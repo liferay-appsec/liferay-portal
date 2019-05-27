@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!DOCTYPE service-builder PUBLIC "-//Liferay//DTD Service Builder 7.2.0//EN" "http://www.liferay.com/dtd/liferay-service-builder_7_2_0.dtd">
+
+<service-builder auto-namespace-tables="false" mvcc-enabled="true" package-path="com.liferay.portal.security.password">
+	<author>Arthur Chan</author>
+	<namespace>Password</namespace>
+	<entity local-service="true" name="PasswordEntry" remote-service="true" uuid="true">
+
+		<!-- PK fields -->
+
+		<column name="passwordEntryId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="userId" type="long" />
+		<column name="companyId" type="long" />
+		<column name="createDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="hash" type="String" />
+
+		<!-- Order -->
+
+		<order by="asc">
+			<order-column name="createDate" />
+		</order>
+
+		<!-- Finder methods -->
+
+		<finder name="UserId" return-type="Collection">
+			<finder-column name="userId" />
+		</finder>
+	</entity>
+	<entity local-service="true" name="PasswordHashGenerator" remote-service="true" uuid="true">
+
+		<!-- PK fields -->
+
+		<column name="passwordHashGeneratorId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="createDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="hashGeneratorName" type="String" />
+		<column name="hashGeneratorMeta" type="String" />
+
+		<!-- Order -->
+
+		<order by="asc">
+			<order-column name="createDate" />
+		</order>
+
+		<!-- Finder methods -->
+
+		<finder name="LtCreateDate" return-type="Collection">
+			<finder-column comparator="&lt;" name="createDate" />
+		</finder>
+	</entity>
+	<entity local-service="true" name="PasswordMeta" uuid="true">
+
+		<!-- PK fields -->
+
+		<column name="passwordMetaId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="createDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="passwordEntryId" type="long" />
+		<column name="salt" type="String" />
+		<column name="pepperId" type="String" />
+
+		<!-- Order -->
+
+		<order by="asc">
+			<order-column name="createDate" />
+		</order>
+
+		<!-- Finder methods -->
+
+		<finder name="LtCreateDate" return-type="Collection">
+			<finder-column comparator="&lt;" name="createDate" />
+		</finder>
+		<finder name="PasswordEntryId" return-type="Collection">
+			<finder-column name="passwordEntryId" />
+		</finder>
+	</entity>
+</service-builder>
