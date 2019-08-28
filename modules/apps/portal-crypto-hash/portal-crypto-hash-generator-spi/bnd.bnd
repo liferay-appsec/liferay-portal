@@ -1,0 +1,7 @@
+Bundle-Name: Liferay Portal Crypto Hash Generator SPI
+Bundle-SymbolicName: com.liferay.portal.crypto.hash.generator.spi
+Bundle-Version: 1.0.0
+Export-Package:\
+	com.liferay.portal.crypto.hash.generator.spi,\
+	com.liferay.portal.crypto.hash.generator.spi.factory,\
+	com.liferay.portal.crypto.hash.generator.spi.salt
