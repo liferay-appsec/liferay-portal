@@ -1,0 +1,4 @@
+dependencies {
+	testIntegrationCompile project(":apps:portal-crypto-hash:portal-crypto-hash-api")
+	testIntegrationCompile project(":test:arquillian-extension-junit-bridge")
+}
