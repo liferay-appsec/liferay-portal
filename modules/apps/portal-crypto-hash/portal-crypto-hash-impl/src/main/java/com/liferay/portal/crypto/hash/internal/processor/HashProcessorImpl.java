@@ -142,7 +142,7 @@ public class HashProcessorImpl implements HashProcessor {
 			input = hashGenerator.generate(input);
 		}
 
-		return Arrays.equals(input, hash);
+		return _compare(input, hash);
 	}
 
 	@Activate
@@ -155,6 +155,27 @@ public class HashProcessorImpl implements HashProcessor {
 	@Deactivate
 	protected void deactivate() {
 		_hashGeneratorFactories.close();
+	}
+
+	/**
+	 * A comparison algorithm that prevents timing attack
+	 *
+	 * @param bytes1 the input bytes
+	 * @param bytes2 the expected bytes
+	 * @return true if two given arrays of bytes are the same, otherwise false
+	 */
+	private boolean _compare(byte[] bytes1, byte[] bytes2) {
+		int diff = bytes1.length ^ bytes2.length;
+
+		for (int i = 0; (i < bytes1.length) && (i < bytes2.length); ++i) {
+			diff |= bytes1[i] ^ bytes2[i];
+		}
+
+		if (diff == 0) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private HashGenerator _createHashGenerator(
