@@ -12,22 +12,27 @@
  * details.
  */
 
-package com.liferay.portal.crypto.hash.generator.spi;
+package com.liferay.portal.crypto.hash.generator.spi.salt;
 
-import com.liferay.portal.crypto.hash.generator.spi.salt.DefaultSizeSaltGenerator;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
 
 import org.osgi.annotation.versioning.ConsumerType;
 
 /**
+ * @author Carlos Sierra Andrés
  * @author Arthur Chan
  */
 @ConsumerType
-public interface HashGenerator extends DefaultSizeSaltGenerator {
+public interface VariableSizeSaltGenerator {
 
-	public byte[] generate(byte[] toBeHashed) throws Exception;
+	public default byte[] generateSalt(int size) {
+		byte[] salt = new byte[size];
 
-	public void setPepper(byte[] pepper);
+		for (int i = 0; i < size; ++i) {
+			salt[i] = SecureRandomUtil.nextByte();
+		}
 
-	public void setSalt(byte[] salt);
+		return salt;
+	}
 
 }
