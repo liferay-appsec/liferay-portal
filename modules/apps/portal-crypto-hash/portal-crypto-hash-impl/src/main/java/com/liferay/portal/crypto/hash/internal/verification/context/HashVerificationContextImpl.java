@@ -61,7 +61,7 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 		public BuilderImpl(
 			String hashGeneratorName, JSONObject hashGeneratorMetaJSONObject) {
 
-			this(hashGeneratorName, hashGeneratorMeta, null, null);
+			this(hashGeneratorName, hashGeneratorMetaJSONObject, null, null);
 		}
 
 		public BuilderImpl(

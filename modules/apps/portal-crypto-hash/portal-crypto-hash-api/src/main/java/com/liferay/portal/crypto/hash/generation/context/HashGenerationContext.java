@@ -33,9 +33,17 @@ public interface HashGenerationContext {
 
 	public String getHashGeneratorName();
 
+	public String getPepperAppId();
+
 	public SaltCommand[] getSaltCommands();
 
-	public interface Builder {
+	public interface Builder extends HashGenerationContextBuilder {
+
+		public HashGenerationContextBuilder pepperApp(String pepperAppId);
+
+	}
+
+	public interface HashGenerationContextBuilder {
 
 		public HashGenerationContext build(SaltCommand... saltCommands);
 
