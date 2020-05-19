@@ -20,7 +20,7 @@ package com.liferay.portal.crypto.hash.pepper.storage.spi;
  */
 public interface HashPepperStorage {
 
-	public String getCurrentPepperId();
+	public String getCurrentPepperId(String appId);
 
 	public byte[] getPepper(String pepperId);
 

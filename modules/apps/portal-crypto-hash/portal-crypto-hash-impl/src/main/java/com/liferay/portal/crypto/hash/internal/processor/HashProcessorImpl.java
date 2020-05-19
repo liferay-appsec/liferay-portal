@@ -87,7 +87,8 @@ public class HashProcessorImpl implements HashProcessor {
 		String pepperId = null;
 
 		if (_hashPepperStorage != null) {
-			pepperId = _hashPepperStorage.getCurrentPepperId();
+			pepperId = _hashPepperStorage.getCurrentPepperId(
+				hashGenerationContext.getPepperAppId());
 
 			hashGenerator.setPepper(_hashPepperStorage.getPepper(pepperId));
 		}

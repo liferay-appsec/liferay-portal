@@ -28,11 +28,12 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 
 	public HashGenerationContextImpl(
 		String hashGeneratorName, JSONObject hashGeneratorMetaJSONObject,
-		SaltCommand... saltCommands) {
+		String pepperAppId, SaltCommand... saltCommands) {
 
 		_hashGeneratorName = hashGeneratorName;
 		_hashGeneratorMeta = Optional.ofNullable(hashGeneratorMetaJSONObject);
 
+		_pepperAppId = pepperAppId;
 		_saltCommands = saltCommands;
 	}
 
@@ -46,6 +47,11 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 		return _hashGeneratorName;
 	}
 
+	@Override
+	public String getPepperAppId() {
+		return _pepperAppId;
+	}
+
 	public SaltCommand[] getSaltCommands() {
 		return _saltCommands;
 	}
@@ -55,8 +61,16 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 		public BuilderImpl(
 			String hashGeneratorName, JSONObject hashGeneratorMetaJSONObject) {
 
+			this(hashGeneratorName, hashGeneratorMetaJSONObject, null);
+		}
+
+		public BuilderImpl(
+			String hashGeneratorName, JSONObject hashGeneratorMetaJSONObject,
+			String pepperAppId) {
+
 			_hashGeneratorName = hashGeneratorName;
 			_hashGeneratorMetaJSONObject = hashGeneratorMetaJSONObject;
+			_pepperAppId = pepperAppId;
 		}
 
 		@Override
@@ -68,16 +82,25 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 			}
 
 			return new HashGenerationContextImpl(
-				_hashGeneratorName, _hashGeneratorMetaJSONObject, saltCommands);
+				_hashGeneratorName, _hashGeneratorMetaJSONObject, _pepperAppId,
+				saltCommands);
+		}
+
+		@Override
+		public HashGenerationContextBuilder pepperApp(String pepperAppId) {
+			return new BuilderImpl(
+				_hashGeneratorName, _hashGeneratorMetaJSONObject, pepperAppId);
 		}
 
 		private final JSONObject _hashGeneratorMetaJSONObject;
 		private String _hashGeneratorName;
+		private String _pepperAppId;
 
 	}
 
 	private final Optional<JSONObject> _hashGeneratorMeta;
 	private final String _hashGeneratorName;
+	private final String _pepperAppId;
 	private final SaltCommand[] _saltCommands;
 
 }
