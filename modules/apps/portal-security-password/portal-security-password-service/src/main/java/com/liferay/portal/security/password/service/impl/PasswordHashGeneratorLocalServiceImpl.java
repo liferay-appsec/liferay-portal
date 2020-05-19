@@ -145,7 +145,9 @@ public class PasswordHashGeneratorLocalServiceImpl
 						passwordHashGenerator.getHashGeneratorMeta()));
 
 			HashGenerationContext hashGenerationContext =
-				hashGenerationContextBuilder.build(
+				hashGenerationContextBuilder.pepperApp(
+					_pepperAppId
+					).build(
 					SaltCommand.generateDefaultSizeSalt());
 
 			_serviceRegistration = bundleContext.registerService(
@@ -283,6 +285,9 @@ public class PasswordHashGeneratorLocalServiceImpl
 
 	@Reference
 	private PasswordMetaPersistence _passwordMetaPersistence;
+
+	private static final String _pepperAppId =
+		"com.liferay.portal.security.password.service";
 
 	private ServiceRegistration<HashGenerationContext> _serviceRegistration;
 
