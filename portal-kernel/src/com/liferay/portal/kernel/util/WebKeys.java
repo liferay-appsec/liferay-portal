@@ -399,10 +399,6 @@ public interface WebKeys {
 
 	public static final String NOTES_LIST = "NOTES_LIST";
 
-	public static final String OPEN_ID_LOGIN = "OPEN_ID_LOGIN";
-
-	public static final String OPEN_ID_LOGIN_PENDING = "OPEN_ID_LOGIN_PENDING";
-
 	public static final String ORG_LABOR = "ORG_LABOR";
 
 	public static final String ORGANIZATION = "ORGANIZATION";
