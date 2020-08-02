@@ -110,6 +110,8 @@ if (samlRoleIdpOptionDisabled) {
 	</c:when>
 </c:choose>
 
+<liferay-util:dynamic-include key="com.liferay.saml.web#/admin/general.jsp#post" />
+
 <aui:script>
 	window['<portlet:namespace />showCertificateDialog'] = function (uri) {
 		Liferay.Util.openModal({
