@@ -25,7 +25,7 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.saml.addon.keep.alive.web.internal.constants.SamlKeepAliveConstants;
+import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.persistence.model.SamlIdpSpConnection;
 import com.liferay.saml.persistence.model.SamlIdpSpSession;

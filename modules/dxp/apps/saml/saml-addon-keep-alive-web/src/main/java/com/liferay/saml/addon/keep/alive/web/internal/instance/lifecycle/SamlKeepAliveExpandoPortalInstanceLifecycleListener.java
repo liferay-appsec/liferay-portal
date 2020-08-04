@@ -26,7 +26,7 @@ import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
-import com.liferay.saml.addon.keep.alive.web.internal.constants.SamlKeepAliveConstants;
+import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.persistence.model.SamlIdpSpConnection;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 
