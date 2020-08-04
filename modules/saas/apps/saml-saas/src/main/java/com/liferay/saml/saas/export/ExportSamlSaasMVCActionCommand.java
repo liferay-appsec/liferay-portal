@@ -14,6 +14,7 @@
 
 package com.liferay.saml.saas.export;
 
+import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -29,6 +30,7 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
+import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
@@ -239,7 +241,16 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		for (SamlSpIdpConnection samlSpIdpConnection :
 				samlSpIdpConnectionsList) {
 
+			ExpandoBridge expandoBridge =
+				samlSpIdpConnection.getExpandoBridge();
+
+			String keepAliveURL = (String)expandoBridge.getAttribute(
+				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL);
+
 			JSONObject jsonSamlSpIdpConnection = JSONUtil.put(
+				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL,
+				keepAliveURL
+			).put(
 				"assertionSignatureRequired",
 				samlSpIdpConnection.getAssertionSignatureRequired()
 			).put(

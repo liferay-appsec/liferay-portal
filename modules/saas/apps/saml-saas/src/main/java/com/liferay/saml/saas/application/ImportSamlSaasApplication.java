@@ -16,6 +16,7 @@ package com.liferay.saml.saas.application;
 
 import static com.liferay.portal.kernel.security.auth.CompanyThreadLocal.getCompanyId;
 
+import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -29,6 +30,7 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.saas.configuration.SaasConfiguration;
+import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
@@ -284,13 +286,24 @@ public class ImportSamlSaasApplication extends Application {
 			String userAttributeMappings = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("userAttributeMappings"));
 
-			_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
-				samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
-				forceAuthn, ldapImportEnabled, metadataUrl,
-				new ByteArrayInputStream(metadataXml.getBytes()), name,
-				nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-				userAttributeMappings,
-				ServiceContextThreadLocal.getServiceContext());
+			SamlSpIdpConnection samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
+					samlIdpEntityId, assertionSignatureRequired, clockSkew,
+					enabled, forceAuthn, ldapImportEnabled, metadataUrl,
+					new ByteArrayInputStream(metadataXml.getBytes()), name,
+					nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
+					userAttributeMappings,
+					ServiceContextThreadLocal.getServiceContext());
+
+			String keepAliveURL = GetterUtil.getString(
+				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL);
+
+			ExpandoBridge expandoBridge =
+				samlSpIdpConnection.getExpandoBridge();
+
+			expandoBridge.setAttribute(
+				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL,
+				keepAliveURL, false);
 		}
 	}
 
