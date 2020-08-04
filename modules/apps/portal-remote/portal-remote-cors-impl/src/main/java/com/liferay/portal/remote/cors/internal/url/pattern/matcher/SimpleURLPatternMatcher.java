@@ -14,9 +14,6 @@
 
 package com.liferay.portal.remote.cors.internal.url.pattern.matcher;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +52,7 @@ public class SimpleURLPatternMatcher<T> implements URLPatternMatcher<T> {
 	public void putValue(String urlPattern, T value)
 		throws IllegalArgumentException {
 
-		if (_isWildcardURLPattern(urlPattern)) {
+		if (URLPatternMatcherUtil.isWildcardURLPattern(urlPattern)) {
 			if (!_wildcardURLPatternValues.containsKey(urlPattern)) {
 				_wildcardURLPatternValues.put(urlPattern, value);
 			}
@@ -63,7 +60,7 @@ public class SimpleURLPatternMatcher<T> implements URLPatternMatcher<T> {
 			return;
 		}
 
-		if (_isExtensionURLPattern(urlPattern)) {
+		if (URLPatternMatcherUtil.isExtensionURLPattern(urlPattern)) {
 			if (!_extensionURLPatternValues.containsKey(urlPattern)) {
 				_extensionURLPatternValues.put(urlPattern, value);
 			}
@@ -74,59 +71,6 @@ public class SimpleURLPatternMatcher<T> implements URLPatternMatcher<T> {
 		if (!_exactURLPatternValues.containsKey(urlPattern)) {
 			_exactURLPatternValues.put(urlPattern, value);
 		}
-	}
-
-	private boolean _isExtensionURLPattern(String urlPattern) {
-
-		// Servlet 4 spec 12.1.3
-		// Servlet 4 spec 12.2
-
-		if ((urlPattern.length() < 3) || (urlPattern.charAt(0) != '*') ||
-			(urlPattern.charAt(1) != '.')) {
-
-			return false;
-		}
-
-		for (int i = 2; i < urlPattern.length(); ++i) {
-			if (urlPattern.charAt(i) == '/') {
-				return false;
-			}
-
-			if (urlPattern.charAt(i) == '.') {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	private boolean _isWildcardURLPattern(String urlPattern) {
-
-		// Servlet 4 spec 12.2
-
-		if ((urlPattern.length() < 2) || (urlPattern.charAt(0) != '/') ||
-			(urlPattern.charAt(urlPattern.length() - 1) != '*') ||
-			(urlPattern.charAt(urlPattern.length() - 2) != '/')) {
-
-			return false;
-		}
-
-		// RFC 3986 3.3
-
-		try {
-			String urlPath = urlPattern.substring(0, urlPattern.length() - 1);
-
-			URI uri = new URI("https://test" + urlPath);
-
-			if (!urlPath.contentEquals(uri.getPath())) {
-				return false;
-			}
-		}
-		catch (URISyntaxException uriSyntaxException) {
-			return false;
-		}
-
-		return true;
 	}
 
 	private final Map<String, T> _exactURLPatternValues = new HashMap<>();
