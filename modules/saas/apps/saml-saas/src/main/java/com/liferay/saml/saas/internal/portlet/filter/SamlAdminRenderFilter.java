@@ -69,7 +69,13 @@ public class SamlAdminRenderFilter implements RenderFilter {
 				ConfigurationProviderUtil.getCompanyConfiguration(
 					SaasConfiguration.class, companyId);
 
-			if (!saasConfiguration.isProductionEnvironment()) {
+			String preSharedKey = saasConfiguration.preSharedKey();
+			String virtualHostURLExport =
+				saasConfiguration.virtualHostURLExport();
+
+			if (!saasConfiguration.isProductionEnvironment() &&
+				!preSharedKey.isEmpty() && !virtualHostURLExport.isEmpty()) {
+
 				_exportSamlEntryOptionMVCRenderCommand.render(
 					renderRequest, renderResponse);
 			}
