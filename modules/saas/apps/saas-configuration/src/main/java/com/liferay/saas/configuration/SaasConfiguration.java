@@ -28,7 +28,8 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface SaasConfiguration {
 
 	@Meta.AD(
-		id = "saas.production.environment", name = "saas-production-environment"
+		deflt = "false", id = "saas.production.environment",
+		name = "saas-production-environment"
 	)
 	public boolean isProductionEnvironment();
 
