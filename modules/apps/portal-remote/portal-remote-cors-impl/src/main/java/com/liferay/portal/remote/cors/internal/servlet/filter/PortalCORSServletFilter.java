@@ -196,10 +196,10 @@ public class PortalCORSServletFilter
 			return;
 		}
 
-		URLtoCORSSupportMapper urlPatternMatcher = _getURLtoCORSSupportMapper(
-			companyId);
+		URLtoCORSSupportMapper urLtoCORSSupportMapper =
+			_getURLtoCORSSupportMapper(companyId);
 
-		CORSSupport corsSupport = urlPatternMatcher.get(
+		CORSSupport corsSupport = urLtoCORSSupportMapper.get(
 			_getURI(httpServletRequest));
 
 		if (corsSupport != null) {
