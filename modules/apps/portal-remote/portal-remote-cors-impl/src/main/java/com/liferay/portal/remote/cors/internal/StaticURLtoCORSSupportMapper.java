@@ -201,9 +201,12 @@ public class StaticURLtoCORSSupportMapper extends BaseURLtoCORSSupportMapper {
 		long bitMask = 1 << index;
 
 		for (; row < urlPattern.length(); ++row) {
-			char character = urlPattern.charAt(row);
+			char character;
 
-			if (!wildcard) {
+			if (wildcard) {
+				character = urlPattern.charAt(row);
+			}
+			else {
 				character = urlPattern.charAt(urlPattern.length() - 1 - row);
 			}
 
