@@ -131,11 +131,11 @@ public class DynamicURLtoCORSSupportMapper extends BaseURLtoCORSSupportMapper {
 
 	@Override
 	protected void put(
-		String urlPattern, CORSSupport corsSupport, boolean forward) {
+		String urlPattern, CORSSupport corsSupport, boolean wildcard) {
 
 		TrieNode previousTrieNode = null;
 
-		if (forward) {
+		if (wildcard) {
 			previousTrieNode = _wildCardTrieNode;
 		}
 		else {
@@ -147,7 +147,7 @@ public class DynamicURLtoCORSSupportMapper extends BaseURLtoCORSSupportMapper {
 		for (int i = 0; i < urlPattern.length(); ++i) {
 			int index = i;
 
-			if (!forward) {
+			if (!wildcard) {
 				index = urlPattern.length() - 1 - i;
 			}
 

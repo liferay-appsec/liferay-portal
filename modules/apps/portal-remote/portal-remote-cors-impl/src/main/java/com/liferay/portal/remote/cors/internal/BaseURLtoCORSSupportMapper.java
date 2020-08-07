@@ -119,6 +119,6 @@ public abstract class BaseURLtoCORSSupportMapper
 	protected abstract CORSSupport getWildcardCORSSupport(String urlPath);
 
 	protected abstract void put(
-		String urlPattern, CORSSupport corsSupport, boolean forward);
+		String urlPattern, CORSSupport corsSupport, boolean wildcard);
 
 }
