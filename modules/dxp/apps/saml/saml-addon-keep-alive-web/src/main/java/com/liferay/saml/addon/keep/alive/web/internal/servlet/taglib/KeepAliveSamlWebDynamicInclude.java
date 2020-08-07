@@ -19,7 +19,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.servlet.taglib.BaseDynamicInclude;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.saml.constants.SamlKeepAliveConstants;
+import com.liferay.saml.addon.keep.alive.web.internal.constants.SamlKeepAliveConstants;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.persistence.model.SamlIdpSpConnection;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
