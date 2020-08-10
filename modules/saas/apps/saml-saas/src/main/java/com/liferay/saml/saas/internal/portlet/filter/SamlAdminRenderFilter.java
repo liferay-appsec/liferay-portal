@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
@@ -59,6 +60,12 @@ public class SamlAdminRenderFilter implements RenderFilter {
 		throws IOException, PortletException {
 
 		chain.doFilter(renderRequest, renderResponse);
+
+		if (!"general".contentEquals(
+				ParamUtil.getString(renderRequest, "tabs1", "general"))) {
+
+			return;
+		}
 
 		long companyId = _portal.getCompanyId(renderRequest);
 
