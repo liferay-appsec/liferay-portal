@@ -21,6 +21,8 @@ public class ExportImportKeys {
 
 	public static final String ERROR_MESSAGE = "ERROR";
 
+	public static final String EXPANDO_VALUES = "expandoValues";
+
 	public static final String SAML_KEYSTORE = "SamlKeystore";
 
 	public static final String SAML_PROVIDER_CONFIGURATION_KEY =

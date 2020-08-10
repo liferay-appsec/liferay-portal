@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.saas.configuration.SaasConfiguration;
-import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
@@ -41,6 +40,7 @@ import com.liferay.saml.saas.util.SymmetricEntriptor;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.Serializable;
 
 import java.security.KeyStore;
 
@@ -295,15 +295,16 @@ public class ImportSamlSaasApplication extends Application {
 					userAttributeMappings,
 					ServiceContextThreadLocal.getServiceContext());
 
-			String keepAliveURL = GetterUtil.getString(
-				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL);
+			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
+				ExportImportKeys.SAML_EXPANDO_VALUES);
 
 			ExpandoBridge expandoBridge =
 				samlSpIdpConnection.getExpandoBridge();
 
-			expandoBridge.setAttribute(
-				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL,
-				keepAliveURL, false);
+			for (String key : expandoValues.keySet()) {
+				expandoBridge.setAttribute(
+					key, (Serializable)expandoValues.get(key), false);
+			}
 		}
 	}
 

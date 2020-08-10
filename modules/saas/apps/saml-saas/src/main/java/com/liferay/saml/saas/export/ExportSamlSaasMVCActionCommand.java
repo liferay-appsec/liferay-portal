@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
-import com.liferay.saml.constants.SamlKeepAliveConstants;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
@@ -48,6 +47,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.portlet.ActionRequest;
@@ -144,10 +144,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 					jsonResponse);
 
 				if (response.get(
-						ExportImportKeys.SAML_RESULT
-					).equals(
-						ExportImportKeys.ERROR_MESSAGE
-					)) {
+						ExportImportKeys.SAML_RESULT).equals(
+							ExportImportKeys.ERROR_MESSAGE)) {
 
 					SessionErrors.add(actionRequest, "exportError");
 				}
@@ -232,6 +230,26 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		);
 	}
 
+	private JSONObject _getSpIdpConnectionExpandoValues(
+		SamlSpIdpConnection samlSpIdpConnection) {
+
+		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+
+		ExpandoBridge expandoBridge = samlSpIdpConnection.getExpandoBridge();
+
+		Enumeration<String> enumeration = expandoBridge.getAttributeNames();
+
+		while (enumeration.hasMoreElements()) {
+			String attributeName = enumeration.nextElement();
+
+			jsonObject.put(
+				attributeName,
+				expandoBridge.getAttribute(attributeName, false));
+		}
+
+		return jsonObject;
+	}
+
 	private JSONArray _getSpIdpConnections(long companyId) {
 		JSONArray samlSpIdpConnections = JSONFactoryUtil.createJSONArray();
 
@@ -241,26 +259,20 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		for (SamlSpIdpConnection samlSpIdpConnection :
 				samlSpIdpConnectionsList) {
 
-			ExpandoBridge expandoBridge =
-				samlSpIdpConnection.getExpandoBridge();
-
-			String keepAliveURL = (String)expandoBridge.getAttribute(
-				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL);
-
 			JSONObject jsonSamlSpIdpConnection = JSONUtil.put(
-				SamlKeepAliveConstants.EXPANDO_COLUMN_NAME_KEEP_ALIVE_URL,
-				keepAliveURL
+				ExportImportKeys.SAML_EXPANDO_VALUES,
+				_getSpIdpConnectionExpandoValues(samlSpIdpConnection)
 			).put(
 				"assertionSignatureRequired",
-				samlSpIdpConnection.getAssertionSignatureRequired()
+				samlSpIdpConnection.isAssertionSignatureRequired()
 			).put(
 				"clockSkew", samlSpIdpConnection.getClockSkew()
 			).put(
-				"enabled", samlSpIdpConnection.getEnabled()
+				"enabled", samlSpIdpConnection.isEnabled()
 			).put(
-				"forceAuthn", samlSpIdpConnection.getForceAuthn()
+				"forceAuthn", samlSpIdpConnection.isForceAuthn()
 			).put(
-				"ldapImportEnabled", samlSpIdpConnection.getLdapImportEnabled()
+				"ldapImportEnabled", samlSpIdpConnection.isLdapImportEnabled()
 			).put(
 				"metadataUrl", samlSpIdpConnection.getMetadataUrl()
 			).put(
@@ -275,10 +287,10 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				"samlSpIdpConnectionId",
 				samlSpIdpConnection.getSamlSpIdpConnectionId()
 			).put(
-				"signAuthnRequest", samlSpIdpConnection.getSignAuthnRequest()
+				"signAuthnRequest", samlSpIdpConnection.isSignAuthnRequest()
 			).put(
 				"unknownUsersAreStrangers",
-				samlSpIdpConnection.getUnknownUsersAreStrangers()
+				samlSpIdpConnection.isUnknownUsersAreStrangers()
 			).put(
 				"userAttributeMappings",
 				samlSpIdpConnection.getUserAttributeMappings()
