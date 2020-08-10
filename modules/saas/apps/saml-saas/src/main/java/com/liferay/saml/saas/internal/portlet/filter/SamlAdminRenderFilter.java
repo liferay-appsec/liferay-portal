@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
-import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
@@ -32,7 +31,9 @@ import javax.portlet.filter.FilterChain;
 import javax.portlet.filter.FilterConfig;
 import javax.portlet.filter.PortletFilter;
 import javax.portlet.filter.RenderFilter;
-import javax.portlet.filter.RenderResponseWrapper;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,10 +58,7 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			FilterChain chain)
 		throws IOException, PortletException {
 
-		RenderResponseWrapper renderResponseWrapper = new RenderResponseWrapper(
-			renderResponse);
-
-		chain.doFilter(renderRequest, renderResponseWrapper);
+		chain.doFilter(renderRequest, renderResponse);
 
 		long companyId = _portal.getCompanyId(renderRequest);
 
@@ -76,13 +74,23 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			if (!saasConfiguration.isProductionEnvironment() &&
 				!preSharedKey.isEmpty() && !virtualHostURLExport.isEmpty()) {
 
-				_exportSamlEntryOptionMVCRenderCommand.render(
-					renderRequest, renderResponse);
+				RequestDispatcher requestDispatcher =
+					_servletContext.getRequestDispatcher("/export.jsp");
+
+				try {
+					requestDispatcher.include(
+						_portal.getHttpServletRequest(renderRequest),
+						_portal.getHttpServletResponse(renderResponse));
+				}
+				catch (Exception exception) {
+					throw new PortletException(
+						"Unable to include export.jsp", exception);
+				}
 			}
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(
-				"Unable to SaaS instance configuration",
+				"Unable to get SaaS instance configuration",
 				configurationException);
 		}
 	}
@@ -94,10 +102,10 @@ public class SamlAdminRenderFilter implements RenderFilter {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlAdminRenderFilter.class);
 
-	@Reference(target = "(mvc.command.name=/admin/saas/saml/export/content)")
-	private MVCRenderCommand _exportSamlEntryOptionMVCRenderCommand;
-
 	@Reference
 	private Portal _portal;
+
+	@Reference(target = "(osgi.web.symbolicname=com.liferay.saml.saas)")
+	private ServletContext _servletContext;
 
 }
