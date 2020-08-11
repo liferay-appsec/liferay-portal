@@ -31,7 +31,7 @@ public interface SaasConfiguration {
 		deflt = "false", id = "saas.production.environment",
 		name = "saas-production-environment"
 	)
-	public boolean isProductionEnvironment();
+	public boolean productionEnvironment();
 
 	@Meta.AD(id = "saas.preshared.key", name = "saas-pre-shared-key")
 	public String preSharedKey();

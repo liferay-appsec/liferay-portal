@@ -91,7 +91,7 @@ public class ImportSamlSaasApplication extends Application {
 
 			String preSharedKey = saasConfiguration.preSharedKey();
 
-			if (!saasConfiguration.isProductionEnvironment()) {
+			if (!saasConfiguration.productionEnvironment()) {
 				throw new RuntimeException(
 					"Instance must be configured as a SAML SaaS production " +
 						"environment to receive configuration data imports");

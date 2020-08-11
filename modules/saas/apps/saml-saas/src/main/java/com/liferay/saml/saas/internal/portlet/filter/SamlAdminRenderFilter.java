@@ -78,7 +78,7 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			String virtualHostURLExport =
 				saasConfiguration.targetInstanceImportURL();
 
-			if (!saasConfiguration.isProductionEnvironment() &&
+			if (!saasConfiguration.productionEnvironment() &&
 				!preSharedKey.isEmpty() && !virtualHostURLExport.isEmpty()) {
 
 				RequestDispatcher requestDispatcher =
