@@ -17,21 +17,21 @@ package com.liferay.saml.saas.constants;
 /**
  * @author Marta Medio
  */
-public class ExportImportKeys {
-
-	public static final String ERROR_MESSAGE = "ERROR";
+public class JSONKeys {
 
 	public static final String EXPANDO_VALUES = "expandoValues";
 
-	public static final String SAML_KEYSTORE = "SamlKeystore";
+	public static final String RESULT = "result";
 
-	public static final String SAML_PROVIDER_CONFIGURATION_KEY =
-		"SamlProviderConfiguration";
+	public static final String RESULT_ERROR = "ERROR";
 
-	public static final String SAML_RESULT = "Result";
+	public static final String RESULT_SUCCESS = "SUCCESS";
 
-	public static final String SAML_SP_IDP_CONNECTIONS = "SamlSpIdpConnections";
+	public static final String SAML_KEYSTORE = "samlKeystore";
 
-	public static final String SUCCESS_MESSAGE = "SUCCESS";
+	public static final String SAML_PROVIDER_CONFIGURATION =
+		"samlProviderConfiguration";
+
+	public static final String SAML_SP_IDP_CONNECTIONS = "samlSpIdpConnections";
 
 }

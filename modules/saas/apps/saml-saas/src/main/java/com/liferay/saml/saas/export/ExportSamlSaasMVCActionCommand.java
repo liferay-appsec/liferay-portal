@@ -36,7 +36,7 @@ import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
-import com.liferay.saml.saas.constants.ExportImportKeys;
+import com.liferay.saml.saas.constants.JSONKeys;
 import com.liferay.saml.saas.util.SymmetricEntriptor;
 
 import java.io.ByteArrayOutputStream;
@@ -89,7 +89,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 	@Override
 	protected void doProcessAction(
-		ActionRequest actionRequest, ActionResponse actionResponse) {
+		ActionRequest actionRequest, ActionResponse actionResponse) 
+		throws Exception {
 
 		long companyId = _portal.getCompanyId(actionRequest);
 
@@ -110,12 +111,12 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			}
 
 			JSONObject samlJsonObject = JSONUtil.put(
-				ExportImportKeys.SAML_KEYSTORE, _getKeyStore()
+				JSONKeys.SAML_KEYSTORE, _getKeyStore()
 			).put(
-				ExportImportKeys.SAML_PROVIDER_CONFIGURATION_KEY,
+				JSONKeys.SAML_PROVIDER_CONFIGURATION,
 				_getSamlProviderConfiguration()
 			).put(
-				ExportImportKeys.SAML_SP_IDP_CONNECTIONS,
+				JSONKeys.SAML_SP_IDP_CONNECTIONS,
 				_getSpIdpConnections(companyId)
 			);
 
@@ -144,8 +145,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 					jsonResponse);
 
 				if (response.get(
-						ExportImportKeys.SAML_RESULT).equals(
-							ExportImportKeys.ERROR_MESSAGE)) {
+						JSONKeys.RESULT).equals(
+							JSONKeys.RESULT_ERROR)) {
 
 					SessionErrors.add(actionRequest, "exportError");
 				}
@@ -260,7 +261,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				samlSpIdpConnectionsList) {
 
 			JSONObject jsonSamlSpIdpConnection = JSONUtil.put(
-				ExportImportKeys.SAML_EXPANDO_VALUES,
+				JSONKeys.EXPANDO_VALUES,
 				_getSpIdpConnectionExpandoValues(samlSpIdpConnection)
 			).put(
 				"assertionSignatureRequired",

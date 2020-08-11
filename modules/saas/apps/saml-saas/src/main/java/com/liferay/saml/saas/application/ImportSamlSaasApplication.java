@@ -35,7 +35,7 @@ import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
-import com.liferay.saml.saas.constants.ExportImportKeys;
+import com.liferay.saml.saas.constants.JSONKeys;
 import com.liferay.saml.saas.util.SymmetricEntriptor;
 
 import java.io.ByteArrayInputStream;
@@ -103,14 +103,14 @@ public class ImportSamlSaasApplication extends Application {
 
 			_generateSamlProviderConfiguration(
 				(JSONObject)samlJsonObject.get(
-					ExportImportKeys.SAML_PROVIDER_CONFIGURATION_KEY));
+					JSONKeys.SAML_PROVIDER_CONFIGURATION));
 
 			_generateSamlSpIdpConnections(
 				(JSONArray)samlJsonObject.get(
-					ExportImportKeys.SAML_SP_IDP_CONNECTIONS));
+					JSONKeys.SAML_SP_IDP_CONNECTIONS));
 
 			_generateKeystore(
-				(String)samlJsonObject.get(ExportImportKeys.SAML_KEYSTORE));
+				(String)samlJsonObject.get(JSONKeys.SAML_KEYSTORE));
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -118,12 +118,12 @@ public class ImportSamlSaasApplication extends Application {
 				exception);
 
 			return JSONUtil.put(
-				ExportImportKeys.SAML_RESULT, ExportImportKeys.ERROR_MESSAGE
+				JSONKeys.RESULT, JSONKeys.RESULT_ERROR
 			).toString();
 		}
 
 		return JSONUtil.put(
-			ExportImportKeys.SAML_RESULT, ExportImportKeys.SUCCESS_MESSAGE
+			JSONKeys.RESULT, JSONKeys.RESULT_SUCCESS
 		).toString();
 	}
 
@@ -296,7 +296,7 @@ public class ImportSamlSaasApplication extends Application {
 					ServiceContextThreadLocal.getServiceContext());
 
 			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
-				ExportImportKeys.SAML_EXPANDO_VALUES);
+				JSONKeys.EXPANDO_VALUES);
 
 			ExpandoBridge expandoBridge =
 				samlSpIdpConnection.getExpandoBridge();
