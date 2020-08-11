@@ -127,9 +127,7 @@ public class ImportSamlSaasApplication extends Application {
 		).toString();
 	}
 
-	@Reference(
-		name = "KeyStoreManager", target = "(default=true)", unbind = "-"
-	)
+	@Reference(name = "KeyStoreManager", unbind = "-")
 	public void setKeyStoreManager(KeyStoreManager keyStoreManager) {
 		_keyStoreManager = keyStoreManager;
 	}
