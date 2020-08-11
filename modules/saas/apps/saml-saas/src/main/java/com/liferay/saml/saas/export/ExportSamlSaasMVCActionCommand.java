@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
@@ -89,40 +90,23 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 	@Override
 	protected void doProcessAction(
-		ActionRequest actionRequest, ActionResponse actionResponse) 
+			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
 		long companyId = _portal.getCompanyId(actionRequest);
 
+		SaasConfiguration saasConfiguration =
+			ConfigurationProviderUtil.getCompanyConfiguration(
+				SaasConfiguration.class, companyId);
+
+		if (saasConfiguration.isProductionEnvironment() ||
+			Validator.isBlank(saasConfiguration.virtualHostURLExport()) ||
+			Validator.isBlank(saasConfiguration.preSharedKey())) {
+
+			return;
+		}
+
 		try {
-			SaasConfiguration saasConfiguration =
-				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class, companyId);
-
-			String virtualHostURLExport =
-				saasConfiguration.virtualHostURLExport();
-			String preSharedKey = saasConfiguration.preSharedKey();
-
-			if (saasConfiguration.isProductionEnvironment() ||
-				virtualHostURLExport.isEmpty() || preSharedKey.isEmpty()) {
-
-				throw new RuntimeException(
-					"SaaS environment invalid for SAML data export");
-			}
-
-			JSONObject samlJsonObject = JSONUtil.put(
-				JSONKeys.SAML_KEYSTORE, _getKeyStore()
-			).put(
-				JSONKeys.SAML_PROVIDER_CONFIGURATION,
-				_getSamlProviderConfiguration()
-			).put(
-				JSONKeys.SAML_SP_IDP_CONNECTIONS,
-				_getSpIdpConnections(companyId)
-			);
-
-			String encryptedData = SymmetricEntriptor.encryptData(
-				preSharedKey, samlJsonObject.toString());
-
 			ClientBuilder clientBuilder = new ClientBuilderImpl();
 
 			Client client = clientBuilder.build();
@@ -137,7 +121,11 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			String jsonResponse = target.request(
 				MediaType.APPLICATION_JSON
 			).post(
-				Entity.entity(encryptedData, MediaType.TEXT_PLAIN), String.class
+				Entity.entity(
+					_getEncryptedJSONPayload(
+						companyId, saasConfiguration.preSharedKey()),
+					MediaType.TEXT_PLAIN),
+				String.class
 			);
 
 			if (jsonResponse != null) {
@@ -153,15 +141,45 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			}
 		}
 		catch (Exception exception) {
-			_log.error(
-				"Unable to export SAML data, check your Saas Configuration",
-				exception);
+			_log.error("Unable to export SAML configuration data", exception);
 
 			SessionErrors.add(actionRequest, "exportError");
 		}
+	}
 
-		actionResponse.setRenderParameter("mvcRenderCommandName", "/admin");
-		actionResponse.setRenderParameter("tabs1", "general");
+	private String _getEncryptedJSONPayload(long companyId, String preSharedKey)
+		throws Exception {
+
+		JSONObject samlJsonObject;
+
+		try {
+			samlJsonObject = JSONUtil.put(
+				JSONKeys.SAML_KEYSTORE, _getKeyStore());
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to export the SAML KeyStore for companyId " + companyId,
+				exception);
+
+			throw exception;
+		}
+
+		samlJsonObject.put(
+			JSONKeys.SAML_PROVIDER_CONFIGURATION,
+			_getSamlProviderConfiguration()
+		).put(
+			JSONKeys.SAML_SP_IDP_CONNECTIONS, _getSpIdpConnections(companyId)
+		);
+
+		try {
+			return SymmetricEntriptor.encryptData(
+				preSharedKey, samlJsonObject.toString());
+		}
+		catch (Exception exception) {
+			_log.error("Unable to encrypt the JSON payload", exception);
+
+			throw exception;
+		}
 	}
 
 	private String _getKeyStore()
