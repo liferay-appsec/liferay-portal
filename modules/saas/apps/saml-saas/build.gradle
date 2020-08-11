@@ -16,6 +16,5 @@ dependencies{
 	compileOnly project(":dxp:apps:saml:saml-api")
 	compileOnly project(":dxp:apps:saml:saml-persistence-api")
 	compileOnly project(":dxp:apps:saml:saml-web")
-	compileOnly project(":saas:apps:saas-configuration")
-
+	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-1"
 }

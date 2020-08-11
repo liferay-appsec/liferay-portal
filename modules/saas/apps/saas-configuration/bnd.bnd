@@ -1,4 +1,0 @@
-Bundle-Name: Liferay SaaS Configuration
-Bundle-SymbolicName: com.liferay.saas.configuration
-Bundle-Version: 1.0.0
-Export-Package: com.liferay.saas.configuration

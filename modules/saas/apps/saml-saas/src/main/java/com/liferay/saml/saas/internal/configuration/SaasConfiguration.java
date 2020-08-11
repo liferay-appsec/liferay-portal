@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.saas.configuration;
+package com.liferay.saml.saas.internal.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 

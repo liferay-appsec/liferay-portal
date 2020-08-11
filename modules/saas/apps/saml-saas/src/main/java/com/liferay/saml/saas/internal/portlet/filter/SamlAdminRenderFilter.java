@@ -20,9 +20,9 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
+import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
 
 import java.io.IOException;
 

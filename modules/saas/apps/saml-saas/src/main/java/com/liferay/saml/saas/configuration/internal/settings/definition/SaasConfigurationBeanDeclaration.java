@@ -12,10 +12,10 @@
  * details.
  */
 
-package com.liferay.saas.configuration.internal.settings.definition;
+package com.liferay.saml.saas.configuration.internal.settings.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
-import com.liferay.saas.configuration.SaasConfiguration;
+import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
 
 import org.osgi.service.component.annotations.Component;
 
