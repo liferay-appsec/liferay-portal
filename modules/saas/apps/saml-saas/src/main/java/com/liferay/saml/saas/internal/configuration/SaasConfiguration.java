@@ -27,10 +27,12 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 @Meta.OCD(id = "com.liferay.saas.configuration.SaasConfiguration")
 public interface SaasConfiguration {
 
-	@Meta.AD(deflt = "false", id = "saas.production.environment")
+	@Meta.AD(
+		deflt = "false", id = "saas.production.environment", required = false
+	)
 	public boolean productionEnvironment();
 
-	@Meta.AD(id = "saas.pre.shared.key")
+	@Meta.AD(id = "saas.pre.shared.key", required = false)
 	public String preSharedKey();
 
 	@Meta.AD(id = "saas.target.instance.import.url", required = false)
