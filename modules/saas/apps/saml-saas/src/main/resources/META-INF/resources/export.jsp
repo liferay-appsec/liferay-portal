@@ -21,19 +21,19 @@
 </portlet:actionURL>
 
 <div class="container-fluid container-fluid-max-xl sheet">
-	<liferay-ui:error key="exportError" message="error-during-export" />
+	<liferay-ui:error key="exportError" message="an-error-has-occurred-during-the-export-process" />
 
 	<div class="button-holder">
 		<h3 class="text-default">
-			<liferay-ui:message key="export-your-configuration-from-instance-to-environment" />
+			<liferay-ui:message key="export-the-saml-configuration-from-this-instance-to-your-production-instance" />
 		</h3>
 
 		<div class="alert alert-warning">
-			<liferay-ui:message key="warning-export-configuration" />
+			<liferay-ui:message key="the-saml-configuration-of-your-production-instance-will-be-completely-overwritten" />
 		</div>
 
 		<aui:form action="<%= exportSamlUrl %>" method="post" name="fm">
-			<aui:button type="submit" value="export-saml" />
+			<aui:button type="submit" value="export-saml-configuration" />
 		</aui:form>
 	</div>
 </div>
