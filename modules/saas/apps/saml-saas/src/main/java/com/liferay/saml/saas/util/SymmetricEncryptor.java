@@ -30,7 +30,7 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * @author Marta Medio
  */
-public class SymmetricEntriptor {
+public class SymmetricEncryptor {
 
 	public static String decryptData(String preSharedKey, String data)
 		throws Exception {

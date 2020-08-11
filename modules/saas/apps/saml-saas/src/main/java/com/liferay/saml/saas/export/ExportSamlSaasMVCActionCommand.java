@@ -38,7 +38,7 @@ import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
 import com.liferay.saml.saas.constants.JSONKeys;
-import com.liferay.saml.saas.util.SymmetricEntriptor;
+import com.liferay.saml.saas.util.SymmetricEncryptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -169,7 +169,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		);
 
 		try {
-			return SymmetricEntriptor.encryptData(
+			return SymmetricEncryptor.encryptData(
 				preSharedKey, samlJsonObject.toString());
 		}
 		catch (Exception exception) {
