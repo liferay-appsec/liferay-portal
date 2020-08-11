@@ -130,9 +130,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				JSONObject response = JSONFactoryUtil.createJSONObject(
 					jsonResponse);
 
-				if (response.get(
-						JSONKeys.RESULT).equals(
-							JSONKeys.RESULT_ERROR)) {
+				if (JSONKeys.RESULT_ERROR.equals(
+						response.get(JSONKeys.RESULT))) {
 
 					SessionErrors.add(actionRequest, "exportError");
 				}
