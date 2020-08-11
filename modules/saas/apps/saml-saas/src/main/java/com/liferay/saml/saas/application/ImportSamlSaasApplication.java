@@ -14,8 +14,6 @@
 
 package com.liferay.saml.saas.application;
 
-import static com.liferay.portal.kernel.security.auth.CompanyThreadLocal.getCompanyId;
-
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -25,10 +23,12 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saas.configuration.SaasConfiguration;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
@@ -81,18 +81,26 @@ public class ImportSamlSaasApplication extends Application {
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	public String importSamlConfiguration(String data) {
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
 		try {
 			SaasConfiguration saasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class, getCompanyId());
+					SaasConfiguration.class, serviceContext.getCompanyId());
 
 			String preSharedKey = saasConfiguration.preSharedKey();
 
-			if (!saasConfiguration.isProductionEnvironment() ||
-				preSharedKey.isEmpty()) {
-
+			if (!saasConfiguration.isProductionEnvironment()) {
 				throw new RuntimeException(
-					"SaaS environment invalid for SAML data import");
+					"Instance must be configured as a SAML SaaS production " +
+						"environment to receive configuration data imports");
+			}
+
+			if (Validator.isBlank(preSharedKey)) {
+				throw new RuntimeException(
+					"Instance must be configured with a pre-shared key to " +
+						"decrypt configuration data imports");
 			}
 
 			String decryptedData = SymmetricEntriptor.decryptData(
@@ -106,6 +114,7 @@ public class ImportSamlSaasApplication extends Application {
 					JSONKeys.SAML_PROVIDER_CONFIGURATION));
 
 			_generateSamlSpIdpConnections(
+				serviceContext,
 				(JSONArray)samlJsonObject.get(
 					JSONKeys.SAML_SP_IDP_CONNECTIONS));
 
@@ -113,9 +122,7 @@ public class ImportSamlSaasApplication extends Application {
 				(String)samlJsonObject.get(JSONKeys.SAML_KEYSTORE));
 		}
 		catch (Exception exception) {
-			_log.error(
-				"Unable to import SAML data, check your Saas Configuration",
-				exception);
+			_log.error("Unable to import SAML configuration data", exception);
 
 			return JSONUtil.put(
 				JSONKeys.RESULT, JSONKeys.RESULT_ERROR
@@ -230,12 +237,12 @@ public class ImportSamlSaasApplication extends Application {
 	}
 
 	private void _generateSamlSpIdpConnections(
-			JSONArray jsonSamlSpIdConnections)
+			ServiceContext serviceContext, JSONArray jsonSamlSpIdConnections)
 		throws PortalException {
 
 		List<SamlSpIdpConnection> samlSpIdpConnections =
 			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(
-				getCompanyId());
+				serviceContext.getCompanyId());
 
 		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
 			_samlSpIdpConnectionLocalService.deleteSamlSpIdpConnection(
@@ -290,8 +297,7 @@ public class ImportSamlSaasApplication extends Application {
 					enabled, forceAuthn, ldapImportEnabled, metadataUrl,
 					new ByteArrayInputStream(metadataXml.getBytes()), name,
 					nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-					userAttributeMappings,
-					ServiceContextThreadLocal.getServiceContext());
+					userAttributeMappings, serviceContext);
 
 			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
 				JSONKeys.EXPANDO_VALUES);
