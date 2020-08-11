@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.saas.configuration.SaasConfiguration;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
 
 import java.io.IOException;
@@ -67,38 +68,39 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			return;
 		}
 
-		long companyId = _portal.getCompanyId(renderRequest);
-
 		try {
 			SaasConfiguration saasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class, companyId);
+					SaasConfiguration.class,
+					_portal.getCompanyId(renderRequest));
 
-			String preSharedKey = saasConfiguration.preSharedKey();
-			String virtualHostURLExport =
-				saasConfiguration.targetInstanceImportURL();
+			if (saasConfiguration.productionEnvironment() ||
+				Validator.isBlank(saasConfiguration.preSharedKey()) ||
+				Validator.isBlank(
+					saasConfiguration.targetInstanceImportURL())) {
 
-			if (!saasConfiguration.productionEnvironment() &&
-				!preSharedKey.isEmpty() && !virtualHostURLExport.isEmpty()) {
-
-				RequestDispatcher requestDispatcher =
-					_servletContext.getRequestDispatcher("/export.jsp");
-
-				try {
-					requestDispatcher.include(
-						_portal.getHttpServletRequest(renderRequest),
-						_portal.getHttpServletResponse(renderResponse));
-				}
-				catch (Exception exception) {
-					throw new PortletException(
-						"Unable to include export.jsp", exception);
-				}
+				return;
 			}
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(
 				"Unable to get SaaS instance configuration",
 				configurationException);
+
+			return;
+		}
+
+		RequestDispatcher requestDispatcher =
+			_servletContext.getRequestDispatcher("/export.jsp");
+
+		try {
+			requestDispatcher.include(
+				_portal.getHttpServletRequest(renderRequest),
+				_portal.getHttpServletResponse(renderResponse));
+		}
+		catch (Exception exception) {
+			throw new PortletException(
+				"Unable to include export.jsp", exception);
 		}
 	}
 
