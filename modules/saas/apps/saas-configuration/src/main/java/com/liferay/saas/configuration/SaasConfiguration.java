@@ -33,7 +33,7 @@ public interface SaasConfiguration {
 	)
 	public boolean productionEnvironment();
 
-	@Meta.AD(id = "saas.preshared.key", name = "saas-pre-shared-key")
+	@Meta.AD(id = "saas.pre.shared.key", name = "saas-pre-shared-key")
 	public String preSharedKey();
 
 	@Meta.AD(
