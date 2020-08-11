@@ -20,9 +20,9 @@
 	<portlet:param name="mvcRenderCommandName" value="/admin" />
 </portlet:actionURL>
 
-<liferay-ui:error key="exportError" message="error-during-export" />
-
 <div class="container-fluid container-fluid-max-xl sheet">
+	<liferay-ui:error key="exportError" message="error-during-export" />
+
 	<div class="button-holder">
 		<h3 class="text-default">
 			<liferay-ui:message key="export-your-configuration-from-instance-to-environment" />
