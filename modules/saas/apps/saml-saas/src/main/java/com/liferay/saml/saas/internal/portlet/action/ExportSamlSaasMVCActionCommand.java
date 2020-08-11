@@ -147,11 +147,10 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 	private String _getEncryptedJSONPayload(long companyId, String preSharedKey)
 		throws Exception {
 
-		JSONObject samlJsonObject;
+		JSONObject jsonObject;
 
 		try {
-			samlJsonObject = JSONUtil.put(
-				JSONKeys.SAML_KEYSTORE, _getKeyStore());
+			jsonObject = JSONUtil.put(JSONKeys.SAML_KEYSTORE, _getKeyStore());
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -161,7 +160,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			throw exception;
 		}
 
-		samlJsonObject.put(
+		jsonObject.put(
 			JSONKeys.SAML_PROVIDER_CONFIGURATION,
 			_getSamlProviderConfiguration()
 		).put(
@@ -170,7 +169,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 		try {
 			return SymmetricEncryptor.encryptData(
-				preSharedKey, samlJsonObject.toString());
+				preSharedKey, jsonObject.toString());
 		}
 		catch (Exception exception) {
 			_log.error("Unable to encrypt the JSON payload", exception);

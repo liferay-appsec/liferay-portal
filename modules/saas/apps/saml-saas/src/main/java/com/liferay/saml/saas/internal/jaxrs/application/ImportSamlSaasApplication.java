@@ -106,20 +106,18 @@ public class ImportSamlSaasApplication extends Application {
 			String decryptedData = SymmetricEncryptor.decryptData(
 				preSharedKey, data);
 
-			JSONObject samlJsonObject = JSONFactoryUtil.createJSONObject(
+			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 				decryptedData);
 
 			_generateSamlProviderConfiguration(
-				(JSONObject)samlJsonObject.get(
+				(JSONObject)jsonObject.get(
 					JSONKeys.SAML_PROVIDER_CONFIGURATION));
 
 			_generateSamlSpIdpConnections(
 				serviceContext,
-				(JSONArray)samlJsonObject.get(
-					JSONKeys.SAML_SP_IDP_CONNECTIONS));
+				(JSONArray)jsonObject.get(JSONKeys.SAML_SP_IDP_CONNECTIONS));
 
-			_generateKeystore(
-				(String)samlJsonObject.get(JSONKeys.SAML_KEYSTORE));
+			_generateKeystore((String)jsonObject.get(JSONKeys.SAML_KEYSTORE));
 		}
 		catch (Exception exception) {
 			_log.error("Unable to import SAML configuration data", exception);
