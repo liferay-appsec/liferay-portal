@@ -100,7 +100,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				SaasConfiguration.class, companyId);
 
 		if (saasConfiguration.isProductionEnvironment() ||
-			Validator.isBlank(saasConfiguration.virtualHostURLExport()) ||
+			Validator.isBlank(saasConfiguration.targetInstanceImportURL()) ||
 			Validator.isBlank(saasConfiguration.preSharedKey())) {
 
 			return;
@@ -116,7 +116,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			UriBuilder uriBuilder = runtimeDelegate.createUriBuilder();
 
 			WebTarget target = client.target(
-				uriBuilder.uri(saasConfiguration.virtualHostURLExport()));
+				uriBuilder.uri(saasConfiguration.targetInstanceImportURL()));
 
 			String jsonResponse = target.request(
 				MediaType.APPLICATION_JSON

@@ -37,9 +37,9 @@ public interface SaasConfiguration {
 	public String preSharedKey();
 
 	@Meta.AD(
-		id = "saas.virtual.host.url.export",
-		name = "saas-virtual-host-url-export", required = false
+		id = "saas.target.instance.import.url",
+		name = "saas-target-instance-import-url", required = false
 	)
-	public String virtualHostURLExport();
+	public String targetInstanceImportURL();
 
 }
