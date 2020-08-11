@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.saml.saas.export;
+package com.liferay.saml.saas.internal.portlet.action;
 
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -37,8 +37,8 @@ import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
-import com.liferay.saml.saas.constants.JSONKeys;
-import com.liferay.saml.saas.util.SymmetricEncryptor;
+import com.liferay.saml.saas.internal.constants.JSONKeys;
+import com.liferay.saml.saas.internal.util.SymmetricEncryptor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

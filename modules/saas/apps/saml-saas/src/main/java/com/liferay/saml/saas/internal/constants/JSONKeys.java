@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.saml.saas.constants;
+package com.liferay.saml.saas.internal.constants;
 
 /**
  * @author Marta Medio

@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.saml.saas.util;
+package com.liferay.saml.saas.internal.util;
 
 import com.liferay.portal.kernel.util.Base64;
 
