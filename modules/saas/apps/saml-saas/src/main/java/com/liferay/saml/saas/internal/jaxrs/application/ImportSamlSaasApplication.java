@@ -63,8 +63,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	property = {
-		"liferay.auth.verifier=false", "liferay.cors.annotation=true",
-		"liferay.oauth2=false", "oauth2.scope.checker.type=none",
+		"liferay.auth.verifier=false", "liferay.oauth2=false",
 		"osgi.jaxrs.application.base=/saml-saas-import",
 		"osgi.jaxrs.name=Liferay.Saas.SamlImport.Application"
 	},
