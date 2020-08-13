@@ -168,16 +168,15 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		throws CertificateException, ConfigurationException, IOException,
 			   KeyStoreException, NoSuchAlgorithmException {
 
+		KeyStore keyStore = _keyStoreManager.getKeyStore();
+		ByteArrayOutputStream byteArrayOutputStream =
+			new ByteArrayOutputStream();
+
 		SamlConfiguration samlConfiguration =
 			ConfigurationProviderUtil.getSystemConfiguration(
 				SamlConfiguration.class);
 
 		String keyStorePassword = samlConfiguration.keyStorePassword();
-
-		KeyStore keyStore = _keyStoreManager.getKeyStore();
-
-		ByteArrayOutputStream byteArrayOutputStream =
-			new ByteArrayOutputStream();
 
 		keyStore.store(byteArrayOutputStream, keyStorePassword.toCharArray());
 
