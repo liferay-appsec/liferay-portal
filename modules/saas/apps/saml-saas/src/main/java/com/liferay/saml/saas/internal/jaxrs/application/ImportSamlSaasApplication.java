@@ -44,7 +44,6 @@ import java.io.Serializable;
 import java.security.KeyStore;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -246,10 +245,8 @@ public class ImportSamlSaasApplication extends Application {
 				samlSpIdpConnection.getSamlSpIdpConnectionId());
 		}
 
-		for (Iterator<JSONObject> iterator = jsonSamlSpIdConnections.iterator();
-			 iterator.hasNext();) {
-
-			JSONObject jsonSamlSpIdpConnection = iterator.next();
+		for (JSONObject jsonSamlSpIdpConnection :
+				(Iterable<JSONObject>)jsonSamlSpIdConnections) {
 
 			String samlIdpEntityId = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("samlIdpEntityId"));
