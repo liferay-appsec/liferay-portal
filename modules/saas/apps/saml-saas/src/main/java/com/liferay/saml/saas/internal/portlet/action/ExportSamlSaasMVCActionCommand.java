@@ -60,10 +60,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.ext.RuntimeDelegate;
-
-import org.apache.cxf.jaxrs.client.spec.ClientBuilderImpl;
-import org.apache.cxf.jaxrs.impl.RuntimeDelegateImpl;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -100,16 +96,11 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		try {
-			ClientBuilder clientBuilder = new ClientBuilderImpl();
-
-			Client client = clientBuilder.build();
-
-			RuntimeDelegate runtimeDelegate = new RuntimeDelegateImpl();
-
-			UriBuilder uriBuilder = runtimeDelegate.createUriBuilder();
+			Client client = _clientBuilder.build();
 
 			WebTarget target = client.target(
-				uriBuilder.uri(saasConfiguration.targetInstanceImportURL()));
+				UriBuilder.fromUri(
+					saasConfiguration.targetInstanceImportURL()));
 
 			String jsonResponse = target.request(
 				MediaType.APPLICATION_JSON
@@ -314,6 +305,9 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ExportSamlSaasMVCActionCommand.class);
+
+	@Reference
+	private ClientBuilder _clientBuilder;
 
 	@Reference(name = "KeyStoreManager", target = "(default=true)")
 	private KeyStoreManager _keyStoreManager;
