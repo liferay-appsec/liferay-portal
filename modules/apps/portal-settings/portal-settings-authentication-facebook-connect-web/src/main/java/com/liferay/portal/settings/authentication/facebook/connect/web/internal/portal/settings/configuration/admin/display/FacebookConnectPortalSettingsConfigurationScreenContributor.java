@@ -28,7 +28,9 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Drew Brokke
+ * @deprecated As of Athanasius (7.3.x), with no direct replacement
  */
+@Deprecated
 @Component(service = PortalSettingsConfigurationScreenContributor.class)
 public class FacebookConnectPortalSettingsConfigurationScreenContributor
 	implements PortalSettingsConfigurationScreenContributor {
