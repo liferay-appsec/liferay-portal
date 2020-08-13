@@ -39,7 +39,9 @@ import org.osgi.service.component.annotations.Reference;
  * portal instance being accessed.
  *
  * @author Michael C. Han
+ * @deprecated As of Athanasius (7.3.x), with no direct replacement
  */
+@Deprecated
 @Component(immediate = true, service = DynamicInclude.class)
 public class FacebookConnectNavigationPreJSPDynamicInclude
 	extends BaseJSPDynamicInclude {
