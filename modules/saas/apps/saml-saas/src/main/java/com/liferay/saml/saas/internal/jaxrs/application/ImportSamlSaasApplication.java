@@ -161,46 +161,19 @@ public class ImportSamlSaasApplication extends Application {
 		UnicodeProperties unicodeProperties = new UnicodeProperties();
 
 		unicodeProperties.put(
-			"saml.keystore.credential.password",
+			"saml.entity.id",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
-					"saml.keystore.credential.password")));
-		unicodeProperties.put(
-			"saml.keystore.encryption.credential.password",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get(
-					"saml.keystore.encryption.credential.password")));
-		unicodeProperties.put(
-			"saml.sp.assertion.signature.required",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get(
-					"saml.sp.assertion.signature.required")));
-		unicodeProperties.put(
-			"saml.idp.authn.request.signature.required",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get(
-					"saml.idp.authn.request.signature.required")));
-		unicodeProperties.put(
-			"saml.sp.clock.skew",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.sp.clock.skew")));
+				jsonSamlProviderConfiguration.get("saml.entity.id")));
 		unicodeProperties.put(
 			"saml.idp.assertion.lifetime",
 			String.valueOf(
 				jsonSamlProviderConfiguration.get(
 					"saml.idp.assertion.lifetime")));
 		unicodeProperties.put(
-			"saml.entity.id",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.entity.id")));
-		unicodeProperties.put(
-			"saml.sp.ldap.import.enabled",
+			"saml.idp.authn.request.signature.required",
 			String.valueOf(
 				jsonSamlProviderConfiguration.get(
-					"saml.sp.ldap.import.enabled")));
-		unicodeProperties.put(
-			"saml.role",
-			String.valueOf(jsonSamlProviderConfiguration.get("saml.role")));
+					"saml.idp.authn.request.signature.required")));
 		unicodeProperties.put(
 			"saml.idp.session.maximum.age",
 			String.valueOf(
@@ -211,23 +184,50 @@ public class ImportSamlSaasApplication extends Application {
 			String.valueOf(
 				jsonSamlProviderConfiguration.get("saml.idp.session.timeout")));
 		unicodeProperties.put(
-			"saml.sp.sign.authn.request",
+			"saml.keystore.credential.password",
 			String.valueOf(
 				jsonSamlProviderConfiguration.get(
-					"saml.sp.sign.authn.request")));
+					"saml.keystore.credential.password")));
+		unicodeProperties.put(
+			"saml.keystore.encryption.credential.password",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get(
+					"saml.keystore.encryption.credential.password")));
+		unicodeProperties.put(
+			"saml.role",
+			String.valueOf(jsonSamlProviderConfiguration.get("saml.role")));
 		unicodeProperties.put(
 			"saml.sign.metadata",
 			String.valueOf(
 				jsonSamlProviderConfiguration.get("saml.sign.metadata")));
 		unicodeProperties.put(
-			"saml.ssl.required",
-			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.ssl.required")));
-		unicodeProperties.put(
 			"saml.sp.allow.showing.the.login.portlet",
 			String.valueOf(
 				jsonSamlProviderConfiguration.get(
 					"saml.sp.allow.showing.the.login.portlet")));
+		unicodeProperties.put(
+			"saml.sp.assertion.signature.required",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get(
+					"saml.sp.assertion.signature.required")));
+		unicodeProperties.put(
+			"saml.sp.clock.skew",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get("saml.sp.clock.skew")));
+		unicodeProperties.put(
+			"saml.sp.ldap.import.enabled",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get(
+					"saml.sp.ldap.import.enabled")));
+		unicodeProperties.put(
+			"saml.sp.sign.authn.request",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get(
+					"saml.sp.sign.authn.request")));
+		unicodeProperties.put(
+			"saml.ssl.required",
+			String.valueOf(
+				jsonSamlProviderConfiguration.get("saml.ssl.required")));
 
 		_samlProviderConfigurationHelper.updateProperties(unicodeProperties);
 	}
