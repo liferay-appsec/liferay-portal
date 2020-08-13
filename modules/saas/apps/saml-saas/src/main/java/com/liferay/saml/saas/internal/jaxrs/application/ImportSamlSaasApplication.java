@@ -23,10 +23,10 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
-import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
@@ -49,10 +49,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.osgi.service.component.annotations.Component;
@@ -79,14 +82,15 @@ public class ImportSamlSaasApplication extends Application {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public String importSamlConfiguration(String data) {
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
+	public String importSamlConfiguration(
+		String data, @Context HttpServletRequest httpServletRequest) {
+
+		long companyId = _portal.getCompanyId(httpServletRequest);
 
 		try {
 			SaasConfiguration saasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class, serviceContext.getCompanyId());
+					SaasConfiguration.class, companyId);
 
 			String preSharedKey = saasConfiguration.preSharedKey();
 
@@ -113,7 +117,7 @@ public class ImportSamlSaasApplication extends Application {
 					JSONKeys.SAML_PROVIDER_CONFIGURATION));
 
 			_generateSamlSpIdpConnections(
-				serviceContext,
+				httpServletRequest,
 				(JSONArray)jsonObject.get(JSONKeys.SAML_SP_IDP_CONNECTIONS));
 
 			_generateKeystore((String)jsonObject.get(JSONKeys.SAML_KEYSTORE));
@@ -236,12 +240,13 @@ public class ImportSamlSaasApplication extends Application {
 	}
 
 	private void _generateSamlSpIdpConnections(
-			ServiceContext serviceContext, JSONArray jsonSamlSpIdConnections)
+			HttpServletRequest httpServletRequest,
+			JSONArray jsonSamlSpIdConnections)
 		throws PortalException {
 
 		List<SamlSpIdpConnection> samlSpIdpConnections =
 			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(
-				serviceContext.getCompanyId());
+				_portal.getCompanyId(httpServletRequest));
 
 		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
 			_samlSpIdpConnectionLocalService.deleteSamlSpIdpConnection(
@@ -296,7 +301,10 @@ public class ImportSamlSaasApplication extends Application {
 					enabled, forceAuthn, ldapImportEnabled, metadataUrl,
 					new ByteArrayInputStream(metadataXml.getBytes()), name,
 					nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-					userAttributeMappings, serviceContext);
+					userAttributeMappings,
+					ServiceContextFactory.getInstance(
+						SamlSpIdpConnection.class.getName(),
+						httpServletRequest));
 
 			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
 				JSONKeys.EXPANDO_VALUES);
@@ -315,6 +323,9 @@ public class ImportSamlSaasApplication extends Application {
 		ImportSamlSaasApplication.class);
 
 	private KeyStoreManager _keyStoreManager;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<suppressions>
+	<source-check>
+		<suppress checks="JavaAPISignatureCheck" files="src/main/java/com/liferay/saml/saas/internal/jaxrs/application/ImportSamlSaasApplication.java" />
+	</source-check>
+</suppressions>
