@@ -118,15 +118,13 @@ public class ImportSamlSaasApplication extends Application {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 				decryptedData);
 
+			_generateKeystore((String)jsonObject.get(JSONKeys.SAML_KEYSTORE));
 			_generateSamlProviderConfiguration(
 				(JSONObject)jsonObject.get(
 					JSONKeys.SAML_PROVIDER_CONFIGURATION));
-
 			_generateSamlSpIdpConnections(
 				httpServletRequest,
 				(JSONArray)jsonObject.get(JSONKeys.SAML_SP_IDP_CONNECTIONS));
-
-			_generateKeystore((String)jsonObject.get(JSONKeys.SAML_KEYSTORE));
 		}
 		catch (Exception exception) {
 			_log.error("Unable to import SAML configuration data", exception);
