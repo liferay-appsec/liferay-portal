@@ -288,7 +288,6 @@ public class ImportSamlSaasApplication extends Application {
 
 			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
 				JSONKeys.EXPANDO_VALUES);
-
 			ExpandoBridge expandoBridge =
 				samlSpIdpConnection.getExpandoBridge();
 
