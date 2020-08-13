@@ -93,8 +93,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				SaasConfiguration.class, companyId);
 
 		if (saasConfiguration.productionEnvironment() ||
-			Validator.isBlank(saasConfiguration.targetInstanceImportURL()) ||
-			Validator.isBlank(saasConfiguration.preSharedKey())) {
+			Validator.isBlank(saasConfiguration.preSharedKey()) ||
+			Validator.isBlank(saasConfiguration.targetInstanceImportURL())) {
 
 			return;
 		}
