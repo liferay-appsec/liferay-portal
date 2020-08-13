@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.saml.saas.configuration.internal.settings.definition;
+package com.liferay.saml.saas.internal.settings.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
 import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
