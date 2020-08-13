@@ -81,13 +81,6 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
-	@Reference(
-		name = "KeyStoreManager", target = "(default=true)", unbind = "-"
-	)
-	public void setKeyStoreManager(KeyStoreManager keyStoreManager) {
-		_keyStoreManager = keyStoreManager;
-	}
-
 	@Override
 	protected void doProcessAction(
 			ActionRequest actionRequest, ActionResponse actionResponse)
@@ -322,6 +315,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 	private static final Log _log = LogFactoryUtil.getLog(
 		ExportSamlSaasMVCActionCommand.class);
 
+	@Reference(name = "KeyStoreManager", target = "(default=true)")
 	private KeyStoreManager _keyStoreManager;
 
 	@Reference
