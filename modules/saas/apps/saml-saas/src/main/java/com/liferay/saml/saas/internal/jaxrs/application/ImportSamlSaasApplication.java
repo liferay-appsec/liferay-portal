@@ -39,7 +39,6 @@ import com.liferay.saml.saas.internal.constants.JSONKeys;
 import com.liferay.saml.saas.internal.util.SymmetricEncryptor;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
 
 import java.security.KeyStore;
@@ -140,20 +139,17 @@ public class ImportSamlSaasApplication extends Application {
 	}
 
 	private void _generateKeystore(String keyStoreBase64) throws Exception {
+		KeyStore keyStore = _keyStoreManager.getKeyStore();
+
 		SamlConfiguration samlConfiguration =
 			ConfigurationProviderUtil.getSystemConfiguration(
 				SamlConfiguration.class);
 
 		String keyStorePassword = samlConfiguration.keyStorePassword();
 
-		byte[] decodedKeyStore = Base64.decode(keyStoreBase64);
-
-		InputStream keyStoreInputStream = new ByteArrayInputStream(
-			decodedKeyStore);
-
-		KeyStore keyStore = _keyStoreManager.getKeyStore();
-
-		keyStore.load(keyStoreInputStream, keyStorePassword.toCharArray());
+		keyStore.load(
+			new ByteArrayInputStream(Base64.decode(keyStoreBase64)),
+			keyStorePassword.toCharArray());
 
 		_keyStoreManager.saveKeyStore(keyStore);
 	}
