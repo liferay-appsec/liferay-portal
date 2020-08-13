@@ -254,34 +254,24 @@ public class ImportSamlSaasApplication extends Application {
 				jsonSamlSpIdpConnection.get("assertionSignatureRequired"));
 			long clockSkew = GetterUtil.getLong(
 				jsonSamlSpIdpConnection.get("clockSkew"));
-
 			boolean enabled = GetterUtil.getBoolean(
 				jsonSamlSpIdpConnection.get("enabled"));
-
 			boolean forceAuthn = GetterUtil.getBoolean(
 				jsonSamlSpIdpConnection.get("forceAuthn"));
-
 			boolean ldapImportEnabled = GetterUtil.getBoolean(
 				jsonSamlSpIdpConnection.get("ldapImportEnabled"));
-
 			String metadataUrl = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("metadataUrl"));
-
 			String metadataXml = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("metadataXml"));
-
 			String name = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("name"));
-
 			String nameIdFormat = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("nameIdFormat"));
-
 			boolean signAuthnRequest = GetterUtil.getBoolean(
 				jsonSamlSpIdpConnection.get("signAuthnRequest"));
-
 			boolean unknownUsersAreStrangers = GetterUtil.getBoolean(
 				jsonSamlSpIdpConnection.get("unknownUsersAreStrangers"));
-
 			String userAttributeMappings = GetterUtil.getString(
 				jsonSamlSpIdpConnection.get("userAttributeMappings"));
 
