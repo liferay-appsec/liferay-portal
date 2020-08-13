@@ -33,7 +33,9 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Stian Sigvartsen
+ * @deprecated As of Athanasius (7.3.x), with no direct replacement
  */
+@Deprecated
 @Component(
 	immediate = true,
 	property = "verify.process.name=com.liferay.portal.security.sso.facebook.connect",

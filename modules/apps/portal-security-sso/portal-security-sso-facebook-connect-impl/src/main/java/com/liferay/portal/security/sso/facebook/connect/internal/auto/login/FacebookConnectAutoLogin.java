@@ -45,7 +45,9 @@ import org.osgi.service.component.annotations.Reference;
  * <p>
  *
  * @author Wilson Man
+ * @deprecated As of Athanasius (7.3.x), with no direct replacement
  */
+@Deprecated
 @Component(immediate = true, service = AutoLogin.class)
 public class FacebookConnectAutoLogin extends BaseAutoLogin {
 
