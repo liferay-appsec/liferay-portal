@@ -54,9 +54,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -95,15 +97,19 @@ public class ImportSamlSaasApplication extends Application {
 			String preSharedKey = saasConfiguration.preSharedKey();
 
 			if (!saasConfiguration.productionEnvironment()) {
-				throw new RuntimeException(
+				_log.error(
 					"Instance must be configured as a SAML SaaS production " +
 						"environment to receive configuration data imports");
+
+				throw new WebApplicationException(Response.Status.NOT_FOUND);
 			}
 
 			if (Validator.isBlank(preSharedKey)) {
-				throw new RuntimeException(
+				_log.error(
 					"Instance must be configured with a pre-shared key to " +
 						"decrypt configuration data imports");
+
+				throw new WebApplicationException(Response.Status.NOT_FOUND);
 			}
 
 			String decryptedData = SymmetricEncryptor.decryptData(
