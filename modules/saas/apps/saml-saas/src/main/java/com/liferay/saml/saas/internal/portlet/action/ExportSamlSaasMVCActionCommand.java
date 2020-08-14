@@ -240,11 +240,9 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		Enumeration<String> enumeration = expandoBridge.getAttributeNames();
 
 		while (enumeration.hasMoreElements()) {
-			String attributeName = enumeration.nextElement();
+			String name = enumeration.nextElement();
 
-			jsonObject.put(
-				attributeName,
-				expandoBridge.getAttribute(attributeName, false));
+			jsonObject.put(name, expandoBridge.getAttribute(name, false));
 		}
 
 		return jsonObject;
