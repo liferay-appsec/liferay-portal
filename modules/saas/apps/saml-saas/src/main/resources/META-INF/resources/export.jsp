@@ -16,7 +16,7 @@
 
 <%@ include file="/init.jsp" %>
 
-<portlet:actionURL name="/admin/saas/saml/export" var="exportSamlUrl">
+<portlet:actionURL name="/admin/saml/saas/export" var="exportSamlUrl">
 	<portlet:param name="mvcRenderCommandName" value="/admin" />
 </portlet:actionURL>
 
