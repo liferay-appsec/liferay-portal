@@ -68,9 +68,7 @@ public class SymmetricEncryptor {
 
 		cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec);
 
-		byte[] decryptedBytes = cipher.doFinal(cipherInput);
-
-		return new String(decryptedBytes);
+		return new String(cipher.doFinal(cipherInput));
 	}
 
 	public static String encryptData(String preSharedKey, String data)
