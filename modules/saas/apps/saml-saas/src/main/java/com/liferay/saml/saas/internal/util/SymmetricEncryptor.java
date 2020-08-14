@@ -37,22 +37,22 @@ public class SymmetricEncryptor {
 
 		ByteBuffer byteBuffer = ByteBuffer.wrap(Base64.decode(data));
 
-		byte[] salt = new byte[_PBKDF2_SALT_LENGTH];
+		byte[] pbeKeySpecSalt = new byte[_PBKDF2_SALT_LENGTH];
 
-		byteBuffer.get(salt);
+		byteBuffer.get(pbeKeySpecSalt);
 
-		byte[] nonce = new byte[_GCM_NONCE_LENGTH];
+		byte[] gmcParameterSpecSrc = new byte[_GCM_NONCE_LENGTH];
 
-		byteBuffer.get(nonce);
+		byteBuffer.get(gmcParameterSpecSrc);
 
-		byte[] cipherBytes = new byte[byteBuffer.remaining()];
+		byte[] cipherInput = new byte[byteBuffer.remaining()];
 
-		byteBuffer.get(cipherBytes);
+		byteBuffer.get(cipherInput);
 
 		SecretKeyFactory factory = SecretKeyFactory.getInstance(_ALGORITHM);
 
 		KeySpec keySpec = new PBEKeySpec(
-			preSharedKey.toCharArray(), salt, _PBKDF2_ITERATION_COUNT,
+			preSharedKey.toCharArray(), pbeKeySpecSalt, _PBKDF2_ITERATION_COUNT,
 			_AES_KEY_LENGTH);
 
 		SecretKey secretKey = factory.generateSecret(keySpec);
@@ -62,11 +62,11 @@ public class SymmetricEncryptor {
 		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 		GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(
-			_GCM_TAG_LENGTH, nonce);
+			_GCM_TAG_LENGTH, gmcParameterSpecSrc);
 
 		cipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec);
 
-		byte[] decryptedBytes = cipher.doFinal(cipherBytes);
+		byte[] decryptedBytes = cipher.doFinal(cipherInput);
 
 		return new String(decryptedBytes);
 	}
