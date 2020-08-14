@@ -35,9 +35,7 @@ public class SymmetricEncryptor {
 	public static String decryptData(String preSharedKey, String data)
 		throws Exception {
 
-		byte[] decode = Base64.decode(data);
-
-		ByteBuffer byteBuffer = ByteBuffer.wrap(decode);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(Base64.decode(data));
 
 		byte[] salt = new byte[_PBKDF2_SALT_LENGTH];
 
