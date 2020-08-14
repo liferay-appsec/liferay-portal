@@ -68,7 +68,8 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			renderRequest, "mvcRenderCommandName", null);
 		String tabs1 = ParamUtil.getString(renderRequest, "tabs1", "general");
 
-		if ((mvcrenderCommandName != null) ||
+		if (((mvcrenderCommandName != null) &&
+			 !Objects.equals(mvcrenderCommandName, "/admin")) ||
 			!Objects.equals(tabs1, "general")) {
 
 			return;
