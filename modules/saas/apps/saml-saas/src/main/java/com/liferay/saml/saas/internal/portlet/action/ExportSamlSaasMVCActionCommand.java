@@ -307,7 +307,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 	@Reference
 	private ClientBuilder _clientBuilder;
 
-	@Reference(name = "KeyStoreManager", target = "(default=true)")
+	@Reference(name = "KeyStoreManager")
 	private KeyStoreManager _keyStoreManager;
 
 	@Reference
