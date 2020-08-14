@@ -74,7 +74,8 @@ public class SymmetricEncryptor {
 	public static String encryptData(String preSharedKey, String data)
 		throws Exception {
 
-		SecretKeyFactory factory = SecretKeyFactory.getInstance(_ALGORITHM);
+		SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(
+			_ALGORITHM);
 
 		byte[] salt = new byte[16];
 
@@ -82,11 +83,11 @@ public class SymmetricEncryptor {
 			preSharedKey.toCharArray(), salt, _PBKDF2_ITERATION_COUNT,
 			_AES_KEY_LENGTH);
 
-		SecretKey secretKey = factory.generateSecret(keySpec);
+		SecretKey secretKey = secretKeyFactory.generateSecret(keySpec);
 
 		byte[] secret = secretKey.getEncoded();
 
-		SecretKey key = new SecretKeySpec(secret, "AES");
+		SecretKeySpec secretKeySpec = new SecretKeySpec(secret, "AES");
 
 		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
@@ -94,7 +95,7 @@ public class SymmetricEncryptor {
 
 		GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, nonce);
 
-		cipher.init(Cipher.ENCRYPT_MODE, key, gcmParameterSpec);
+		cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, gcmParameterSpec);
 
 		byte[] encrypted = cipher.doFinal(data.getBytes());
 
