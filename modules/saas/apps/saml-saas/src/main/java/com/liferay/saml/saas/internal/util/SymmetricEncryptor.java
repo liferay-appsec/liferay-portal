@@ -49,13 +49,14 @@ public class SymmetricEncryptor {
 
 		byteBuffer.get(cipherInput);
 
-		SecretKeyFactory factory = SecretKeyFactory.getInstance(_ALGORITHM);
+		SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(
+			_ALGORITHM);
 
 		KeySpec keySpec = new PBEKeySpec(
 			preSharedKey.toCharArray(), pbeKeySpecSalt, _PBKDF2_ITERATION_COUNT,
 			_AES_KEY_LENGTH);
 
-		SecretKey secretKey = factory.generateSecret(keySpec);
+		SecretKey secretKey = secretKeyFactory.generateSecret(keySpec);
 
 		SecretKey key = new SecretKeySpec(secretKey.getEncoded(), "AES");
 
