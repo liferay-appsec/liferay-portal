@@ -64,12 +64,12 @@ public class SamlAdminRenderFilter implements RenderFilter {
 
 		chain.doFilter(renderRequest, renderResponse);
 
-		String tabs1 = ParamUtil.getString(renderRequest, "tabs1", "general");
 		String mvcrenderCommandName = ParamUtil.getString(
 			renderRequest, "mvcRenderCommandName", null);
+		String tabs1 = ParamUtil.getString(renderRequest, "tabs1", "general");
 
-		if (!Objects.equals(tabs1, "general") ||
-			(mvcrenderCommandName != null)) {
+		if ((mvcrenderCommandName != null) ||
+			!Objects.equals(tabs1, "general")) {
 
 			return;
 		}
