@@ -26,6 +26,8 @@ import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
 
 import java.io.IOException;
 
+import java.util.Objects;
+
 import javax.portlet.PortletException;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
@@ -62,12 +64,13 @@ public class SamlAdminRenderFilter implements RenderFilter {
 
 		chain.doFilter(renderRequest, renderResponse);
 
-		String generalTab = ParamUtil.getString(
-			renderRequest, "tabs1", "general");
+		String tabs1 = ParamUtil.getString(renderRequest, "tabs1", "general");
 		String mvcrenderCommandName = ParamUtil.getString(
 			renderRequest, "mvcRenderCommandName", null);
 
-		if (!generalTab.equals("general") || (mvcrenderCommandName != null)) {
+		if (!Objects.equals(tabs1, "general") ||
+			(mvcrenderCommandName != null)) {
+
 			return;
 		}
 
