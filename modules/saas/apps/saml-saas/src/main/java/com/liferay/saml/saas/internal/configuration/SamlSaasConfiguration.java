@@ -24,8 +24,8 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 @ExtendedObjectClassDefinition(
 	generateUI = false, scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
-@Meta.OCD(id = "com.liferay.saml.saas.configuration.SAMLSaasConfiguration")
-public interface SaasConfiguration {
+@Meta.OCD(id = "com.liferay.saml.saas.configuration.SamlSaasConfiguration")
+public interface SamlSaasConfiguration {
 
 	@Meta.AD(
 		deflt = "false", id = "saml.saas.production.environment",
@@ -33,7 +33,7 @@ public interface SaasConfiguration {
 	)
 	public boolean productionEnvironment();
 
-	@Meta.AD(id = "saml.saml.saas.pre.shared.key", required = false)
+	@Meta.AD(id = "saml.saas.pre.shared.key", required = false)
 	public String preSharedKey();
 
 	@Meta.AD(id = "saml.saas.target.instance.import.url", required = false)

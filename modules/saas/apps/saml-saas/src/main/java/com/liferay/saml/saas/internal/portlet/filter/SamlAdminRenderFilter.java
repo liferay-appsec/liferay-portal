@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlAdminPortletKeys;
-import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
+import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 
 import java.io.IOException;
 
@@ -64,27 +64,27 @@ public class SamlAdminRenderFilter implements RenderFilter {
 
 		chain.doFilter(renderRequest, renderResponse);
 
-		String mvcrenderCommandName = ParamUtil.getString(
+		String mvcRenderCommandName = ParamUtil.getString(
 			renderRequest, "mvcRenderCommandName", null);
 		String tabs1 = ParamUtil.getString(renderRequest, "tabs1", "general");
 
-		if (((mvcrenderCommandName != null) &&
-			 !Objects.equals(mvcrenderCommandName, "/admin")) ||
+		if (((mvcRenderCommandName != null) &&
+			 !Objects.equals(mvcRenderCommandName, "/admin")) ||
 			!Objects.equals(tabs1, "general")) {
 
 			return;
 		}
 
 		try {
-			SaasConfiguration saasConfiguration =
+			SamlSaasConfiguration samlSaasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class,
+					SamlSaasConfiguration.class,
 					_portal.getCompanyId(renderRequest));
 
-			if (saasConfiguration.productionEnvironment() ||
-				Validator.isBlank(saasConfiguration.preSharedKey()) ||
+			if (samlSaasConfiguration.productionEnvironment() ||
+				Validator.isBlank(samlSaasConfiguration.preSharedKey()) ||
 				Validator.isBlank(
-					saasConfiguration.targetInstanceImportURL())) {
+					samlSaasConfiguration.targetInstanceImportURL())) {
 
 				return;
 			}

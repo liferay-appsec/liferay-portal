@@ -34,7 +34,7 @@ import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
-import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
+import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 import com.liferay.saml.saas.internal.constants.JSONKeys;
 import com.liferay.saml.saas.internal.util.SymmetricEncryptor;
 
@@ -88,13 +88,13 @@ public class ImportSamlSaasApplication extends Application {
 		long companyId = _portal.getCompanyId(httpServletRequest);
 
 		try {
-			SaasConfiguration saasConfiguration =
+			SamlSaasConfiguration samlSaasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
-					SaasConfiguration.class, companyId);
+					SamlSaasConfiguration.class, companyId);
 
-			String preSharedKey = saasConfiguration.preSharedKey();
+			String preSharedKey = samlSaasConfiguration.preSharedKey();
 
-			if (!saasConfiguration.productionEnvironment()) {
+			if (!samlSaasConfiguration.productionEnvironment()) {
 				_log.error(
 					"Instance must be configured as a SAML SaaS production " +
 						"environment to receive configuration data imports");

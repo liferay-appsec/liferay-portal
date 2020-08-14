@@ -15,7 +15,7 @@
 package com.liferay.saml.saas.internal.settings.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
-import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
+import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -28,7 +28,7 @@ public class SaasConfigurationBeanDeclaration
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return SaasConfiguration.class;
+		return SamlSaasConfiguration.class;
 	}
 
 }

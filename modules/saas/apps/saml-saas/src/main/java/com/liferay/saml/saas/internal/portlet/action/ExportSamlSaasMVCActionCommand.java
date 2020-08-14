@@ -36,7 +36,7 @@ import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
-import com.liferay.saml.saas.internal.configuration.SaasConfiguration;
+import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 import com.liferay.saml.saas.internal.constants.JSONKeys;
 import com.liferay.saml.saas.internal.util.SymmetricEncryptor;
 
@@ -71,7 +71,7 @@ import org.osgi.service.component.annotations.Reference;
 	immediate = true,
 	property = {
 		"javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
-		"mvc.command.name=/admin/saml/saas/export"
+		"mvc.command.name=/admin/saas/export"
 	},
 	service = MVCActionCommand.class
 )
@@ -84,13 +84,14 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 		long companyId = _portal.getCompanyId(actionRequest);
 
-		SaasConfiguration saasConfiguration =
+		SamlSaasConfiguration samlSaasConfiguration =
 			ConfigurationProviderUtil.getCompanyConfiguration(
-				SaasConfiguration.class, companyId);
+				SamlSaasConfiguration.class, companyId);
 
-		if (saasConfiguration.productionEnvironment() ||
-			Validator.isBlank(saasConfiguration.preSharedKey()) ||
-			Validator.isBlank(saasConfiguration.targetInstanceImportURL())) {
+		if (samlSaasConfiguration.productionEnvironment() ||
+			Validator.isBlank(samlSaasConfiguration.preSharedKey()) ||
+			Validator.isBlank(
+				samlSaasConfiguration.targetInstanceImportURL())) {
 
 			return;
 		}
@@ -100,14 +101,14 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 			WebTarget target = client.target(
 				UriBuilder.fromUri(
-					saasConfiguration.targetInstanceImportURL()));
+					samlSaasConfiguration.targetInstanceImportURL()));
 
 			String jsonResponse = target.request(
 				MediaType.APPLICATION_JSON
 			).post(
 				Entity.entity(
 					_getEncryptedJSONPayload(
-						companyId, saasConfiguration.preSharedKey()),
+						companyId, samlSaasConfiguration.preSharedKey()),
 					MediaType.TEXT_PLAIN),
 				String.class
 			);
