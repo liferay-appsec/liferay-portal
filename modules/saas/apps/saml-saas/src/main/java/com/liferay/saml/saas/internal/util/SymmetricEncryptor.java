@@ -58,14 +58,15 @@ public class SymmetricEncryptor {
 
 		SecretKey secretKey = secretKeyFactory.generateSecret(keySpec);
 
-		SecretKey key = new SecretKeySpec(secretKey.getEncoded(), "AES");
+		SecretKeySpec secretKeySpec = new SecretKeySpec(
+			secretKey.getEncoded(), "AES");
 
 		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 		GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(
 			_GCM_TAG_LENGTH, gmcParameterSpecSrc);
 
-		cipher.init(Cipher.DECRYPT_MODE, key, gcmParameterSpec);
+		cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec);
 
 		byte[] decryptedBytes = cipher.doFinal(cipherInput);
 
