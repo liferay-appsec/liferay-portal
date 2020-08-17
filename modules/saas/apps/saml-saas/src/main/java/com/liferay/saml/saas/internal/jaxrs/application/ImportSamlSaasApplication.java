@@ -15,6 +15,7 @@
 package com.liferay.saml.saas.internal.jaxrs.application;
 
 import com.liferay.expando.kernel.model.ExpandoBridge;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -45,6 +46,7 @@ import java.security.KeyStore;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -58,13 +60,17 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marta Medio
  */
 @Component(
+	configurationPid = "com.liferay.saml.runtime.configuration.SamlConfiguration",
+	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	property = {
 		"liferay.auth.verifier=false", "liferay.oauth2=false",
 		"osgi.jaxrs.application.base=/saml-saas-import",
@@ -137,14 +143,16 @@ public class ImportSamlSaasApplication extends Application {
 		).toString();
 	}
 
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_samlConfiguration = ConfigurableUtil.createConfigurable(
+			SamlConfiguration.class, properties);
+	}
+
 	private void _generateKeystore(String keyStoreBase64) throws Exception {
 		KeyStore keyStore = _keyStoreManager.getKeyStore();
 
-		SamlConfiguration samlConfiguration =
-			ConfigurationProviderUtil.getSystemConfiguration(
-				SamlConfiguration.class);
-
-		String keyStorePassword = samlConfiguration.keyStorePassword();
+		String keyStorePassword = _samlConfiguration.keyStorePassword();
 
 		keyStore.load(
 			new ByteArrayInputStream(Base64.decode(keyStoreBase64)),
@@ -306,6 +314,8 @@ public class ImportSamlSaasApplication extends Application {
 
 	@Reference
 	private Portal _portal;
+
+	private SamlConfiguration _samlConfiguration;
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;

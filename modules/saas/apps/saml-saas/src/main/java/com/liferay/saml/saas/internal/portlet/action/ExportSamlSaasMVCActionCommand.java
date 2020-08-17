@@ -15,6 +15,7 @@
 package com.liferay.saml.saas.internal.portlet.action;
 
 import com.liferay.expando.kernel.model.ExpandoBridge;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -50,6 +51,7 @@ import java.security.cert.CertificateException;
 
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -61,14 +63,17 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marta Medio
  */
 @Component(
-	immediate = true,
+	configurationPid = "com.liferay.saml.runtime.configuration.SamlConfiguration",
+	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = {
 		"javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
 		"mvc.command.name=/admin/saas/export"
@@ -76,6 +81,12 @@ import org.osgi.service.component.annotations.Reference;
 	service = MVCActionCommand.class
 )
 public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
+
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_samlConfiguration = ConfigurableUtil.createConfigurable(
+			SamlConfiguration.class, properties);
+	}
 
 	@Override
 	protected void doProcessAction(
@@ -173,11 +184,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		ByteArrayOutputStream byteArrayOutputStream =
 			new ByteArrayOutputStream();
 
-		SamlConfiguration samlConfiguration =
-			ConfigurationProviderUtil.getSystemConfiguration(
-				SamlConfiguration.class);
-
-		String keyStorePassword = samlConfiguration.keyStorePassword();
+		String keyStorePassword = _samlConfiguration.keyStorePassword();
 
 		keyStore.store(byteArrayOutputStream, keyStorePassword.toCharArray());
 
@@ -312,6 +319,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private Portal _portal;
+
+	private SamlConfiguration _samlConfiguration;
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
