@@ -57,7 +57,7 @@ import org.osgi.service.component.annotations.Reference;
 	configurationPid = "com.liferay.saml.runtime.configuration.SamlKeyStoreManagerConfiguration",
 	immediate = true,
 	property = "javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
-	service = RenderFilter.class
+	service = {}
 )
 public class SamlAdminRenderFilter implements RenderFilter {
 
