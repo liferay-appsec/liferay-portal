@@ -47,6 +47,7 @@ import java.security.KeyStore;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -94,6 +95,19 @@ public class ImportSamlSaasApplication extends Application {
 		long companyId = _portal.getCompanyId(httpServletRequest);
 
 		try {
+			Class<? extends KeyStoreManager> clazz =
+				_keyStoreManager.getClass();
+
+			if (!Objects.equals(
+					clazz.getName(), _DL_KEYSTORE_MANAGER_CLASS_NAME)) {
+
+				_log.error(
+					"KeyStore Manager target is invalid to receive " +
+						"configuration data imports");
+
+				throw new WebApplicationException(Response.Status.NOT_FOUND);
+			}
+
 			SamlSaasConfiguration samlSaasConfiguration =
 				ConfigurationProviderUtil.getCompanyConfiguration(
 					SamlSaasConfiguration.class, companyId);
@@ -305,6 +319,10 @@ public class ImportSamlSaasApplication extends Application {
 			}
 		}
 	}
+
+	private static final String _DL_KEYSTORE_MANAGER_CLASS_NAME =
+		"com.liferay.saml.opensaml.integration.internal.credential." +
+			"DLKeyStoreManagerImpl";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImportSamlSaasApplication.class);
