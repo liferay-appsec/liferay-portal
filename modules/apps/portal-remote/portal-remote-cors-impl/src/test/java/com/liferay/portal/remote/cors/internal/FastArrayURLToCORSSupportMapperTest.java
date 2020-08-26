@@ -21,7 +21,7 @@ import org.junit.Test;
 /**
  * @author Brian Wing Shun Chan
  */
-public class FastURLToCORSSupportMapperTest
+public class FastArrayURLToCORSSupportMapperTest
 	extends SimpleURLToCORSSupportMapperTest {
 
 	@Test
@@ -32,7 +32,7 @@ public class FastURLToCORSSupportMapperTest
 	protected URLToCORSSupportMapper createURLToCORSSupportMapper(
 		Map<String, CORSSupport> corsSupports) {
 
-		return new FastURLToCORSSupportMapper(corsSupports);
+		return new FastArrayURLToCORSSupportMapper(corsSupports);
 	}
 
 }

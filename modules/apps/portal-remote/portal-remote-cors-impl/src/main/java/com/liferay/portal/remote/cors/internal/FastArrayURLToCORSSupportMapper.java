@@ -24,9 +24,12 @@ import java.util.Map;
  * @author Arthur Chan
  * @author Carlos Sierra Andrés
  */
-public class FastURLToCORSSupportMapper extends BaseURLToCORSSupportMapper {
+public class FastArrayURLToCORSSupportMapper
+	extends BaseURLToCORSSupportMapper {
 
-	public FastURLToCORSSupportMapper(Map<String, CORSSupport> corsSupports) {
+	public FastArrayURLToCORSSupportMapper(
+		Map<String, CORSSupport> corsSupports) {
+
 		int maxURLPatternLength = 0;
 
 		for (Map.Entry<String, CORSSupport> entry : corsSupports.entrySet()) {
