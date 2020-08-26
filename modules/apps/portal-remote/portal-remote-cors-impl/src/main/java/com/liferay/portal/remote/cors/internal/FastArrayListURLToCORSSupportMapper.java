@@ -14,8 +14,6 @@
 
 package com.liferay.portal.remote.cors.internal;
 
-import com.liferay.portal.kernel.util.Validator;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ import java.util.Map;
  * @author Carlos Sierra Andrés
  */
 public class FastArrayListURLToCORSSupportMapper
-	extends BaseURLToCORSSupportMapper {
+	extends BaseFastURLToCORSSupportMapper {
 
 	public FastArrayListURLToCORSSupportMapper(
 		Map<String, CORSSupport> corsSupports) {
@@ -41,58 +39,46 @@ public class FastArrayListURLToCORSSupportMapper
 	}
 
 	@Override
-	public CORSSupport get(String urlPath) {
-		try {
-			CORSSupport corsSupport = _getWildcardCORSSupport(urlPath);
+	protected void fastPut(
+		CORSSupport corsSupport, String urlPattern, boolean wildcard) {
 
-			if (corsSupport != null) {
-				return corsSupport;
+		TrieNode previousTrieNode = null;
+
+		if (wildcard) {
+			previousTrieNode = _wildCardTrieNode;
+		}
+		else {
+			previousTrieNode = _extensionTrieNode;
+		}
+
+		TrieNode currentTrieNode = null;
+
+		for (int i = 0; i < urlPattern.length(); ++i) {
+			int index = i;
+
+			if (!wildcard) {
+				index = urlPattern.length() - 1 - i;
 			}
 
-			return _getExtensionCORSSupport(urlPath);
+			currentTrieNode = previousTrieNode.next(urlPattern.charAt(index));
+
+			if (currentTrieNode == null) {
+				TrieNode nextNode = _trieNodeArrayList.nextAvailableNode();
+
+				currentTrieNode = previousTrieNode.setNext(
+					urlPattern.charAt(index), nextNode);
+			}
+
+			previousTrieNode = currentTrieNode;
 		}
-		catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-			throw new IllegalArgumentException(
-				"urlPath contains invalid characters",
-				indexOutOfBoundsException);
+
+		if (currentTrieNode != null) {
+			currentTrieNode.set(corsSupport);
 		}
 	}
 
 	@Override
-	protected void put(CORSSupport corsSupport, String urlPattern)
-		throws IllegalArgumentException {
-
-		if (corsSupport == null) {
-			throw new IllegalArgumentException("CORS support is null");
-		}
-
-		if (Validator.isBlank(urlPattern)) {
-			throw new IllegalArgumentException("urlPattern is empty");
-		}
-
-		try {
-			if (isWildcardURLPattern(urlPattern)) {
-				_put(corsSupport, urlPattern, true);
-
-				return;
-			}
-
-			if (isExtensionURLPattern(urlPattern)) {
-				_put(corsSupport, urlPattern, false);
-
-				return;
-			}
-
-			_put(corsSupport, urlPattern, true);
-		}
-		catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-			throw new IllegalArgumentException(
-				"urlPattern contains invalid characters",
-				indexOutOfBoundsException);
-		}
-	}
-
-	private CORSSupport _getExtensionCORSSupport(String urlPath) {
+	protected CORSSupport getExtensionCORSSupport(String urlPath) {
 		TrieNode currentTrieNode = null;
 		TrieNode previousTrieNode = _extensionTrieNode;
 
@@ -125,7 +111,8 @@ public class FastArrayListURLToCORSSupportMapper
 		return null;
 	}
 
-	private CORSSupport _getWildcardCORSSupport(String urlPath) {
+	@Override
+	protected CORSSupport getWildcardCORSSupport(String urlPath) {
 		boolean onlyExact = false;
 		boolean onlyWildcard = false;
 
@@ -189,48 +176,6 @@ public class FastArrayListURLToCORSSupportMapper
 		return corsSupport;
 	}
 
-	private void _put(
-		CORSSupport corsSupport, String urlPattern, boolean wildcard) {
-
-		TrieNode previousTrieNode = null;
-
-		if (wildcard) {
-			previousTrieNode = _wildCardTrieNode;
-		}
-		else {
-			previousTrieNode = _extensionTrieNode;
-		}
-
-		TrieNode currentTrieNode = null;
-
-		for (int i = 0; i < urlPattern.length(); ++i) {
-			int index = i;
-
-			if (!wildcard) {
-				index = urlPattern.length() - 1 - i;
-			}
-
-			currentTrieNode = previousTrieNode.next(urlPattern.charAt(index));
-
-			if (currentTrieNode == null) {
-				TrieNode nextNode = _trieNodeArrayList.nextAvailableNode();
-
-				currentTrieNode = previousTrieNode.setNext(
-					urlPattern.charAt(index), nextNode);
-			}
-
-			previousTrieNode = currentTrieNode;
-		}
-
-		if (currentTrieNode != null) {
-			currentTrieNode.set(corsSupport);
-		}
-	}
-
-	private static final byte _ASCII_CHARACTER_RANGE = 96;
-
-	private static final byte _ASCII_PRINTABLE_OFFSET = 32;
-
 	private final TrieNode _extensionTrieNode;
 	private final TrieNodeArrayList _trieNodeArrayList;
 	private final TrieNode _wildCardTrieNode;
@@ -238,9 +183,9 @@ public class FastArrayListURLToCORSSupportMapper
 	private static class TrieNode {
 
 		public TrieNode() {
-			_trieNodes = new ArrayList<>(_ASCII_CHARACTER_RANGE);
+			_trieNodes = new ArrayList<>(ASCII_CHARACTER_RANGE);
 
-			for (int i = 0; i < _ASCII_CHARACTER_RANGE; ++i) {
+			for (int i = 0; i < ASCII_CHARACTER_RANGE; ++i) {
 				_trieNodes.add(null);
 			}
 		}
@@ -258,7 +203,7 @@ public class FastArrayListURLToCORSSupportMapper
 		}
 
 		public TrieNode next(char character) {
-			return _trieNodes.get(character - _ASCII_PRINTABLE_OFFSET);
+			return _trieNodes.get(character - ASCII_PRINTABLE_OFFSET);
 		}
 
 		public void set(CORSSupport corsSupport) {
@@ -266,7 +211,7 @@ public class FastArrayListURLToCORSSupportMapper
 		}
 
 		public TrieNode setNext(char character, TrieNode nextNode) {
-			_trieNodes.set(character - _ASCII_PRINTABLE_OFFSET, nextNode);
+			_trieNodes.set(character - ASCII_PRINTABLE_OFFSET, nextNode);
 
 			return nextNode;
 		}
