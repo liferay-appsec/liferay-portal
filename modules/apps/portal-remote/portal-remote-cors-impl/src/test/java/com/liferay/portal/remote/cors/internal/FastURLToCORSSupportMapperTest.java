@@ -24,11 +24,7 @@ import org.junit.Test;
 public class FastURLToCORSSupportMapperTest
 	extends SimpleURLToCORSSupportMapperTest {
 
-	@Test
-	public void testGet() {
-		super.testGet();
-	}
-
+	@Override
 	protected URLToCORSSupportMapper createURLToCORSSupportMapper(
 		Map<String, CORSSupport> corsSupports) {
 
