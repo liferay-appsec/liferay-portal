@@ -74,6 +74,16 @@ public class SimpleURLToCORSSupportMapper extends BaseURLToCORSSupportMapper {
 	}
 
 	@Override
+	protected CORSSupport getExtensionCORSSupport(String urlPath) {
+		return null;
+	}
+
+	@Override
+	protected CORSSupport getWildcardCORSSupport(String urlPath) {
+		return null;
+	}
+
+	@Override
 	protected void put(CORSSupport corsSupport, String urlPattern)
 		throws IllegalArgumentException {
 
@@ -96,6 +106,11 @@ public class SimpleURLToCORSSupportMapper extends BaseURLToCORSSupportMapper {
 		if (!_exactURLPatternCORSSupports.containsKey(urlPattern)) {
 			_exactURLPatternCORSSupports.put(urlPattern, corsSupport);
 		}
+	}
+
+	@Override
+	protected void put(
+		CORSSupport corsSupport, String urlPattern, boolean wildcard) {
 	}
 
 	private final Map<String, CORSSupport> _exactURLPatternCORSSupports =

@@ -19,9 +19,25 @@ import java.net.URISyntaxException;
 
 /**
  * @author Carlos Sierra Andrés
+ * @author Arthur Chan
  */
 public abstract class BaseURLToCORSSupportMapper
 	implements URLToCORSSupportMapper {
+
+	@Override
+	public CORSSupport get(String urlPath) {
+		CORSSupport corsSupport = getWildcardCORSSupport(urlPath);
+
+		if (corsSupport != null) {
+			return corsSupport;
+		}
+
+		return getExtensionCORSSupport(urlPath);
+	}
+
+	protected abstract CORSSupport getExtensionCORSSupport(String urlPath);
+
+	protected abstract CORSSupport getWildcardCORSSupport(String urlPath);
 
 	protected boolean isExtensionURLPattern(String urlPattern) {
 
@@ -76,7 +92,33 @@ public abstract class BaseURLToCORSSupportMapper
 		return true;
 	}
 
-	protected abstract void put(CORSSupport corsSupport, String urlPattern)
-		throws IllegalArgumentException;
+	protected void put(CORSSupport corsSupport, String urlPattern)
+		throws IllegalArgumentException {
+
+		if (corsSupport == null) {
+			throw new IllegalArgumentException("Value can not be null");
+		}
+
+		if (isWildcardURLPattern(urlPattern)) {
+			put(corsSupport, urlPattern, true);
+
+			return;
+		}
+
+		if (isExtensionURLPattern(urlPattern)) {
+			put(corsSupport, urlPattern, false);
+
+			return;
+		}
+
+		put(corsSupport, urlPattern, true);
+	}
+
+	protected abstract void put(
+		CORSSupport corsSupport, String urlPattern, boolean wildcard);
+
+	protected static final byte ASCII_CHARACTER_RANGE = 96;
+
+	protected static final byte ASCII_PRINTABLE_OFFSET = 32;
 
 }
