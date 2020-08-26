@@ -22,10 +22,10 @@ import java.util.Map;
  * @author Arthur Chan
  * @author Carlos Sierra Andrés
  */
-public class FastArrayListURLToCORSSupportMapper
+public class ArrayListFastURLToCORSSupportMapper
 	extends BaseFastURLToCORSSupportMapper {
 
-	public FastArrayListURLToCORSSupportMapper(
+	public ArrayListFastURLToCORSSupportMapper(
 		Map<String, CORSSupport> corsSupports) {
 
 		_trieNodeArrayList = new TrieNodeArrayList();
