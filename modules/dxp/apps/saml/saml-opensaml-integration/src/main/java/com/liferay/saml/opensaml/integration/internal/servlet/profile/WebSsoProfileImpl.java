@@ -1008,7 +1008,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 	protected Assertion getSuccessAssertion(
 		SamlSsoRequestContext samlSsoRequestContext,
-		AssertionConsumerService assertionConsumerService, NameID nameID) {
+		AssertionConsumerService assertionConsumerService, NameID nameID,
+		long sessionCreationTime) {
 
 		MessageContext<AuthnRequest> messageContext =
 			(MessageContext<AuthnRequest>)
@@ -1051,7 +1052,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
 
 		authnStatements.add(
-			getSuccessAuthnStatement(samlSsoRequestContext, assertion));
+			getSuccessAuthnStatement(
+				samlSsoRequestContext, assertion, sessionCreationTime));
 
 		SAMLPeerEntityContext samlPeerEntityContext =
 			messageContext.getSubcontext(SAMLPeerEntityContext.class);
@@ -1130,7 +1132,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected AuthnStatement getSuccessAuthnStatement(
-		SamlSsoRequestContext samlSsoRequestContext, Assertion assertion) {
+		SamlSsoRequestContext samlSsoRequestContext, Assertion assertion,
+		long sessionCreationTime) {
 
 		AuthnStatement authnStatement = OpenSamlUtil.buildAuthnStatement();
 
@@ -1138,7 +1141,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		authnStatement.setAuthnContext(authnContext);
 
-		authnStatement.setAuthnInstant(assertion.getIssueInstant());
+		authnStatement.setAuthnInstant(new DateTime(sessionCreationTime));
 		authnStatement.setSessionIndex(
 			samlSsoRequestContext.getSamlSsoSessionId());
 
@@ -1513,8 +1516,11 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		NameID nameID = getSuccessNameId(samlSsoRequestContext);
 
+		HttpSession session = httpServletRequest.getSession();
+
 		Assertion assertion = getSuccessAssertion(
-			samlSsoRequestContext, assertionConsumerService, nameID);
+			samlSsoRequestContext, assertionConsumerService, nameID,
+			session.getCreationTime());
 
 		Credential credential = metadataManager.getSigningCredential();
 
