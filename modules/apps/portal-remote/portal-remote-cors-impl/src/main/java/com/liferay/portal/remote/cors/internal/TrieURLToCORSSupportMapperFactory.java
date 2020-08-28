@@ -14,44 +14,22 @@
 
 package com.liferay.portal.remote.cors.internal;
 
-import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Carlos Sierra Andrés
+ * @author Arthur Chan
  */
 public class TrieURLToCORSSupportMapperFactory {
 
 	public static BaseTrieURLToCORSSupportMapper create(
 		Map<String, CORSSupport> corsSupports) {
 
-		URLToCORSSupportMapper urlToCORSSupportMapper;
-
 		if (corsSupports.size() > 64) {
-			urlToCORSSupportMapper = new DynamicURLToCORSSupportMapper();
-		}
-		else {
-			Set<String> keys = corsSupports.keySet();
-
-			Stream<String> stream = keys.stream();
-
-			urlToCORSSupportMapper = new StaticURLToCORSSupportMapper(
-				stream.map(
-					String::length
-				).max(
-					Comparator.naturalOrder()
-				).orElse(
-					0
-				));
+			return new DynamicSizeTrieURLToCORSSupportMapper(corsSupports);
 		}
 
-		for (Map.Entry<String, CORSSupport> entry : corsSupports.entrySet()) {
-			urlToCORSSupportMapper.put(entry.getKey(), entry.getValue());
-		}
-
-		return urlToCORSSupportMapper;
+		return new StaticSizeTrieURLToCORSSupportMapper(corsSupports);
 	}
 
 }
