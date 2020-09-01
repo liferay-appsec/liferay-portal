@@ -14,12 +14,11 @@
 
 package com.liferay.saml.saas.internal.util;
 
+import com.liferay.portal.kernel.security.SecureRandom;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 
 import java.nio.ByteBuffer;
-
-import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -46,12 +45,10 @@ public class SymmetricEncryptor {
 		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 		cipher.init(
-			Cipher.DECRYPT_MODE, 
+			Cipher.DECRYPT_MODE,
 			new SecretKeySpec(
-				DigesterUtil.digestRaw("SHA-256", preSharedKey),
-				"AES"),
-			new GCMParameterSpec(
-				_GCM_TAG_LENGTH, gmcParameterSpecSrc));
+				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
+			new GCMParameterSpec(_GCM_TAG_LENGTH, gmcParameterSpecSrc));
 
 		return new String(cipher.doFinal(cipherInput));
 	}
@@ -70,8 +67,7 @@ public class SymmetricEncryptor {
 		cipher.init(
 			Cipher.ENCRYPT_MODE,
 			new SecretKeySpec(
-				DigesterUtil.digestRaw("SHA-256", preSharedKey),
-				"AES"),
+				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
 			new GCMParameterSpec(128, gmcParameterSpecSrc));
 
 		byte[] cipherOutput = cipher.doFinal(data.getBytes());
