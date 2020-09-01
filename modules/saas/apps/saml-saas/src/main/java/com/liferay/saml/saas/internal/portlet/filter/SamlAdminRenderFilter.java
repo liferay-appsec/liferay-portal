@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.saml.constants.SamlAdminPortletKeys;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
 import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 
@@ -56,8 +56,7 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	configurationPid = "com.liferay.saml.runtime.configuration.SamlKeyStoreManagerConfiguration",
 	immediate = true,
-	property = "javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
-	service = {}
+	property = "javax.portlet.name=" + SamlPortletKeys.SAML_ADMIN, service = {}
 )
 public class SamlAdminRenderFilter implements RenderFilter {
 

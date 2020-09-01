@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.saml.constants.SamlAdminPortletKeys;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
@@ -75,7 +75,7 @@ import org.osgi.service.component.annotations.Reference;
 	configurationPid = "com.liferay.saml.runtime.configuration.SamlConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = {
-		"javax.portlet.name=" + SamlAdminPortletKeys.SAML_ADMIN,
+		"javax.portlet.name=" + SamlPortletKeys.SAML_ADMIN,
 		"mvc.command.name=/admin/saas/export"
 	},
 	service = MVCActionCommand.class
