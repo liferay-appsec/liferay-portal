@@ -14,11 +14,12 @@
 
 package com.liferay.saml.saas.internal.util;
 
-import com.liferay.portal.kernel.security.SecureRandom;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 
 import java.nio.ByteBuffer;
+
+import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
