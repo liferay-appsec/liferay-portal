@@ -14,6 +14,7 @@
 
 package com.liferay.saml.saas.internal.jaxrs.application;
 
+import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -24,7 +25,6 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
-import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -45,6 +45,7 @@ import java.io.Serializable;
 import java.security.KeyStore;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -288,16 +289,32 @@ public class ImportSamlSaasApplication extends Application {
 			String userAttributeMappings = GetterUtil.getString(
 				samlSpIdpConnectionJsonObject.get("userAttributeMappings"));
 
+			long samlSpIdpConnectionId = _counterLocalService.increment(
+				SamlSpIdpConnection.class.getName());
+
 			SamlSpIdpConnection samlSpIdpConnection =
-				_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
-					samlIdpEntityId, assertionSignatureRequired, clockSkew,
-					enabled, forceAuthn, ldapImportEnabled, metadataUrl,
-					new ByteArrayInputStream(metadataXml.getBytes()), name,
-					nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-					userAttributeMappings,
-					ServiceContextFactory.getInstance(
-						SamlSpIdpConnection.class.getName(),
-						httpServletRequest));
+				_samlSpIdpConnectionLocalService.createSamlSpIdpConnection(
+					samlSpIdpConnectionId);
+
+			samlSpIdpConnection.setCompanyId(
+				_portal.getCompanyId(httpServletRequest));
+			samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
+			samlSpIdpConnection.setAssertionSignatureRequired(
+				assertionSignatureRequired);
+			samlSpIdpConnection.setClockSkew(clockSkew);
+			samlSpIdpConnection.setEnabled(enabled);
+			samlSpIdpConnection.setForceAuthn(forceAuthn);
+			samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
+			samlSpIdpConnection.setMetadataUrl(metadataUrl);
+			samlSpIdpConnection.setMetadataXml(metadataXml);
+			samlSpIdpConnection.setMetadataUpdatedDate(new Date());
+			samlSpIdpConnection.setUnknownUsersAreStrangers(
+				unknownUsersAreStrangers);
+			samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
+			samlSpIdpConnection.setName(name);
+			samlSpIdpConnection.setNameIdFormat(nameIdFormat);
+			samlSpIdpConnection.setSignAuthnRequest(signAuthnRequest);
+			samlSpIdpConnection.setUserAttributeMappings(userAttributeMappings);
 
 			JSONObject expandoValuesJsonObject =
 				samlSpIdpConnectionJsonObject.getJSONObject(
@@ -309,11 +326,17 @@ public class ImportSamlSaasApplication extends Application {
 				expandoBridge.setAttribute(
 					key, (Serializable)expandoValuesJsonObject.get(key), false);
 			}
+
+			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
+				samlSpIdpConnection);
 		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImportSamlSaasApplication.class);
+
+	@Reference
+	private CounterLocalService _counterLocalService;
 
 	@Reference(name = "KeyStoreManager")
 	private KeyStoreManager _keyStoreManager;

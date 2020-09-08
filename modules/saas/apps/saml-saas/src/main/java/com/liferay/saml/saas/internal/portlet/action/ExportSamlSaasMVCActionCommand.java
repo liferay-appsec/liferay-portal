@@ -266,49 +266,44 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		for (SamlSpIdpConnection samlSpIdpConnection :
 				samlSpIdpConnectionsList) {
 
-			JSONObject samlSpIdpConnectionJsonObject = JSONUtil.put(
-				JSONKeys.EXPANDO_VALUES,
-				_getSpIdpConnectionExpandoValues(samlSpIdpConnection)
-			).put(
-				"assertionSignatureRequired",
-				samlSpIdpConnection.isAssertionSignatureRequired()
-			).put(
-				"clockSkew", samlSpIdpConnection.getClockSkew()
-			).put(
-				"enabled", samlSpIdpConnection.isEnabled()
-			).put(
-				"forceAuthn", samlSpIdpConnection.isForceAuthn()
-			).put(
-				"ldapImportEnabled", samlSpIdpConnection.isLdapImportEnabled()
-			).put(
-				"name", samlSpIdpConnection.getName()
-			).put(
-				"nameIdFormat", samlSpIdpConnection.getNameIdFormat()
-			).put(
-				"samlIdpEntityId", samlSpIdpConnection.getSamlIdpEntityId()
-			).put(
-				"samlSpIdpConnectionId",
-				samlSpIdpConnection.getSamlSpIdpConnectionId()
-			).put(
-				"signAuthnRequest", samlSpIdpConnection.isSignAuthnRequest()
-			).put(
-				"unknownUsersAreStrangers",
-				samlSpIdpConnection.isUnknownUsersAreStrangers()
-			).put(
-				"userAttributeMappings",
-				samlSpIdpConnection.getUserAttributeMappings()
-			);
-
-			if (Validator.isNotNull(samlSpIdpConnection.getMetadataUrl())) {
-				samlSpIdpConnectionJsonObject.put(
-					"metadataUrl", samlSpIdpConnection.getMetadataUrl());
-			}
-			else {
-				samlSpIdpConnectionJsonObject.put(
-					"metadataXml", samlSpIdpConnection.getMetadataXml());
-			}
-
-			samlSpIdpConnectionsJsonArray.put(samlSpIdpConnectionJsonObject);
+			samlSpIdpConnectionsJsonArray.put(
+				JSONUtil.put(
+					JSONKeys.EXPANDO_VALUES,
+					_getSpIdpConnectionExpandoValues(samlSpIdpConnection)
+				).put(
+					"assertionSignatureRequired",
+					samlSpIdpConnection.isAssertionSignatureRequired()
+				).put(
+					"clockSkew", samlSpIdpConnection.getClockSkew()
+				).put(
+					"enabled", samlSpIdpConnection.isEnabled()
+				).put(
+					"forceAuthn", samlSpIdpConnection.isForceAuthn()
+				).put(
+					"ldapImportEnabled",
+					samlSpIdpConnection.isLdapImportEnabled()
+				).put(
+					"metadataUrl", samlSpIdpConnection.getMetadataUrl()
+				).put(
+					"metadataXml", samlSpIdpConnection.getMetadataXml()
+				).put(
+					"name", samlSpIdpConnection.getName()
+				).put(
+					"nameIdFormat", samlSpIdpConnection.getNameIdFormat()
+				).put(
+					"samlIdpEntityId", samlSpIdpConnection.getSamlIdpEntityId()
+				).put(
+					"samlSpIdpConnectionId",
+					samlSpIdpConnection.getSamlSpIdpConnectionId()
+				).put(
+					"signAuthnRequest", samlSpIdpConnection.isSignAuthnRequest()
+				).put(
+					"unknownUsersAreStrangers",
+					samlSpIdpConnection.isUnknownUsersAreStrangers()
+				).put(
+					"userAttributeMappings",
+					samlSpIdpConnection.getUserAttributeMappings()
+				));
 		}
 
 		return samlSpIdpConnectionsJsonArray;
