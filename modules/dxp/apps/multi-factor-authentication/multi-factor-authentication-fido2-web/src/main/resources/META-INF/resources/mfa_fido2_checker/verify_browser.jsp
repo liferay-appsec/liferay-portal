@@ -17,66 +17,23 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String assertionReqest = (String)request.getAttribute("assertionReqest");
+String assertionRequest = (String)request.getAttribute("assertionRequest");
 %>
 
 <div id="<portlet:namespace/>messageContainer"></div>
 
-<aui:button id="startAuthentication" value="start" />
-
-<aui:input name="responseJSON" showRequiredLabel="yes" type="hidden" />
-
 <aui:button-row>
-	<aui:button type="submit" value="submit" />
+	<clay:button
+		additionalProps='<%=
+			HashMapBuilder.<String, Object>put(
+				"assertionRequest", assertionRequest
+			).build()
+		%>'
+		label="verify"
+		propsTransformer="js/AuthenticationTransformer"
+	/>
+
+	<liferay-ui:message key="button-verify-identity-using-a-registered-fido2-authenticator" />
 </aui:button-row>
 
-<aui:script use="aui-base">
-	Liferay.Loader.require(
-		'<%=npmResolvedPackageName%>/js/yubico-webauthn/webauthn',
-		function (webauthn) {
-			A.one('#<portlet:namespace />startAuthentication').on(
-				'click',
-				function (event) {
-					var assertionRequest = JSON.parse('<%=assertionReqest %>');
-					webauthn
-						.getAssertion(
-							assertionRequest.publicKeyCredentialRequestOptions
-						)
-						.then(
-							function (value) {
-								var responseJSONInput = A.one(
-									'#<portlet:namespace />responseJSON'
-								);
-
-								var publicKeyCredentialObject = webauthn.responseToObject(
-									value
-								);
-
-								if (
-									publicKeyCredentialObject.response.userHandle !=
-										null &&
-									publicKeyCredentialObject.response
-										.userHandle === ''
-								) {
-									delete publicKeyCredentialObject.response
-										.userHandle;
-								}
-
-								responseJSONInput._node.value = JSON.stringify(
-									publicKeyCredentialObject
-								);
-							},
-							function (reason) {
-								var messageContainer = A.one(
-									'#<portlet:namespace />messageContainer'
-								);
-								messageContainer.html(
-									'<span class="alert alert-danger"><liferay-ui:message key="your-authenticator-was-unable-to-verify-your-credential" /></span>'
-								);
-							}
-						);
-				}
-			);
-		}
-	);
-</aui:script>
+<aui:input name="responseJSON" showRequiredLabel="yes" type="hidden" />

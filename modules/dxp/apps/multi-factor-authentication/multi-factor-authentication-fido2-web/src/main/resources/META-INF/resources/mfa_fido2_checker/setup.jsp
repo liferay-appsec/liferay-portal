@@ -22,45 +22,18 @@ String pkccOptions = (String)request.getAttribute("pkccOptions");
 
 <div id="<portlet:namespace/>messageContainer"></div>
 
-<aui:button id="startRegistration" value="start" />
-
-<aui:input name="responseJSON" showRequiredLabel="yes" type="hidden" />
-
 <aui:button-row>
-	<aui:button type="submit" value="submit" />
+	<clay:button
+		additionalProps='<%=
+			HashMapBuilder.<String, Object>put(
+				"pkccOptions", pkccOptions
+			).build()
+		%>'
+		label="register"
+		propsTransformer="js/RegistrationTransformer"
+	/>
+
+	<liferay-ui:message key="button-register-a-fido2-authenticator" />
 </aui:button-row>
 
-<aui:script use="aui-base">
-	Liferay.Loader.require(
-		'<%=npmResolvedPackageName%>/js/yubico-webauthn/webauthn',
-		function (webauthn) {
-			A.one('#<portlet:namespace />startRegistration').on('click', function (
-				event
-			) {
-				webauthn.createCredential(JSON.parse('<%=pkccOptions %>')).then(
-					function (value) {
-						var responseJSONInput = A.one(
-							'#<portlet:namespace />responseJSON'
-						);
-
-						var publicKeyCredentialObject = webauthn.responseToObject(
-							value
-						);
-
-						responseJSONInput._node.value = JSON.stringify(
-							publicKeyCredentialObject
-						);
-					},
-					function (reason) {
-						var messageContainer = A.one(
-							'#<portlet:namespace />messageContainer'
-						);
-						messageContainer.html(
-							'<span class="alert alert-danger"><liferay-ui:message key="your-authenticator-was-unable-to-create-a-credential" /></span>'
-						);
-					}
-				);
-			});
-		}
-	);
-</aui:script>
+<aui:input name="responseJSON" showRequiredLabel="yes" type="hidden" />
