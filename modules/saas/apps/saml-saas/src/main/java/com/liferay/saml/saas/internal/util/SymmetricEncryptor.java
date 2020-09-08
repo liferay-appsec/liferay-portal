@@ -14,12 +14,11 @@
 
 package com.liferay.saml.saas.internal.util;
 
+import com.liferay.portal.kernel.security.SecureRandom;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 
 import java.nio.ByteBuffer;
-
-import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -61,7 +60,7 @@ public class SymmetricEncryptor {
 
 		final SecureRandom secureRandom = new SecureRandom();
 
-		byte[] gmcParameterSpecSrc = new byte[12];
+		byte[] gmcParameterSpecSrc = new byte[_GCM_NONCE_LENGTH];
 
 		secureRandom.nextBytes(gmcParameterSpecSrc);
 
