@@ -125,11 +125,11 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			);
 
 			if (jsonResponse != null) {
-				JSONObject response = JSONFactoryUtil.createJSONObject(
-					jsonResponse);
+				JSONObject responseJsonObject =
+					JSONFactoryUtil.createJSONObject(jsonResponse);
 
 				if (JSONKeys.RESULT_ERROR.equals(
-						response.get(JSONKeys.RESULT))) {
+						responseJsonObject.get(JSONKeys.RESULT))) {
 
 					SessionErrors.add(actionRequest, "exportError");
 				}
@@ -257,7 +257,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	private JSONArray _getSpIdpConnections(long companyId) {
-		JSONArray samlSpIdpConnections = JSONFactoryUtil.createJSONArray();
+		JSONArray samlSpIdpConnectionsJsonArray =
+			JSONFactoryUtil.createJSONArray();
 
 		List<SamlSpIdpConnection> samlSpIdpConnectionsList =
 			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(companyId);
@@ -265,7 +266,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		for (SamlSpIdpConnection samlSpIdpConnection :
 				samlSpIdpConnectionsList) {
 
-			JSONObject samlSpIdpConnectionData = JSONUtil.put(
+			JSONObject samlSpIdpConnectionJsonObject = JSONUtil.put(
 				JSONKeys.EXPANDO_VALUES,
 				_getSpIdpConnectionExpandoValues(samlSpIdpConnection)
 			).put(
@@ -299,18 +300,18 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 			);
 
 			if (Validator.isNotNull(samlSpIdpConnection.getMetadataUrl())) {
-				samlSpIdpConnectionData.put(
+				samlSpIdpConnectionJsonObject.put(
 					"metadataUrl", samlSpIdpConnection.getMetadataUrl());
 			}
 			else {
-				samlSpIdpConnectionData.put(
+				samlSpIdpConnectionJsonObject.put(
 					"metadataXml", samlSpIdpConnection.getMetadataXml());
 			}
 
-			samlSpIdpConnections.put(samlSpIdpConnectionData);
+			samlSpIdpConnectionsJsonArray.put(samlSpIdpConnectionJsonObject);
 		}
 
-		return samlSpIdpConnections;
+		return samlSpIdpConnectionsJsonArray;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

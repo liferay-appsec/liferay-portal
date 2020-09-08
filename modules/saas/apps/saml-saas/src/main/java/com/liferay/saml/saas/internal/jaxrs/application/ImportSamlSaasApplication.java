@@ -164,7 +164,7 @@ public class ImportSamlSaasApplication extends Application {
 	}
 
 	private void _generateSamlProviderConfiguration(
-			JSONObject jsonSamlProviderConfiguration)
+			JSONObject samlProviderConfigurationJsonObject)
 		throws Exception {
 
 		UnicodeProperties unicodeProperties = new UnicodeProperties();
@@ -172,78 +172,80 @@ public class ImportSamlSaasApplication extends Application {
 		unicodeProperties.put(
 			"saml.entity.id",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.entity.id")));
+				samlProviderConfigurationJsonObject.get("saml.entity.id")));
 		unicodeProperties.put(
 			"saml.idp.assertion.lifetime",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.idp.assertion.lifetime")));
 		unicodeProperties.put(
 			"saml.idp.authn.request.signature.required",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.idp.authn.request.signature.required")));
 		unicodeProperties.put(
 			"saml.idp.session.maximum.age",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.idp.session.maximum.age")));
 		unicodeProperties.put(
 			"saml.idp.session.timeout",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.idp.session.timeout")));
+				samlProviderConfigurationJsonObject.get(
+					"saml.idp.session.timeout")));
 		unicodeProperties.put(
 			"saml.keystore.credential.password",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.keystore.credential.password")));
 		unicodeProperties.put(
 			"saml.keystore.encryption.credential.password",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.keystore.encryption.credential.password")));
 		unicodeProperties.put(
 			"saml.role",
-			String.valueOf(jsonSamlProviderConfiguration.get("saml.role")));
+			String.valueOf(
+				samlProviderConfigurationJsonObject.get("saml.role")));
 		unicodeProperties.put(
 			"saml.sign.metadata",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.sign.metadata")));
+				samlProviderConfigurationJsonObject.get("saml.sign.metadata")));
 		unicodeProperties.put(
 			"saml.sp.allow.showing.the.login.portlet",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.sp.allow.showing.the.login.portlet")));
 		unicodeProperties.put(
 			"saml.sp.assertion.signature.required",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.sp.assertion.signature.required")));
 		unicodeProperties.put(
 			"saml.sp.clock.skew",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.sp.clock.skew")));
+				samlProviderConfigurationJsonObject.get("saml.sp.clock.skew")));
 		unicodeProperties.put(
 			"saml.sp.ldap.import.enabled",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.sp.ldap.import.enabled")));
 		unicodeProperties.put(
 			"saml.sp.sign.authn.request",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get(
+				samlProviderConfigurationJsonObject.get(
 					"saml.sp.sign.authn.request")));
 		unicodeProperties.put(
 			"saml.ssl.required",
 			String.valueOf(
-				jsonSamlProviderConfiguration.get("saml.ssl.required")));
+				samlProviderConfigurationJsonObject.get("saml.ssl.required")));
 
 		_samlProviderConfigurationHelper.updateProperties(unicodeProperties);
 	}
 
 	private void _generateSamlSpIdpConnections(
 			HttpServletRequest httpServletRequest,
-			JSONArray jsonSamlSpIdConnections)
+			JSONArray samlSpIdConnectionsJsonArray)
 		throws PortalException {
 
 		List<SamlSpIdpConnection> samlSpIdpConnections =
@@ -255,35 +257,36 @@ public class ImportSamlSaasApplication extends Application {
 				samlSpIdpConnection.getSamlSpIdpConnectionId());
 		}
 
-		for (JSONObject jsonSamlSpIdpConnection :
-				(Iterable<JSONObject>)jsonSamlSpIdConnections) {
+		for (JSONObject samlSpIdpConnectionJsonObject :
+				(Iterable<JSONObject>)samlSpIdConnectionsJsonArray) {
 
 			String samlIdpEntityId = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("samlIdpEntityId"));
+				samlSpIdpConnectionJsonObject.get("samlIdpEntityId"));
 			boolean assertionSignatureRequired = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("assertionSignatureRequired"));
+				samlSpIdpConnectionJsonObject.get(
+					"assertionSignatureRequired"));
 			long clockSkew = GetterUtil.getLong(
-				jsonSamlSpIdpConnection.get("clockSkew"));
+				samlSpIdpConnectionJsonObject.get("clockSkew"));
 			boolean enabled = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("enabled"));
+				samlSpIdpConnectionJsonObject.get("enabled"));
 			boolean forceAuthn = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("forceAuthn"));
+				samlSpIdpConnectionJsonObject.get("forceAuthn"));
 			boolean ldapImportEnabled = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("ldapImportEnabled"));
+				samlSpIdpConnectionJsonObject.get("ldapImportEnabled"));
 			String metadataUrl = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("metadataUrl"));
+				samlSpIdpConnectionJsonObject.get("metadataUrl"));
 			String metadataXml = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("metadataXml"));
+				samlSpIdpConnectionJsonObject.get("metadataXml"));
 			String name = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("name"));
+				samlSpIdpConnectionJsonObject.get("name"));
 			String nameIdFormat = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("nameIdFormat"));
+				samlSpIdpConnectionJsonObject.get("nameIdFormat"));
 			boolean signAuthnRequest = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("signAuthnRequest"));
+				samlSpIdpConnectionJsonObject.get("signAuthnRequest"));
 			boolean unknownUsersAreStrangers = GetterUtil.getBoolean(
-				jsonSamlSpIdpConnection.get("unknownUsersAreStrangers"));
+				samlSpIdpConnectionJsonObject.get("unknownUsersAreStrangers"));
 			String userAttributeMappings = GetterUtil.getString(
-				jsonSamlSpIdpConnection.get("userAttributeMappings"));
+				samlSpIdpConnectionJsonObject.get("userAttributeMappings"));
 
 			SamlSpIdpConnection samlSpIdpConnection =
 				_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
@@ -296,14 +299,15 @@ public class ImportSamlSaasApplication extends Application {
 						SamlSpIdpConnection.class.getName(),
 						httpServletRequest));
 
-			JSONObject expandoValues = jsonSamlSpIdpConnection.getJSONObject(
-				JSONKeys.EXPANDO_VALUES);
+			JSONObject expandoValuesJsonObject =
+				samlSpIdpConnectionJsonObject.getJSONObject(
+					JSONKeys.EXPANDO_VALUES);
 			ExpandoBridge expandoBridge =
 				samlSpIdpConnection.getExpandoBridge();
 
-			for (String key : expandoValues.keySet()) {
+			for (String key : expandoValuesJsonObject.keySet()) {
 				expandoBridge.setAttribute(
-					key, (Serializable)expandoValues.get(key), false);
+					key, (Serializable)expandoValuesJsonObject.get(key), false);
 			}
 		}
 	}
