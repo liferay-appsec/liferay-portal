@@ -23,6 +23,9 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlPortletKeys;
+import com.liferay.saml.constants.SamlProviderConfigurationKeys;
+import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
+import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
 import com.liferay.saml.saas.internal.configuration.SamlSaasConfiguration;
 
@@ -105,6 +108,17 @@ public class SamlAdminRenderFilter implements RenderFilter {
 			return;
 		}
 
+		SamlProviderConfiguration samlProviderConfiguration =
+			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
+
+		String samlRole = samlProviderConfiguration.role();
+
+		if (!Objects.equals(
+				SamlProviderConfigurationKeys.SAML_ROLE_SP, samlRole)) {
+
+			return;
+		}
+
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher("/export.jsp");
 
@@ -155,6 +169,9 @@ public class SamlAdminRenderFilter implements RenderFilter {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
 
 	private ServiceRegistration<?> _serviceRegistration;
 
