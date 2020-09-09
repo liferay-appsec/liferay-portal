@@ -69,15 +69,8 @@ public class StaticSizeTrieURLPatternMapper<T>
 			}
 
 			if (character == '.') {
-				long bitmask =
-					currentBitmask &
-					_extensionTrieMatrix[1][row + 1][_INDEX_STAR];
-
-				if (bitmask != 0) {
-					return _extensionValues.get(_getFirstSetBitIndex(bitmask));
-				}
-
-				break;
+				return _extensionValues.get(
+					_getFirstSetBitIndex(currentBitmask));
 			}
 		}
 
