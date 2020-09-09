@@ -14,6 +14,7 @@
 
 package com.liferay.portal.remote.cors.internal.url.pattern.mapper;
 
+import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 
@@ -28,6 +30,10 @@ import org.junit.Test;
  * @author Arthur Chan
  */
 public class SimpleURLPatternMapperTest {
+
+	@ClassRule
+	public static final CodeCoverageAssertor codeCoverageAssertor =
+		CodeCoverageAssertor.INSTANCE;
 
 	@Test
 	public void testGet() {

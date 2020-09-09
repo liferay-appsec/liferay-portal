@@ -14,14 +14,12 @@
 
 package com.liferay.portal.remote.cors.internal.url.pattern.mapper;
 
-import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -29,10 +27,6 @@ import org.junit.Test;
  */
 public class StaticSizeTrieURLPatternMapperTest
 	extends SimpleURLPatternMapperTest {
-
-	@ClassRule
-	public static final CodeCoverageAssertor codeCoverageAssertor =
-		CodeCoverageAssertor.INSTANCE;
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testExtensionMaximumCount() {
