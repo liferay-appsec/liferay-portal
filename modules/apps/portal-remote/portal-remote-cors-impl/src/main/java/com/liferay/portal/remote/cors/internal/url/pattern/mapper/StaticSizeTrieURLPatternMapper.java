@@ -68,7 +68,7 @@ public class StaticSizeTrieURLPatternMapper<T>
 				break;
 			}
 
-			if ((character == '.') && ((row + 1) < _maxURLPatternLength)) {
+			if (character == '.') {
 				long bitmask =
 					currentBitmask &
 					_extensionTrieMatrix[1][row + 1][_INDEX_STAR];
