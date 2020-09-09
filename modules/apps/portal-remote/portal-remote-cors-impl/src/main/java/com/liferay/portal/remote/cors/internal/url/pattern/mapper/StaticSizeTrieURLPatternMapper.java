@@ -195,13 +195,7 @@ public class StaticSizeTrieURLPatternMapper<T>
 				"Exceeding maximum number of allowed URL patterns");
 		}
 
-		int index = _getExactIndex(urlPattern, trieMatrix);
-
-		if (index > -1) {
-			values.add(index, value);
-
-			return;
-		}
+		int index;
 
 		if (wildcard) {
 			index = _wildcardURLPatternCount++;
@@ -231,40 +225,7 @@ public class StaticSizeTrieURLPatternMapper<T>
 
 		trieMatrix[1][row - 1][column] |= bitmask;
 
-		values.add(index, value);
-	}
-
-	private int _getExactIndex(String urlPath, long[][][] trieMatrix) {
-		long bitmask = _BITMASK;
-		int column = 0;
-		int maxRow = Math.min(urlPath.length(), _maxURLPatternLength - 1);
-		int row = 0;
-
-		for (; row < maxRow; ++row) {
-			char character = urlPath.charAt(row);
-
-			column = character - ASCII_PRINTABLE_OFFSET;
-
-			bitmask &= trieMatrix[0][row][column];
-
-			if (bitmask == 0) {
-				break;
-			}
-		}
-
-		if (row > (_maxURLPatternLength - 1)) {
-			bitmask = 0;
-		}
-
-		if (bitmask != 0) {
-			bitmask &= trieMatrix[1][row - 1][column];
-
-			if (bitmask != 0) {
-				return _getFirstSetBitIndex(bitmask);
-			}
-		}
-
-		return -1;
+		values.add(value);
 	}
 
 	private int _getFirstSetBitIndex(long bitmask) {
