@@ -17,6 +17,7 @@ package com.liferay.portal.remote.cors.internal.url.pattern.mapper;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
@@ -32,6 +33,22 @@ public class StaticSizeTrieURLPatternMapperTest
 	@ClassRule
 	public static final CodeCoverageAssertor codeCoverageAssertor =
 		CodeCoverageAssertor.INSTANCE;
+
+	@Test
+	public void testFullAddresses() {
+		Map<String, String> map = new HashMap<>();
+
+		for (int i = 0; i < Long.SIZE; i++) {
+			map.put("*.key" + i, "value" + i);
+		}
+
+		URLPatternMapper<String> urlPatternMapper = createURLPatternMapper(map);
+
+		for (int i = 0; i < Long.SIZE; i++) {
+			Assert.assertEquals(
+				"value" + i, urlPatternMapper.getValue("*.key" + i));
+		}
+	}
 
 	@Test
 	public void testGetExtensionValueBounds() {
