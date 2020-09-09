@@ -120,10 +120,6 @@ public class StaticSizeTrieURLPatternMapper<T>
 			}
 		}
 
-		if (row > (_maxURLPatternLength - 1)) {
-			currentBitmask = 0;
-		}
-
 		if (currentBitmask == 0) {
 			if (bestMatchBitmask == 0) {
 				return null;
