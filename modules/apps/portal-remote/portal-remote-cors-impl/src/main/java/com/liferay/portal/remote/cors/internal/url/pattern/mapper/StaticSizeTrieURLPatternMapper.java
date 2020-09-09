@@ -109,9 +109,7 @@ public class StaticSizeTrieURLPatternMapper<T>
 				break;
 			}
 
-			if (!exact && (character == '/') &&
-				((row + 1) < _maxURLPatternLength)) {
-
+			if (!exact && (character == '/')) {
 				long bitmask =
 					currentBitmask &
 					_wildCardTrieMatrix[1][row + 1][_INDEX_STAR];
