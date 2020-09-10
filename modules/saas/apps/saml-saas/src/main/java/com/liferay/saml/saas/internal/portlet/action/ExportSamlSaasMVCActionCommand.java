@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -176,8 +175,8 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	private String _getKeyStore()
-		throws CertificateException, ConfigurationException, IOException,
-			   KeyStoreException, NoSuchAlgorithmException {
+		throws CertificateException, IOException, KeyStoreException,
+			   NoSuchAlgorithmException {
 
 		KeyStore keyStore = _keyStoreManager.getKeyStore();
 		ByteArrayOutputStream byteArrayOutputStream =
