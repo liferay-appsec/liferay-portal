@@ -58,7 +58,7 @@ public class SymmetricEncryptor {
 
 		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
-		final SecureRandom secureRandom = new SecureRandom();
+		SecureRandom secureRandom = new SecureRandom();
 
 		byte[] gmcParameterSpecSrc = new byte[_GCM_NONCE_LENGTH];
 
