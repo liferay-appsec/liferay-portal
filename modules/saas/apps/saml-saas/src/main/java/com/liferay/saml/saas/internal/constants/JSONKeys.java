@@ -23,9 +23,9 @@ public class JSONKeys {
 
 	public static final String RESULT = "result";
 
-	public static final String RESULT_ERROR = "ERROR";
+	public static final String RESULT_ERROR = "resultError";
 
-	public static final String RESULT_SUCCESS = "SUCCESS";
+	public static final String RESULT_SUCCESS = "resultSuccess";
 
 	public static final String SAML_KEYSTORE = "samlKeystore";
 
