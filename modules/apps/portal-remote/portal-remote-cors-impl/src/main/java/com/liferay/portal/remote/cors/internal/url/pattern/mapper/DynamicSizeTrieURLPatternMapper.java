@@ -162,9 +162,7 @@ public class DynamicSizeTrieURLPatternMapper<T>
 			previousTrieNode = currentTrieNode;
 		}
 
-		if (currentTrieNode != null) {
-			currentTrieNode.setValue(value);
-		}
+		currentTrieNode.setValue(value);
 	}
 
 	private final TrieNode _extensionTrieNode;
