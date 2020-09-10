@@ -181,7 +181,6 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		KeyStore keyStore = _keyStoreManager.getKeyStore();
 		ByteArrayOutputStream byteArrayOutputStream =
 			new ByteArrayOutputStream();
-
 		String keyStorePassword = _samlConfiguration.keyStorePassword();
 
 		keyStore.store(byteArrayOutputStream, keyStorePassword.toCharArray());
