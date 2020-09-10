@@ -110,11 +110,11 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 		try {
 			Client client = _clientBuilder.build();
 
-			WebTarget target = client.target(
+			WebTarget webTarget = client.target(
 				UriBuilder.fromUri(
 					samlSaasConfiguration.targetInstanceImportURL()));
 
-			String jsonResponse = target.request(
+			String jsonResponse = webTarget.request(
 				MediaType.APPLICATION_JSON
 			).post(
 				Entity.entity(
