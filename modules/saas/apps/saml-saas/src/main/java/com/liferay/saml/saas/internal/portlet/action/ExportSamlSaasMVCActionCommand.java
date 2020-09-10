@@ -114,7 +114,7 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				UriBuilder.fromUri(
 					samlSaasConfiguration.targetInstanceImportURL()));
 
-			String jsonResponse = webTarget.request(
+			String json = webTarget.request(
 				MediaType.APPLICATION_JSON
 			).post(
 				Entity.entity(
@@ -124,12 +124,11 @@ public class ExportSamlSaasMVCActionCommand extends BaseMVCActionCommand {
 				String.class
 			);
 
-			if (jsonResponse != null) {
-				JSONObject responseJsonObject =
-					JSONFactoryUtil.createJSONObject(jsonResponse);
+			if (json != null) {
+				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
 
 				if (JSONKeys.RESULT_ERROR.equals(
-						responseJsonObject.get(JSONKeys.RESULT))) {
+						jsonObject.get(JSONKeys.RESULT))) {
 
 					SessionErrors.add(actionRequest, "exportError");
 				}
