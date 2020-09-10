@@ -42,13 +42,8 @@ public class SymmetricEncryptor {
 
 		byteBuffer.get(cipherInput);
 
-		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-
-		cipher.init(
-			Cipher.DECRYPT_MODE,
-			new SecretKeySpec(
-				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
-			new GCMParameterSpec(_GCM_TAG_LENGTH, gmcParameterSpecSrc));
+		Cipher cipher = _getCipher(
+			Cipher.DECRYPT_MODE, gmcParameterSpecSrc, preSharedKey);
 
 		return new String(cipher.doFinal(cipherInput));
 	}
@@ -62,13 +57,8 @@ public class SymmetricEncryptor {
 
 		secureRandom.nextBytes(gmcParameterSpecSrc);
 
-		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-
-		cipher.init(
-			Cipher.ENCRYPT_MODE,
-			new SecretKeySpec(
-				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
-			new GCMParameterSpec(_GCM_TAG_LENGTH, gmcParameterSpecSrc));
+		Cipher cipher = _getCipher(
+			Cipher.ENCRYPT_MODE, gmcParameterSpecSrc, preSharedKey);
 
 		byte[] cipherOutput = cipher.doFinal(data.getBytes());
 
@@ -80,6 +70,21 @@ public class SymmetricEncryptor {
 		byteBuffer.put(cipherOutput);
 
 		return Base64.encode(byteBuffer.array());
+	}
+
+	private static Cipher _getCipher(
+			int encryptMode, byte[] gmcParameterSpecSrc, String preSharedKey)
+		throws Exception {
+
+		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+		cipher.init(
+			encryptMode,
+			new SecretKeySpec(
+				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
+			new GCMParameterSpec(_GCM_TAG_LENGTH, gmcParameterSpecSrc));
+
+		return cipher;
 	}
 
 	private static final int _GCM_NONCE_LENGTH = 12;
