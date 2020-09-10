@@ -99,8 +99,6 @@ public class ImportSamlSaasApplication extends Application {
 				ConfigurationProviderUtil.getCompanyConfiguration(
 					SamlSaasConfiguration.class, companyId);
 
-			String preSharedKey = samlSaasConfiguration.preSharedKey();
-
 			if (!samlSaasConfiguration.productionEnvironment()) {
 				_log.error(
 					"Instance must be configured as a SAML SaaS production " +
@@ -109,7 +107,7 @@ public class ImportSamlSaasApplication extends Application {
 				throw new WebApplicationException(Response.Status.NOT_FOUND);
 			}
 
-			if (Validator.isBlank(preSharedKey)) {
+			if (Validator.isBlank(samlSaasConfiguration.preSharedKey())) {
 				_log.error(
 					"Instance must be configured with a pre-shared key to " +
 						"decrypt configuration data imports");
@@ -118,7 +116,7 @@ public class ImportSamlSaasApplication extends Application {
 			}
 
 			String decryptedData = SymmetricEncryptor.decryptData(
-				preSharedKey, data);
+				samlSaasConfiguration.preSharedKey(), data);
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 				decryptedData);
