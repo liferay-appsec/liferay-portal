@@ -111,10 +111,9 @@ public class SamlAdminRenderFilter implements RenderFilter {
 		SamlProviderConfiguration samlProviderConfiguration =
 			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
-		String samlRole = samlProviderConfiguration.role();
-
 		if (!Objects.equals(
-				SamlProviderConfigurationKeys.SAML_ROLE_SP, samlRole)) {
+				SamlProviderConfigurationKeys.SAML_ROLE_SP,
+				samlProviderConfiguration.role())) {
 
 			return;
 		}
