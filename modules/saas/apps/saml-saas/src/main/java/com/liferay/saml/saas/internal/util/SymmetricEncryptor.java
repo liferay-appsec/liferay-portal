@@ -56,13 +56,13 @@ public class SymmetricEncryptor {
 	public static String encryptData(String preSharedKey, String data)
 		throws Exception {
 
-		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+		byte[] gmcParameterSpecSrc = new byte[_GCM_NONCE_LENGTH];
 
 		SecureRandom secureRandom = new SecureRandom();
 
-		byte[] gmcParameterSpecSrc = new byte[_GCM_NONCE_LENGTH];
-
 		secureRandom.nextBytes(gmcParameterSpecSrc);
+
+		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 		cipher.init(
 			Cipher.ENCRYPT_MODE,
