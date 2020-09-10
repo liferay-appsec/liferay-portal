@@ -68,7 +68,7 @@ public class SymmetricEncryptor {
 			Cipher.ENCRYPT_MODE,
 			new SecretKeySpec(
 				DigesterUtil.digestRaw("SHA-256", preSharedKey), "AES"),
-			new GCMParameterSpec(128, gmcParameterSpecSrc));
+			new GCMParameterSpec(_GCM_TAG_LENGTH, gmcParameterSpecSrc));
 
 		byte[] cipherOutput = cipher.doFinal(data.getBytes());
 
