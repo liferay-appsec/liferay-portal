@@ -96,7 +96,7 @@ public class DynamicSizeTrieURLPatternMapper<T>
 			if (!exact && (urlPath.charAt(i) == '/')) {
 				TrieNode nextTrieNode = currentTrieNode.getNextTrieNode('*');
 
-				if (nextTrieNode != null) {
+				if ((nextTrieNode != null) && nextTrieNode.isEnd()) {
 					value = nextTrieNode.getValue();
 				}
 			}
