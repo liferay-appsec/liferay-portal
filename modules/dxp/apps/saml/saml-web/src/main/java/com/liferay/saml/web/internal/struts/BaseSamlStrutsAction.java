@@ -14,13 +14,20 @@
 
 package com.liferay.saml.web.internal.struts;
 
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.StatusException;
 import com.liferay.saml.util.JspUtil;
+
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -96,6 +103,32 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
 		throws Exception;
+
+	protected JSONObject toJSONObject(
+		List<SamlSpIdpConnection> samlSpIdpConnections, String selectedName,
+		String error) {
+
+		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+
+		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
+			jsonArray.put(
+				JSONUtil.put(
+					"enabled", samlSpIdpConnection.isEnabled()
+				).put(
+					"entityId", samlSpIdpConnection.getSamlIdpEntityId()
+				).put(
+					"name", samlSpIdpConnection.getName()
+				));
+		}
+
+		return JSONUtil.put(
+			"error", error
+		).put(
+			"relevantIdpConnections", jsonArray
+		).put(
+			"selectedName", selectedName
+		);
+	}
 
 	protected SamlProviderConfigurationHelper samlProviderConfigurationHelper;
 
