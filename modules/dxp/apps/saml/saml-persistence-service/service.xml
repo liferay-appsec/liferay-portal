@@ -152,7 +152,9 @@
 		<column name="clockSkew" type="long" />
 		<column name="enabled" type="boolean" />
 		<column name="forceAuthn" type="boolean" />
+		<column name="idpInitiatedSSOEnabled" type="boolean" />
 		<column name="ldapImportEnabled" type="boolean" />
+		<column name="maximumAuthnAge" type="int" />
 		<column name="metadataUpdatedDate" type="Date" />
 		<column name="metadataUrl" type="String" />
 		<column name="metadataXml" type="String" />
