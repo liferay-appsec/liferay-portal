@@ -70,9 +70,17 @@ public class SamlSpIdpConnectionTable
 	public final Column<SamlSpIdpConnectionTable, Boolean> forceAuthn =
 		createColumn(
 			"forceAuthn", Boolean.class, Types.BOOLEAN, Column.FLAG_DEFAULT);
+	public final Column<SamlSpIdpConnectionTable, Boolean>
+		idpInitiatedSSOEnabled = createColumn(
+			"idpInitiatedSSOEnabled", Boolean.class, Types.BOOLEAN,
+			Column.FLAG_DEFAULT);
 	public final Column<SamlSpIdpConnectionTable, Boolean> ldapImportEnabled =
 		createColumn(
 			"ldapImportEnabled", Boolean.class, Types.BOOLEAN,
+			Column.FLAG_DEFAULT);
+	public final Column<SamlSpIdpConnectionTable, Integer> maximumAuthnAge =
+		createColumn(
+			"maximumAuthnAge", Integer.class, Types.INTEGER,
 			Column.FLAG_DEFAULT);
 	public final Column<SamlSpIdpConnectionTable, Date> metadataUpdatedDate =
 		createColumn(

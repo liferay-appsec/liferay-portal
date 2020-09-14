@@ -74,7 +74,10 @@ public class SamlSpIdpConnectionModelImpl
 		{"samlIdpEntityId", Types.VARCHAR},
 		{"assertionSignatureRequired", Types.BOOLEAN},
 		{"clockSkew", Types.BIGINT}, {"enabled", Types.BOOLEAN},
-		{"forceAuthn", Types.BOOLEAN}, {"ldapImportEnabled", Types.BOOLEAN},
+		{"forceAuthn", Types.BOOLEAN},
+		{"idpInitiatedSSOEnabled", Types.BOOLEAN},
+		{"ldapImportEnabled", Types.BOOLEAN},
+		{"maximumAuthnAge", Types.INTEGER},
 		{"metadataUpdatedDate", Types.TIMESTAMP},
 		{"metadataUrl", Types.VARCHAR}, {"metadataXml", Types.CLOB},
 		{"name", Types.VARCHAR}, {"nameIdFormat", Types.VARCHAR},
@@ -98,7 +101,9 @@ public class SamlSpIdpConnectionModelImpl
 		TABLE_COLUMNS_MAP.put("clockSkew", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("enabled", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("forceAuthn", Types.BOOLEAN);
+		TABLE_COLUMNS_MAP.put("idpInitiatedSSOEnabled", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("ldapImportEnabled", Types.BOOLEAN);
+		TABLE_COLUMNS_MAP.put("maximumAuthnAge", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("metadataUpdatedDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("metadataUrl", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("metadataXml", Types.CLOB);
@@ -110,7 +115,7 @@ public class SamlSpIdpConnectionModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table SamlSpIdpConnection (samlSpIdpConnectionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,samlIdpEntityId VARCHAR(1024) null,assertionSignatureRequired BOOLEAN,clockSkew LONG,enabled BOOLEAN,forceAuthn BOOLEAN,ldapImportEnabled BOOLEAN,metadataUpdatedDate DATE null,metadataUrl VARCHAR(1024) null,metadataXml TEXT null,name VARCHAR(75) null,nameIdFormat VARCHAR(1024) null,signAuthnRequest BOOLEAN,unknownUsersAreStrangers BOOLEAN,userAttributeMappings STRING null)";
+		"create table SamlSpIdpConnection (samlSpIdpConnectionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,samlIdpEntityId VARCHAR(1024) null,assertionSignatureRequired BOOLEAN,clockSkew LONG,enabled BOOLEAN,forceAuthn BOOLEAN,idpInitiatedSSOEnabled BOOLEAN,ldapImportEnabled BOOLEAN,maximumAuthnAge INTEGER,metadataUpdatedDate DATE null,metadataUrl VARCHAR(1024) null,metadataXml TEXT null,name VARCHAR(75) null,nameIdFormat VARCHAR(1024) null,signAuthnRequest BOOLEAN,unknownUsersAreStrangers BOOLEAN,userAttributeMappings STRING null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table SamlSpIdpConnection";
@@ -355,11 +360,24 @@ public class SamlSpIdpConnectionModelImpl
 			(BiConsumer<SamlSpIdpConnection, Boolean>)
 				SamlSpIdpConnection::setForceAuthn);
 		attributeGetterFunctions.put(
+			"idpInitiatedSSOEnabled",
+			SamlSpIdpConnection::getIdpInitiatedSSOEnabled);
+		attributeSetterBiConsumers.put(
+			"idpInitiatedSSOEnabled",
+			(BiConsumer<SamlSpIdpConnection, Boolean>)
+				SamlSpIdpConnection::setIdpInitiatedSSOEnabled);
+		attributeGetterFunctions.put(
 			"ldapImportEnabled", SamlSpIdpConnection::getLdapImportEnabled);
 		attributeSetterBiConsumers.put(
 			"ldapImportEnabled",
 			(BiConsumer<SamlSpIdpConnection, Boolean>)
 				SamlSpIdpConnection::setLdapImportEnabled);
+		attributeGetterFunctions.put(
+			"maximumAuthnAge", SamlSpIdpConnection::getMaximumAuthnAge);
+		attributeSetterBiConsumers.put(
+			"maximumAuthnAge",
+			(BiConsumer<SamlSpIdpConnection, Integer>)
+				SamlSpIdpConnection::setMaximumAuthnAge);
 		attributeGetterFunctions.put(
 			"metadataUpdatedDate", SamlSpIdpConnection::getMetadataUpdatedDate);
 		attributeSetterBiConsumers.put(
@@ -639,6 +657,21 @@ public class SamlSpIdpConnectionModelImpl
 	}
 
 	@Override
+	public boolean getIdpInitiatedSSOEnabled() {
+		return _idpInitiatedSSOEnabled;
+	}
+
+	@Override
+	public boolean isIdpInitiatedSSOEnabled() {
+		return _idpInitiatedSSOEnabled;
+	}
+
+	@Override
+	public void setIdpInitiatedSSOEnabled(boolean idpInitiatedSSOEnabled) {
+		_idpInitiatedSSOEnabled = idpInitiatedSSOEnabled;
+	}
+
+	@Override
 	public boolean getLdapImportEnabled() {
 		return _ldapImportEnabled;
 	}
@@ -655,6 +688,16 @@ public class SamlSpIdpConnectionModelImpl
 		}
 
 		_ldapImportEnabled = ldapImportEnabled;
+	}
+
+	@Override
+	public int getMaximumAuthnAge() {
+		return _maximumAuthnAge;
+	}
+
+	@Override
+	public void setMaximumAuthnAge(int maximumAuthnAge) {
+		_maximumAuthnAge = maximumAuthnAge;
 	}
 
 	@Override
@@ -873,7 +916,10 @@ public class SamlSpIdpConnectionModelImpl
 		samlSpIdpConnectionImpl.setClockSkew(getClockSkew());
 		samlSpIdpConnectionImpl.setEnabled(isEnabled());
 		samlSpIdpConnectionImpl.setForceAuthn(isForceAuthn());
+		samlSpIdpConnectionImpl.setIdpInitiatedSSOEnabled(
+			isIdpInitiatedSSOEnabled());
 		samlSpIdpConnectionImpl.setLdapImportEnabled(isLdapImportEnabled());
+		samlSpIdpConnectionImpl.setMaximumAuthnAge(getMaximumAuthnAge());
 		samlSpIdpConnectionImpl.setMetadataUpdatedDate(
 			getMetadataUpdatedDate());
 		samlSpIdpConnectionImpl.setMetadataUrl(getMetadataUrl());
@@ -1015,7 +1061,12 @@ public class SamlSpIdpConnectionModelImpl
 
 		samlSpIdpConnectionCacheModel.forceAuthn = isForceAuthn();
 
+		samlSpIdpConnectionCacheModel.idpInitiatedSSOEnabled =
+			isIdpInitiatedSSOEnabled();
+
 		samlSpIdpConnectionCacheModel.ldapImportEnabled = isLdapImportEnabled();
+
+		samlSpIdpConnectionCacheModel.maximumAuthnAge = getMaximumAuthnAge();
 
 		Date metadataUpdatedDate = getMetadataUpdatedDate();
 
@@ -1161,7 +1212,9 @@ public class SamlSpIdpConnectionModelImpl
 	private long _clockSkew;
 	private boolean _enabled;
 	private boolean _forceAuthn;
+	private boolean _idpInitiatedSSOEnabled;
 	private boolean _ldapImportEnabled;
+	private int _maximumAuthnAge;
 	private Date _metadataUpdatedDate;
 	private String _metadataUrl;
 	private String _metadataXml;

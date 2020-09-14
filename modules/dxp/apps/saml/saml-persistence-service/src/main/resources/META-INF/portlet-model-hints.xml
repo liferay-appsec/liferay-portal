@@ -87,7 +87,9 @@
 		<field name="clockSkew" type="long" />
 		<field name="enabled" type="boolean" />
 		<field name="forceAuthn" type="boolean" />
+		<field name="idpInitiatedSSOEnabled" type="boolean" />
 		<field name="ldapImportEnabled" type="boolean" />
+		<field name="maximumAuthnAge" type="int" />
 		<field name="metadataUpdatedDate" type="Date" />
 		<field name="metadataUrl" type="String">
 			<hint-collection name="ENTITY-ID" />

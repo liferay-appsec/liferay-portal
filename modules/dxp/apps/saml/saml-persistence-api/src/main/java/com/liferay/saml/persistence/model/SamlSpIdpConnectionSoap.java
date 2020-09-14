@@ -47,7 +47,9 @@ public class SamlSpIdpConnectionSoap implements Serializable {
 		soapModel.setClockSkew(model.getClockSkew());
 		soapModel.setEnabled(model.isEnabled());
 		soapModel.setForceAuthn(model.isForceAuthn());
+		soapModel.setIdpInitiatedSSOEnabled(model.isIdpInitiatedSSOEnabled());
 		soapModel.setLdapImportEnabled(model.isLdapImportEnabled());
+		soapModel.setMaximumAuthnAge(model.getMaximumAuthnAge());
 		soapModel.setMetadataUpdatedDate(model.getMetadataUpdatedDate());
 		soapModel.setMetadataUrl(model.getMetadataUrl());
 		soapModel.setMetadataXml(model.getMetadataXml());
@@ -221,6 +223,18 @@ public class SamlSpIdpConnectionSoap implements Serializable {
 		_forceAuthn = forceAuthn;
 	}
 
+	public boolean getIdpInitiatedSSOEnabled() {
+		return _idpInitiatedSSOEnabled;
+	}
+
+	public boolean isIdpInitiatedSSOEnabled() {
+		return _idpInitiatedSSOEnabled;
+	}
+
+	public void setIdpInitiatedSSOEnabled(boolean idpInitiatedSSOEnabled) {
+		_idpInitiatedSSOEnabled = idpInitiatedSSOEnabled;
+	}
+
 	public boolean getLdapImportEnabled() {
 		return _ldapImportEnabled;
 	}
@@ -231,6 +245,14 @@ public class SamlSpIdpConnectionSoap implements Serializable {
 
 	public void setLdapImportEnabled(boolean ldapImportEnabled) {
 		_ldapImportEnabled = ldapImportEnabled;
+	}
+
+	public int getMaximumAuthnAge() {
+		return _maximumAuthnAge;
+	}
+
+	public void setMaximumAuthnAge(int maximumAuthnAge) {
+		_maximumAuthnAge = maximumAuthnAge;
 	}
 
 	public Date getMetadataUpdatedDate() {
@@ -316,7 +338,9 @@ public class SamlSpIdpConnectionSoap implements Serializable {
 	private long _clockSkew;
 	private boolean _enabled;
 	private boolean _forceAuthn;
+	private boolean _idpInitiatedSSOEnabled;
 	private boolean _ldapImportEnabled;
+	private int _maximumAuthnAge;
 	private Date _metadataUpdatedDate;
 	private String _metadataUrl;
 	private String _metadataXml;

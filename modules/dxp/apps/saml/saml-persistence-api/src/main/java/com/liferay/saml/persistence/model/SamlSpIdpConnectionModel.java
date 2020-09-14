@@ -263,6 +263,27 @@ public interface SamlSpIdpConnectionModel
 	public void setForceAuthn(boolean forceAuthn);
 
 	/**
+	 * Returns the idp initiated sso enabled of this saml sp idp connection.
+	 *
+	 * @return the idp initiated sso enabled of this saml sp idp connection
+	 */
+	public boolean getIdpInitiatedSSOEnabled();
+
+	/**
+	 * Returns <code>true</code> if this saml sp idp connection is idp initiated sso enabled.
+	 *
+	 * @return <code>true</code> if this saml sp idp connection is idp initiated sso enabled; <code>false</code> otherwise
+	 */
+	public boolean isIdpInitiatedSSOEnabled();
+
+	/**
+	 * Sets whether this saml sp idp connection is idp initiated sso enabled.
+	 *
+	 * @param idpInitiatedSSOEnabled the idp initiated sso enabled of this saml sp idp connection
+	 */
+	public void setIdpInitiatedSSOEnabled(boolean idpInitiatedSSOEnabled);
+
+	/**
 	 * Returns the ldap import enabled of this saml sp idp connection.
 	 *
 	 * @return the ldap import enabled of this saml sp idp connection
@@ -282,6 +303,20 @@ public interface SamlSpIdpConnectionModel
 	 * @param ldapImportEnabled the ldap import enabled of this saml sp idp connection
 	 */
 	public void setLdapImportEnabled(boolean ldapImportEnabled);
+
+	/**
+	 * Returns the maximum authn age of this saml sp idp connection.
+	 *
+	 * @return the maximum authn age of this saml sp idp connection
+	 */
+	public int getMaximumAuthnAge();
+
+	/**
+	 * Sets the maximum authn age of this saml sp idp connection.
+	 *
+	 * @param maximumAuthnAge the maximum authn age of this saml sp idp connection
+	 */
+	public void setMaximumAuthnAge(int maximumAuthnAge);
 
 	/**
 	 * Returns the metadata updated date of this saml sp idp connection.

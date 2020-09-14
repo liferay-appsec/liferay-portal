@@ -80,6 +80,23 @@ public interface SamlSpIdpConnectionLocalService
 
 	public SamlSpIdpConnection addSamlSpIdpConnection(
 			String samlIdpEntityId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean idpInitiatedSSOEnabled,
+			boolean ldapImportEnabled, int maximumAuthnAge, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, boolean signAuthnRequest,
+			boolean unknownUsersAreStrangers, String userAttributeMappings,
+			ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 #addSamlSpIdpConnection(String, boolean, long, boolean,
+	 boolean, boolean, int, String, InputStream, String, String,
+	 boolean, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
+	public SamlSpIdpConnection addSamlSpIdpConnection(
+			String samlIdpEntityId, boolean assertionSignatureRequired,
 			long clockSkew, boolean enabled, boolean forceAuthn,
 			boolean ldapImportEnabled, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
@@ -309,6 +326,24 @@ public interface SamlSpIdpConnectionLocalService
 	public void updateMetadata(long samlSpIdpConnectionId)
 		throws PortalException;
 
+	public SamlSpIdpConnection updateSamlSpIdpConnection(
+			long samlSpIdpConnectionId, String samlIdpEntityId,
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean idpInitiatedSSOEnabled, boolean ldapImportEnabled,
+			int maximumAuthnAge, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, boolean signAuthnRequest,
+			boolean unknownUsersAreStrangers, String userAttributeMappings,
+			ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 #updateSamlSpIdpConnection(long, String, boolean, long,
+	 boolean, boolean, boolean, String, InputStream, String,
+	 String, boolean, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
 	public SamlSpIdpConnection updateSamlSpIdpConnection(
 			long samlSpIdpConnectionId, String samlIdpEntityId,
 			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
