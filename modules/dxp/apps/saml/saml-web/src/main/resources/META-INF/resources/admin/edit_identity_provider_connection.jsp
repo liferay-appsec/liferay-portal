@@ -61,6 +61,10 @@ long clockSkew = GetterUtil.getLong(request.getAttribute(SamlWebKeys.SAML_CLOCK_
 
 		<aui:input helpMessage="force-authn-help" name="forceAuthn" />
 
+		<aui:input helpMessage="idp-initiated-sso-enabled-help" name="idpInitiatedSSOEnabled" />
+
+		<aui:input helpMessage="maximum-authn-age-help" name="maximumAuthnAge" />
+
 		<aui:input helpMessage="unknown-users-are-strangers-help" name="unknownUsersAreStrangers" />
 	</aui:fieldset>
 

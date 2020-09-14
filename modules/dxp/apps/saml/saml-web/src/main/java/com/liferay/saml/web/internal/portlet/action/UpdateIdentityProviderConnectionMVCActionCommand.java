@@ -64,10 +64,12 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 			uploadPortletRequest, "assertionSignatureRequired");
 		long clockSkew = ParamUtil.getLong(uploadPortletRequest, "clockSkew");
 		boolean enabled = ParamUtil.getBoolean(uploadPortletRequest, "enabled");
-		boolean forceAuthn = ParamUtil.getBoolean(
-			uploadPortletRequest, "forceAuthn");
+		boolean idpInitiatedSSOEnabled = ParamUtil.getBoolean(
+			uploadPortletRequest, "idpInitiatedSSOEnabled");
 		boolean ldapImportEnabled = ParamUtil.getBoolean(
 			uploadPortletRequest, "ldapImportEnabled");
+		int maximumAuthnAge = ParamUtil.getInteger(
+			uploadPortletRequest, "maximumAuthnAge");
 		boolean unknownUsersAreStrangers = ParamUtil.getBoolean(
 			uploadPortletRequest, "unknownUsersAreStrangers");
 		String metadataUrl = ParamUtil.getString(
@@ -88,17 +90,18 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 		if (samlSpIdpConnectionId <= 0) {
 			_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
 				samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
-				forceAuthn, ldapImportEnabled, metadataUrl,
-				metadataXmlInputStream, name, nameIdFormat, signAuthnRequest,
-				unknownUsersAreStrangers, userAttributeMappings,
-				serviceContext);
+				idpInitiatedSSOEnabled, ldapImportEnabled, maximumAuthnAge,
+				metadataUrl, metadataXmlInputStream, name, nameIdFormat,
+				signAuthnRequest, unknownUsersAreStrangers,
+				userAttributeMappings, serviceContext);
 		}
 		else {
 			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
 				samlSpIdpConnectionId, samlIdpEntityId,
-				assertionSignatureRequired, clockSkew, enabled, forceAuthn,
-				ldapImportEnabled, metadataUrl, metadataXmlInputStream, name,
-				nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
+				assertionSignatureRequired, clockSkew, enabled,
+				idpInitiatedSSOEnabled, ldapImportEnabled, maximumAuthnAge,
+				metadataUrl, metadataXmlInputStream, name, nameIdFormat,
+				signAuthnRequest, unknownUsersAreStrangers,
 				userAttributeMappings, serviceContext);
 		}
 	}
