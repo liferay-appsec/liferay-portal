@@ -21,10 +21,10 @@ import com.yubico.webauthn.data.ByteArray;
  */
 public class ConvertUtil {
 
-	public static long byteArrayToLong(ByteArray bytes)
+	public static long byteArrayToLong(ByteArray byteArray)
 		throws IllegalArgumentException {
 
-		return bytesToLong(bytes.getBytes());
+		return bytesToLong(byteArray.getBytes());
 	}
 
 	public static long bytesToLong(byte[] bytes)
@@ -34,29 +34,31 @@ public class ConvertUtil {
 			throw new IllegalArgumentException();
 		}
 
-		long result = 0;
+		long l = 0;
 
 		for (int i = 0; i < Long.BYTES; i++) {
-			result <<= Byte.SIZE;
-			result |= bytes[i] & 0xFF;
+			l <<= Byte.SIZE;
+
+			l |= bytes[i] & 0xFF;
 		}
 
-		return result;
+		return l;
 	}
 
-	public static ByteArray longToByteArray(long num) {
-		return new ByteArray(longToBytes(num));
+	public static ByteArray longToByteArray(long l) {
+		return new ByteArray(longToBytes(l));
 	}
 
-	public static byte[] longToBytes(long num) {
-		byte[] result = new byte[Long.BYTES];
+	public static byte[] longToBytes(long l) {
+		byte[] bytes = new byte[Long.BYTES];
 
 		for (int i = Long.BYTES - 1; i >= 0; i--) {
-			result[i] = (byte)(num & 0xFF);
-			num >>= Byte.SIZE;
+			bytes[i] = (byte)(l & 0xFF);
+
+			l >>= Byte.SIZE;
 		}
 
-		return result;
+		return bytes;
 	}
 
 }
