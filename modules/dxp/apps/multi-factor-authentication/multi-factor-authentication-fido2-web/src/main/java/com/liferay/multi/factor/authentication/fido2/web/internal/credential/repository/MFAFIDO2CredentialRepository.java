@@ -70,14 +70,13 @@ public class MFAFIDO2CredentialRepository implements CredentialRepository {
 
 	@Override
 	public Optional<ByteArray> getUserHandleForUsername(String userName) {
-		long userId = _getUserIdByUserName(userName);
-
-		return Optional.of(ConvertUtil.longToByteArray(userId));
+		return Optional.of(
+			ConvertUtil.longToByteArray(_getUserIdByUserName(userName)));
 	}
 
 	@Override
 	public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
-		return Optional.of(_getScreenNameByUserHandle(userHandle));
+		return Optional.ofNullable(_getScreenNameByUserHandle(userHandle));
 	}
 
 	@Override
@@ -92,13 +91,13 @@ public class MFAFIDO2CredentialRepository implements CredentialRepository {
 					userId, credentialId.getBase64());
 
 		if (mfaFIDO2CredentialEntry == null) {
-			return Optional.of(null);
+			return Optional.empty();
 		}
 
 		String storedCredentialKey = mfaFIDO2CredentialEntry.getCredentialKey();
 
 		if (!storedCredentialKey.equals(credentialId.getBase64())) {
-			return Optional.of(null);
+			return Optional.empty();
 		}
 
 		return Optional.of(_buildRegisteredCredential(mfaFIDO2CredentialEntry));
@@ -155,7 +154,7 @@ public class MFAFIDO2CredentialRepository implements CredentialRepository {
 		User user = _userLocalService.fetchUserById(userId);
 
 		if (user == null) {
-			return "";
+			return null;
 		}
 
 		return user.getScreenName();
