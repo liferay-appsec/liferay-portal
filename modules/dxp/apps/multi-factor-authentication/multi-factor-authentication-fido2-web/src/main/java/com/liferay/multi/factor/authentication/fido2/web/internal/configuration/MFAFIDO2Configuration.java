@@ -38,6 +38,12 @@ public interface MFAFIDO2Configuration {
 	public boolean enabled();
 
 	@Meta.AD(
+		deflt = "200", description = "order-description",
+		id = "service.ranking", name = "order", required = false
+	)
+	public int order();
+
+	@Meta.AD(
 		deflt = "relying Party", description = "relying-party-name-description",
 		name = "relying-party-name", required = false
 	)
