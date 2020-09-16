@@ -39,7 +39,7 @@ public interface MFAFIDO2Configuration {
 
 	@Meta.AD(
 		deflt = "relying Party", description = "relying-party-name-description",
-		name = "relying-party-name"
+		name = "relying-party-name", required = false
 	)
 	public String rpName();
 
@@ -63,7 +63,7 @@ public interface MFAFIDO2Configuration {
 	 */
 	@Meta.AD(
 		deflt = "localhost", description = "relying-party-id-description",
-		name = "relying-party-id"
+		name = "relying-party-id", required = false
 	)
 	public String rpId();
 
