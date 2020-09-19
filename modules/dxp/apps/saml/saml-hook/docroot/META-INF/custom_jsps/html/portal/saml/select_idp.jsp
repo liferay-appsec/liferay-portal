@@ -17,7 +17,7 @@
 <%@ include file="/html/portal/init.jsp" %>
 
 <%
-String redirect = ParamUtil.getString(request, "redirect");
+String redirect = GetterUtil.getString(ParamUtil.getString(request, "redirect"), ParamUtil.getString(request, "RelayState"));
 
 JSONObject samlSsoLoginContext = (JSONObject)request.getAttribute("SAML_SSO_LOGIN_CONTEXT");
 
