@@ -352,7 +352,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			}
 
 			Object sessionAuthnInstant = session.getAttribute(
-				SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT);
+				_SAML_SSO_ERROR_AUTHN_INSTANT);
 
 			if ((sessionAuthnInstant != null) &&
 				!authnInstant.isAfter(
@@ -377,7 +377,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		}
 
 		session.setAttribute(
-			SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT, authnInstant.getMillis());
+			_SAML_SSO_ERROR_AUTHN_INSTANT, authnInstant.getMillis());
 
 		throw new AuthnAgeException();
 	}
@@ -990,8 +990,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		else {
 			authnRequest.setForceAuthn(false);
 
-			httpSession.removeAttribute(
-				SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT);
+			httpSession.removeAttribute(_SAML_SSO_ERROR_AUTHN_INSTANT);
 		}
 
 		authnRequest.setID(generateIdentifier(20));
@@ -2161,6 +2160,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		throw new SubjectException("Unable to verify subject");
 	}
+
+	private static final String _SAML_SSO_ERROR_AUTHN_INSTANT =
+		"SAML_SSO_ERROR_AUTHN_INSTANT";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		WebSsoProfileImpl.class);

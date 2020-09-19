@@ -73,9 +73,6 @@ public interface SamlWebKeys {
 
 	public static final String SAML_SSO_ERROR = "SAML_SSO_ERROR";
 
-	public static final String SAML_SSO_ERROR_AUTHN_INSTANT =
-		"SAML_SSO_ERROR_AUTHN_INSTANT";
-
 	public static final String SAML_SSO_LOGIN_CONTEXT =
 		"SAML_SSO_LOGIN_CONTEXT";
 
