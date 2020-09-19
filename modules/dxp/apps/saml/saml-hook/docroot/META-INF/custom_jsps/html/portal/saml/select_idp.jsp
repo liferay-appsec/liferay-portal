@@ -64,7 +64,8 @@ String selectedEntityId = StringPool.BLANK;
 	
 				<aui:fieldset>
 					<aui:button-row>
-						<aui:button type="submit" value="sign-in" />
+						<aui:button cssClass="btn btn-primary" type="submit" value="sign-in" />
+						<aui:a cssClass="btn btn-secondary" href="<%= themeDisplay.getPathMain() %>">Cancel</aui:a>
 					</aui:button-row>
 				</aui:fieldset>
 			</c:when>
