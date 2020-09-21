@@ -26,6 +26,7 @@ import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.AuthnAgeException;
+import com.liferay.saml.runtime.exception.ForceAuthnException;
 import com.liferay.saml.runtime.servlet.profile.SamlSpIdpConnectionsProfile;
 import com.liferay.saml.util.JspUtil;
 
@@ -150,7 +151,8 @@ public class AuthRedirectAction extends BaseSamlStrutsAction {
 	}
 
 	private static final String[] _ERRORS = {
-		AuthnAgeException.class.getSimpleName()
+		AuthnAgeException.class.getSimpleName(),
+		ForceAuthnException.class.getSimpleName()
 	};
 
 	@Reference

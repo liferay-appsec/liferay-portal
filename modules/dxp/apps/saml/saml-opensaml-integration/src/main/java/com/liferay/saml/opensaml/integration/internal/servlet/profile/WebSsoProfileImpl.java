@@ -79,6 +79,7 @@ import com.liferay.saml.runtime.exception.AudienceException;
 import com.liferay.saml.runtime.exception.AuthnAgeException;
 import com.liferay.saml.runtime.exception.DestinationException;
 import com.liferay.saml.runtime.exception.ExpiredException;
+import com.liferay.saml.runtime.exception.ForceAuthnException;
 import com.liferay.saml.runtime.exception.InResponseToException;
 import com.liferay.saml.runtime.exception.IssuerException;
 import com.liferay.saml.runtime.exception.ReplayException;
@@ -253,6 +254,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			else if (exception1 instanceof ContactNameException) {
 				error = ContactNameException.class.getSimpleName();
 			}
+			else if (exception1 instanceof ForceAuthnException) {
+				error = ForceAuthnException.class.getSimpleName();
+			}
 			else if (exception1 instanceof SubjectException) {
 				error = SubjectException.class.getSimpleName();
 			}
@@ -387,13 +391,24 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		DateTime authnInstant = authnStatement.getAuthnInstant();
 
-		if (Validator.isNotNull(inResponseTo) &&
-			(samlSpIdpConnection.getMaximumAuthnAge() == 0)) {
+		if (Validator.isNotNull(inResponseTo)) {
+			if (samlSpIdpConnection.getMaximumAuthnAge() == 0) {
 
-			// All such SP initiated Authn Requests are sent with
-			// forceAuthn=true
+				// All such SP initiated Authn Requests are sent with
+				// forceAuthn=true
 
-			return;
+				return;
+			}
+
+			Object sessionAuthnInstant = session.getAttribute(
+				SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT);
+
+			if ((sessionAuthnInstant != null) &&
+				!authnInstant.isAfter(
+					GetterUtil.getLong(sessionAuthnInstant))) {
+
+				throw new ForceAuthnException();
+			}
 		}
 
 		DateTime nowDateTime = new DateTime(DateTimeZone.UTC);
@@ -1023,6 +1038,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		}
 		else {
 			authnRequest.setForceAuthn(false);
+
+			httpSession.removeAttribute(
+				SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT);
 		}
 
 		authnRequest.setID(generateIdentifier(20));

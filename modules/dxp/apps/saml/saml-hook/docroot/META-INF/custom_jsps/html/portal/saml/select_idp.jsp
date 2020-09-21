@@ -84,12 +84,23 @@ String selectedEntityId = StringPool.BLANK;
 			<aui:input name="idpEntityId" type="hidden" value="<%= selectedEntityId %>" />
 			<aui:input name="p_auth" type="hidden" value="<%= AuthTokenUtil.getToken(request) %>" />
 
-			<div class="portlet-msg-info">
+			<%
+			String key = StringPool.BLANK;
+			boolean portletMsgError = true;
+
+			if ("AuthnAgeException".equals(error)) {
+				key = "you-authenticated-with-this-identity-provide-too-long-ago";
+				portletMsgError = false;
+			}
+			else if ("ForceAuthnException".equals(error)) {
+				key = "the-identity-provider-is-not-behaving-as-expected";
+			}
+			%>
+
+			<div class="<%= portletMsgError ? "portlet-msg-error" : "portlet-msg-info" %>">
 				<h2><%= selectedName %></h2>
 
-				<c:if test='<%= "AuthnAgeException".equals(error) %>'>
-					<liferay-ui:message key="you-authenticated-with-this-identity-provide-too-long-ago" />
-				</c:if>
+				<liferay-ui:message key="<%= key %>" />
 
 				<aui:fieldset>
 					<aui:button-row>
