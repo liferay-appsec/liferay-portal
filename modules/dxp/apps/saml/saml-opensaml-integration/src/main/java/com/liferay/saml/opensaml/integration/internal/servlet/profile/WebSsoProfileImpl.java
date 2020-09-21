@@ -903,7 +903,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			samlSpSession.getSamlSpSessionKey(), -1);
 
 		httpServletResponse.sendRedirect(
-			getAuthRedirectURL(messageContext, httpServletRequest, null));
+			getAuthRedirectURL(messageContext, httpServletRequest));
 	}
 
 	protected void doSendAuthnRequest(
@@ -1032,10 +1032,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 	protected String getAuthRedirectURL(
 			MessageContext<?> messageContext,
-			HttpServletRequest httpServletRequest, String errorEntityId)
+			HttpServletRequest httpServletRequest)
 		throws PortalException {
 
-		StringBundler sb = new StringBundler(6);
+		StringBundler sb = new StringBundler(3);
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
@@ -1043,16 +1043,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		sb.append(themeDisplay.getPathMain());
 
-		sb.append("/portal/saml/auth_redirect?");
-
-		if (Validator.isNotNull(errorEntityId)) {
-			sb.append("idpEntityId=");
-			sb.append(errorEntityId);
-			sb.append("&redirect=");
-		}
-		else {
-			sb.append("redirect=");
-		}
+		sb.append("/portal/saml/auth_redirect?redirect=");
 
 		SAMLBindingContext samlBindingContext = messageContext.getSubcontext(
 			SAMLBindingContext.class);
