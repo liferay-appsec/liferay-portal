@@ -14,15 +14,44 @@
 
 package com.liferay.saml.web.internal.struts;
 
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.ContactNameException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.exception.UserEmailAddressException;
+import com.liferay.portal.kernel.exception.UserEmailAddressException.MustNotUseCompanyMx;
+import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlWebKeys;
+import com.liferay.saml.persistence.model.SamlSpIdpConnection;
+import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
+import com.liferay.saml.runtime.exception.AuthnAgeException;
+import com.liferay.saml.runtime.exception.EntityInteractionException;
+import com.liferay.saml.runtime.exception.ForceAuthnException;
+import com.liferay.saml.runtime.exception.SubjectException;
+import com.liferay.saml.runtime.servlet.profile.SamlSpIdpConnectionsProfile;
 import com.liferay.saml.runtime.servlet.profile.WebSsoProfile;
+import com.liferay.saml.util.JspUtil;
+
+import java.io.IOException;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Mika Koivisto
@@ -57,10 +86,134 @@ public class AssertionConsumerServiceAction extends BaseSamlStrutsAction {
 			HttpServletResponse httpServletResponse)
 		throws Exception {
 
-		_webSsoProfile.processResponse(httpServletRequest, httpServletResponse);
+		try {
+			_webSsoProfile.processResponse(
+				httpServletRequest, httpServletResponse);
+		}
+		catch (EntityInteractionException entityInteractionException) {
+			HttpServletRequest originalHttpServletRequest =
+				_portal.getOriginalServletRequest(httpServletRequest);
+
+			HttpSession httpSession = originalHttpServletRequest.getSession();
+
+			httpSession.setAttribute(
+				SamlWebKeys.SAML_SUBJECT_NAME_ID,
+				entityInteractionException.getNameIdValue());
+
+			Throwable causeThrowable = entityInteractionException.getCause();
+
+			String error = StringPool.BLANK;
+
+			if (causeThrowable instanceof ContactNameException) {
+				error = ContactNameException.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof SubjectException) {
+				error = SubjectException.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof MustNotUseCompanyMx) {
+				error = MustNotUseCompanyMx.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof UserEmailAddressException) {
+				error = UserEmailAddressException.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof UserScreenNameException) {
+				error = UserScreenNameException.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof ForceAuthnException) {
+				error = ForceAuthnException.class.getSimpleName();
+			}
+			else if (causeThrowable instanceof AuthnAgeException) {
+				error = AuthnAgeException.class.getSimpleName();
+			}
+
+			if (Validator.isBlank(error) ||
+				!ArrayUtil.contains(_ERRORS, error)) {
+
+				httpSession.setAttribute(SamlWebKeys.SAML_SSO_ERROR, error);
+
+				String redirect = ParamUtil.getString(
+					httpServletRequest, "RelayState");
+
+				redirect = _portal.escapeRedirect(redirect);
+
+				if (Validator.isNull(redirect)) {
+					redirect = _portal.getHomeURL(httpServletRequest);
+				}
+
+				try {
+					httpServletResponse.sendRedirect(redirect);
+
+					return null;
+				}
+				catch (IOException ioException) {
+					throw new SystemException(ioException);
+				}
+			}
+
+			SamlSpIdpConnection samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+					_portal.getCompanyId(httpServletRequest),
+					entityInteractionException.getEntityId());
+
+			List<SamlSpIdpConnection> samlSpIdpConnections =
+				_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(
+					_portal.getCompanyId(originalHttpServletRequest));
+
+			Stream<SamlSpIdpConnection> stream = samlSpIdpConnections.stream();
+
+			samlSpIdpConnections = stream.filter(
+				samlSpIdpConnection2 -> isEnabled(
+					samlSpIdpConnection2, httpServletRequest)
+			).collect(
+				Collectors.toList()
+			);
+
+			httpServletRequest.setAttribute(
+				SamlWebKeys.SAML_SSO_LOGIN_CONTEXT,
+				toJSONObject(
+					samlSpIdpConnections, samlSpIdpConnection.getName(),
+					error));
+
+			JspUtil.dispatch(
+				httpServletRequest, httpServletResponse,
+				"/portal/saml/select_idp.jsp",
+				"please-select-your-identity-provider", false);
+
+			return null;
+		}
 
 		return null;
 	}
+
+	protected boolean isEnabled(
+		SamlSpIdpConnection samlSpIdpConnection,
+		HttpServletRequest httpServletRequest) {
+
+		if (_samlSpIdpConnectionsProfile != null) {
+			return _samlSpIdpConnectionsProfile.isEnabled(
+				samlSpIdpConnection, httpServletRequest);
+		}
+
+		return samlSpIdpConnection.isEnabled();
+	}
+
+	private static final String[] _ERRORS = {
+		AuthnAgeException.class.getSimpleName(),
+		ForceAuthnException.class.getSimpleName()
+	};
+
+	@Reference
+	private Portal _portal;
+
+	@Reference
+	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
+
+	@Reference(
+		cardinality = ReferenceCardinality.OPTIONAL,
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY
+	)
+	private volatile SamlSpIdpConnectionsProfile _samlSpIdpConnectionsProfile;
 
 	@Reference
 	private WebSsoProfile _webSsoProfile;
