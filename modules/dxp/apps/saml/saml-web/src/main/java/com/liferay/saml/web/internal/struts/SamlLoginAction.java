@@ -14,7 +14,9 @@
 
 package com.liferay.saml.web.internal.struts;
 
+import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -84,6 +86,17 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 
 			httpServletRequest.setAttribute(
 				SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
+
+			boolean forceAuthn = GetterUtil.getBoolean(
+				ParamUtil.getBoolean(httpServletRequest, "forceAuthn"));
+
+			if (forceAuthn) {
+				AuthTokenUtil.checkCSRFToken(
+					httpServletRequest, SamlLoginAction.class.getName());
+
+				httpServletRequest.setAttribute(
+					SamlWebKeys.FORCE_REAUTHENTICATION, forceAuthn);
+			}
 
 			return null;
 		}

@@ -14,20 +14,36 @@
 
 package com.liferay.saml.web.internal.struts;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlWebKeys;
+import com.liferay.saml.persistence.model.SamlSpIdpConnection;
+import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
+import com.liferay.saml.runtime.exception.AuthnAgeException;
+import com.liferay.saml.runtime.servlet.profile.SamlSpIdpConnectionsProfile;
+import com.liferay.saml.util.JspUtil;
 
 import java.io.IOException;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Tomas Polesovsky
@@ -70,17 +86,84 @@ public class AuthRedirectAction extends BaseSamlStrutsAction {
 			redirect = _portal.getHomeURL(httpServletRequest);
 		}
 
-		try {
-			httpServletResponse.sendRedirect(redirect);
+		HttpServletRequest originalHttpServletRequest =
+			_portal.getOriginalServletRequest(httpServletRequest);
+
+		HttpSession session = originalHttpServletRequest.getSession();
+
+		String error = (String)session.getAttribute(SamlWebKeys.SAML_SSO_ERROR);
+
+		if (!ArrayUtil.contains(_ERRORS, error)) {
+			try {
+				httpServletResponse.sendRedirect(redirect);
+
+				return null;
+			}
+			catch (IOException ioException) {
+				throw new SystemException(ioException);
+			}
 		}
-		catch (IOException ioException) {
-			throw new SystemException(ioException);
-		}
+
+		SamlSpIdpConnection samlSpIdpConnection =
+			_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+				_portal.getCompanyId(httpServletRequest),
+				ParamUtil.get(
+					originalHttpServletRequest, "idpEntityId",
+					StringPool.BLANK));
+
+		List<SamlSpIdpConnection> samlSpIdpConnections =
+			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(
+				_portal.getCompanyId(originalHttpServletRequest));
+
+		Stream<SamlSpIdpConnection> stream = samlSpIdpConnections.stream();
+
+		samlSpIdpConnections = stream.filter(
+			samlSpIdpConnection2 -> isEnabled(
+				samlSpIdpConnection2, httpServletRequest)
+		).collect(
+			Collectors.toList()
+		);
+
+		httpServletRequest.setAttribute(
+			SamlWebKeys.SAML_SSO_LOGIN_CONTEXT,
+			toJSONObject(
+				samlSpIdpConnections, samlSpIdpConnection.getName(), error));
+
+		JspUtil.dispatch(
+			httpServletRequest, httpServletResponse,
+			"/portal/saml/select_idp.jsp",
+			"please-select-your-identity-provider", false);
 
 		return null;
 	}
 
+	protected boolean isEnabled(
+		SamlSpIdpConnection samlSpIdpConnection,
+		HttpServletRequest httpServletRequest) {
+
+		if (_samlSpIdpConnectionsProfile != null) {
+			return _samlSpIdpConnectionsProfile.isEnabled(
+				samlSpIdpConnection, httpServletRequest);
+		}
+
+		return samlSpIdpConnection.isEnabled();
+	}
+
+	private static final String[] _ERRORS = {
+		AuthnAgeException.class.getSimpleName()
+	};
+
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
+
+	@Reference(
+		cardinality = ReferenceCardinality.OPTIONAL,
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY
+	)
+	private volatile SamlSpIdpConnectionsProfile _samlSpIdpConnectionsProfile;
 
 }

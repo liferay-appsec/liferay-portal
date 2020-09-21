@@ -21,17 +21,23 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 JSONObject samlSsoLoginContext = (JSONObject)request.getAttribute("SAML_SSO_LOGIN_CONTEXT");
 
+String selectedName = samlSsoLoginContext.getString("selectedName");
+String error = samlSsoLoginContext.getString("error");
+
 JSONArray relevantIdpConnectionsJSONArray = samlSsoLoginContext.getJSONArray("relevantIdpConnections");
+
+String selectedEntityId = StringPool.BLANK;
 %>
 
+<liferay-util:buffer
+	var="selectIdpContent"
+>
 <aui:form action='<%= PortalUtil.getPortalURL(request) + "/c/portal/login" %>' method="get" name="fm">
 	<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
 	<c:choose>
 		<c:when test="<%= relevantIdpConnectionsJSONArray.length() > 0 %>">
-			<p><liferay-ui:message key="please-select-your-identity-provider" /></p>
-
 			<aui:select label="identity-provider" name="idpEntityId">
 
 				<%
@@ -40,6 +46,12 @@ JSONArray relevantIdpConnectionsJSONArray = samlSsoLoginContext.getJSONArray("re
 
 					String entityId = relevantIdpConnectionJSONObject.getString("entityId");
 					String name = relevantIdpConnectionJSONObject.getString("name");
+
+					if (name.equals(selectedName)) {
+						selectedEntityId = entityId;
+
+						continue;
+					}
 				%>
 
 					<aui:option label="<%= HtmlUtil.escape(name) %>" value="<%= HtmlUtil.escapeAttribute(entityId) %>" />
@@ -61,3 +73,39 @@ JSONArray relevantIdpConnectionsJSONArray = samlSsoLoginContext.getJSONArray("re
 		</c:otherwise>
 	</c:choose>
 </aui:form>
+</liferay-util:buffer>
+
+<c:choose>
+	<c:when test="<%= Validator.isNotNull(selectedEntityId) %>">
+		<aui:form action='<%= PortalUtil.getPortalURL(request) + "/c/portal/login" %>' method="post" name="fm">
+			<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
+			<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
+			<aui:input name="forceAuthn" type="hidden" value="true" />
+			<aui:input name="idpEntityId" type="hidden" value="<%= selectedEntityId %>" />
+			<aui:input name="p_auth" type="hidden" value="<%= AuthTokenUtil.getToken(request) %>" />
+
+			<div class="portlet-msg-info">
+				<h2><%= selectedName %></h2>
+
+				<c:if test='<%= "AuthnAgeException".equals(error) %>'>
+					<liferay-ui:message key="you-authenticated-with-this-identity-provide-too-long-ago" />
+				</c:if>
+
+				<aui:fieldset>
+					<aui:button-row>
+						<aui:button type="submit" value="re-authenticate" />
+					</aui:button-row>
+				</aui:fieldset>
+			</div>
+		</aui:form>
+
+		<c:if test="<%= relevantIdpConnectionsJSONArray.length() > 1 %>">
+			<p><liferay-ui:message key="alternatively-you-can-select-a-different-identity-provider" /></p>
+			<%= selectIdpContent %>
+		</c:if>
+	</c:when>
+	<c:otherwise>
+		<p><liferay-ui:message key="please-select-your-identity-provider" /></p>
+		<%= selectIdpContent %>
+	</c:otherwise>
+</c:choose>

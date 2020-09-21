@@ -32,9 +32,11 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -74,6 +76,7 @@ import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.AssertionException;
 import com.liferay.saml.runtime.exception.AudienceException;
+import com.liferay.saml.runtime.exception.AuthnAgeException;
 import com.liferay.saml.runtime.exception.DestinationException;
 import com.liferay.saml.runtime.exception.ExpiredException;
 import com.liferay.saml.runtime.exception.InResponseToException;
@@ -214,7 +217,16 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 			HttpSession httpSession = originalHttpServletRequest.getSession();
 
+			String errorEntityId = null;
+
 			if (messageContext != null) {
+				SAMLPeerEntityContext samlPeerEntityContext =
+					messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
+				if (samlPeerEntityContext != null) {
+					errorEntityId = samlPeerEntityContext.getEntityId();
+				}
+
 				SAMLSubjectNameIdentifierContext
 					samlSubjectNameIdentifierContext =
 						messageContext.getSubcontext(
@@ -235,7 +247,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 			String error = StringPool.BLANK;
 
-			if (exception1 instanceof ContactNameException) {
+			if (exception1 instanceof AuthnAgeException) {
+				error = AuthnAgeException.class.getSimpleName();
+			}
+			else if (exception1 instanceof ContactNameException) {
 				error = ContactNameException.class.getSimpleName();
 			}
 			else if (exception1 instanceof SubjectException) {
@@ -272,7 +287,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 			try {
 				httpServletResponse.sendRedirect(
-					getAuthRedirectURL(messageContext, httpServletRequest));
+					getAuthRedirectURL(
+						messageContext, httpServletRequest, errorEntityId));
 			}
 			catch (Exception exception2) {
 				ExceptionHandlerUtil.handleException(exception2);
@@ -362,6 +378,42 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			httpServletRequest, httpServletResponse,
 			SamlWebKeys.SAML_SSO_SESSION_ID,
 			samlSsoRequestContext.getSamlSsoSessionId(), -1);
+	}
+
+	protected void checkAuthnInstant(
+			String inResponseTo, AuthnStatement authnStatement,
+			SamlSpIdpConnection samlSpIdpConnection, HttpSession session)
+		throws PortalException {
+
+		DateTime authnInstant = authnStatement.getAuthnInstant();
+
+		if (Validator.isNotNull(inResponseTo) &&
+			(samlSpIdpConnection.getMaximumAuthnAge() == 0)) {
+
+			// All such SP initiated Authn Requests are sent with
+			// forceAuthn=true
+
+			return;
+		}
+
+		DateTime nowDateTime = new DateTime(DateTimeZone.UTC);
+
+		DateTime adjustedAuthnInstantDateTime = authnInstant.minus(
+			new Duration(samlSpIdpConnection.getClockSkew()));
+
+		if (adjustedAuthnInstantDateTime.isAfter(
+				nowDateTime.minus(
+					new Duration(
+						samlSpIdpConnection.getMaximumAuthnAge() *
+							Time.MINUTE)))) {
+
+			return;
+		}
+
+		session.setAttribute(
+			SamlWebKeys.SAML_SSO_ERROR_AUTHN_INSTANT, authnInstant.getMillis());
+
+		throw new AuthnAgeException();
 	}
 
 	protected SamlSsoRequestContext decodeAuthnConversationAfterLogin(
@@ -837,9 +889,21 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		SamlSpSession samlSpSession = getSamlSpSession(httpServletRequest);
 		HttpSession httpSession = httpServletRequest.getSession();
 
+		SAMLPeerEntityContext samlPeerEntityContext =
+			messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
 
 		AuthnStatement authnStatement = authnStatements.get(0);
+
+		SamlSpIdpConnection samlSpIdpConnection =
+			_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+				CompanyThreadLocal.getCompanyId(),
+				samlPeerEntityContext.getEntityId());
+
+		checkAuthnInstant(
+			samlResponse.getInResponseTo(), authnStatement, samlSpIdpConnection,
+			httpSession);
 
 		String sessionIndex = authnStatement.getSessionIndex();
 
@@ -873,7 +937,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			samlSpSession.getSamlSpSessionKey(), -1);
 
 		httpServletResponse.sendRedirect(
-			getAuthRedirectURL(messageContext, httpServletRequest));
+			getAuthRedirectURL(messageContext, httpServletRequest, null));
 	}
 
 	protected void doSendAuthnRequest(
@@ -948,14 +1012,17 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
-		String error = (String)httpSession.getAttribute(
-			SamlWebKeys.SAML_SSO_ERROR);
+		boolean forceReauthentication = GetterUtil.getBoolean(
+			httpServletRequest.getAttribute(SamlWebKeys.FORCE_REAUTHENTICATION),
+			Boolean.FALSE);
 
-		if (Validator.isBlank(error)) {
-			authnRequest.setForceAuthn(samlSpIdpConnection.isForceAuthn());
+		if ((samlSpIdpConnection.getMaximumAuthnAge() == 0) ||
+			forceReauthentication) {
+
+			authnRequest.setForceAuthn(true);
 		}
 		else {
-			authnRequest.setForceAuthn(true);
+			authnRequest.setForceAuthn(false);
 		}
 
 		authnRequest.setID(generateIdentifier(20));
@@ -996,10 +1063,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 	protected String getAuthRedirectURL(
 			MessageContext<?> messageContext,
-			HttpServletRequest httpServletRequest)
+			HttpServletRequest httpServletRequest, String errorEntityId)
 		throws PortalException {
 
-		StringBundler sb = new StringBundler(3);
+		StringBundler sb = new StringBundler(6);
 
 		ThemeDisplay themeDisplay =
 			(ThemeDisplay)httpServletRequest.getAttribute(
@@ -1007,7 +1074,16 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		sb.append(themeDisplay.getPathMain());
 
-		sb.append("/portal/saml/auth_redirect?redirect=");
+		sb.append("/portal/saml/auth_redirect?");
+
+		if (Validator.isNotNull(errorEntityId)) {
+			sb.append("idpEntityId=");
+			sb.append(errorEntityId);
+			sb.append("&redirect=");
+		}
+		else {
+			sb.append("redirect=");
+		}
 
 		SAMLBindingContext samlBindingContext = messageContext.getSubcontext(
 			SAMLBindingContext.class);
