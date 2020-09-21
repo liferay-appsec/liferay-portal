@@ -32,47 +32,47 @@ String selectedEntityId = StringPool.BLANK;
 <liferay-util:buffer
 	var="selectIdpContent"
 >
-<aui:form action='<%= PortalUtil.getPortalURL(request) + "/c/portal/login" %>' method="get" name="fm">
-	<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
-	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
-
-	<c:choose>
-		<c:when test="<%= relevantIdpConnectionsJSONArray.length() > 0 %>">
-			<aui:select label="identity-provider" name="idpEntityId">
-
-				<%
-				for (int i = 0; i < relevantIdpConnectionsJSONArray.length(); i++) {
-					JSONObject relevantIdpConnectionJSONObject = relevantIdpConnectionsJSONArray.getJSONObject(i);
-
-					String entityId = relevantIdpConnectionJSONObject.getString("entityId");
-					String name = relevantIdpConnectionJSONObject.getString("name");
-
-					if (name.equals(selectedName)) {
-						selectedEntityId = entityId;
-
-						continue;
+	<aui:form action='<%= PortalUtil.getPortalURL(request) + "/c/portal/login" %>' method="get" name="fm">
+		<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
+		<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
+	
+		<c:choose>
+			<c:when test="<%= relevantIdpConnectionsJSONArray.length() > 0 %>">
+				<aui:select label="identity-provider" name="idpEntityId">
+	
+					<%
+					for (int i = 0; i < relevantIdpConnectionsJSONArray.length(); i++) {
+						JSONObject relevantIdpConnectionJSONObject = relevantIdpConnectionsJSONArray.getJSONObject(i);
+	
+						String entityId = relevantIdpConnectionJSONObject.getString("entityId");
+						String name = relevantIdpConnectionJSONObject.getString("name");
+	
+						if (name.equals(selectedName)) {
+							selectedEntityId = entityId;
+	
+							continue;
+						}
+					%>
+	
+						<aui:option label="<%= HtmlUtil.escape(name) %>" value="<%= HtmlUtil.escapeAttribute(entityId) %>" />
+	
+					<%
 					}
-				%>
-
-					<aui:option label="<%= HtmlUtil.escape(name) %>" value="<%= HtmlUtil.escapeAttribute(entityId) %>" />
-
-				<%
-				}
-				%>
-
-			</aui:select>
-
-			<aui:fieldset>
-				<aui:button-row>
-					<aui:button type="submit" value="sign-in" />
-				</aui:button-row>
-			</aui:fieldset>
-		</c:when>
-		<c:otherwise>
-			<liferay-ui:message key="no-identity-provider-is-available-to-sign-you-in" />
-		</c:otherwise>
-	</c:choose>
-</aui:form>
+					%>
+	
+				</aui:select>
+	
+				<aui:fieldset>
+					<aui:button-row>
+						<aui:button type="submit" value="sign-in" />
+					</aui:button-row>
+				</aui:fieldset>
+			</c:when>
+			<c:otherwise>
+				<liferay-ui:message key="no-identity-provider-is-available-to-sign-you-in" />
+			</c:otherwise>
+		</c:choose>
+	</aui:form>
 </liferay-util:buffer>
 
 <c:choose>
