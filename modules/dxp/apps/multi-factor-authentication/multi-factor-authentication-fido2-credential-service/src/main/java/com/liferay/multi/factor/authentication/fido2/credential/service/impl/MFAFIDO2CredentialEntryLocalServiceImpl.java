@@ -49,7 +49,9 @@ public class MFAFIDO2CredentialEntryLocalServiceImpl
 
 		if (mfaFIDO2CredentialEntry != null) {
 			throw new DuplicateMFAFIDO2CredentialEntryException(
-				"{credentialKey=" + credentialKey + ", userId=" + userId + "}");
+				StringBundler.concat(
+					"{credentialKey=", credentialKey, ", userId=", userId,
+					"}"));
 		}
 
 		mfaFIDO2CredentialEntry = mfaFIDO2CredentialEntryPersistence.create(
@@ -106,7 +108,9 @@ public class MFAFIDO2CredentialEntryLocalServiceImpl
 
 		if (mfaFIDO2CredentialEntry == null) {
 			throw new NoSuchMFAFIDO2CredentialEntryException(
-				"{credentialKey=" + credentialKey + ", userId=" + userId + "}");
+				StringBundler.concat(
+					"{credentialKey=", credentialKey, ", userId=", userId,
+					"}"));
 		}
 
 		if (signatureCount < 1) {
