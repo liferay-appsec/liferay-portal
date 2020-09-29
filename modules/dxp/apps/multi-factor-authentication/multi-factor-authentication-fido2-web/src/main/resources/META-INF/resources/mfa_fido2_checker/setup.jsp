@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String pkccOptions = (String)request.getAttribute("pkccOptions");
+String pkccOptions = (String)request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS);
 %>
 
 <div id="<portlet:namespace/>messageContainer"></div>

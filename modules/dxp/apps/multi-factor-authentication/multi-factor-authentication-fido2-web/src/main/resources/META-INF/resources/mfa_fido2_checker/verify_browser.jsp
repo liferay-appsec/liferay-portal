@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String assertionRequest = (String)request.getAttribute("assertionRequest");
+String assertionRequest = (String)request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST);
 %>
 
 <div id="<portlet:namespace/>messageContainer"></div>

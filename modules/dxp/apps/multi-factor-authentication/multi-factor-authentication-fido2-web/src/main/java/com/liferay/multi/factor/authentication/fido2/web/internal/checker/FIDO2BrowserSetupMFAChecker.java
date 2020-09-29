@@ -100,7 +100,8 @@ public class FIDO2BrowserSetupMFAChecker
 
 		String assertionRequest = _startAuthentication(userId);
 
-		httpServletRequest.setAttribute("assertionRequest", assertionRequest);
+		httpServletRequest.setAttribute(
+			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST, assertionRequest);
 
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher(
@@ -113,7 +114,8 @@ public class FIDO2BrowserSetupMFAChecker
 
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
-		httpSession.setAttribute("assertionRequest", assertionRequest);
+		httpSession.setAttribute(
+			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST, assertionRequest);
 	}
 
 	@Override
@@ -140,7 +142,8 @@ public class FIDO2BrowserSetupMFAChecker
 
 		String pkccOptions = _startRegistration(userId);
 
-		httpServletRequest.setAttribute("pkccOptions", pkccOptions);
+		httpServletRequest.setAttribute(
+			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, pkccOptions);
 
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher(
@@ -153,7 +156,8 @@ public class FIDO2BrowserSetupMFAChecker
 
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
-		httpSession.setAttribute("pkccOptions", pkccOptions);
+		httpSession.setAttribute(
+			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, pkccOptions);
 	}
 
 	@Override
@@ -440,7 +444,8 @@ public class FIDO2BrowserSetupMFAChecker
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
 		AssertionRequest assertionRequest = _jsonMapper.readValue(
-			(String)httpSession.getAttribute("assertionRequest"),
+			(String)httpSession.getAttribute(
+				MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST),
 			AssertionRequest.class);
 
 		FinishAssertionOptions finishAssertionOptions =
@@ -482,7 +487,8 @@ public class FIDO2BrowserSetupMFAChecker
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
 		PublicKeyCredentialCreationOptions pkccOptions = _jsonMapper.readValue(
-			(String)httpSession.getAttribute("pkccOptions"),
+			(String)httpSession.getAttribute(
+				MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS),
 			PublicKeyCredentialCreationOptions.class);
 
 		FinishRegistrationOptions finishRegistrationOptions =

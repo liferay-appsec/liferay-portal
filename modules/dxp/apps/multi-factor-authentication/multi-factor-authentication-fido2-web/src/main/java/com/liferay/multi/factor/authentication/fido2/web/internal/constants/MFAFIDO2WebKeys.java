@@ -19,6 +19,12 @@ package com.liferay.multi.factor.authentication.fido2.web.internal.constants;
  */
 public class MFAFIDO2WebKeys {
 
+	public static final String MFA_FIDO2_ASSERTION_REQUEST =
+		"MFA_FIDO2_ASSERTION_REQUEST";
+
+	public static final String MFA_FIDO2_PKCC_OPTIONS =
+		"MFA_FIDO2_PKCC_OPTIONS";
+
 	public static final String MFA_FIDO2_VALIDATED_AT_TIME =
 		"MFA_FIDO2_VALIDATED_AT_TIME";
 
