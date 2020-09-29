@@ -54,7 +54,9 @@ public class SamlSpIdpConnectionWrapper
 		attributes.put("clockSkew", getClockSkew());
 		attributes.put("enabled", isEnabled());
 		attributes.put("forceAuthn", isForceAuthn());
+		attributes.put("idpInitiatedSSOEnabled", isIdpInitiatedSSOEnabled());
 		attributes.put("ldapImportEnabled", isLdapImportEnabled());
+		attributes.put("maximumAuthnAge", getMaximumAuthnAge());
 		attributes.put("metadataUpdatedDate", getMetadataUpdatedDate());
 		attributes.put("metadataUrl", getMetadataUrl());
 		attributes.put("metadataXml", getMetadataXml());
@@ -138,11 +140,24 @@ public class SamlSpIdpConnectionWrapper
 			setForceAuthn(forceAuthn);
 		}
 
+		Boolean idpInitiatedSSOEnabled = (Boolean)attributes.get(
+			"idpInitiatedSSOEnabled");
+
+		if (idpInitiatedSSOEnabled != null) {
+			setIdpInitiatedSSOEnabled(idpInitiatedSSOEnabled);
+		}
+
 		Boolean ldapImportEnabled = (Boolean)attributes.get(
 			"ldapImportEnabled");
 
 		if (ldapImportEnabled != null) {
 			setLdapImportEnabled(ldapImportEnabled);
+		}
+
+		Integer maximumAuthnAge = (Integer)attributes.get("maximumAuthnAge");
+
+		if (maximumAuthnAge != null) {
+			setMaximumAuthnAge(maximumAuthnAge);
 		}
 
 		Date metadataUpdatedDate = (Date)attributes.get("metadataUpdatedDate");
@@ -257,6 +272,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Returns the idp initiated sso enabled of this saml sp idp connection.
+	 *
+	 * @return the idp initiated sso enabled of this saml sp idp connection
+	 */
+	@Override
+	public boolean getIdpInitiatedSSOEnabled() {
+		return model.getIdpInitiatedSSOEnabled();
+	}
+
+	/**
 	 * Returns the ldap import enabled of this saml sp idp connection.
 	 *
 	 * @return the ldap import enabled of this saml sp idp connection
@@ -264,6 +289,16 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public boolean getLdapImportEnabled() {
 		return model.getLdapImportEnabled();
+	}
+
+	/**
+	 * Returns the maximum authn age of this saml sp idp connection.
+	 *
+	 * @return the maximum authn age of this saml sp idp connection
+	 */
+	@Override
+	public int getMaximumAuthnAge() {
+		return model.getMaximumAuthnAge();
 	}
 
 	/**
@@ -447,6 +482,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Returns <code>true</code> if this saml sp idp connection is idp initiated sso enabled.
+	 *
+	 * @return <code>true</code> if this saml sp idp connection is idp initiated sso enabled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIdpInitiatedSSOEnabled() {
+		return model.isIdpInitiatedSSOEnabled();
+	}
+
+	/**
 	 * Returns <code>true</code> if this saml sp idp connection is ldap import enabled.
 	 *
 	 * @return <code>true</code> if this saml sp idp connection is ldap import enabled; <code>false</code> otherwise
@@ -544,6 +589,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Sets whether this saml sp idp connection is idp initiated sso enabled.
+	 *
+	 * @param idpInitiatedSSOEnabled the idp initiated sso enabled of this saml sp idp connection
+	 */
+	@Override
+	public void setIdpInitiatedSSOEnabled(boolean idpInitiatedSSOEnabled) {
+		model.setIdpInitiatedSSOEnabled(idpInitiatedSSOEnabled);
+	}
+
+	/**
 	 * Sets whether this saml sp idp connection is ldap import enabled.
 	 *
 	 * @param ldapImportEnabled the ldap import enabled of this saml sp idp connection
@@ -551,6 +606,16 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public void setLdapImportEnabled(boolean ldapImportEnabled) {
 		model.setLdapImportEnabled(ldapImportEnabled);
+	}
+
+	/**
+	 * Sets the maximum authn age of this saml sp idp connection.
+	 *
+	 * @param maximumAuthnAge the maximum authn age of this saml sp idp connection
+	 */
+	@Override
+	public void setMaximumAuthnAge(int maximumAuthnAge) {
+		model.setMaximumAuthnAge(maximumAuthnAge);
 	}
 
 	/**

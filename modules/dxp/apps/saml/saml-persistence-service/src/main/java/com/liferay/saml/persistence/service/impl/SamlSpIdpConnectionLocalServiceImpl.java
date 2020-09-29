@@ -50,8 +50,8 @@ public class SamlSpIdpConnectionLocalServiceImpl
 	@Override
 	public SamlSpIdpConnection addSamlSpIdpConnection(
 			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
+			long clockSkew, boolean enabled, boolean idpInitiatedSSOEnabled,
+			boolean ldapImportEnabled, int maximumAuthnAge, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
 			String nameIdFormat, boolean signAuthnRequest,
 			boolean unknownUsersAreStrangers, String userAttributeMappings,
@@ -89,8 +89,9 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setClockSkew(clockSkew);
 		samlSpIdpConnection.setEnabled(enabled);
 		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
-		samlSpIdpConnection.setForceAuthn(forceAuthn);
+		samlSpIdpConnection.setIdpInitiatedSSOEnabled(idpInitiatedSSOEnabled);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
+		samlSpIdpConnection.setMaximumAuthnAge(maximumAuthnAge);
 		samlSpIdpConnection.setMetadataUpdatedDate(now);
 		samlSpIdpConnection.setUnknownUsersAreStrangers(
 			unknownUsersAreStrangers);
@@ -126,6 +127,40 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setUserAttributeMappings(userAttributeMappings);
 
 		return samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #addSamlSpIdpConnection(String, boolean, long, boolean,
+	 *             boolean, boolean, int, String, InputStream, String, String,
+	 *             boolean, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
+	@Override
+	public SamlSpIdpConnection addSamlSpIdpConnection(
+			String samlIdpEntityId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean forceAuthn,
+			boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, boolean signAuthnRequest,
+			boolean unknownUsersAreStrangers, String userAttributeMappings,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		int maximumAuthnAge;
+
+		if (forceAuthn) {
+			maximumAuthnAge = 0;
+		}
+		else {
+			maximumAuthnAge = -1;
+		}
+
+		return addSamlSpIdpConnection(
+			samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
+			!forceAuthn, ldapImportEnabled, maximumAuthnAge, metadataUrl,
+			metadataXmlInputStream, name, nameIdFormat, signAuthnRequest, false,
+			userAttributeMappings, serviceContext);
 	}
 
 	/**
@@ -240,7 +275,8 @@ public class SamlSpIdpConnectionLocalServiceImpl
 	public SamlSpIdpConnection updateSamlSpIdpConnection(
 			long samlSpIdpConnectionId, String samlIdpEntityId,
 			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			boolean idpInitiatedSSOEnabled, boolean ldapImportEnabled,
+			int maximumAuthnAge, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
 			String nameIdFormat, boolean signAuthnRequest,
 			boolean unknownUsersAreStrangers, String userAttributeMappings,
@@ -278,8 +314,9 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setClockSkew(clockSkew);
 		samlSpIdpConnection.setEnabled(enabled);
 		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
-		samlSpIdpConnection.setForceAuthn(forceAuthn);
+		samlSpIdpConnection.setIdpInitiatedSSOEnabled(idpInitiatedSSOEnabled);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
+		samlSpIdpConnection.setMaximumAuthnAge(maximumAuthnAge);
 		samlSpIdpConnection.setMetadataUpdatedDate(now);
 		samlSpIdpConnection.setUnknownUsersAreStrangers(
 			unknownUsersAreStrangers);
@@ -320,6 +357,41 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setUserAttributeMappings(userAttributeMappings);
 
 		return samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #updateSamlSpIdpConnection(long, String, boolean, long,
+	 *             boolean, boolean, boolean, String, InputStream, String,
+	 *             String, boolean, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
+	@Override
+	public SamlSpIdpConnection updateSamlSpIdpConnection(
+			long samlSpIdpConnectionId, String samlIdpEntityId,
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, boolean signAuthnRequest,
+			boolean unknownUsersAreStrangers, String userAttributeMappings,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		int maximumAuthnAge;
+
+		if (forceAuthn) {
+			maximumAuthnAge = 0;
+		}
+		else {
+			maximumAuthnAge = -1;
+		}
+
+		return updateSamlSpIdpConnection(
+			samlSpIdpConnectionId, samlIdpEntityId, assertionSignatureRequired,
+			clockSkew, enabled, !forceAuthn, ldapImportEnabled, maximumAuthnAge,
+			metadataUrl, metadataXmlInputStream, name, nameIdFormat,
+			signAuthnRequest, unknownUsersAreStrangers, userAttributeMappings,
+			serviceContext);
 	}
 
 	/**

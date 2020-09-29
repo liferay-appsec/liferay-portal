@@ -148,8 +148,13 @@ public class SamlSpIdpConnectionPersistenceTest {
 
 		newSamlSpIdpConnection.setForceAuthn(RandomTestUtil.randomBoolean());
 
+		newSamlSpIdpConnection.setIdpInitiatedSSOEnabled(
+			RandomTestUtil.randomBoolean());
+
 		newSamlSpIdpConnection.setLdapImportEnabled(
 			RandomTestUtil.randomBoolean());
+
+		newSamlSpIdpConnection.setMaximumAuthnAge(RandomTestUtil.nextInt());
 
 		newSamlSpIdpConnection.setMetadataUpdatedDate(
 			RandomTestUtil.nextDate());
@@ -212,8 +217,14 @@ public class SamlSpIdpConnectionPersistenceTest {
 			existingSamlSpIdpConnection.isForceAuthn(),
 			newSamlSpIdpConnection.isForceAuthn());
 		Assert.assertEquals(
+			existingSamlSpIdpConnection.isIdpInitiatedSSOEnabled(),
+			newSamlSpIdpConnection.isIdpInitiatedSSOEnabled());
+		Assert.assertEquals(
 			existingSamlSpIdpConnection.isLdapImportEnabled(),
 			newSamlSpIdpConnection.isLdapImportEnabled());
+		Assert.assertEquals(
+			existingSamlSpIdpConnection.getMaximumAuthnAge(),
+			newSamlSpIdpConnection.getMaximumAuthnAge());
 		Assert.assertEquals(
 			Time.getShortTimestamp(
 				existingSamlSpIdpConnection.getMetadataUpdatedDate()),
@@ -289,7 +300,8 @@ public class SamlSpIdpConnectionPersistenceTest {
 			true, "userId", true, "userName", true, "createDate", true,
 			"modifiedDate", true, "samlIdpEntityId", true,
 			"assertionSignatureRequired", true, "clockSkew", true, "enabled",
-			true, "forceAuthn", true, "ldapImportEnabled", true,
+			true, "forceAuthn", true, "idpInitiatedSSOEnabled", true,
+			"ldapImportEnabled", true, "maximumAuthnAge", true,
 			"metadataUpdatedDate", true, "metadataUrl", true, "name", true,
 			"nameIdFormat", true, "signAuthnRequest", true,
 			"unknownUsersAreStrangers", true, "userAttributeMappings", true);
@@ -613,8 +625,13 @@ public class SamlSpIdpConnectionPersistenceTest {
 
 		samlSpIdpConnection.setForceAuthn(RandomTestUtil.randomBoolean());
 
+		samlSpIdpConnection.setIdpInitiatedSSOEnabled(
+			RandomTestUtil.randomBoolean());
+
 		samlSpIdpConnection.setLdapImportEnabled(
 			RandomTestUtil.randomBoolean());
+
+		samlSpIdpConnection.setMaximumAuthnAge(RandomTestUtil.nextInt());
 
 		samlSpIdpConnection.setMetadataUpdatedDate(RandomTestUtil.nextDate());
 

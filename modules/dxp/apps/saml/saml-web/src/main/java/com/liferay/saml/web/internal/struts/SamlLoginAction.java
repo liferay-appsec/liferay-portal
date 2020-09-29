@@ -14,11 +14,9 @@
 
 package com.liferay.saml.web.internal.struts;
 
-import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -89,6 +87,17 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 			httpServletRequest.setAttribute(
 				SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
 
+			boolean forceAuthn = GetterUtil.getBoolean(
+				ParamUtil.getBoolean(httpServletRequest, "forceAuthn"));
+
+			if (forceAuthn) {
+				AuthTokenUtil.checkCSRFToken(
+					httpServletRequest, SamlLoginAction.class.getName());
+
+				httpServletRequest.setAttribute(
+					SamlWebKeys.FORCE_REAUTHENTICATION, forceAuthn);
+			}
+
 			return null;
 		}
 
@@ -122,7 +131,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 
 		httpServletRequest.setAttribute(
 			SamlWebKeys.SAML_SSO_LOGIN_CONTEXT,
-			toJSONObject(samlSpIdpConnections));
+			toJSONObject(samlSpIdpConnections, null, null));
 
 		JspUtil.dispatch(
 			httpServletRequest, httpServletResponse,
@@ -142,25 +151,6 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		}
 
 		return samlSpIdpConnection.isEnabled();
-	}
-
-	protected JSONObject toJSONObject(
-		List<SamlSpIdpConnection> samlSpIdpConnections) {
-
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
-
-		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
-			jsonArray.put(
-				JSONUtil.put(
-					"enabled", samlSpIdpConnection.isEnabled()
-				).put(
-					"entityId", samlSpIdpConnection.getSamlIdpEntityId()
-				).put(
-					"name", samlSpIdpConnection.getName()
-				));
-		}
-
-		return JSONUtil.put("relevantIdpConnections", jsonArray);
 	}
 
 	@Reference

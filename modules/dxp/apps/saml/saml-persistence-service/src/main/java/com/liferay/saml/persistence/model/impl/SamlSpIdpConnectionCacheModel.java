@@ -64,7 +64,7 @@ public class SamlSpIdpConnectionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(41);
+		StringBundler sb = new StringBundler(45);
 
 		sb.append("{samlSpIdpConnectionId=");
 		sb.append(samlSpIdpConnectionId);
@@ -88,8 +88,12 @@ public class SamlSpIdpConnectionCacheModel
 		sb.append(enabled);
 		sb.append(", forceAuthn=");
 		sb.append(forceAuthn);
+		sb.append(", idpInitiatedSSOEnabled=");
+		sb.append(idpInitiatedSSOEnabled);
 		sb.append(", ldapImportEnabled=");
 		sb.append(ldapImportEnabled);
+		sb.append(", maximumAuthnAge=");
+		sb.append(maximumAuthnAge);
 		sb.append(", metadataUpdatedDate=");
 		sb.append(metadataUpdatedDate);
 		sb.append(", metadataUrl=");
@@ -153,7 +157,10 @@ public class SamlSpIdpConnectionCacheModel
 		samlSpIdpConnectionImpl.setClockSkew(clockSkew);
 		samlSpIdpConnectionImpl.setEnabled(enabled);
 		samlSpIdpConnectionImpl.setForceAuthn(forceAuthn);
+		samlSpIdpConnectionImpl.setIdpInitiatedSSOEnabled(
+			idpInitiatedSSOEnabled);
 		samlSpIdpConnectionImpl.setLdapImportEnabled(ldapImportEnabled);
+		samlSpIdpConnectionImpl.setMaximumAuthnAge(maximumAuthnAge);
 
 		if (metadataUpdatedDate == Long.MIN_VALUE) {
 			samlSpIdpConnectionImpl.setMetadataUpdatedDate(null);
@@ -230,7 +237,11 @@ public class SamlSpIdpConnectionCacheModel
 
 		forceAuthn = objectInput.readBoolean();
 
+		idpInitiatedSSOEnabled = objectInput.readBoolean();
+
 		ldapImportEnabled = objectInput.readBoolean();
+
+		maximumAuthnAge = objectInput.readInt();
 		metadataUpdatedDate = objectInput.readLong();
 		metadataUrl = objectInput.readUTF();
 		metadataXml = (String)objectInput.readObject();
@@ -276,7 +287,11 @@ public class SamlSpIdpConnectionCacheModel
 
 		objectOutput.writeBoolean(forceAuthn);
 
+		objectOutput.writeBoolean(idpInitiatedSSOEnabled);
+
 		objectOutput.writeBoolean(ldapImportEnabled);
+
+		objectOutput.writeInt(maximumAuthnAge);
 		objectOutput.writeLong(metadataUpdatedDate);
 
 		if (metadataUrl == null) {
@@ -330,7 +345,9 @@ public class SamlSpIdpConnectionCacheModel
 	public long clockSkew;
 	public boolean enabled;
 	public boolean forceAuthn;
+	public boolean idpInitiatedSSOEnabled;
 	public boolean ldapImportEnabled;
+	public int maximumAuthnAge;
 	public long metadataUpdatedDate;
 	public String metadataUrl;
 	public String metadataXml;

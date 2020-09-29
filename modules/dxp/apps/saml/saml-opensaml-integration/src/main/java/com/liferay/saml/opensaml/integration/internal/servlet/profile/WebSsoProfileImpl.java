@@ -17,12 +17,8 @@ package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.exception.ContactNameException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.exception.UserEmailAddressException;
-import com.liferay.portal.kernel.exception.UserEmailAddressException.MustNotUseCompanyMx;
-import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
@@ -32,9 +28,11 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -74,8 +72,11 @@ import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.AssertionException;
 import com.liferay.saml.runtime.exception.AudienceException;
+import com.liferay.saml.runtime.exception.AuthnAgeException;
 import com.liferay.saml.runtime.exception.DestinationException;
+import com.liferay.saml.runtime.exception.EntityInteractionException;
 import com.liferay.saml.runtime.exception.ExpiredException;
+import com.liferay.saml.runtime.exception.ForceAuthnException;
 import com.liferay.saml.runtime.exception.InResponseToException;
 import com.liferay.saml.runtime.exception.IssuerException;
 import com.liferay.saml.runtime.exception.ReplayException;
@@ -198,10 +199,54 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			HttpServletResponse httpServletResponse)
 		throws PortalException {
 
+		MessageContext<?> messageContext = null;
+
 		try {
-			doProcessResponse(httpServletRequest, httpServletResponse);
+			messageContext = decodeSamlMessage(
+				httpServletRequest, httpServletResponse,
+				getSamlBinding(SAMLConstants.SAML2_POST_BINDING_URI), true);
+
+			doProcessResponse(
+				messageContext, httpServletRequest, httpServletResponse);
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception, exception);
+			}
+			else {
+				if (!(exception instanceof SubjectException)) {
+					_log.error(exception.getMessage());
+				}
+			}
+
+			if (messageContext != null) {
+				SAMLPeerEntityContext samlPeerEntityContext =
+					messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
+				SAMLSubjectNameIdentifierContext
+					samlSubjectNameIdentifierContext =
+						messageContext.getSubcontext(
+							SAMLSubjectNameIdentifierContext.class);
+
+				String nameIdValue = null;
+
+				if (samlSubjectNameIdentifierContext != null) {
+					NameID nameID =
+						samlSubjectNameIdentifierContext.
+							getSAML2SubjectNameID();
+
+					if (nameID != null) {
+						nameIdValue = nameID.getValue();
+					}
+				}
+
+				if (samlPeerEntityContext != null) {
+					throw new EntityInteractionException(
+						samlPeerEntityContext.getEntityId(), nameIdValue,
+						exception);
+				}
+			}
+
 			ExceptionHandlerUtil.handleException(exception);
 		}
 	}
@@ -288,6 +333,53 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			httpServletRequest, httpServletResponse,
 			SamlWebKeys.SAML_SSO_SESSION_ID,
 			samlSsoRequestContext.getSamlSsoSessionId(), -1);
+	}
+
+	protected void checkAuthnInstant(
+			String inResponseTo, AuthnStatement authnStatement,
+			SamlSpIdpConnection samlSpIdpConnection, HttpSession session)
+		throws PortalException {
+
+		DateTime authnInstant = authnStatement.getAuthnInstant();
+
+		if (Validator.isNotNull(inResponseTo)) {
+			if (samlSpIdpConnection.getMaximumAuthnAge() == 0) {
+
+				// All such SP initiated Authn Requests are sent with
+				// forceAuthn=true
+
+				return;
+			}
+
+			Object sessionAuthnInstant = session.getAttribute(
+				_SAML_SSO_ERROR_AUTHN_INSTANT);
+
+			if ((sessionAuthnInstant != null) &&
+				!authnInstant.isAfter(
+					GetterUtil.getLong(sessionAuthnInstant))) {
+
+				throw new ForceAuthnException();
+			}
+		}
+
+		DateTime nowDateTime = new DateTime(DateTimeZone.UTC);
+
+		DateTime adjustedAuthnInstantDateTime = authnInstant.minus(
+			new Duration(samlSpIdpConnection.getClockSkew()));
+
+		if (adjustedAuthnInstantDateTime.isAfter(
+				nowDateTime.minus(
+					new Duration(
+						samlSpIdpConnection.getMaximumAuthnAge() *
+							Time.MINUTE)))) {
+
+			return;
+		}
+
+		session.setAttribute(
+			_SAML_SSO_ERROR_AUTHN_INSTANT, authnInstant.getMillis());
+
+		throw new AuthnAgeException();
 	}
 
 	protected SamlSsoRequestContext decodeAuthnConversationAfterLogin(
@@ -615,13 +707,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected void doProcessResponse(
+			MessageContext<?> messageContext,
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
 		throws Exception {
-
-		MessageContext<?> messageContext = decodeSamlMessage(
-			httpServletRequest, httpServletResponse,
-			getSamlBinding(SAMLConstants.SAML2_POST_BINDING_URI), true);
 
 		InOutOperationContext<Response, ?> inOutOperationContext =
 			messageContext.getSubcontext(InOutOperationContext.class);
@@ -756,72 +845,31 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			httpServletRequest);
 
-		try {
-			User user = _userResolver.resolveUser(
-				new UserResolverSAMLContextImpl(
-					(MessageContext<Response>)messageContext),
-				serviceContext);
+		User user = _userResolver.resolveUser(
+			new UserResolverSAMLContextImpl(
+				(MessageContext<Response>)messageContext),
+			serviceContext);
 
-			serviceContext.setUserId(user.getUserId());
-		}
-		catch (PortalException portalException) {
-			HttpServletRequest originalHttpServletRequest =
-				_portal.getOriginalServletRequest(httpServletRequest);
-
-			HttpSession httpSession = originalHttpServletRequest.getSession();
-
-			httpSession.setAttribute(
-				SamlWebKeys.SAML_SUBJECT_NAME_ID, nameID.getValue());
-
-			String error = StringPool.BLANK;
-
-			if (portalException instanceof ContactNameException) {
-				error = ContactNameException.class.getSimpleName();
-			}
-			else if (portalException instanceof SubjectException) {
-				error = SubjectException.class.getSimpleName();
-			}
-			else if (portalException instanceof MustNotUseCompanyMx) {
-				error = MustNotUseCompanyMx.class.getSimpleName();
-			}
-			else if (portalException instanceof UserEmailAddressException) {
-				error = UserEmailAddressException.class.getSimpleName();
-			}
-			else if (portalException instanceof UserScreenNameException) {
-				error = UserScreenNameException.class.getSimpleName();
-			}
-			else {
-				Class<?> clazz = portalException.getClass();
-
-				httpSession.setAttribute(
-					SamlWebKeys.SAML_SSO_ERROR, clazz.getSimpleName());
-
-				throw portalException;
-			}
-
-			httpSession.setAttribute(SamlWebKeys.SAML_SSO_ERROR, error);
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(portalException, portalException);
-			}
-			else {
-				if (!(portalException instanceof SubjectException)) {
-					_log.error(portalException.getMessage());
-				}
-			}
-
-			httpServletResponse.sendRedirect(
-				getAuthRedirectURL(messageContext, httpServletRequest));
-
-			return;
-		}
+		serviceContext.setUserId(user.getUserId());
 
 		SamlSpSession samlSpSession = getSamlSpSession(httpServletRequest);
 		HttpSession httpSession = httpServletRequest.getSession();
 
+		SAMLPeerEntityContext samlPeerEntityContext =
+			messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
 
 		AuthnStatement authnStatement = authnStatements.get(0);
+
+		SamlSpIdpConnection samlSpIdpConnection =
+			_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
+				CompanyThreadLocal.getCompanyId(),
+				samlPeerEntityContext.getEntityId());
+
+		checkAuthnInstant(
+			samlResponse.getInResponseTo(), authnStatement, samlSpIdpConnection,
+			httpSession);
 
 		String sessionIndex = authnStatement.getSessionIndex();
 
@@ -930,14 +978,19 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
-		String error = (String)httpSession.getAttribute(
-			SamlWebKeys.SAML_SSO_ERROR);
+		boolean forceReauthentication = GetterUtil.getBoolean(
+			httpServletRequest.getAttribute(SamlWebKeys.FORCE_REAUTHENTICATION),
+			Boolean.FALSE);
 
-		if (Validator.isBlank(error)) {
-			authnRequest.setForceAuthn(samlSpIdpConnection.isForceAuthn());
+		if ((samlSpIdpConnection.getMaximumAuthnAge() == 0) ||
+			forceReauthentication) {
+
+			authnRequest.setForceAuthn(true);
 		}
 		else {
-			authnRequest.setForceAuthn(true);
+			authnRequest.setForceAuthn(false);
+
+			httpSession.removeAttribute(_SAML_SSO_ERROR_AUTHN_INSTANT);
 		}
 
 		authnRequest.setID(generateIdentifier(20));
@@ -1008,7 +1061,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 	protected Assertion getSuccessAssertion(
 		SamlSsoRequestContext samlSsoRequestContext,
-		AssertionConsumerService assertionConsumerService, NameID nameID) {
+		AssertionConsumerService assertionConsumerService, NameID nameID,
+		long sessionCreationTime) {
 
 		MessageContext<AuthnRequest> messageContext =
 			(MessageContext<AuthnRequest>)
@@ -1051,7 +1105,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
 
 		authnStatements.add(
-			getSuccessAuthnStatement(samlSsoRequestContext, assertion));
+			getSuccessAuthnStatement(
+				samlSsoRequestContext, assertion, sessionCreationTime));
 
 		SAMLPeerEntityContext samlPeerEntityContext =
 			messageContext.getSubcontext(SAMLPeerEntityContext.class);
@@ -1130,7 +1185,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected AuthnStatement getSuccessAuthnStatement(
-		SamlSsoRequestContext samlSsoRequestContext, Assertion assertion) {
+		SamlSsoRequestContext samlSsoRequestContext, Assertion assertion,
+		long sessionCreationTime) {
 
 		AuthnStatement authnStatement = OpenSamlUtil.buildAuthnStatement();
 
@@ -1138,7 +1194,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		authnStatement.setAuthnContext(authnContext);
 
-		authnStatement.setAuthnInstant(assertion.getIssueInstant());
+		authnStatement.setAuthnInstant(new DateTime(sessionCreationTime));
 		authnStatement.setSessionIndex(
 			samlSsoRequestContext.getSamlSsoSessionId());
 
@@ -1513,8 +1569,11 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		NameID nameID = getSuccessNameId(samlSsoRequestContext);
 
+		HttpSession session = httpServletRequest.getSession();
+
 		Assertion assertion = getSuccessAssertion(
-			samlSsoRequestContext, assertionConsumerService, nameID);
+			samlSsoRequestContext, assertionConsumerService, nameID,
+			session.getCreationTime());
 
 		Credential credential = metadataManager.getSigningCredential();
 
@@ -2101,6 +2160,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 		throw new SubjectException("Unable to verify subject");
 	}
+
+	private static final String _SAML_SSO_ERROR_AUTHN_INSTANT =
+		"SAML_SSO_ERROR_AUTHN_INSTANT";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		WebSsoProfileImpl.class);
