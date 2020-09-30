@@ -47,7 +47,7 @@ public interface MFAFIDO2Configuration {
 		deflt = "relying Party", description = "relying-party-name-description",
 		name = "relying-party-name", required = false
 	)
-	public String rpName();
+	public String relyingPartyName();
 
 	/**
 	 * Number of allowed credentials(authenticators) per user.
@@ -71,7 +71,7 @@ public interface MFAFIDO2Configuration {
 		deflt = "localhost", description = "relying-party-id-description",
 		name = "relying-party-id", required = false
 	)
-	public String rpId();
+	public String relyingPartyId();
 
 	/**
 	 * The allowed origins that returned authenticator responses will be

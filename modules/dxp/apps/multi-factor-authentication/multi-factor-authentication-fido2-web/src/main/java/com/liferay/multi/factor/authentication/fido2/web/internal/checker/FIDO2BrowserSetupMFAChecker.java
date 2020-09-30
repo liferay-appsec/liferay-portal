@@ -318,9 +318,9 @@ public class FIDO2BrowserSetupMFAChecker
 		).identity(
 			RelyingPartyIdentity.builder(
 			).id(
-				_mfaFIDO2Configuration.rpId()
+				_mfaFIDO2Configuration.relyingPartyId()
 			).name(
-				_mfaFIDO2Configuration.rpName()
+				_mfaFIDO2Configuration.relyingPartyName()
 			).build()
 		).credentialRepository(
 			new MFAFIDO2CredentialRepository(
