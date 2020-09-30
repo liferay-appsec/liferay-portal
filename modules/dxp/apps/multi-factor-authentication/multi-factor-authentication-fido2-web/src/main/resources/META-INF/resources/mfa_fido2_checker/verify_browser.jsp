@@ -16,17 +16,13 @@
 
 <%@ include file="/init.jsp" %>
 
-<%
-String assertionRequest = (String)request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST);
-%>
-
 <div id="<portlet:namespace/>messageContainer"></div>
 
 <aui:button-row>
 	<clay:button
 		additionalProps='<%=
-			HashMapBuilder.<String, Object>put(
-				"assertionRequest", assertionRequest
+			HashMapBuilder.put(
+				"assertionRequest", request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST)
 			).build()
 		%>'
 		label="verify"
