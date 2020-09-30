@@ -27,10 +27,13 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialType;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Arthur Chan
@@ -50,57 +53,57 @@ public class MFAFIDO2CredentialRepository implements CredentialRepository {
 	public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(
 		String userName) {
 
-		long userId = _getUserIdByUserName(userName);
+		Optional<Long> optionalUserId = _getOptionalUserId(userName);
 
-		Set<PublicKeyCredentialDescriptor> descriptors = new HashSet<>();
-
-		List<MFAFIDO2CredentialEntry> mfaFIDO2CredentialEntries =
-			_mfaFIDO2CredentialEntryLocalService.
-				getMFAFIDO2CredentialEntriesByUserId(userId);
-
-		for (MFAFIDO2CredentialEntry mfaFIDO2CredentialEntry :
-				mfaFIDO2CredentialEntries) {
-
-			descriptors.add(
-				_buildPublicKeyCredentialDescriptor(mfaFIDO2CredentialEntry));
-		}
-
-		return descriptors;
+		return optionalUserId.map(
+			_mfaFIDO2CredentialEntryLocalService::
+				getMFAFIDO2CredentialEntriesByUserId
+		).map(
+			List::stream
+		).map(
+			stream -> stream.map(
+				this::_buildPublicKeyCredentialDescriptor
+			).collect(
+				Collectors.toSet()
+			)
+		).orElse(
+			Collections.emptySet()
+		);
 	}
 
 	@Override
 	public Optional<ByteArray> getUserHandleForUsername(String userName) {
-		return Optional.of(
-			ConvertUtil.longToByteArray(_getUserIdByUserName(userName)));
+		Optional<Long> optionalUserId = _getOptionalUserId(userName);
+
+		return optionalUserId.map(ConvertUtil::longToByteArray);
 	}
 
 	@Override
 	public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
-		return Optional.ofNullable(_getScreenNameByUserHandle(userHandle));
+		return Optional.ofNullable(
+			_userLocalService.fetchUserById(
+				ConvertUtil.byteArrayToLong(userHandle))
+		).map(
+			User::getScreenName
+		);
 	}
 
 	@Override
 	public Optional<RegisteredCredential> lookup(
 		ByteArray credentialId, ByteArray userHandle) {
 
-		long userId = ConvertUtil.byteArrayToLong(userHandle);
-
-		MFAFIDO2CredentialEntry mfaFIDO2CredentialEntry =
+		return Optional.ofNullable(
 			_mfaFIDO2CredentialEntryLocalService.
 				fetchMFAFIDO2CredentialEntryByUserIdAndCredentialKey(
-					userId, credentialId.getBase64());
-
-		if (mfaFIDO2CredentialEntry == null) {
-			return Optional.empty();
-		}
-
-		String storedCredentialKey = mfaFIDO2CredentialEntry.getCredentialKey();
-
-		if (!storedCredentialKey.equals(credentialId.getBase64())) {
-			return Optional.empty();
-		}
-
-		return Optional.of(_buildRegisteredCredential(mfaFIDO2CredentialEntry));
+					ConvertUtil.byteArrayToLong(userHandle),
+					credentialId.getBase64())
+		).filter(
+			mfaFIDO2CredentialEntry -> Objects.equals(
+				mfaFIDO2CredentialEntry.getCredentialKey(),
+				credentialId.getBase64())
+		).map(
+			this::_buildRegisteredCredential
+		);
 	}
 
 	@Override
@@ -148,27 +151,13 @@ public class MFAFIDO2CredentialRepository implements CredentialRepository {
 		).build();
 	}
 
-	private String _getScreenNameByUserHandle(ByteArray userHandle) {
-		long userId = ConvertUtil.byteArrayToLong(userHandle);
-
-		User user = _userLocalService.fetchUserById(userId);
-
-		if (user == null) {
-			return null;
-		}
-
-		return user.getScreenName();
-	}
-
-	private long _getUserIdByUserName(String userName) {
-		User user = _userLocalService.fetchUserByScreenName(
-			CompanyThreadLocal.getCompanyId(), userName);
-
-		if (user == null) {
-			return -1;
-		}
-
-		return user.getUserId();
+	private Optional<Long> _getOptionalUserId(String userName) {
+		return Optional.ofNullable(
+			_userLocalService.fetchUserByScreenName(
+				CompanyThreadLocal.getCompanyId(), userName)
+		).map(
+			User::getUserId
+		);
 	}
 
 	private final MFAFIDO2CredentialEntryLocalService
