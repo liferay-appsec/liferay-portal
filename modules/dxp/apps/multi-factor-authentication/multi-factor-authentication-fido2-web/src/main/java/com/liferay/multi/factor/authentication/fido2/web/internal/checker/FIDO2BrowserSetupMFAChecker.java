@@ -34,9 +34,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.util.PropsValues;
 
 import com.yubico.webauthn.AssertionRequest;
@@ -64,8 +66,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -98,10 +98,12 @@ public class FIDO2BrowserSetupMFAChecker
 			HttpServletResponse httpServletResponse, long userId)
 		throws Exception {
 
-		String assertionRequest = _startAuthentication(userId);
+		String mfaFIDO2AssertionRequest = _objectMapper.writeValueAsString(
+			_getAssertionRequest(userId));
 
 		httpServletRequest.setAttribute(
-			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST, assertionRequest);
+			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST,
+			mfaFIDO2AssertionRequest);
 
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher(
@@ -115,7 +117,8 @@ public class FIDO2BrowserSetupMFAChecker
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
 		httpSession.setAttribute(
-			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST, assertionRequest);
+			MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST,
+			mfaFIDO2AssertionRequest);
 	}
 
 	@Override
@@ -140,10 +143,11 @@ public class FIDO2BrowserSetupMFAChecker
 			return;
 		}
 
-		String pkccOptions = _startRegistration(userId);
+		String mfaFIDO2pkccOptions = _objectMapper.writeValueAsString(
+			_getPublicKeyCredentialCreationOptions(userId));
 
 		httpServletRequest.setAttribute(
-			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, pkccOptions);
+			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, mfaFIDO2pkccOptions);
 
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher(
@@ -157,7 +161,7 @@ public class FIDO2BrowserSetupMFAChecker
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
 		httpSession.setAttribute(
-			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, pkccOptions);
+			MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, mfaFIDO2pkccOptions);
 	}
 
 	@Override
@@ -180,9 +184,7 @@ public class FIDO2BrowserSetupMFAChecker
 		HttpServletRequest originalHttpServletRequest =
 			_portal.getOriginalServletRequest(httpServletRequest);
 
-		HttpSession httpSession = originalHttpServletRequest.getSession(false);
-
-		if (isVerified(httpSession, userId)) {
+		if (isVerified(originalHttpServletRequest.getSession(false), userId)) {
 			return true;
 		}
 
@@ -208,7 +210,7 @@ public class FIDO2BrowserSetupMFAChecker
 	@Override
 	public boolean setUp(HttpServletRequest httpServletRequest, long userId) {
 		try {
-			RegistrationResult registrationResult = _finishRegistration(
+			RegistrationResult registrationResult = _getRegistrationResult(
 				httpServletRequest);
 
 			PublicKeyCredentialDescriptor publicKeyCredentialDescriptor =
@@ -255,28 +257,31 @@ public class FIDO2BrowserSetupMFAChecker
 		if (!isAvailable(user.getUserId())) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Requested FIDO2 verfication for user " + userId +
+					"Requested FIDO2 verification for user " + userId +
 						" with incomplete configuration");
 			}
 
 			return false;
 		}
 
-		AssertionResult assertionResult = null;
-
 		try {
-			assertionResult = _finishAuthentication(httpServletRequest);
+			AssertionResult assertionResult = _getAssertionResult(
+				httpServletRequest);
+
+			ByteArray credentialId = assertionResult.getCredentialId();
+
+			if (!assertionResult.isSuccess()) {
+				_mfaFIDO2CredentialEntryLocalService.updateAttempts(
+					userId, credentialId.getBase64(), 0);
+
+				return false;
+			}
+
+			_mfaFIDO2CredentialEntryLocalService.updateAttempts(
+				userId, credentialId.getBase64(),
+				assertionResult.getSignatureCount());
 		}
 		catch (Exception exception) {
-			return false;
-		}
-
-		ByteArray credentialId = assertionResult.getCredentialId();
-
-		if (!assertionResult.isSuccess()) {
-			_mfaFIDO2CredentialEntryLocalService.updateAttempts(
-				userId, credentialId.getBase64(), 0);
-
 			return false;
 		}
 
@@ -291,10 +296,6 @@ public class FIDO2BrowserSetupMFAChecker
 		httpSession.setAttribute(
 			MFAFIDO2WebKeys.MFA_FIDO2_VALIDATED_USER_ID, userId);
 
-		_mfaFIDO2CredentialEntryLocalService.updateAttempts(
-			userId, credentialId.getBase64(),
-			assertionResult.getSignatureCount());
-
 		return true;
 	}
 
@@ -305,35 +306,27 @@ public class FIDO2BrowserSetupMFAChecker
 		_mfaFIDO2Configuration = ConfigurableUtil.createConfigurable(
 			MFAFIDO2Configuration.class, properties);
 
-		_jsonMapper = new ObjectMapper();
-		_jsonMapper = _jsonMapper.configure(
-			SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-		_jsonMapper = _jsonMapper.setSerializationInclusion(
-			JsonInclude.Include.NON_ABSENT);
-		_jsonMapper = _jsonMapper.registerModule(new Jdk8Module());
+		_objectMapper = new ObjectMapper();
 
-		RelyingPartyIdentity relyingPartyIdentity =
+		_objectMapper = _objectMapper.configure(
+			SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+		_objectMapper = _objectMapper.registerModule(new Jdk8Module());
+		_objectMapper = _objectMapper.setSerializationInclusion(
+			JsonInclude.Include.NON_ABSENT);
+
+		_relyingParty = RelyingParty.builder(
+		).identity(
 			RelyingPartyIdentity.builder(
 			).id(
 				_mfaFIDO2Configuration.rpId()
 			).name(
 				_mfaFIDO2Configuration.rpName()
-			).build();
-
-		MFAFIDO2CredentialRepository mfaFIDO2CredentialRepository =
-			new MFAFIDO2CredentialRepository(
-				_mfaFIDO2CredentialEntryLocalService, _userLocalService);
-
-		Stream<String> originsStream = Arrays.stream(
-			_mfaFIDO2Configuration.origins());
-
-		_relyingParty = RelyingParty.builder(
-		).identity(
-			relyingPartyIdentity
+			).build()
 		).credentialRepository(
-			mfaFIDO2CredentialRepository
+			new MFAFIDO2CredentialRepository(
+				_mfaFIDO2CredentialEntryLocalService, _userLocalService)
 		).origins(
-			originsStream.collect(Collectors.toSet())
+			SetUtil.fromArray(_mfaFIDO2Configuration.origins())
 		).allowOriginPort(
 			_mfaFIDO2Configuration.allowOriginPort()
 		).allowOriginSubdomain(
@@ -416,142 +409,104 @@ public class FIDO2BrowserSetupMFAChecker
 		return true;
 	}
 
-	private AssertionResult _finishAuthentication(
+	private AssertionRequest _getAssertionRequest(long userId)
+		throws Exception {
+
+		User user = _userLocalService.getUserById(userId);
+
+		return _relyingParty.startAssertion(
+			StartAssertionOptions.builder(
+			).username(
+				Optional.of(user.getScreenName())
+			).build());
+	}
+
+	private AssertionResult _getAssertionResult(
 			HttpServletRequest httpServletRequest)
 		throws Exception {
 
-		String responseJSON = ParamUtil.getString(
-			httpServletRequest, "responseJSON");
+		HttpServletRequest originalHttpServletRequest =
+			_portal.getOriginalServletRequest(httpServletRequest);
 
-		TypeReference
-			<PublicKeyCredential
-				<AuthenticatorAssertionResponse,
-				 ClientAssertionExtensionOutputs>> typeReference =
+		HttpSession httpSession = originalHttpServletRequest.getSession();
+
+		return _relyingParty.finishAssertion(
+			FinishAssertionOptions.builder(
+			).request(
+				_objectMapper.readValue(
+					GetterUtil.getString(
+						httpSession.getAttribute(
+							MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST)),
+					AssertionRequest.class)
+			).response(
+				_objectMapper.readValue(
+					ParamUtil.getString(httpServletRequest, "responseJSON"),
 					new TypeReference
 						<PublicKeyCredential
 							<AuthenticatorAssertionResponse,
 							 ClientAssertionExtensionOutputs>>() {
-					};
+					})
+			).build());
+	}
 
-		PublicKeyCredential
-			<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
-				publicKeyCredential = _jsonMapper.readValue(
-					responseJSON, typeReference);
+	private PublicKeyCredentialCreationOptions
+			_getPublicKeyCredentialCreationOptions(long userId)
+		throws Exception {
+
+		User user = _userLocalService.fetchUserById(userId);
+
+		return _relyingParty.startRegistration(
+			StartRegistrationOptions.builder(
+			).user(
+				UserIdentity.builder(
+				).name(
+					user.getScreenName()
+				).displayName(
+					user.getFullName()
+				).id(
+					ConvertUtil.longToByteArray(userId)
+				).build()
+			).build());
+	}
+
+	private RegistrationResult _getRegistrationResult(
+			HttpServletRequest httpServletRequest)
+		throws Exception {
 
 		HttpServletRequest originalHttpServletRequest =
 			_portal.getOriginalServletRequest(httpServletRequest);
 
 		HttpSession httpSession = originalHttpServletRequest.getSession();
 
-		AssertionRequest assertionRequest = _jsonMapper.readValue(
-			(String)httpSession.getAttribute(
-				MFAFIDO2WebKeys.MFA_FIDO2_ASSERTION_REQUEST),
-			AssertionRequest.class);
-
-		FinishAssertionOptions finishAssertionOptions =
-			FinishAssertionOptions.builder(
+		return _relyingParty.finishRegistration(
+			FinishRegistrationOptions.builder(
 			).request(
-				assertionRequest
+				_objectMapper.readValue(
+					GetterUtil.getString(
+						httpSession.getAttribute(
+							MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS)),
+					PublicKeyCredentialCreationOptions.class)
 			).response(
-				publicKeyCredential
-			).build();
-
-		return _relyingParty.finishAssertion(finishAssertionOptions);
-	}
-
-	private RegistrationResult _finishRegistration(
-			HttpServletRequest httpServletRequest)
-		throws Exception {
-
-		String responseJSON = ParamUtil.getString(
-			httpServletRequest, "responseJSON");
-
-		TypeReference
-			<PublicKeyCredential
-				<AuthenticatorAttestationResponse,
-				 ClientRegistrationExtensionOutputs>> typeReference =
+				_objectMapper.readValue(
+					ParamUtil.getString(httpServletRequest, "responseJSON"),
 					new TypeReference
 						<PublicKeyCredential
 							<AuthenticatorAttestationResponse,
 							 ClientRegistrationExtensionOutputs>>() {
-					};
-
-		PublicKeyCredential
-			<AuthenticatorAttestationResponse,
-			 ClientRegistrationExtensionOutputs> publicKeyCredential =
-				_jsonMapper.readValue(responseJSON, typeReference);
-
-		HttpServletRequest originalHttpServletRequest =
-			_portal.getOriginalServletRequest(httpServletRequest);
-
-		HttpSession httpSession = originalHttpServletRequest.getSession();
-
-		PublicKeyCredentialCreationOptions pkccOptions = _jsonMapper.readValue(
-			(String)httpSession.getAttribute(
-				MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS),
-			PublicKeyCredentialCreationOptions.class);
-
-		FinishRegistrationOptions finishRegistrationOptions =
-			FinishRegistrationOptions.builder(
-			).request(
-				pkccOptions
-			).response(
-				publicKeyCredential
-			).build();
-
-		return _relyingParty.finishRegistration(finishRegistrationOptions);
-	}
-
-	private String _startAuthentication(long userId) throws Exception {
-		User user = _userLocalService.fetchUserById(userId);
-
-		StartAssertionOptions startAssertionOptions =
-			StartAssertionOptions.builder(
-			).username(
-				Optional.of(user.getScreenName())
-			).build();
-
-		AssertionRequest assertionRequest = _relyingParty.startAssertion(
-			startAssertionOptions);
-
-		return _jsonMapper.writeValueAsString(assertionRequest);
-	}
-
-	private String _startRegistration(long userId) throws Exception {
-		User user = _userLocalService.fetchUserById(userId);
-
-		ByteArray userHandle = ConvertUtil.longToByteArray(userId);
-
-		UserIdentity uid = UserIdentity.builder(
-		).name(
-			user.getScreenName()
-		).displayName(
-			user.getFullName()
-		).id(
-			userHandle
-		).build();
-
-		StartRegistrationOptions startRegistrationOptions =
-			StartRegistrationOptions.builder(
-			).user(
-				uid
-			).build();
-
-		PublicKeyCredentialCreationOptions pkccOptions =
-			_relyingParty.startRegistration(startRegistrationOptions);
-
-		return _jsonMapper.writeValueAsString(pkccOptions);
+					})
+			).build());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FIDO2BrowserSetupMFAChecker.class);
 
-	private ObjectMapper _jsonMapper;
 	private MFAFIDO2Configuration _mfaFIDO2Configuration;
 
 	@Reference
 	private MFAFIDO2CredentialEntryLocalService
 		_mfaFIDO2CredentialEntryLocalService;
+
+	private ObjectMapper _objectMapper;
 
 	@Reference
 	private Portal _portal;
