@@ -21,7 +21,7 @@
 <aui:button-row>
 	<clay:button
 		additionalProps='<%=
-			HashMapBuilder.<String, Object>put(
+			HashMapBuilder.put(
 				"pkccOptions", request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS)
 			).build()
 		%>'
