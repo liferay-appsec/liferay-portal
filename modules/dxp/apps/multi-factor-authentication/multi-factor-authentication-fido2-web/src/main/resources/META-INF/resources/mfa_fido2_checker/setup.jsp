@@ -16,17 +16,13 @@
 
 <%@ include file="/init.jsp" %>
 
-<%
-String pkccOptions = (String)request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS);
-%>
-
 <div id="<portlet:namespace/>messageContainer"></div>
 
 <aui:button-row>
 	<clay:button
 		additionalProps='<%=
 			HashMapBuilder.<String, Object>put(
-				"pkccOptions", pkccOptions
+				"pkccOptions", request.getAttribute(MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS)
 			).build()
 		%>'
 		label="register"
