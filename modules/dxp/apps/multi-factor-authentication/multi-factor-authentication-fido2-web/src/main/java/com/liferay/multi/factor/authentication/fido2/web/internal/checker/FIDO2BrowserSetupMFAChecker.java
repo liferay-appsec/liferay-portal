@@ -395,18 +395,10 @@ public class FIDO2BrowserSetupMFAChecker
 			return false;
 		}
 
-		Object mfaFIDO2ValidatedUserId = httpSession.getAttribute(
-			MFAFIDO2WebKeys.MFA_FIDO2_VALIDATED_USER_ID);
-
-		if (mfaFIDO2ValidatedUserId == null) {
-			return false;
-		}
-
-		if (!Objects.equals(mfaFIDO2ValidatedUserId, userId)) {
-			return false;
-		}
-
-		return true;
+		return Objects.equals(
+			httpSession.getAttribute(
+				MFAFIDO2WebKeys.MFA_FIDO2_VALIDATED_USER_ID),
+			userId);
 	}
 
 	private AssertionRequest _getAssertionRequest(long userId)
