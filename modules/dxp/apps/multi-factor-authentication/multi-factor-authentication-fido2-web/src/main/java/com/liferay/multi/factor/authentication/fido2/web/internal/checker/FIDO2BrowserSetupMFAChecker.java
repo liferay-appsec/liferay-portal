@@ -379,19 +379,17 @@ public class FIDO2BrowserSetupMFAChecker
 	}
 
 	protected boolean isVerified(HttpSession httpSession, long userId) {
-		User user = _userLocalService.fetchUser(userId);
+		if (httpSession == null) {
+			return false;
+		}
 
-		if (user == null) {
+		if (_userLocalService.fetchUser(userId) == null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Requested FIDO2 verification for nonexistent user " +
 						userId);
 			}
 
-			return false;
-		}
-
-		if (httpSession == null) {
 			return false;
 		}
 
