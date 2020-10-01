@@ -440,8 +440,7 @@ public class FIDO2BrowserSetupMFAChecker
 	}
 
 	private PublicKeyCredentialCreationOptions
-			_getPublicKeyCredentialCreationOptions(long userId)
-		throws Exception {
+			_getPublicKeyCredentialCreationOptions(long userId) {
 
 		User user = _userLocalService.fetchUserById(userId);
 
