@@ -427,6 +427,61 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			return properties;
 		}
 
+		/**
+		 * Because we allow Filter to overwrite authVerifier's properties,
+		 * we need to create a new configuration that takes the overwritten
+		 * properties instead of authVerifier's original properties.
+		 *
+		 * The job is used to be done by AuthVerifierPipeline.
+		 * _mergeAuthVerifierConfiguration() at a per request basis, move the
+		 * routine here would benefit request performance.
+		 */
+		private AuthVerifierConfiguration _mergeAuthVerifierConfiguration(
+			AuthVerifierConfiguration authVerifierConfiguration,
+			AuthVerifierFilter authVerifierFilter) {
+
+			String authVerifierPropertyName =
+				AuthVerifierPipeline.getAuthVerifierPropertyName(
+					authVerifierConfiguration.getAuthVerifierClassName());
+
+			Map<String, Object> filterProperties =
+				authVerifierFilter._initParametersMap;
+
+			Properties mergedProperties = new Properties(
+				authVerifierConfiguration.getProperties());
+
+			for (Map.Entry<String, Object> propertyEntry :
+					filterProperties.entrySet()) {
+
+				String propertyName = propertyEntry.getKey();
+				Object propertyValue = propertyEntry.getValue();
+
+				if (propertyName.startsWith(authVerifierPropertyName) &&
+					(propertyValue instanceof String)) {
+
+					mergedProperties.setProperty(
+						propertyName.substring(
+							authVerifierPropertyName.length()),
+						(String)propertyValue);
+				}
+			}
+
+			if (mergedProperties.size() < 1) {
+				return null;
+			}
+
+			AuthVerifierConfiguration mergedAuthVerifierConfiguration =
+				new AuthVerifierConfiguration();
+
+			mergedAuthVerifierConfiguration.setAuthVerifier(
+				authVerifierConfiguration.getAuthVerifier());
+			mergedAuthVerifierConfiguration.setAuthVerifierClassName(
+				authVerifierConfiguration.getAuthVerifierClassName());
+			mergedAuthVerifierConfiguration.setProperties(mergedProperties);
+
+			return mergedAuthVerifierConfiguration;
+		}
+
 		private void _rebuildAll() {
 			for (AuthVerifierFilter authVerifierFilter : _authVerifierFilters) {
 				_rebuildFor(authVerifierFilter);
@@ -442,6 +497,13 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 			for (AuthVerifierConfiguration authVerifierConfiguration :
 					_authVerifierConfigurations) {
+
+				authVerifierConfiguration = _mergeAuthVerifierConfiguration(
+					authVerifierConfiguration, authVerifierFilter);
+
+				if (authVerifierConfiguration == null) {
+					continue;
+				}
 
 				Properties properties =
 					authVerifierConfiguration.getProperties();
