@@ -17,6 +17,7 @@ package com.liferay.portal.servlet.filters.authverifier;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.url.pattern.mapper.URLPatternMapper;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapperFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
@@ -41,6 +42,7 @@ import com.liferay.registry.ServiceReference;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -303,9 +305,13 @@ public class AuthVerifierFilter extends BasePortalFilter {
 	private static final AuthVerifierServiceTrackerCustomizer
 		_authVerifierServiceTrackerCustomizer;
 
+	private URLPatternMapper<List<AuthVerifierConfiguration>>
+		_excludeURLPatternMapper;
 	private boolean _guestAllowed = true;
 	private final Set<String> _hostsAllowed = new HashSet<>();
 	private boolean _httpsRequired;
+	private URLPatternMapper<List<AuthVerifierConfiguration>>
+		_includeURLPatternMapper;
 	private final Map<String, Object> _initParametersMap = new HashMap<>();
 
 	private static class AuthVerifierServiceTrackerCustomizer
@@ -316,6 +322,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			AuthVerifierFilter authVerifierFilter) {
 
 			_authVerifierFilters.add(authVerifierFilter);
+
+			_rebuildFor(authVerifierFilter);
 		}
 
 		@Override
@@ -347,6 +355,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 			_authVerifierConfigurations.add(0, authVerifierConfiguration);
 
+			_rebuildAll();
+
 			return authVerifierConfiguration;
 		}
 
@@ -364,6 +374,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 			if (_validate(authVerifierConfiguration)) {
 				_authVerifierConfigurations.add(0, authVerifierConfiguration);
+
+				_rebuildAll();
 			}
 		}
 
@@ -383,6 +395,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			registry.ungetService(serviceReference);
 
 			_authVerifierConfigurations.remove(authVerifierConfiguration);
+
+			_rebuildAll();
 		}
 
 		private Properties _loadProperties(
@@ -413,6 +427,72 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			return properties;
 		}
 
+		private void _rebuildAll() {
+			for (AuthVerifierFilter authVerifierFilter : _authVerifierFilters) {
+				_rebuildFor(authVerifierFilter);
+			}
+		}
+
+		private void _rebuildFor(AuthVerifierFilter authVerifierFilter) {
+			Map<String, List<AuthVerifierConfiguration>>
+				excludeAuthVerifierConfigurations = new HashMap<>();
+
+			Map<String, List<AuthVerifierConfiguration>>
+				includeAuthVerifierConfigurations = new HashMap<>();
+
+			for (AuthVerifierConfiguration authVerifierConfiguration :
+					_authVerifierConfigurations) {
+
+				Properties properties =
+					authVerifierConfiguration.getProperties();
+
+				String[] urlsExcludes = StringUtil.split(
+					properties.getProperty("urls.excludes"));
+
+				for (String urlsExclude : urlsExcludes) {
+					if (!excludeAuthVerifierConfigurations.containsKey(
+							urlsExclude)) {
+
+						excludeAuthVerifierConfigurations.put(
+							urlsExclude, new ArrayList<>());
+					}
+
+					List<AuthVerifierConfiguration>
+						excludeAuthVerifierConfiguration =
+							excludeAuthVerifierConfigurations.get(urlsExclude);
+
+					excludeAuthVerifierConfiguration.add(
+						authVerifierConfiguration);
+				}
+
+				String[] urlsIncludes = StringUtil.split(
+					properties.getProperty("urls.includes"));
+
+				for (String urlsInclude : urlsIncludes) {
+					if (!includeAuthVerifierConfigurations.containsKey(
+							urlsInclude)) {
+
+						includeAuthVerifierConfigurations.put(
+							urlsInclude, new ArrayList<>());
+					}
+
+					List<AuthVerifierConfiguration>
+						includeAuthVerifierConfiguration =
+							includeAuthVerifierConfigurations.get(urlsInclude);
+
+					includeAuthVerifierConfiguration.add(
+						authVerifierConfiguration);
+				}
+			}
+
+			authVerifierFilter._excludeURLPatternMapper =
+				URLPatternMapperFactory.create(
+					excludeAuthVerifierConfigurations);
+			authVerifierFilter._includeURLPatternMapper =
+				URLPatternMapperFactory.create(
+					includeAuthVerifierConfigurations);
+		}
+
 		private boolean _validate(
 			AuthVerifierConfiguration authVerifierConfiguration) {
 
@@ -437,9 +517,10 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			return true;
 		}
 
-		private final List<AuthVerifierConfiguration>
+		private static final List<AuthVerifierConfiguration>
 			_authVerifierConfigurations = new CopyOnWriteArrayList<>();
-		private List<AuthVerifierFilter> _authVerifierFilters;
+		private static final List<AuthVerifierFilter> _authVerifierFilters =
+			new CopyOnWriteArrayList<>();
 
 	}
 
