@@ -16,6 +16,7 @@ package com.liferay.portal.servlet.filters.authverifier;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
@@ -63,6 +64,13 @@ import javax.servlet.http.HttpServletResponse;
  * @author Raymond Augé
  */
 public class AuthVerifierFilter extends BasePortalFilter {
+
+	@Override
+	public void destroy() {
+		_authVerifierServiceTrackerCustomizer.removeAuthVerifierFilter(this);
+
+		super.destroy();
+	}
 
 	@Override
 	public void init(FilterConfig filterConfig) {
@@ -125,6 +133,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 				_log.warn("use_permission_checker is deprecated");
 			}
 		}
+
+		_authVerifierServiceTrackerCustomizer.addAuthVerifierFilter(this);
 	}
 
 	@Override
@@ -212,18 +222,6 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 	}
 
-	private AuthVerifierFilter() {
-		Registry registry = RegistryUtil.getRegistry();
-
-		Filter filter = registry.getFilter(
-			"(objectClass=" + AuthVerifier.class.getName() + ")");
-
-		_authVerifierServiceTracker = registry.trackServices(
-			filter, new AuthVerifierServiceTrackerCustomizer());
-
-		_authVerifierServiceTracker.open();
-	}
-
 	private boolean _isAccessAllowed(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
@@ -302,18 +300,23 @@ public class AuthVerifierFilter extends BasePortalFilter {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierFilter.class.getName());
 
-	private final List<AuthVerifierConfiguration> _authVerifierConfigurations =
-		new CopyOnWriteArrayList<>();
-	private final ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
-		_authVerifierServiceTracker;
+	private static final AuthVerifierServiceTrackerCustomizer
+		_authVerifierServiceTrackerCustomizer;
+
 	private boolean _guestAllowed = true;
 	private final Set<String> _hostsAllowed = new HashSet<>();
 	private boolean _httpsRequired;
 	private final Map<String, Object> _initParametersMap = new HashMap<>();
 
-	private class AuthVerifierServiceTrackerCustomizer
+	private static class AuthVerifierServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer
 			<AuthVerifier, AuthVerifierConfiguration> {
+
+		public void addAuthVerifierFilter(
+			AuthVerifierFilter authVerifierFilter) {
+
+			_authVerifierFilters.add(authVerifierFilter);
+		}
 
 		@Override
 		public AuthVerifierConfiguration addingService(
@@ -362,6 +365,12 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			if (_validate(authVerifierConfiguration)) {
 				_authVerifierConfigurations.add(0, authVerifierConfiguration);
 			}
+		}
+
+		public void removeAuthVerifierFilter(
+			AuthVerifierFilter authVerifierFilter) {
+
+			_authVerifierFilters.remove(authVerifierFilter);
 		}
 
 		@Override
@@ -428,6 +437,26 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			return true;
 		}
 
+		private final List<AuthVerifierConfiguration>
+			_authVerifierConfigurations = new CopyOnWriteArrayList<>();
+		private List<AuthVerifierFilter> _authVerifierFilters;
+
+	}
+
+	static {
+		_authVerifierServiceTrackerCustomizer =
+			new AuthVerifierServiceTrackerCustomizer();
+
+		Registry registry = RegistryUtil.getRegistry();
+
+		Filter filter = registry.getFilter(
+			"(objectClass=" + AuthVerifier.class.getName() + ")");
+
+		ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
+			authVerifierServiceTracker = registry.trackServices(
+				filter, _authVerifierServiceTrackerCustomizer);
+
+		authVerifierServiceTracker.open();
 	}
 
 }
