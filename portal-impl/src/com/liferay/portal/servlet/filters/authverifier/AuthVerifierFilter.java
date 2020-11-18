@@ -145,83 +145,21 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			HttpServletResponse httpServletResponse, FilterChain filterChain)
 		throws Exception {
 
-		if (!_isAccessAllowed(httpServletRequest, httpServletResponse)) {
-			return;
-		}
-
-		if (_isApplySSL(httpServletRequest, httpServletResponse)) {
-			return;
-		}
-
-		if (_isCORSPreflightRequest(httpServletRequest)) {
-			Class<?> clazz = getClass();
-
-			processFilter(
-				clazz.getName(), httpServletRequest, httpServletResponse,
-				filterChain);
-
+		if (_preProcess(httpServletRequest, httpServletResponse, filterChain)) {
 			return;
 		}
 
 		AccessControlUtil.initAccessControlContext(
 			httpServletRequest, httpServletResponse, _initParametersMap);
 
-		AuthVerifierResult.State state = AccessControlUtil.verifyRequest();
+		AccessControlUtil.verifyRequest();
 
 		AccessControlContext accessControlContext =
 			AccessControlUtil.getAccessControlContext();
 
-		AuthVerifierResult authVerifierResult =
-			accessControlContext.getAuthVerifierResult();
-
-		if (_log.isDebugEnabled()) {
-			_log.debug("Auth verifier result " + authVerifierResult);
-		}
-
-		if (state == AuthVerifierResult.State.INVALID_CREDENTIALS) {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Result state does not allow us to continue");
-			}
-		}
-		else if (state == AuthVerifierResult.State.NOT_APPLICABLE) {
-			_log.error("Invalid state " + state);
-		}
-		else if (!_guestAllowed &&
-				 (state == AuthVerifierResult.State.UNSUCCESSFUL)) {
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Guest is not allowed to access " +
-						httpServletRequest.getRequestURI());
-			}
-
-			httpServletResponse.sendError(
-				HttpServletResponse.SC_FORBIDDEN, "Authorization required");
-		}
-		else if (_guestAllowed || (state == AuthVerifierResult.State.SUCCESS)) {
-			long userId = authVerifierResult.getUserId();
-
-			AccessControlUtil.initContextUser(userId);
-
-			String authType = MapUtil.getString(
-				accessControlContext.getSettings(),
-				AuthVerifierPipeline.AUTH_TYPE);
-
-			ProtectedServletRequest protectedServletRequest =
-				new ProtectedServletRequest(
-					httpServletRequest, String.valueOf(userId), authType);
-
-			accessControlContext.setRequest(protectedServletRequest);
-
-			Class<?> clazz = getClass();
-
-			processFilter(
-				clazz.getName(), protectedServletRequest, httpServletResponse,
-				filterChain);
-		}
-		else {
-			_log.error("Unimplemented state " + state);
-		}
+		_postProcess(
+			accessControlContext, httpServletRequest, httpServletResponse,
+			filterChain);
 	}
 
 	private boolean _isAccessAllowed(
@@ -292,6 +230,93 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 		if (StringUtil.equals(httpServletRequest.getMethod(), "OPTIONS") &&
 			Validator.isNotNull(httpServletRequest.getHeader("Origin"))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private void _postProcess(
+			AccessControlContext accessControlContext,
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, FilterChain filterChain)
+		throws Exception {
+
+		AuthVerifierResult authVerifierResult =
+			accessControlContext.getAuthVerifierResult();
+
+		AuthVerifierResult.State state = authVerifierResult.getState();
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Auth verifier result " + authVerifierResult);
+		}
+
+		if (state == AuthVerifierResult.State.INVALID_CREDENTIALS) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Result state does not allow us to continue");
+			}
+		}
+		else if (state == AuthVerifierResult.State.NOT_APPLICABLE) {
+			_log.error("Invalid state " + state);
+		}
+		else if (!_guestAllowed &&
+				 (state == AuthVerifierResult.State.UNSUCCESSFUL)) {
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Guest is not allowed to access " +
+						httpServletRequest.getRequestURI());
+			}
+
+			httpServletResponse.sendError(
+				HttpServletResponse.SC_FORBIDDEN, "Authorization required");
+		}
+		else if (_guestAllowed || (state == AuthVerifierResult.State.SUCCESS)) {
+			long userId = authVerifierResult.getUserId();
+
+			AccessControlUtil.initContextUser(userId);
+
+			String authType = MapUtil.getString(
+				accessControlContext.getSettings(),
+				AuthVerifierPipeline.AUTH_TYPE);
+
+			ProtectedServletRequest protectedServletRequest =
+				new ProtectedServletRequest(
+					httpServletRequest, String.valueOf(userId), authType);
+
+			accessControlContext.setRequest(protectedServletRequest);
+
+			Class<?> clazz = getClass();
+
+			processFilter(
+				clazz.getName(), protectedServletRequest, httpServletResponse,
+				filterChain);
+		}
+		else {
+			_log.error("Unimplemented state " + state);
+		}
+	}
+
+	private boolean _preProcess(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, FilterChain filterChain)
+		throws Exception {
+
+		if (!_isAccessAllowed(httpServletRequest, httpServletResponse)) {
+			return true;
+		}
+
+		if (_isApplySSL(httpServletRequest, httpServletResponse)) {
+			return true;
+		}
+
+		if (_isCORSPreflightRequest(httpServletRequest)) {
+			Class<?> clazz = getClass();
+
+			processFilter(
+				clazz.getName(), httpServletRequest, httpServletResponse,
+				filterChain);
 
 			return true;
 		}
