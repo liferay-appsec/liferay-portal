@@ -20,11 +20,13 @@ import com.liferay.petra.url.pattern.mapper.URLPatternMapper;
 import com.liferay.petra.url.pattern.mapper.URLPatternMapperFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -51,6 +53,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -152,10 +155,89 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		AccessControlUtil.initAccessControlContext(
 			httpServletRequest, httpServletResponse, _initParametersMap);
 
-		AccessControlUtil.verifyRequest();
-
 		AccessControlContext accessControlContext =
 			AccessControlUtil.getAccessControlContext();
+
+		String requestURI = httpServletRequest.getRequestURI();
+
+		String contextPath = httpServletRequest.getContextPath();
+
+		if (requestURI.equals(contextPath)) {
+			requestURI += "/";
+		}
+		else {
+			requestURI = requestURI.substring(contextPath.length());
+		}
+
+		Set<AuthVerifierConfiguration> excludeAuthVerifierConfigurations =
+			new HashSet<>();
+
+		_excludeURLPatternMapper.consumeValues(
+			authVerifierConfigurations ->
+				excludeAuthVerifierConfigurations.addAll(
+					authVerifierConfigurations),
+			requestURI);
+
+		_includeURLPatternMapper.consumeValues(
+			new Consumer<List<AuthVerifierConfiguration>>() {
+
+				@Override
+				public void accept(
+					List<AuthVerifierConfiguration>
+						authVerifierConfigurations) {
+
+					if (_foundResult) {
+						return;
+					}
+
+					for (AuthVerifierConfiguration authVerifierConfiguration :
+							authVerifierConfigurations) {
+
+						if (excludeAuthVerifierConfigurations.contains(
+								authVerifierConfiguration)) {
+
+							continue;
+						}
+
+						AuthVerifierResult authVerifierResult =
+							_processMatchedAuthVerifierConfiguration(
+								accessControlContext,
+								authVerifierConfiguration);
+
+						if (authVerifierResult == null) {
+							continue;
+						}
+
+						Map<String, Object> settings = _mergeSettings(
+							authVerifierConfiguration,
+							authVerifierResult.getSettings());
+
+						AuthVerifier authVerifier =
+							authVerifierConfiguration.getAuthVerifier();
+
+						settings.put(
+							AuthVerifierPipeline.AUTH_TYPE,
+							authVerifier.getAuthType());
+
+						authVerifierResult.setSettings(settings);
+
+						settings = accessControlContext.getSettings();
+
+						settings.putAll(authVerifierResult.getSettings());
+
+						accessControlContext.setAuthVerifierResult(
+							authVerifierResult);
+
+						_foundResult = true;
+
+						return;
+					}
+				}
+
+				private boolean _foundResult;
+
+			},
+			requestURI);
 
 		_postProcess(
 			accessControlContext, httpServletRequest, httpServletResponse,
@@ -235,6 +317,28 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		return false;
+	}
+
+	private Map<String, Object> _mergeSettings(
+		AuthVerifierConfiguration authVerifierConfiguration,
+		Map<String, Object> settings) {
+
+		AuthVerifier authVerifier = authVerifierConfiguration.getAuthVerifier();
+
+		Properties properties = authVerifierConfiguration.getProperties();
+
+		Map<String, Object> mergedSettings = new HashMap<>(settings);
+
+		if (properties != null) {
+			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+				mergedSettings.put((String)entry.getKey(), entry.getValue());
+			}
+		}
+
+		mergedSettings.put(
+			AuthVerifierPipeline.AUTH_TYPE, authVerifier.getAuthType());
+
+		return mergedSettings;
 	}
 
 	private void _postProcess(
@@ -322,6 +426,75 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		return false;
+	}
+
+	private AuthVerifierResult _processMatchedAuthVerifierConfiguration(
+		AccessControlContext accessControlContext,
+		AuthVerifierConfiguration authVerifierConfiguration) {
+
+		AuthVerifier authVerifier = authVerifierConfiguration.getAuthVerifier();
+
+		AuthVerifierResult authVerifierResult = null;
+
+		try {
+			authVerifierResult = authVerifier.verify(
+				accessControlContext,
+				authVerifierConfiguration.getProperties());
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				Class<?> authVerifierClass = authVerifier.getClass();
+
+				_log.debug(
+					"Skipping " + authVerifierClass.getName(), exception);
+			}
+
+			return null;
+		}
+
+		if (authVerifierResult == null) {
+			Class<?> authVerifierClass = authVerifier.getClass();
+
+			_log.error(
+				"Auth verifier " + authVerifierClass.getName() +
+					" did not return an auth verifier result");
+
+			return null;
+		}
+
+		if (authVerifierResult.getState() ==
+				AuthVerifierResult.State.NOT_APPLICABLE) {
+
+			return null;
+		}
+
+		User user = UserLocalServiceUtil.fetchUser(
+			authVerifierResult.getUserId());
+
+		if ((user == null) || !user.isActive()) {
+			if (_log.isDebugEnabled()) {
+				Class<?> authVerifierClass = authVerifier.getClass();
+
+				if (user == null) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned null user",
+							authVerifierResult.getUserId()));
+				}
+				else {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned inactive user",
+							authVerifierResult.getUserId()));
+				}
+			}
+
+			return null;
+		}
+
+		return authVerifierResult;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
