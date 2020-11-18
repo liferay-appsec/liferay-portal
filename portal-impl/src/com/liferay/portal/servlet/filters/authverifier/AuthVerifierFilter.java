@@ -221,10 +221,6 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 						authVerifierResult.setSettings(settings);
 
-						settings = accessControlContext.getSettings();
-
-						settings.putAll(authVerifierResult.getSettings());
-
 						accessControlContext.setAuthVerifierResult(
 							authVerifierResult);
 
@@ -239,9 +235,44 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			},
 			requestURI);
 
+		AuthVerifierResult authVerifierResult =
+			accessControlContext.getAuthVerifierResult();
+
+		if (authVerifierResult == null) {
+			accessControlContext.setAuthVerifierResult(
+				_createGuestVerificationResult(accessControlContext));
+		}
+
+		Map<String, Object> settings = accessControlContext.getSettings();
+
+		authVerifierResult = accessControlContext.getAuthVerifierResult();
+
+		if (authVerifierResult.getSettings() != null) {
+			settings.putAll(authVerifierResult.getSettings());
+		}
+
 		_postProcess(
 			accessControlContext, httpServletRequest, httpServletResponse,
 			filterChain);
+	}
+
+	private AuthVerifierResult _createGuestVerificationResult(
+			AccessControlContext accessControlContext)
+		throws Exception {
+
+		AuthVerifierResult authVerifierResult = new AuthVerifierResult();
+
+		authVerifierResult.setState(AuthVerifierResult.State.UNSUCCESSFUL);
+
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
+
+		long defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+			PortalUtil.getCompanyId(httpServletRequest));
+
+		authVerifierResult.setUserId(defaultUserId);
+
+		return authVerifierResult;
 	}
 
 	private boolean _isAccessAllowed(
