@@ -467,6 +467,13 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			}
 
 			if (mergedProperties.size() < 1) {
+				String portalPropertyProperty = GetterUtil.getString(
+					filterProperties.get("portal_property_prefix"));
+
+				if (Validator.isNotNull(portalPropertyProperty)) {
+					return authVerifierConfiguration;
+				}
+
 				return null;
 			}
 
