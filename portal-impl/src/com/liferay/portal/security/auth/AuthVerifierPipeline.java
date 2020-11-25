@@ -28,7 +28,6 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.registry.Filter;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
 import com.liferay.registry.ServiceReference;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -51,6 +49,8 @@ import jodd.util.Wildcard;
 /**
  * @author Tomas Polesovsky
  * @author Peter Fellwock
+ * @author Arthur Chan
+ * @author Carlos Sierra Andrés
  */
 public class AuthVerifierPipeline {
 
@@ -64,23 +64,41 @@ public class AuthVerifierPipeline {
 			PropsKeys.AUTH_VERIFIER, simpleClassName, StringPool.PERIOD);
 	}
 
-	public static AuthVerifierResult verifyRequest(
+	public AuthVerifierPipeline(
+		List<AuthVerifierConfiguration> authVerifierConfigurations,
+		String contextPath) {
+
+		_authVerifierConfigurations = new ArrayList<>(
+			authVerifierConfigurations);
+
+		_contextPath = contextPath;
+	}
+
+	public AuthVerifierResult verifyRequest(
 			AccessControlContext accessControlContext)
 		throws PortalException {
 
-		return _authVerifierPipeline._verifyRequest(accessControlContext);
-	}
+		if (accessControlContext == null) {
+			throw new IllegalArgumentException(
+				"Access control context is null");
+		}
 
-	private AuthVerifierPipeline() {
-		Registry registry = RegistryUtil.getRegistry();
+		List<AuthVerifierConfiguration> authVerifierConfigurations =
+			_getAuthVerifierConfigurations(accessControlContext);
 
-		Filter filter = registry.getFilter(
-			"(objectClass=" + AuthVerifier.class.getName() + ")");
+		for (AuthVerifierConfiguration authVerifierConfiguration :
+				authVerifierConfigurations) {
 
-		_serviceTracker = registry.trackServices(
-			filter, new AuthVerifierTrackerCustomizer());
+			AuthVerifierResult authVerifierResult =
+				_verifyWithAuthVerifierConfiguration(
+					accessControlContext, authVerifierConfiguration);
 
-		_serviceTracker.open();
+			if (authVerifierResult != null) {
+				return authVerifierResult;
+			}
+		}
+
+		return _createGuestVerificationResult(accessControlContext);
 	}
 
 	private AuthVerifierResult _createGuestVerificationResult(
@@ -251,41 +269,11 @@ public class AuthVerifierPipeline {
 		return mergedSettings;
 	}
 
-	private AuthVerifierResult _verifyRequest(
-			AccessControlContext accessControlContext)
-		throws PortalException {
-
-		if (accessControlContext == null) {
-			throw new IllegalArgumentException(
-				"Access control context is null");
-		}
-
-		List<AuthVerifierConfiguration> authVerifierConfigurations =
-			_getAuthVerifierConfigurations(accessControlContext);
-
-		for (AuthVerifierConfiguration authVerifierConfiguration :
-				authVerifierConfigurations) {
-
-			AuthVerifierResult authVerifierResult =
-				_verifyWithAuthVerifierConfiguration(
-					accessControlContext, authVerifierConfiguration);
-
-			if (authVerifierResult != null) {
-				return authVerifierResult;
-			}
-		}
-
-		return _createGuestVerificationResult(accessControlContext);
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
-	private static final AuthVerifierPipeline _authVerifierPipeline =
-		new AuthVerifierPipeline();
-
-	private final List<AuthVerifierConfiguration> _authVerifierConfigurations =
-		new CopyOnWriteArrayList<>();
+	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
+	private final String _contextPath;
 	private final ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
 		_serviceTracker;
 
