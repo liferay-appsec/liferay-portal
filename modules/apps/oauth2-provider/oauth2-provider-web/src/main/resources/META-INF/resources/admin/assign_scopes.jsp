@@ -87,6 +87,7 @@ AssignScopesDisplayContext assignScopesDisplayContext = (AssignScopesDisplayCont
 				</div>
 
 				<aui:input id="impliedScopeAliases" name="scopeAliases" type="hidden" />
+				<aui:input id="newInputField" name="newInputField" type="hidden" />
 			</aui:form>
 		</clay:col>
 	</clay:row>
