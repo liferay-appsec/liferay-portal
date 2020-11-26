@@ -33,15 +33,12 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
-
-import jodd.util.Wildcard;
 
 /**
  * @author Tomas Polesovsky
@@ -187,141 +184,6 @@ public class AuthVerifierPipeline {
 		}
 
 		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
-	}
-
-	private List<AuthVerifierConfiguration> _getAuthVerifierConfigurations(
-		AccessControlContext accessControlContext) {
-
-		HttpServletRequest httpServletRequest =
-			accessControlContext.getRequest();
-
-		List<AuthVerifierConfiguration> authVerifierConfigurations =
-			new ArrayList<>();
-
-		String requestURI = httpServletRequest.getRequestURI();
-
-		String contextPath = httpServletRequest.getContextPath();
-
-		if (requestURI.equals(contextPath)) {
-			requestURI += "/";
-		}
-
-		for (AuthVerifierConfiguration authVerifierConfiguration :
-				_authVerifierConfigurations) {
-
-			authVerifierConfiguration = _mergeAuthVerifierConfiguration(
-				authVerifierConfiguration, accessControlContext, contextPath);
-
-			if (_isMatchingRequestURI(authVerifierConfiguration, requestURI)) {
-				authVerifierConfigurations.add(authVerifierConfiguration);
-			}
-		}
-
-		return authVerifierConfigurations;
-	}
-
-	private boolean _isMatchingRequestURI(
-		AuthVerifierConfiguration authVerifierConfiguration,
-		String requestURI) {
-
-		Properties properties = authVerifierConfiguration.getProperties();
-
-		String[] urlsExcludes = StringUtil.split(
-			properties.getProperty("urls.excludes"));
-
-		if ((urlsExcludes.length > 0) &&
-			(Wildcard.matchOne(requestURI, urlsExcludes) > -1)) {
-
-			return false;
-		}
-
-		String[] urlsIncludes = StringUtil.split(
-			properties.getProperty("urls.includes"));
-
-		if (urlsIncludes.length == 0) {
-			return false;
-		}
-
-		if (Wildcard.matchOne(requestURI, urlsIncludes) > -1) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private AuthVerifierConfiguration _mergeAuthVerifierConfiguration(
-		AuthVerifierConfiguration authVerifierConfiguration,
-		AccessControlContext accessControlContext, String contextPath) {
-
-		Map<String, Object> settings = accessControlContext.getSettings();
-
-		String authVerifierSettingsKey = getAuthVerifierPropertyName(
-			authVerifierConfiguration.getAuthVerifierClassName());
-
-		boolean merge = false;
-
-		Set<String> settingsKeys = settings.keySet();
-
-		Iterator<String> iterator = settingsKeys.iterator();
-
-		while (iterator.hasNext() && !merge) {
-			String settingsKey = iterator.next();
-
-			if (settingsKey.startsWith(authVerifierSettingsKey) &&
-				(settings.get(settingsKey) instanceof String)) {
-
-				merge = true;
-			}
-		}
-
-		if (!merge) {
-			return authVerifierConfiguration;
-		}
-
-		AuthVerifierConfiguration mergedAuthVerifierConfiguration =
-			new AuthVerifierConfiguration();
-
-		mergedAuthVerifierConfiguration.setAuthVerifier(
-			authVerifierConfiguration.getAuthVerifier());
-
-		Properties mergedProperties = new Properties(
-			authVerifierConfiguration.getProperties());
-
-		for (Map.Entry<String, Object> entry : settings.entrySet()) {
-			String settingsKey = entry.getKey();
-
-			if (!settingsKey.startsWith(authVerifierSettingsKey)) {
-				continue;
-			}
-
-			Object settingsValue = entry.getValue();
-
-			if (settingsValue instanceof String) {
-				String propertiesKey = settingsKey.substring(
-					authVerifierSettingsKey.length());
-
-				if (propertiesKey.equals("urls.includes") ||
-					propertiesKey.equals("urls.excludes")) {
-
-					String settingsValueString = (String)settingsValue;
-
-					if (settingsValueString.charAt(0) != '/') {
-						settingsValueString = "/" + settingsValueString;
-					}
-
-					mergedProperties.setProperty(
-						propertiesKey, contextPath + settingsValueString);
-				}
-				else {
-					mergedProperties.setProperty(
-						propertiesKey, (String)settingsValue);
-				}
-			}
-		}
-
-		mergedAuthVerifierConfiguration.setProperties(mergedProperties);
-
-		return mergedAuthVerifierConfiguration;
 	}
 
 	private Map<String, Object> _mergeSettings(
