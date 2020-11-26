@@ -30,13 +30,16 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.auth.registry.AuthVerifierRegistry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -79,19 +82,20 @@ public class AuthVerifierPipeline {
 				"Access control context is null");
 		}
 
-		List<AuthVerifierConfiguration> authVerifierConfigurations =
-			_getAuthVerifierConfigurations(accessControlContext);
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
 
-		for (AuthVerifierConfiguration authVerifierConfiguration :
-				authVerifierConfigurations) {
+		String requestURI = httpServletRequest.getRequestURI();
 
-			AuthVerifierResult authVerifierResult =
-				_verifyWithAuthVerifierConfiguration(
-					accessControlContext, authVerifierConfiguration);
+		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
+			new AuthVerifierConfigurationConsumer(
+				accessControlContext, _excludeURLPatternMapper, requestURI);
 
-			if (authVerifierResult != null) {
-				return authVerifierResult;
-			}
+		_includeURLPatternMapper.consumeValues(
+			authVerifierConfigurationConsumer, requestURI);
+
+		if (authVerifierConfigurationConsumer.getAuthVerifierResult() != null) {
+			return authVerifierConfigurationConsumer.getAuthVerifierResult();
 		}
 
 		return _createGuestVerificationResult(accessControlContext);
@@ -186,20 +190,6 @@ public class AuthVerifierPipeline {
 		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
 	}
 
-	private Map<String, Object> _mergeSettings(
-		Properties properties, Map<String, Object> settings) {
-
-		Map<String, Object> mergedSettings = new HashMap<>(settings);
-
-		if (properties != null) {
-			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-				mergedSettings.put((String)entry.getKey(), entry.getValue());
-			}
-		}
-
-		return mergedSettings;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
@@ -210,13 +200,84 @@ public class AuthVerifierPipeline {
 	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
 
+	private static class AuthVerifierConfigurationConsumer
+		implements Consumer<List<AuthVerifierConfiguration>> {
+
+		public AuthVerifierConfigurationConsumer(
+			AccessControlContext accessControlContext,
+			URLPatternMapper<List<AuthVerifierConfiguration>>
+				excludeURLPatternMapper,
+			String requestURI) {
+
+			_accessControlContext = accessControlContext;
+			_excludeURLPatternMapper = excludeURLPatternMapper;
+			_requestURI = requestURI;
+		}
+
+		@Override
+		public void accept(
+			List<AuthVerifierConfiguration> authVerifierConfigurations) {
+
+			if (_authVerifierResult != null) {
+				return;
+			}
+
+			if (_excludedAuthVerifierConfigurations == null) {
+				_excludedAuthVerifierConfigurations = new HashSet<>();
+
+				_excludeURLPatternMapper.consumeValues(
+					_excludedAuthVerifierConfigurations::addAll, _requestURI);
+			}
+
+			for (AuthVerifierConfiguration authVerifierConfiguration :
+					authVerifierConfigurations) {
+
+				if (_excludedAuthVerifierConfigurations.contains(
+						authVerifierConfiguration)) {
+
+					continue;
+				}
+
+				_authVerifierResult = _verifyWithAuthVerifierConfiguration(
+					_accessControlContext, authVerifierConfiguration);
+
+				if (_authVerifierResult != null) {
+					return;
+				}
+			}
+		}
+
+		public AuthVerifierResult getAuthVerifierResult() {
+			return _authVerifierResult;
+		}
+
+		private Map<String, Object> _mergeSettings(
+			Properties properties, Map<String, Object> settings) {
+
+			Map<String, Object> mergedSettings = new HashMap<>(settings);
+
+			if (properties != null) {
+				for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+					mergedSettings.put(
+						(String)entry.getKey(), entry.getValue());
+				}
+			}
+
+			return mergedSettings;
+		}
+
 		private AuthVerifierResult _verifyWithAuthVerifierConfiguration(
 			AccessControlContext accessControlContext,
 			AuthVerifierConfiguration authVerifierConfiguration) {
 
 			AuthVerifierResult authVerifierResult = null;
 
-			AuthVerifier authVerifier = authVerifierConfiguration.getAuthVerifier();
+			AuthVerifier authVerifier = AuthVerifierRegistry.getAuthVerifier(
+				authVerifierConfiguration.getAuthVerifierClassName());
+
+			if (authVerifier == null) {
+				return authVerifierResult;
+			}
 
 			Properties properties = authVerifierConfiguration.getProperties();
 
@@ -286,5 +347,15 @@ public class AuthVerifierPipeline {
 
 			return authVerifierResult;
 		}
+
+		private final AccessControlContext _accessControlContext;
+		private AuthVerifierResult _authVerifierResult;
+		private Set<AuthVerifierConfiguration>
+			_excludedAuthVerifierConfigurations;
+		private final URLPatternMapper<List<AuthVerifierConfiguration>>
+			_excludeURLPatternMapper;
+		private final String _requestURI;
+
+	}
 
 }
