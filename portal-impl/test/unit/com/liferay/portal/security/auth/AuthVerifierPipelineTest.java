@@ -95,10 +95,13 @@ public class AuthVerifierPipelineTest {
 
 		accessControlContext.setRequest(mockHttpServletRequest);
 
+		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
+			new HashMap<String, Object>());
+
 		try {
 			Assert.assertSame(
 				authVerifierResult,
-				AuthVerifierPipeline.verifyRequest(accessControlContext));
+				authVerifierPipeline.verifyRequest(accessControlContext));
 		}
 		finally {
 			serviceRegistration.unregister();
