@@ -281,10 +281,10 @@ public class HashProcessorTest {
 
 		for (int i = 0; i < bytes.length; ++i) {
 			char leftHalf = hexString.charAt(i * 2);
-			char rightHalf = hexString.charAt(i * 2 + 1);
+			char rightHalf = hexString.charAt((i * 2) + 1);
 
 			int byteValue =
-				_getHexCharValue(leftHalf) * 16 + _getHexCharValue(rightHalf);
+				(_getHexCharValue(leftHalf) * 16) + _getHexCharValue(rightHalf);
 
 			bytes[i] = (byte)byteValue;
 		}
