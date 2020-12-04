@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+
+<model-hints>
+	<model name="com.liferay.portal.security.password.model.PasswordEntry">
+		<field name="mvccVersion" type="long" />
+		<field name="uuid" type="String" />
+		<field name="passwordEntryId" type="long" />
+		<field name="userId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="createDate" type="Date" />
+		<field name="hash" type="String" />
+	</model>
+	<model name="com.liferay.portal.security.password.model.PasswordHashGenerator">
+		<field name="mvccVersion" type="long" />
+		<field name="uuid" type="String" />
+		<field name="passwordHashGeneratorId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="createDate" type="Date" />
+		<field name="hashGeneratorName" type="String" />
+		<field name="hashGeneratorMeta" type="String" />
+	</model>
+	<model name="com.liferay.portal.security.password.model.PasswordMeta">
+		<field name="mvccVersion" type="long" />
+		<field name="uuid" type="String" />
+		<field name="passwordMetaId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="createDate" type="Date" />
+		<field name="passwordEntryId" type="long" />
+		<field name="salt" type="String" />
+		<field name="pepperId" type="String" />
+	</model>
+</model-hints>
