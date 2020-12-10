@@ -133,8 +133,11 @@ public class HashProcessorImpl implements HashProcessor {
 			if (!(_hashPepperStorage instanceof DummyHashPepperStorage)) {
 				Optional<String> optionalPepperId = hashFlavor.getPepperId();
 
-				hashGenerator.setPepper(
-					_hashPepperStorage.getPepper(optionalPepperId.get()));
+				optionalPepperId.map(
+					_hashPepperStorage::getPepper
+				).ifPresent(
+					hashGenerator::setPepper
+				);
 			}
 
 			// process salt
