@@ -34,7 +34,7 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 		HashFlavor hashFlavor) {
 
 		_hashGeneratorName = hashGeneratorName;
-		_hashGeneratorMeta = Optional.ofNullable(hashGeneratorMetaJSONObject);
+		_hashGeneratorMeta = hashGeneratorMetaJSONObject;
 		_hashFlavor = hashFlavor;
 	}
 
@@ -45,7 +45,7 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 
 	@Override
 	public Optional<JSONObject> getHashGeneratorMeta() {
-		return _hashGeneratorMeta;
+		return Optional.ofNullable(_hashGeneratorMeta);
 	}
 
 	@Override
@@ -151,7 +151,7 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 	}
 
 	private final HashFlavor _hashFlavor;
-	private final Optional<JSONObject> _hashGeneratorMeta;
+	private final JSONObject _hashGeneratorMeta;
 	private final String _hashGeneratorName;
 
 }
