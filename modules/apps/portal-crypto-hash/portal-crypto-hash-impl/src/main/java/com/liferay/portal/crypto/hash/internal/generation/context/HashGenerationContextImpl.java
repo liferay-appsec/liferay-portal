@@ -16,10 +16,9 @@ package com.liferay.portal.crypto.hash.internal.generation.context;
 
 import com.liferay.portal.crypto.hash.generation.context.HashGenerationContext;
 import com.liferay.portal.crypto.hash.generation.context.salt.SaltCommand;
+import org.json.JSONObject;
 
 import java.util.Optional;
-
-import org.json.JSONObject;
 
 /**
  * @author Arthur Chan
@@ -31,14 +30,14 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 		SaltCommand... saltCommands) {
 
 		_hashGeneratorName = hashGeneratorName;
-		_hashGeneratorMeta = Optional.ofNullable(hashGeneratorMetaJSONObject);
+		_hashGeneratorMeta = hashGeneratorMetaJSONObject;
 
 		_saltCommands = saltCommands;
 	}
 
 	@Override
 	public Optional<JSONObject> getHashGeneratorMeta() {
-		return _hashGeneratorMeta;
+		return Optional.ofNullable(_hashGeneratorMeta);
 	}
 
 	@Override
@@ -72,11 +71,11 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 		}
 
 		private final JSONObject _hashGeneratorMetaJSONObject;
-		private String _hashGeneratorName;
+		private final String _hashGeneratorName;
 
 	}
 
-	private final Optional<JSONObject> _hashGeneratorMeta;
+	private final JSONObject _hashGeneratorMeta;
 	private final String _hashGeneratorName;
 	private final SaltCommand[] _saltCommands;
 
