@@ -15,10 +15,12 @@
 package com.liferay.portal.crypto.hash.generation.context;
 
 import com.liferay.portal.crypto.hash.generation.context.salt.SaltCommand;
-import org.json.JSONObject;
-import org.osgi.annotation.versioning.ProviderType;
 
 import java.util.Optional;
+
+import org.json.JSONObject;
+
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * @author Carlos Sierra Andrés

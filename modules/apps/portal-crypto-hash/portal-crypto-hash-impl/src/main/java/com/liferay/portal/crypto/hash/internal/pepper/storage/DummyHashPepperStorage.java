@@ -15,6 +15,7 @@
 package com.liferay.portal.crypto.hash.internal.pepper.storage;
 
 import com.liferay.portal.crypto.hash.pepper.storage.spi.HashPepperStorage;
+
 import org.osgi.service.component.annotations.Component;
 
 /**

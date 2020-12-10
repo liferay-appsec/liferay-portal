@@ -31,7 +31,12 @@ import com.liferay.portal.crypto.hash.internal.verification.context.HashVerifica
 import com.liferay.portal.crypto.hash.pepper.storage.spi.HashPepperStorage;
 import com.liferay.portal.crypto.hash.processor.HashProcessor;
 import com.liferay.portal.crypto.hash.verification.context.HashVerificationContext;
+
+import java.util.Optional;
+import java.util.Set;
+
 import org.json.JSONObject;
+
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -39,9 +44,6 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
-
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * @author Arthur Chan

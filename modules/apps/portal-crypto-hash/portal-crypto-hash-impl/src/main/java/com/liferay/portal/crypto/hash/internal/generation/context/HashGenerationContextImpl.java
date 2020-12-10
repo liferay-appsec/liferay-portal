@@ -16,9 +16,10 @@ package com.liferay.portal.crypto.hash.internal.generation.context;
 
 import com.liferay.portal.crypto.hash.generation.context.HashGenerationContext;
 import com.liferay.portal.crypto.hash.generation.context.salt.SaltCommand;
-import org.json.JSONObject;
 
 import java.util.Optional;
+
+import org.json.JSONObject;
 
 /**
  * @author Arthur Chan
