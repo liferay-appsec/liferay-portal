@@ -19,7 +19,6 @@ import com.liferay.portal.crypto.hash.flavor.HashFlavor;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
 import java.util.Optional;
 
 /**
@@ -28,18 +27,18 @@ import java.util.Optional;
 public class HashFlavorImpl implements HashFlavor {
 
 	public HashFlavorImpl(String pepperId, byte[] salt) {
-		_pepperId = Optional.ofNullable(pepperId);
-		_salt = Optional.ofNullable(salt);
+		_pepperId = pepperId;
+		_salt = salt;
 	}
 
 	@Override
 	public Optional<String> getPepperId() {
-		return _pepperId;
+		return Optional.ofNullable(_pepperId);
 	}
 
 	@Override
 	public Optional<byte[]> getSalt() {
-		return _salt;
+		return Optional.ofNullable(_salt);
 	}
 
 	@Override
@@ -52,13 +51,17 @@ public class HashFlavorImpl implements HashFlavor {
 
 		//version
 		dataOutputStream.writeByte(1);
-		dataOutputStream.writeUTF(_pepperId.orElse(""));
 
-		if (_salt.isPresent()) {
-			byte[] salt = _salt.get();
+		if (_pepperId != null) {
+			dataOutputStream.writeUTF(_pepperId);
+		}
+		else {
+			dataOutputStream.writeUTF("");
+		}
 
-			dataOutputStream.writeShort(salt.length);
-			dataOutputStream.write(salt);
+		if (_salt != null) {
+			dataOutputStream.writeShort(_salt.length);
+			dataOutputStream.write(_salt);
 		}
 		else {
 			dataOutputStream.writeShort(0);
@@ -71,7 +74,7 @@ public class HashFlavorImpl implements HashFlavor {
 		return byteArrayOutputStream.toByteArray();
 	}
 
-	private final Optional<String> _pepperId;
-	private final Optional<byte[]> _salt;
+	private final String _pepperId;
+	private final byte[] _salt;
 
 }
