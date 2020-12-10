@@ -29,9 +29,8 @@ import java.util.Set;
 @ProviderType
 public interface HashProcessor {
 
-	public HashGenerationContext.HashGenerationContextBuilder
-		createHashGenerationContextBuilder(
-			String hashGeneratorName, JSONObject hashGenerationMetaJSONObject);
+	public HashGenerationContext.Builder createHashGenerationContextBuilder(
+		String hashGeneratorName, JSONObject hashGenerationMetaJSONObject);
 
 	public HashVerificationContext.Builder createHashVerificationContextBuilder(
 		String hashGeneratorName, JSONObject hashGenerationMetaJSONObject);

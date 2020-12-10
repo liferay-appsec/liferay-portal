@@ -55,9 +55,8 @@ import java.util.Set;
 public class HashProcessorImpl implements HashProcessor {
 
 	@Override
-	public HashGenerationContext.HashGenerationContextBuilder
-		createHashGenerationContextBuilder(
-			String hashGeneratorName, JSONObject hashGenerationMetaJSONObject) {
+	public HashGenerationContext.Builder createHashGenerationContextBuilder(
+		String hashGeneratorName, JSONObject hashGenerationMetaJSONObject) {
 
 		_verifyHashGeneratorName(hashGeneratorName);
 

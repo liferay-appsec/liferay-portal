@@ -48,10 +48,9 @@ public class HashProcessorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		HashGenerationContext.HashGenerationContextBuilder
-			hashGenerationContextBuilder1 =
-				_hashProcessor.createHashGenerationContextBuilder(
-					_MESSAGE_DIGEST_ALGO_1, null);
+		HashGenerationContext.Builder hashGenerationContextBuilder1 =
+			_hashProcessor.createHashGenerationContextBuilder(
+				_MESSAGE_DIGEST_ALGO_1, null);
 
 		defaultSaltHashGenerationContext1 = hashGenerationContextBuilder1.build(
 			SaltCommand.generateDefaultSizeSalt());
@@ -62,10 +61,9 @@ public class HashProcessorTest {
 
 		notSaltHashGenerationContext1 = hashGenerationContextBuilder1.build();
 
-		HashGenerationContext.HashGenerationContextBuilder
-			hashGenerationContextBuilder2 =
-				_hashProcessor.createHashGenerationContextBuilder(
-					_MESSAGE_DIGEST_ALGO_2, null);
+		HashGenerationContext.Builder hashGenerationContextBuilder2 =
+			_hashProcessor.createHashGenerationContextBuilder(
+				_MESSAGE_DIGEST_ALGO_2, null);
 
 		defaultSaltHashGenerationContext2 = hashGenerationContextBuilder2.build(
 			SaltCommand.generateDefaultSizeSalt());
@@ -205,10 +203,9 @@ public class HashProcessorTest {
 
 	@Test
 	public void testReusableHashGenerationContextBuilder() throws Exception {
-		HashGenerationContext.HashGenerationContextBuilder
-			hashGenerationContextBuilder =
-				_hashProcessor.createHashGenerationContextBuilder(
-					_MESSAGE_DIGEST_ALGO_1, null);
+		HashGenerationContext.Builder hashGenerationContextBuilder =
+			_hashProcessor.createHashGenerationContextBuilder(
+				_MESSAGE_DIGEST_ALGO_1, null);
 
 		HashGenerationContext hashGenerationContext1 =
 			hashGenerationContextBuilder.build(

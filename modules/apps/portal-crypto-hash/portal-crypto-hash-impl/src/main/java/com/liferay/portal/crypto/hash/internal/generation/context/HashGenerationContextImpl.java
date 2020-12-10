@@ -49,7 +49,7 @@ public class HashGenerationContextImpl implements HashGenerationContext {
 		return _saltCommands;
 	}
 
-	public static class BuilderImpl implements HashGenerationContextBuilder {
+	public static class BuilderImpl implements Builder {
 
 		public BuilderImpl(
 			String hashGeneratorName, JSONObject hashGeneratorMetaJSONObject) {
