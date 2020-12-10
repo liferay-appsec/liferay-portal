@@ -24,16 +24,15 @@ import com.liferay.portal.crypto.hash.verification.context.HashVerificationConte
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-
-import java.util.Arrays;
-import java.util.Optional;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * @author Arthur Chan
@@ -49,9 +48,10 @@ public class HashProcessorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		HashGenerationContext.Builder hashGenerationContextBuilder1 =
-			_hashProcessor.createHashGenerationContextBuilder(
-				_MESSAGE_DIGEST_ALGO_1, null);
+		HashGenerationContext.HashGenerationContextBuilder
+			hashGenerationContextBuilder1 =
+				_hashProcessor.createHashGenerationContextBuilder(
+					_MESSAGE_DIGEST_ALGO_1, null);
 
 		defaultSaltHashGenerationContext1 = hashGenerationContextBuilder1.build(
 			SaltCommand.generateDefaultSizeSalt());
@@ -62,9 +62,10 @@ public class HashProcessorTest {
 
 		notSaltHashGenerationContext1 = hashGenerationContextBuilder1.build();
 
-		HashGenerationContext.Builder hashGenerationContextBuilder2 =
-			_hashProcessor.createHashGenerationContextBuilder(
-				_MESSAGE_DIGEST_ALGO_2, null);
+		HashGenerationContext.HashGenerationContextBuilder
+			hashGenerationContextBuilder2 =
+				_hashProcessor.createHashGenerationContextBuilder(
+					_MESSAGE_DIGEST_ALGO_2, null);
 
 		defaultSaltHashGenerationContext2 = hashGenerationContextBuilder2.build(
 			SaltCommand.generateDefaultSizeSalt());
@@ -204,9 +205,10 @@ public class HashProcessorTest {
 
 	@Test
 	public void testReusableHashGenerationContextBuilder() throws Exception {
-		HashGenerationContext.Builder hashGenerationContextBuilder =
-			_hashProcessor.createHashGenerationContextBuilder(
-				_MESSAGE_DIGEST_ALGO_1, null);
+		HashGenerationContext.HashGenerationContextBuilder
+			hashGenerationContextBuilder =
+				_hashProcessor.createHashGenerationContextBuilder(
+					_MESSAGE_DIGEST_ALGO_1, null);
 
 		HashGenerationContext hashGenerationContext1 =
 			hashGenerationContextBuilder.build(

@@ -15,7 +15,6 @@
 package com.liferay.portal.crypto.hash.internal.pepper.storage;
 
 import com.liferay.portal.crypto.hash.pepper.storage.spi.HashPepperStorage;
-
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -25,7 +24,7 @@ import org.osgi.service.component.annotations.Component;
 public class DummyHashPepperStorage implements HashPepperStorage {
 
 	@Override
-	public String getCurrentPepperId(String appId) {
+	public String getCurrentPepperId() {
 		throw new UnsupportedOperationException();
 	}
 
