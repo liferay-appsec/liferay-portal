@@ -110,13 +110,13 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 		public HashVerificationContext build(HashFlavor hashFlavor) {
 			Optional<String> optionalPepperId = hashFlavor.getPepperId();
 
-			Optional<byte[]> optionalsalt = hashFlavor.getSalt();
+			Optional<byte[]> optionalSalt = hashFlavor.getSalt();
 
 			return new HashVerificationContextImpl(
 				_hashGeneratorName, _hashGeneratorMetaJSONObject,
 				new HashFlavorImpl(
 					optionalPepperId.orElse(""),
-					optionalsalt.orElse(new byte[0])));
+					optionalSalt.orElse(new byte[0])));
 		}
 
 		@Override
