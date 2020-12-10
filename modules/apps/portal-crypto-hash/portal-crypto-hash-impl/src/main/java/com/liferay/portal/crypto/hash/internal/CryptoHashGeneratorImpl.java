@@ -14,14 +14,14 @@
 
 package com.liferay.portal.crypto.hash.internal;
 
+import com.liferay.portal.crypto.hash.CryptoHashGenerationContext;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
 import com.liferay.portal.crypto.hash.CryptoHashVerificationContext;
 import com.liferay.portal.crypto.hash.exception.CryptoHashException;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProvider;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderResponse;
-
-import java.security.NoSuchAlgorithmException;
+import com.liferay.portal.crypto.hash.spi.VariableSizeSaltProvider;
 
 /**
  * @author Arthur Chan
@@ -29,27 +29,39 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CryptoHashGeneratorImpl implements CryptoHashGenerator {
 
-	public CryptoHashGeneratorImpl(CryptoHashProvider cryptoHashProvider)
-		throws NoSuchAlgorithmException {
-
-		_cryptoHashProvider = cryptoHashProvider;
-	}
-
 	@Override
-	public CryptoHashResponse generate(byte[] input)
+	public CryptoHashResponse generate(
+			byte[] input,
+			CryptoHashGenerationContext cryptoHashGenerationContext)
 		throws CryptoHashException {
 
-		byte[] salt = _cryptoHashProvider.generateSalt();
+		CryptoHashProvider cryptoHashProvider =
+			CryptoHashProviderRegistry.getCryptoHashProvider(
+				cryptoHashGenerationContext.getCryptoHashProviderName());
+
+		byte[] salt = cryptoHashProvider.generateSalt();
+
+		if (cryptoHashGenerationContext.getSaltSize() > 0) {
+			if (!(cryptoHashProvider instanceof VariableSizeSaltProvider)) {
+				throw new CryptoHashException(
+					cryptoHashGenerationContext.getCryptoHashProviderName() +
+						" does not support to generate variable size salt.");
+			}
+
+			VariableSizeSaltProvider variableSizeSaltProvider =
+				(VariableSizeSaltProvider)cryptoHashProvider;
+
+			salt = variableSizeSaltProvider.generateSalt(
+				cryptoHashGenerationContext.getSaltSize());
+		}
 
 		CryptoHashProviderResponse cryptoHashProviderResponse =
-			_cryptoHashProvider.generate(salt, input);
+			cryptoHashProvider.generate(salt, input);
 
 		return new CryptoHashResponse(
 			new CryptoHashVerificationContext(
 				cryptoHashProviderResponse.getCryptoHashProviderName(), salt),
 			cryptoHashProviderResponse.getHash());
 	}
-
-	private final CryptoHashProvider _cryptoHashProvider;
 
 }
