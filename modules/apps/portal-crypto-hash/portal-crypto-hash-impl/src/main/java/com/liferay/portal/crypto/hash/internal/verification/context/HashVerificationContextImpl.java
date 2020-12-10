@@ -17,14 +17,12 @@ package com.liferay.portal.crypto.hash.internal.verification.context;
 import com.liferay.portal.crypto.hash.flavor.HashFlavor;
 import com.liferay.portal.crypto.hash.internal.flavor.HashFlavorImpl;
 import com.liferay.portal.crypto.hash.verification.context.HashVerificationContext;
+import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-
 import java.util.Optional;
-
-import org.json.JSONObject;
 
 /**
  * @author Arthur Chan
@@ -37,7 +35,6 @@ public class HashVerificationContextImpl implements HashVerificationContext {
 
 		_hashGeneratorName = hashGeneratorName;
 		_hashGeneratorMeta = Optional.ofNullable(hashGeneratorMetaJSONObject);
-
 		_hashFlavor = hashFlavor;
 	}
 
