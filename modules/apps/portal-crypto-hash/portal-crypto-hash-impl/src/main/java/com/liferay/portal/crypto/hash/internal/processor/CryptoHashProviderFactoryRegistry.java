@@ -37,7 +37,7 @@ public class CryptoHashProviderFactoryRegistry {
 		_cryptoHashProviderFactories =
 			ServiceTrackerMapFactory.openSingleValueMap(
 				bundleContext, CryptoHashProviderFactory.class,
-				"crypto.hash.generator.name");
+				"crypto.hash.provider.name");
 	}
 
 	private ServiceTrackerMap<String, CryptoHashProviderFactory>
