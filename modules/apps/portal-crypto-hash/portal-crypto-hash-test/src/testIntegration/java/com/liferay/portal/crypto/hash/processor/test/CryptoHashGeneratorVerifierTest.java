@@ -141,18 +141,18 @@ public class CryptoHashGeneratorVerifierTest {
 		String factoryConfigurationPid =
 			ConfigurationTestUtil.createFactoryConfiguration(
 				"com.liferay.portal.crypto.hash.configuration." +
-					"HashProcessorConfiguration",
+					"CryptoHashProcessorConfiguration",
 				new HashMapDictionary<>(
 					HashMapBuilder.<String, Object>put(
 						"configuration.name", configurationName
 					).put(
-						"CryptoHashGeneratorProvider.target", generatorSelect
+						"CryptoHashProvider.target", generatorSelect
 					).build()));
 
 		return () -> ConfigurationTestUtil.deleteFactoryConfiguration(
 			factoryConfigurationPid,
 			"com.liferay.portal.crypto.hash.configuration." +
-				"HashProcessorConfiguration");
+				"CryptoHashProcessorConfiguration");
 	}
 
 	private static AutoCloseable _createMessageDigestConfiguration(
@@ -161,14 +161,14 @@ public class CryptoHashGeneratorVerifierTest {
 
 		String factoryConfigurationPid =
 			ConfigurationTestUtil.createFactoryConfiguration(
-				"com.liferay.portal.crypto.hash.generator.message.digest." +
+				"com.liferay.portal.crypto.hash.provider.message.digest." +
 					"internal.configuration." +
-						"MessageDigestCryptoHashGeneratorProviderConfiguration",
+						"MessageDigestCryptoHashProviderConfiguration",
 				new HashMapDictionary<>(
 					HashMapBuilder.<String, Object>put(
 						"configuration.name", configurationName
 					).put(
-						"hash.provider.name", algoName
+						"crypto.hash.provider.name", algoName
 					).put(
 						"salt.size", saltSize
 					).build()));
@@ -177,7 +177,7 @@ public class CryptoHashGeneratorVerifierTest {
 			factoryConfigurationPid,
 			"com.liferay.portal.crypto.hash.generator.message.digest." +
 				"internal.configuration." +
-					"MessageDigestCryptoHashGeneratorProviderConfiguration");
+					"MessageDigestCryptoHashProviderConfiguration");
 	}
 
 	/*private static int _getHexCharValue(char hexChar)
