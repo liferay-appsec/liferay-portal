@@ -18,7 +18,6 @@ import com.liferay.portal.crypto.hash.generation.context.CryptoHashGenerationCon
 import com.liferay.portal.crypto.hash.generation.response.CryptoHashGenerationResponse;
 import com.liferay.portal.crypto.hash.verification.context.CryptoHashVerificationContext;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -29,16 +28,6 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface CryptoHashProcessor {
-
-	public CryptoHashGenerationContext.Builder
-		createCryptoHashGenerationContextBuilder(
-			String cryptoHashProviderName,
-			Map<String, ?> cryptoHashProviderProperties);
-
-	public CryptoHashVerificationContext.Builder
-		createCryptoHashVerificationContextBuilder(
-			String cryptoHashProviderName,
-			Map<String, ?> cryptoHashProviderProperties);
 
 	public CryptoHashGenerationResponse generate(
 			byte[] input,

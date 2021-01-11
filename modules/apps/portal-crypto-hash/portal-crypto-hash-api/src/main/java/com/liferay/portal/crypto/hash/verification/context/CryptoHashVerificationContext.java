@@ -16,8 +16,6 @@ package com.liferay.portal.crypto.hash.verification.context;
 
 import com.liferay.portal.crypto.hash.flavor.CryptoHashFlavor;
 
-import java.io.IOException;
-
 import java.util.Map;
 
 import org.osgi.annotation.versioning.ProviderType;
@@ -34,32 +32,5 @@ public interface CryptoHashVerificationContext {
 	public String getCryptoHashProviderName();
 
 	public Map<String, ?> getCryptoHashProviderProperties();
-
-	public interface Builder extends PepperedBuilder {
-
-		public ContextBuilder setHashFlavor(byte[] serializedHashFlavor)
-			throws IOException;
-
-		public ContextBuilder setHashFlavor(CryptoHashFlavor cryptoHashFlavor);
-
-	}
-
-	public interface ContextBuilder {
-
-		public CryptoHashVerificationContext build();
-
-	}
-
-	public interface PepperedBuilder extends SaltedBuilder {
-
-		public SaltedBuilder setPepperId(String pepperId);
-
-	}
-
-	public interface SaltedBuilder extends ContextBuilder {
-
-		public ContextBuilder setSalt(byte[] salt);
-
-	}
 
 }

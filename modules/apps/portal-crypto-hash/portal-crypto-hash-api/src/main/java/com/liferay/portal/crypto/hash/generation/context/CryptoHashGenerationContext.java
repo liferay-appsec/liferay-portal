@@ -33,12 +33,4 @@ public interface CryptoHashGenerationContext {
 
 	public SaltCommand[] getSaltCommands();
 
-	public interface Builder {
-
-		public CryptoHashGenerationContext build();
-
-		public Builder setSaltCommands(SaltCommand... saltCommands);
-
-	}
-
 }
