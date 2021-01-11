@@ -14,9 +14,8 @@
 
 package com.liferay.portal.crypto.hash.verification;
 
-import com.liferay.portal.crypto.hash.flavor.CryptoHashFlavor;
-
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Arthur Chan
@@ -25,17 +24,13 @@ import java.util.Map;
 public final class CryptoHashVerificationContext {
 
 	public CryptoHashVerificationContext(
-		CryptoHashFlavor cryptoHashFlavor,
-		Map<String, ?> cryptoHashProviderProperties,
-		String cryptoHashProviderName) {
+		String pepperId, byte[] salt, String cryptoHashProviderName,
+		Map<String, ?> cryptoHashProviderProperties) {
 
-		_cryptoHashFlavor = cryptoHashFlavor;
-		_cryptoHashProviderProperties = cryptoHashProviderProperties;
+		_pepperId = pepperId;
+		_salt = salt;
 		_cryptoHashProviderName = cryptoHashProviderName;
-	}
-
-	public CryptoHashFlavor getCryptoHashFlavor() {
-		return _cryptoHashFlavor;
+		_cryptoHashProviderProperties = cryptoHashProviderProperties;
 	}
 
 	public String getCryptoHashProviderName() {
@@ -46,8 +41,17 @@ public final class CryptoHashVerificationContext {
 		return _cryptoHashProviderProperties;
 	}
 
-	private final CryptoHashFlavor _cryptoHashFlavor;
+	public Optional<String> getPepperId() {
+		return Optional.ofNullable(_pepperId);
+	}
+
+	public Optional<byte[]> getSalt() {
+		return Optional.ofNullable(_salt);
+	}
+
 	private final String _cryptoHashProviderName;
 	private final Map<String, ?> _cryptoHashProviderProperties;
+	private final String _pepperId;
+	private final byte[] _salt;
 
 }

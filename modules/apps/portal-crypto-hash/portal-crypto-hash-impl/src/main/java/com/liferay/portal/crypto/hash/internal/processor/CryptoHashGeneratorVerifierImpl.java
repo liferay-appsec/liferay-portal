@@ -14,7 +14,6 @@
 
 package com.liferay.portal.crypto.hash.internal.processor;
 
-import com.liferay.portal.crypto.hash.flavor.CryptoHashFlavor;
 import com.liferay.portal.crypto.hash.generation.CryptoHashGenerationResponse;
 import com.liferay.portal.crypto.hash.generation.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.internal.pepper.storage.DummyCryptoHashPepperStorage;
@@ -67,10 +66,9 @@ public class CryptoHashGeneratorVerifierImpl
 		return new CryptoHashGenerationResponse(
 			cryptoHashProviderResponse.getHash(),
 			new CryptoHashVerificationContext(
-				new CryptoHashFlavor(
-					pepperId, cryptoHashProviderResponse.getSalt()),
-				cryptoHashProviderResponse.getCryptoHashProviderProperties(),
-				cryptoHashProviderResponse.getCryptoHashProviderName()));
+				pepperId, cryptoHashProviderResponse.getSalt(),
+				cryptoHashProviderResponse.getCryptoHashProviderName(),
+				cryptoHashProviderResponse.getCryptoHashProviderProperties()));
 	}
 
 	@Override
@@ -87,9 +85,6 @@ public class CryptoHashGeneratorVerifierImpl
 				cryptoHashVerificationContext.
 					getCryptoHashProviderProperties());
 
-			CryptoHashFlavor cryptoHashFlavor =
-				cryptoHashVerificationContext.getCryptoHashFlavor();
-
 			// process pepper
 
 			byte[] pepper = null;
@@ -98,7 +93,7 @@ public class CryptoHashGeneratorVerifierImpl
 					DummyCryptoHashPepperStorage)) {
 
 				Optional<String> optionalPepperId =
-					cryptoHashFlavor.getPepperId();
+					cryptoHashVerificationContext.getPepperId();
 
 				pepper = optionalPepperId.map(
 					_cryptoHashPepperStorage::getPepper
@@ -109,7 +104,8 @@ public class CryptoHashGeneratorVerifierImpl
 
 			// process salt
 
-			Optional<byte[]> optionalSalt = cryptoHashFlavor.getSalt();
+			Optional<byte[]> optionalSalt =
+				cryptoHashVerificationContext.getSalt();
 
 			final CryptoHashProviderResponse hashProviderResponse =
 				cryptoHashProvider.generate(

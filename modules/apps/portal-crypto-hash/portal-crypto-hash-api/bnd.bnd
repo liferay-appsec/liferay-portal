@@ -3,6 +3,5 @@ Bundle-SymbolicName: com.liferay.portal.crypto.hash.api
 Bundle-Version: 1.0.0
 Export-Package:\
 	com.liferay.portal.crypto.hash.configuration,\
-	com.liferay.portal.crypto.hash.flavor,\
 	com.liferay.portal.crypto.hash.generation,\
 	com.liferay.portal.crypto.hash.verification
