@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
  * @author Carlos Sierra Andrés
  */
 @Component(
-	configurationPid = "com.liferay.portal.crypto.hash.configuration.CrytpoHashProcessorConfiguration",
+	configurationPid = "com.liferay.portal.crypto.hash.configuration.CryptoHashProcessorConfiguration",
 	configurationPolicy = ConfigurationPolicy.REQUIRE,
 	service = {CryptoHashGenerator.class, CryptoHashVerifier.class}
 )
