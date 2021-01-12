@@ -40,6 +40,7 @@ import com.liferay.registry.ServiceReference;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -320,7 +320,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		implements ServiceTrackerCustomizer
 			<AuthVerifier, AuthVerifierConfiguration> {
 
-		public static void addAuthVerifierPipeline(
+		public static synchronized void addAuthVerifierPipeline(
 			AuthVerifierPipeline authVerifierPipeline) {
 
 			_authVerifierPipelines.add(authVerifierPipeline);
@@ -329,14 +329,14 @@ public class AuthVerifierFilter extends BasePortalFilter {
 				_authVerifierConfigurations);
 		}
 
-		public static void removeAuthVerifierPipeline(
+		public static synchronized void removeAuthVerifierPipeline(
 			AuthVerifierPipeline authVerifierPipeline) {
 
 			_authVerifierPipelines.remove(authVerifierPipeline);
 		}
 
 		@Override
-		public AuthVerifierConfiguration addingService(
+		public synchronized AuthVerifierConfiguration addingService(
 			ServiceReference<AuthVerifier> serviceReference) {
 
 			Registry registry = RegistryUtil.getRegistry();
@@ -372,7 +372,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		@Override
-		public void modifiedService(
+		public synchronized void modifiedService(
 			ServiceReference<AuthVerifier> serviceReference,
 			AuthVerifierConfiguration authVerifierConfiguration) {
 
@@ -394,7 +394,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		@Override
-		public void removedService(
+		public synchronized void removedService(
 			ServiceReference<AuthVerifier> serviceReference,
 			AuthVerifierConfiguration authVerifierConfiguration) {
 
@@ -462,9 +462,9 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		private static final List<AuthVerifierConfiguration>
-			_authVerifierConfigurations = new CopyOnWriteArrayList<>();
+			_authVerifierConfigurations = new ArrayList<>();
 		private static final List<AuthVerifierPipeline> _authVerifierPipelines =
-			new CopyOnWriteArrayList<>();
+			new ArrayList<>();
 
 	}
 
