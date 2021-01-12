@@ -20,6 +20,8 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
+import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
+import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -31,13 +33,21 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
+import com.liferay.registry.Filter;
+import com.liferay.registry.Registry;
+import com.liferay.registry.RegistryUtil;
+import com.liferay.registry.ServiceReference;
+import com.liferay.registry.ServiceTracker;
+import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -53,6 +63,15 @@ import javax.servlet.http.HttpServletResponse;
  * @author Raymond Augé
  */
 public class AuthVerifierFilter extends BasePortalFilter {
+
+	@Override
+	public void destroy() {
+		AuthVerifierTrackerCustomizer.removeAuthVerifierPipeline(
+			(AuthVerifierPipeline)_initParametersMap.get(
+				AuthVerifierPipeline.class.getName()));
+
+		super.destroy();
+	}
 
 	@Override
 	public void init(FilterConfig filterConfig) {
@@ -116,9 +135,14 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			}
 		}
 
+		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
+			_initParametersMap);
+
+		AuthVerifierTrackerCustomizer.addAuthVerifierPipeline(
+			authVerifierPipeline);
+
 		_initParametersMap.put(
-			AuthVerifierPipeline.class.getName(),
-			new AuthVerifierPipeline(_initParametersMap));
+			AuthVerifierPipeline.class.getName(), authVerifierPipeline);
 	}
 
 	@Override
@@ -284,9 +308,176 @@ public class AuthVerifierFilter extends BasePortalFilter {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierFilter.class.getName());
 
+	private static final ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
+		_serviceTracker;
+
 	private boolean _guestAllowed = true;
 	private final Set<String> _hostsAllowed = new HashSet<>();
 	private boolean _httpsRequired;
 	private final Map<String, Object> _initParametersMap = new HashMap<>();
+
+	private static class AuthVerifierTrackerCustomizer
+		implements ServiceTrackerCustomizer
+			<AuthVerifier, AuthVerifierConfiguration> {
+
+		public static void addAuthVerifierPipeline(
+			AuthVerifierPipeline authVerifierPipeline) {
+
+			_authVerifierPipelines.add(authVerifierPipeline);
+
+			authVerifierPipeline.rebuildAuthVerifierPipeline(
+				_authVerifierConfigurations);
+		}
+
+		public static void removeAuthVerifierPipeline(
+			AuthVerifierPipeline authVerifierPipeline) {
+
+			_authVerifierPipelines.remove(authVerifierPipeline);
+		}
+
+		@Override
+		public AuthVerifierConfiguration addingService(
+			ServiceReference<AuthVerifier> serviceReference) {
+
+			Registry registry = RegistryUtil.getRegistry();
+
+			AuthVerifier authVerifier = registry.getService(serviceReference);
+
+			if (authVerifier == null) {
+				return null;
+			}
+
+			Class<?> authVerifierClass = authVerifier.getClass();
+
+			Properties properties = _loadProperties(
+				serviceReference, authVerifierClass.getName());
+
+			if (!_validate(properties, authVerifierClass.getName())) {
+				return null;
+			}
+
+			AuthVerifierConfiguration authVerifierConfiguration =
+				new AuthVerifierConfiguration();
+
+			authVerifierConfiguration.setAuthVerifier(authVerifier);
+			authVerifierConfiguration.setAuthVerifierClassName(
+				authVerifierClass.getName());
+			authVerifierConfiguration.setProperties(properties);
+
+			_authVerifierConfigurations.add(authVerifierConfiguration);
+
+			_rebuildAllAuthVerifierPipelines();
+
+			return authVerifierConfiguration;
+		}
+
+		@Override
+		public void modifiedService(
+			ServiceReference<AuthVerifier> serviceReference,
+			AuthVerifierConfiguration authVerifierConfiguration) {
+
+			Properties properties = _loadProperties(
+				serviceReference,
+				authVerifierConfiguration.getAuthVerifierClassName());
+
+			if (_validate(
+					properties,
+					authVerifierConfiguration.getAuthVerifierClassName())) {
+
+				authVerifierConfiguration.setProperties(properties);
+			}
+			else {
+				_authVerifierConfigurations.remove(authVerifierConfiguration);
+			}
+
+			_rebuildAllAuthVerifierPipelines();
+		}
+
+		@Override
+		public void removedService(
+			ServiceReference<AuthVerifier> serviceReference,
+			AuthVerifierConfiguration authVerifierConfiguration) {
+
+			Registry registry = RegistryUtil.getRegistry();
+
+			registry.ungetService(serviceReference);
+
+			_authVerifierConfigurations.remove(authVerifierConfiguration);
+
+			_rebuildAllAuthVerifierPipelines();
+		}
+
+		private Properties _loadProperties(
+			ServiceReference<AuthVerifier> serviceReference,
+			String authVerifierClassName) {
+
+			Properties properties = new Properties();
+
+			String authVerifierPropertyName =
+				AuthVerifierPipeline.getAuthVerifierPropertyName(
+					authVerifierClassName);
+
+			Map<String, Object> serviceReferenceProperties =
+				serviceReference.getProperties();
+
+			for (Map.Entry<String, Object> entry :
+					serviceReferenceProperties.entrySet()) {
+
+				String key = entry.getKey();
+
+				if (key.startsWith(authVerifierPropertyName)) {
+					key = key.substring(authVerifierPropertyName.length());
+				}
+
+				properties.setProperty(key, String.valueOf(entry.getValue()));
+			}
+
+			return properties;
+		}
+
+		private void _rebuildAllAuthVerifierPipelines() {
+			_authVerifierPipelines.forEach(
+				authVerifierPipeline ->
+					authVerifierPipeline.rebuildAuthVerifierPipeline(
+						_authVerifierConfigurations));
+		}
+
+		private boolean _validate(
+			Properties properties, String authVerifierClassName) {
+
+			String[] urlsIncludes = StringUtil.split(
+				properties.getProperty("urls.includes"));
+
+			if (urlsIncludes.length == 0) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Auth verifier " + authVerifierClassName +
+							" does not have URLs configured");
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		private static final List<AuthVerifierConfiguration>
+			_authVerifierConfigurations = new CopyOnWriteArrayList<>();
+		private static final List<AuthVerifierPipeline> _authVerifierPipelines =
+			new CopyOnWriteArrayList<>();
+
+	}
+
+	static {
+		Registry registry = RegistryUtil.getRegistry();
+
+		Filter filter = registry.getFilter(
+			"(objectClass=" + AuthVerifier.class.getName() + ")");
+
+		_serviceTracker = registry.trackServices(
+			filter, new AuthVerifierFilter.AuthVerifierTrackerCustomizer());
+
+		_serviceTracker.open();
+	}
 
 }
