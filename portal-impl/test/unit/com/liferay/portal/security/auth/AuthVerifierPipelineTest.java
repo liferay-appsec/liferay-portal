@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
+import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -34,7 +35,9 @@ import com.liferay.registry.ServiceRegistration;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -78,23 +81,47 @@ public class AuthVerifierPipelineTest {
 				"portal_property_prefix", ""
 			).build());
 
+		AuthVerifierConfiguration authVerifierConfiguration =
+			new AuthVerifierConfiguration();
+
+		final AuthVerifier authVerifier =
+			(AuthVerifier)ProxyUtil.newProxyInstance(
+				AuthVerifier.class.getClassLoader(),
+				new Class<?>[] {AuthVerifier.class},
+				(proxy, method, args) -> {
+					if (Objects.equals(method.getName(), "verify")) {
+						return authVerifierResult;
+					}
+
+					return null;
+				});
+
+		Map<String, Object> propertyMap = Collections.singletonMap(
+			"urls.includes",
+			StringBundler.concat(
+				_BASE_URL, "/regular/*,", _BASE_URL, "/legacy*"));
+
+		Properties properties = new Properties();
+
+		for (Map.Entry<String, Object> entry : propertyMap.entrySet()) {
+			properties.setProperty(
+				entry.getKey(), String.valueOf(entry.getValue()));
+		}
+
+		Class<? extends AuthVerifier> authVerifierClass =
+			authVerifier.getClass();
+
+		authVerifierConfiguration.setAuthVerifier(authVerifier);
+		authVerifierConfiguration.setAuthVerifierClassName(
+			authVerifierClass.getName());
+		authVerifierConfiguration.setProperties(properties);
+
+		authVerifierPipeline.rebuildAuthVerifierPipeline(
+			Collections.singletonList(authVerifierConfiguration));
+
 		ServiceRegistration<AuthVerifier> serviceRegistration =
 			registry.registerService(
-				AuthVerifier.class,
-				(AuthVerifier)ProxyUtil.newProxyInstance(
-					AuthVerifier.class.getClassLoader(),
-					new Class<?>[] {AuthVerifier.class},
-					(proxy, method, args) -> {
-						if (Objects.equals(method.getName(), "verify")) {
-							return authVerifierResult;
-						}
-
-						return null;
-					}),
-				Collections.singletonMap(
-					"urls.includes",
-					StringBundler.concat(
-						_BASE_URL, "/regular/*,", _BASE_URL, "/legacy*")));
+				AuthVerifier.class, authVerifier, propertyMap);
 
 		AccessControlContext accessControlContext = new AccessControlContext();
 
