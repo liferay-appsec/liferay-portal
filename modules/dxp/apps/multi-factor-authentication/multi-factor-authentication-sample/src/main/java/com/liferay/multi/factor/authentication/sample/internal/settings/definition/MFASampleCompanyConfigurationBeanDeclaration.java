@@ -12,9 +12,9 @@
  *
  */
 
-package com.liferay.multi.factor.authentication.poc.internal.settings.definition;
+package com.liferay.multi.factor.authentication.sample.internal.settings.definition;
 
-import com.liferay.multi.factor.authentication.poc.internal.configuration.MFAPocConfiguration;
+import com.liferay.multi.factor.authentication.sample.internal.configuration.MFASampleConfiguration;
 import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
 
 import org.osgi.service.component.annotations.Component;
@@ -26,12 +26,12 @@ import org.osgi.service.component.annotations.Component;
 	property = "mfa.visibility.configuration.pid=com.liferay.multi.factor.authentication.poc.internal.configuration.MFAPocConfiguration",
 	service = ConfigurationBeanDeclaration.class
 )
-public class MFAPocCompanyConfigurationBeanDeclaration
+public class MFASampleCompanyConfigurationBeanDeclaration
 	implements ConfigurationBeanDeclaration {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return MFAPocConfiguration.class;
+		return MFASampleConfiguration.class;
 	}
 
 }
