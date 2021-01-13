@@ -34,7 +34,8 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.crypto.hash.provider.message.digest.internal.configuration.MessageDigestCryptoHashProviderConfiguration",
-	configurationPolicy = ConfigurationPolicy.REQUIRE, service = {}
+	configurationPolicy = ConfigurationPolicy.REQUIRE, immediate = true,
+	service = {}
 )
 public class MessageDigestCryptoHashProviderRegistrator {
 

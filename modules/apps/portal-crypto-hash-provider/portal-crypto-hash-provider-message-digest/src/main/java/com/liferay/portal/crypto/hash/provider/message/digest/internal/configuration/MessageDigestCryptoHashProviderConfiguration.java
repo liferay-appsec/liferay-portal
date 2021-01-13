@@ -37,7 +37,8 @@ public interface MessageDigestCryptoHashProviderConfiguration {
 	public String name();
 
 	@Meta.AD(
-		id = "crypto.hash.provider.name", name = "crypto-hash-provider-name"
+		deflt = "SHA-256", id = "crypto.hash.provider.name",
+		name = "crypto-hash-provider-name"
 	)
 	public String cryptoHashProvider();
 
