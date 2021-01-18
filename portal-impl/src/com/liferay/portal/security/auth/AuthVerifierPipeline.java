@@ -56,6 +56,8 @@ public class AuthVerifierPipeline {
 		AuthVerifierConfiguration authVerifierConfiguration) {
 
 		_authVerifierConfigurations.add(authVerifierConfiguration);
+
+		_classChange++;
 	}
 
 	public static String getAuthVerifierPropertyName(String className) {
@@ -70,22 +72,65 @@ public class AuthVerifierPipeline {
 		AuthVerifierConfiguration authVerifierConfiguration) {
 
 		_authVerifierConfigurations.remove(authVerifierConfiguration);
+
+		_classChange++;
 	}
 
 	public AuthVerifierPipeline(Map<String, Object> initParametersMap) {
 		_initParametersMap = initParametersMap;
 	}
 
-	public void rebuildAuthVerifierPipeline(
-		List<AuthVerifierConfiguration> authVerifierConfigurations) {
+	public AuthVerifierResult verifyRequest(
+			AccessControlContext accessControlContext)
+		throws PortalException {
 
+		if (_instanceChange < _classChange) {
+			_buildURLPatternMapper();
+
+			_instanceChange = _classChange;
+		}
+
+		if (accessControlContext == null) {
+			throw new IllegalArgumentException(
+				"Access control context is null");
+		}
+
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
+
+		String requestURI = httpServletRequest.getRequestURI();
+
+		String contextPath = httpServletRequest.getContextPath();
+
+		if (requestURI.equals(contextPath)) {
+			requestURI += "/";
+		}
+		else {
+			requestURI = requestURI.substring(contextPath.length());
+		}
+
+		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
+			new AuthVerifierConfigurationConsumer(
+				accessControlContext, _excludeURLPatternMapper, requestURI);
+
+		_includeURLPatternMapper.consumeValues(
+			authVerifierConfigurationConsumer, requestURI);
+
+		if (authVerifierConfigurationConsumer.getAuthVerifierResult() != null) {
+			return authVerifierConfigurationConsumer.getAuthVerifierResult();
+		}
+
+		return _createGuestVerificationResult(accessControlContext);
+	}
+
+	private void _buildURLPatternMapper() {
 		Map<String, List<AuthVerifierConfiguration>>
 			excludeAuthVerifierConfigurations = new HashMap<>();
 		Map<String, List<AuthVerifierConfiguration>>
 			includeAuthVerifierConfigurations = new HashMap<>();
 
 		for (AuthVerifierConfiguration authVerifierConfiguration :
-				authVerifierConfigurations) {
+				_authVerifierConfigurations) {
 
 			if (!_initParametersMap.containsKey("portal_property_prefix")) {
 				authVerifierConfiguration = _mergeAuthVerifierConfiguration(
@@ -137,43 +182,6 @@ public class AuthVerifierPipeline {
 			excludeAuthVerifierConfigurations);
 		_includeURLPatternMapper = URLPatternMapperFactory.create(
 			includeAuthVerifierConfigurations);
-	}
-
-	public AuthVerifierResult verifyRequest(
-			AccessControlContext accessControlContext)
-		throws PortalException {
-
-		if (accessControlContext == null) {
-			throw new IllegalArgumentException(
-				"Access control context is null");
-		}
-
-		HttpServletRequest httpServletRequest =
-			accessControlContext.getRequest();
-
-		String requestURI = httpServletRequest.getRequestURI();
-
-		String contextPath = httpServletRequest.getContextPath();
-
-		if (requestURI.equals(contextPath)) {
-			requestURI += "/";
-		}
-		else {
-			requestURI = requestURI.substring(contextPath.length());
-		}
-
-		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
-			new AuthVerifierConfigurationConsumer(
-				accessControlContext, _excludeURLPatternMapper, requestURI);
-
-		_includeURLPatternMapper.consumeValues(
-			authVerifierConfigurationConsumer, requestURI);
-
-		if (authVerifierConfigurationConsumer.getAuthVerifierResult() != null) {
-			return authVerifierConfigurationConsumer.getAuthVerifierResult();
-		}
-
-		return _createGuestVerificationResult(accessControlContext);
 	}
 
 	private AuthVerifierResult _createGuestVerificationResult(
@@ -253,12 +261,14 @@ public class AuthVerifierPipeline {
 
 	private static final Set<AuthVerifierConfiguration>
 		_authVerifierConfigurations = new HashSet<>();
+	private static long _classChange = Long.MIN_VALUE;
 
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
 	private final Map<String, Object> _initParametersMap;
+	private long _instanceChange = Long.MIN_VALUE;
 
 	private static class AuthVerifierConfigurationConsumer
 		implements Consumer<List<AuthVerifierConfiguration>> {
