@@ -20,20 +20,25 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
+import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
+
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -116,7 +121,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		}
 
 		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
-			_initParametersMap);
+			_buildAuthVerifierConfigurations(_initParametersMap));
 
 		_initParametersMap.put(
 			AuthVerifierPipeline.class.getName(), authVerifierPipeline);
@@ -205,6 +210,62 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		else {
 			_log.error("Unimplemented state " + state);
 		}
+	}
+
+	private List<AuthVerifierConfiguration> _buildAuthVerifierConfigurations(
+		Map<String, Object> initParametersMap) {
+
+		Map<String, Map<String, Object>> propertiesMap = new HashMap<>();
+
+		for (Map.Entry<String, Object> entry : initParametersMap.entrySet()) {
+			final String propertyName = entry.getKey();
+
+			if (!propertyName.startsWith(PropsKeys.AUTH_VERIFIER)) {
+				continue;
+			}
+
+			String authVerifierPropertyName = propertyName.substring(
+				PropsKeys.AUTH_VERIFIER.length());
+
+			int indexOf = authVerifierPropertyName.indexOf('.');
+
+			String authVerifierClassName = authVerifierPropertyName.substring(
+				0, indexOf);
+
+			Map<String, Object> authVerifierPropertiesMap =
+				propertiesMap.computeIfAbsent(
+					authVerifierClassName, key -> new HashMap<>());
+
+			authVerifierPropertiesMap.put(
+				authVerifierPropertyName.substring(indexOf + 1),
+				entry.getValue());
+		}
+
+		ArrayList<AuthVerifierConfiguration> authVerifierConfigurations =
+			new ArrayList<>();
+
+		for (Map.Entry<String, Map<String, Object>> entry :
+				propertiesMap.entrySet()) {
+
+			final AuthVerifierConfiguration authVerifierConfiguration =
+				new AuthVerifierConfiguration();
+
+			authVerifierConfiguration.setAuthVerifierClassName(entry.getKey());
+
+			Properties properties = new Properties();
+
+			final Map<String, Object> value = entry.getValue();
+
+			for (Map.Entry<String, Object> propertyEntry : value.entrySet()) {
+				properties.setProperty(
+					propertyEntry.getKey(),
+					String.valueOf(propertyEntry.getValue()));
+			}
+
+			authVerifierConfiguration.setProperties(properties);
+		}
+
+		return authVerifierConfigurations;
 	}
 
 	private boolean _isAccessAllowed(

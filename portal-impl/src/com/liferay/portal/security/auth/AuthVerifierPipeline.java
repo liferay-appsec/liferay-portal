@@ -51,14 +51,6 @@ public class AuthVerifierPipeline {
 
 	public static final String AUTH_TYPE = "auth.type";
 
-	public static void addAuthVerifierConfiguration(
-		AuthVerifierConfiguration authVerifierConfiguration) {
-
-		_authVerifierConfigurations.add(authVerifierConfiguration);
-
-		_classChange++;
-	}
-
 	public static String getAuthVerifierPropertyName(String className) {
 		String simpleClassName = StringUtil.extractLast(
 			className, StringPool.PERIOD);
@@ -67,16 +59,29 @@ public class AuthVerifierPipeline {
 			PropsKeys.AUTH_VERIFIER, simpleClassName, StringPool.PERIOD);
 	}
 
-	public static void removeAuthVerifierConfiguration(
+	public AuthVerifierPipeline(
+		List<AuthVerifierConfiguration> authVerifierConfigurations) {
+
+		_authVerifierConfigurations = new ArrayList<>(
+			authVerifierConfigurations);
+
+		_buildURLPatternMapper();
+	}
+
+	public void addAuthVerifierConfiguration(
+		AuthVerifierConfiguration authVerifierConfiguration) {
+
+		_authVerifierConfigurations.add(authVerifierConfiguration);
+
+		_classChange++;
+	}
+
+	public void removeAuthVerifierConfiguration(
 		AuthVerifierConfiguration authVerifierConfiguration) {
 
 		_authVerifierConfigurations.remove(authVerifierConfiguration);
 
 		_classChange++;
-	}
-
-	public AuthVerifierPipeline(Map<String, Object> initParametersMap) {
-		_initParametersMap = initParametersMap;
 	}
 
 	public AuthVerifierResult verifyRequest(
@@ -130,15 +135,6 @@ public class AuthVerifierPipeline {
 
 		for (AuthVerifierConfiguration authVerifierConfiguration :
 				_authVerifierConfigurations) {
-
-			if (!_initParametersMap.containsKey("portal_property_prefix")) {
-				authVerifierConfiguration = _mergeAuthVerifierConfiguration(
-					authVerifierConfiguration);
-
-				if (authVerifierConfiguration == null) {
-					continue;
-				}
-			}
 
 			Properties properties = authVerifierConfiguration.getProperties();
 
@@ -220,53 +216,16 @@ public class AuthVerifierPipeline {
 		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
 	}
 
-	private AuthVerifierConfiguration _mergeAuthVerifierConfiguration(
-		AuthVerifierConfiguration authVerifierConfiguration) {
-
-		String authVerifierPropertyName = getAuthVerifierPropertyName(
-			authVerifierConfiguration.getAuthVerifierClassName());
-
-		Properties properties = new Properties(
-			authVerifierConfiguration.getProperties());
-
-		for (Map.Entry<String, Object> entry : _initParametersMap.entrySet()) {
-			String propertyName = entry.getKey();
-
-			if (propertyName.startsWith(authVerifierPropertyName)) {
-				properties.setProperty(
-					propertyName.substring(authVerifierPropertyName.length()),
-					String.valueOf(entry.getValue()));
-			}
-		}
-
-		if (properties.isEmpty()) {
-			return null;
-		}
-
-		AuthVerifierConfiguration mergedAuthVerifierConfiguration =
-			new AuthVerifierConfiguration();
-
-		mergedAuthVerifierConfiguration.setAuthVerifier(
-			authVerifierConfiguration.getAuthVerifier());
-		mergedAuthVerifierConfiguration.setAuthVerifierClassName(
-			authVerifierConfiguration.getAuthVerifierClassName());
-		mergedAuthVerifierConfiguration.setProperties(properties);
-
-		return mergedAuthVerifierConfiguration;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
-	private static final Set<AuthVerifierConfiguration>
-		_authVerifierConfigurations = new HashSet<>();
 	private static long _classChange = Long.MIN_VALUE;
 
+	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
-	private final Map<String, Object> _initParametersMap;
 	private long _instanceChange = Long.MIN_VALUE;
 
 	private static class AuthVerifierConfigurationConsumer

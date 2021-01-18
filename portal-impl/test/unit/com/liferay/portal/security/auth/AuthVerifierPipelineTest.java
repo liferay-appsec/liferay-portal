@@ -23,7 +23,6 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguratio
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.UserImpl;
@@ -76,11 +75,6 @@ public class AuthVerifierPipelineTest {
 		authVerifierResult.setSettings(new HashMap<>());
 		authVerifierResult.setState(AuthVerifierResult.State.SUCCESS);
 
-		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
-			HashMapBuilder.<String, Object>put(
-				"portal_property_prefix", ""
-			).build());
-
 		AuthVerifierConfiguration authVerifierConfiguration =
 			new AuthVerifierConfiguration();
 
@@ -96,6 +90,9 @@ public class AuthVerifierPipelineTest {
 					return null;
 				});
 
+		Class<? extends AuthVerifier> authVerifierClass =
+			authVerifier.getClass();
+
 		Map<String, Object> propertyMap = Collections.singletonMap(
 			"urls.includes",
 			StringBundler.concat(
@@ -108,15 +105,11 @@ public class AuthVerifierPipelineTest {
 				entry.getKey(), String.valueOf(entry.getValue()));
 		}
 
-		Class<? extends AuthVerifier> authVerifierClass =
-			authVerifier.getClass();
-
-		authVerifierConfiguration.setAuthVerifier(authVerifier);
 		authVerifierConfiguration.setAuthVerifierClassName(
 			authVerifierClass.getName());
 		authVerifierConfiguration.setProperties(properties);
 
-		authVerifierPipeline.rebuildAuthVerifierPipeline(
+		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
 			Collections.singletonList(authVerifierConfiguration));
 
 		ServiceRegistration<AuthVerifier> serviceRegistration =
