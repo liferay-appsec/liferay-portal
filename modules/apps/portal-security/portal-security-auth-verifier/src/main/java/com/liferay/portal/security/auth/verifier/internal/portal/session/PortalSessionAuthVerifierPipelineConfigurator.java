@@ -12,46 +12,41 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.basic.auth.header;
+package com.liferay.portal.security.auth.verifier.internal.portal.session;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
-import com.liferay.portal.kernel.security.auto.login.AutoLogin;
-import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPublisher;
+import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPipelineConfigurator;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
  */
 @Component(
-	configurationPid = "com.liferay.portal.security.auth.verifier.internal.basic.auth.header.configuration.BasicAuthHeaderAuthVerifierConfiguration",
+	configurationPid = "com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, service = {}
 )
-public class BasicAuthHeaderAuthVerifierPublisher
-	extends BaseAuthVerifierPublisher {
+public class PortalSessionAuthVerifierPipelineConfigurator
+	extends BaseAuthVerifierPipelineConfigurator {
 
 	@Activate
 	@Override
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
-		_authVerifier = new BasicAuthHeaderAuthVerifier(_autoLogin);
+		if (!properties.containsKey("check.csrf.token")) {
+			properties = new HashMap<>(properties);
+
+			properties.put("check.csrf.token", false);
+		}
 
 		super.activate(bundleContext, properties);
-	}
-
-	@Deactivate
-	@Override
-	protected void deactivate() {
-		super.deactivate();
 	}
 
 	@Override
@@ -59,26 +54,15 @@ public class BasicAuthHeaderAuthVerifierPublisher
 		return _authVerifier;
 	}
 
-	@Modified
-	@Override
-	protected void modified(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		super.modified(bundleContext, properties);
-	}
-
 	@Override
 	protected String translateKey(String authVerifierPropertyName, String key) {
-		if (key.equals("forceBasicAuth")) {
-			key = "basic_auth";
+		if (key.equals("hostsAllowed")) {
+			key = "check.csrf.token";
 		}
 
 		return super.translateKey(authVerifierPropertyName, key);
 	}
 
-	private AuthVerifier _authVerifier;
-
-	@Reference(target = "(&(private.auto.login=true)(type=basic.auth.header))")
-	private AutoLogin _autoLogin;
+	private final AuthVerifier _authVerifier = new PortalSessionAuthVerifier();
 
 }

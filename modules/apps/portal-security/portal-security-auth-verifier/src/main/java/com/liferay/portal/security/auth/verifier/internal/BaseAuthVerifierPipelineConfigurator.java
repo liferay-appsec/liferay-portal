@@ -23,13 +23,18 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
  * @author Arthur Chan
  */
-public abstract class BaseAuthVerifierPublisher {
+public abstract class BaseAuthVerifierPipelineConfigurator {
 
+	@Activate
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
@@ -56,16 +61,16 @@ public abstract class BaseAuthVerifierPublisher {
 
 		_authVerifierConfiguration = new AuthVerifierConfiguration();
 
-		_authVerifierConfiguration.setAuthVerifier(authVerifier);
 		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
 		_authVerifierConfiguration.setProperties(translatedProperties);
 
-		AuthVerifierPipeline.addAuthVerifierConfiguration(
+		_authVerifierPipeline.addAuthVerifierConfiguration(
 			_authVerifierConfiguration);
 	}
 
+	@Deactivate
 	protected void deactivate() {
-		AuthVerifierPipeline.removeAuthVerifierConfiguration(
+		_authVerifierPipeline.removeAuthVerifierConfiguration(
 			_authVerifierConfiguration);
 
 		_authVerifierConfiguration = null;
@@ -73,6 +78,7 @@ public abstract class BaseAuthVerifierPublisher {
 
 	protected abstract AuthVerifier getAuthVerifierInstance();
 
+	@Modified
 	protected void modified(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
@@ -96,5 +102,8 @@ public abstract class BaseAuthVerifierPublisher {
 	}
 
 	private AuthVerifierConfiguration _authVerifierConfiguration;
+
+	@Reference(target="(original.bean=true)")
+	private AuthVerifierPipeline _authVerifierPipeline;
 
 }

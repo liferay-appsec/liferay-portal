@@ -12,49 +12,38 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.portal.session;
+package com.liferay.portal.security.auth.verifier.internal.request.parameter;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
-import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPublisher;
+import com.liferay.portal.kernel.security.auto.login.AutoLogin;
+import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPipelineConfigurator;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
  */
 @Component(
-	configurationPid = "com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierConfiguration",
+	configurationPid = "com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterAuthVerifierConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, service = {}
 )
-public class PortalSessionAuthVerifierPublisher
-	extends BaseAuthVerifierPublisher {
+public class RequestParameterAuthVerifierPipelineConfigurator
+	extends BaseAuthVerifierPipelineConfigurator {
 
 	@Activate
 	@Override
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
-		if (!properties.containsKey("check.csrf.token")) {
-			properties = new HashMap<>(properties);
-
-			properties.put("check.csrf.token", false);
-		}
+		_authVerifier = new RequestParameterAuthVerifier(_autoLogin);
 
 		super.activate(bundleContext, properties);
-	}
-
-	@Deactivate
-	@Override
-	protected void deactivate() {
-		super.deactivate();
 	}
 
 	@Override
@@ -62,23 +51,9 @@ public class PortalSessionAuthVerifierPublisher
 		return _authVerifier;
 	}
 
-	@Modified
-	@Override
-	protected void modified(
-		BundleContext bundleContext, Map<String, Object> properties) {
+	private AuthVerifier _authVerifier;
 
-		super.modified(bundleContext, properties);
-	}
-
-	@Override
-	protected String translateKey(String authVerifierPropertyName, String key) {
-		if (key.equals("hostsAllowed")) {
-			key = "check.csrf.token";
-		}
-
-		return super.translateKey(authVerifierPropertyName, key);
-	}
-
-	private final AuthVerifier _authVerifier = new PortalSessionAuthVerifier();
+	@Reference(target = "(&(private.auto.login=true)(type=request.parameter))")
+	private AutoLogin _autoLogin;
 
 }
