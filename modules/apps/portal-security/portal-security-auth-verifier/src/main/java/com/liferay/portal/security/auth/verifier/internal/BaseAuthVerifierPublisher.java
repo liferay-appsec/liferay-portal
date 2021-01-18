@@ -15,18 +15,18 @@
 package com.liferay.portal.security.auth.verifier.internal;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
+import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
 import java.util.Map;
+import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Tomas Polesovsky
+ * @author Arthur Chan
  */
 public abstract class BaseAuthVerifierPublisher {
 
@@ -46,24 +46,29 @@ public abstract class BaseAuthVerifierPublisher {
 		String authVerifierPropertyName =
 			AuthVerifierPipeline.getAuthVerifierPropertyName(clazz.getName());
 
-		Dictionary<String, Object> authVerifierProperties = new Hashtable<>();
+		Properties translatedProperties = new Properties();
 
 		for (Map.Entry<String, Object> entry : properties.entrySet()) {
-			String key = translateKey(authVerifierPropertyName, entry.getKey());
-
-			authVerifierProperties.put(key, entry.getValue());
+			translatedProperties.setProperty(
+				translateKey(authVerifierPropertyName, entry.getKey()),
+				String.valueOf(entry.getValue()));
 		}
 
-		_authVerifierRegistration = bundleContext.registerService(
-			AuthVerifier.class, authVerifier, authVerifierProperties);
+		_authVerifierConfiguration = new AuthVerifierConfiguration();
+
+		_authVerifierConfiguration.setAuthVerifier(authVerifier);
+		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
+		_authVerifierConfiguration.setProperties(translatedProperties);
+
+		AuthVerifierPipeline.addAuthVerifierConfiguration(
+			_authVerifierConfiguration);
 	}
 
 	protected void deactivate() {
-		if (_authVerifierRegistration != null) {
-			_authVerifierRegistration.unregister();
+		AuthVerifierPipeline.removeAuthVerifierConfiguration(
+			_authVerifierConfiguration);
 
-			_authVerifierRegistration = null;
-		}
+		_authVerifierConfiguration = null;
 	}
 
 	protected abstract AuthVerifier getAuthVerifierInstance();
@@ -87,9 +92,9 @@ public abstract class BaseAuthVerifierPublisher {
 			key = "urls.includes";
 		}
 
-		return authVerifierPropertyName + key;
+		return key;
 	}
 
-	private ServiceRegistration<AuthVerifier> _authVerifierRegistration;
+	private AuthVerifierConfiguration _authVerifierConfiguration;
 
 }

@@ -51,12 +51,24 @@ public class AuthVerifierPipeline {
 
 	public static final String AUTH_TYPE = "auth.type";
 
+	public static void addAuthVerifierConfiguration(
+		AuthVerifierConfiguration authVerifierConfiguration) {
+
+		_authVerifierConfigurations.add(authVerifierConfiguration);
+	}
+
 	public static String getAuthVerifierPropertyName(String className) {
 		String simpleClassName = StringUtil.extractLast(
 			className, StringPool.PERIOD);
 
 		return StringBundler.concat(
 			PropsKeys.AUTH_VERIFIER, simpleClassName, StringPool.PERIOD);
+	}
+
+	public static void removeAuthVerifierConfiguration(
+		AuthVerifierConfiguration authVerifierConfiguration) {
+
+		_authVerifierConfigurations.remove(authVerifierConfiguration);
 	}
 
 	public AuthVerifierPipeline(Map<String, Object> initParametersMap) {
@@ -237,6 +249,9 @@ public class AuthVerifierPipeline {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
+
+	private static final Set<AuthVerifierConfiguration>
+		_authVerifierConfigurations = new HashSet<>();
 
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
