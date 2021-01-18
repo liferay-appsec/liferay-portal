@@ -68,7 +68,7 @@ public class AuthVerifierPipeline {
 		_buildURLPatternMapper();
 	}
 
-	public void addAuthVerifierConfiguration(
+	public synchronized void addAuthVerifierConfiguration(
 		AuthVerifierConfiguration authVerifierConfiguration) {
 
 		_authVerifierConfigurations.add(authVerifierConfiguration);
@@ -76,7 +76,7 @@ public class AuthVerifierPipeline {
 		_buildURLPatternMapper();
 	}
 
-	public void removeAuthVerifierConfiguration(
+	public synchronized void removeAuthVerifierConfiguration(
 		AuthVerifierConfiguration authVerifierConfiguration) {
 
 		_authVerifierConfigurations.remove(authVerifierConfiguration);
