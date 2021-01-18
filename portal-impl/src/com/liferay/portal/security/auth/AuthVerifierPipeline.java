@@ -294,6 +294,10 @@ public class AuthVerifierPipeline {
 			AuthVerifier authVerifier =
 				authVerifierConfiguration.getAuthVerifier();
 
+			if (authVerifier == null) {
+				return null;
+			}
+
 			Properties properties = authVerifierConfiguration.getProperties();
 
 			try {
