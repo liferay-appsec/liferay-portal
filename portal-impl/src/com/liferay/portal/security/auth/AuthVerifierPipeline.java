@@ -73,7 +73,7 @@ public class AuthVerifierPipeline {
 
 		_authVerifierConfigurations.add(authVerifierConfiguration);
 
-		_classChange++;
+		_buildURLPatternMapper();
 	}
 
 	public void removeAuthVerifierConfiguration(
@@ -81,18 +81,12 @@ public class AuthVerifierPipeline {
 
 		_authVerifierConfigurations.remove(authVerifierConfiguration);
 
-		_classChange++;
+		_buildURLPatternMapper();
 	}
 
 	public AuthVerifierResult verifyRequest(
 			AccessControlContext accessControlContext)
 		throws PortalException {
-
-		if (_instanceChange < _classChange) {
-			_buildURLPatternMapper();
-
-			_instanceChange = _classChange;
-		}
 
 		if (accessControlContext == null) {
 			throw new IllegalArgumentException(
@@ -219,14 +213,11 @@ public class AuthVerifierPipeline {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
-	private static long _classChange = Long.MIN_VALUE;
-
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
 	private URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
-	private long _instanceChange = Long.MIN_VALUE;
 
 	private static class AuthVerifierConfigurationConsumer
 		implements Consumer<List<AuthVerifierConfiguration>> {
