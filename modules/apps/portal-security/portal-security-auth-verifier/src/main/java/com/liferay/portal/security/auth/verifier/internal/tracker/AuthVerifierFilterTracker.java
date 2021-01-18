@@ -288,6 +288,8 @@ public class AuthVerifierFilterTracker {
 
 			properties.putAll(_getWhiteboardProperties(serviceReference));
 
+			properties.putIfAbsent("filter.init.standalone", "true");
+
 			return properties;
 		}
 
