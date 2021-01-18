@@ -22,7 +22,7 @@ import java.util.Properties;
 public class AuthVerifierConfiguration {
 
 	public AuthVerifier getAuthVerifier() {
-		return _authVerifier;
+		return AuthVerifierRegistry.getAuthVerifier(getAuthVerifierClassName());
 	}
 
 	public String getAuthVerifierClassName() {
@@ -33,19 +33,22 @@ public class AuthVerifierConfiguration {
 		return _properties;
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no replacement
+	 */
+	@Deprecated
 	public void setAuthVerifier(AuthVerifier authVerifier) {
-		_authVerifier = authVerifier;
 	}
 
 	public void setAuthVerifierClassName(String authVerifierClassName) {
-		_authVerifierClassName = authVerifierClassName;
+		_authVerifierClassName = authVerifierClassName.substring(
+			authVerifierClassName.lastIndexOf('.') + 1);
 	}
 
 	public void setProperties(Properties properties) {
 		_properties = properties;
 	}
 
-	private AuthVerifier _authVerifier;
 	private String _authVerifierClassName;
 	private Properties _properties;
 

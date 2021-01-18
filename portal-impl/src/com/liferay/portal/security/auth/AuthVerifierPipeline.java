@@ -25,7 +25,6 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
-import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierRegistry;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -342,15 +341,8 @@ public class AuthVerifierPipeline {
 
 			AuthVerifierResult authVerifierResult = null;
 
-			String authVerifierClassName =
-				authVerifierConfiguration.getAuthVerifierClassName();
-
-			int authVerifierSimpleClassNameIndex =
-				authVerifierClassName.lastIndexOf('.') + 1;
-
-			AuthVerifier authVerifier = AuthVerifierRegistry.getAuthVerifier(
-				authVerifierClassName.substring(
-					authVerifierSimpleClassNameIndex));
+			AuthVerifier authVerifier =
+				authVerifierConfiguration.getAuthVerifier();
 
 			Properties properties = authVerifierConfiguration.getProperties();
 
