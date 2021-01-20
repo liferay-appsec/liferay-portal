@@ -272,6 +272,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			}
 
 			authVerifierConfiguration.setProperties(properties);
+
+			authVerifierConfigurations.add(authVerifierConfiguration);
 		}
 
 		return authVerifierConfigurations;
