@@ -39,6 +39,10 @@ public class AuthVerifierRegistry {
 	public static AuthVerifier getAuthVerifier(String simpleClassName) {
 		final Tracked tracked = _serviceTrackerMap.getService(simpleClassName);
 
+		if (tracked == null) {
+			return null;
+		}
+
 		return tracked.getAuthVerifier();
 	}
 
