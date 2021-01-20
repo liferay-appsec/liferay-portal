@@ -214,9 +214,9 @@ public class AuthVerifierPipeline {
 		AuthVerifierPipeline.class);
 
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
-	private URLPatternMapper<List<AuthVerifierConfiguration>>
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
-	private URLPatternMapper<List<AuthVerifierConfiguration>>
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
 
 	private static class AuthVerifierConfigurationConsumer
