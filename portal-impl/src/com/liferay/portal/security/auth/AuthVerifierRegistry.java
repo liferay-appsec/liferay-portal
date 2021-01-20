@@ -63,7 +63,8 @@ public class AuthVerifierRegistry {
 			}
 
 			properties.put(
-				propertyKey, serviceReference.getProperty(propertyKey));
+				propertyKey.substring(authVerifierPropertyName.length()),
+				serviceReference.getProperty(propertyKey));
 		}
 
 		if (properties.isEmpty()) {
