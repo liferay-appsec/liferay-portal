@@ -21,8 +21,12 @@ import java.util.Properties;
  */
 public class AuthVerifierConfiguration {
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no replacement
+	 */
+	@Deprecated
 	public AuthVerifier getAuthVerifier() {
-		return AuthVerifierRegistry.getAuthVerifier(getAuthVerifierClassName());
+		return null;
 	}
 
 	public String getAuthVerifierClassName() {

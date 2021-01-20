@@ -289,14 +289,14 @@ public class AuthVerifierPipeline {
 			AccessControlContext accessControlContext,
 			AuthVerifierConfiguration authVerifierConfiguration) {
 
-			AuthVerifierResult authVerifierResult = null;
-
-			AuthVerifier authVerifier =
-				authVerifierConfiguration.getAuthVerifier();
+			AuthVerifier authVerifier = AuthVerifierRegistry.getAuthVerifier(
+				authVerifierConfiguration.getAuthVerifierClassName());
 
 			if (authVerifier == null) {
 				return null;
 			}
+
+			AuthVerifierResult authVerifierResult = null;
 
 			Properties properties = authVerifierConfiguration.getProperties();
 

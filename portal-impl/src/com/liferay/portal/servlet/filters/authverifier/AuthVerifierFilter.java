@@ -31,13 +31,9 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
+import com.liferay.portal.security.auth.AuthVerifierRegistry;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -62,9 +58,6 @@ import javax.servlet.http.HttpServletResponse;
  * @author Raymond Augé
  */
 public class AuthVerifierFilter extends BasePortalFilter {
-
-	private ServiceTracker<AuthVerifierPipeline, AuthVerifierPipeline>
-		_authVerifierPipelineServiceTracker;
 
 	@Override
 	public void init(FilterConfig filterConfig) {
@@ -132,60 +125,15 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			_initParametersMap.remove("standalone");
 
 			_initParametersMap.put(
-				AuthVerifierPipeline.class.getName(), new AuthVerifierPipeline(
+				AuthVerifierPipeline.class.getName(),
+				new AuthVerifierPipeline(
 					_buildAuthVerifierConfigurations(_initParametersMap)));
 		}
 		else {
-			Registry registry = RegistryUtil.getRegistry();
-
-			_authVerifierPipelineServiceTracker = registry.trackServices(
-				"(&(objectClass=%s)(original.bean=true))",
-				new ServiceTrackerCustomizer<
-					AuthVerifierPipeline, AuthVerifierPipeline>() {
-					@Override
-					public AuthVerifierPipeline addingService(
-						ServiceReference<AuthVerifierPipeline>
-							serviceReference) {
-
-						AuthVerifierPipeline authVerifierPipeline =
-							registry.getService(serviceReference);
-
-						_initParametersMap.put(
-							AuthVerifierPipeline.class.getName(),
-							authVerifierPipeline);
-
-						return authVerifierPipeline;
-					}
-
-					@Override
-					public void modifiedService(
-						ServiceReference<AuthVerifierPipeline> serviceReference,
-						AuthVerifierPipeline service) {
-
-					}
-
-					@Override
-					public void removedService(
-						ServiceReference<AuthVerifierPipeline> serviceReference,
-						AuthVerifierPipeline service) {
-
-						registry.ungetService(serviceReference);
-
-						_initParametersMap.remove(
-							AuthVerifierPipeline.class.getName(),
-							registry.getService(serviceReference));
-					}
-				});
+			_initParametersMap.put(
+				AuthVerifierPipeline.class.getName(),
+				AuthVerifierRegistry.authVerifierPipeline);
 		}
-	}
-
-	@Override
-	public void destroy() {
-		if (_authVerifierPipelineServiceTracker != null) {
-			_authVerifierPipelineServiceTracker.close();
-		}
-
-		super.destroy();
 	}
 
 	@Override

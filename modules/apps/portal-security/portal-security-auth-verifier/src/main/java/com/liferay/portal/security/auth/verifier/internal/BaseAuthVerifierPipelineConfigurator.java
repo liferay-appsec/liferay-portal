@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
+import com.liferay.portal.security.auth.AuthVerifierRegistry;
 
 import java.util.Map;
 import java.util.Properties;
@@ -26,7 +27,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -64,14 +64,14 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
 		_authVerifierConfiguration.setProperties(translatedProperties);
 
-		_authVerifierPipeline.addAuthVerifierConfiguration(
+		AuthVerifierRegistry.authVerifierPipeline.addAuthVerifierConfiguration(
 			_authVerifierConfiguration);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		_authVerifierPipeline.removeAuthVerifierConfiguration(
-			_authVerifierConfiguration);
+		AuthVerifierRegistry.authVerifierPipeline.
+			removeAuthVerifierConfiguration(_authVerifierConfiguration);
 
 		_authVerifierConfiguration = null;
 	}
@@ -102,8 +102,5 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 	}
 
 	private AuthVerifierConfiguration _authVerifierConfiguration;
-
-	@Reference(target="(original.bean=true)")
-	private AuthVerifierPipeline _authVerifierPipeline;
 
 }
