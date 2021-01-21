@@ -28,7 +28,6 @@ import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUti
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
-import com.liferay.portal.security.auth.AuthVerifierRegistry;
 
 import java.util.Map;
 
@@ -103,14 +102,6 @@ public class AccessControlImpl implements AccessControl {
 
 		AuthVerifierResult authVerifierResult =
 			_authVerifierPipeline.verifyRequest(accessControlContext);
-
-		if (authVerifierResult.getState() ==
-			AuthVerifierResult.State.UNSUCCESSFUL) {
-
-			authVerifierResult =
-				AuthVerifierRegistry.authVerifierPipeline.verifyRequest(
-					accessControlContext);
-		}
 
 		Map<String, Object> authVerifierResultSettings =
 			authVerifierResult.getSettings();
