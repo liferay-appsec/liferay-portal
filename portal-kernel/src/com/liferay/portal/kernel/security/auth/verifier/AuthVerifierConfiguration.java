@@ -45,8 +45,18 @@ public class AuthVerifierConfiguration {
 	}
 
 	public void setAuthVerifierClassName(String authVerifierClassName) {
+		int lastDotIndex = authVerifierClassName.lastIndexOf('.');
+
+		int simpleClassNameIndex = lastDotIndex + 1;
+
+		int lastDollarIndex = authVerifierClassName.lastIndexOf('$');
+
+		if (lastDotIndex < lastDollarIndex) {
+			simpleClassNameIndex = lastDollarIndex + 1;
+		}
+
 		_authVerifierClassName = authVerifierClassName.substring(
-			authVerifierClassName.lastIndexOf('.') + 1);
+			simpleClassNameIndex);
 	}
 
 	public void setProperties(Properties properties) {
