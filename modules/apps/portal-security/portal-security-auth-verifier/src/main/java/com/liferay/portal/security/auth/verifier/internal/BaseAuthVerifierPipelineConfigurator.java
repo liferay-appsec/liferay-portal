@@ -44,9 +44,7 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 			return;
 		}
 
-		AuthVerifier authVerifier = getAuthVerifierInstance();
-
-		Class<?> clazz = authVerifier.getClass();
+		Class<?> clazz = getAuthVerifierClass();
 
 		String authVerifierPropertyName =
 			AuthVerifierPipeline.getAuthVerifierPropertyName(clazz.getName());
@@ -76,7 +74,7 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 		_authVerifierConfiguration = null;
 	}
 
-	protected abstract AuthVerifier getAuthVerifierInstance();
+	protected abstract Class<? extends AuthVerifier> getAuthVerifierClass();
 
 	@Modified
 	protected void modified(
