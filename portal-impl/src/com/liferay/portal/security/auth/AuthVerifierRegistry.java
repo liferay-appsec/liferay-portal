@@ -143,12 +143,10 @@ public class AuthVerifierRegistry {
 						_buildAuthVerifierConfiguration(
 							serviceReference, authVerifier);
 
-					if (authVerifierConfiguration == null) {
-						return null;
+					if (authVerifierConfiguration != null) {
+						authVerifierPipeline.addAuthVerifierConfiguration(
+							authVerifierConfiguration);
 					}
-
-					authVerifierPipeline.addAuthVerifierConfiguration(
-						authVerifierConfiguration);
 
 					return new Tracked(authVerifier, authVerifierConfiguration);
 				}
@@ -158,8 +156,13 @@ public class AuthVerifierRegistry {
 					ServiceReference<AuthVerifier> serviceReference,
 					Tracked tracked) {
 
-					authVerifierPipeline.removeAuthVerifierConfiguration(
-						tracked.getAuthVerifierConfiguration());
+					AuthVerifierConfiguration authVerifierConfiguration =
+						tracked.getAuthVerifierConfiguration();
+
+					if (authVerifierConfiguration != null) {
+						authVerifierPipeline.removeAuthVerifierConfiguration(
+							authVerifierConfiguration);
+					}
 
 					final AuthVerifier authVerifier = tracked._authVerifier;
 
@@ -178,8 +181,13 @@ public class AuthVerifierRegistry {
 					ServiceReference<AuthVerifier> serviceReference,
 					Tracked tracked) {
 
-					authVerifierPipeline.removeAuthVerifierConfiguration(
-						tracked.getAuthVerifierConfiguration());
+					AuthVerifierConfiguration authVerifierConfiguration =
+						tracked.getAuthVerifierConfiguration();
+
+					if (authVerifierConfiguration != null) {
+						authVerifierPipeline.removeAuthVerifierConfiguration(
+							authVerifierConfiguration);
+					}
 
 					Registry registry = RegistryUtil.getRegistry();
 
