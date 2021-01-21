@@ -250,7 +250,7 @@ public class AuthVerifierTest {
 		properties = new HashMapDictionary<>();
 
 		properties.put(
-			"urls.includes",
+			"auth.verifier.AuthVerifierTest$TestAuthVerifier.urls.includes",
 			"/authVerifierMatched,/attemptMatchRelativeToContextPath");
 
 		_registerAuthVerifier(new TestAuthVerifier(), properties);
