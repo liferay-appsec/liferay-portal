@@ -31,8 +31,8 @@ public class TunnelAuthVerifierPipelineConfigurator
 	extends BaseAuthVerifierPipelineConfigurator {
 
 	@Override
-	protected AuthVerifier getAuthVerifierInstance() {
-		return _authVerifier;
+	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
+		return TunnelAuthVerifier.class;
 	}
 
 	@Override
@@ -43,7 +43,5 @@ public class TunnelAuthVerifierPipelineConfigurator
 
 		return super.translateKey(authVerifierPropertyName, key);
 	}
-
-	private final AuthVerifier _authVerifier = new TunnelAuthVerifier();
 
 }

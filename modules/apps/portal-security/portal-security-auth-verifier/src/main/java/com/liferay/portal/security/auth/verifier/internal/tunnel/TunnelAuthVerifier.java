@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -39,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * @author Zsolt Berentey
  */
+@Component(service = AuthVerifier.class)
 public class TunnelAuthVerifier implements AuthVerifier {
 
 	@Override

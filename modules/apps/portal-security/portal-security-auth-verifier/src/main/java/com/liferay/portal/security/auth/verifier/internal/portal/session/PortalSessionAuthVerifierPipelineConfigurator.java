@@ -50,8 +50,8 @@ public class PortalSessionAuthVerifierPipelineConfigurator
 	}
 
 	@Override
-	protected AuthVerifier getAuthVerifierInstance() {
-		return _authVerifier;
+	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
+		return PortalSessionAuthVerifier.class;
 	}
 
 	@Override

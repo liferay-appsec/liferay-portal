@@ -36,24 +36,10 @@ import org.osgi.service.component.annotations.Reference;
 public class RequestParameterAuthVerifierPipelineConfigurator
 	extends BaseAuthVerifierPipelineConfigurator {
 
-	@Activate
 	@Override
-	protected void activate(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		_authVerifier = new RequestParameterAuthVerifier(_autoLogin);
-
-		super.activate(bundleContext, properties);
+	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
+		return RequestParameterAuthVerifier.class;
 	}
 
-	@Override
-	protected AuthVerifier getAuthVerifierInstance() {
-		return _authVerifier;
-	}
-
-	private AuthVerifier _authVerifier;
-
-	@Reference(target = "(&(private.auto.login=true)(type=request.parameter))")
-	private AutoLogin _autoLogin;
 
 }

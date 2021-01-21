@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import org.osgi.service.component.annotations.Component;
 
 import java.util.Properties;
 
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * @author Tomas Polesovsky
  */
+@Component(service = AuthVerifier.class)
 public class PortalSessionAuthVerifier implements AuthVerifier {
 
 	public static final String AUTH_TYPE = HttpServletRequest.FORM_AUTH;

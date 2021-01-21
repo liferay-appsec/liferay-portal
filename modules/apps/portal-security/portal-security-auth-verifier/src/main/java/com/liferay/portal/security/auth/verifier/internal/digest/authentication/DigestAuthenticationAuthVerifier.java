@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import org.osgi.service.component.annotations.Component;
 
 import java.util.Properties;
 
@@ -32,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * @author Tomas Polesovsky
  */
+@Component(service = AuthVerifier.class)
 public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
 	@Override

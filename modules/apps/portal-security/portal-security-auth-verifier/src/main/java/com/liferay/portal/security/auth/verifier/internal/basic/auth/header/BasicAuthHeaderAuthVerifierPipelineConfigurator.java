@@ -15,16 +15,10 @@
 package com.liferay.portal.security.auth.verifier.internal.basic.auth.header;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
-import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPipelineConfigurator;
 
-import java.util.Map;
-
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -36,19 +30,9 @@ import org.osgi.service.component.annotations.Reference;
 public class BasicAuthHeaderAuthVerifierPipelineConfigurator
 	extends BaseAuthVerifierPipelineConfigurator {
 
-	@Activate
 	@Override
-	protected void activate(
-		BundleContext bundleContext, Map<String, Object> properties) {
-
-		_authVerifier = new BasicAuthHeaderAuthVerifier(_autoLogin);
-
-		super.activate(bundleContext, properties);
-	}
-
-	@Override
-	protected AuthVerifier getAuthVerifierInstance() {
-		return _authVerifier;
+	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
+		return BasicAuthHeaderAuthVerifier.class;
 	}
 
 	@Override
@@ -61,8 +45,5 @@ public class BasicAuthHeaderAuthVerifierPipelineConfigurator
 	}
 
 	private AuthVerifier _authVerifier;
-
-	@Reference(target = "(&(private.auto.login=true)(type=basic.auth.header))")
-	private AutoLogin _autoLogin;
 
 }

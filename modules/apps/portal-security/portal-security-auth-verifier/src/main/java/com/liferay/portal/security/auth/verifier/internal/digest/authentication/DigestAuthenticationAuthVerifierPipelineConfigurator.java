@@ -31,8 +31,8 @@ public class DigestAuthenticationAuthVerifierPipelineConfigurator
 	extends BaseAuthVerifierPipelineConfigurator {
 
 	@Override
-	protected AuthVerifier getAuthVerifierInstance() {
-		return _authVerifier;
+	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
+		return DigestAuthenticationAuthVerifier.class;
 	}
 
 	@Override
