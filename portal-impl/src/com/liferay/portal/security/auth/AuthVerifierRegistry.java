@@ -16,10 +16,13 @@ package com.liferay.portal.security.auth;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
 import com.liferay.registry.ServiceReference;
 import com.liferay.registry.ServiceTrackerCustomizer;
+import com.liferay.registry.collections.ServiceReferenceMapper;
 import com.liferay.registry.collections.ServiceReferenceMapperFactory;
 import com.liferay.registry.collections.ServiceTrackerMap;
 import com.liferay.registry.collections.ServiceTrackerMapFactory;
@@ -80,6 +83,8 @@ public class AuthVerifierRegistry {
 		return authVerifierConfiguration;
 	}
 
+	private static final ServiceReferenceMapper<String, AuthVerifier>
+		_authVerifierServiceReferenceMapper;
 	private static final ServiceTrackerMap<String, Tracked> _serviceTrackerMap;
 
 	private static class Tracked {
@@ -119,15 +124,29 @@ public class AuthVerifierRegistry {
 		ServiceTrackerMapFactory serviceTrackerMapFactory =
 			ServiceTrackerMapFactoryUtil.getServiceTrackerMapFactory();
 
-		_serviceTrackerMap = serviceTrackerMapFactory.openSingleValueMap(
-			AuthVerifier.class, null,
+		_authVerifierServiceReferenceMapper =
 			ServiceReferenceMapperFactory.create(
 				(authVerifier, emitter) -> {
 					Class<? extends AuthVerifier> clazz =
 						authVerifier.getClass();
 
 					emitter.emit(clazz.getSimpleName());
-				}),
+				});
+
+		_serviceTrackerMap = serviceTrackerMapFactory.openSingleValueMap(
+			AuthVerifier.class, null,
+			(serviceReference, emitter) -> {
+				String authVerifierClassName = GetterUtil.getString(
+					serviceReference.getProperty("auth.verifier.class.name"));
+
+				if (Validator.isNotNull(authVerifierClassName)) {
+					emitter.emit(authVerifierClassName);
+				}
+				else {
+					_authVerifierServiceReferenceMapper.map(
+						serviceReference, emitter);
+				}
+			},
 			new ServiceTrackerCustomizer<AuthVerifier, Tracked>() {
 
 				@Override
