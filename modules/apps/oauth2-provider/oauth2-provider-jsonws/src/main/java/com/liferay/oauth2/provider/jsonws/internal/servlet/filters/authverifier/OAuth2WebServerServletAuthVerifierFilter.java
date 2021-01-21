@@ -36,6 +36,7 @@ import org.osgi.service.component.annotations.Component;
 		"before-filter=Auto Login Filter", "dispatcher=FORWARD",
 		"dispatcher=REQUEST",
 		"init.param.auth.verifier.OAuth2JSONWSAuthVerifier.urls.includes=/*",
+		"init.param.standalone=true",
 		"servlet-context-name=",
 		"servlet-filter-name=OAuth2 Web Server Servlet Auth Verifier Filter",
 		"url-pattern=/c/portal/fragment/*",
