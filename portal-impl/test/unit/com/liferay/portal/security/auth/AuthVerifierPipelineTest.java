@@ -31,12 +31,16 @@ import com.liferay.registry.BasicRegistryImpl;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
 import com.liferay.registry.ServiceRegistration;
+import com.liferay.registry.collections.ServiceTrackerMap;
+import com.liferay.registry.collections.ServiceTrackerMapFactory;
+import com.liferay.registry.collections.ServiceTrackerMapFactoryUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -111,6 +115,44 @@ public class AuthVerifierPipelineTest {
 
 		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
 			Collections.singletonList(authVerifierConfiguration));
+
+		ServiceTrackerMapFactoryUtil.setServiceTrackerMapFactory(
+			(ServiceTrackerMapFactory)ProxyUtil.newProxyInstance(
+				AuthVerifierPipeline.class.getClassLoader(),
+				new Class<?>[] {ServiceTrackerMapFactory.class},
+				(proxy, method, args) -> null));
+
+		ReflectionTestUtil.setFieldValue(
+			AuthVerifierRegistry.class, "_serviceTrackerMap",
+			new ServiceTrackerMap<String, AuthVerifier>() {
+
+				@Override
+				public void close() {
+				}
+
+				@Override
+				public boolean containsKey(String key) {
+					return false;
+				}
+
+				@Override
+				public AuthVerifier getService(String key) {
+					if (key.equals(
+							authVerifierConfiguration.
+								getAuthVerifierClassName())) {
+
+						return authVerifier;
+					}
+
+					return null;
+				}
+
+				@Override
+				public Set<String> keySet() {
+					return null;
+				}
+
+			});
 
 		ServiceRegistration<AuthVerifier> serviceRegistration =
 			registry.registerService(
