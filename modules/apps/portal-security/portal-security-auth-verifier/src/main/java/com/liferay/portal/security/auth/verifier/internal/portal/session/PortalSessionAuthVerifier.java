@@ -28,11 +28,12 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import org.osgi.service.component.annotations.Component;
 
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Tomas Polesovsky

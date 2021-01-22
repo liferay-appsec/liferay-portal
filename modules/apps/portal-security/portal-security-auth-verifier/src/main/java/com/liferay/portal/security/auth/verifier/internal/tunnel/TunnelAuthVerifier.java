@@ -24,7 +24,6 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
-import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -36,6 +35,8 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Zsolt Berentey

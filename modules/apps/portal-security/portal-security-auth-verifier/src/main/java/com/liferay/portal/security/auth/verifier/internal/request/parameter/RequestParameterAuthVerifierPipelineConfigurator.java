@@ -15,16 +15,10 @@
 package com.liferay.portal.security.auth.verifier.internal.request.parameter;
 
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
-import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.security.auth.verifier.internal.BaseAuthVerifierPipelineConfigurator;
 
-import java.util.Map;
-
-import org.osgi.framework.BundleContext;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -40,6 +34,5 @@ public class RequestParameterAuthVerifierPipelineConfigurator
 	protected Class<? extends AuthVerifier> getAuthVerifierClass() {
 		return RequestParameterAuthVerifier.class;
 	}
-
 
 }

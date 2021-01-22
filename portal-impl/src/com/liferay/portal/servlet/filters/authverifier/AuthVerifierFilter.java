@@ -126,7 +126,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 		ServletContext servletContext = filterConfig.getServletContext();
 
 		if (servletContext.equals(
-			ServletContextPool.get(PortalUtil.getServletContextName()))) {
+				ServletContextPool.get(PortalUtil.getServletContextName()))) {
 
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),

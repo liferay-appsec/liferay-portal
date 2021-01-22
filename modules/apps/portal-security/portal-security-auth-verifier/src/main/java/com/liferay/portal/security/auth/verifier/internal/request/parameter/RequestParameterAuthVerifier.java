@@ -20,10 +20,11 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.kernel.security.auto.login.AutoLoginException;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 import java.util.Properties;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -66,4 +67,5 @@ public class RequestParameterAuthVerifier implements AuthVerifier {
 
 	@Reference(target = "(&(private.auto.login=true)(type=request.parameter))")
 	private AutoLogin _autoLogin;
+
 }
