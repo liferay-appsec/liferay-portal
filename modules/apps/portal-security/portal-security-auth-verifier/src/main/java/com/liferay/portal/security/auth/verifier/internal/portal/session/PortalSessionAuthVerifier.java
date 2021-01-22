@@ -27,13 +27,14 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Portal;
 
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -59,7 +60,7 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 			HttpServletRequest httpServletRequest =
 				accessControlContext.getRequest();
 
-			User user = PortalUtil.getUser(httpServletRequest);
+			User user = _portal.getUser(httpServletRequest);
 
 			if ((user == null) || user.isDefaultUser()) {
 				return authVerifierResult;
@@ -70,7 +71,7 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 
 			if (checkCSRFToken) {
 				HttpServletRequest originalHttpServletRequest =
-					PortalUtil.getOriginalServletRequest(httpServletRequest);
+					_portal.getOriginalServletRequest(httpServletRequest);
 
 				String requestURI = originalHttpServletRequest.getRequestURI();
 
@@ -106,5 +107,8 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortalSessionAuthVerifier.class);
+
+	@Reference
+	private Portal _portal;
 
 }

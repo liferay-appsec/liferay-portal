@@ -63,6 +63,4 @@ public class PortalSessionAuthVerifierPipelineConfigurator
 		return super.translateKey(authVerifierPropertyName, key);
 	}
 
-	private final AuthVerifier _authVerifier = new PortalSessionAuthVerifier();
-
 }

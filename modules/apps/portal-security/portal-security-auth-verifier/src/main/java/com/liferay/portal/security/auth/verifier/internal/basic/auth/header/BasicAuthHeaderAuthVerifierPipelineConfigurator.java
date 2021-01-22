@@ -44,6 +44,4 @@ public class BasicAuthHeaderAuthVerifierPipelineConfigurator
 		return super.translateKey(authVerifierPropertyName, key);
 	}
 
-	private AuthVerifier _authVerifier;
-
 }

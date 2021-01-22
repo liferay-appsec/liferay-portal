@@ -44,7 +44,4 @@ public class DigestAuthenticationAuthVerifierPipelineConfigurator
 		return super.translateKey(authVerifierPropertyName, key);
 	}
 
-	private final AuthVerifier _authVerifier =
-		new DigestAuthenticationAuthVerifier();
-
 }
