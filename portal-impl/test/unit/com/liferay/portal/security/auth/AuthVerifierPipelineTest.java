@@ -114,7 +114,7 @@ public class AuthVerifierPipelineTest {
 		authVerifierConfiguration.setProperties(properties);
 
 		AuthVerifierPipeline authVerifierPipeline = new AuthVerifierPipeline(
-			Collections.singletonList(authVerifierConfiguration));
+			Collections.singletonList(authVerifierConfiguration), true);
 
 		ServiceTrackerMapFactoryUtil.setServiceTrackerMapFactory(
 			(ServiceTrackerMapFactory)ProxyUtil.newProxyInstance(
