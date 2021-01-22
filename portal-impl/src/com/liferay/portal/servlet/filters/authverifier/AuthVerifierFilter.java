@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
+import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -46,6 +47,7 @@ import java.util.Set;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -121,19 +123,20 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			}
 		}
 
-		if (_initParametersMap.containsKey("standalone")) {
-			_initParametersMap.remove("standalone");
+		ServletContext servletContext = filterConfig.getServletContext();
+
+		if (servletContext.equals(
+			ServletContextPool.get(PortalUtil.getServletContextName()))) {
 
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
-				new AuthVerifierPipeline(
-					_buildAuthVerifierConfigurations(_initParametersMap),
-					true));
+				AuthVerifierRegistry.authVerifierPipeline);
 		}
 		else {
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
-				AuthVerifierRegistry.authVerifierPipeline);
+				new AuthVerifierPipeline(
+					_buildAuthVerifierConfigurations(_initParametersMap), true));
 		}
 	}
 
