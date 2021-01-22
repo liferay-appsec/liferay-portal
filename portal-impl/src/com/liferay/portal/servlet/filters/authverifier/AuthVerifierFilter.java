@@ -225,7 +225,10 @@ public class AuthVerifierFilter extends BasePortalFilter {
 	private List<AuthVerifierConfiguration> _buildAuthVerifierConfigurations(
 		Map<String, Object> initParametersMap) {
 
-		Map<String, Map<String, Object>> propertiesMap = new HashMap<>();
+		Map<String, Integer> authVerifierConfigurationIndexs = new HashMap<>();
+
+		ArrayList<AuthVerifierConfiguration> authVerifierConfigurations =
+			new ArrayList<>();
 
 		for (Map.Entry<String, Object> entry : initParametersMap.entrySet()) {
 			final String propertyName = entry.getKey();
@@ -242,39 +245,33 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			String authVerifierClassName = authVerifierPropertyName.substring(
 				0, indexOf);
 
-			Map<String, Object> authVerifierPropertiesMap =
-				propertiesMap.computeIfAbsent(
-					authVerifierClassName, key -> new HashMap<>());
+			Integer authVerifierConfigurationIndex =
+				authVerifierConfigurationIndexs.get(authVerifierClassName);
 
-			authVerifierPropertiesMap.put(
-				authVerifierPropertyName.substring(indexOf + 1),
-				entry.getValue());
-		}
+			if (authVerifierConfigurationIndex == null) {
+				authVerifierConfigurations.add(new AuthVerifierConfiguration());
 
-		ArrayList<AuthVerifierConfiguration> authVerifierConfigurations =
-			new ArrayList<>();
-
-		for (Map.Entry<String, Map<String, Object>> entry :
-				propertiesMap.entrySet()) {
-
-			final AuthVerifierConfiguration authVerifierConfiguration =
-				new AuthVerifierConfiguration();
-
-			authVerifierConfiguration.setAuthVerifierClassName(entry.getKey());
-
-			Properties properties = new Properties();
-
-			final Map<String, Object> value = entry.getValue();
-
-			for (Map.Entry<String, Object> propertyEntry : value.entrySet()) {
-				properties.setProperty(
-					propertyEntry.getKey(),
-					String.valueOf(propertyEntry.getValue()));
+				authVerifierConfigurationIndex =
+					authVerifierConfigurations.size() - 1;
 			}
 
-			authVerifierConfiguration.setProperties(properties);
+			AuthVerifierConfiguration authVerifierConfiguration =
+				authVerifierConfigurations.get(authVerifierConfigurationIndex);
 
-			authVerifierConfigurations.add(authVerifierConfiguration);
+			if (authVerifierConfiguration.getAuthVerifierClassName() == null) {
+				authVerifierConfiguration.setAuthVerifierClassName(
+					authVerifierClassName);
+			}
+
+			if (authVerifierConfiguration.getProperties() == null) {
+				authVerifierConfiguration.setProperties(new Properties());
+			}
+
+			Properties properties = authVerifierConfiguration.getProperties();
+
+			properties.put(
+				authVerifierPropertyName.substring(indexOf + 1),
+				entry.getValue());
 		}
 
 		return authVerifierConfigurations;
