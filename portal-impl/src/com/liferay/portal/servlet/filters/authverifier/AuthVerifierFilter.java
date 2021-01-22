@@ -127,7 +127,8 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
 				new AuthVerifierPipeline(
-					_buildAuthVerifierConfigurations(_initParametersMap)));
+					_buildAuthVerifierConfigurations(_initParametersMap),
+					true));
 		}
 		else {
 			_initParametersMap.put(

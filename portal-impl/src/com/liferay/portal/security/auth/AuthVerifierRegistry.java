@@ -37,7 +37,7 @@ import java.util.Properties;
 public class AuthVerifierRegistry {
 
 	public static final AuthVerifierPipeline authVerifierPipeline =
-		new AuthVerifierPipeline(Collections.emptyList());
+		new AuthVerifierPipeline(Collections.emptyList(), false);
 
 	public static AuthVerifier getAuthVerifier(String simpleClassName) {
 		final Tracked tracked = _serviceTrackerMap.getService(simpleClassName);
