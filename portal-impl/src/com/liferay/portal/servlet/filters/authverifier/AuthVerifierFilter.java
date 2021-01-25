@@ -36,6 +36,8 @@ import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -129,14 +131,17 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
-				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE);
+				Collections.singletonList(
+					AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE));
 		}
 		else {
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
-				new AuthVerifierPipeline(
-					_buildAuthVerifierConfigurations(_initParametersMap),
-					servletContext.getContextPath()));
+				Arrays.asList(
+					new AuthVerifierPipeline(
+						_buildAuthVerifierConfigurations(_initParametersMap),
+						servletContext.getContextPath()),
+					AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE));
 		}
 	}
 

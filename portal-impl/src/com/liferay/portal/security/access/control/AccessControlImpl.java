@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,7 +53,7 @@ public class AccessControlImpl implements AccessControl {
 				"Authentication context is already initialized");
 		}
 
-		_authVerifierPipeline = (AuthVerifierPipeline)settings.get(
+		_authVerifierPipelines = (List<AuthVerifierPipeline>)settings.get(
 			AuthVerifierPipeline.class.getName());
 
 		accessControlContext = new AccessControlContext();
@@ -100,23 +101,41 @@ public class AccessControlImpl implements AccessControl {
 		AccessControlContext accessControlContext =
 			AccessControlUtil.getAccessControlContext();
 
-		AuthVerifierResult authVerifierResult =
-			_authVerifierPipeline.verifyRequest(accessControlContext);
+		AuthVerifierResult authVerifierResult = null;
 
-		Map<String, Object> authVerifierResultSettings =
-			authVerifierResult.getSettings();
+		for (AuthVerifierPipeline authVerifierPipeline :
+			_authVerifierPipelines) {
 
-		if (authVerifierResultSettings != null) {
-			Map<String, Object> settings = accessControlContext.getSettings();
+			authVerifierResult = authVerifierPipeline.verifyRequest(
+				accessControlContext);
 
-			settings.putAll(authVerifierResultSettings);
+			if (authVerifierResult.getState() ==
+				AuthVerifierResult.State.SUCCESS) {
+
+				break;
+			}
 		}
 
-		accessControlContext.setAuthVerifierResult(authVerifierResult);
+		if (authVerifierResult != null) {
+			Map<String, Object> authVerifierResultSettings =
+				authVerifierResult.getSettings();
 
-		return authVerifierResult.getState();
+			if (authVerifierResultSettings != null) {
+				Map<String, Object> settings =
+					accessControlContext.getSettings();
+
+				settings.putAll(authVerifierResultSettings);
+			}
+
+			accessControlContext.setAuthVerifierResult(authVerifierResult);
+
+			return authVerifierResult.getState();
+		}
+		else {
+			return AuthVerifierResult.State.UNSUCCESSFUL;
+		}
 	}
 
-	private AuthVerifierPipeline _authVerifierPipeline;
+	private List<AuthVerifierPipeline> _authVerifierPipelines;
 
 }
