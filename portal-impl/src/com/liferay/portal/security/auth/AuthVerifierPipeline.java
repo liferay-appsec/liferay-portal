@@ -30,6 +30,11 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.registry.Registry;
+import com.liferay.registry.RegistryUtil;
+import com.liferay.registry.ServiceReference;
+import com.liferay.registry.ServiceTracker;
+import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -211,6 +216,8 @@ public class AuthVerifierPipeline {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
+	private static ServiceTracker
+		<AuthVerifierConfiguration, AuthVerifierConfiguration> _serviceTracker;
 
 	static {
 		if (PortalUtil.getPortal() != null) {
@@ -221,6 +228,52 @@ public class AuthVerifierPipeline {
 			PORTAL_AUTH_VERIFIER_PIPELINE = new AuthVerifierPipeline(
 				Collections.emptyList(), "");
 		}
+
+		Registry registry = RegistryUtil.getRegistry();
+
+		_serviceTracker = registry.trackServices(
+			AuthVerifierConfiguration.class,
+			new ServiceTrackerCustomizer
+				<AuthVerifierConfiguration, AuthVerifierConfiguration>() {
+
+				@Override
+				public AuthVerifierConfiguration addingService(
+					ServiceReference<AuthVerifierConfiguration>
+						serviceReference) {
+
+					AuthVerifierConfiguration authVerifierConfiguration =
+						registry.getService(serviceReference);
+
+					if (authVerifierConfiguration != null) {
+						PORTAL_AUTH_VERIFIER_PIPELINE.
+							_addAuthVerifierConfiguration(
+								authVerifierConfiguration);
+					}
+
+					return authVerifierConfiguration;
+				}
+
+				@Override
+				public void modifiedService(
+					ServiceReference<AuthVerifierConfiguration>
+						serviceReference,
+					AuthVerifierConfiguration authVerifierConfiguration) {
+				}
+
+				@Override
+				public void removedService(
+					ServiceReference<AuthVerifierConfiguration>
+						serviceReference,
+					AuthVerifierConfiguration authVerifierConfiguration) {
+
+					PORTAL_AUTH_VERIFIER_PIPELINE.
+						_removeAuthVerifierConfiguration(
+							authVerifierConfiguration);
+				}
+
+			});
+
+		_serviceTracker.open();
 	}
 
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
