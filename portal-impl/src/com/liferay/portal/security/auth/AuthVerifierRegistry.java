@@ -17,6 +17,7 @@ package com.liferay.portal.security.auth;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
@@ -38,7 +39,8 @@ import java.util.Properties;
 public class AuthVerifierRegistry {
 
 	public static final AuthVerifierPipeline authVerifierPipeline =
-		new AuthVerifierPipeline(Collections.emptyList(), false);
+		new AuthVerifierPipeline(
+			Collections.emptyList(), PortalUtil.getServletContextName());
 
 	public static AuthVerifier getAuthVerifier(String simpleClassName) {
 		return _serviceTrackerMap.getService(simpleClassName);

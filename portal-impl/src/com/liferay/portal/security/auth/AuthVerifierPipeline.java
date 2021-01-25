@@ -61,14 +61,14 @@ public class AuthVerifierPipeline {
 
 	public AuthVerifierPipeline(
 		List<AuthVerifierConfiguration> authVerifierConfigurations,
-		boolean forApplication) {
+		String contextPath) {
 
 		_authVerifierConfigurations = new ArrayList<>(
 			authVerifierConfigurations);
 
-		_buildURLPatternMapper();
+		_contextPath = contextPath;
 
-		_forApplication = forApplication;
+		_buildURLPatternMapper();
 	}
 
 	public synchronized void addAuthVerifierConfiguration(
@@ -96,7 +96,10 @@ public class AuthVerifierPipeline {
 				"Access control context is null");
 		}
 
-		String requestURI = _parseRequestURI(accessControlContext);
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
+
+		String requestURI = httpServletRequest.getRequestURI();
 
 		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
 			new AuthVerifierConfigurationConsumer(
@@ -127,7 +130,7 @@ public class AuthVerifierPipeline {
 				properties.getProperty("urls.excludes"));
 
 			for (String urlsExclude : urlsExcludes) {
-				urlsExclude = _fixLegacyURLPattern(urlsExclude);
+				urlsExclude = _contextPath + _fixLegacyURLPattern(urlsExclude);
 
 				excludeAuthVerifierConfigurations.computeIfAbsent(
 					urlsExclude, key -> new ArrayList<>());
@@ -144,7 +147,7 @@ public class AuthVerifierPipeline {
 				properties.getProperty("urls.includes"));
 
 			for (String urlsInclude : urlsIncludes) {
-				urlsInclude = _fixLegacyURLPattern(urlsInclude);
+				urlsInclude = _contextPath + _fixLegacyURLPattern(urlsInclude);
 
 				includeAuthVerifierConfigurations.computeIfAbsent(
 					urlsInclude, key -> new ArrayList<>());
@@ -201,33 +204,13 @@ public class AuthVerifierPipeline {
 		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
 	}
 
-	private String _parseRequestURI(AccessControlContext accessControlContext) {
-		HttpServletRequest httpServletRequest =
-			accessControlContext.getRequest();
-
-		String requestURI = httpServletRequest.getRequestURI();
-
-		if (_forApplication) {
-			String contextPath = httpServletRequest.getContextPath();
-
-			if (requestURI.equals(contextPath)) {
-				requestURI += "/";
-			}
-			else {
-				requestURI = requestURI.substring(contextPath.length());
-			}
-		}
-
-		return requestURI;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
 
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
+	private final String _contextPath;
 	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
-	private final boolean _forApplication;
 	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_includeURLPatternMapper;
 
