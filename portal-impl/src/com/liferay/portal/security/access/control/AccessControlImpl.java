@@ -29,7 +29,6 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,8 +52,10 @@ public class AccessControlImpl implements AccessControl {
 				"Authentication context is already initialized");
 		}
 
-		_authVerifierPipelines = (List<AuthVerifierPipeline>)settings.get(
-			AuthVerifierPipeline.class.getName());
+		if (settings.get(AuthVerifierPipeline.class.getName()) != null) {
+			_authVerifierPipeline = (AuthVerifierPipeline)settings.get(
+				AuthVerifierPipeline.class.getName());
+		}
 
 		accessControlContext = new AccessControlContext();
 
@@ -101,41 +102,34 @@ public class AccessControlImpl implements AccessControl {
 		AccessControlContext accessControlContext =
 			AccessControlUtil.getAccessControlContext();
 
-		AuthVerifierResult authVerifierResult = null;
+		AuthVerifierResult authVerifierResult =
+			_authVerifierPipeline.verifyRequest(accessControlContext);
 
-		for (AuthVerifierPipeline authVerifierPipeline :
-			_authVerifierPipelines) {
+		if ((authVerifierResult.getState() !=
+				AuthVerifierResult.State.SUCCESS) &&
+			(_authVerifierPipeline !=
+				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE)) {
 
-			authVerifierResult = authVerifierPipeline.verifyRequest(
-				accessControlContext);
-
-			if (authVerifierResult.getState() ==
-				AuthVerifierResult.State.SUCCESS) {
-
-				break;
-			}
+			authVerifierResult =
+				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+					verifyRequest(accessControlContext);
 		}
 
-		if (authVerifierResult != null) {
-			Map<String, Object> authVerifierResultSettings =
-				authVerifierResult.getSettings();
+		Map<String, Object> authVerifierResultSettings =
+			authVerifierResult.getSettings();
 
-			if (authVerifierResultSettings != null) {
-				Map<String, Object> settings =
-					accessControlContext.getSettings();
+		if (authVerifierResultSettings != null) {
+			Map<String, Object> settings = accessControlContext.getSettings();
 
-				settings.putAll(authVerifierResultSettings);
-			}
-
-			accessControlContext.setAuthVerifierResult(authVerifierResult);
-
-			return authVerifierResult.getState();
+			settings.putAll(authVerifierResultSettings);
 		}
-		else {
-			return AuthVerifierResult.State.UNSUCCESSFUL;
-		}
+
+		accessControlContext.setAuthVerifierResult(authVerifierResult);
+
+		return authVerifierResult.getState();
 	}
 
-	private List<AuthVerifierPipeline> _authVerifierPipelines;
+	private AuthVerifierPipeline _authVerifierPipeline =
+		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE;
 
 }
