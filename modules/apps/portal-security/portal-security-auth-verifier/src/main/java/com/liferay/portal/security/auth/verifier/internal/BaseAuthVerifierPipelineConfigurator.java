@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
-import com.liferay.portal.security.auth.AuthVerifierRegistry;
 
 import java.util.Map;
 import java.util.Properties;
@@ -62,13 +61,13 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
 		_authVerifierConfiguration.setProperties(translatedProperties);
 
-		AuthVerifierRegistry.authVerifierPipeline.addAuthVerifierConfiguration(
-			_authVerifierConfiguration);
+		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+			addAuthVerifierConfiguration(_authVerifierConfiguration);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		AuthVerifierRegistry.authVerifierPipeline.
+		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
 			removeAuthVerifierConfiguration(_authVerifierConfiguration);
 
 		_authVerifierConfiguration = null;

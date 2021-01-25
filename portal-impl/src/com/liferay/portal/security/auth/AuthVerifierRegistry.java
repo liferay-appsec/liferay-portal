@@ -17,7 +17,6 @@ package com.liferay.portal.security.auth;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
@@ -30,17 +29,12 @@ import com.liferay.registry.collections.ServiceTrackerMap;
 import com.liferay.registry.collections.ServiceTrackerMapFactory;
 import com.liferay.registry.collections.ServiceTrackerMapFactoryUtil;
 
-import java.util.Collections;
 import java.util.Properties;
 
 /**
  * @author Carlos Sierra Andrés
  */
 public class AuthVerifierRegistry {
-
-	public static final AuthVerifierPipeline authVerifierPipeline =
-		new AuthVerifierPipeline(
-			Collections.emptyList(), PortalUtil.getServletContextName());
 
 	public static AuthVerifier getAuthVerifier(String simpleClassName) {
 		return _serviceTrackerMap.getService(simpleClassName);
@@ -167,8 +161,9 @@ public class AuthVerifierRegistry {
 							serviceReference, authVerifier);
 
 					if (authVerifierConfiguration != null) {
-						authVerifierPipeline.addAuthVerifierConfiguration(
-							authVerifierConfiguration);
+						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+							addAuthVerifierConfiguration(
+								authVerifierConfiguration);
 					}
 
 					return new Tracked(authVerifier, authVerifierConfiguration);
@@ -183,16 +178,18 @@ public class AuthVerifierRegistry {
 						tracked.getAuthVerifierConfiguration();
 
 					if (authVerifierConfiguration != null) {
-						authVerifierPipeline.removeAuthVerifierConfiguration(
-							authVerifierConfiguration);
+						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+							removeAuthVerifierConfiguration(
+								authVerifierConfiguration);
 					}
 
 					authVerifierConfiguration = _buildAuthVerifierConfiguration(
 						serviceReference, tracked.getAuthVerifier());
 
 					if (authVerifierConfiguration != null) {
-						authVerifierPipeline.addAuthVerifierConfiguration(
-							authVerifierConfiguration);
+						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+							addAuthVerifierConfiguration(
+								authVerifierConfiguration);
 					}
 
 					tracked.setAuthVerifierConfiguration(
@@ -208,8 +205,9 @@ public class AuthVerifierRegistry {
 						tracked.getAuthVerifierConfiguration();
 
 					if (authVerifierConfiguration != null) {
-						authVerifierPipeline.removeAuthVerifierConfiguration(
-							authVerifierConfiguration);
+						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+							removeAuthVerifierConfiguration(
+								authVerifierConfiguration);
 					}
 
 					Registry registry = RegistryUtil.getRegistry();

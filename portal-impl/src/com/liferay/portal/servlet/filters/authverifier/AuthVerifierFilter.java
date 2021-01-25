@@ -32,7 +32,6 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
-import com.liferay.portal.security.auth.AuthVerifierRegistry;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
 
@@ -130,7 +129,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 
 			_initParametersMap.put(
 				AuthVerifierPipeline.class.getName(),
-				AuthVerifierRegistry.authVerifierPipeline);
+				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE);
 		}
 		else {
 			_initParametersMap.put(

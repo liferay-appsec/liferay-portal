@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguratio
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.security.auth.AuthVerifierRegistry;
 import com.liferay.portal.servlet.filters.authverifier.AuthVerifierFilter;
 
@@ -86,13 +87,13 @@ public class OAuth2WebServerServletAuthVerifierFilter
 
 		_authVerifierConfiguration.setProperties(properties);
 
-		AuthVerifierRegistry.authVerifierPipeline.addAuthVerifierConfiguration(
-			_authVerifierConfiguration);
+		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+			addAuthVerifierConfiguration(_authVerifierConfiguration);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		AuthVerifierRegistry.authVerifierPipeline.
+		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
 			removeAuthVerifierConfiguration(_authVerifierConfiguration);
 	}
 
