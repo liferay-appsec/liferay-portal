@@ -17,10 +17,9 @@ package com.liferay.oauth2.provider.jsonws.internal.servlet.filters.authverifier
 import com.liferay.portal.kernel.security.access.control.AccessControlThreadLocal;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.auth.AuthVerifierPipeline;
-import com.liferay.portal.security.auth.AuthVerifierRegistry;
 import com.liferay.portal.servlet.filters.authverifier.AuthVerifierFilter;
 
 import java.util.Map;
@@ -31,6 +30,8 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -73,7 +74,9 @@ public class OAuth2WebServerServletAuthVerifierFilter
 	}
 
 	@Activate
-	protected void activate(Map<String, Object> propertiesMap) {
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> propertiesMap) {
+
 		_authVerifierConfiguration = new AuthVerifierConfiguration();
 
 		_authVerifierConfiguration.setAuthVerifierClassName(
@@ -87,14 +90,14 @@ public class OAuth2WebServerServletAuthVerifierFilter
 
 		_authVerifierConfiguration.setProperties(properties);
 
-		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-			addAuthVerifierConfiguration(_authVerifierConfiguration);
+		_serviceRegistration = bundleContext.registerService(
+			AuthVerifierConfiguration.class, _authVerifierConfiguration,
+			new HashMapDictionary<>());
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-			removeAuthVerifierConfiguration(_authVerifierConfiguration);
+		_serviceRegistration.unregister();
 	}
 
 	@Override
@@ -117,5 +120,6 @@ public class OAuth2WebServerServletAuthVerifierFilter
 	}
 
 	private AuthVerifierConfiguration _authVerifierConfiguration;
+	private ServiceRegistration<AuthVerifierConfiguration> _serviceRegistration;
 
 }

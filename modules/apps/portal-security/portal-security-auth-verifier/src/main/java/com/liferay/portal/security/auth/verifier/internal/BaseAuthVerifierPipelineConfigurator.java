@@ -17,12 +17,14 @@ package com.liferay.portal.security.auth.verifier.internal;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 
 import java.util.Map;
 import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
@@ -61,16 +63,14 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
 		_authVerifierConfiguration.setProperties(translatedProperties);
 
-		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-			addAuthVerifierConfiguration(_authVerifierConfiguration);
+		_serviceRegistration = bundleContext.registerService(
+			AuthVerifierConfiguration.class, _authVerifierConfiguration,
+			new HashMapDictionary<>());
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-			removeAuthVerifierConfiguration(_authVerifierConfiguration);
-
-		_authVerifierConfiguration = null;
+		_serviceRegistration.unregister();
 	}
 
 	protected abstract Class<? extends AuthVerifier> getAuthVerifierClass();
@@ -99,5 +99,6 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 	}
 
 	private AuthVerifierConfiguration _authVerifierConfiguration;
+	private ServiceRegistration<AuthVerifierConfiguration> _serviceRegistration;
 
 }

@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
 import com.liferay.registry.ServiceReference;
+import com.liferay.registry.ServiceRegistration;
 import com.liferay.registry.ServiceTracker;
 import com.liferay.registry.ServiceTrackerCustomizer;
 import com.liferay.registry.collections.ServiceReferenceMapper;
@@ -29,6 +30,8 @@ import com.liferay.registry.collections.ServiceTrackerMap;
 import com.liferay.registry.collections.ServiceTrackerMapFactory;
 import com.liferay.registry.collections.ServiceTrackerMapFactoryUtil;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Properties;
 
 /**
@@ -84,32 +87,37 @@ public class AuthVerifierRegistry {
 
 		public Tracked(
 			AuthVerifier authVerifier,
-			AuthVerifierConfiguration authVerifierConfiguration) {
+			ServiceRegistration<AuthVerifierConfiguration>
+				serviceRegistration) {
 
 			_authVerifier = authVerifier;
-			_authVerifierConfiguration = authVerifierConfiguration;
+			_serviceRegistration = serviceRegistration;
 		}
 
 		public AuthVerifier getAuthVerifier() {
 			return _authVerifier;
 		}
 
-		public AuthVerifierConfiguration getAuthVerifierConfiguration() {
-			return _authVerifierConfiguration;
+		public ServiceRegistration<AuthVerifierConfiguration>
+			getServiceRegistration() {
+
+			return _serviceRegistration;
 		}
 
 		public void setAuthVerifier(AuthVerifier authVerifier) {
 			_authVerifier = authVerifier;
 		}
 
-		public void setAuthVerifierConfiguration(
-			AuthVerifierConfiguration authVerifierConfiguration) {
+		public void setServiceRegistration(
+			ServiceRegistration<AuthVerifierConfiguration>
+				serviceRegistration) {
 
-			_authVerifierConfiguration = authVerifierConfiguration;
+			_serviceRegistration = serviceRegistration;
 		}
 
 		private AuthVerifier _authVerifier;
-		private AuthVerifierConfiguration _authVerifierConfiguration;
+		private ServiceRegistration<AuthVerifierConfiguration>
+			_serviceRegistration;
 
 	}
 
@@ -160,13 +168,16 @@ public class AuthVerifierRegistry {
 						_buildAuthVerifierConfiguration(
 							serviceReference, authVerifier);
 
+					ServiceRegistration<AuthVerifierConfiguration>
+						serviceRegistration = null;
+
 					if (authVerifierConfiguration != null) {
-						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-							addAuthVerifierConfiguration(
-								authVerifierConfiguration);
+						serviceRegistration = registry.registerService(
+							AuthVerifierConfiguration.class,
+							authVerifierConfiguration, new HashMap<>());
 					}
 
-					return new Tracked(authVerifier, authVerifierConfiguration);
+					return new Tracked(authVerifier, serviceRegistration);
 				}
 
 				@Override
@@ -174,26 +185,24 @@ public class AuthVerifierRegistry {
 					ServiceReference<AuthVerifier> serviceReference,
 					Tracked tracked) {
 
+					ServiceRegistration<AuthVerifierConfiguration>
+						serviceRegistration = tracked.getServiceRegistration();
+
+					if (serviceRegistration != null) {
+						serviceRegistration.unregister();
+					}
+
 					AuthVerifierConfiguration authVerifierConfiguration =
-						tracked.getAuthVerifierConfiguration();
+						_buildAuthVerifierConfiguration(
+							serviceReference, tracked.getAuthVerifier());
 
 					if (authVerifierConfiguration != null) {
-						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-							removeAuthVerifierConfiguration(
-								authVerifierConfiguration);
+						registry.registerService(
+							AuthVerifierConfiguration.class,
+							authVerifierConfiguration, new HashMap<>());
 					}
 
-					authVerifierConfiguration = _buildAuthVerifierConfiguration(
-						serviceReference, tracked.getAuthVerifier());
-
-					if (authVerifierConfiguration != null) {
-						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-							addAuthVerifierConfiguration(
-								authVerifierConfiguration);
-					}
-
-					tracked.setAuthVerifierConfiguration(
-						authVerifierConfiguration);
+					tracked.setServiceRegistration(serviceRegistration);
 				}
 
 				@Override
@@ -201,13 +210,11 @@ public class AuthVerifierRegistry {
 					ServiceReference<AuthVerifier> serviceReference,
 					Tracked tracked) {
 
-					AuthVerifierConfiguration authVerifierConfiguration =
-						tracked.getAuthVerifierConfiguration();
+					ServiceRegistration<AuthVerifierConfiguration>
+						serviceRegistration = tracked.getServiceRegistration();
 
-					if (authVerifierConfiguration != null) {
-						AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-							removeAuthVerifierConfiguration(
-								authVerifierConfiguration);
+					if (serviceRegistration != null) {
+						serviceRegistration.unregister();
 					}
 
 					Registry registry = RegistryUtil.getRegistry();
