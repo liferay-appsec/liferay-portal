@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.auth.registry.AuthVerifierRegistry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +53,8 @@ import javax.servlet.http.HttpServletRequest;
 public class AuthVerifierPipeline {
 
 	public static final String AUTH_TYPE = "auth.type";
+
+	public static final AuthVerifierPipeline PORTAL_AUTH_VERIFIER_PIPELINE;
 
 	public static String getAuthVerifierPropertyName(String className) {
 		String simpleClassName = StringUtil.extractLast(
@@ -192,6 +195,17 @@ public class AuthVerifierPipeline {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AuthVerifierPipeline.class);
+
+	static {
+		if (PortalUtil.getPortal() != null) {
+			PORTAL_AUTH_VERIFIER_PIPELINE = new AuthVerifierPipeline(
+				Collections.emptyList(), PortalUtil.getServletContextName());
+		}
+		else {
+			PORTAL_AUTH_VERIFIER_PIPELINE = new AuthVerifierPipeline(
+				Collections.emptyList(), "");
+		}
+	}
 
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
 	private final String _contextPath;
