@@ -100,6 +100,16 @@ public class AccessControlImpl implements AccessControl {
 		AuthVerifierResult authVerifierResult =
 			_authVerifierPipeline.verifyRequest(accessControlContext);
 
+		if ((authVerifierResult.getState() !=
+				AuthVerifierResult.State.SUCCESS) &&
+			(_authVerifierPipeline !=
+				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE)) {
+
+			authVerifierResult =
+				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
+					verifyRequest(accessControlContext);
+		}
+
 		Map<String, Object> authVerifierResultSettings =
 			authVerifierResult.getSettings();
 
