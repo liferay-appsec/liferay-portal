@@ -55,8 +55,6 @@ public class AccessControlImpl implements AccessControl {
 		if (settings.get(AuthVerifierPipeline.class.getName()) != null) {
 			_authVerifierPipeline = (AuthVerifierPipeline)settings.get(
 				AuthVerifierPipeline.class.getName());
-
-			settings.remove(AuthVerifierPipeline.class.getName());
 		}
 
 		accessControlContext = new AccessControlContext();
@@ -68,6 +66,9 @@ public class AccessControlImpl implements AccessControl {
 			accessControlContext.getSettings();
 
 		accessControlContextSettings.putAll(settings);
+
+		accessControlContextSettings.remove(
+			AuthVerifierPipeline.class.getName());
 
 		AccessControlUtil.setAccessControlContext(accessControlContext);
 	}
