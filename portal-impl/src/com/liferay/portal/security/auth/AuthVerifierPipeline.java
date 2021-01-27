@@ -30,11 +30,6 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.registry.Registry;
-import com.liferay.registry.RegistryUtil;
-import com.liferay.registry.ServiceReference;
-import com.liferay.registry.ServiceTracker;
-import com.liferay.registry.ServiceTrackerCustomizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -348,127 +343,6 @@ public class AuthVerifierPipeline {
 
 	private final List<AuthVerifierConfiguration> _authVerifierConfigurations;
 	private final String _contextPath;
-	private final ServiceTracker<AuthVerifier, AuthVerifierConfiguration>
-		_serviceTracker;
-
-	private class AuthVerifierTrackerCustomizer
-		implements ServiceTrackerCustomizer
-			<AuthVerifier, AuthVerifierConfiguration> {
-
-		@Override
-		public AuthVerifierConfiguration addingService(
-			ServiceReference<AuthVerifier> serviceReference) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			AuthVerifier authVerifier = registry.getService(serviceReference);
-
-			if (authVerifier == null) {
-				return null;
-			}
-
-			Class<?> authVerifierClass = authVerifier.getClass();
-
-			AuthVerifierConfiguration authVerifierConfiguration =
-				new AuthVerifierConfiguration();
-
-			authVerifierConfiguration.setAuthVerifier(authVerifier);
-			authVerifierConfiguration.setAuthVerifierClassName(
-				authVerifierClass.getName());
-			authVerifierConfiguration.setProperties(
-				_loadProperties(serviceReference, authVerifierClass.getName()));
-
-			if (!_validate(authVerifierConfiguration)) {
-				return null;
-			}
-
-			_authVerifierConfigurations.add(0, authVerifierConfiguration);
-
-			return authVerifierConfiguration;
-		}
-
-		@Override
-		public void modifiedService(
-			ServiceReference<AuthVerifier> serviceReference,
-			AuthVerifierConfiguration authVerifierConfiguration) {
-
-			_authVerifierConfigurations.remove(authVerifierConfiguration);
-
-			authVerifierConfiguration.setProperties(
-				_loadProperties(
-					serviceReference,
-					authVerifierConfiguration.getAuthVerifierClassName()));
-
-			if (_validate(authVerifierConfiguration)) {
-				_authVerifierConfigurations.add(0, authVerifierConfiguration);
-			}
-		}
-
-		@Override
-		public void removedService(
-			ServiceReference<AuthVerifier> serviceReference,
-			AuthVerifierConfiguration authVerifierConfiguration) {
-
-			Registry registry = RegistryUtil.getRegistry();
-
-			registry.ungetService(serviceReference);
-
-			_authVerifierConfigurations.remove(authVerifierConfiguration);
-		}
-
-		private Properties _loadProperties(
-			ServiceReference<AuthVerifier> serviceReference,
-			String authVerifierClassName) {
-
-			Properties properties = new Properties();
-
-			String authVerifierPropertyName = getAuthVerifierPropertyName(
-				authVerifierClassName);
-
-			Map<String, Object> serviceReferenceProperties =
-				serviceReference.getProperties();
-
-			for (Map.Entry<String, Object> entry :
-					serviceReferenceProperties.entrySet()) {
-
-				String key = entry.getKey();
-
-				if (key.startsWith(authVerifierPropertyName)) {
-					key = key.substring(authVerifierPropertyName.length());
-				}
-
-				properties.setProperty(key, String.valueOf(entry.getValue()));
-			}
-
-			return properties;
-		}
-
-		private boolean _validate(
-			AuthVerifierConfiguration authVerifierConfiguration) {
-
-			Properties properties = authVerifierConfiguration.getProperties();
-
-			String[] urlsIncludes = StringUtil.split(
-				properties.getProperty("urls.includes"));
-
-			if (urlsIncludes.length == 0) {
-				if (_log.isWarnEnabled()) {
-					String authVerifierClassName =
-						authVerifierConfiguration.getAuthVerifierClassName();
-
-					_log.warn(
-						"Auth verifier " + authVerifierClassName +
-							" does not have URLs configured");
-				}
-
-				return false;
-			}
-
-			return true;
-		}
-
-	}
-
 	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
 		_excludeURLPatternMapper;
 	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
