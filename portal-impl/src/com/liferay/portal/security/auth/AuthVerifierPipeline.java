@@ -16,6 +16,8 @@ package com.liferay.portal.security.auth;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapper;
+import com.liferay.petra.url.pattern.mapper.URLPatternMapperFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -72,6 +74,8 @@ public class AuthVerifierPipeline {
 			authVerifierConfigurations);
 
 		_contextPath = contextPath;
+
+		_buildURLPatternMapper();
 	}
 
 	public AuthVerifierResult verifyRequest(
@@ -101,6 +105,58 @@ public class AuthVerifierPipeline {
 		return _createGuestVerificationResult(accessControlContext);
 	}
 
+	private void _buildURLPatternMapper() {
+		Map<String, List<AuthVerifierConfiguration>>
+			excludeAuthVerifierConfigurations = new HashMap<>();
+		Map<String, List<AuthVerifierConfiguration>>
+			includeAuthVerifierConfigurations = new HashMap<>();
+
+		for (AuthVerifierConfiguration authVerifierConfiguration :
+				_authVerifierConfigurations) {
+
+			Properties properties = authVerifierConfiguration.getProperties();
+
+			String[] urlsExcludes = StringUtil.split(
+				properties.getProperty("urls.excludes"));
+
+			for (String urlsExclude : urlsExcludes) {
+				urlsExclude = _contextPath + _fixLegacyURLPattern(urlsExclude);
+
+				excludeAuthVerifierConfigurations.computeIfAbsent(
+					urlsExclude, key -> new ArrayList<>());
+
+				List<AuthVerifierConfiguration>
+					excludeAuthVerifierConfigurationList =
+						excludeAuthVerifierConfigurations.get(urlsExclude);
+
+				excludeAuthVerifierConfigurationList.add(
+					authVerifierConfiguration);
+			}
+
+			String[] urlsIncludes = StringUtil.split(
+				properties.getProperty("urls.includes"));
+
+			for (String urlsInclude : urlsIncludes) {
+				urlsInclude = _contextPath + _fixLegacyURLPattern(urlsInclude);
+
+				includeAuthVerifierConfigurations.computeIfAbsent(
+					urlsInclude, key -> new ArrayList<>());
+
+				List<AuthVerifierConfiguration>
+					includeAuthVerifierConfigurationList =
+						includeAuthVerifierConfigurations.get(urlsInclude);
+
+				includeAuthVerifierConfigurationList.add(
+					authVerifierConfiguration);
+			}
+		}
+
+		_excludeURLPatternMapper = URLPatternMapperFactory.create(
+			excludeAuthVerifierConfigurations);
+		_includeURLPatternMapper = URLPatternMapperFactory.create(
+			includeAuthVerifierConfigurations);
+	}
+
 	private AuthVerifierResult _createGuestVerificationResult(
 			AccessControlContext accessControlContext)
 		throws PortalException {
@@ -118,6 +174,24 @@ public class AuthVerifierPipeline {
 		authVerifierResult.setUserId(defaultUserId);
 
 		return authVerifierResult;
+	}
+
+	private String _fixLegacyURLPattern(String urlPattern) {
+		if ((urlPattern == null) || (urlPattern.length() == 0)) {
+			return urlPattern;
+		}
+
+		if (urlPattern.charAt(urlPattern.length() - 1) != '*') {
+			return urlPattern;
+		}
+
+		if ((urlPattern.length() > 1) &&
+			(urlPattern.charAt(urlPattern.length() - 2) == '/')) {
+
+			return urlPattern;
+		}
+
+		return urlPattern.substring(0, urlPattern.length() - 1) + "/*";
 	}
 
 	private List<AuthVerifierConfiguration> _getAuthVerifierConfigurations(
@@ -394,6 +468,11 @@ public class AuthVerifierPipeline {
 		}
 
 	}
+
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
+		_excludeURLPatternMapper;
+	private volatile URLPatternMapper<List<AuthVerifierConfiguration>>
+		_includeURLPatternMapper;
 
 		private AuthVerifierResult _verifyWithAuthVerifierConfiguration(
 			AccessControlContext accessControlContext,
