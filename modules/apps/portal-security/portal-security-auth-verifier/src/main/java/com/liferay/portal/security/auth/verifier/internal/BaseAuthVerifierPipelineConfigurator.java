@@ -39,9 +39,9 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
 
-		Boolean enabled = GetterUtil.getBoolean(properties.get("enabled"));
+		boolean enabled = GetterUtil.getBoolean(properties.get("enabled"));
 
-		if ((enabled == null) || !enabled) {
+		if (!enabled) {
 			return;
 		}
 
