@@ -58,13 +58,14 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 				String.valueOf(entry.getValue()));
 		}
 
-		_authVerifierConfiguration = new AuthVerifierConfiguration();
+		AuthVerifierConfiguration authVerifierConfiguration =
+			new AuthVerifierConfiguration();
 
-		_authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
-		_authVerifierConfiguration.setProperties(translatedProperties);
+		authVerifierConfiguration.setAuthVerifierClassName(clazz.getName());
+		authVerifierConfiguration.setProperties(translatedProperties);
 
 		_serviceRegistration = bundleContext.registerService(
-			AuthVerifierConfiguration.class, _authVerifierConfiguration,
+			AuthVerifierConfiguration.class, authVerifierConfiguration,
 			new HashMapDictionary<>());
 	}
 
@@ -98,7 +99,6 @@ public abstract class BaseAuthVerifierPipelineConfigurator {
 		return key;
 	}
 
-	private AuthVerifierConfiguration _authVerifierConfiguration;
 	private ServiceRegistration<AuthVerifierConfiguration> _serviceRegistration;
 
 }
