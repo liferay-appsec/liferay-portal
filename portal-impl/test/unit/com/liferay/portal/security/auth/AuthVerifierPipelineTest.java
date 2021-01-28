@@ -83,17 +83,16 @@ public class AuthVerifierPipelineTest {
 		AuthVerifierConfiguration authVerifierConfiguration =
 			new AuthVerifierConfiguration();
 
-		final AuthVerifier authVerifier =
-			(AuthVerifier)ProxyUtil.newProxyInstance(
-				AuthVerifier.class.getClassLoader(),
-				new Class<?>[] {AuthVerifier.class},
-				(proxy, method, args) -> {
-					if (Objects.equals(method.getName(), "verify")) {
-						return authVerifierResult;
-					}
+		AuthVerifier authVerifier = (AuthVerifier)ProxyUtil.newProxyInstance(
+			AuthVerifier.class.getClassLoader(),
+			new Class<?>[] {AuthVerifier.class},
+			(proxy, method, args) -> {
+				if (Objects.equals(method.getName(), "verify")) {
+					return authVerifierResult;
+				}
 
-					return null;
-				});
+				return null;
+			});
 
 		Class<? extends AuthVerifier> authVerifierClass =
 			authVerifier.getClass();
