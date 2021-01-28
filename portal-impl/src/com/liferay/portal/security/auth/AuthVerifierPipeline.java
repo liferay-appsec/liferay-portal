@@ -133,12 +133,10 @@ public class AuthVerifierPipeline {
 			for (String urlsExclude : urlsExcludes) {
 				urlsExclude = _contextPath + _fixLegacyURLPattern(urlsExclude);
 
-				excludeAuthVerifierConfigurations.computeIfAbsent(
-					urlsExclude, key -> new ArrayList<>());
-
 				List<AuthVerifierConfiguration>
 					excludeAuthVerifierConfigurationList =
-						excludeAuthVerifierConfigurations.get(urlsExclude);
+						excludeAuthVerifierConfigurations.computeIfAbsent(
+							urlsExclude, key -> new ArrayList<>());
 
 				excludeAuthVerifierConfigurationList.add(
 					authVerifierConfiguration);
@@ -150,12 +148,10 @@ public class AuthVerifierPipeline {
 			for (String urlsInclude : urlsIncludes) {
 				urlsInclude = _contextPath + _fixLegacyURLPattern(urlsInclude);
 
-				includeAuthVerifierConfigurations.computeIfAbsent(
-					urlsInclude, key -> new ArrayList<>());
-
 				List<AuthVerifierConfiguration>
 					includeAuthVerifierConfigurationList =
-						includeAuthVerifierConfigurations.get(urlsInclude);
+						includeAuthVerifierConfigurations.computeIfAbsent(
+							urlsInclude, key -> new ArrayList<>());
 
 				includeAuthVerifierConfigurationList.add(
 					authVerifierConfiguration);
