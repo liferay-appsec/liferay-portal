@@ -78,9 +78,6 @@ public class AuthVerifierRegistry {
 		return authVerifierConfiguration;
 	}
 
-	private static final ServiceReferenceMapper<String, AuthVerifier>
-		_authVerifierServiceReferenceMapper;
-	private static final ServiceTracker<AuthVerifier, Tracked> _serviceTracker;
 	private static final ServiceTrackerMap<String, AuthVerifier>
 		_serviceTrackerMap;
 
@@ -126,14 +123,15 @@ public class AuthVerifierRegistry {
 		ServiceTrackerMapFactory serviceTrackerMapFactory =
 			ServiceTrackerMapFactoryUtil.getServiceTrackerMapFactory();
 
-		_authVerifierServiceReferenceMapper =
-			ServiceReferenceMapperFactory.create(
-				(authVerifier, emitter) -> {
-					Class<? extends AuthVerifier> clazz =
-						authVerifier.getClass();
+		ServiceReferenceMapper<String, AuthVerifier>
+			authVerifierServiceReferenceMapper =
+				ServiceReferenceMapperFactory.create(
+					(authVerifier, emitter) -> {
+						Class<? extends AuthVerifier> clazz =
+							authVerifier.getClass();
 
-					emitter.emit(clazz.getSimpleName());
-				});
+						emitter.emit(clazz.getSimpleName());
+					});
 
 		_serviceTrackerMap = serviceTrackerMapFactory.openSingleValueMap(
 			AuthVerifier.class, null,
@@ -145,87 +143,90 @@ public class AuthVerifierRegistry {
 					emitter.emit(authVerifierClassName);
 				}
 				else {
-					_authVerifierServiceReferenceMapper.map(
+					authVerifierServiceReferenceMapper.map(
 						serviceReference, emitter);
 				}
 			});
 
 		Registry registry = RegistryUtil.getRegistry();
 
-		_serviceTracker = registry.trackServices(
-			AuthVerifier.class,
-			new ServiceTrackerCustomizer<AuthVerifier, Tracked>() {
+		ServiceTracker<AuthVerifier, Tracked> serviceTracker =
+			registry.trackServices(
+				AuthVerifier.class,
+				new ServiceTrackerCustomizer<AuthVerifier, Tracked>() {
 
-				@Override
-				public Tracked addingService(
-					ServiceReference<AuthVerifier> serviceReference) {
+					@Override
+					public Tracked addingService(
+						ServiceReference<AuthVerifier> serviceReference) {
 
-					Registry registry = RegistryUtil.getRegistry();
+						Registry registry = RegistryUtil.getRegistry();
 
-					AuthVerifier authVerifier = registry.getService(
-						serviceReference);
+						AuthVerifier authVerifier = registry.getService(
+							serviceReference);
 
-					AuthVerifierConfiguration authVerifierConfiguration =
-						_buildAuthVerifierConfiguration(
-							serviceReference, authVerifier);
+						AuthVerifierConfiguration authVerifierConfiguration =
+							_buildAuthVerifierConfiguration(
+								serviceReference, authVerifier);
 
-					ServiceRegistration<AuthVerifierConfiguration>
-						serviceRegistration = null;
+						ServiceRegistration<AuthVerifierConfiguration>
+							serviceRegistration = null;
 
-					if (authVerifierConfiguration != null) {
-						serviceRegistration = registry.registerService(
-							AuthVerifierConfiguration.class,
-							authVerifierConfiguration, new HashMap<>());
+						if (authVerifierConfiguration != null) {
+							serviceRegistration = registry.registerService(
+								AuthVerifierConfiguration.class,
+								authVerifierConfiguration, new HashMap<>());
+						}
+
+						return new Tracked(authVerifier, serviceRegistration);
 					}
 
-					return new Tracked(authVerifier, serviceRegistration);
-				}
+					@Override
+					public void modifiedService(
+						ServiceReference<AuthVerifier> serviceReference,
+						Tracked tracked) {
 
-				@Override
-				public void modifiedService(
-					ServiceReference<AuthVerifier> serviceReference,
-					Tracked tracked) {
+						ServiceRegistration<AuthVerifierConfiguration>
+							serviceRegistration =
+								tracked.getServiceRegistration();
 
-					ServiceRegistration<AuthVerifierConfiguration>
-						serviceRegistration = tracked.getServiceRegistration();
+						if (serviceRegistration != null) {
+							serviceRegistration.unregister();
+						}
 
-					if (serviceRegistration != null) {
-						serviceRegistration.unregister();
+						AuthVerifierConfiguration authVerifierConfiguration =
+							_buildAuthVerifierConfiguration(
+								serviceReference, tracked.getAuthVerifier());
+
+						if (authVerifierConfiguration != null) {
+							registry.registerService(
+								AuthVerifierConfiguration.class,
+								authVerifierConfiguration, new HashMap<>());
+						}
+
+						tracked.setServiceRegistration(serviceRegistration);
 					}
 
-					AuthVerifierConfiguration authVerifierConfiguration =
-						_buildAuthVerifierConfiguration(
-							serviceReference, tracked.getAuthVerifier());
+					@Override
+					public void removedService(
+						ServiceReference<AuthVerifier> serviceReference,
+						Tracked tracked) {
 
-					if (authVerifierConfiguration != null) {
-						registry.registerService(
-							AuthVerifierConfiguration.class,
-							authVerifierConfiguration, new HashMap<>());
+						ServiceRegistration<AuthVerifierConfiguration>
+							serviceRegistration =
+								tracked.getServiceRegistration();
+
+						if (serviceRegistration != null) {
+							serviceRegistration.unregister();
+						}
+
+						Registry registry = RegistryUtil.getRegistry();
+
+						registry.ungetService(serviceReference);
 					}
 
-					tracked.setServiceRegistration(serviceRegistration);
-				}
+				});
 
-				@Override
-				public void removedService(
-					ServiceReference<AuthVerifier> serviceReference,
-					Tracked tracked) {
-
-					ServiceRegistration<AuthVerifierConfiguration>
-						serviceRegistration = tracked.getServiceRegistration();
-
-					if (serviceRegistration != null) {
-						serviceRegistration.unregister();
-					}
-
-					Registry registry = RegistryUtil.getRegistry();
-
-					registry.ungetService(serviceReference);
-				}
-
-			});
-
-		_serviceTracker.open();
+		serviceTracker.open();
 	}
 
 }
