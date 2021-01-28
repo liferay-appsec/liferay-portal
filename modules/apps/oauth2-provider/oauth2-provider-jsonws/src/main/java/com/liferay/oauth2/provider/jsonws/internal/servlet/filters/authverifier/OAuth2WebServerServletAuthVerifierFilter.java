@@ -86,7 +86,7 @@ public class OAuth2WebServerServletAuthVerifierFilter
 
 		properties.put(
 			"urls.includes",
-			StringUtil.merge((String[])propertiesMap.get("url-pattern"), ","));
+			StringUtil.merge((Object[])propertiesMap.get("url-pattern"), ","));
 
 		_authVerifierConfiguration.setProperties(properties);
 
