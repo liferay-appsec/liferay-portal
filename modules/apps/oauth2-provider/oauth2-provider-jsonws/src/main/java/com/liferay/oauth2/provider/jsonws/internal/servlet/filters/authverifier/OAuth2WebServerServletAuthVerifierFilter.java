@@ -77,9 +77,10 @@ public class OAuth2WebServerServletAuthVerifierFilter
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> propertiesMap) {
 
-		_authVerifierConfiguration = new AuthVerifierConfiguration();
+		AuthVerifierConfiguration authVerifierConfiguration =
+			new AuthVerifierConfiguration();
 
-		_authVerifierConfiguration.setAuthVerifierClassName(
+		authVerifierConfiguration.setAuthVerifierClassName(
 			"OAuth2JSONWSAuthVerifier");
 
 		Properties properties = new Properties();
@@ -88,10 +89,10 @@ public class OAuth2WebServerServletAuthVerifierFilter
 			"urls.includes",
 			StringUtil.merge((Object[])propertiesMap.get("url-pattern"), ","));
 
-		_authVerifierConfiguration.setProperties(properties);
+		authVerifierConfiguration.setProperties(properties);
 
 		_serviceRegistration = bundleContext.registerService(
-			AuthVerifierConfiguration.class, _authVerifierConfiguration,
+			AuthVerifierConfiguration.class, authVerifierConfiguration,
 			new HashMapDictionary<>());
 	}
 
@@ -119,7 +120,6 @@ public class OAuth2WebServerServletAuthVerifierFilter
 		}
 	}
 
-	private AuthVerifierConfiguration _authVerifierConfiguration;
 	private ServiceRegistration<AuthVerifierConfiguration> _serviceRegistration;
 
 }
