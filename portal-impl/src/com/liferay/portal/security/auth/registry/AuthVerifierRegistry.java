@@ -86,15 +86,6 @@ public class AuthVerifierRegistry {
 
 	private static class Tracked {
 
-		public Tracked(
-			AuthVerifier authVerifier,
-			ServiceRegistration<AuthVerifierConfiguration>
-				serviceRegistration) {
-
-			_authVerifier = authVerifier;
-			_serviceRegistration = serviceRegistration;
-		}
-
 		public AuthVerifier getAuthVerifier() {
 			return _authVerifier;
 		}
@@ -113,6 +104,15 @@ public class AuthVerifierRegistry {
 			ServiceRegistration<AuthVerifierConfiguration>
 				serviceRegistration) {
 
+			_serviceRegistration = serviceRegistration;
+		}
+
+		private Tracked(
+			AuthVerifier authVerifier,
+			ServiceRegistration<AuthVerifierConfiguration>
+				serviceRegistration) {
+
+			_authVerifier = authVerifier;
 			_serviceRegistration = serviceRegistration;
 		}
 
