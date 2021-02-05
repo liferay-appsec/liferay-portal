@@ -24,10 +24,10 @@ import java.util.Optional;
 public final class CryptoHashVerificationContext {
 
 	public CryptoHashVerificationContext(
-		String pepperId, byte[] salt, String cryptoHashProviderName,
+		byte[] pepper, byte[] salt, String cryptoHashProviderName,
 		Map<String, ?> cryptoHashProviderProperties) {
 
-		_pepperId = pepperId;
+		_pepper = pepper;
 		_salt = salt;
 		_cryptoHashProviderName = cryptoHashProviderName;
 		_cryptoHashProviderProperties = cryptoHashProviderProperties;
@@ -41,8 +41,8 @@ public final class CryptoHashVerificationContext {
 		return _cryptoHashProviderProperties;
 	}
 
-	public Optional<String> getPepperIdOptional() {
-		return Optional.ofNullable(_pepperId);
+	public Optional<byte[]> getPepperOptional() {
+		return Optional.ofNullable(_pepper);
 	}
 
 	public Optional<byte[]> getSaltOptional() {
@@ -51,7 +51,7 @@ public final class CryptoHashVerificationContext {
 
 	private final String _cryptoHashProviderName;
 	private final Map<String, ?> _cryptoHashProviderProperties;
-	private final String _pepperId;
+	private final byte[] _pepper;
 	private final byte[] _salt;
 
 }
