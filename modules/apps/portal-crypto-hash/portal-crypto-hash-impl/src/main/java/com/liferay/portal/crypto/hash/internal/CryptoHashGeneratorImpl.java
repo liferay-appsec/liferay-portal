@@ -14,18 +14,19 @@
 
 package com.liferay.portal.crypto.hash.internal;
 
+import com.liferay.portal.crypto.hash.CryptoHashGenerationContext;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
+import com.liferay.portal.crypto.hash.CryptoHashVerificationContext;
 import com.liferay.portal.crypto.hash.exception.CryptoHashException;
 import com.liferay.portal.crypto.hash.provider.spi.CryptoHashProvider;
 import com.liferay.portal.crypto.hash.provider.spi.factory.CryptoHashProviderFactory;
-import com.liferay.portal.kernel.security.SecureRandomUtil;
-import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.crypto.hash.provider.spi.salt.VariableSizeSaltProvider;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -37,32 +38,99 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = CryptoHashGenerator.class)
 public class CryptoHashGeneratorImpl implements CryptoHashGenerator {
 
-	public CryptoHashGeneratorImpl() throws NoSuchAlgorithmException {
-		_messageDigest = MessageDigest.getInstance("SHA-256");
-	}
-
 	@Override
-	public CryptoHashResponse generate(byte[] input)
+	public CryptoHashResponse generate(
+			byte[] input,
+			CryptoHashGenerationContext cryptoHashGenerationContext)
 		throws CryptoHashException {
 
-		byte[] salt = new byte[16];
+		CryptoHashProvider cryptoHashProvider = null;
 
-		for (int i = 0; i < 16; ++i) {
-			salt[i] = SecureRandomUtil.nextByte();
+		try {
+			cryptoHashProvider = _getCryptoHashProvider(
+				cryptoHashGenerationContext.getCryptoHashProviderName(),
+				cryptoHashGenerationContext.getCryptoHashProviderProperties());
+		}
+		catch (Exception exception) {
+			throw new CryptoHashException(exception);
 		}
 
-		return new CryptoHashResponse(_digest(salt, input), salt);
+		// Implementation for pepper will come in next iteration.
+		// In this iteration, we will deal with salt first.
+
+		int saltSize = cryptoHashGenerationContext.getSaltSize();
+
+		byte[] salt = null;
+
+		if (saltSize < 1) {
+			salt = cryptoHashProvider.generateSalt();
+		}
+		else if (cryptoHashProvider instanceof VariableSizeSaltProvider) {
+			VariableSizeSaltProvider variableSizeSaltProvider =
+				(VariableSizeSaltProvider)cryptoHashProvider;
+
+			salt = variableSizeSaltProvider.generateSalt(saltSize);
+		}
+		else {
+			throw new CryptoHashException(
+				cryptoHashGenerationContext.getCryptoHashProviderName() +
+					"can not generate variable size salt.");
+		}
+
+		try {
+			cryptoHashProvider.setSalt(salt);
+
+			byte[] hash = cryptoHashProvider.hash(input);
+
+			return new CryptoHashResponse(hash, salt);
+		}
+		catch (Exception exception) {
+			throw new CryptoHashException(exception);
+		}
 	}
 
 	@Override
-	public boolean verify(byte[] input, byte[] hash, byte[] salt)
+	public boolean verify(
+			byte[] input, byte[] hash,
+			CryptoHashVerificationContext... cryptoHashVerificationContexts)
 		throws CryptoHashException {
 
-		return MessageDigest.isEqual(_digest(salt, input), hash);
-	}
+		// Each password may get hashed multiple times using generate() method,
+		// thus each password may have a list of hashing contexts including
+		// different combination of salt, pepper, and hash algorithm.
 
-	private byte[] _digest(byte[] salt, byte[] input) {
-		return _messageDigest.digest(ArrayUtil.append(salt, input));
+		for (CryptoHashVerificationContext cryptoHashVerificationContext :
+				cryptoHashVerificationContexts) {
+
+			CryptoHashProvider cryptoHashProvider = null;
+
+			try {
+				cryptoHashProvider = _getCryptoHashProvider(
+					cryptoHashVerificationContext.getCryptoHashProviderName(),
+					cryptoHashVerificationContext.
+						getCryptoHashProviderProperties());
+			}
+			catch (Exception exception) {
+				throw new CryptoHashException(exception);
+			}
+
+			// Implementation for pepper will come in next iteration.
+			// In this iteration, we will deal with salt first.
+
+			Optional<byte[]> optionalSalt =
+				cryptoHashVerificationContext.getSaltOptional();
+
+			try {
+				optionalSalt.ifPresent(cryptoHashProvider::setSalt);
+
+				input = cryptoHashProvider.hash(input);
+			}
+			catch (Exception exception) {
+				throw new CryptoHashException(exception);
+			}
+		}
+
+		return MessageDigest.isEqual(input, hash);
 	}
 
 	private CryptoHashProvider _getCryptoHashProvider(
@@ -81,7 +149,5 @@ public class CryptoHashGeneratorImpl implements CryptoHashGenerator {
 	@Reference
 	private CryptoHashProviderFactoryRegistry
 		_cryptoHashProviderFactoryRegistry;
-
-	private final MessageDigest _messageDigest;
 
 }
