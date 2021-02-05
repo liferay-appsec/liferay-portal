@@ -24,12 +24,11 @@ public final class CryptoHashGenerationContext {
 
 	public CryptoHashGenerationContext(
 		String cryptoHashProviderName,
-		Map<String, ?> cryptoHashProviderProperties,
-		SaltCommand... saltCommands) {
+		Map<String, ?> cryptoHashProviderProperties, int saltSize) {
 
 		_cryptoHashProviderName = cryptoHashProviderName;
 		_cryptoHashProviderProperties = cryptoHashProviderProperties;
-		_saltCommands = saltCommands;
+		_saltSize = saltSize;
 	}
 
 	public String getCryptoHashProviderName() {
@@ -40,12 +39,12 @@ public final class CryptoHashGenerationContext {
 		return _cryptoHashProviderProperties;
 	}
 
-	public SaltCommand[] getSaltCommands() {
-		return _saltCommands;
+	public int getSaltSize() {
+		return _saltSize;
 	}
 
 	private final String _cryptoHashProviderName;
 	private final Map<String, ?> _cryptoHashProviderProperties;
-	private final SaltCommand[] _saltCommands;
+	private final int _saltSize;
 
 }
