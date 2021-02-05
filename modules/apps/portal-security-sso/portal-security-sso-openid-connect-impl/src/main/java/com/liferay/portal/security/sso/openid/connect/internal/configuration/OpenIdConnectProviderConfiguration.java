@@ -110,4 +110,10 @@ public interface OpenIdConnectProviderConfiguration {
 	)
 	public String userInfoEndPoint();
 
+	@Meta.AD(
+		deflt = "1000", description = "token-connection-timeout-help",
+		name = "token-connection-timeout", required = false
+	)
+	public int tokenConnectionTimeout();
+
 }
