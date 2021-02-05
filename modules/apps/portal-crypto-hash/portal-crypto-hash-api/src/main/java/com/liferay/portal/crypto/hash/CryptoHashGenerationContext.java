@@ -23,25 +23,25 @@ public final class CryptoHashGenerationContext {
 	public CryptoHashGenerationContext(String cryptoHashProviderName) {
 		_cryptoHashProviderName = cryptoHashProviderName;
 
-		_saltCommands = null;
+		_saltSize = -1;
 	}
 
 	public CryptoHashGenerationContext(
-		String cryptoHashProviderName, SaltCommand... saltCommands) {
+		String cryptoHashProviderName, int saltSize) {
 
 		_cryptoHashProviderName = cryptoHashProviderName;
-		_saltCommands = saltCommands;
+		_saltSize = saltSize;
 	}
 
 	public String getCryptoHashProviderName() {
 		return _cryptoHashProviderName;
 	}
 
-	public SaltCommand[] getSaltCommands() {
-		return _saltCommands;
+	public int getSaltSize() {
+		return _saltSize;
 	}
 
 	private final String _cryptoHashProviderName;
-	private final SaltCommand[] _saltCommands;
+	private final int _saltSize;
 
 }
