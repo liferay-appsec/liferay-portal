@@ -17,13 +17,18 @@ package com.liferay.portal.crypto.hash.internal;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
 import com.liferay.portal.crypto.hash.exception.CryptoHashException;
+import com.liferay.portal.crypto.hash.provider.spi.CryptoHashProvider;
+import com.liferay.portal.crypto.hash.provider.spi.factory.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import java.util.Map;
+
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Arthur Chan
@@ -59,6 +64,23 @@ public class CryptoHashGeneratorImpl implements CryptoHashGenerator {
 	private byte[] _digest(byte[] salt, byte[] input) {
 		return _messageDigest.digest(ArrayUtil.append(salt, input));
 	}
+
+	private CryptoHashProvider _getCryptoHashProvider(
+			String cryptoHashProviderName,
+			Map<String, ?> cryptoHashProviderProperties)
+		throws Exception {
+
+		CryptoHashProviderFactory cryptoHashProviderFactory =
+			_cryptoHashProviderFactoryRegistry.getCryptoHashProviderFactory(
+				cryptoHashProviderName);
+
+		return cryptoHashProviderFactory.create(
+			cryptoHashProviderName, cryptoHashProviderProperties);
+	}
+
+	@Reference
+	private CryptoHashProviderFactoryRegistry
+		_cryptoHashProviderFactoryRegistry;
 
 	private final MessageDigest _messageDigest;
 
