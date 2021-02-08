@@ -12,31 +12,38 @@
  * details.
  */
 
-package com.liferay.portal.crypto.hash.internal;
+package com.liferay.portal.crypto.hash.test;
 
+import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.crypto.hash.CryptoHashGenerationContext;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
 import com.liferay.portal.crypto.hash.CryptoHashVerificationContext;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.UnicodeFormatter;
+import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.HashMap;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * @author Arthur Chan
  * @author Carlos Sierra Andrés
  */
+@RunWith(Arquillian.class)
 public class CryptoHashGeneratorTest {
 
-	@Before
-	public void setUp() throws Exception {
-		_cryptoHashGenerator = new CryptoHashGeneratorImpl();
-	}
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testGenerate() throws Exception {
@@ -110,6 +117,7 @@ public class CryptoHashGeneratorTest {
 
 	private static final byte[] _SALT_2 = "salt2".getBytes();
 
+	@Inject
 	private CryptoHashGenerator _cryptoHashGenerator;
 
 }
