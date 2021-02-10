@@ -133,49 +133,6 @@ public class GroupServicePermissionTest {
 		_testAddGroup(false, false, true, true);
 	}
 
-	@Test
-	public void testUpdatePermissionsCustomRole() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
-
-		_givePermissionToManageSubsites(_group1);
-
-		_testUpdateGroup(false, false, true, true);
-	}
-
-	@Test
-	public void testUpdatePermissionsCustomRoleInSubsite() throws Exception {
-		_user = UserTestUtil.addUser(null, _group11.getGroupId());
-
-		_givePermissionToManageSubsites(_group11);
-
-		_testUpdateGroup(false, false, false, true);
-	}
-
-	@Test
-	public void testUpdatePermissionsRegularUser() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
-
-		_testUpdateGroup(false, false, false, false);
-	}
-
-	@Test
-	public void testUpdatePermissionsSiteAdmin() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
-
-		_giveSiteAdminRole(_group1);
-
-		_testUpdateGroup(true, false, true, true);
-	}
-
-	@Test
-	public void testUpdatePermissionsSubsiteAdmin() throws Exception {
-		_user = UserTestUtil.addUser(null, _group11.getGroupId());
-
-		_giveSiteAdminRole(_group11);
-
-		_testUpdateGroup(false, true, false, true);
-	}
-
 	private void _givePermissionToManageSubsites(Group group) throws Exception {
 		_role = RoleTestUtil.addRole(
 			"Subsites Admin", RoleConstants.TYPE_SITE, Group.class.getName(),
@@ -273,56 +230,6 @@ public class GroupServicePermissionTest {
 			Assert.assertFalse(
 				"The user should be able to add this site",
 				hasManageSubsitePermisionOnGroup111 || hasManageSite1);
-		}
-	}
-
-	private void _testUpdateGroup(
-			boolean hasManageSite1, boolean hasManageSite11,
-			boolean hasManageSubsitePermisionOnGroup1,
-			boolean hasManageSubsitePermisionOnGroup11)
-		throws Exception {
-
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(_user));
-
-		try {
-			_groupService.updateGroup(_group1.getGroupId(), "");
-
-			Assert.assertTrue(
-				"The user should not be able to update this site",
-				hasManageSite1);
-		}
-		catch (PrincipalException principalException) {
-			Assert.assertFalse(
-				"The user should be able to update this site", hasManageSite1);
-		}
-
-		try {
-			_groupService.updateGroup(_group11.getGroupId(), "");
-
-			Assert.assertTrue(
-				"The user should not be able to update this site",
-				hasManageSubsitePermisionOnGroup1 || hasManageSite1 ||
-				hasManageSite11);
-		}
-		catch (PrincipalException principalException) {
-			Assert.assertFalse(
-				"The user should be able to update this site",
-				hasManageSubsitePermisionOnGroup1 || hasManageSite1 ||
-				hasManageSite11);
-		}
-
-		try {
-			_groupService.updateGroup(_group111.getGroupId(), "");
-
-			Assert.assertTrue(
-				"The user should not be able to update this site",
-				hasManageSubsitePermisionOnGroup11 || hasManageSite1);
-		}
-		catch (PrincipalException principalException) {
-			Assert.assertFalse(
-				"The user should be able to update this site",
-				hasManageSubsitePermisionOnGroup1 || hasManageSite1);
 		}
 	}
 
