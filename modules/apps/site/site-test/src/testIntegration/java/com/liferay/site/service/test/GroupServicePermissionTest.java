@@ -68,11 +68,7 @@ public class GroupServicePermissionTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_group1 = GroupTestUtil.addGroup();
-
-		_groups.addFirst(_group1);
-
-		_group11 = GroupTestUtil.addGroup(_group1.getGroupId());
+		_group11 = GroupTestUtil.addGroup();
 
 		_groups.addFirst(_group11);
 
@@ -236,7 +232,6 @@ public class GroupServicePermissionTest {
 	@Inject
 	private static RoleLocalService _roleLocalService;
 
-	private Group _group1;
 	private Group _group11;
 	private Group _group111;
 
