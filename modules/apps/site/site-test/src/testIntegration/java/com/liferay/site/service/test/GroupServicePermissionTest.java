@@ -68,13 +68,13 @@ public class GroupServicePermissionTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_group11 = GroupTestUtil.addGroup();
+		_parentGroup = GroupTestUtil.addGroup();
 
-		_groups.addFirst(_group11);
+		_groups.addFirst(_parentGroup);
 
-		_group111 = GroupTestUtil.addGroup(_group11.getGroupId());
+		_childGroup = GroupTestUtil.addGroup(_parentGroup.getGroupId());
 
-		_groups.addFirst(_group111);
+		_groups.addFirst(_childGroup);
 
 		_name = PrincipalThreadLocal.getName();
 
@@ -88,43 +88,43 @@ public class GroupServicePermissionTest {
 
 	@Test
 	public void testAddPermissionsCustomRole() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
+		_user = UserTestUtil.addUser(null, _parentGroup.getGroupId());
 
-		_givePermissionToManageSubsites(_group1);
+		_givePermissionToManageSubsites(_parentGroup);
 
 		_testAddGroup(false, true, true, true);
 	}
 
 	@Test
 	public void testAddPermissionsCustomRoleInSubsite() throws Exception {
-		_user = UserTestUtil.addUser(null, _group11.getGroupId());
+		_user = UserTestUtil.addUser(null, _childGroup.getGroupId());
 
-		_givePermissionToManageSubsites(_group11);
+		_givePermissionToManageSubsites(_childGroup);
 
 		_testAddGroup(false, false, true, true);
 	}
 
 	@Test
 	public void testAddPermissionsRegularUser() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
+		_user = UserTestUtil.addUser(null, _parentGroup.getGroupId());
 
 		_testAddGroup(false, false, false, false);
 	}
 
 	@Test
 	public void testAddPermissionsSiteAdmin() throws Exception {
-		_user = UserTestUtil.addUser(null, _group1.getGroupId());
+		_user = UserTestUtil.addUser(null, _parentGroup.getGroupId());
 
-		_giveSiteAdminRole(_group1);
+		_giveSiteAdminRole(_parentGroup);
 
 		_testAddGroup(true, true, true, true);
 	}
 
 	@Test
 	public void testAddPermissionsSubsiteAdmin() throws Exception {
-		_user = UserTestUtil.addUser(null, _group11.getGroupId());
+		_user = UserTestUtil.addUser(null, _childGroup.getGroupId());
 
-		_giveSiteAdminRole(_group11);
+		_giveSiteAdminRole(_childGroup);
 
 		_testAddGroup(false, false, true, true);
 	}
@@ -161,7 +161,7 @@ public class GroupServicePermissionTest {
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
-				_group1.getGroupId(), _user.getUserId());
+				_parentGroup.getGroupId(), _user.getUserId());
 
 		try {
 			Group group = GroupTestUtil.addGroup(
@@ -176,7 +176,7 @@ public class GroupServicePermissionTest {
 
 		try {
 			Group group = GroupTestUtil.addGroup(
-				_group1.getGroupId(), serviceContext);
+				_parentGroup.getGroupId(), serviceContext);
 
 			Assert.assertTrue(
 				"The user should not be able to add this site",
@@ -194,7 +194,7 @@ public class GroupServicePermissionTest {
 
 		try {
 			Group group = GroupTestUtil.addGroup(
-				_group11.getGroupId(), serviceContext);
+				_parentGroup.getGroupId(), serviceContext);
 
 			Assert.assertTrue(
 				"The user should not be able to add this site",
@@ -212,7 +212,7 @@ public class GroupServicePermissionTest {
 
 		try {
 			Group group = GroupTestUtil.addGroup(
-				_group111.getGroupId(), serviceContext);
+				_childGroup.getGroupId(), serviceContext);
 
 			Assert.assertTrue(
 				"The user should not be able to add this site",
@@ -232,8 +232,7 @@ public class GroupServicePermissionTest {
 	@Inject
 	private static RoleLocalService _roleLocalService;
 
-	private Group _group11;
-	private Group _group111;
+	private Group _childGroup;
 
 	@Inject
 	private GroupLocalService _groupLocalService;
@@ -245,6 +244,7 @@ public class GroupServicePermissionTest {
 	private GroupService _groupService;
 
 	private String _name;
+	private Group _parentGroup;
 
 	@Inject
 	private PermissionCheckerFactory _permissionCheckerFactory;
