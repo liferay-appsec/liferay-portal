@@ -96,7 +96,7 @@ public class GroupServicePermissionTest {
 
 		_givePermissionToManageSubsites(_group1);
 
-		_testAddGroup(false, true, true, true);
+		_testAddGroup(false, true, false, true);
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class GroupServicePermissionTest {
 
 		_givePermissionToManageSubsites(_group11);
 
-		_testAddGroup(false, false, true, true);
+		_testAddGroup(false, false, false, true);
 	}
 
 	@Test
@@ -121,7 +121,7 @@ public class GroupServicePermissionTest {
 
 		_giveSiteAdminRole(_group1);
 
-		_testAddGroup(true, true, true, true);
+		_testAddGroup(true, false, false, false);
 	}
 
 	@Test
@@ -130,7 +130,7 @@ public class GroupServicePermissionTest {
 
 		_giveSiteAdminRole(_group11);
 
-		_testAddGroup(false, false, true, true);
+		_testAddGroup(false, false, true, false);
 	}
 
 	@Test
@@ -139,7 +139,7 @@ public class GroupServicePermissionTest {
 
 		_givePermissionToManageSubsites(_group1);
 
-		_testUpdateGroup(false, false, true, true);
+		_testUpdateGroup(false, false, false, true);
 	}
 
 	@Test
@@ -164,7 +164,7 @@ public class GroupServicePermissionTest {
 
 		_giveSiteAdminRole(_group1);
 
-		_testUpdateGroup(true, false, true, true);
+		_testUpdateGroup(true, false, false, false);
 	}
 
 	@Test
@@ -173,7 +173,7 @@ public class GroupServicePermissionTest {
 
 		_giveSiteAdminRole(_group11);
 
-		_testUpdateGroup(false, true, false, true);
+		_testUpdateGroup(false, true, false, false);
 	}
 
 	private void _givePermissionToManageSubsites(Group group) throws Exception {
