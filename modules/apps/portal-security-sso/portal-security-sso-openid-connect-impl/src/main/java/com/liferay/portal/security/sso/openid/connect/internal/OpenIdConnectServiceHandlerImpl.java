@@ -33,6 +33,7 @@ import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceExcept
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceHandler;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 
+import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectSessionHelperImpl;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jwt.JWT;
@@ -189,7 +190,7 @@ public class OpenIdConnectServiceHandlerImpl
 		openIdConnectSessionImpl.setOpenIdConnectFlowState(
 			OpenIdConnectFlowState.AUTH_COMPLETE);
 
-		_openIdConnectSessionRegistryImpl.setOpenIdConnectSession(
+		_openIdConnectSessionHelperImpl.setOpenIdConnectSession(
 			httpSession, openIdConnectSessionImpl);
 	}
 
@@ -229,7 +230,7 @@ public class OpenIdConnectServiceHandlerImpl
 			openIdConnectSessionImpl.setOpenIdConnectFlowState(
 				OpenIdConnectFlowState.AUTH_REQUESTED);
 
-			_openIdConnectSessionRegistryImpl.setOpenIdConnectSession(
+			_openIdConnectSessionHelperImpl.setOpenIdConnectSession(
 				httpSession, openIdConnectSessionImpl);
 		}
 		catch (IOException ioException) {
@@ -357,7 +358,7 @@ public class OpenIdConnectServiceHandlerImpl
 		HttpSession httpSession, String expectedProviderName) {
 
 		Object openIdConnectSessionObject =
-			_openIdConnectSessionRegistryImpl.getOpenIdConnectSession(
+			_openIdConnectSessionHelperImpl.getOpenIdConnectSession(
 				httpSession);
 
 		if (openIdConnectSessionObject instanceof OpenIdConnectSessionImpl) {
@@ -665,7 +666,7 @@ public class OpenIdConnectServiceHandlerImpl
 			_openIdConnectProviderRegistry;
 
 	@Reference
-	private OpenIdConnectSessionRegistryImpl _openIdConnectSessionRegistryImpl;
+	private OpenIdConnectSessionHelperImpl _openIdConnectSessionHelperImpl;
 
 	@Reference
 	private OpenIdConnectUserInfoProcessor _openIdConnectUserInfoProcessor;

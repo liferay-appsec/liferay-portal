@@ -12,14 +12,16 @@
  * details.
  */
 
-package com.liferay.portal.security.sso.openid.connect;
+package com.liferay.portal.security.sso.openid.connect.util;
+
+import com.liferay.portal.security.sso.openid.connect.OpenIdConnectSession;
 
 import javax.servlet.http.HttpSession;
 
 /**
  * @author Istvan Sajtos
  */
-public interface OpenIdConnectSessionRegistry {
+public interface OpenIdConnectSessionHelper {
 
 	public OpenIdConnectSession getOpenIdConnectSession(HttpSession httpSession);
 }
