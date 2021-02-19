@@ -130,7 +130,7 @@ public class RefreshTokenTest extends BaseClientTestCase {
 				defaultCompanyId, user, "oauthTestApplication",
 				Arrays.asList(
 					GrantType.RESOURCE_OWNER_PASSWORD, GrantType.REFRESH_TOKEN),
-				Collections.singletonList("everything"));
+				Collections.singletonList("everything"), false);
 		}
 
 	}

@@ -196,13 +196,13 @@ public class SecurityTest extends BaseClientTestCase {
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCode",
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE),
-				Collections.singletonList("everything"));
+				Collections.singletonList("everything"), false);
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCodePKCE", null,
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE_PKCE),
 				Collections.singletonList("everything"),
-				Collections.singletonList("http://redirecturi:8080"));
+				Collections.singletonList("http://redirecturi:8080"), false);
 		}
 
 	}

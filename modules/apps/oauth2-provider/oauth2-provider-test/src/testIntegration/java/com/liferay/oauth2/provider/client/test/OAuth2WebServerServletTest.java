@@ -152,7 +152,8 @@ public class OAuth2WebServerServletTest extends BaseClientTestCase {
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplication",
 				Collections.singletonList(GrantType.CLIENT_CREDENTIALS),
-				Arrays.asList("GET", "everything.read.documents.download"));
+				Arrays.asList("GET", "everything.read.documents.download"),
+				false);
 		}
 
 	}

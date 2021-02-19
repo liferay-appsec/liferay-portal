@@ -233,18 +233,20 @@ public abstract class BaseTestPreparatorBundleActivator
 			Arrays.asList(
 				GrantType.CLIENT_CREDENTIALS,
 				GrantType.RESOURCE_OWNER_PASSWORD),
-			Arrays.asList("everything", "everything.read"));
+			Arrays.asList("everything", "everything.read"), false);
 	}
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId,
-			List<GrantType> availableGrants, List<String> availableScopes)
+			List<GrantType> availableGrants, List<String> availableScopes,
+			boolean trustedApplication)
 		throws PortalException {
 
 		return createOAuth2Application(
 			companyId, user, clientId, "oauthTestApplicationSecret",
 			availableGrants, availableScopes,
-			Collections.singletonList("http://redirecturi:8080"));
+			Collections.singletonList("http://redirecturi:8080"),
+			trustedApplication);
 	}
 
 	protected OAuth2Application createOAuth2Application(
@@ -257,13 +259,13 @@ public abstract class BaseTestPreparatorBundleActivator
 			Arrays.asList(
 				GrantType.CLIENT_CREDENTIALS,
 				GrantType.RESOURCE_OWNER_PASSWORD),
-			availableScopes);
+			availableScopes, false);
 	}
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId, String clientSecret,
 			List<GrantType> availableGrants, List<String> availableScopes,
-			List<String> redirectUris)
+			List<String> redirectUris, boolean trustedApplication)
 		throws PortalException {
 
 		ServiceReference<OAuth2ApplicationLocalService> serviceReference =
@@ -283,7 +285,7 @@ public abstract class BaseTestPreparatorBundleActivator
 				Collections.singletonList("token_introspection"),
 				"http://localhost:8080", 0, "test application",
 				"http://localhost:8080", redirectUris, availableScopes,
-				new ServiceContext());
+				new ServiceContext(), trustedApplication);
 
 		autoCloseables.add(
 			() -> oAuth2ApplicationLocalService.deleteOAuth2Application(

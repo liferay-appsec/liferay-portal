@@ -120,7 +120,7 @@ public class ScopeFinderTest extends BaseClientTestCase {
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestClientCredentials",
 				Collections.singletonList(GrantType.CLIENT_CREDENTIALS),
-				Collections.singletonList("everything.read"));
+				Collections.singletonList("everything.read"), false);
 		}
 
 	}

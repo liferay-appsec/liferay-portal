@@ -229,7 +229,7 @@ public class TOCTOUTest extends BaseClientTestCase {
 			OAuth2Application oAuth2Application = createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCode",
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE),
-				Collections.singletonList("everything.read"));
+				Collections.singletonList("everything.read"), false);
 
 			Application application = new TestRunnablePostHandlingApplication(
 				() -> {
