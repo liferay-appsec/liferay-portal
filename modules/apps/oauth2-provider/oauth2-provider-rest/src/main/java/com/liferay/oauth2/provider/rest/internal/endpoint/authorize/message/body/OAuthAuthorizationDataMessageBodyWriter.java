@@ -14,8 +14,10 @@
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.authorize.message.body;
 
+import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -82,40 +84,58 @@ public class OAuthAuthorizationDataMessageBodyWriter
 		OAuthAuthorizationData oAuthAuthorizationData,
 		String authorizeScreenURL) {
 
+		boolean addOAuth2Prefix = false;
+
+		if (MapUtil.getBoolean(
+				oAuthAuthorizationData.getExtraApplicationProperties(),
+				OAuth2ProviderRESTEndpointConstants.
+					PROPERTY_KEY_CLIENT_TRUSTED_APPLICATION)) {
+
+			authorizeScreenURL = _getReplyTo(oAuthAuthorizationData);
+
+			authorizeScreenURL = setParameter(
+				authorizeScreenURL, OAuthConstants.AUTHORIZATION_DECISION_KEY,
+				OAuthConstants.AUTHORIZATION_DECISION_ALLOW, false);
+		}
+		else {
+			addOAuth2Prefix = true;
+
+			authorizeScreenURL = setParameter(
+				authorizeScreenURL, "reply_to",
+				_getReplyTo(oAuthAuthorizationData), addOAuth2Prefix);
+		}
+
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.AUTHORIZATION_CODE_CHALLENGE,
-			oAuthAuthorizationData.getClientCodeChallenge());
+			oAuthAuthorizationData.getClientCodeChallenge(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.CLIENT_AUDIENCE,
-			oAuthAuthorizationData.getAudience());
+			oAuthAuthorizationData.getAudience(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.CLIENT_ID,
-			oAuthAuthorizationData.getClientId());
+			oAuthAuthorizationData.getClientId(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.NONCE,
-			oAuthAuthorizationData.getNonce());
+			oAuthAuthorizationData.getNonce(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.REDIRECT_URI,
-			oAuthAuthorizationData.getRedirectUri());
+			oAuthAuthorizationData.getRedirectUri(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.RESPONSE_TYPE,
-			oAuthAuthorizationData.getResponseType());
+			oAuthAuthorizationData.getResponseType(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.SCOPE,
-			oAuthAuthorizationData.getProposedScope());
+			oAuthAuthorizationData.getProposedScope(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.SESSION_AUTHENTICITY_TOKEN,
-			oAuthAuthorizationData.getAuthenticityToken());
+			oAuthAuthorizationData.getAuthenticityToken(), addOAuth2Prefix);
 		authorizeScreenURL = setParameter(
 			authorizeScreenURL, OAuthConstants.STATE,
-			oAuthAuthorizationData.getState());
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, "reply_to",
-			_getReplyTo(oAuthAuthorizationData));
+			oAuthAuthorizationData.getState(), addOAuth2Prefix);
 
 		if (authorizeScreenURL.length() > _invokerFilterURIMaxLength) {
 			authorizeScreenURL = removeParameter(
-				authorizeScreenURL, OAuthConstants.SCOPE);
+				authorizeScreenURL, OAuthConstants.SCOPE, addOAuth2Prefix);
 		}
 
 		return authorizeScreenURL;
