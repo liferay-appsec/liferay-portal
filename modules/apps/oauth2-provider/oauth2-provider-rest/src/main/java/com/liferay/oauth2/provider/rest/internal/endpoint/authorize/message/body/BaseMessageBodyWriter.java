@@ -117,16 +117,24 @@ public abstract class BaseMessageBodyWriter<T> implements MessageBodyWriter<T> {
 		return authorizeScreenConfiguration.authorizeScreenURL();
 	}
 
-	protected String removeParameter(String url, String name) {
+	protected String removeParameter(
+		String url, String name, boolean addOAuth2Prefix) {
+
 		return http.removeParameter(url, "oauth2_" + name);
 	}
 
-	protected String setParameter(String url, String name, String value) {
+	protected String setParameter(
+		String url, String name, String value, boolean addOAuth2Prefix) {
+
 		if (Validator.isBlank(value)) {
 			return url;
 		}
 
-		return http.addParameter(url, "oauth2_" + name, value);
+		if (addOAuth2Prefix) {
+			return http.addParameter(url, "oauth2_" + name, value);
+		}
+
+		return http.addParameter(url, name, value);
 	}
 
 	protected abstract String writeTo(T t, String authorizeScreenURL);

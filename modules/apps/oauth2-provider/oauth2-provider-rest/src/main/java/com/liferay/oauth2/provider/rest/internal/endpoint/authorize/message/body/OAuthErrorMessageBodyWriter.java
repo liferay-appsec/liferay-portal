@@ -63,8 +63,8 @@ public class OAuthErrorMessageBodyWriter
 	@Override
 	protected String writeTo(OAuthError oAuthError, String authorizeScreenURL) {
 		return setParameter(
-			authorizeScreenURL, OAuthConstants.ERROR_KEY,
-			oAuthError.getError());
+			authorizeScreenURL, OAuthConstants.ERROR_KEY, oAuthError.getError(),
+			true);
 	}
 
 }
