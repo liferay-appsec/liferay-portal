@@ -114,29 +114,29 @@ public class GrantedFlowsTest extends BaseClientTestCase {
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCode",
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE),
-				Collections.singletonList("everything"), false);
+				Collections.singletonList("everything"));
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCodePKCE", null,
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE_PKCE),
 				Collections.singletonList("everything"),
-				Collections.singletonList("http://redirecturi:8080"), false);
+				Collections.singletonList("http://redirecturi:8080"));
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationClient",
 				Collections.singletonList(GrantType.CLIENT_CREDENTIALS),
-				Collections.singletonList("everything"), false);
+				Collections.singletonList("everything"));
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationNoGrants", null,
 				Collections.emptyList(),
 				Collections.singletonList("everything"),
-				Collections.singletonList("http://redirecturi:8080"), false);
+				Collections.singletonList("http://redirecturi:8080"));
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationPassword",
 				Collections.singletonList(GrantType.RESOURCE_OWNER_PASSWORD),
-				Collections.singletonList("everything"), false);
+				Collections.singletonList("everything"));
 		}
 
 	}

@@ -86,7 +86,7 @@ public class GrantAuthorizationCodeKillSwitchTest extends BaseClientTestCase {
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCode",
 				Collections.singletonList(GrantType.AUTHORIZATION_CODE),
-				Collections.singletonList("everything"), false);
+				Collections.singletonList("everything"));
 		}
 
 	}

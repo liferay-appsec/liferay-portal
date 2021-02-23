@@ -128,7 +128,7 @@ public class NarrowDownScopeClientTest extends BaseClientTestCase {
 				Arrays.asList(
 					GrantType.AUTHORIZATION_CODE, GrantType.CLIENT_CREDENTIALS,
 					GrantType.RESOURCE_OWNER_PASSWORD),
-				Arrays.asList("GET", "POST"), false);
+				Arrays.asList("GET", "POST"));
 		}
 
 	}

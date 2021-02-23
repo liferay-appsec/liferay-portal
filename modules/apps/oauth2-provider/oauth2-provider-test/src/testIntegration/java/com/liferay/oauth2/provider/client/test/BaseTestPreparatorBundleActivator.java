@@ -238,6 +238,17 @@ public abstract class BaseTestPreparatorBundleActivator
 
 	protected OAuth2Application createOAuth2Application(
 			long companyId, User user, String clientId,
+			List<GrantType> availableGrants, List<String> availableScopes)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, "oauthTestApplicationSecret",
+			availableGrants, availableScopes,
+			Collections.singletonList("http://redirecturi:8080"), false);
+	}
+
+	protected OAuth2Application createOAuth2Application(
+			long companyId, User user, String clientId,
 			List<GrantType> availableGrants, List<String> availableScopes,
 			boolean trustedApplication)
 		throws PortalException {
@@ -260,6 +271,17 @@ public abstract class BaseTestPreparatorBundleActivator
 				GrantType.CLIENT_CREDENTIALS,
 				GrantType.RESOURCE_OWNER_PASSWORD),
 			availableScopes, false);
+	}
+
+	protected OAuth2Application createOAuth2Application(
+			long companyId, User user, String clientId, String clientSecret,
+			List<GrantType> availableGrants, List<String> availableScopes,
+			List<String> redirectUris)
+		throws PortalException {
+
+		return createOAuth2Application(
+			companyId, user, clientId, clientSecret, availableGrants,
+			availableScopes, redirectUris, false);
 	}
 
 	protected OAuth2Application createOAuth2Application(
