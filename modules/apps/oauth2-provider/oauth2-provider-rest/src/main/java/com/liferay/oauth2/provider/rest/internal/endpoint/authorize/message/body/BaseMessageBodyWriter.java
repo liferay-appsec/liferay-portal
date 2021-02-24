@@ -117,26 +117,6 @@ public abstract class BaseMessageBodyWriter<T> implements MessageBodyWriter<T> {
 		return authorizeScreenConfiguration.authorizeScreenURL();
 	}
 
-	protected String removeParameter(
-		String url, String name, boolean addOAuth2Prefix) {
-
-		return http.removeParameter(url, "oauth2_" + name);
-	}
-
-	protected String setParameter(
-		String url, String name, String value, boolean addOAuth2Prefix) {
-
-		if (Validator.isBlank(value)) {
-			return url;
-		}
-
-		if (addOAuth2Prefix) {
-			return http.addParameter(url, "oauth2_" + name, value);
-		}
-
-		return http.addParameter(url, name, value);
-	}
-
 	protected abstract String writeTo(T t, String authorizeScreenURL);
 
 	@Reference
@@ -150,6 +130,42 @@ public abstract class BaseMessageBodyWriter<T> implements MessageBodyWriter<T> {
 
 	@Reference
 	protected Portal portal;
+
+	protected class ParameterPrefixURLBuilder {
+
+		protected ParameterPrefixURLBuilder(
+			final String parameterPrefix, final String url) {
+
+			_parameterPrefix = parameterPrefix;
+			_url = url;
+		}
+
+		protected String build() {
+			return _url;
+		}
+
+		protected ParameterPrefixURLBuilder removeParameter(String name) {
+			_url = http.removeParameter(_url, _parameterPrefix + name);
+
+			return this;
+		}
+
+		protected ParameterPrefixURLBuilder setParameter(
+			String name, String value) {
+
+			if (Validator.isBlank(value)) {
+				return this;
+			}
+
+			_url = http.addParameter(_url, _parameterPrefix + name, value);
+
+			return this;
+		}
+
+		private final String _parameterPrefix;
+		private String _url;
+
+	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseMessageBodyWriter.class);

@@ -84,58 +84,55 @@ public class OAuthAuthorizationDataMessageBodyWriter
 		OAuthAuthorizationData oAuthAuthorizationData,
 		String authorizeScreenURL) {
 
-		boolean addOAuth2Prefix = false;
+		ParameterPrefixURLBuilder parameterPrefixURLBuilder;
 
 		if (MapUtil.getBoolean(
 				oAuthAuthorizationData.getExtraApplicationProperties(),
 				OAuth2ProviderRESTEndpointConstants.
 					PROPERTY_KEY_CLIENT_TRUSTED_APPLICATION)) {
 
-			authorizeScreenURL = _getReplyTo(oAuthAuthorizationData);
-
-			authorizeScreenURL = setParameter(
-				authorizeScreenURL, OAuthConstants.AUTHORIZATION_DECISION_KEY,
-				OAuthConstants.AUTHORIZATION_DECISION_ALLOW, false);
+			parameterPrefixURLBuilder = new ParameterPrefixURLBuilder(
+				"", _getReplyTo(oAuthAuthorizationData)
+			).setParameter(
+				OAuthConstants.AUTHORIZATION_DECISION_KEY,
+				OAuthConstants.AUTHORIZATION_DECISION_ALLOW
+			);
 		}
 		else {
-			addOAuth2Prefix = true;
-
-			authorizeScreenURL = setParameter(
-				authorizeScreenURL, "reply_to",
-				_getReplyTo(oAuthAuthorizationData), addOAuth2Prefix);
+			parameterPrefixURLBuilder = new ParameterPrefixURLBuilder(
+				"oauth2_", authorizeScreenURL
+			).setParameter(
+				"reply_to", _getReplyTo(oAuthAuthorizationData)
+			);
 		}
 
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.AUTHORIZATION_CODE_CHALLENGE,
-			oAuthAuthorizationData.getClientCodeChallenge(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.CLIENT_AUDIENCE,
-			oAuthAuthorizationData.getAudience(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.CLIENT_ID,
-			oAuthAuthorizationData.getClientId(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.NONCE,
-			oAuthAuthorizationData.getNonce(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.REDIRECT_URI,
-			oAuthAuthorizationData.getRedirectUri(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.RESPONSE_TYPE,
-			oAuthAuthorizationData.getResponseType(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.SCOPE,
-			oAuthAuthorizationData.getProposedScope(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.SESSION_AUTHENTICITY_TOKEN,
-			oAuthAuthorizationData.getAuthenticityToken(), addOAuth2Prefix);
-		authorizeScreenURL = setParameter(
-			authorizeScreenURL, OAuthConstants.STATE,
-			oAuthAuthorizationData.getState(), addOAuth2Prefix);
+		authorizeScreenURL = parameterPrefixURLBuilder.setParameter(
+			OAuthConstants.AUTHORIZATION_CODE_CHALLENGE,
+			oAuthAuthorizationData.getClientCodeChallenge()
+		).setParameter(
+			OAuthConstants.CLIENT_AUDIENCE, oAuthAuthorizationData.getAudience()
+		).setParameter(
+			OAuthConstants.CLIENT_ID, oAuthAuthorizationData.getClientId()
+		).setParameter(
+			OAuthConstants.NONCE, oAuthAuthorizationData.getNonce()
+		).setParameter(
+			OAuthConstants.REDIRECT_URI, oAuthAuthorizationData.getRedirectUri()
+		).setParameter(
+			OAuthConstants.RESPONSE_TYPE,
+			oAuthAuthorizationData.getResponseType()
+		).setParameter(
+			OAuthConstants.SCOPE, oAuthAuthorizationData.getProposedScope()
+		).setParameter(
+			OAuthConstants.SESSION_AUTHENTICITY_TOKEN,
+			oAuthAuthorizationData.getAuthenticityToken()
+		).setParameter(
+			OAuthConstants.STATE, oAuthAuthorizationData.getState()
+		).build();
 
 		if (authorizeScreenURL.length() > _invokerFilterURIMaxLength) {
-			authorizeScreenURL = removeParameter(
-				authorizeScreenURL, OAuthConstants.SCOPE, addOAuth2Prefix);
+			authorizeScreenURL = parameterPrefixURLBuilder.removeParameter(
+				OAuthConstants.SCOPE
+			).build();
 		}
 
 		return authorizeScreenURL;
