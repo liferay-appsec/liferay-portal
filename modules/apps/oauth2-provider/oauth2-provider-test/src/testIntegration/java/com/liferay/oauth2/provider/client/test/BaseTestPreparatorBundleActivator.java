@@ -233,7 +233,7 @@ public abstract class BaseTestPreparatorBundleActivator
 			Arrays.asList(
 				GrantType.CLIENT_CREDENTIALS,
 				GrantType.RESOURCE_OWNER_PASSWORD),
-			Arrays.asList("everything", "everything.read"), false);
+			Arrays.asList("everything", "everything.read"));
 	}
 
 	protected OAuth2Application createOAuth2Application(
@@ -244,7 +244,7 @@ public abstract class BaseTestPreparatorBundleActivator
 		return createOAuth2Application(
 			companyId, user, clientId, "oauthTestApplicationSecret",
 			availableGrants, availableScopes,
-			Collections.singletonList("http://redirecturi:8080"), false);
+			Collections.singletonList("http://redirecturi:8080"));
 	}
 
 	protected OAuth2Application createOAuth2Application(
