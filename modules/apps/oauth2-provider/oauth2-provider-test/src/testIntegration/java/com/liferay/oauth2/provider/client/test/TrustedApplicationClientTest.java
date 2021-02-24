@@ -49,7 +49,7 @@ public class TrustedApplicationClientTest extends BaseClientTestCase {
 
 	@Test
 	public void testResponseCodeLocationApplication() {
-		Response codeResponse = getCodeResponse(
+		Response response = getCodeResponse(
 			"test@liferay.com", "test", null,
 			getCodeFunction(
 				webTarget -> webTarget.queryParam(
@@ -60,11 +60,11 @@ public class TrustedApplicationClientTest extends BaseClientTestCase {
 					"response_type", "code"
 				)));
 
-		URI location = codeResponse.getLocation();
+		URI locationURI = response.getLocation();
 
-		Assert.assertNotEquals(location.toString(), _OAUTH2_DECISION_URL);
+		Assert.assertNotEquals(locationURI.toString(), _OAUTH2_DECISION_URL);
 
-		codeResponse = getCodeResponse(
+		response = getCodeResponse(
 			"test@liferay.com", "test", null,
 			getCodeFunction(
 				webTarget -> webTarget.queryParam(
@@ -75,14 +75,14 @@ public class TrustedApplicationClientTest extends BaseClientTestCase {
 					"response_type", "code"
 				)));
 
-		location = codeResponse.getLocation();
+		locationURI = response.getLocation();
 
-		Assert.assertNotEquals(location.toString(), _OAUTH2_DECISION_URL);
+		Assert.assertNotEquals(locationURI.toString(), _OAUTH2_DECISION_URL);
 	}
 
 	@Test
 	public void testResponseCodeLocationTrustedApplication() {
-		Response codeResponse = getCodeResponse(
+		Response response = getCodeResponse(
 			"test@liferay.com", "test", null,
 			getCodeFunction(
 				webTarget -> webTarget.queryParam(
@@ -93,11 +93,11 @@ public class TrustedApplicationClientTest extends BaseClientTestCase {
 					"response_type", "code"
 				)));
 
-		URI location = codeResponse.getLocation();
+		URI locationURI = response.getLocation();
 
-		Assert.assertEquals(location.toString(), _OAUTH2_DECISION_URL);
+		Assert.assertEquals(locationURI.toString(), _OAUTH2_DECISION_URL);
 
-		codeResponse = getCodeResponse(
+		response = getCodeResponse(
 			"test@liferay.com", "test", null,
 			getCodeFunction(
 				webTarget -> webTarget.queryParam(
@@ -108,9 +108,9 @@ public class TrustedApplicationClientTest extends BaseClientTestCase {
 					"response_type", "code"
 				)));
 
-		location = codeResponse.getLocation();
+		locationURI = response.getLocation();
 
-		Assert.assertEquals(location.toString(), _OAUTH2_DECISION_URL);
+		Assert.assertEquals(locationURI.toString(), _OAUTH2_DECISION_URL);
 	}
 
 	public static class TrustedApplicationClientTestPreparatorBundleActivator
