@@ -23,6 +23,7 @@ import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 
 import java.io.IOException;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -78,6 +79,13 @@ public class AuthRedirectAction extends BaseSamlStrutsAction {
 		}
 
 		return null;
+	}
+
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.saml.web)", unbind = "-"
+	)
+	protected void setServletContext(ServletContext servletContext) {
+		super.servletContext = servletContext;
 	}
 
 	@Reference

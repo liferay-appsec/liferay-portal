@@ -22,6 +22,7 @@ import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.StatusException;
 import com.liferay.saml.util.JspUtil;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -73,7 +74,7 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 
 			JspUtil.dispatch(
 				httpServletRequest, httpServletResponse,
-				JspUtil.PATH_PORTAL_SAML_ERROR, "status");
+				JspUtil.PATH_PORTAL_SAML_ERROR, "status", servletContext);
 		}
 		finally {
 			currentThread.setContextClassLoader(contextClassLoader);
@@ -97,7 +98,10 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 			HttpServletResponse httpServletResponse)
 		throws Exception;
 
+	protected abstract void setServletContext(ServletContext servletContext);
+
 	protected SamlProviderConfigurationHelper samlProviderConfigurationHelper;
+	protected ServletContext servletContext;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseSamlStrutsAction.class);
