@@ -88,14 +88,5 @@ page import="java.util.List" %>
 <%
 String currentURL = PortalUtil.getCurrentURL(request);
 
-LocalEntityManager localEntityManager = (LocalEntityManager)request.getAttribute(LocalEntityManager.class.getName());
-NameIdTypeValues nameIdTypeValues = NameIdTypeValuesUtil.getNameIdTypeValues();
-GeneralTabDefaultViewDisplayContext generalTabDefaultViewDisplayContext = (GeneralTabDefaultViewDisplayContext)renderRequest.getAttribute(GeneralTabDefaultViewDisplayContext.class.getName());
 SamlProviderConfigurationHelper samlProviderConfigurationHelper = (SamlProviderConfigurationHelper)request.getAttribute(SamlProviderConfigurationHelper.class.getName());
-
-SamlProviderConfiguration samlProviderConfiguration = null;
-
-if (samlProviderConfigurationHelper != null) {
-	samlProviderConfiguration = samlProviderConfigurationHelper.getSamlProviderConfiguration();
-}
 %>
