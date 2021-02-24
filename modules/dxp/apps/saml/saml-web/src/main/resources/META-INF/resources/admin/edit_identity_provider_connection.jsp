@@ -17,9 +17,13 @@
 <%@ include file="/init.jsp" %>
 
 <%
+NameIdTypeValues nameIdTypeValues = NameIdTypeValuesUtil.getNameIdTypeValues();
+
 String redirect = ParamUtil.getString(request, "redirect");
 
 SamlSpIdpConnection samlSpIdpConnection = (SamlSpIdpConnection)request.getAttribute(SamlWebKeys.SAML_SP_IDP_CONNECTION);
+
+SamlProviderConfiguration samlProviderConfiguration = samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
 long clockSkew = GetterUtil.getLong(request.getAttribute(SamlWebKeys.SAML_CLOCK_SKEW), samlProviderConfiguration.clockSkew());
 %>
