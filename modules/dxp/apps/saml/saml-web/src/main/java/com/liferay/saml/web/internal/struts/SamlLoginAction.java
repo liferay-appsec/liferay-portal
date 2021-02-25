@@ -139,7 +139,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		JspUtil.dispatch(
 			httpServletRequest, httpServletResponse,
 			JspUtil.PATH_PORTAL_SAML_SELECT_IDP,
-			"please-select-your-identity-provider", false);
+			"please-select-your-identity-provider");
 
 		return null;
 	}

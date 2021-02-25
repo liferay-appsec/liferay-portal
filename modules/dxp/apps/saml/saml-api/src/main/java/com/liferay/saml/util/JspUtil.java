@@ -14,14 +14,6 @@
 
 package com.liferay.saml.util;
 
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.struts.Definition;
-import com.liferay.portal.struts.TilesUtil;
-
-import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,13 +33,18 @@ public class JspUtil {
 	public static final String PATH_PORTAL_SAML_SLO_SP_STATUS =
 		"/portal/saml/slo_sp_status.jsp";
 
-	public static void dispatch(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, String path, String title)
-		throws Exception {
+	private static JspUtil _jspUtil;
 
-		dispatch(httpServletRequest, httpServletResponse, path, title, false);
-	}
+	protected void doDispatch(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, String path, String title,
+		boolean popUp)
+		throws Exception {}
+
+	public void doDispatch(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, String path, String title)
+		throws Exception {}
 
 	public static void dispatch(
 			HttpServletRequest httpServletRequest,
@@ -55,45 +52,25 @@ public class JspUtil {
 			boolean popUp)
 		throws Exception {
 
-		httpServletRequest.setAttribute(
-			TilesUtil.DEFINITION,
-			new Definition(
-				StringPool.BLANK,
-				HashMapBuilder.put(
-					"content", path
-				).put(
-					"pop_up", String.valueOf(popUp)
-				).put(
-					"title", title
-				).build()));
-
-		RequestDispatcher requestDispatcher =
-			httpServletRequest.getRequestDispatcher(
-				_PATH_HTML_COMMON_THEMES_PORTAL);
-
-		if (popUp) {
-			requestDispatcher.include(httpServletRequest, httpServletResponse);
-
-			return;
-		}
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		boolean stateMaximized = themeDisplay.isStateMaximized();
-
-		themeDisplay.setStateMaximized(true);
-
-		try {
-			requestDispatcher.include(httpServletRequest, httpServletResponse);
-		}
-		finally {
-			themeDisplay.setStateMaximized(stateMaximized);
-		}
+		getJspUtil().doDispatch(
+			httpServletRequest, httpServletResponse, path, title, popUp);
 	}
 
-	private static final String _PATH_HTML_COMMON_THEMES_PORTAL =
-		"/html/common/themes/portal.jsp";
+	public static void dispatch(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, String path, String title)
+		throws Exception {
+
+		getJspUtil().doDispatch(
+			httpServletRequest, httpServletResponse, path, title);
+	}
+
+	private static JspUtil getJspUtil() {
+		return _jspUtil;
+	}
+
+	public static void setJspUtil(JspUtil jspUtil) {
+		_jspUtil = jspUtil;
+	}
 
 }
