@@ -20,10 +20,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.constants.SamlWebKeys;
@@ -67,11 +64,6 @@ public class SamlAdminPortlet extends MVCPortlet {
 
 	@Activate
 	protected void activate(Map<String, Object> properties) {
-		_loginDialogDisabled = GetterUtil.getBoolean(
-			PropsUtil.get(PropsKeys.LOGIN_DIALOG_DISABLED));
-
-		PropsUtil.set(PropsKeys.LOGIN_DIALOG_DISABLED, "true");
-
 		if (!PropsValues.SESSION_ENABLE_PHISHING_PROTECTION) {
 			return;
 		}
@@ -104,10 +96,6 @@ public class SamlAdminPortlet extends MVCPortlet {
 
 	@Deactivate
 	protected void deactivate() {
-		PropsUtil.set(
-			PropsKeys.LOGIN_DIALOG_DISABLED,
-			String.valueOf(_loginDialogDisabled));
-
 		if (!PropsValues.SESSION_ENABLE_PHISHING_PROTECTION) {
 			return;
 		}
@@ -138,7 +126,5 @@ public class SamlAdminPortlet extends MVCPortlet {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlAdminPortlet.class);
-
-	private boolean _loginDialogDisabled;
 
 }
