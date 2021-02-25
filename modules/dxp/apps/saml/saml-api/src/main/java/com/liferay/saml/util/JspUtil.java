@@ -22,6 +22,7 @@ import com.liferay.portal.struts.Definition;
 import com.liferay.portal.struts.TilesUtil;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -55,6 +56,16 @@ public class JspUtil {
 			boolean popUp)
 		throws Exception {
 
+		dispatch(
+			httpServletRequest, httpServletResponse, path, title, popUp, null);
+	}
+
+	public static void dispatch(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, String path, String title,
+			boolean popUp, ServletContext servletContext)
+		throws Exception {
+
 		httpServletRequest.setAttribute(
 			TilesUtil.DEFINITION,
 			new Definition(
@@ -70,6 +81,10 @@ public class JspUtil {
 		RequestDispatcher requestDispatcher =
 			httpServletRequest.getRequestDispatcher(
 				_PATH_HTML_COMMON_THEMES_PORTAL);
+
+		if (servletContext != null) {
+			requestDispatcher = servletContext.getRequestDispatcher(path);
+		}
 
 		if (popUp) {
 			requestDispatcher.include(httpServletRequest, httpServletResponse);
@@ -91,6 +106,17 @@ public class JspUtil {
 		finally {
 			themeDisplay.setStateMaximized(stateMaximized);
 		}
+	}
+
+	public static void dispatch(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, String path, String title,
+			ServletContext servletContext)
+		throws Exception {
+
+		dispatch(
+			httpServletRequest, httpServletResponse, path, title, false,
+			servletContext);
 	}
 
 	private static final String _PATH_HTML_COMMON_THEMES_PORTAL =
