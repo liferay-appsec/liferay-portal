@@ -21,7 +21,6 @@ import com.liferay.saml.util.SamlHttpRequestUtil;
 
 import java.io.PrintWriter;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -62,13 +61,6 @@ public class MetadataAction extends BaseSamlStrutsAction {
 		printWriter.print(metadata);
 
 		return null;
-	}
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.saml.web)", unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.servletContext = servletContext;
 	}
 
 	@Reference

@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.servlet.profile.SingleLogoutProfile;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -67,13 +66,6 @@ public class SingleLogoutAction extends BaseSamlStrutsAction {
 		}
 
 		return null;
-	}
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.saml.web)", unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.servletContext = servletContext;
 	}
 
 	@Reference

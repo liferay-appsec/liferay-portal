@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -140,7 +139,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		JspUtil.dispatch(
 			httpServletRequest, httpServletResponse,
 			JspUtil.PATH_PORTAL_SAML_SELECT_IDP,
-			"please-select-your-identity-provider", servletContext);
+			"please-select-your-identity-provider");
 
 		return null;
 	}
@@ -155,13 +154,6 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		}
 
 		return samlSpIdpConnection.isEnabled();
-	}
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.saml.web)", unbind = "-"
-	)
-	protected void setServletContext(ServletContext servletContext) {
-		super.servletContext = servletContext;
 	}
 
 	protected JSONObject toJSONObject(
