@@ -96,38 +96,36 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 </noscript>
 
 <aui:script use="aui-base,aui-io-request-deprecated,aui-template-deprecated">
-	var confirmLogout = function() {
-		return confirm('<liferay-ui:message key="leaving-this-window-might-leave-logout-unfinished" />');
+	var confirmLogout = function () {
+		return confirm(
+			'<liferay-ui:message key="leaving-this-window-might-leave-logout-unfinished" />'
+		);
 	};
 
 	var eventHandlers = [];
 
-	var detachHandlers = function() {
-		(new A.EventHandle(eventHandlers)).detach();
+	var detachHandlers = function () {
+		new A.EventHandle(eventHandlers).detach();
 	};
 
 	eventHandlers.push(
-		A.getWin().on(
-			'beforeunload',
-			function(event) {
-				event.preventDefault('<liferay-ui:message key="leaving-this-window-might-leave-logout-unfinished" />');
-			}
-		)
+		A.getWin().on('beforeunload', (event) => {
+			event.preventDefault(
+				'<liferay-ui:message key="leaving-this-window-might-leave-logout-unfinished" />'
+			);
+		})
 	);
 
 	if (Liferay.SPA && Liferay.SPA.app) {
 		eventHandlers.push(
-			Liferay.on(
-				'beforeNavigate',
-				function(event) {
-					if (!confirmLogout()) {
-						event.originalEvent.preventDefault();
-					}
-					else {
-						SAML.SLO.clearFinishTimeout();
-					}
+			Liferay.on('beforeNavigate', (event) => {
+				if (!confirmLogout()) {
+					event.originalEvent.preventDefault();
 				}
-			)
+				else {
+					SAML.SLO.clearFinishTimeout();
+				}
+			})
 		);
 
 		Liferay.once('endNavigate', detachHandlers);
@@ -139,70 +137,73 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 		2: {
 			cssClass: 'portlet-msg-success-label',
 			retry: false,
-			title: '<%= UnicodeLanguageUtil.get(request, "single-sign-out-completed-successfully") %>'
+			title:
+				'<%= UnicodeLanguageUtil.get(request, "single-sign-out-completed-successfully") %>',
 		},
 		3: {
 			cssClass: 'portlet-msg-error-label',
 			retry: true,
-			title: '<%= UnicodeLanguageUtil.get(request, "single-sign-out-request-failed") %>'
+			title:
+				'<%= UnicodeLanguageUtil.get(request, "single-sign-out-request-failed") %>',
 		},
 		4: {
 			cssClass: 'portlet-msg-no-support-label',
 			retry: false,
-			title: '<%= UnicodeLanguageUtil.get(request, "this-service-provider-does-not-support-single-sign-out") %>'
+			title:
+				'<%= UnicodeLanguageUtil.get(request, "this-service-provider-does-not-support-single-sign-out") %>',
 		},
 		5: {
 			cssClass: 'portlet-msg-timed-out-label',
 			retry: true,
-			title: '<%= UnicodeLanguageUtil.get(request, "single-sign-out-request-timed-out") %>'
+			title:
+				'<%= UnicodeLanguageUtil.get(request, "single-sign-out-request-timed-out") %>',
 		},
 		defaultStatus: {
 			cssClass: 'portlet-msg-progress-label',
 			retry: false,
-			title: '<%= UnicodeLanguageUtil.get(request, "single-sign-out-in-progress") %>'
-		}
+			title:
+				'<%= UnicodeLanguageUtil.get(request, "single-sign-out-in-progress") %>',
+		},
 	};
 
 	var SAML = Liferay.namespace('SAML');
 
 	var TPL_SAML_ENTITY = new A.Template(
 		'<tpl for="items">',
-			'<div class="saml-sp" id="samlSp{$i}">',
-				'<span class="portlet-msg-progress-label saml-sp-label">{name}</span>',
-				'<a class="hide saml-sp-retry" data-entityId="{entityId}" href="javascript:;"><%= UnicodeLanguageUtil.get(request, "retry") %></a>',
-				'<iframe class="hide-accessible" src="?cmd=logout&entityId={entityId}"></iframe>',
-			'</div>',
+		'<div class="saml-sp" id="samlSp{$i}">',
+		'<span class="portlet-msg-progress-label saml-sp-label">{name}</span>',
+		'<a class="hide saml-sp-retry" data-entityId="{entityId}" href="javascript:;"><%= UnicodeLanguageUtil.get(request, "retry") %></a>',
+		'<iframe class="hide-accessible" src="?cmd=logout&entityId={entityId}"></iframe>',
+		'</div>',
 		'</tpl>'
 	);
 
 	SAML.SLO = {
-		init: function(items) {
+		init: function (items) {
 			var instance = this;
 
 			var entities = instance._entities;
 			var entityStatus = instance._entityStatus;
 
-			items.forEach(
-				function(item, index, collection) {
-					var entityId = item.entityId;
+			items.forEach((item, index, collection) => {
+				var entityId = item.entityId;
 
-					entities[entityId] = 'samlSp' + index;
-					entityStatus[entityId] = 0;
-				}
-			);
+				entities[entityId] = 'samlSp' + index;
+				entityStatus[entityId] = 0;
+			});
 
 			var outputNode = A.one('#samlSloResults');
 
 			TPL_SAML_ENTITY.render(
 				{
-					items: items
+					items: items,
 				},
 				outputNode
 			);
 
 			outputNode.delegate(
 				'click',
-				function(event) {
+				(event) => {
 					instance.retryLogout(event.currentTarget.attr('data-entityId'));
 				},
 				'.saml-sp-retry'
@@ -213,52 +214,52 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 			instance.checkStatus();
 		},
 
-		checkStatus: function() {
+		checkStatus: function () {
 			var instance = this;
 
-			A.io.request(
-				'?cmd=status',
-				{
-					dataType: 'JSON',
-					on: {
-						success: function(event) {
-							var logoutPending = false;
+			A.io.request('?cmd=status', {
+				dataType: 'JSON',
+				on: {
+					success: function (event) {
+						var logoutPending = false;
 
-							this.get('responseData.samlSloRequestInfos').forEach(
-								function(item, index, collection) {
-									logoutPending |= item.status < 2;
+						this.get('responseData.samlSloRequestInfos').forEach(
+							(item, index, collection) => {
+								logoutPending |= item.status < 2;
 
-									instance.updateStatus(item);
-								}
-							);
-
-							if (logoutPending) {
-								setTimeout(A.bind('checkStatus', instance), 1000);
+								instance.updateStatus(item);
 							}
-							else {
-								instance._completeSignOut.show();
+						);
 
-								instance.finishTimeout = setTimeout(A.bind('finishLogout', instance), 5000);
-							}
+						if (logoutPending) {
+							setTimeout(A.bind('checkStatus', instance), 1000);
 						}
-					}
-				}
-			);
+						else {
+							instance._completeSignOut.show();
+
+							instance.finishTimeout = setTimeout(
+								A.bind('finishLogout', instance),
+								5000
+							);
+						}
+					},
+				},
+			});
 		},
 
-		clearFinishTimeout: function() {
+		clearFinishTimeout: function () {
 			var instance = this;
 
 			clearTimeout(instance.finishTimeout);
 		},
 
-		finishLogout: function() {
+		finishLogout: function () {
 			detachHandlers();
 
 			location.href = '?cmd=finish';
 		},
 
-		retryLogout: function(entityId) {
+		retryLogout: function (entityId) {
 			var instance = this;
 
 			var entityNode = A.one('#' + instance._entities[entityId]);
@@ -266,22 +267,22 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 			if (entityNode) {
 				var defaultStatus = MAP_ENTITY_STATUS.defaultStatus;
 
-				entityNode.one('.saml-sp-label').attr(
-					{
-						className: 'saml-sp-label ' + defaultStatus.cssClass,
-						title: defaultStatus.title
-					}
-				);
+				entityNode.one('.saml-sp-label').attr({
+					className: 'saml-sp-label ' + defaultStatus.cssClass,
+					title: defaultStatus.title,
+				});
 
 				entityNode.one('.saml-sp-retry').hide();
 
-				entityNode.one('iframe').set('src', '?cmd=logout&entityId=' + entityId);
+				entityNode
+					.one('iframe')
+					.set('src', '?cmd=logout&entityId=' + entityId);
 
 				instance.checkStatus();
 			}
 		},
 
-		updateStatus: function(samlSloRequestInfo) {
+		updateStatus: function (samlSloRequestInfo) {
 			var instance = this;
 
 			var infoStatus = samlSloRequestInfo.status;
@@ -297,21 +298,21 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 
 				var entityNode = A.one('#' + instance._entities[entityId]);
 
-				var statusDetails = MAP_ENTITY_STATUS[infoStatus] || MAP_ENTITY_STATUS.defaultStatus;
+				var statusDetails =
+					MAP_ENTITY_STATUS[infoStatus] ||
+					MAP_ENTITY_STATUS.defaultStatus;
 
-				entityNode.one('.saml-sp-label').attr(
-					{
-						className: 'saml-sp-label ' + statusDetails.cssClass,
-						title: statusDetails.title
-					}
-				);
+				entityNode.one('.saml-sp-label').attr({
+					className: 'saml-sp-label ' + statusDetails.cssClass,
+					title: statusDetails.title,
+				});
 
 				entityNode.one('.saml-sp-retry').toggle(statusDetails.retry);
 			}
 		},
 
 		_entities: {},
-		_entityStatus: {}
+		_entityStatus: {},
 	};
 
 	Liferay.SAML.SLO.init(<%= samlSloRequestInfosJSONArray %>);
