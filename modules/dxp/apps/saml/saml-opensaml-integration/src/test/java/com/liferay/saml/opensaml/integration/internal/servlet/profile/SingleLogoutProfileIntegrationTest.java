@@ -36,7 +36,7 @@ import com.liferay.saml.persistence.service.SamlIdpSpSessionLocalServiceUtil;
 import com.liferay.saml.persistence.service.SamlSpSessionLocalService;
 import com.liferay.saml.persistence.service.SamlSpSessionLocalServiceUtil;
 import com.liferay.saml.util.JspUtil;
-import com.liferay.saml.util.internal.JSPImpl;
+import com.liferay.saml.util.internal.JspUtilImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,9 +78,9 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 
 		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
 
-		_jspImpl = new JSPImpl();
+		_jspUtilImpl = new JspUtilImpl();
 
-		JspUtil.setJspUtil(_jspImpl);
+		JspUtil.setJspUtil(_jspUtilImpl);
 
 		_samlIdpSpConnectionLocalService = getMockPortletService(
 			SamlIdpSpConnectionLocalServiceUtil.class,
@@ -332,7 +332,7 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 		Assert.assertEquals("test@liferay.com", nameID.getValue());
 	}
 
-	private JSPImpl _jspImpl;
+	private JspUtilImpl _jspUtilImpl;
 	private SamlIdpSpConnectionLocalService _samlIdpSpConnectionLocalService;
 	private SamlIdpSpSessionLocalService _samlIdpSpSessionLocalService;
 	private SamlSpSessionLocalService _samlSpSessionLocalService;

@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Carlos Sierra Andrés
  */
 @Component(immediate = true, service = {})
-public class JSPImpl extends JspUtil {
+public class JspUtilImpl extends JspUtil {
 
 	@Override
 	public void doDispatch(
