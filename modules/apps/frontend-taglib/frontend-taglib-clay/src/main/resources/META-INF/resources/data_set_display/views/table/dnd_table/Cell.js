@@ -22,7 +22,6 @@ import Context from './TableContext';
 function Cell({children, className, columnName, expand, heading, resizable}) {
 	const cellRef = useRef();
 	const clientX = useRef({current: null});
-
 	const {
 		columnDefinitions,
 		draggingAllowed,
@@ -34,13 +33,28 @@ function Cell({children, className, columnName, expand, heading, resizable}) {
 		updateDraggingColumnName,
 	} = useContext(Context);
 
+	const intersectionObserver = useRef(
+		new IntersectionObserver(
+			(entries) => {
+				const cellWidth = entries[0].boundingClientRect.width;
+
+				if (cellWidth) {
+					registerColumn(columnName, cellWidth, resizable);
+					intersectionObserver.current.disconnect();
+				}
+			},
+			{
+				root: null,
+				threshold: 1,
+			}
+		)
+	);
+
 	useLayoutEffect(() => {
 		if (columnName && heading && !isFixed) {
-			const {width} = cellRef.current.getClientRects()[0];
-
-			registerColumn(columnName, width, resizable);
+			intersectionObserver.current.observe(cellRef.current);
 		}
-	}, [columnName, isFixed, registerColumn, heading, resizable]);
+	}, [columnName, isFixed, heading]);
 
 	const handleDrag = useMemo(() => {
 		return throttle((event) => {
