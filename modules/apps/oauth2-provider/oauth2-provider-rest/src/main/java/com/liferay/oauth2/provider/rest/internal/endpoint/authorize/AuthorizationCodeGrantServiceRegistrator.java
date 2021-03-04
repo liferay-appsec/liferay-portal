@@ -79,10 +79,6 @@ public class AuthorizationCodeGrantServiceRegistrator {
 	public static class LiferayAuthorizationCodeGrantService
 		extends AuthorizationCodeGrantService {
 
-		public LiferayOAuthDataProvider getDataProvider() {
-			return getDataProvider();
-		}
-
 		@Override
 		public ServerAuthorizationCodeGrant getGrantRepresentation(
 			OAuthRedirectionState state, Client client,
@@ -101,7 +97,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 				long userId = GetterUtil.getLong(userSubject.getId());
 
 				OAuth2Authorization oAuth2Authorization =
-					getDataProvider().
+					_getLiferayOAuthDataProvider().
 						getOAuth2AuthorizationByRememberDeviceContent(
 							client, rememberDeviceCookieContent, userId);
 
@@ -152,7 +148,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 					long userId = GetterUtil.getLong(userSubject.getId());
 
 					OAuth2Authorization oAuth2Authorization =
-						getDataProvider().
+						_getLiferayOAuthDataProvider().
 							getOAuth2AuthorizationByRememberDeviceContent(
 								client, rememberDeviceCookieContent, userId);
 
@@ -161,7 +157,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 							oAuth2Authorization.getRememberDeviceContent())) {
 
 						RefreshToken refreshToken =
-							getDataProvider().getRefreshToken(
+							_getLiferayOAuthDataProvider().getRefreshToken(
 								oAuth2Authorization.getRefreshTokenContent());
 
 						if ((refreshToken != null) &&
@@ -169,7 +165,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 								refreshToken.getIssuedAt(),
 								refreshToken.getExpiresIn())) {
 
-							getDataProvider().doRevokeRefreshToken(
+							_getLiferayOAuthDataProvider().doRevokeRefreshToken(
 								refreshToken);
 
 							return true;
@@ -232,7 +228,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 			OAuthRedirectionState oAuthRedirectionState =
 				super.recreateRedirectionStateFromParams(params);
 
-			Client client = getDataProvider().getClient(
+			Client client = _getLiferayOAuthDataProvider().getClient(
 				oAuthRedirectionState.getClientId());
 
 			if (MapUtil.getBoolean(
@@ -255,6 +251,10 @@ public class AuthorizationCodeGrantServiceRegistrator {
 			}
 
 			return oAuthRedirectionState;
+		}
+
+		private LiferayOAuthDataProvider _getLiferayOAuthDataProvider() {
+			return (LiferayOAuthDataProvider)getDataProvider();
 		}
 
 		private String _getRememberDeviceCookieContent() {
