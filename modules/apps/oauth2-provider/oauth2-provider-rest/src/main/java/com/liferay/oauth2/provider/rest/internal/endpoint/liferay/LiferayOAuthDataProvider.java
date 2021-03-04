@@ -331,6 +331,30 @@ public class LiferayOAuthDataProvider
 			getServerAuthorizationCodeGrants(client, subject);
 	}
 
+	public OAuth2Authorization getOAuth2AuthorizationByRememberDeviceContent(
+		Client client, String rememberDeviceContent, long userId) {
+
+		Map<String, String> properties = client.getProperties();
+
+		long companyId = GetterUtil.getLong(
+			properties.get(
+				OAuth2ProviderRESTEndpointConstants.PROPERTY_KEY_COMPANY_ID));
+
+		try {
+			OAuth2Application oAuth2Application =
+				_oAuth2ApplicationLocalService.getOAuth2Application(
+					companyId, client.getClientId());
+
+			return _oAuth2AuthorizationLocalService.
+				fetchLatestOAuth2AuthorizationByRememberDeviceContent(
+					userId, oAuth2Application.getOAuth2ApplicationId(),
+					rememberDeviceContent);
+		}
+		catch (PortalException portalException) {
+			throw new OAuthServiceException(portalException);
+		}
+	}
+
 	@Override
 	public RefreshToken getRefreshToken(String refreshTokenKey) {
 		if (Validator.isBlank(refreshTokenKey)) {
