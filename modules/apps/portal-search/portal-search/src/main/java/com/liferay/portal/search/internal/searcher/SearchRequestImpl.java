@@ -23,6 +23,7 @@ import com.liferay.portal.search.aggregation.pipeline.PipelineAggregation;
 import com.liferay.portal.search.constants.SearchContextAttributes;
 import com.liferay.portal.search.filter.ComplexQueryPart;
 import com.liferay.portal.search.groupby.GroupByRequest;
+import com.liferay.portal.search.highlight.Highlight;
 import com.liferay.portal.search.query.Query;
 import com.liferay.portal.search.rescore.Rescore;
 import com.liferay.portal.search.searcher.SearchRequest;
@@ -67,6 +68,7 @@ public class SearchRequestImpl implements SearchRequest, Serializable {
 			searchRequestImpl._federatedSearchRequestsMap);
 		_from = searchRequestImpl._from;
 		_groupByRequests.addAll(searchRequestImpl._groupByRequests);
+		_highlight = searchRequestImpl._highlight;
 		_includeContributors.addAll(searchRequestImpl._includeContributors);
 		_includeResponseString = searchRequestImpl._includeResponseString;
 		_modelIndexerClassNames.addAll(
@@ -201,6 +203,11 @@ public class SearchRequestImpl implements SearchRequest, Serializable {
 	@Override
 	public List<GroupByRequest> getGroupByRequests() {
 		return Collections.unmodifiableList(_groupByRequests);
+	}
+
+	@Override
+	public Highlight getHighlight() {
+		return _highlight;
 	}
 
 	@Override
@@ -372,6 +379,10 @@ public class SearchRequestImpl implements SearchRequest, Serializable {
 		_searchContext.setGroupIds(groupIds);
 	}
 
+	public void setHighlight(Highlight highlight) {
+		_highlight = highlight;
+	}
+
 	public void setHighlightEnabled(boolean highlightEnabled) {
 		QueryConfig queryConfig = _searchContext.getQueryConfig();
 
@@ -468,6 +479,7 @@ public class SearchRequestImpl implements SearchRequest, Serializable {
 	private String[] _fetchSourceIncludes;
 	private Integer _from;
 	private final List<GroupByRequest> _groupByRequests = new ArrayList<>();
+	private Highlight _highlight;
 	private final List<String> _includeContributors = new ArrayList<>();
 	private boolean _includeResponseString;
 	private final List<String> _modelIndexerClassNames = new ArrayList<>();

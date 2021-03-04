@@ -20,6 +20,7 @@ import com.liferay.portal.search.aggregation.Aggregation;
 import com.liferay.portal.search.aggregation.pipeline.PipelineAggregation;
 import com.liferay.portal.search.filter.ComplexQueryPart;
 import com.liferay.portal.search.groupby.GroupByRequest;
+import com.liferay.portal.search.highlight.Highlight;
 import com.liferay.portal.search.internal.searcher.SearchRequestImpl;
 import com.liferay.portal.search.query.Query;
 import com.liferay.portal.search.rescore.Rescore;
@@ -320,6 +321,14 @@ public class SearchRequestBuilderImpl implements SearchRequestBuilder {
 	public SearchRequestBuilder groupIds(long... groupIds) {
 		withSearchRequestImpl(
 			searchRequestImpl -> searchRequestImpl.setGroupIds(groupIds));
+
+		return this;
+	}
+
+	@Override
+	public SearchRequestBuilder highlight(Highlight highlight) {
+		withSearchRequestImpl(
+			searchRequestImpl -> searchRequestImpl.setHighlight(highlight));
 
 		return this;
 	}
