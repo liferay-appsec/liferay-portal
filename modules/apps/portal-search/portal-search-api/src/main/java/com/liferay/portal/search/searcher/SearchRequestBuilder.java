@@ -19,6 +19,7 @@ import com.liferay.portal.search.aggregation.Aggregation;
 import com.liferay.portal.search.aggregation.pipeline.PipelineAggregation;
 import com.liferay.portal.search.filter.ComplexQueryPart;
 import com.liferay.portal.search.groupby.GroupByRequest;
+import com.liferay.portal.search.highlight.Highlight;
 import com.liferay.portal.search.query.Query;
 import com.liferay.portal.search.rescore.Rescore;
 import com.liferay.portal.search.sort.Sort;
@@ -124,6 +125,8 @@ public interface SearchRequestBuilder {
 		GroupByRequest... groupByRequests);
 
 	public SearchRequestBuilder groupIds(long... groupIds);
+
+	public SearchRequestBuilder highlight(Highlight highlight);
 
 	public SearchRequestBuilder highlightEnabled(boolean highlightEnabled);
 
