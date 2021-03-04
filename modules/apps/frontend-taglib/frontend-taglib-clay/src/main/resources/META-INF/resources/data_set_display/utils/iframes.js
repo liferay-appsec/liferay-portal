@@ -12,29 +12,45 @@
  * details.
  */
 
-import {OPEN_MODAL} from './eventsDefinitions';
+import {OPEN_MODAL, OPEN_MODAL_FROM_IFRAME} from './eventsDefinitions';
 
-export const iframeHandlerModalNamespace = 'iframe-handler-modal_';
-export let counter = 0;
-export const iframeInitialHandlerModalId = `${iframeHandlerModalNamespace}${counter}`;
+const iframeHandlerModalNamespace = 'iframe-handler-modal_';
+let modalsCounter = 0;
+const registeredModals = new Map();
 
-Liferay.on('endNavigate', () => {
-	counter = 0;
+Liferay.on(OPEN_MODAL_FROM_IFRAME, (payload) => {
+	let firstAvailableModalId = null;
+
+	// eslint-disable-next-line no-for-of-loops/no-for-of-loops
+	for (const [modalId, modalRef] of registeredModals.entries()) {
+		if (modalRef) {
+			firstAvailableModalId = modalId;
+			break;
+		}
+	}
+
+	window.top.Liferay.fire(OPEN_MODAL, {
+		...payload,
+		id: firstAvailableModalId,
+	});
 });
 
-export function getIframeHandlerModalId() {
-	return `${iframeHandlerModalNamespace}${counter++}`;
+Liferay.on('endNavigate', () => {
+	registeredModals.clear();
+});
+
+export function subscribeModal(modalNode) {
+	const id = `${iframeHandlerModalNamespace}${modalsCounter++}`;
+
+	registeredModals.set(id, modalNode);
+
+	return id;
+}
+
+export function unsubscribeModal(modalId) {
+	registeredModals.delete(modalId);
 }
 
 export function isPageInIframe() {
 	return window.location !== window.parent.location;
-}
-
-export function initializeIframeListeners() {
-	Liferay.on(OPEN_MODAL, (payload) => {
-		window.top.Liferay.fire(OPEN_MODAL, {
-			...payload,
-			id: iframeInitialHandlerModalId,
-		});
-	});
 }

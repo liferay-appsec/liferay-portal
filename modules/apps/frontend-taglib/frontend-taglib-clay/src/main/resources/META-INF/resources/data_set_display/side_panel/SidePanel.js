@@ -28,7 +28,11 @@ import {
 	OPEN_SIDE_PANEL,
 	SIDE_PANEL_CLOSED,
 } from '../utils/eventsDefinitions';
-import {getIframeHandlerModalId, isPageInIframe} from '../utils/iframes';
+import {
+	isPageInIframe,
+	subscribeModal,
+	unsubscribeModal,
+} from '../utils/iframes';
 import {logError} from '../utils/logError';
 import {exposeSidePanel} from '../utils/sidePanels';
 import SideMenu from './SideMenu';
@@ -43,6 +47,7 @@ export default class SidePanel extends React.Component {
 			active: null,
 			closeButtonStyle: null,
 			currentURL: props.url || null,
+			iframeHandlerModalId: null,
 			loading: true,
 			menuCoverTopDistance: 0,
 			moving: false,
@@ -54,7 +59,6 @@ export default class SidePanel extends React.Component {
 				document.querySelector(this.props.wrapperSelector) ||
 				document.querySelector('body'),
 		};
-		this.iframeHandlerModalId = getIframeHandlerModalId();
 		this.handleIframeClickOnSubmit = this.handleIframeClickOnSubmit.bind(
 			this
 		);
@@ -68,6 +72,7 @@ export default class SidePanel extends React.Component {
 		this.updateTop = this.updateTop.bind(this);
 		this.debouncedUpdateTop = debounce(this.updateTop, 250);
 		this.panel = React.createRef();
+		this.modalRef = React.createRef();
 		this.iframeRef = React.createRef();
 	}
 
@@ -102,6 +107,14 @@ export default class SidePanel extends React.Component {
 			url: this.state.currentURL,
 			visible: this.state.visible,
 		}));
+
+		if (!this.state.iframeHandlerModalId && this.modalRef.current) {
+			const modalId = subscribeModal(this.modalRef.current);
+
+			this.setState({
+				iframeHandlerModalId: modalId,
+			});
+		}
 	}
 
 	handlePanelOpenEvent(event) {
@@ -146,6 +159,7 @@ export default class SidePanel extends React.Component {
 	}
 
 	componentWillUnmount() {
+		unsubscribeModal(this.state.iframeHandlerModalId);
 		this._isMounted = false;
 		window.removeEventListener('keyup', this.handleKeyupEvent);
 
@@ -341,7 +355,10 @@ export default class SidePanel extends React.Component {
 
 		const content = (
 			<>
-				<Modal id={this.iframeHandlerModalId} />
+				<Modal
+					id={this.state.iframeHandlerModalId}
+					ref={this.modalRef}
+				/>
 				<div
 					className={classNames(
 						'side-panel-nav-cover navigation-bar border-bottom',

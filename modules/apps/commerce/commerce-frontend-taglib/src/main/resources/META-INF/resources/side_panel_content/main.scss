@@ -1,3 +1,5 @@
+@import 'atlas-variables';
+
 $header-height: 65px;
 $dialog-footer-height: 70px;
 
@@ -35,7 +37,7 @@ $dialog-footer-height: 70px;
 	}
 
 	.side-panel-iframe-menu-wrapper {
-		border-bottom: 1px solid #e7e7ed;
+		border-bottom: 1px solid $gray-300;
 		position: sticky;
 		top: 0;
 	}

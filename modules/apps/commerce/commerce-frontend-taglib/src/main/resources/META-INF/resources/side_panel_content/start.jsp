@@ -16,9 +16,7 @@
 
 <%@ include file="/side_panel_content/init.jsp" %>
 
-<aui:script require="commerce-frontend-js/utilities/iframes as iframesUtils">
-	iframesUtils.initializeIframeListeners();
-</aui:script>
+<link href="<%= PortalUtil.getStaticResourceURL(request, PortalUtil.getPathModule() + "/commerce-frontend-taglib/side_panel_content/main.css") %>" rel="stylesheet" />
 
 <div class="side-panel-iframe">
 	<c:if test="<%= Validator.isNotNull(title) %>">

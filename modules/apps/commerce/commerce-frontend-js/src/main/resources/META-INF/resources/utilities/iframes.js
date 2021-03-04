@@ -12,29 +12,6 @@
  * details.
  */
 
-import {OPEN_MODAL} from './eventsDefinitions';
-
-export const iframeHandlerModalNamespace = 'iframe-handler-modal_';
-export let counter = 0;
-export const iframeInitialHandlerModalId = `${iframeHandlerModalNamespace}${counter}`;
-
-Liferay.on('endNavigate', () => {
-	counter = 0;
-});
-
-export function getIframeHandlerModalId() {
-	return `${iframeHandlerModalNamespace}${counter++}`;
-}
-
 export function isPageInIframe() {
 	return window.location !== window.parent.location;
-}
-
-export function initializeIframeListeners() {
-	Liferay.on(OPEN_MODAL, (payload) => {
-		window.top.Liferay.fire(OPEN_MODAL, {
-			...payload,
-			id: iframeInitialHandlerModalId,
-		});
-	});
 }

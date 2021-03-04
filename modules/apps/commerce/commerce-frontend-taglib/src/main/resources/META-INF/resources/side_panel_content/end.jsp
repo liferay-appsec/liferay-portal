@@ -31,15 +31,6 @@
 	</c:if>
 </div>
 
-<aui:script require="commerce-frontend-js/utilities/eventsDefinitions as events">
-	document.querySelector('body').classList.remove('open');
-
-	document
-		.querySelectorAll('.side-panel-iframe-close, .btn-cancel')
-		.forEach((trigger) => {
-			trigger.addEventListener('click', (e) => {
-				e.preventDefault();
-				window.parent.Liferay.fire(events.CLOSE_SIDE_PANEL);
-			});
-		});
-</aui:script>
+<liferay-frontend:component
+	module="side_panel_content/index"
+/>

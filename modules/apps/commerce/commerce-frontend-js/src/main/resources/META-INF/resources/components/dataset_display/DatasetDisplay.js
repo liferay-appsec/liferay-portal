@@ -34,7 +34,6 @@ import {
 	showNotification,
 } from '../../utilities/notifications';
 import Modal from '../modal/Modal';
-import SidePanel from '../side_panel/SidePanel';
 import DatasetDisplayContext from './DatasetDisplayContext';
 import EmptyResultMessage from './EmptyResultMessage';
 import ManagementBar from './management_bar/index';
@@ -45,9 +44,7 @@ function DatasetDisplay(props) {
 	const [views, updateViews] = useState(props.views);
 	const [loading, setLoading] = useState(false);
 	const [actionLoading, setActionLoading] = useState(false);
-	const [datasetDisplaySupportSidePanelId] = useState(
-		props.sidePanelId || 'support-side-panel-' + getRandomId()
-	);
+	const [datasetDisplaySupportSidePanelId] = useState(props.sidePanelId);
 
 	const [datasetDisplaySupportModalId] = useState(
 		'support-modal-' + getRandomId()
@@ -489,12 +486,6 @@ function DatasetDisplay(props) {
 					id={datasetDisplaySupportModalId}
 					onClose={refreshData}
 				/>
-				{!props.sidePanelId && (
-					<SidePanel
-						id={datasetDisplaySupportSidePanelId}
-						onAfterSubmit={refreshData}
-					/>
-				)}
 				<div className="dataset-display-wrapper" ref={wrapperRef}>
 					{props.style === 'default' && (
 						<div className="dataset-display dataset-display-inline">

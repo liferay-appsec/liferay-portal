@@ -15,7 +15,6 @@
 import React from 'react';
 
 import datasetDisplayLauncher from '../../../../../frontend-taglib/frontend-taglib-clay/src/main/resources/META-INF/resources/data_set_display/entry';
-import sidePanelLauncher from '../../../src/main/resources/META-INF/resources/components/side_panel/entry';
 
 import '../../../src/main/resources/META-INF/resources/styles/main.scss';
 
@@ -107,7 +106,6 @@ const fluidDataSetDisplayProps = {
 		initialTotalItems: 40,
 	},
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	spritemap: './assets/clay/icons.svg',
 	style: 'fluid',
 	views: [
@@ -278,7 +276,6 @@ const emailsDataSetDisplayProps = {
 		initialDelta: 10,
 	},
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	spritemap: './assets/clay/icons.svg',
 	style: 'stacked',
 	views: [
@@ -323,7 +320,6 @@ const selectableTableProps = {
 	},
 	selectedItemsKey: 'countryId',
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	spritemap: './assets/clay/icons.svg',
 	views: [
 		{
@@ -468,7 +464,6 @@ const ordersDataSetDisplayProps = {
 	},
 	selectedItemsKey: 'id',
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	sorting: [
 		{
 			direction: 'desc',
@@ -542,13 +537,15 @@ const productsDataSetDisplayProps = {
 			method: 'delete',
 		},
 	],
-	creationMenuItems: [
-		{
-			href: 'modal/url',
-			label: 'Add Product',
-			target: 'modal',
-		},
-	],
+	creationMenu: {
+		primaryItems: [
+			{
+				href: 'modal/url',
+				label: 'Add Product',
+				target: 'modal',
+			},
+		],
+	},
 	filters: [
 		{
 			id: 'customFilterId',
@@ -619,6 +616,14 @@ const productsDataSetDisplayProps = {
 	inlineEditingSettings: true,
 	itemsActions: [
 		{
+			href: '/dataset-display.html',
+			icon: 'pencil',
+			id: 'edit',
+			label: 'Edit',
+			permissionKey: 'update',
+			target: 'sidePanel',
+		},
+		{
 			href: '/page/{id}',
 			icon: 'view',
 			id: 'view',
@@ -664,7 +669,6 @@ const productsDataSetDisplayProps = {
 	},
 	selectedItemsKey: 'id',
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	sorting: [
 		{
 			direction: 'desc',
@@ -805,7 +809,6 @@ const priceListsDataSetDisplayProps = {
 	},
 	selectedItemsKey: 'id',
 	showPagination: true,
-	sidePanelId: 'sidePanelTestId',
 	spritemap: './assets/clay/icons.svg',
 	views: [
 		{
@@ -890,28 +893,3 @@ datasetDisplayLauncher(
 	emailsDataSetDisplayProps,
 	document.getElementById('emails-dataset-display-root')
 );
-
-sidePanelLauncher('sidePanel', 'side-panel-root', {
-	containerSelector: '.container',
-	id: 'sidePanelTestId',
-	items: [
-		{
-			href: '/side-panel/comments.html',
-			icon: 'comments',
-			slug: 'comments',
-		},
-		{
-			href: '/side-panel/edit.html',
-			icon: 'pencil',
-			slug: 'edit',
-		},
-		{
-			href: '/side-panel/changelog.html',
-			icon: 'restore',
-			slug: 'changelog',
-		},
-	],
-	size: 'md',
-	spritemap: './assets/clay/icons.svg',
-	topAnchorSelector: '.top-anchor',
-});

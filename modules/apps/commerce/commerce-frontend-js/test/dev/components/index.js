@@ -69,11 +69,6 @@ module.exports = [
 		page: 'mini-compare.html',
 	},
 	{
-		entry: 'SidePanel',
-		name: 'Side panel',
-		page: 'side-panel.html',
-	},
-	{
 		entry: 'StepTracker',
 		name: 'Step tracker',
 		page: 'step-tracker.html',
