@@ -20,19 +20,29 @@ import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDa
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.MapUtil;
+
+import java.net.URI;
 
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import javax.servlet.http.Cookie;
+
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthError;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
+import org.apache.cxf.rs.security.oauth2.common.OAuthRedirectionState;
 import org.apache.cxf.rs.security.oauth2.common.OOBAuthorizationResponse;
 import org.apache.cxf.rs.security.oauth2.common.UserSubject;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
@@ -56,6 +66,131 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class AuthorizationCodeGrantServiceRegistrator {
 
+	public static class LiferayAuthorizationCodeGrantService
+		extends AuthorizationCodeGrantService {
+
+		@Override
+		protected boolean canAuthorizationBeSkipped(
+			MultivaluedMap<String, String> params, Client client,
+			UserSubject userSubject, List<String> requestedScope,
+			List<OAuthPermission> permissions) {
+
+			if (MapUtil.getBoolean(
+					client.getProperties(),
+					OAuth2ProviderRESTEndpointConstants.
+						PROPERTY_KEY_CLIENT_TRUSTED_APPLICATION)) {
+
+				return true;
+			}
+
+			return super.canAuthorizationBeSkipped(
+				params, client, userSubject, requestedScope, permissions);
+		}
+
+		@Override
+		protected Response deliverOOBResponse(
+			OOBAuthorizationResponse oobAuthorizationResponse) {
+
+			_log.error(
+				"The parameter \"redirect_uri\" was not found in the request " +
+					"for client " + oobAuthorizationResponse.getClientId());
+
+			return Response.status(
+				500
+			).build();
+		}
+
+		@Override
+		protected Client getClient(
+			String clientId, MultivaluedMap<String, String> params) {
+
+			try {
+				Client client = getValidClient(clientId, params);
+
+				if (client != null) {
+					return client;
+				}
+			}
+			catch (OAuthServiceException oAuthServiceException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Unable to validate remote client",
+						oAuthServiceException);
+				}
+
+				if (oAuthServiceException.getError() != null) {
+					reportInvalidRequestError(
+						oAuthServiceException.getError(), null);
+				}
+			}
+
+			reportInvalidRequestError(
+				new OAuthError(OAuthConstants.INVALID_CLIENT), null);
+
+			return null;
+		}
+
+		@Override
+		protected OAuthRedirectionState recreateRedirectionStateFromParams(
+			MultivaluedMap<String, String> params) {
+
+			OAuthRedirectionState oAuthRedirectionState =
+				super.recreateRedirectionStateFromParams(params);
+
+			Client client = getDataProvider().getClient(
+				oAuthRedirectionState.getClientId());
+
+			if (MapUtil.getBoolean(
+					client.getProperties(),
+					OAuth2ProviderRESTEndpointConstants.
+						PROPERTY_KEY_CLIENT_REMEMBER_DEVICE) &&
+				params.containsKey(
+					_OAUTH2_AUTHORIZE_PORTLET_REMEMBER_DEVICE_PARAMETER)) {
+
+				Cookie cookie = _setRememberDeviceCookie();
+
+				Map<String, String> extraProperties =
+					oAuthRedirectionState.getExtraProperties();
+
+				extraProperties.put(
+					OAuth2ProviderRESTEndpointConstants.COOKIE_REMEMBER_DEVICE,
+					cookie.getValue());
+
+				oAuthRedirectionState.setExtraProperties(extraProperties);
+			}
+
+			return oAuthRedirectionState;
+		}
+
+		private Cookie _setRememberDeviceCookie() {
+			UUID uuid = new UUID(
+				SecureRandomUtil.nextLong(), SecureRandomUtil.nextLong());
+
+			Cookie cookie = new Cookie(
+				OAuth2ProviderRESTEndpointConstants.COOKIE_REMEMBER_DEVICE,
+				uuid.toString());
+
+			URI absolutePath = _uriInfo.getBaseUri();
+
+			cookie.setPath(absolutePath.getPath());
+
+			CookieKeys.addCookie(
+				getMessageContext().getHttpServletRequest(),
+				getMessageContext().getHttpServletResponse(), cookie);
+
+			return cookie;
+		}
+
+		private static final String
+			_OAUTH2_AUTHORIZE_PORTLET_REMEMBER_DEVICE_PARAMETER =
+				"_com_liferay_oauth2_provider_web_internal_portlet_" +
+					"OAuth2AuthorizePortlet_rememberDevice";
+
+		@Context
+		private UriInfo _uriInfo;
+
+	}
+
 	@Activate
 	protected void activate(
 		BundleContext bundleContext, Map<String, Object> properties) {
@@ -71,72 +206,7 @@ public class AuthorizationCodeGrantServiceRegistrator {
 		}
 
 		AuthorizationCodeGrantService authorizationCodeGrantService =
-			new AuthorizationCodeGrantService() {
-
-				@Override
-				protected boolean canAuthorizationBeSkipped(
-					MultivaluedMap<String, String> params, Client client,
-					UserSubject userSubject, List<String> requestedScope,
-					List<OAuthPermission> permissions) {
-
-					if (MapUtil.getBoolean(
-							client.getProperties(),
-							OAuth2ProviderRESTEndpointConstants.
-								PROPERTY_KEY_CLIENT_TRUSTED_APPLICATION)) {
-
-						return true;
-					}
-
-					return super.canAuthorizationBeSkipped(
-						params, client, userSubject, requestedScope,
-						permissions);
-				}
-
-				@Override
-				protected Response deliverOOBResponse(
-					OOBAuthorizationResponse oobAuthorizationResponse) {
-
-					_log.error(
-						"The parameter \"redirect_uri\" was not found in the " +
-							"request for client " +
-								oobAuthorizationResponse.getClientId());
-
-					return Response.status(
-						500
-					).build();
-				}
-
-				@Override
-				protected Client getClient(
-					String clientId, MultivaluedMap<String, String> params) {
-
-					try {
-						Client client = getValidClient(clientId, params);
-
-						if (client != null) {
-							return client;
-						}
-					}
-					catch (OAuthServiceException oAuthServiceException) {
-						if (_log.isDebugEnabled()) {
-							_log.debug(
-								"Unable to validate remote client",
-								oAuthServiceException);
-						}
-
-						if (oAuthServiceException.getError() != null) {
-							reportInvalidRequestError(
-								oAuthServiceException.getError(), null);
-						}
-					}
-
-					reportInvalidRequestError(
-						new OAuthError(OAuthConstants.INVALID_CLIENT), null);
-
-					return null;
-				}
-
-			};
+			new LiferayAuthorizationCodeGrantService();
 
 		authorizationCodeGrantService.setCanSupportPublicClients(
 			oAuth2ProviderConfiguration.allowAuthorizationCodePKCEGrant());
