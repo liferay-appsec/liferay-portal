@@ -20,6 +20,7 @@ import com.liferay.portal.search.aggregation.Aggregation;
 import com.liferay.portal.search.aggregation.pipeline.PipelineAggregation;
 import com.liferay.portal.search.engine.adapter.ccr.CrossClusterRequest;
 import com.liferay.portal.search.filter.ComplexQueryPart;
+import com.liferay.portal.search.highlight.Highlight;
 import com.liferay.portal.search.query.Query;
 import com.liferay.portal.search.rescore.Rescore;
 import com.liferay.portal.search.stats.StatsRequest;
@@ -80,6 +81,10 @@ public abstract class BaseSearchRequest extends CrossClusterRequest {
 
 	public Map<String, Facet> getFacets() {
 		return _facets;
+	}
+
+	public Highlight getHighlight() {
+		return _highlight;
 	}
 
 	public Map<String, Float> getIndexBoosts() {
@@ -198,6 +203,10 @@ public abstract class BaseSearchRequest extends CrossClusterRequest {
 		_explain = explain;
 	}
 
+	public void setHighlight(Highlight highlight) {
+		_highlight = highlight;
+	}
+
 	public void setIncludeResponseString(boolean includeResponseString) {
 		_includeResponseString = includeResponseString;
 	}
@@ -265,6 +274,7 @@ public abstract class BaseSearchRequest extends CrossClusterRequest {
 	private final List<ComplexQueryPart> _complexQueryParts = new ArrayList<>();
 	private Boolean _explain;
 	private final Map<String, Facet> _facets = new LinkedHashMap<>();
+	private Highlight _highlight;
 	private boolean _includeResponseString;
 	private final Map<String, Float> _indexBoosts = new LinkedHashMap<>();
 	private String[] _indexNames;
