@@ -16,6 +16,7 @@ package com.liferay.portal.crypto.hash.provider.message.digest.internal;
 
 import com.liferay.portal.crypto.hash.spi.CryptoHashProvider;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderResponse;
+import com.liferay.portal.crypto.hash.spi.VariableSizeSaltProvider;
 import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.security.MessageDigest;
@@ -24,7 +25,8 @@ import java.security.NoSuchAlgorithmException;
 /**
  * @author Arthur Chan
  */
-public class MessageDigestCryptoHashProvider implements CryptoHashProvider {
+public class MessageDigestCryptoHashProvider
+	implements CryptoHashProvider, VariableSizeSaltProvider {
 
 	public MessageDigestCryptoHashProvider() throws NoSuchAlgorithmException {
 		_messageDigest = MessageDigest.getInstance("SHA-256");
