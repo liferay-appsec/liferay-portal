@@ -468,7 +468,7 @@ definition {
 	@description = "This is a test for LPS-98076. As a Developer, I want to Implement the HTML field type"
 	@priority = "4"
 	test VerifyRichFieldHelpTextOnUpload {
-		property portal.acceptance = "false";
+		property portal.upstream = "quarantine";
 
 		DMNavigator.gotoDocumentType();
 
