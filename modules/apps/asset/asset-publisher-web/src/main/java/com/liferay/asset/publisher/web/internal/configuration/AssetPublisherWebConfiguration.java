@@ -64,7 +64,7 @@ public interface AssetPublisherWebConfiguration {
 	 * @return <code>true</code> if dynamic export is enabled.
 	 */
 	@Meta.AD(
-		deflt = "true", description = "dynamic-export-enabled-key-description",
+		deflt = "false", description = "dynamic-export-enabled-key-description",
 		name = "dynamic-export-enabled", required = false
 	)
 	public boolean dynamicExportEnabled();
@@ -101,7 +101,7 @@ public interface AssetPublisherWebConfiguration {
 	 * @return <code>true</code> if manual export is enabled.
 	 */
 	@Meta.AD(
-		deflt = "true", description = "manual-export-enabled-key-description",
+		deflt = "false", description = "manual-export-enabled-key-description",
 		name = "manual-export-enabled", required = false
 	)
 	public boolean manualExportEnabled();
