@@ -242,7 +242,11 @@ const DatePicker = ({
 					}
 
 					if (moment(value).isValid()) {
-						onChange(moment(value).locale(locale).format('L'));
+						onChange(
+							moment(value, getLocaleDateFormat(locale)).format(
+								'MM/DD/YYYY'
+							)
+						);
 					}
 				}}
 				ref={inputRef}
