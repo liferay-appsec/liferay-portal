@@ -61,13 +61,12 @@ portletURL.setParameter("tabs1", tabs1);
 	/>
 </c:if>
 
-<clay:management-toolbar-v2
+<clay:management-toolbar
 	clearResultsURL="<%= reportsEngineDisplayContext.getClearResultsURL() %>"
 	creationMenu="<%= reportsEngineDisplayContext.getCreationMenu() %>"
 	disabled="<%= reportsEngineDisplayContext.isDisabled() %>"
 	filterDropdownItems="<%= reportsEngineDisplayContext.getFilterOptions() %>"
 	itemsTotal="<%= reportsEngineDisplayContext.getTotalItems() %>"
-	namespace="<%= liferayPortletResponse.getNamespace() %>"
 	searchActionURL="<%= reportsEngineDisplayContext.getSearchURL() %>"
 	searchContainerId="reportsEngine"
 	searchFormName="fm1"
