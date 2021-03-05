@@ -46,7 +46,7 @@ definition {
 	@description = "This is a test for LPS-107630. As an App Adm, I want to use an existing fieldset"
 	@priority = "4"
 	test FieldsetSetAsCollapsible {
-		property portal.acceptance = "false";
+		property portal.upstream = "quarantine";
 
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "guest");
 
