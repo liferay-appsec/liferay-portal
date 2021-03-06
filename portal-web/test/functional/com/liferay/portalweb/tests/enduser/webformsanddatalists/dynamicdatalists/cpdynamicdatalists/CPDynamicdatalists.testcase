@@ -96,7 +96,7 @@ definition {
 
 	@priority = "5"
 	test AddFormTemplate {
-		property portal.acceptance = "true";
+		property portal.acceptance = "quarantine";
 
 		Navigator.openURL();
 
