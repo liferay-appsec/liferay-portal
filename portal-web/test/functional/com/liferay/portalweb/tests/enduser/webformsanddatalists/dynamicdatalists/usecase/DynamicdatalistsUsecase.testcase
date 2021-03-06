@@ -2644,6 +2644,8 @@ definition {
 	@description = "This is a use case for LPS-67478 ."
 	@priority = "3"
 	test ViewLinkToPageBreadcrumb {
+		property portal.upstream = "quarantine";
+
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
