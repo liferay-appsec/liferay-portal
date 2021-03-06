@@ -24,7 +24,7 @@ export default function propsTransformer({portletNamespace, ...otherProps}) {
 					)
 				) {
 					const form = document.getElementById(
-						`${portletNamespace}SynonymSetsEntriesFm`
+						`${portletNamespace}fm`
 					);
 
 					if (form) {
