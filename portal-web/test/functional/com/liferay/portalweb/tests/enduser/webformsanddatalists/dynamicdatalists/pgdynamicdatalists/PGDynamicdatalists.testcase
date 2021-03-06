@@ -1164,6 +1164,8 @@ definition {
 
 	@priority = "3"
 	test ViewDecimalFieldPredefinedValue {
+		property portal.upstream = "quarantine";
+
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
