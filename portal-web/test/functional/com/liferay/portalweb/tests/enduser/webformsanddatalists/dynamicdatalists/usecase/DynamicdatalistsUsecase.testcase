@@ -1573,6 +1573,8 @@ definition {
 
 	@priority = "4"
 	test AssertUserUpdateRejectedRecord {
+		property portal.upstream = "quarantine";
+
 		ProductMenu.gotoPortlet(
 			category = "Site Builder",
 			portlet = "Pages");
