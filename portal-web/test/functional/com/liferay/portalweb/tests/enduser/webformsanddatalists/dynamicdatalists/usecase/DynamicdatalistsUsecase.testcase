@@ -2814,6 +2814,8 @@ definition {
 	@description = "This is a use case for LPS-51538."
 	@priority = "3"
 	test ViewNestedFieldDoesNotDisplayInRecordTable {
+		property portal.upstream = "quarantine";
+
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
