@@ -34,12 +34,13 @@ page import="com.liferay.portal.search.tuning.synonyms.web.internal.display.cont
 SynonymsDisplayContext synonymsDisplayContext = (SynonymsDisplayContext)request.getAttribute(SynonymsPortletKeys.SYNONYMS_DISPLAY_CONTEXT);
 %>
 
-<clay:management-toolbar-v2
+<clay:management-toolbar
 	actionDropdownItems="<%= synonymsDisplayContext.getActionDropdownMultipleItems() %>"
 	componentId="synonymSetsEntriesManagementToolbar"
 	creationMenu="<%= synonymsDisplayContext.getCreationMenu() %>"
 	disabled="<%= synonymsDisplayContext.isDisabledManagementBar() %>"
 	itemsTotal="<%= synonymsDisplayContext.getItemsTotal() %>"
+	propsTransformer="js/SynonymsManagementToolbarPropsTransformer"
 	searchContainerId="synonymSetsEntries"
 	selectable="<%= true %>"
 	showCreationMenu="<%= true %>"
@@ -85,7 +86,3 @@ SynonymsDisplayContext synonymsDisplayContext = (SynonymsDisplayContext)request.
 		/>
 	</liferay-ui:search-container>
 </aui:form>
-
-<aui:script require='<%= npmResolvedPackageName + "/js/MultipleCheckboxAction.es as MultipleCheckboxAction" %>'>
-	new MultipleCheckboxAction.default('<portlet:namespace />');
-</aui:script>
