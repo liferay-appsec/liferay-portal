@@ -66,6 +66,8 @@ definition {
 
 	@priority = "5"
 	test AddDisplayTemplateVelocity {
+		property portal.upstream = "quarantine";
+
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
