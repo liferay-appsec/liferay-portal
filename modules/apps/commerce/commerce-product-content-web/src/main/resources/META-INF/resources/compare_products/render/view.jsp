@@ -42,7 +42,7 @@ List<CPOptionCategory> cpOptionCategories = cpCompareContentHelper.getCPOptionCa
 
 					<td class="commerce-compare-table__card">
 						<liferay-commerce-product:product-list-entry-renderer
-							CPCatalogEntry = "<%= cpCatalogEntry %>"
+							CPCatalogEntry="<%= cpCatalogEntry %>"
 						/>
 					</td>
 

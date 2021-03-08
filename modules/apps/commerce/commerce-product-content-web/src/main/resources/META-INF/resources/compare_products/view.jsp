@@ -43,9 +43,9 @@ CPDataSourceResult cpDataSourceResult = cpCompareContentDisplayContext.getCPData
 	</c:when>
 	<c:when test="<%= cpCompareContentDisplayContext.isSelectionStyleCustomRenderer() %>">
 		<liferay-commerce-product:product-list-renderer
-			CPDataSourceResult = "<%= cpCompareContentDisplayContext.getCPDataSourceResult() %>"
-			entryKeys = "<%= cpCompareContentDisplayContext.getCPContentListEntryRendererKeys() %>"
-			key = "<%= cpCompareContentDisplayContext.getCPContentListRendererKey() %>"
+			CPDataSourceResult="<%= cpCompareContentDisplayContext.getCPDataSourceResult() %>"
+			entryKeys="<%= cpCompareContentDisplayContext.getCPContentListEntryRendererKeys() %>"
+			key="<%= cpCompareContentDisplayContext.getCPContentListRendererKey() %>"
 		/>
 	</c:when>
 	<c:otherwise>

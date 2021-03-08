@@ -37,7 +37,9 @@ if (cpSku != null) {
 <div class="mb-5 product-detail" id="<portlet:namespace /><%= cpDefinitionId %>ProductContent">
 	<div class="row">
 		<div class="col-12 col-md-6">
-			<commerce-ui:gallery CPDefinitionId="<%= cpDefinitionId %>" />
+			<commerce-ui:gallery
+				CPDefinitionId="<%= cpDefinitionId %>"
+			/>
 		</div>
 
 		<div class="col-12 col-md-6 d-flex flex-column justify-content-center">

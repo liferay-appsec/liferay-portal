@@ -27,7 +27,7 @@ CPDataSourceResult cpDataSourceResult = (CPDataSourceResult)request.getAttribute
 	%>
 
 		<liferay-commerce-product:product-list-entry-renderer
-			CPCatalogEntry = "<%= cpCatalogEntry %>"
+			CPCatalogEntry="<%= cpCatalogEntry %>"
 		/>
 
 	<%

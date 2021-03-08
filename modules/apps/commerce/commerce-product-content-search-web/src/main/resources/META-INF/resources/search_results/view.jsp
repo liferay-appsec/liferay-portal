@@ -54,9 +54,9 @@ SearchContainer<CPCatalogEntry> cpCatalogEntrySearchContainer = cpSearchResultsD
 	</c:when>
 	<c:when test="<%= cpSearchResultsDisplayContext.isSelectionStyleCustomRenderer() %>">
 		<liferay-commerce-product:product-list-renderer
-			CPDataSourceResult = "<%= cpSearchResultsDisplayContext.getCPDataSourceResult() %>"
-			entryKeys = "<%= cpSearchResultsDisplayContext.getCPContentListEntryRendererKeys() %>"
-			key = "<%= cpSearchResultsDisplayContext.getCPContentListRendererKey() %>"
+			CPDataSourceResult="<%= cpSearchResultsDisplayContext.getCPDataSourceResult() %>"
+			entryKeys="<%= cpSearchResultsDisplayContext.getCPContentListEntryRendererKeys() %>"
+			key="<%= cpSearchResultsDisplayContext.getCPContentListRendererKey() %>"
 		/>
 
 		<c:if test="<%= cpSearchResultsDisplayContext.isPaginate() %>">
