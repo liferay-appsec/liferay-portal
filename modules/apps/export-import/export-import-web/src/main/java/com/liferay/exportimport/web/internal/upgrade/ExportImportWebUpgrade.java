@@ -37,7 +37,8 @@ public class ExportImportWebUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"1.0.0", "1.0.1",
 			new com.liferay.exportimport.web.internal.upgrade.v1_0_1.
-				UpgradeStagingConfigurationClassNames(_groupLocalService));
+				StagingConfigurationClassNamesUpgradeProcess(
+					_groupLocalService));
 	}
 
 	@Reference(unbind = "-")

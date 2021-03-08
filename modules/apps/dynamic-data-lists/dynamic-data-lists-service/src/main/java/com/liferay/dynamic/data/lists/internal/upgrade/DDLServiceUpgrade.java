@@ -15,11 +15,11 @@
 package com.liferay.dynamic.data.lists.internal.upgrade;
 
 import com.liferay.counter.kernel.service.CounterLocalService;
+import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_0.SchemaUpgradeProcess;
 import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_0.UpgradeKernelPackage;
 import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_0.UpgradeLastPublishDate;
-import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_0.UpgradeSchema;
-import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_1.UpgradeRecordGroup;
-import com.liferay.dynamic.data.lists.internal.upgrade.v1_1_1.UpgradeVersionUserId;
+import com.liferay.dynamic.data.lists.internal.upgrade.v1_0_1.RecordGroupUpgradeProcess;
+import com.liferay.dynamic.data.lists.internal.upgrade.v1_1_1.VersionUserIdUpgradeProcess;
 import com.liferay.dynamic.data.lists.internal.upgrade.v2_0_0.util.DDLRecordSetTable;
 import com.liferay.dynamic.data.lists.internal.upgrade.v2_0_0.util.DDLRecordSetVersionTable;
 import com.liferay.dynamic.data.lists.internal.upgrade.v2_0_0.util.DDLRecordTable;
@@ -43,29 +43,29 @@ public class DDLServiceUpgrade implements UpgradeStepRegistrator {
 
 	@Override
 	public void register(Registry registry) {
-		registry.register("0.0.1", "0.0.2", new UpgradeSchema());
+		registry.register("0.0.1", "0.0.2", new SchemaUpgradeProcess());
 
 		registry.register("0.0.2", "0.0.3", new UpgradeKernelPackage());
 
 		registry.register("0.0.3", "1.0.0", new UpgradeLastPublishDate());
 
-		registry.register("1.0.0", "1.0.1", new UpgradeRecordGroup());
+		registry.register("1.0.0", "1.0.1", new RecordGroupUpgradeProcess());
 
 		registry.register(
 			"1.0.1", "1.0.2",
 			new com.liferay.dynamic.data.lists.internal.upgrade.v1_0_2.
-				UpgradeSchema());
+				SchemaUpgradeProcess());
 
 		registry.register(
 			"1.0.2", "1.1.0",
 			new com.liferay.dynamic.data.lists.internal.upgrade.v1_1_0.
-				UpgradeDDLRecord(),
+				DDLRecordUpgradeProcess(),
 			new com.liferay.dynamic.data.lists.internal.upgrade.v1_1_0.
-				UpgradeDDLRecordSet(),
+				DDLRecordSetUpgradeProcess(),
 			new com.liferay.dynamic.data.lists.internal.upgrade.v1_1_0.
-				UpgradeDDLRecordSetVersion(_counterLocalService));
+				DDLRecordSetVersionUpgradeProcess(_counterLocalService));
 
-		registry.register("1.1.0", "1.1.1", new UpgradeVersionUserId());
+		registry.register("1.1.0", "1.1.1", new VersionUserIdUpgradeProcess());
 
 		registry.register(
 			"1.1.1", "2.0.0",
@@ -78,12 +78,12 @@ public class DDLServiceUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"2.0.0", "2.1.0",
 			new com.liferay.dynamic.data.lists.internal.upgrade.v2_1_0.
-				UpgradeSchema());
+				SchemaUpgradeProcess());
 
 		registry.register(
 			"2.1.0", "2.2.0",
 			new com.liferay.dynamic.data.lists.internal.upgrade.v2_2_0.
-				UpgradeSchema());
+				SchemaUpgradeProcess());
 
 		registry.register(
 			"2.2.0", "2.3.0",

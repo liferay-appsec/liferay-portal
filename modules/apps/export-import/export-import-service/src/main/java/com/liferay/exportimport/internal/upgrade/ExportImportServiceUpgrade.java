@@ -14,7 +14,7 @@
 
 package com.liferay.exportimport.internal.upgrade;
 
-import com.liferay.exportimport.internal.upgrade.v1_0_0.UpgradePublisherRequest;
+import com.liferay.exportimport.internal.upgrade.v1_0_0.PublisherRequestUpgradeProcess;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
@@ -43,7 +43,7 @@ public class ExportImportServiceUpgrade implements UpgradeStepRegistrator {
 			"0.0.1", "1.0.0",
 			new com.liferay.exportimport.internal.upgrade.v1_0_0.
 				UpgradeBackgroundTaskExecutorClassNames(),
-			new UpgradePublisherRequest(
+			new PublisherRequestUpgradeProcess(
 				_exportImportConfigurationLocalService, _groupLocalService,
 				_schedulerEngineHelper, _userLocalService));
 
