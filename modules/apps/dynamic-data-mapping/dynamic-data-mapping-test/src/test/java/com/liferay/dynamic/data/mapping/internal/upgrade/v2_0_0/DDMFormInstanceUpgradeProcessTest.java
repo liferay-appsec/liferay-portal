@@ -36,11 +36,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
  * @author Pedro Queiroz
  */
 @RunWith(PowerMockRunner.class)
-public class UpgradeDDMFormInstanceTest extends PowerMockito {
+public class DDMFormInstanceUpgradeProcessTest extends PowerMockito {
 
 	@Before
 	public void setUp() throws Exception {
-		setUpUpgradeDDMFormInstance();
+		setUpDDMFormInstanceUpgradeProcess();
 	}
 
 	@Test
@@ -55,7 +55,7 @@ public class UpgradeDDMFormInstanceTest extends PowerMockito {
 
 		Assert.assertEquals(
 			17,
-			_upgradeDDMFormInstance.getNewActionIds(
+			_ddmFormInstanceUpgradeProcess.getNewActionIds(
 				"RecordSet", "FormInstance", 0, currentNewActionIds));
 	}
 
@@ -71,7 +71,7 @@ public class UpgradeDDMFormInstanceTest extends PowerMockito {
 
 		Assert.assertEquals(
 			25,
-			_upgradeDDMFormInstance.getNewActionIds(
+			_ddmFormInstanceUpgradeProcess.getNewActionIds(
 				"RecordSet", "FormInstance", 0, currentNewActionIds));
 	}
 
@@ -134,17 +134,17 @@ public class UpgradeDDMFormInstanceTest extends PowerMockito {
 		);
 
 		field(
-			UpgradeDDMFormInstance.class, "_resourceActionLocalService"
+			DDMFormInstanceUpgradeProcess.class, "_resourceActionLocalService"
 		).set(
-			_upgradeDDMFormInstance, resourceActionLocalService
+			_ddmFormInstanceUpgradeProcess, resourceActionLocalService
 		);
 	}
 
-	protected void setUpUpgradeDDMFormInstance() throws Exception {
-		_upgradeDDMFormInstance = new UpgradeDDMFormInstance(
+	protected void setUpDDMFormInstanceUpgradeProcess() throws Exception {
+		_ddmFormInstanceUpgradeProcess = new DDMFormInstanceUpgradeProcess(
 			null, null, null, null, null);
 	}
 
-	private UpgradeDDMFormInstance _upgradeDDMFormInstance;
+	private DDMFormInstanceUpgradeProcess _ddmFormInstanceUpgradeProcess;
 
 }

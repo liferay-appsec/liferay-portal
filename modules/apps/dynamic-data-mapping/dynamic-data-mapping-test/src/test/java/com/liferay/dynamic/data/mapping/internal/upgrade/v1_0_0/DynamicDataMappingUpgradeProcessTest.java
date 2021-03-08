@@ -102,7 +102,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 		"com.liferay.portal.util.PropsValues"
 	}
 )
-public class UpgradeDynamicDataMappingTest extends PowerMockito {
+public class DynamicDataMappingUpgradeProcessTest extends PowerMockito {
 
 	@Before
 	public void setUp() throws Exception {
@@ -116,45 +116,46 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		setUpSAXReaderUtil();
 		setUpJSONFactoryUtil();
 
-		_upgradeDynamicDataMapping = new UpgradeDynamicDataMapping(
-			null, null, null, null, null, null, null,
-			_ddmFormValuesDeserializer, _ddmFormValuesSerializer, null, null,
-			null, null, null, null,
-			(ResourceActions)ProxyUtil.newProxyInstance(
-				UpgradeDynamicDataMappingTest.class.getClassLoader(),
-				new Class<?>[] {ResourceActions.class},
-				new InvocationHandler() {
+		_dynamicDataMappingUpgradeProcess =
+			new DynamicDataMappingUpgradeProcess(
+				null, null, null, null, null, null, null,
+				_ddmFormValuesDeserializer, _ddmFormValuesSerializer, null,
+				null, null, null, null, null,
+				(ResourceActions)ProxyUtil.newProxyInstance(
+					DynamicDataMappingUpgradeProcessTest.class.getClassLoader(),
+					new Class<?>[] {ResourceActions.class},
+					new InvocationHandler() {
 
-					@Override
-					public Object invoke(
-						Object proxy, Method method, Object[] args) {
+						@Override
+						public Object invoke(
+							Object proxy, Method method, Object[] args) {
 
-						String methodName = method.getName();
+							String methodName = method.getName();
 
-						if (methodName.equals("getCompositeModelName")) {
-							if (ArrayUtil.isEmpty(args)) {
-								return StringPool.BLANK;
+							if (methodName.equals("getCompositeModelName")) {
+								if (ArrayUtil.isEmpty(args)) {
+									return StringPool.BLANK;
+								}
+
+								Arrays.sort(args);
+
+								StringBundler sb = new StringBundler(
+									args.length * 2);
+
+								for (Object className : args) {
+									sb.append(className);
+								}
+
+								sb.setIndex(sb.index() - 1);
+
+								return sb.toString();
 							}
 
-							Arrays.sort(args);
-
-							StringBundler sb = new StringBundler(
-								args.length * 2);
-
-							for (Object className : args) {
-								sb.append(className);
-							}
-
-							sb.setIndex(sb.index() - 1);
-
-							return sb.toString();
+							return null;
 						}
 
-						return null;
-					}
-
-				}),
-			null, null, null, null);
+					}),
+				null, null, null, null);
 	}
 
 	@Test
@@ -168,7 +169,7 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 
 		Assert.assertEquals(
 			"myna2",
-			_upgradeDynamicDataMapping.createNewDDMFormFieldName(
+			_dynamicDataMappingUpgradeProcess.createNewDDMFormFieldName(
 				"?my/--na", existingFieldNames));
 	}
 
@@ -180,15 +181,15 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 
 		Assert.assertEquals(
 			"name",
-			_upgradeDynamicDataMapping.createNewDDMFormFieldName(
+			_dynamicDataMappingUpgradeProcess.createNewDDMFormFieldName(
 				"name/?--", existingFieldNames));
 		Assert.assertEquals(
 			"firstName",
-			_upgradeDynamicDataMapping.createNewDDMFormFieldName(
+			_dynamicDataMappingUpgradeProcess.createNewDDMFormFieldName(
 				"first Name", existingFieldNames));
 		Assert.assertEquals(
 			"this_is_a_field_name",
-			_upgradeDynamicDataMapping.createNewDDMFormFieldName(
+			_dynamicDataMappingUpgradeProcess.createNewDDMFormFieldName(
 				"this?*&_is///_{{a[[  [_]  ~'field'////>_<name",
 				existingFieldNames));
 	}
@@ -199,32 +200,32 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 
 		Set<String> existingFieldNames = Collections.<String>emptySet();
 
-		_upgradeDynamicDataMapping.createNewDDMFormFieldName(
+		_dynamicDataMappingUpgradeProcess.createNewDDMFormFieldName(
 			"??????", existingFieldNames);
 	}
 
 	@Test
 	public void testIsInvalidFieldName() {
 		Assert.assertTrue(
-			_upgradeDynamicDataMapping.isInvalidFieldName("/name?"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("/name?"));
 		Assert.assertTrue(
-			_upgradeDynamicDataMapping.isInvalidFieldName("_name--"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("_name--"));
 		Assert.assertTrue(
-			_upgradeDynamicDataMapping.isInvalidFieldName("name^*"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("name^*"));
 		Assert.assertTrue(
-			_upgradeDynamicDataMapping.isInvalidFieldName("name^*"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("name^*"));
 		Assert.assertTrue(
-			_upgradeDynamicDataMapping.isInvalidFieldName("my name"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("my name"));
 	}
 
 	@Test
 	public void testIsValidFieldName() {
 		Assert.assertFalse(
-			_upgradeDynamicDataMapping.isInvalidFieldName("name"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("name"));
 		Assert.assertFalse(
-			_upgradeDynamicDataMapping.isInvalidFieldName("name_"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("name_"));
 		Assert.assertFalse(
-			_upgradeDynamicDataMapping.isInvalidFieldName("转注字"));
+			_dynamicDataMappingUpgradeProcess.isInvalidFieldName("转注字"));
 	}
 
 	@Test
@@ -240,8 +241,8 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 
 		ddmForm.addDDMFormField(ddmFormField);
 
-		_upgradeDynamicDataMapping.populateStructureInvalidDDMFormFieldNamesMap(
-			structureId, ddmForm);
+		_dynamicDataMappingUpgradeProcess.
+			populateStructureInvalidDDMFormFieldNamesMap(structureId, ddmForm);
 
 		DDMFormValues ddmFormValues = DDMFormValuesTestUtil.createDDMFormValues(
 			ddmForm);
@@ -253,7 +254,7 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		String serializedDDMFormValues = serialize(ddmFormValues);
 
 		String updatedSerializedDDMFormValues =
-			_upgradeDynamicDataMapping.renameInvalidDDMFormFieldNames(
+			_dynamicDataMappingUpgradeProcess.renameInvalidDDMFormFieldNames(
 				structureId, serializedDDMFormValues);
 
 		DDMFormValues updatedDDMFormValues = deserialize(
@@ -289,11 +290,11 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 
 		ddmForm.addDDMFormField(ddmFormField);
 
-		_upgradeDynamicDataMapping.populateStructureInvalidDDMFormFieldNamesMap(
-			structureId, ddmForm);
+		_dynamicDataMappingUpgradeProcess.
+			populateStructureInvalidDDMFormFieldNamesMap(structureId, ddmForm);
 
 		String updatedScript =
-			_upgradeDynamicDataMapping.renameInvalidDDMFormFieldNames(
+			_dynamicDataMappingUpgradeProcess.renameInvalidDDMFormFieldNames(
 				structureId, "Hello $name*!");
 
 		Assert.assertEquals("Hello $name!", updatedScript);
@@ -399,10 +400,10 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		String expectedJSON = serialize(ddmFormValues);
 
 		DDMFormValues actualDDMFormValues =
-			_upgradeDynamicDataMapping.getDDMFormValues(
+			_dynamicDataMappingUpgradeProcess.getDDMFormValues(
 				1L, ddmForm, document.asXML());
 
-		String actualJSON = _upgradeDynamicDataMapping.toJSON(
+		String actualJSON = _dynamicDataMappingUpgradeProcess.toJSON(
 			actualDDMFormValues);
 
 		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
@@ -516,10 +517,10 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		String expectedJSON = serialize(ddmFormValues);
 
 		DDMFormValues actualDDMFormValues =
-			_upgradeDynamicDataMapping.getDDMFormValues(
+			_dynamicDataMappingUpgradeProcess.getDDMFormValues(
 				1L, ddmForm, document.asXML());
 
-		String actualJSON = _upgradeDynamicDataMapping.toJSON(
+		String actualJSON = _dynamicDataMappingUpgradeProcess.toJSON(
 			actualDDMFormValues);
 
 		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
@@ -596,10 +597,10 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		String expectedJSON = serialize(ddmFormValues);
 
 		DDMFormValues actualDDMFormValues =
-			_upgradeDynamicDataMapping.getDDMFormValues(
+			_dynamicDataMappingUpgradeProcess.getDDMFormValues(
 				1L, ddmForm, document.asXML());
 
-		String actualJSON = _upgradeDynamicDataMapping.toJSON(
+		String actualJSON = _dynamicDataMappingUpgradeProcess.toJSON(
 			actualDDMFormValues);
 
 		JSONAssert.assertEquals(expectedJSON, actualJSON, false);
@@ -609,7 +610,7 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 	public void testToXMLWithoutLocalizedData() throws Exception {
 		String fieldsDisplay = "Text_INSTANCE_hcxo";
 
-		String xml = _upgradeDynamicDataMapping.toXML(
+		String xml = _dynamicDataMappingUpgradeProcess.toXML(
 			HashMapBuilder.put(
 				"_fieldsDisplay",
 				createLocalizationXML(new String[] {fieldsDisplay})
@@ -639,7 +640,7 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		String fieldsDisplay =
 			"Text_INSTANCE_hcxo,Text_INSTANCE_vfqd,Text_INSTANCE_ycey";
 
-		String xml = _upgradeDynamicDataMapping.toXML(
+		String xml = _dynamicDataMappingUpgradeProcess.toXML(
 			HashMapBuilder.put(
 				"_fieldsDisplay",
 				createLocalizationXML(new String[] {fieldsDisplay})
@@ -1030,10 +1031,9 @@ public class UpgradeDynamicDataMappingTest extends PowerMockito {
 		new DDMFormValuesJSONDeserializer();
 	private final DDMFormValuesSerializer _ddmFormValuesSerializer =
 		new DDMFormValuesJSONSerializer();
+	private DynamicDataMappingUpgradeProcess _dynamicDataMappingUpgradeProcess;
 
 	@Mock
 	private Language _language;
-
-	private UpgradeDynamicDataMapping _upgradeDynamicDataMapping;
 
 }

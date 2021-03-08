@@ -77,7 +77,7 @@ public class UpgradeDDMFormInstanceSettingsTest {
 		Assert.assertFalse(
 			containsField(fieldValuesJSONArray, "requireAuthentication"));
 
-		_upgradeDDMFormInstanceSettings.upgrade();
+		_ddmFormInstanceSettingsUpgradeProcess.upgrade();
 
 		formInstance = getRecordSet(formInstance);
 
@@ -100,7 +100,7 @@ public class UpgradeDDMFormInstanceSettingsTest {
 		Assert.assertFalse(
 			containsField(fieldValuesJSONArray, "autosaveEnabled"));
 
-		_upgradeDDMFormInstanceSettings.upgrade();
+		_ddmFormInstanceSettingsUpgradeProcess.upgrade();
 
 		formInstance = getRecordSet(formInstance);
 
@@ -253,7 +253,7 @@ public class UpgradeDDMFormInstanceSettingsTest {
 						String className = clazz.getName();
 
 						if (className.contains(_CLASS_NAME)) {
-							_upgradeDDMFormInstanceSettings =
+							_ddmFormInstanceSettingsUpgradeProcess =
 								(UpgradeProcess)upgradeStep;
 						}
 					}
@@ -264,17 +264,18 @@ public class UpgradeDDMFormInstanceSettingsTest {
 
 	private static final String _CLASS_NAME =
 		"com.liferay.dynamic.data.mapping.internal.upgrade.v2_0_3." +
-			"UpgradeDDMFormInstanceSettings";
+			"DDMFormInstanceSettingsUpgradeProcess";
 
 	@Inject(
 		filter = "(&(objectClass=com.liferay.dynamic.data.mapping.internal.upgrade.DDMServiceUpgrade))"
 	)
 	private static UpgradeStepRegistrator _upgradeStepRegistrator;
 
+	private UpgradeProcess _ddmFormInstanceSettingsUpgradeProcess;
+
 	@DeleteAfterTestRun
 	private Group _group;
 
 	private JSONFactory _jsonFactory;
-	private UpgradeProcess _upgradeDDMFormInstanceSettings;
 
 }

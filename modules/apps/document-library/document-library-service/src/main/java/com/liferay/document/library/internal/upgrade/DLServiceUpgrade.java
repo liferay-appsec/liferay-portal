@@ -103,7 +103,7 @@ public class DLServiceUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"3.2.0", "3.2.1", new DDMStructureLinkUpgradeProcess(),
 			new com.liferay.document.library.internal.upgrade.v3_2_1.
-				DLFileEntryTypeUpgradeProcess());
+				UpgradeDLFileEntryType());
 	}
 
 	@Reference

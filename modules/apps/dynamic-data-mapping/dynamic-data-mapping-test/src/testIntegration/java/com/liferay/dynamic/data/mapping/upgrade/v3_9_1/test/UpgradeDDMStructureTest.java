@@ -89,7 +89,7 @@ public class UpgradeDDMStructureTest {
 			DDMFormInstanceTestUtil.addDDMFormInstance(
 				ddmForm, _group, _userId);
 
-		_upgradeDDMStructure.upgrade();
+		_ddmStructureUpgradeProcess.upgrade();
 
 		ddmForm = _getUpgradedDDMForm(ddmFormInstance);
 
@@ -117,7 +117,7 @@ public class UpgradeDDMStructureTest {
 			DDMFormInstanceTestUtil.addDDMFormInstance(
 				ddmForm, _group, _userId);
 
-		_upgradeDDMStructure.upgrade();
+		_ddmStructureUpgradeProcess.upgrade();
 
 		ddmForm = _getUpgradedDDMForm(ddmFormInstance);
 
@@ -169,7 +169,7 @@ public class UpgradeDDMStructureTest {
 			DDMFormInstanceTestUtil.addDDMFormInstance(
 				ddmForm, _group, _userId);
 
-		_upgradeDDMStructure.upgrade();
+		_ddmStructureUpgradeProcess.upgrade();
 
 		ddmForm = _getUpgradedDDMForm(ddmFormInstance);
 
@@ -222,7 +222,7 @@ public class UpgradeDDMStructureTest {
 			DDMFormInstanceTestUtil.addDDMFormInstance(
 				ddmForm, _group, _userId);
 
-		_upgradeDDMStructure.upgrade();
+		_ddmStructureUpgradeProcess.upgrade();
 
 		ddmForm = _getUpgradedDDMForm(ddmFormInstance);
 
@@ -254,7 +254,7 @@ public class UpgradeDDMStructureTest {
 			DDMFormInstanceTestUtil.addDDMFormInstance(
 				ddmForm, _group, _userId);
 
-		_upgradeDDMStructure.upgrade();
+		_ddmStructureUpgradeProcess.upgrade();
 
 		ddmForm = _getUpgradedDDMForm(ddmFormInstance);
 
@@ -287,7 +287,8 @@ public class UpgradeDDMStructureTest {
 						String className = clazz.getName();
 
 						if (className.contains(_CLASS_NAME)) {
-							_upgradeDDMStructure = (UpgradeProcess)upgradeStep;
+							_ddmStructureUpgradeProcess =
+								(UpgradeProcess)upgradeStep;
 						}
 					}
 				}
@@ -319,17 +320,18 @@ public class UpgradeDDMStructureTest {
 
 	private static final String _CLASS_NAME =
 		"com.liferay.dynamic.data.mapping.internal.upgrade.v3_9_1." +
-			"UpgradeDDMStructure";
+			"DDMStructureUpgradeProcess";
 
 	@Inject(
 		filter = "(&(objectClass=com.liferay.dynamic.data.mapping.internal.upgrade.DDMServiceUpgrade))"
 	)
 	private static UpgradeStepRegistrator _upgradeStepRegistrator;
 
+	private UpgradeProcess _ddmStructureUpgradeProcess;
+
 	@DeleteAfterTestRun
 	private Group _group;
 
-	private UpgradeProcess _upgradeDDMStructure;
 	private long _userId;
 
 }

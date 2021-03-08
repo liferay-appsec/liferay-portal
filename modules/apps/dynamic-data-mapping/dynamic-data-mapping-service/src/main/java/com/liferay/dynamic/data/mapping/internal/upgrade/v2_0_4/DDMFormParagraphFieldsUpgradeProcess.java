@@ -12,26 +12,26 @@
  * details.
  */
 
-package com.liferay.dynamic.data.mapping.internal.upgrade.v1_0_3;
+package com.liferay.dynamic.data.mapping.internal.upgrade.v2_0_4;
 
+import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.util.PortalUtil;
 
 /**
- * @author Lino Alves
+ * @author Laszlo Hudak
  */
-public class UpgradeDDMFormFieldValidation
-	extends com.liferay.dynamic.data.mapping.internal.upgrade.v2_0_5.
-				UpgradeDDMFormFieldValidation {
+public class DDMFormParagraphFieldsUpgradeProcess
+	extends com.liferay.dynamic.data.mapping.internal.upgrade.v1_0_3.
+				DDMFormParagraphFieldsUpgradeProcess {
 
-	public UpgradeDDMFormFieldValidation(JSONFactory jsonFactory) {
+	public DDMFormParagraphFieldsUpgradeProcess(JSONFactory jsonFactory) {
 		super(jsonFactory);
 	}
 
 	@Override
 	protected long getClassNameId() {
-		return PortalUtil.getClassNameId(
-			"com.liferay.dynamic.data.lists.model.DDLRecordSet");
+		return PortalUtil.getClassNameId(DDMFormInstance.class);
 	}
 
 }

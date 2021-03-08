@@ -36,11 +36,11 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author Jeyvison Nascimento
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UpgradeDynamicDataMappingTest {
+public class DynamicDataMappingUpgradeProcessTest {
 
 	@Test
 	public void testTransformRadioDDMFormFieldValues() throws Exception {
-		UpgradeDynamicDataMapping.RadioDDMFormFieldValueTransformer
+		DynamicDataMappingUpgradeProcess.RadioDDMFormFieldValueTransformer
 			radioDDMFormFieldValueTransformer =
 				_getRadioDDMFormFieldValueTransformer();
 
@@ -81,7 +81,7 @@ public class UpgradeDynamicDataMappingTest {
 	public void testTransformRadioDDMFormFieldValuesWithNullValue()
 		throws Exception {
 
-		UpgradeDynamicDataMapping.RadioDDMFormFieldValueTransformer
+		DynamicDataMappingUpgradeProcess.RadioDDMFormFieldValueTransformer
 			radioDDMFormFieldValueTransformer =
 				_getRadioDDMFormFieldValueTransformer();
 
@@ -102,7 +102,7 @@ public class UpgradeDynamicDataMappingTest {
 
 	@Test
 	public void testTransformSelectDDMFormFieldValues() throws Exception {
-		UpgradeDynamicDataMapping.SelectDDMFormFieldValueTransformer
+		DynamicDataMappingUpgradeProcess.SelectDDMFormFieldValueTransformer
 			selectDDMFormFieldValueTransformer =
 				_getSelectDDMFormFieldValueTransformer();
 
@@ -143,7 +143,7 @@ public class UpgradeDynamicDataMappingTest {
 	public void testTransformSelectDDMFormFieldValuesWithNullValue()
 		throws Exception {
 
-		UpgradeDynamicDataMapping.SelectDDMFormFieldValueTransformer
+		DynamicDataMappingUpgradeProcess.SelectDDMFormFieldValueTransformer
 			selectDDMFormFieldValueTransformer =
 				_getSelectDDMFormFieldValueTransformer();
 
@@ -172,29 +172,31 @@ public class UpgradeDynamicDataMappingTest {
 		return locales;
 	}
 
-	private UpgradeDynamicDataMapping.RadioDDMFormFieldValueTransformer
+	private DynamicDataMappingUpgradeProcess
+		_getDynamicDataMappingUpgradeProcess() {
+
+		return new DynamicDataMappingUpgradeProcess(
+			null, null, null, null, _jsonFactory);
+	}
+
+	private DynamicDataMappingUpgradeProcess.RadioDDMFormFieldValueTransformer
 		_getRadioDDMFormFieldValueTransformer() {
 
-		UpgradeDynamicDataMapping upgradeDynamicDataMapping =
-			_getUpgradeDynamicDataMapping();
+		DynamicDataMappingUpgradeProcess upgradeDynamicDataMapping =
+			_getDynamicDataMappingUpgradeProcess();
 
 		return upgradeDynamicDataMapping.
 			new RadioDDMFormFieldValueTransformer();
 	}
 
-	private UpgradeDynamicDataMapping.SelectDDMFormFieldValueTransformer
+	private DynamicDataMappingUpgradeProcess.SelectDDMFormFieldValueTransformer
 		_getSelectDDMFormFieldValueTransformer() {
 
-		UpgradeDynamicDataMapping upgradeDynamicDataMapping =
-			_getUpgradeDynamicDataMapping();
+		DynamicDataMappingUpgradeProcess upgradeDynamicDataMapping =
+			_getDynamicDataMappingUpgradeProcess();
 
 		return upgradeDynamicDataMapping.
 			new SelectDDMFormFieldValueTransformer();
-	}
-
-	private UpgradeDynamicDataMapping _getUpgradeDynamicDataMapping() {
-		return new UpgradeDynamicDataMapping(
-			null, null, null, null, _jsonFactory);
 	}
 
 	@Mock
