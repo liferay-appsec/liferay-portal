@@ -50,6 +50,7 @@ import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
@@ -71,6 +72,7 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -84,6 +86,7 @@ import com.liferay.portletmvc4spring.test.mock.web.portlet.MockPortletRequest;
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -92,12 +95,17 @@ import java.util.Map;
 
 import javax.portlet.PortletPreferences;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
  * Tests the export and import behavior of the Asset Publisher bundle with
@@ -113,6 +121,27 @@ public class AssetPublisherExportImportTest
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
+
+	@BeforeClass
+	public static void setUpClass() throws Exception {
+		_assetPublisherWebConfiguration = _configurationAdmin.getConfiguration(
+			"com.liferay.asset.publisher.web.internal.configuration." +
+				"AssetPublisherWebConfiguration",
+			StringPool.QUESTION);
+
+		Dictionary<String, Object> properties = new HashMapDictionary<>();
+
+		properties.put("dynamicExportEnabled", true);
+
+		ConfigurationTestUtil.saveConfiguration(
+			_assetPublisherWebConfiguration, properties);
+	}
+
+	@AfterClass
+	public static void tearDownClass() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(
+			_assetPublisherWebConfiguration);
+	}
 
 	@Override
 	public String getPortletId() throws Exception {
@@ -1192,6 +1221,11 @@ public class AssetPublisherExportImportTest
 
 		_assetVocabularyLocalService.deleteAssetVocabulary(assetVocabulary);
 	}
+
+	private static Configuration _assetPublisherWebConfiguration;
+
+	@Inject
+	private static ConfigurationAdmin _configurationAdmin;
 
 	@Inject
 	private AssetCategoryLocalService _assetCategoryLocalService;
