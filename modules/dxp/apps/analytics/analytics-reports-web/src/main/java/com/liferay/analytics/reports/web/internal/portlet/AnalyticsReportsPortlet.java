@@ -126,7 +126,7 @@ public class AnalyticsReportsPortlet extends MVCPortlet {
 		return classPK;
 	}
 
-	private String _getclassTypeName(HttpServletRequest httpServletRequest) {
+	private String _getClassTypeName(HttpServletRequest httpServletRequest) {
 		return ParamUtil.getString(httpServletRequest, "classTypeName");
 	}
 
@@ -138,7 +138,7 @@ public class AnalyticsReportsPortlet extends MVCPortlet {
 				AnalyticsReportsWebKeys.INFO_ITEM_REFERENCE)
 		).orElseGet(
 			() -> Optional.ofNullable(
-				_getclassTypeName(httpServletRequest)
+				_getClassTypeName(httpServletRequest)
 			).filter(
 				Validator::isNotNull
 			).map(
