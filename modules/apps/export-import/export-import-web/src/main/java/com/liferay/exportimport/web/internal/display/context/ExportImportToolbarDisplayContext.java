@@ -67,8 +67,7 @@ public class ExportImportToolbarDisplayContext {
 	public List<DropdownItem> getActionDropdownItems() {
 		return DropdownItemListBuilder.add(
 			dropdownItem -> {
-				dropdownItem.setHref(
-					"javascript:" + _portletNamespace + "deleteEntries();");
+				dropdownItem.putData("action", "deleteEntries");
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "delete"));
 			}
