@@ -60,19 +60,19 @@ public class AddressContactInfoManager extends BaseContactInfoManager<Address> {
 
 		Address address = _addressLocalService.createAddress(addressId);
 
-		address.setStreet1(street1);
-		address.setStreet2(street2);
-		address.setStreet3(street3);
-		address.setCity(city);
-		address.setZip(zip);
+		address.setCountryId(countryId);
 		address.setRegionId(
 			ParamUtil.getLong(actionRequest, "addressRegionId"));
-		address.setCountryId(countryId);
 		address.setTypeId(ParamUtil.getLong(actionRequest, "addressTypeId"));
+		address.setCity(city);
 		address.setMailing(
 			ParamUtil.getBoolean(actionRequest, "addressMailing"));
 		address.setPrimary(
 			ParamUtil.getBoolean(actionRequest, "addressPrimary"));
+		address.setStreet1(street1);
+		address.setStreet2(street2);
+		address.setStreet3(street3);
+		address.setZip(zip);
 
 		return address;
 	}

@@ -46,20 +46,20 @@ public class ServiceBuilderAddressUtil {
 		Address address = AddressLocalServiceUtil.createAddress(
 			GetterUtil.getLong(postalAddress.getId()));
 
-		address.setStreet1(street1);
-		address.setStreet2(street2);
-		address.setStreet3(street3);
-		address.setCity(city);
-		address.setZip(zip);
+		address.setCountryId(countryId);
 		address.setRegionId(
 			ServiceBuilderRegionUtil.getServiceBuilderRegionId(
 				postalAddress.getAddressRegion(), countryId));
-		address.setCountryId(countryId);
 		address.setTypeId(
 			ServiceBuilderListTypeUtil.toServiceBuilderListTypeId(
 				"other", postalAddress.getAddressType(), type));
+		address.setCity(city);
 		address.setMailing(true);
 		address.setPrimary(GetterUtil.getBoolean(postalAddress.getPrimary()));
+		address.setStreet1(street1);
+		address.setStreet2(street2);
+		address.setStreet3(street3);
+		address.setZip(zip);
 
 		return address;
 	}

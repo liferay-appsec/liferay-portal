@@ -516,16 +516,16 @@ public class UsersAdminImpl implements UsersAdmin {
 
 			Address address = AddressLocalServiceUtil.createAddress(addressId);
 
+			address.setCountryId(countryId);
+			address.setRegionId(regionId);
+			address.setTypeId(typeId);
+			address.setCity(city);
+			address.setMailing(mailing);
+			address.setPrimary(primary);
 			address.setStreet1(street1);
 			address.setStreet2(street2);
 			address.setStreet3(street3);
-			address.setCity(city);
 			address.setZip(zip);
-			address.setRegionId(regionId);
-			address.setCountryId(countryId);
-			address.setTypeId(typeId);
-			address.setMailing(mailing);
-			address.setPrimary(primary);
 
 			addresses.add(address);
 		}

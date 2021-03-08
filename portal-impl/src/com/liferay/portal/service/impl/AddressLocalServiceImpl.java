@@ -113,18 +113,18 @@ public class AddressLocalServiceImpl extends AddressLocalServiceBaseImpl {
 		address.setUserName(user.getFullName());
 		address.setClassNameId(classNameId);
 		address.setClassPK(classPK);
-		address.setName(name);
+		address.setCountryId(countryId);
+		address.setRegionId(regionId);
+		address.setTypeId(typeId);
+		address.setCity(city);
 		address.setDescription(description);
+		address.setMailing(mailing);
+		address.setName(name);
+		address.setPrimary(primary);
 		address.setStreet1(street1);
 		address.setStreet2(street2);
 		address.setStreet3(street3);
-		address.setCity(city);
 		address.setZip(zip);
-		address.setRegionId(regionId);
-		address.setCountryId(countryId);
-		address.setTypeId(typeId);
-		address.setMailing(mailing);
-		address.setPrimary(primary);
 
 		address = addressPersistence.update(address);
 
@@ -281,18 +281,18 @@ public class AddressLocalServiceImpl extends AddressLocalServiceBaseImpl {
 
 		Address address = addressPersistence.findByPrimaryKey(addressId);
 
-		address.setName(name);
+		address.setCountryId(countryId);
+		address.setRegionId(regionId);
+		address.setTypeId(typeId);
+		address.setCity(city);
 		address.setDescription(description);
+		address.setMailing(mailing);
+		address.setName(name);
+		address.setPrimary(primary);
 		address.setStreet1(street1);
 		address.setStreet2(street2);
 		address.setStreet3(street3);
-		address.setCity(city);
 		address.setZip(zip);
-		address.setRegionId(regionId);
-		address.setCountryId(countryId);
-		address.setTypeId(typeId);
-		address.setMailing(mailing);
-		address.setPrimary(primary);
 
 		address = addressPersistence.update(address);
 
