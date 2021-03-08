@@ -12,37 +12,48 @@
  *
  */
 
-package com.liferay.saml.web.internal.struts;
+package com.liferay.saml.web.internal.portlet.action;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.exception.StatusException;
 import com.liferay.saml.util.JspUtil;
 
+import javax.portlet.PortletException;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Mika Koivisto
+ * @author Arthur Chan
  */
-public abstract class BaseSamlStrutsAction implements StrutsAction {
+public abstract class BaseSamlMVCRenderCommand implements MVCRenderCommand {
+
+	public boolean isEnabled() {
+		return samlProviderConfigurationHelper.isEnabled();
+	}
 
 	@Override
-	public String execute(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws Exception {
+	public String render(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws PortletException {
 
 		if (!isEnabled()) {
 			return "/common/referer_js.jsp";
 		}
+
+		HttpServletRequest httpServletRequest =
+			PortalUtil.getHttpServletRequest(renderRequest);
 
 		httpServletRequest.setAttribute(
 			WebKeys.RESOURCE_BUNDLE_LOADER, resourceBundleLoader);
@@ -52,11 +63,11 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
 
 		try {
-			Class<? extends BaseSamlStrutsAction> clazz = getClass();
+			Class<? extends BaseSamlMVCRenderCommand> clazz = getClass();
 
 			currentThread.setContextClassLoader(clazz.getClassLoader());
 
-			return doExecute(httpServletRequest, httpServletResponse);
+			return doRender(renderRequest, renderResponse);
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -68,29 +79,21 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 
 			Class<?> clazz = exception.getClass();
 
-			SessionErrors.add(httpServletRequest, clazz.getName());
+			SessionErrors.add(renderRequest, clazz.getName());
 
 			if (exception instanceof StatusException) {
 				StatusException statusException = (StatusException)exception;
 
 				SessionErrors.add(
-					httpServletRequest, "statusCodeURI",
+					renderRequest, "statusCodeURI",
 					statusException.getMessage());
 			}
 
-			JspUtil.dispatch(
-				httpServletRequest, httpServletResponse,
-				JspUtil.PATH_PORTAL_SAML_ERROR, "status");
+			return JspUtil.PATH_PORTAL_SAML_ERROR;
 		}
 		finally {
 			currentThread.setContextClassLoader(contextClassLoader);
 		}
-
-		return null;
-	}
-
-	public boolean isEnabled() {
-		return samlProviderConfigurationHelper.isEnabled();
 	}
 
 	public void setSamlProviderConfigurationHelper(
@@ -99,9 +102,8 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 		this.samlProviderConfigurationHelper = samlProviderConfigurationHelper;
 	}
 
-	protected abstract String doExecute(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
+	protected abstract String doRender(
+			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws Exception;
 
 	@Reference(target = "(bundle.symbolic.name=com.liferay.saml.web)")
@@ -110,6 +112,6 @@ public abstract class BaseSamlStrutsAction implements StrutsAction {
 	protected SamlProviderConfigurationHelper samlProviderConfigurationHelper;
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		BaseSamlStrutsAction.class);
+		BaseSamlMVCRenderCommand.class);
 
 }
