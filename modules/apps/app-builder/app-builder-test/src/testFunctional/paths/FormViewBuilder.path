@@ -107,8 +107,20 @@
 </tr>
 
 <tr>
+	<td>SIDEBAR_BASIC_SHOW_AS_SWITCHER</td>
+	<td>//div[contains(@data-field-name,'showAsSwitcher')]</td>
+	<td></td>
+</tr>
+
+<tr>
 	<td>SIDEBAR_ADVANCED_FIELD_NAME</td>
 	<td>//input[contains(@name,'name')]</td>
+	<td></td>
+</tr>
+
+<tr>
+	<td>SIDEBAR_ADVANCED_INLINE</td>
+	<td>//span[contains(text(),'Inline')]</td>
 	<td></td>
 </tr>
 
@@ -181,6 +193,12 @@
 <tr>
 	<td>SIDEBAR_ADVANCED_PREDEFINED_SELECT_FROM_LIST</td>
 	<td>//div[contains(@data-field-name,'predefinedValue')]//div[contains(@class,'form-builder-select-field')]</td>
+	<td></td>
+</tr>
+
+<tr>
+	<td>SINGLE_SELECTION_FIELD_WITHOUT_LABEL</td>
+	<td>//div[@class='container ddm-form-builder ']//div[@class='ddm-radio']</td>
 	<td></td>
 </tr>
 

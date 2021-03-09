@@ -4585,4 +4585,189 @@ definition {
 		AppBuilderAdmin.save();
 	}
 
+	@description = "The visual properties are overwritten and not propagated to the other Form Views"
+	@priority = "5"
+	test VisualPropertiesAreOverwrittenAndNotPropagatedToTheOthersFormViews {
+		property portal.acceptance = "true";
+
+		var age = "Age";
+		var agePlaceholderFormView1 = "Type your age here... form view 1";
+		var agePlaceholderFormView2 = "Type your age here... form view 2";
+		var country = "Country";
+		var countryHelpTextFormView1 = "help text to country form view 1";
+		var countryHelpTextFormView2 = "help text to country form view 2";
+		var formView1 = "Form View 1";
+		var formView2 = "Form View 2";
+		var maritalStatus = "Marital Status";
+		var nameFormView1 = "Name Form View 1";
+		var nameFormView2 = "Name Form View 2";
+		var since = "Since";
+		var sincePredefinedDateFormView1 = "01/01/2001";
+		var sincePredefinedDateFormView2 = "02/02/2002";
+		var teams = "Teams";
+
+		AppBuilderAdmin.addCustomObject(
+			customObjectName = "my custom object",
+			isCreatingFormView = "true",
+			isCreatingViaPlusIcon = "true");
+
+		FormViewBuilder.setName(formViewName = "${formView1}");
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Text");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${nameFormView1}");
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Numeric");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${age}");
+
+		FormViewBuilder.setPlaceholder(fieldValue = "${agePlaceholderFormView1}");
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Select from List");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${country}");
+
+		FormViewBuilder.setFieldHelpText(fieldLabel = "${countryHelpTextFormView1}");
+
+		for (var number : list "1,2,3") {
+			FormViewBuilder.editOptionsRow(
+				optionName = "Country${number}",
+				optionValue = "Country ${number}",
+				rowNumber = "${number}");
+		}
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Date");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${since}");
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.setFieldPredefinedDate(fieldValue = "${sincePredefinedDateFormView1}");
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Single Selection");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${maritalStatus}");
+
+		for (var number : list "1,2,3") {
+			FormViewBuilder.editOptionsRow(
+				optionName = "Status${number}",
+				optionValue = "Status ${number}",
+				rowNumber = "${number}");
+		}
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.clickShowLabel();
+
+		FormViewBuilder.validateShowLabelIsOff();
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.addFieldByDoubleClick(fieldType = "Multiple Selection");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${teams}");
+
+		for (var number : list "1,2,3") {
+			FormViewBuilder.editOptionsRow(
+				optionName = "Team${number}",
+				optionValue = "Team ${number}",
+				rowNumber = "${number}");
+		}
+
+		FormViewBuilder.clickShowAsSwitcher();
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.clickInline();
+
+		FormViewBuilder.closeSidebar();
+
+		FormViewBuilder.save();
+
+		AppBuilderAdmin.add();
+
+		FormViewBuilder.setName(formViewName = "${formView2}");
+
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${age}");
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${country}");
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${maritalStatus}");
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${nameFormView1}");
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${since}");
+		FormViewBuilder.addFieldByDoubleClickFromObjectSidebar(fieldLabel = "${teams}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${nameFormView1}");
+
+		FormViewBuilder.setFieldLabelWithNoAssertion(fieldLabel = "${nameFormView2}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${age}");
+
+		FormViewBuilder.setPlaceholder(fieldValue = "${agePlaceholderFormView2}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${country}");
+
+		FormViewBuilder.setFieldHelpText(fieldLabel = "${countryHelpTextFormView2}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${since}");
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.setFieldPredefinedDate(fieldValue = "${sincePredefinedDateFormView2}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${maritalStatus}");
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.validateShowLabelIsOn();
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${teams}");
+
+		FormViewBuilder.clickInline();
+
+		FormViewBuilder.switchToBacisTab();
+
+		FormViewBuilder.clickShowAsSwitcher();
+
+		FormViewBuilder.save();
+
+		FormViewBuilder.openFormView(formViewName = "${formView1}");
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "${nameFormView1}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${age}");
+
+		FormViewBuilder.assertPlaceholderTextAtSidebar(placeHolder = "${agePlaceholderFormView1}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${country}");
+
+		FormViewBuilder.assertHelpTextPresent(
+			fieldName = "${country}",
+			fieldValue = "${countryHelpTextFormView1}");
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${since}");
+
+		FormViewBuilder.switchToAdvancedTab();
+
+		FormViewBuilder.assertPredefinedValueAtSidebar(predefinedValue = "${sincePredefinedDateFormView1}");
+
+		FormViewBuilder.clickSingleSelectionFieldWithoutLabel();
+
+		FormViewBuilder.validateFieldLabelIsNotShown();
+
+		FormViewBuilder.clickFieldLabel(fieldLabel = "${teams}");
+
+		FormViewBuilder.validateInlineOptionIsSetOn();
+
+		FormViewBuilder.switchToBacisTab();
+
+		FormViewBuilder.validateShowAsSwitcherIsON();
+	}
+
 }

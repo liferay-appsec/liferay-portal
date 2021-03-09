@@ -136,6 +136,18 @@ definition {
 			value1 = "${key_optionLabel}");
 	}
 
+	macro assertPlaceholderTextAtSidebar {
+		AssertTextEquals(
+			locator1 = "FormViewBuilder#SIDEBAR_BASIC_PLACEHOLDER",
+			value1 = "${placeHolder}");
+	}
+
+	macro assertPredefinedValueAtSidebar {
+		AssertTextEquals(
+			locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_PREDEFINED_DATE",
+			value1 = "${predefinedValue}");
+	}
+
 	macro assertRuleSaveButtonIsDisabled {
 		AssertElementPresent(locator1 = "FormViewBuilder#RULE_BUILDER_SAVE_BUTTON_DISABLED");
 	}
@@ -187,8 +199,24 @@ definition {
 			value1 = "${key_fieldLabel}");
 	}
 
+	macro clickInline {
+		Click(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_INLINE");
+	}
+
 	macro clickRequiredEllipses {
 		Click(locator1 = "FormViewBuilder#FORM_FIELD_REQUIRED_ELLIPSES");
+	}
+
+	macro clickShowAsSwitcher {
+		Click(locator1 = "FormViewBuilder#SIDEBAR_BASIC_SHOW_AS_SWITCHER");
+	}
+
+	macro clickShowLabel {
+		Click.javaScriptClick(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_SHOW_LABEL");
+	}
+
+	macro clickSingleSelectionFieldWithoutLabel {
+		Click(locator1 = "FormViewBuilder#SINGLE_SELECTION_FIELD_WITHOUT_LABEL");
 	}
 
 	macro closeSidebar() {
@@ -583,6 +611,13 @@ definition {
 			value1 = "${fieldLabel}");
 	}
 
+	macro setFieldLabelWithNoAssertion {
+		var key_fieldType = "label";
+		Type(
+			locator1 = "FormViewBuilder#FIELD_LABEL_AT_SIDEBAR",
+			value1 = "${fieldLabel}");
+	}
+
 	macro setFieldPredefinedDate {
 		Type(
 			locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_PREDEFINED_DATE",
@@ -605,6 +640,12 @@ definition {
 
 	macro setName {
 		AppBuilderAdmin.setName(title = "${formViewName}");
+	}
+
+	macro setPlaceholder {
+		Type(
+			locator1 = "FormViewBuilder#SIDEBAR_BASIC_PLACEHOLDER",
+			value1 = "${fieldValue}");
 	}
 
 	macro setRuleName {
@@ -730,6 +771,10 @@ definition {
 		Click(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_TAB");
 	}
 
+	macro switchToBacisTab {
+		Click(locator1 = "FormViewBuilder#SIDEBAR_BASIC_TAB");
+	}
+
 	macro switchToFormViewTab {
 		AppBuilderAdmin.switchTab(tabName = "Form Views");
 	}
@@ -760,6 +805,10 @@ definition {
 			value1 = "${fieldLabel}");
 	}
 
+	macro validateFieldLabelIsNotShown {
+		AssertElementNotPresent(locator1 = "FormViewBuilder#FIELD_LABEL");
+	}
+
 	macro validateFieldLabelRequired {
 		AssertElementPresent(
 			fieldLabel = "${fieldLabel}",
@@ -774,6 +823,10 @@ definition {
 		AssertTextEquals(
 			locator1 = "FormViewBuilder#FIELD_LABEL_MULTIPLE_SELECTION",
 			value1 = "${fieldLabel}");
+	}
+
+	macro validateInlineOptionIsSetOn {
+		IsChecked(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_INLINE");
 	}
 
 	macro validateLocalization {
@@ -888,6 +941,18 @@ definition {
 		AssertTextEquals(
 			locator1 = "FormViewBuilder#OPTIONS_OPTION_VALUE_FIELD",
 			value1 = "${optionValue}");
+	}
+
+	macro validateShowAsSwitcherIsON {
+		IsChecked(locator1 = "FormViewBuilder#SIDEBAR_BASIC_SHOW_AS_SWITCHER");
+	}
+
+	macro validateShowLabelIsOff {
+		AssertNotChecked.assertNotCheckedNotVisible(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_SHOW_LABEL");
+	}
+
+	macro validateShowLabelIsOn {
+		IsChecked(locator1 = "FormViewBuilder#SIDEBAR_ADVANCED_SHOW_LABEL");
 	}
 
 	macro validateTranslatedField {
