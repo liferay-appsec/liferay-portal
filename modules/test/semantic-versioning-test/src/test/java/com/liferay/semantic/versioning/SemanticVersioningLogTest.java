@@ -54,7 +54,6 @@ public class SemanticVersioningLogTest {
 
 		modulesTestClassGroup = StringUtil.replace(
 			modulesTestClassGroup, CharPool.COLON, CharPool.SLASH);
-
 		modulesTestClassGroup = StringUtil.replace(
 			modulesTestClassGroup, "/baseline", StringPool.BLANK);
 
