@@ -279,7 +279,6 @@ public class JournalArticleInfoItemFieldValuesProvider
 					).values(
 						journalArticle.getDescriptionMap()
 					).build()));
-
 			journalArticleFieldValues.add(
 				new InfoFieldValue<>(
 					JournalArticleInfoItemFields.createDateInfoField,

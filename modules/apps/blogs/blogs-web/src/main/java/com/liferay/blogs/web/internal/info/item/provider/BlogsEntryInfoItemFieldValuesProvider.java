@@ -91,17 +91,14 @@ public class BlogsEntryInfoItemFieldValuesProvider
 				new InfoFieldValue<>(
 					BlogsEntryInfoItemFields.titleInfoField,
 					blogsEntry.getTitle()));
-
 			blogsEntryFieldValues.add(
 				new InfoFieldValue<>(
 					BlogsEntryInfoItemFields.subtitleInfoField,
 					blogsEntry.getSubtitle()));
-
 			blogsEntryFieldValues.add(
 				new InfoFieldValue<>(
 					BlogsEntryInfoItemFields.descriptionInfoField,
 					blogsEntry.getDescription()));
-
 			blogsEntryFieldValues.add(
 				new InfoFieldValue<>(
 					BlogsEntryInfoItemFields.createDateInfoField,

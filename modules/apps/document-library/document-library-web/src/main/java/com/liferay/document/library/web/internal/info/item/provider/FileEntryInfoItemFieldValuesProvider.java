@@ -199,7 +199,6 @@ public class FileEntryInfoItemFieldValuesProvider
 			fileEntryFieldValues.add(
 				new InfoFieldValue<>(
 					FileEntryInfoItemFields.size, fileEntry.getSize()));
-
 			fileEntryFieldValues.add(
 				new InfoFieldValue<>(
 					FileEntryInfoItemFields.createDateInfoField,
