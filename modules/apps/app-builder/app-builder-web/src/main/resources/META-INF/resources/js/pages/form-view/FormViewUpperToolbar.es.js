@@ -82,6 +82,14 @@ export default function FormViewUpperToolbar({newCustomObject, popUpWindow}) {
 			},
 			type: DataLayoutBuilderActions.UPDATE_DATA_LAYOUT_NAME,
 		});
+
+		if (!dataDefinition.availableLanguageIds.includes(editingLanguageId)) {
+			dispatch({
+				payload: editingLanguageId,
+				type:
+					DataLayoutBuilderActions.UPDATE_DATA_DEFINITION_AVAILABLE_LANGUAGE,
+			});
+		}
 	};
 
 	const onKeyDown = (event) => {
