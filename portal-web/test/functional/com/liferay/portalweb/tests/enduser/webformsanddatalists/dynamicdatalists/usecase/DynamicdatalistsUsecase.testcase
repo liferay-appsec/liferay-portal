@@ -2578,8 +2578,6 @@ definition {
 	@description = "This is a use case for LPS-48591."
 	@priority = "3"
 	test ViewFormTemplateFieldsAfterBackNavigation {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(

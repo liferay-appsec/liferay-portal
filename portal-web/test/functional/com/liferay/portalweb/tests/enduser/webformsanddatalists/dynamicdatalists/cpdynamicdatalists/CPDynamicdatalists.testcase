@@ -34,8 +34,6 @@ definition {
 
 	@priority = "4"
 	test AddDisplayTemplateFreeMarker {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -810,8 +808,6 @@ definition {
 
 	@priority = "4"
 	test AddListRecordWithDecimalField {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2124,8 +2120,6 @@ definition {
 
 	@priority = "4"
 	test DeleteDisplayTemplateFreeMarker {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2166,8 +2160,6 @@ definition {
 
 	@priority = "4"
 	test DeleteDisplayTemplateVelocity {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2208,8 +2200,6 @@ definition {
 
 	@priority = "4"
 	test DeleteFormTemplate {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2724,8 +2714,6 @@ definition {
 
 	@priority = "4"
 	test EditDisplayTemplateFreeMarker {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2779,8 +2767,6 @@ definition {
 
 	@priority = "4"
 	test EditDisplayTemplateVelocity {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -2834,8 +2820,6 @@ definition {
 
 	@priority = "4"
 	test EditFormTemplate {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -3617,8 +3601,6 @@ definition {
 
 	@priority = "3"
 	test ViewFormTemplateFieldReadOnlyWithEditMode {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
@@ -3720,8 +3702,6 @@ definition {
 
 	@priority = "3"
 	test ViewFormTemplateFieldsAfterSaveAndContinue {
-		property portal.upstream = "quarantine";
-
 		Navigator.openURL();
 
 		ProductMenu.gotoPortlet(
