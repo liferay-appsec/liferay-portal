@@ -304,12 +304,13 @@ const Main = ({
 	const isSignedIn = Liferay.ThemeDisplay.isSignedIn();
 
 	useEffect(() => {
+		setCurrentValue(value);
 		setDisplayErrors(initialDisplayErrors);
 		setErrorMessage(getErrorMessages(initialErrorMessage, isSignedIn));
 		setValid(initialValid);
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [initialDisplayErrors, initialErrorMessage, initialValid]);
+	}, [initialDisplayErrors, initialErrorMessage, initialValid, value]);
 
 	const checkMaximumRepetitions = () => {
 		const visitor = new PagesVisitor(pages);
