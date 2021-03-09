@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.model.SamlSpSession;
@@ -45,7 +46,6 @@ import java.util.stream.Stream;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -157,14 +157,12 @@ public class SamlSpSsoFilter extends BaseSamlPortalFilter {
 				_enabledSamlSpIdpConnections(httpServletRequest);
 
 			if (enabledSamlSpIdpConnections.size() > 1) {
-				RequestDispatcher requestDispatcher =
-					_servletContext.getRequestDispatcher(
-						"/c/portal/saml/login");
-
-				httpServletResponse.setContentType("text/html");
-
-				requestDispatcher.include(
-					httpServletRequest, httpServletResponse);
+				httpServletResponse.sendRedirect(
+					StringBundler.concat(
+						"/?p_p_id=", SamlPortletKeys.SAML,
+						"&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_",
+						SamlPortletKeys.SAML,
+						"_mvcRenderCommandName=/saml/select_idp"));
 
 				return;
 			}
