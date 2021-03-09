@@ -196,12 +196,11 @@ public class OpenAPIParserUtil {
 
 		Map<String, Schema> externalReferencesMap = new HashMap<>();
 
+		String externalReference = null;
+		Set<String> visitedPaths = new HashSet<>();
+
 		Queue<String> queue = new LinkedList<>(
 			getExternalReferences(openAPIYAML));
-
-		String externalReference = null;
-
-		Set<String> visitedPaths = new HashSet<>();
 
 		while ((externalReference = queue.poll()) != null) {
 			String path = externalReference.substring(
@@ -285,15 +284,14 @@ public class OpenAPIParserUtil {
 	public static Map<String, String> getJavaDataTypeMap(
 		ConfigYAML configYAML, OpenAPIYAML openAPIYAML) {
 
-		Map<String, Schema> allSchemas = OpenAPIUtil.getAllSchemas(openAPIYAML);
 		Map<String, String> javaDataTypeMap = new HashMap<>();
-
-		List<String> externalReferences = getExternalReferences(openAPIYAML);
 
 		Set<String> visitedPaths = new HashSet<>();
 
 		try {
-			for (String externalReference : externalReferences) {
+			for (String externalReference :
+					getExternalReferences(openAPIYAML)) {
+
 				String path = externalReference.substring(
 					0, externalReference.indexOf("#"));
 
@@ -321,6 +319,8 @@ public class OpenAPIParserUtil {
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
 		}
+
+		Map<String, Schema> allSchemas = OpenAPIUtil.getAllSchemas(openAPIYAML);
 
 		for (String schemaName : allSchemas.keySet()) {
 			StringBuilder sb = new StringBuilder();
