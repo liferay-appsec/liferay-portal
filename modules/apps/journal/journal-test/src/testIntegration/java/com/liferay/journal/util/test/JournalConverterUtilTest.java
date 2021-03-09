@@ -50,7 +50,6 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.io.InputStream;
-import java.io.Serializable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,7 +103,11 @@ public class JournalConverterUtilTest {
 	public void testGetContentFromListField() throws Exception {
 		Fields fields = new Fields();
 
-		fields.put(getListField(_ddmStructure.getStructureId()));
+		_addField(
+			_ddmStructure.getStructureId(), null, fields, "list",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("[\"value 01\"]")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(), "list_INSTANCE_pcm9WPVX");
@@ -123,10 +126,12 @@ public class JournalConverterUtilTest {
 	public void testGetContentFromMultiListField() throws Exception {
 		Fields fields = new Fields();
 
-		Field multiListField = getMultiListField(
-			_ddmStructure.getStructureId());
-
-		fields.put(multiListField);
+		_addField(
+			_ddmStructure.getStructureId(), null, fields, "multi_list",
+			HashMapBuilder.put(
+				_enLocale,
+				Collections.singletonList("[\"value 01\",\"value 02\"]")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(), "multi_list_INSTANCE_9X5wVsSv");
@@ -158,7 +163,11 @@ public class JournalConverterUtilTest {
 	public void testGetContentFromTextAreaField() throws Exception {
 		Fields fields = new Fields();
 
-		fields.put(getTextAreaField(_ddmStructure.getStructureId()));
+		_addField(
+			_ddmStructure.getStructureId(), null, fields, "text_area",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("<p>Hello World!</p>")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(), "text_area_INSTANCE_RFnJ1nCn");
@@ -178,7 +187,13 @@ public class JournalConverterUtilTest {
 	public void testGetContentFromTextBoxField() throws Exception {
 		Fields fields = new Fields();
 
-		fields.put(getTextBoxField(_ddmStructure.getStructureId()));
+		_addField(
+			_ddmStructure.getStructureId(), null, fields, "text_box",
+			HashMapBuilder.put(
+				_enLocale, Arrays.asList("one", "two", "three")
+			).put(
+				_ptLocale, Arrays.asList("um", "dois", "tres")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(),
@@ -200,7 +215,13 @@ public class JournalConverterUtilTest {
 	public void testGetContentFromTextField() throws Exception {
 		Fields fields = new Fields();
 
-		fields.put(getTextField(_ddmStructure.getStructureId()));
+		_addField(
+			_ddmStructure.getStructureId(), null, fields, "text",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("one")
+			).put(
+				_ptLocale, Collections.singletonList("um")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(), "text_INSTANCE_bf4sdx6Q");
@@ -219,7 +240,11 @@ public class JournalConverterUtilTest {
 	public void testGetFieldsFromContentWithListElement() throws Exception {
 		Fields expectedFields = new Fields();
 
-		expectedFields.put(getListField(_ddmStructure.getStructureId()));
+		_addField(
+			_ddmStructure.getStructureId(), null, expectedFields, "list",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("[\"value 01\"]")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(),
@@ -257,10 +282,12 @@ public class JournalConverterUtilTest {
 
 		Fields expectedFields = new Fields();
 
-		Field multiListField = getMultiListField(
-			_ddmStructure.getStructureId());
-
-		expectedFields.put(multiListField);
+		_addField(
+			_ddmStructure.getStructureId(), null, expectedFields, "multi_list",
+			HashMapBuilder.put(
+				_enLocale,
+				Collections.singletonList("[\"value 01\",\"value 02\"]")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(),
@@ -339,25 +366,19 @@ public class JournalConverterUtilTest {
 
 		Fields expectedFields = new Fields();
 
-		Field textField1 = new Field();
+		_addField(
+			childDDMStructure.getStructureId(), _enLocale, expectedFields,
+			"Text23i4",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("Text 1")
+			).build());
 
-		textField1.setDDMStructureId(childDDMStructure.getStructureId());
-		textField1.setDefaultLocale(_enLocale);
-		textField1.setName("Text23i4");
-
-		textField1.addValue(_enLocale, "Text 1");
-
-		expectedFields.put(textField1);
-
-		Field textField2 = new Field();
-
-		textField2.setDDMStructureId(childDDMStructure.getStructureId());
-		textField2.setDefaultLocale(_enLocale);
-		textField2.setName("Textlmzq");
-
-		textField2.addValue(_enLocale, "Text 2");
-
-		expectedFields.put(textField2);
+		_addField(
+			childDDMStructure.getStructureId(), _enLocale, expectedFields,
+			"Textlmzq",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("Text 2")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			childDDMStructure.getStructureId(),
@@ -382,11 +403,13 @@ public class JournalConverterUtilTest {
 
 		Fields expectedFields = new Fields();
 
-		Field textField = getTextField(_ddmStructure.getStructureId());
-
-		textField.setValue(_ptLocale, textField.getValue(_enLocale));
-
-		expectedFields.put(textField);
+		_addField(
+			_ddmStructure.getStructureId(), null, expectedFields, "text",
+			HashMapBuilder.put(
+				_enLocale, Collections.singletonList("one")
+			).put(
+				_ptLocale, Collections.singletonList("one")
+			).build());
 
 		Field fieldsDisplayField = getFieldsDisplayField(
 			_ddmStructure.getStructureId(),
@@ -558,33 +581,11 @@ public class JournalConverterUtilTest {
 		return fieldsMap;
 	}
 
-	protected Field getListField(long ddmStructureId) {
-		Field field = new Field();
-
-		field.setDDMStructureId(ddmStructureId);
-		field.setName("list");
-
-		field.addValue(_enLocale, "[\"value 01\"]");
-
-		return field;
-	}
-
-	protected Field getMultiListField(long ddmStructureId) {
-		Field field = new Field();
-
-		field.setDDMStructureId(ddmStructureId);
-		field.setName("multi_list");
-
-		field.addValue(_enLocale, "[\"value 01\",\"value 02\"]");
-
-		return field;
-	}
-
 	protected Fields getNestedFields(long ddmStructureId) {
 		Fields fields = new Fields();
 
 		_addField(
-			ddmStructureId, fields, "boolean",
+			ddmStructureId, null, fields, "boolean",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -592,7 +593,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "document_library",
+			ddmStructureId, null, fields, "document_library",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -600,7 +601,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "link_to_layout",
+			ddmStructureId, null, fields, "link_to_layout",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -608,7 +609,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "text_area",
+			ddmStructureId, null, fields, "text_area",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -616,7 +617,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "multi_list",
+			ddmStructureId, null, fields, "multi_list",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("[\"\"]")
 			).put(
@@ -624,7 +625,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "list",
+			ddmStructureId, null, fields, "list",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("[\"\"]")
 			).put(
@@ -632,7 +633,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "contact",
+			ddmStructureId, null, fields, "contact",
 			HashMapBuilder.put(
 				_enLocale, Arrays.asList("joe", "richard")
 			).put(
@@ -640,7 +641,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "phone",
+			ddmStructureId, null, fields, "phone",
 			HashMapBuilder.put(
 				_enLocale, Arrays.asList("123", "456")
 			).put(
@@ -648,7 +649,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "ext",
+			ddmStructureId, null, fields, "ext",
 			HashMapBuilder.put(
 				_enLocale, Arrays.asList("1", "2", "3", "4", "5")
 			).put(
@@ -656,7 +657,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "text",
+			ddmStructureId, null, fields, "text",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -664,7 +665,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "text_box",
+			ddmStructureId, null, fields, "text_box",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -672,7 +673,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "image_1",
+			ddmStructureId, null, fields, "image_1",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -680,7 +681,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "image_2",
+			ddmStructureId, null, fields, "image_2",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -688,7 +689,7 @@ public class JournalConverterUtilTest {
 			).build());
 
 		_addField(
-			ddmStructureId, fields, "image_3",
+			ddmStructureId, null, fields, "image_3",
 			HashMapBuilder.put(
 				_enLocale, Collections.singletonList("")
 			).put(
@@ -715,54 +716,6 @@ public class JournalConverterUtilTest {
 		fields.put(fieldsDisplayField);
 
 		return fields;
-	}
-
-	protected Field getTextAreaField(long ddmStructureId) {
-		Field field = new Field();
-
-		field.setDDMStructureId(ddmStructureId);
-		field.setName("text_area");
-
-		field.addValue(_enLocale, "<p>Hello World!</p>");
-
-		return field;
-	}
-
-	protected Field getTextBoxField(long ddmStructureId) {
-		Field field = new Field();
-
-		field.setDDMStructureId(ddmStructureId);
-		field.setName("text_box");
-
-		List<Serializable> enValues = new ArrayList<>();
-
-		enValues.add("one");
-		enValues.add("two");
-		enValues.add("three");
-
-		field.addValues(_enLocale, enValues);
-
-		List<Serializable> ptValues = new ArrayList<>();
-
-		ptValues.add("um");
-		ptValues.add("dois");
-		ptValues.add("tres");
-
-		field.addValues(_ptLocale, ptValues);
-
-		return field;
-	}
-
-	protected Field getTextField(long ddmStructureId) {
-		Field field = new Field();
-
-		field.setDDMStructureId(ddmStructureId);
-		field.setName("text");
-
-		field.addValue(_enLocale, "one");
-		field.addValue(_ptLocale, "um");
-
-		return field;
 	}
 
 	protected List<String> getValues(
@@ -835,12 +788,17 @@ public class JournalConverterUtilTest {
 	}
 
 	private void _addField(
-		long ddmStructureId, Fields fields, String name,
+		long ddmStructureId, Locale defaultLocale, Fields fields, String name,
 		HashMap<Locale, List<String>> values) {
 
 		Field field = new Field();
 
 		field.setDDMStructureId(ddmStructureId);
+
+		if (defaultLocale != null) {
+			field.setDefaultLocale(defaultLocale);
+		}
+
 		field.setName(name);
 
 		for (Map.Entry<Locale, List<String>> entry : values.entrySet()) {
