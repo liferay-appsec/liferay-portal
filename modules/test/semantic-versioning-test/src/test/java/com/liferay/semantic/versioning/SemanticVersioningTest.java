@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized;
  * @author Matthew Tambara
  */
 @RunWith(Parameterized.class)
-public class SemanticVersioningLogTest {
+public class SemanticVersioningTest {
 
 	@Parameterized.Parameters(name = "{0}")
 	public static List<String> sampleData() {
@@ -61,7 +61,7 @@ public class SemanticVersioningLogTest {
 			StringUtil.split(modulesTestClassGroup, CharPool.SPACE));
 	}
 
-	public SemanticVersioningLogTest(String module) {
+	public SemanticVersioningTest(String module) {
 		_module = module;
 	}
 
