@@ -28,9 +28,9 @@ import java.security.MessageDigest;
 public class CryptoHashVerifierImpl implements CryptoHashVerifier {
 
 	public CryptoHashVerifierImpl(
-		CryptoHashVerifierRegistry cryptoHashVerifierRegistry) {
+		CryptoHashProviderRegistry cryptoHashProviderRegistry) {
 
-		_cryptoHashVerifierRegistry = cryptoHashVerifierRegistry;
+		_cryptoHashProviderRegistry = cryptoHashProviderRegistry;
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class CryptoHashVerifierImpl implements CryptoHashVerifier {
 				cryptoHashVerificationContexts) {
 
 			CryptoHashProvider cryptoHashProvider =
-				_cryptoHashVerifierRegistry.getCryptoHashProvider(
+				_cryptoHashProviderRegistry.getCryptoHashProvider(
 					cryptoHashVerificationContext.getCryptoHashProviderName());
 
 			CryptoHashProviderResponse cryptoHashProviderResponse =
@@ -56,6 +56,6 @@ public class CryptoHashVerifierImpl implements CryptoHashVerifier {
 		return MessageDigest.isEqual(input, hash);
 	}
 
-	private final CryptoHashVerifierRegistry _cryptoHashVerifierRegistry;
+	private final CryptoHashProviderRegistry _cryptoHashProviderRegistry;
 
 }
