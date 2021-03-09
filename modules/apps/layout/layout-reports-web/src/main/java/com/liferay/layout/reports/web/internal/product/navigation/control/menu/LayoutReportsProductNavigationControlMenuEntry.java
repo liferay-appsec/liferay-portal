@@ -145,6 +145,8 @@ public class LayoutReportsProductNavigationControlMenuEntry
 			values.put("layoutReportsPanelURL", StringPool.BLANK);
 		}
 		else {
+			values.put("cssClass", StringPool.BLANK);
+
 			try {
 				values.put(
 					"layoutReportsPanelURL",
@@ -154,8 +156,6 @@ public class LayoutReportsProductNavigationControlMenuEntry
 			catch (WindowStateException windowStateException) {
 				throw new IOException(windowStateException);
 			}
-
-			values.put("cssClass", StringPool.BLANK);
 		}
 
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
@@ -349,9 +349,7 @@ public class LayoutReportsProductNavigationControlMenuEntry
 				"d-print-none lfr-admin-panel lfr-product-menu-panel ",
 				"lfr-layout-reports-panel sidenav-fixed sidenav-menu-slider ",
 				"sidenav-right\" id=\""));
-
 		jspWriter.write(_portletNamespace);
-
 		jspWriter.write("layoutReportsPanelId\">");
 		jspWriter.write(
 			"<div class=\"sidebar sidebar-light sidenav-menu sidebar-sm\">");
