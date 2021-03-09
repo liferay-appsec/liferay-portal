@@ -161,8 +161,6 @@ public class BlogsAdminPortletDataHandler extends BasePortletDataHandler {
 		portletDataContext.importPortletPermissions(
 			BlogsConstants.RESOURCE_NAME);
 
-		// Friendly URLs
-
 		Element friendlyURLEntriesElement =
 			portletDataContext.getImportDataGroupElement(
 				FriendlyURLEntry.class);
