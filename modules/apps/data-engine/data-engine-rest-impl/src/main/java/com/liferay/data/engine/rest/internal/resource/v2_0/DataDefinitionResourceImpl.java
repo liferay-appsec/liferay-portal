@@ -1245,13 +1245,6 @@ public class DataDefinitionResourceImpl
 		return _npmResolver.resolveModuleName(ddmFormFieldType.getModuleName());
 	}
 
-	@Reference(unbind = "-")
-	private void _setDataListViewResourceFactory(
-		DataListViewResource.Factory dataListViewResourceFactory) {
-
-		_dataListViewResourceFactory = dataListViewResourceFactory;
-	}
-
 	private void _setTypeDDMFormFieldValue(
 		DDMFormValues ddmFormValues, String type) {
 
@@ -1598,6 +1591,7 @@ public class DataDefinitionResourceImpl
 	@Reference
 	private DataEngineNativeObjectTracker _dataEngineNativeObjectTracker;
 
+	@Reference
 	private DataListViewResource.Factory _dataListViewResourceFactory;
 
 	@Reference
