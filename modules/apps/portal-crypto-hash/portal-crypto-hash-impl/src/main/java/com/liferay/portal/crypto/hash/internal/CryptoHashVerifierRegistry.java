@@ -24,7 +24,7 @@ import java.util.Map;
  * @author Arthur Chan
  * @author Carlos Sierra Andrés
  */
-public class CryptoVerifierRegistry {
+public class CryptoHashVerifierRegistry {
 
 	public CryptoHashProvider getCryptoHashProvider(
 		String cryptoHashProviderName) {
