@@ -15,19 +15,13 @@
 package com.liferay.saml.runtime.internal.servlet.filter;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.struts.LastPath;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Props;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.saml.constants.SamlPortletKeys;
+import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
 import com.liferay.saml.persistence.model.SamlSpSession;
 import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
@@ -37,6 +31,7 @@ import com.liferay.saml.runtime.servlet.profile.SamlSpIdpConnectionsProfile;
 import com.liferay.saml.runtime.servlet.profile.SingleLogoutProfile;
 import com.liferay.saml.runtime.servlet.profile.WebSsoProfile;
 import com.liferay.saml.util.SamlHttpRequestUtil;
+import com.liferay.saml.util.SamlSendAuthnRequestUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +43,6 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -167,16 +161,12 @@ public class SamlSpSsoFilter extends BaseSamlPortalFilter {
 			}
 
 			if (enabledSamlSpIdpConnections.size() == 1) {
-				try {
-					login(httpServletRequest, httpServletResponse);
-				}
-				catch (PortalException portalException) {
-					if (_log.isInfoEnabled()) {
-						_log.info(
-							"Failed to send Authn request: " +
-								portalException.getMessage());
-					}
-				}
+				httpServletRequest.setAttribute(
+					SamlWebKeys.SAML_SP_IDP_CONNECTION,
+					enabledSamlSpIdpConnections.get(0));
+
+				_samlSendAuthnRequestUtil.send(
+					httpServletRequest, httpServletResponse);
 
 				return;
 			}
@@ -210,42 +200,6 @@ public class SamlSpSsoFilter extends BaseSamlPortalFilter {
 	@Override
 	protected Log getLog() {
 		return _log;
-	}
-
-	protected void login(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws PortalException {
-
-		String relayState = ParamUtil.getString(httpServletRequest, "redirect");
-
-		if (Validator.isNotNull(relayState)) {
-			relayState = _portal.escapeRedirect(relayState);
-		}
-
-		HttpSession session = httpServletRequest.getSession();
-
-		LastPath lastPath = (LastPath)session.getAttribute(WebKeys.LAST_PATH);
-
-		if (GetterUtil.getBoolean(
-				_props.get(PropsKeys.AUTH_FORWARD_BY_LAST_PATH)) &&
-			(lastPath != null) && Validator.isNull(relayState)) {
-
-			StringBundler sb = new StringBundler(4);
-
-			sb.append(_portal.getPortalURL(httpServletRequest));
-			sb.append(lastPath.getContextPath());
-			sb.append(lastPath.getPath());
-			sb.append(lastPath.getParameters());
-
-			relayState = sb.toString();
-		}
-		else if (Validator.isNull(relayState)) {
-			relayState = _portal.getHomeURL(httpServletRequest);
-		}
-
-		_webSsoProfile.sendAuthnRequest(
-			httpServletRequest, httpServletResponse, relayState);
 	}
 
 	private List<SamlSpIdpConnection> _enabledSamlSpIdpConnections(
@@ -291,6 +245,9 @@ public class SamlSpSsoFilter extends BaseSamlPortalFilter {
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
+
+	@Reference
+	private SamlSendAuthnRequestUtil _samlSendAuthnRequestUtil;
 
 	@Reference
 	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
