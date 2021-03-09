@@ -16,6 +16,5 @@
 
 <%@ include file="/init.jsp" %>
 
-<div class="c-p-3" id="<portlet:namespace />-layout-reports-root" %>
-
+<div class="c-p-3" id="<portlet:namespace />-layout-reports-root">
 </div>
