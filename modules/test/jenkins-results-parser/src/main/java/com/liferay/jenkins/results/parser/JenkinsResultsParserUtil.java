@@ -656,14 +656,14 @@ public class JenkinsResultsParserUtil {
 			return Collections.emptyList();
 		}
 
-		List<File> siblingFilesList = new ArrayList<>(
+		List<File> siblingFiles = new ArrayList<>(
 			Arrays.asList(parentFile.listFiles()));
 
 		if (!includeFile) {
-			siblingFilesList.remove(file);
+			siblingFiles.remove(file);
 		}
 
-		return Collections.unmodifiableList(siblingFilesList);
+		return Collections.unmodifiableList(siblingFiles);
 	}
 
 	public static String fixFileName(String fileName) {
@@ -2352,11 +2352,10 @@ public class JenkinsResultsParserUtil {
 			FileInputStream fileInputStream = new FileInputStream(sourceFile)) {
 
 			byte[] bytes = new byte[1024];
+			int length = 0;
 
-			int len;
-
-			while ((len = fileInputStream.read(bytes)) > 0) {
-				gzipOutputStream.write(bytes, 0, len);
+			while ((length = fileInputStream.read(bytes)) > 0) {
+				gzipOutputStream.write(bytes, 0, length);
 			}
 		}
 		catch (IOException ioException) {
