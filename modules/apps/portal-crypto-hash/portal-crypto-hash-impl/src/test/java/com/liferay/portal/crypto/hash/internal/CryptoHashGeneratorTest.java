@@ -55,8 +55,8 @@ public class CryptoHashGeneratorTest {
 			new CryptoHashGeneratorImpl(bCryptCryptoHashProvider),
 			new CryptoHashGeneratorImpl(messageDigestCryptoHashProvider));
 
-		_cryptoHashVerifier =
-			cryptoHashProviderRegistry.getCryptoHashVerifier();
+		_cryptoHashVerifier = new CryptoHashVerifierImpl(
+			cryptoHashProviderRegistry);
 	}
 
 	@Test

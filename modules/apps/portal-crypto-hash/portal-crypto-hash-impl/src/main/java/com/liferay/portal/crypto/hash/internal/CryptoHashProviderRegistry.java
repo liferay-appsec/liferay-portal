@@ -14,7 +14,6 @@
 
 package com.liferay.portal.crypto.hash.internal;
 
-import com.liferay.portal.crypto.hash.CryptoHashVerifier;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProvider;
 
 import java.util.HashMap;
@@ -30,10 +29,6 @@ public class CryptoHashProviderRegistry {
 		String cryptoHashProviderName) {
 
 		return _cryptoHashProviders.get(cryptoHashProviderName);
-	}
-
-	public CryptoHashVerifier getCryptoHashVerifier() {
-		return new CryptoHashVerifierImpl(this);
 	}
 
 	public void register(CryptoHashProvider cryptoHashProvider) {
