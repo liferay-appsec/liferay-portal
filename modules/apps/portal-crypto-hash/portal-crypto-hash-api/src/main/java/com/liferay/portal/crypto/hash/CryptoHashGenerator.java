@@ -25,6 +25,9 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface CryptoHashGenerator {
 
-	public CryptoHashResponse generate(byte[] input) throws CryptoHashException;
+	public CryptoHashResponse generate(
+			byte[] input,
+			CryptoHashGenerationContext cryptoHashGenerationContext)
+		throws CryptoHashException;
 
 }
