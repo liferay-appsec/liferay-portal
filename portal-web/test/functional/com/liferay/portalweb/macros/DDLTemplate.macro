@@ -31,8 +31,7 @@ definition {
 			locator1 = "Portlet#HEADER",
 			value1 = "Templates for Structure: ${ddlDataDefinitionName}");
 
-		AssertElementPresent.assertVisible(
-			locator1 = "NavBar#ASSET_TEMPLATE");
+		AssertElementPresent.assertVisible(locator1 = "NavBar#ASSET_TEMPLATE");
 
 		LexiconEntry.gotoAddMenuItem(menuItem = "Add Display Template");
 
@@ -112,8 +111,7 @@ definition {
 			locator1 = "Portlet#HEADER",
 			value1 = "Templates for Structure: Data Definition");
 
-		AssertElementPresent.assertVisible(
-			locator1 = "NavBar#ASSET_TEMPLATE");
+		AssertElementPresent.assertVisible(locator1 = "NavBar#ASSET_TEMPLATE");
 
 		LexiconEntry.gotoAdd();
 
