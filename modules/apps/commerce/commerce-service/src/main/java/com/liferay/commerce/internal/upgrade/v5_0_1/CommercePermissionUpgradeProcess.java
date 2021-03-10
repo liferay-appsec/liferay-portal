@@ -60,14 +60,14 @@ public class CommercePermissionUpgradeProcess
 		sb.append(_PORTLET_NAME_COMMERCE_PRICE_LIST);
 		sb.append("')");
 
-		try (Statement s = connection.createStatement(
+		try (Statement statement = connection.createStatement(
 				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-			ResultSet rs = s.executeQuery(sb.toString())) {
+			ResultSet resultSet = statement.executeQuery(sb.toString())) {
 
-			while (rs.next()) {
+			while (resultSet.next()) {
 				ResourcePermission resourcePermission =
 					_resourcePermissionLocalService.getResourcePermission(
-						rs.getLong(1));
+						resultSet.getLong(1));
 
 				if (Objects.equals(
 						resourcePermission.getName(),
@@ -157,13 +157,14 @@ public class CommercePermissionUpgradeProcess
 				"([$COMMERCE_ACTION_IDS$]) and name != '90'",
 			"[$COMMERCE_ACTION_IDS$]");
 
-		try (Statement s = connection.createStatement(
+		try (Statement statement = connection.createStatement(
 				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-			ResultSet rs = s.executeQuery(sql)) {
+			ResultSet resultSet = statement.executeQuery(sql)) {
 
-			while (rs.next()) {
+			while (resultSet.next()) {
 				resourceActionNames.put(
-					rs.getString("actionId"), rs.getString("name"));
+					resultSet.getString("actionId"),
+					resultSet.getString("name"));
 			}
 		}
 
