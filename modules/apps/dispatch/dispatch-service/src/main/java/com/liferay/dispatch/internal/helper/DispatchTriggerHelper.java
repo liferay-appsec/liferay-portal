@@ -69,9 +69,19 @@ public class DispatchTriggerHelper {
 		long dispatchTriggerId, StorageType storageType) {
 
 		try {
-			_awaitScheduledJobDelete(
-				_getJobName(dispatchTriggerId),
-				_getGroupName(dispatchTriggerId), storageType);
+			String jobName = _getJobName(dispatchTriggerId);
+			String groupName = _getGroupName(dispatchTriggerId);
+
+			_schedulerEngineHelper.delete(jobName, groupName, storageType);
+
+			SchedulerResponse scheduledJob =
+				_schedulerEngineHelper.getScheduledJob(
+					jobName, groupName, storageType);
+
+			while (scheduledJob != null) {
+				scheduledJob = _schedulerEngineHelper.getScheduledJob(
+					jobName, groupName, storageType);
+			}
 		}
 		catch (SchedulerException schedulerException) {
 			_log.error(
@@ -112,21 +122,6 @@ public class DispatchTriggerHelper {
 				"Unable to unschedule scheduler job for dispatch Trigger " +
 					dispatchTriggerId,
 				schedulerException);
-		}
-	}
-
-	private void _awaitScheduledJobDelete(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.delete(jobName, groupName, storageType);
-
-		SchedulerResponse scheduledJob = _schedulerEngineHelper.getScheduledJob(
-			jobName, groupName, storageType);
-
-		while (scheduledJob != null) {
-			scheduledJob = _schedulerEngineHelper.getScheduledJob(
-				jobName, groupName, storageType);
 		}
 	}
 
