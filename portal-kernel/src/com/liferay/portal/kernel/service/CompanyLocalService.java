@@ -14,6 +14,7 @@
 
 package com.liferay.portal.kernel.service;
 
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -304,6 +305,26 @@ public interface CompanyLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public Company fetchCompanyByVirtualHost(String virtualHostname);
+
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompany(
+			UnsafeConsumer<Company, E> unsafeConsumer)
+		throws E;
+
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompany(
+			UnsafeConsumer<Company, E> unsafeConsumer, List<Company> companies)
+		throws E;
+
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompanyId(
+			UnsafeConsumer<Long, E> unsafeConsumer)
+		throws E;
+
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompanyId(
+			UnsafeConsumer<Long, E> unsafeConsumer, long[] companyIds)
+		throws E;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();

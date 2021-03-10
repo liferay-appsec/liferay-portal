@@ -328,6 +328,38 @@ public class CompanyLocalServiceUtil {
 		return getService().fetchCompanyByVirtualHost(virtualHostname);
 	}
 
+	public static <E extends Exception> void forEachCompany(
+			com.liferay.petra.function.UnsafeConsumer<Company, E>
+				unsafeConsumer)
+		throws E {
+
+		getService().forEachCompany(unsafeConsumer);
+	}
+
+	public static <E extends Exception> void forEachCompany(
+			com.liferay.petra.function.UnsafeConsumer<Company, E>
+				unsafeConsumer,
+			List<Company> companies)
+		throws E {
+
+		getService().forEachCompany(unsafeConsumer, companies);
+	}
+
+	public static <E extends Exception> void forEachCompanyId(
+			com.liferay.petra.function.UnsafeConsumer<Long, E> unsafeConsumer)
+		throws E {
+
+		getService().forEachCompanyId(unsafeConsumer);
+	}
+
+	public static <E extends Exception> void forEachCompanyId(
+			com.liferay.petra.function.UnsafeConsumer<Long, E> unsafeConsumer,
+			long[] companyIds)
+		throws E {
+
+		getService().forEachCompanyId(unsafeConsumer, companyIds);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
