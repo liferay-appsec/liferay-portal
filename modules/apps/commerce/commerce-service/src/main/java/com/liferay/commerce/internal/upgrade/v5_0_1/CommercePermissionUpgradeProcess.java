@@ -71,9 +71,7 @@ public class CommercePermissionUpgradeProcess
 
 				String name = resourcePermission.getName();
 
-				if (Objects.equals(
-						name, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
-
+				if (Objects.equals(name, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
 					_replaceCommerceDiscountResourcePermission(
 						resourcePermission);
 				}
