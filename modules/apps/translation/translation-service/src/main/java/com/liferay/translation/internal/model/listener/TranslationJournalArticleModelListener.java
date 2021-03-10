@@ -16,6 +16,7 @@ package com.liferay.translation.internal.model.listener;
 
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.translation.service.TranslationEntryLocalService;
@@ -36,9 +37,14 @@ public class TranslationJournalArticleModelListener
 
 		super.onAfterRemove(journalArticle);
 
-		_translationEntryLocalService.deleteTranslationEntries(
-			JournalArticle.class.getName(),
-			journalArticle.getResourcePrimKey());
+		try {
+			_translationEntryLocalService.deleteTranslationEntries(
+				JournalArticle.class.getName(),
+				journalArticle.getResourcePrimKey());
+		}
+		catch (PortalException portalException) {
+			throw new ModelListenerException(portalException);
+		}
 	}
 
 	@Reference

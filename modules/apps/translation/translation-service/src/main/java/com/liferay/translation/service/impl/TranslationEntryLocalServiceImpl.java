@@ -21,7 +21,6 @@ import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.item.updater.InfoItemFieldValuesUpdater;
 import com.liferay.petra.io.StreamUtil;
-import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
@@ -151,32 +150,31 @@ public class TranslationEntryLocalServiceImpl
 	}
 
 	@Override
-	public void deleteTranslationEntries(long classNameId, long classPK) {
-		try {
-			ActionableDynamicQuery actionableDynamicQuery =
-				translationEntryLocalService.getActionableDynamicQuery();
+	public void deleteTranslationEntries(long classNameId, long classPK)
+		throws PortalException {
 
-			actionableDynamicQuery.setAddCriteriaMethod(
-				dynamicQuery -> {
-					dynamicQuery.add(
-						RestrictionsFactoryUtil.eq("classNameId", classNameId));
-					dynamicQuery.add(
-						RestrictionsFactoryUtil.eq("classPK", classPK));
-				});
-			actionableDynamicQuery.setPerformActionMethod(
-				(TranslationEntry translationEntry) ->
-					translationEntryLocalService.deleteTranslationEntry(
-						translationEntry));
+		ActionableDynamicQuery actionableDynamicQuery =
+			translationEntryLocalService.getActionableDynamicQuery();
 
-			actionableDynamicQuery.performActions();
-		}
-		catch (PortalException portalException) {
-			ReflectionUtil.throwException(portalException);
-		}
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> {
+				dynamicQuery.add(
+					RestrictionsFactoryUtil.eq("classNameId", classNameId));
+				dynamicQuery.add(
+					RestrictionsFactoryUtil.eq("classPK", classPK));
+			});
+		actionableDynamicQuery.setPerformActionMethod(
+			(TranslationEntry translationEntry) ->
+				translationEntryLocalService.deleteTranslationEntry(
+					translationEntry));
+
+		actionableDynamicQuery.performActions();
 	}
 
 	@Override
-	public void deleteTranslationEntries(String className, long classPK) {
+	public void deleteTranslationEntries(String className, long classPK)
+		throws PortalException {
+
 		translationEntryLocalService.deleteTranslationEntries(
 			_portal.getClassNameId(className), classPK);
 	}
