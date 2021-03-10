@@ -226,11 +226,11 @@ public class DDMFormFieldTemplateContextFactory {
 		}
 		else {
 			for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
-				Map<String, Object> changedProperties = getChangedProperties(
-					ddmFormFieldValue);
-
 				DDMFormField ddmFormField = _ddmFormFieldsMap.get(
 					ddmFormFieldValue.getName());
+
+				Map<String, Object> changedProperties = getChangedProperties(
+					ddmFormField, ddmFormFieldValue);
 
 				if (!_ddmFormRenderingContext.isReturnFullContext() &&
 					changedProperties.isEmpty() && !ddmFormField.isRequired()) {
@@ -341,7 +341,7 @@ public class DDMFormFieldTemplateContextFactory {
 	}
 
 	protected Map<String, Object> getChangedProperties(
-		DDMFormFieldValue ddmFormFieldValue) {
+		DDMFormField ddmFormField, DDMFormFieldValue ddmFormFieldValue) {
 
 		Map<String, Object> changedProperties =
 			_ddmFormFieldsPropertyChanges.get(
@@ -360,8 +360,7 @@ public class DDMFormFieldTemplateContextFactory {
 		}
 
 		if (Objects.equals(
-				DDMFormFieldTypeConstants.FIELDSET,
-				ddmFormFieldValue.getType())) {
+				DDMFormFieldTypeConstants.FIELDSET, ddmFormField.getType())) {
 
 			changedProperties.put("editOnlyInDefaultLanguage", false);
 		}
