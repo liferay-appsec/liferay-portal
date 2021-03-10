@@ -353,16 +353,16 @@ public class DDMFormFieldTemplateContextFactory {
 			changedProperties = new HashMap<>();
 		}
 
-		changedProperties.put("enabled", _pageEnabled);
-
-		if (_ddmFormRenderingContext.isReadOnly()) {
-			changedProperties.put("readOnly", true);
-		}
-
 		if (Objects.equals(
 				DDMFormFieldTypeConstants.FIELDSET, ddmFormField.getType())) {
 
 			changedProperties.put("editOnlyInDefaultLanguage", false);
+		}
+
+		changedProperties.put("enabled", _pageEnabled);
+
+		if (_ddmFormRenderingContext.isReadOnly()) {
+			changedProperties.put("readOnly", true);
 		}
 
 		return changedProperties;
