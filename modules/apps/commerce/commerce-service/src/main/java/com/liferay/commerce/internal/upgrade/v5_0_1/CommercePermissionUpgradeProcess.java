@@ -48,8 +48,7 @@ public class CommercePermissionUpgradeProcess
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		Map<String, String> resourceActionNames =
-			_getCommerceResourceActionMap();
+		Map<String, String> resourceActionNames = _getResourceActionNames();
 
 		StringBundler sb = new StringBundler(6);
 
@@ -147,9 +146,7 @@ public class CommercePermissionUpgradeProcess
 		}
 	}
 
-	private Map<String, String> _getCommerceResourceActionMap()
-		throws Exception {
-
+	private Map<String, String> _getResourceActionNames() throws Exception {
 		Map<String, String> resourceActionNames = new HashMap<>();
 
 		String sql = _replaceCommerceActionIds(
