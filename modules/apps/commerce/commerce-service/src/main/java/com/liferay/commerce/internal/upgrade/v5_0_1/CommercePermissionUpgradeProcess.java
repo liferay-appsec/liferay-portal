@@ -200,6 +200,26 @@ public class CommercePermissionUpgradeProcess
 	}
 
 	private void _setResourcePermissions(
+			long companyId, String newName, String oldName, String primKey,
+			long roleId, List<ResourceAction> resourceActions, int scope)
+		throws Exception {
+
+		if (primKey.equals(oldName)) {
+			primKey = newName;
+		}
+
+		Stream<ResourceAction> stream = resourceActions.stream();
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			companyId, newName, scope, primKey, roleId,
+			stream.map(
+				ResourceAction::getActionId
+			).toArray(
+				String[]::new
+			));
+	}
+
+	private void _setResourcePermissions(
 			Map<String, String> resourceActionNames,
 			ResourcePermission resourcePermission)
 		throws Exception {
@@ -222,26 +242,6 @@ public class CommercePermissionUpgradeProcess
 				resourcePermission.getScope(), resourcePermission.getPrimKey(),
 				resourcePermission.getRoleId(), new String[] {actionId});
 		}
-	}
-
-	private void _setResourcePermissions(
-			long companyId, String newName, String oldName, String primKey,
-			long roleId, List<ResourceAction> resourceActions, int scope)
-		throws Exception {
-
-		if (primKey.equals(oldName)) {
-			primKey = newName;
-		}
-
-		Stream<ResourceAction> stream = resourceActions.stream();
-
-		_resourcePermissionLocalService.setResourcePermissions(
-			companyId, newName, scope, primKey, roleId,
-			stream.map(
-				ResourceAction::getActionId
-			).toArray(
-				String[]::new
-			));
 	}
 
 	private static final String[] _ACTION_IDS = {
