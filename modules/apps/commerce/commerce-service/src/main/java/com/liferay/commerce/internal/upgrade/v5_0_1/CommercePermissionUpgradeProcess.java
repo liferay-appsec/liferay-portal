@@ -69,9 +69,7 @@ public class CommercePermissionUpgradeProcess
 					_resourcePermissionLocalService.getResourcePermission(
 						rs.getLong(1));
 
-				String name = resourcePermission.getName();
-
-				if (Objects.equals(name, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
+				if (Objects.equals(resourcePermission.getName(), _PORTLET_NAME_COMMERCE_DISCOUNT)) {
 					_setResourcePermissions(
 						resourcePermission.getCompanyId(),
 						_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
@@ -85,7 +83,7 @@ public class CommercePermissionUpgradeProcess
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							name, _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
+							resourcePermission.getName(), _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
 
 					List<ResourceAction> resourceActions =
 						_resourceActionLocalService.getResourceActions(
@@ -108,7 +106,7 @@ public class CommercePermissionUpgradeProcess
 					_resourcePermissionLocalService.deleteResourcePermission(
 						resourcePermission);
 				}
-				else if (Objects.equals(name, "90")) {
+				else if (Objects.equals(resourcePermission.getName(), "90")) {
 					_setResourcePermissions(
 						resourceActionNames, resourcePermission);
 				}
