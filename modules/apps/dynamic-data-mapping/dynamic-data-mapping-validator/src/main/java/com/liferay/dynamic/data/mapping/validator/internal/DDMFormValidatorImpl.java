@@ -191,8 +191,7 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		}
 		catch (DDMFormValidationException ddmFormValidationException) {
 			if ((ddmFormValidationException instanceof
-					DDMFormValidationException.
-						MustSetValidAvailableLocalesForProperty) &&
+					MustSetValidAvailableLocalesForProperty) &&
 				allowInvalidAvailableLocalesForProperty) {
 
 				return;
@@ -469,8 +468,7 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		}
 		catch (DDMFormValidationException ddmFormValidationException) {
 			if ((ddmFormValidationException instanceof
-					DDMFormValidationException.
-						MustSetValidAvailableLocalesForProperty) &&
+					MustSetValidAvailableLocalesForProperty) &&
 				allowInvalidAvailableLocalesForProperty) {
 
 				return;
