@@ -12,25 +12,31 @@
  * details.
  */
 
-package com.liferay.blogs.internal.upgrade.v2_1_1;
+package com.liferay.batch.engine.internal.upgrade.v4_1_0;
 
-import com.liferay.blogs.internal.upgrade.v2_1_1.util.BlogsEntryTable;
+import com.liferay.batch.engine.internal.upgrade.v4_1_0.util.BatchEngineExportTaskTable;
+import com.liferay.batch.engine.internal.upgrade.v4_1_0.util.BatchEngineImportTaskTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
 /**
- * @author Brian I. Kim
+ * @author Ivica Cardic
  */
-public class UpgradeBlogsEntry extends UpgradeProcess {
+public class TaskItemDelegateNameUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		if (hasColumnType(
-				getTableName(BlogsEntryTable.class), "title",
-				"VARCHAR(150) null")) {
-
+		if (!hasColumn("BatchEngineExportTask", "taskItemDelegateName")) {
 			alter(
-				BlogsEntryTable.class,
-				new AlterColumnType("title", "VARCHAR(255) null"));
+				BatchEngineExportTaskTable.class,
+				new AlterTableAddColumn(
+					"taskItemDelegateName", "VARCHAR(75) null"));
+		}
+
+		if (!hasColumn("BatchEngineImportTask", "taskItemDelegateName")) {
+			alter(
+				BatchEngineImportTaskTable.class,
+				new AlterTableAddColumn(
+					"taskItemDelegateName", "VARCHAR(75) null"));
 		}
 	}
 

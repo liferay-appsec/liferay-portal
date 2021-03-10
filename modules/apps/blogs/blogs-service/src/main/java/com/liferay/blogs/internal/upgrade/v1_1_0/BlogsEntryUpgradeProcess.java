@@ -27,9 +27,9 @@ import java.sql.ResultSet;
 /**
  * @author Adolfo Pérez
  */
-public class UpgradeBlogsEntry extends UpgradeProcess {
+public class BlogsEntryUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeBlogsEntry(
+	public BlogsEntryUpgradeProcess(
 		FriendlyURLEntryLocalService friendlyURLEntryLocalService) {
 
 		_friendlyURLEntryLocalService = friendlyURLEntryLocalService;

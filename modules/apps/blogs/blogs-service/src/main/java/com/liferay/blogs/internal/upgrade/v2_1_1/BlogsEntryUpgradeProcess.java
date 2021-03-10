@@ -12,21 +12,26 @@
  * details.
  */
 
-package com.liferay.blogs.internal.upgrade.v1_1_1;
+package com.liferay.blogs.internal.upgrade.v2_1_1;
 
-import com.liferay.blogs.internal.upgrade.v1_1_1.util.BlogsEntryTable;
+import com.liferay.blogs.internal.upgrade.v2_1_1.util.BlogsEntryTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
 /**
- * @author Jürgen Kappler
+ * @author Brian I. Kim
  */
-public class UpgradeBlogsEntry extends UpgradeProcess {
+public class BlogsEntryUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		alter(
-			BlogsEntryTable.class,
-			new AlterColumnType("urlTitle", "VARCHAR(255) null"));
+		if (hasColumnType(
+				getTableName(BlogsEntryTable.class), "title",
+				"VARCHAR(150) null")) {
+
+			alter(
+				BlogsEntryTable.class,
+				new AlterColumnType("title", "VARCHAR(255) null"));
+		}
 	}
 
 }

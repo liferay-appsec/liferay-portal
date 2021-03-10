@@ -12,31 +12,35 @@
  * details.
  */
 
-package com.liferay.batch.engine.internal.upgrade.v4_1_0;
+package com.liferay.batch.engine.internal.upgrade.v4_0_1;
 
-import com.liferay.batch.engine.internal.upgrade.v4_1_0.util.BatchEngineExportTaskTable;
-import com.liferay.batch.engine.internal.upgrade.v4_1_0.util.BatchEngineImportTaskTable;
+import com.liferay.batch.engine.internal.upgrade.v4_0_1.util.BatchEngineExportTaskTable;
+import com.liferay.batch.engine.internal.upgrade.v4_0_1.util.BatchEngineImportTaskTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
 /**
- * @author Ivica Cardic
+ * @author Riccardo Ferrari
  */
-public class UpgradeTaskItemDelegateName extends UpgradeProcess {
+public class ClassNameUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		if (!hasColumn("BatchEngineExportTask", "taskItemDelegateName")) {
+		if (hasColumnType(
+				getTableName(BatchEngineExportTaskTable.class), "className",
+				"VARCHAR(75) null")) {
+
 			alter(
 				BatchEngineExportTaskTable.class,
-				new AlterTableAddColumn(
-					"taskItemDelegateName", "VARCHAR(75) null"));
+				new AlterColumnType("className", "VARCHAR(255) null"));
 		}
 
-		if (!hasColumn("BatchEngineImportTask", "taskItemDelegateName")) {
+		if (hasColumnType(
+				getTableName(BatchEngineImportTaskTable.class), "className",
+				"VARCHAR(75) null")) {
+
 			alter(
 				BatchEngineImportTaskTable.class,
-				new AlterTableAddColumn(
-					"taskItemDelegateName", "VARCHAR(75) null"));
+				new AlterColumnType("className", "VARCHAR(255) null"));
 		}
 	}
 

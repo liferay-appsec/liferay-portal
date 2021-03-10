@@ -12,35 +12,29 @@
  * details.
  */
 
-package com.liferay.batch.engine.internal.upgrade.v4_0_1;
+package com.liferay.batch.engine.internal.upgrade.v4_0_0;
 
-import com.liferay.batch.engine.internal.upgrade.v4_0_1.util.BatchEngineExportTaskTable;
-import com.liferay.batch.engine.internal.upgrade.v4_0_1.util.BatchEngineImportTaskTable;
+import com.liferay.batch.engine.internal.upgrade.v4_0_0.util.BatchEngineExportTaskTable;
+import com.liferay.batch.engine.internal.upgrade.v4_0_0.util.BatchEngineImportTaskTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
 /**
- * @author Riccardo Ferrari
+ * @author Ivica Cardic
  */
-public class UpgradeClassName extends UpgradeProcess {
+public class VersionUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		if (hasColumnType(
-				getTableName(BatchEngineExportTaskTable.class), "className",
-				"VARCHAR(75) null")) {
-
+		if (hasColumn("BatchEngineExportTask", "version")) {
 			alter(
 				BatchEngineExportTaskTable.class,
-				new AlterColumnType("className", "VARCHAR(255) null"));
+				new AlterTableDropColumn("version"));
 		}
 
-		if (hasColumnType(
-				getTableName(BatchEngineImportTaskTable.class), "className",
-				"VARCHAR(75) null")) {
-
+		if (hasColumn("BatchEngineImportTask", "version")) {
 			alter(
 				BatchEngineImportTaskTable.class,
-				new AlterColumnType("className", "VARCHAR(255) null"));
+				new AlterTableDropColumn("version"));
 		}
 	}
 

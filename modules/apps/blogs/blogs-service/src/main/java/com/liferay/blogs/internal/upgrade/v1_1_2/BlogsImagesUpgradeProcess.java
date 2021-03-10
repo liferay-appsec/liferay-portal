@@ -44,9 +44,9 @@ import java.sql.ResultSet;
 /**
  * @author István András Dézsi
  */
-public class UpgradeBlogsImages extends UpgradeProcess {
+public class BlogsImagesUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeBlogsImages(
+	public BlogsImagesUpgradeProcess(
 		ImageLocalService imageLocalService,
 		PortletFileRepository portletFileRepository) {
 
