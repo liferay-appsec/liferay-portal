@@ -19,6 +19,7 @@ import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorFieldCont
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
 import com.liferay.dynamic.data.mapping.form.renderer.constants.DDMFormRendererConstants;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -64,6 +65,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -357,6 +359,13 @@ public class DDMFormFieldTemplateContextFactory {
 			changedProperties.put("readOnly", true);
 		}
 
+		if (Objects.equals(
+				DDMFormFieldTypeConstants.FIELDSET,
+				ddmFormFieldValue.getType())) {
+
+			changedProperties.put("editOnlyInDefaultLanguage", false);
+		}
+
 		return changedProperties;
 	}
 
@@ -432,10 +441,14 @@ public class DDMFormFieldTemplateContextFactory {
 
 	protected void setDDMFormFieldTemplateContextEditOnlyInDefaultLanguage(
 		Map<String, Object> ddmFormFieldTemplateContext,
+		Map<String, Object> changedProperties,
 		boolean editOnlyInDefaultLanguage) {
 
 		ddmFormFieldTemplateContext.put(
-			"editOnlyInDefaultLanguage", editOnlyInDefaultLanguage);
+			"editOnlyInDefaultLanguage",
+			MapUtil.getBoolean(
+				changedProperties, "editOnlyInDefaultLanguage",
+				editOnlyInDefaultLanguage));
 	}
 
 	protected void setDDMFormFieldTemplateContextEnabled(
@@ -853,7 +866,7 @@ public class DDMFormFieldTemplateContextFactory {
 		DDMFormFieldValue ddmFormFieldValue) {
 
 		setDDMFormFieldTemplateContextEditOnlyInDefaultLanguage(
-			ddmFormFieldTemplateContext,
+			ddmFormFieldTemplateContext, changedProperties,
 			_ddmFormRenderingContext.isEditOnlyInDefaultLanguage());
 		setDDMFormFieldTemplateContextEnabled(
 			ddmFormFieldTemplateContext, changedProperties, true);
