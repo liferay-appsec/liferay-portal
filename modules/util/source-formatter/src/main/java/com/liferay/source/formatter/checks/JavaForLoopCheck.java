@@ -227,11 +227,11 @@ public class JavaForLoopCheck extends BaseJavaTermCheck {
 
 		if (type == _COLLECTION_TYPE_ARRAY) {
 			return StringBundler.concat(
-				"\\W", collectionVarName, "\\[", countVarName, "\\]");
+				"\\W", collectionVarName, "\\s*\\[", countVarName, "\\]");
 		}
 
 		return StringBundler.concat(
-			"\\W", collectionVarName, "\\.get\\(", countVarName, "\\)");
+			"\\W", collectionVarName, "\\.\\s*get\\(\\s*", countVarName, "\\)");
 	}
 
 	private static final int _COLLECTION_TYPE_ARRAY = 0;

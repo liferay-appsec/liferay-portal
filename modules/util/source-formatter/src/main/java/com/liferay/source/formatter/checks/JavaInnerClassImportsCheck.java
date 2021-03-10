@@ -219,11 +219,12 @@ public class JavaInnerClassImportsCheck extends BaseFileCheck {
 	}
 
 	private String _stripRedundantOuterClass(
-		String content, String innerClassName, String outerAndInnerClassName) {
+		String content, String innerClassName, String outerClassName) {
 
 		Pattern pattern = Pattern.compile(
 			StringBundler.concat(
-				"\n(.*[^\\w\n.])", outerAndInnerClassName, "\\W"));
+				"\n(.*[^\\w\n.])(", outerClassName, "\\.\\s*", innerClassName,
+				")\\W"));
 
 		Matcher matcher = pattern.matcher(content);
 
@@ -237,8 +238,7 @@ public class JavaInnerClassImportsCheck extends BaseFileCheck {
 			}
 
 			return StringUtil.replaceFirst(
-				content, outerAndInnerClassName, innerClassName,
-				matcher.end(1));
+				content, matcher.group(2), innerClassName, matcher.end(1));
 		}
 
 		return content;
@@ -263,9 +263,7 @@ public class JavaInnerClassImportsCheck extends BaseFileCheck {
 
 			if (imports.contains(outerClassFullyQualifiedName)) {
 				content = _stripRedundantOuterClass(
-					content, innerClassName,
-					innerClassFullyQualifiedName.substring(
-						matcher.start() + 1));
+					content, innerClassName, matcher.group(1));
 			}
 		}
 
@@ -278,6 +276,6 @@ public class JavaInnerClassImportsCheck extends BaseFileCheck {
 	private static final Pattern _innerClassImportPattern = Pattern.compile(
 		"\nimport (([\\w.]+\\.([A-Z]\\w+))\\.([A-Z]\\w+));");
 	private static final Pattern _outerClassPattern = Pattern.compile(
-		"\\.[A-Z]\\w+");
+		"\\.([A-Z]\\w+)");
 
 }
