@@ -37,7 +37,7 @@ import java.util.concurrent.Future;
 /**
  * @author Eudaldo Alonso
  */
-public class UpgradeAssetEntryAssetCategoryRel extends UpgradeProcess {
+public class AssetEntryAssetCategoryRelUpgradeProcess extends UpgradeProcess {
 
 	protected void addAssetEntryAssetCategoryRels() throws Exception {
 		try (PreparedStatement ps = connection.prepareStatement(
@@ -88,14 +88,14 @@ public class UpgradeAssetEntryAssetCategoryRel extends UpgradeProcess {
 
 	protected void upgradeSchema() throws Exception {
 		String template = StringUtil.read(
-			UpgradeAssetEntryAssetCategoryRel.class.getResourceAsStream(
+			AssetEntryAssetCategoryRelUpgradeProcess.class.getResourceAsStream(
 				"dependencies/update.sql"));
 
 		runSQLTemplateString(template, false);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		UpgradeAssetEntryAssetCategoryRel.class);
+		AssetEntryAssetCategoryRelUpgradeProcess.class);
 
 	private class InsertAssetEntryAssetCategoryRelCallable
 		implements Callable<Boolean> {

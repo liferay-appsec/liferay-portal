@@ -30,7 +30,7 @@ import java.sql.SQLException;
  * @author Pavel Savinov
  * @author Roberto Díaz
  */
-public class UpgradeAssetDisplayLayoutFriendlyURLPrivateLayout
+public class AssetDisplayLayoutFriendlyURLPrivateLayoutUpgradeProcess
 	extends UpgradeProcess {
 
 	@Override
@@ -129,6 +129,6 @@ public class UpgradeAssetDisplayLayoutFriendlyURLPrivateLayout
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		UpgradeAssetDisplayLayoutFriendlyURLPrivateLayout.class);
+		AssetDisplayLayoutFriendlyURLPrivateLayoutUpgradeProcess.class);
 
 }

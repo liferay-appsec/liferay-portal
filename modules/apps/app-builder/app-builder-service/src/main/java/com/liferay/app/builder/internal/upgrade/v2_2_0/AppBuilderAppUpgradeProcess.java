@@ -32,9 +32,9 @@ import java.util.Map;
 /**
  * @author Rafael Praxedes
  */
-public class UpgradeAppBuilderApp extends UpgradeProcess {
+public class AppBuilderAppUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeAppBuilderApp(
+	public AppBuilderAppUpgradeProcess(
 		DDLRecordSetLocalService ddlRecordSetLocalService,
 		DDMStructureLocalService ddmStructureLocalService) {
 

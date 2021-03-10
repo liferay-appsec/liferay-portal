@@ -34,9 +34,10 @@ import org.osgi.service.cm.ConfigurationAdmin;
 /**
  * @author Rachael Koestartyo
  */
-public class UpgradeAnalyticsConfigurationPreferences extends UpgradeProcess {
+public class AnalyticsConfigurationPreferencesUpgradeProcess
+	extends UpgradeProcess {
 
-	public UpgradeAnalyticsConfigurationPreferences(
+	public AnalyticsConfigurationPreferencesUpgradeProcess(
 		ConfigurationAdmin configurationAdmin) {
 
 		_configurationAdmin = configurationAdmin;

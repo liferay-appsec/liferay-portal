@@ -36,9 +36,10 @@ import java.util.regex.Pattern;
 /**
  * @author Alejandro Tardín
  */
-public class UpgradeJournalArticleDataFileEntryId extends UpgradeProcess {
+public class JournalArticleDataFileEntryIdUpgradeProcess
+	extends UpgradeProcess {
 
-	public UpgradeJournalArticleDataFileEntryId(
+	public JournalArticleDataFileEntryIdUpgradeProcess(
 		JournalArticleLocalService journalArticleLocalService) {
 
 		_journalArticleLocalService = journalArticleLocalService;

@@ -12,33 +12,30 @@
  * details.
  */
 
-package com.liferay.asset.category.property.internal.upgrade.v2_2_0;
+package com.liferay.announcements.web.internal.upgrade.v2_0_0;
 
-import com.liferay.asset.category.property.internal.upgrade.v2_2_0.util.AssetCategoryPropertyTable;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.PortletKeys;
 
 /**
- * @author Jürgen Kappler
+ * @author Roberto Díaz
  */
-public class UpgradeAssetCategoryProperty extends UpgradeProcess {
+public class PortletPreferencesUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		if (hasColumnType(
-				"AssetCategoryProperty", "key_", "VARCHAR(75) null")) {
-
-			alter(
-				AssetCategoryPropertyTable.class,
-				new AlterColumnType("key_", "VARCHAR(255) null"));
-		}
-
-		if (hasColumnType(
-				"AssetCategoryProperty", "value", "VARCHAR(75) null")) {
-
-			alter(
-				AssetCategoryPropertyTable.class,
-				new AlterColumnType("value", "VARCHAR(255) null"));
+		try (LoggingTimer loggingTimer = new LoggingTimer()) {
+			runSQL(
+				StringBundler.concat(
+					"delete from PortletPreferences where portletId = '",
+					_PORTLET_ID, "' AND ownerType = ",
+					PortletKeys.PREFS_OWNER_TYPE_COMPANY));
 		}
 	}
+
+	private static final String _PORTLET_ID =
+		"com_liferay_announcements_web_portlet_AnnouncementsPortlet";
 
 }

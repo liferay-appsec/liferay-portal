@@ -32,9 +32,10 @@ import org.osgi.service.cm.ConfigurationAdmin;
 /**
  * @author Shinn Lok
  */
-public class UpgradeAnalyticsConfigurationPreferences extends UpgradeProcess {
+public class AnalyticsConfigurationPreferencesUpgradeProcess
+	extends UpgradeProcess {
 
-	public UpgradeAnalyticsConfigurationPreferences(
+	public AnalyticsConfigurationPreferencesUpgradeProcess(
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin) {
 

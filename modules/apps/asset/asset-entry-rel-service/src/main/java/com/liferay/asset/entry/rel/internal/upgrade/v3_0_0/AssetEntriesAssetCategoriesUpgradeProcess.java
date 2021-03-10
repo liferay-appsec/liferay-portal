@@ -12,30 +12,20 @@
  * details.
  */
 
-package com.liferay.announcements.web.internal.upgrade.v2_0_0;
+package com.liferay.asset.entry.rel.internal.upgrade.v3_0_0;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.LoggingTimer;
-import com.liferay.portal.kernel.util.PortletKeys;
 
 /**
- * @author Roberto Díaz
+ * @author Jürgen Kappler
  */
-public class UpgradePortletPreferences extends UpgradeProcess {
+public class AssetEntriesAssetCategoriesUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			runSQL(
-				StringBundler.concat(
-					"delete from PortletPreferences where portletId = '",
-					_PORTLET_ID, "' AND ownerType = ",
-					PortletKeys.PREFS_OWNER_TYPE_COMPANY));
+		if (hasTable("AssetEntries_AssetCategories")) {
+			runSQL("drop table AssetEntries_AssetCategories");
 		}
 	}
-
-	private static final String _PORTLET_ID =
-		"com_liferay_announcements_web_portlet_AnnouncementsPortlet";
 
 }

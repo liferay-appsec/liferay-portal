@@ -29,9 +29,9 @@ import java.util.regex.Pattern;
 /**
  * @author Alejandro Tardín
  */
-public class UpgradeBlogsEntryDataFileEntryId extends UpgradeProcess {
+public class BlogsEntryDataFileEntryIdUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeBlogsEntryDataFileEntryId(
+	public BlogsEntryDataFileEntryIdUpgradeProcess(
 		BlogsEntryLocalService blogsEntryLocalService) {
 
 		_blogsEntryLocalService = blogsEntryLocalService;

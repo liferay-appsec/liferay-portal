@@ -28,7 +28,7 @@ import java.sql.Timestamp;
 /**
  * @author Samuel Ziemer
  */
-public class UpgradeAssetDisplayPageEntry extends UpgradeProcess {
+public class AssetDisplayPageEntryUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {

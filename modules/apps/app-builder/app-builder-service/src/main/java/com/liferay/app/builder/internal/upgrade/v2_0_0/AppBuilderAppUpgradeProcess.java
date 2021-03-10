@@ -24,7 +24,7 @@ import java.sql.ResultSet;
 /**
  * @author Rafael Praxedes
  */
-public class UpgradeAppBuilderApp extends UpgradeProcess {
+public class AppBuilderAppUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {

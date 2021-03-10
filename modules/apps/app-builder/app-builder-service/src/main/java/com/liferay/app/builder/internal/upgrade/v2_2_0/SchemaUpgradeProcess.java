@@ -28,9 +28,9 @@ import java.sql.ResultSet;
 /**
  * @author Rafael Praxedes
  */
-public class UpgradeSchema extends UpgradeProcess {
+public class SchemaUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeSchema(CounterLocalService counterLocalService) {
+	public SchemaUpgradeProcess(CounterLocalService counterLocalService) {
 		_counterLocalService = counterLocalService;
 	}
 
@@ -38,7 +38,7 @@ public class UpgradeSchema extends UpgradeProcess {
 	protected void doUpgrade() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
 			String template = StringUtil.read(
-				UpgradeSchema.class.getResourceAsStream(
+				SchemaUpgradeProcess.class.getResourceAsStream(
 					"dependencies/update.sql"));
 
 			runSQLTemplateString(template, false);

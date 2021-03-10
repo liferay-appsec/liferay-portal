@@ -34,9 +34,9 @@ import java.sql.SQLException;
  * @author Pavel Savinov
  * @author Roberto Díaz
  */
-public class UpgradeAssetDisplayPrivateLayout extends UpgradeProcess {
+public class AssetDisplayPrivateLayoutUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeAssetDisplayPrivateLayout(
+	public AssetDisplayPrivateLayoutUpgradeProcess(
 		LayoutLocalService layoutLocalService,
 		ResourceLocalService resourceLocalService) {
 
@@ -149,7 +149,7 @@ public class UpgradeAssetDisplayPrivateLayout extends UpgradeProcess {
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		UpgradeAssetDisplayPrivateLayout.class);
+		AssetDisplayPrivateLayoutUpgradeProcess.class);
 
 	private final LayoutLocalService _layoutLocalService;
 	private final ResourceLocalService _resourceLocalService;

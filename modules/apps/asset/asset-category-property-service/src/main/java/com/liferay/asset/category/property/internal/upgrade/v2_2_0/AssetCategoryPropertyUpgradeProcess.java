@@ -12,27 +12,33 @@
  * details.
  */
 
-package com.liferay.asset.list.internal.upgrade.v1_3_0;
+package com.liferay.asset.category.property.internal.upgrade.v2_2_0;
 
-import com.liferay.asset.kernel.model.AssetEntry;
-import com.liferay.asset.list.internal.upgrade.v1_3_0.util.AssetListEntryTable;
+import com.liferay.asset.category.property.internal.upgrade.v2_2_0.util.AssetCategoryPropertyTable;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
 /**
- * @author Eudaldo Alonso
+ * @author Jürgen Kappler
  */
-public class UpgradeAssetListEntry extends UpgradeProcess {
+public class AssetCategoryPropertyUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		alter(
-			AssetListEntryTable.class,
-			new AlterTableAddColumn("assetEntrySubtype", "VARCHAR(255) null"),
-			new AlterTableAddColumn("assetEntryType", "VARCHAR(255) null"));
+		if (hasColumnType(
+				"AssetCategoryProperty", "key_", "VARCHAR(75) null")) {
 
-		runSQL(
-			"update AssetListEntry set assetEntryType = '" +
-				AssetEntry.class.getName() + "'");
+			alter(
+				AssetCategoryPropertyTable.class,
+				new AlterColumnType("key_", "VARCHAR(255) null"));
+		}
+
+		if (hasColumnType(
+				"AssetCategoryProperty", "value", "VARCHAR(75) null")) {
+
+			alter(
+				AssetCategoryPropertyTable.class,
+				new AlterColumnType("value", "VARCHAR(255) null"));
+		}
 	}
 
 }

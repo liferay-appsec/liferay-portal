@@ -43,9 +43,9 @@ import java.util.Optional;
 /**
  * @author Pavel Savinov
  */
-public class UpgradeAssetDisplayLayout extends UpgradeProcess {
+public class AssetDisplayLayoutUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeAssetDisplayLayout(
+	public AssetDisplayLayoutUpgradeProcess(
 		AssetEntryLocalService assetEntryLocalService,
 		LayoutLocalService layoutLocalService,
 		LayoutPageTemplateEntryLocalService layoutPageTemplateEntryLocalService,

@@ -12,40 +12,31 @@
  * details.
  */
 
-package com.liferay.asset.display.page.internal.upgrade.v2_3_2;
+package com.liferay.asset.display.page.internal.upgrade.v2_2_2;
 
-import com.liferay.document.library.kernel.model.DLFileEntryConstants;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.PortalUtil;
 
-import java.sql.PreparedStatement;
-
 /**
- * @author Jürgen Kappler
+ * @author Eudaldo Alonso
  */
-public class UpgradeAssetDisplayPageEntry extends UpgradeProcess {
+public class AssetDisplayClassNameUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		_upgradeDLAssetDisplayPageTypes();
+		_upgradeAssetDisplayClassName();
 	}
 
-	private void _upgradeDLAssetDisplayPageTypes() throws Exception {
-		long dlFileEntryClassNameId = PortalUtil.getClassNameId(
-			DLFileEntryConstants.getClassName());
-		long fileEntryClassNameId = PortalUtil.getClassNameId(
-			FileEntry.class.getName());
-
-		try (PreparedStatement ps = connection.prepareStatement(
-				"update AssetDisplayPageEntry set classNameId = ? where " +
-					"classNameId = ?")) {
-
-			ps.setLong(1, fileEntryClassNameId);
-			ps.setLong(2, dlFileEntryClassNameId);
-
-			ps.executeUpdate();
-		}
+	private void _upgradeAssetDisplayClassName() throws Exception {
+		runSQL(
+			StringBundler.concat(
+				"update AssetDisplayPageEntry set value = '",
+				PortalUtil.getClassNameId(FileEntry.class),
+				"' where classNameId = ",
+				PortalUtil.getClassNameId(DLFileEntry.class)));
 	}
 
 }

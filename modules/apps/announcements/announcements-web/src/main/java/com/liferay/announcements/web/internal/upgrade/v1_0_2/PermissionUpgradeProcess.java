@@ -34,13 +34,15 @@ import java.util.Set;
 /**
  * @author Roberto Díaz
  */
-public class UpgradePermission extends UpgradeProcess {
+public class PermissionUpgradeProcess extends UpgradeProcess {
 
-	public UpgradePermission() {
+	public PermissionUpgradeProcess() {
 		this(false);
 	}
 
-	public UpgradePermission(boolean ignoreMissingAddEntryResourceAction) {
+	public PermissionUpgradeProcess(
+		boolean ignoreMissingAddEntryResourceAction) {
+
 		_ignoreMissingAddEntryResourceAction =
 			ignoreMissingAddEntryResourceAction;
 	}
@@ -284,7 +286,7 @@ public class UpgradePermission extends UpgradeProcess {
 	private static final long _BITWISE_VALUE_VIEW = 1;
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		UpgradePermission.class);
+		PermissionUpgradeProcess.class);
 
 	private final boolean _ignoreMissingAddEntryResourceAction;
 	private final Set<String> _resourcePermissions = new HashSet<>();

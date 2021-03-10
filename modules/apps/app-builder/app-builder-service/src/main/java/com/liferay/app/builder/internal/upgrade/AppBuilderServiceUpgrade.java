@@ -14,7 +14,7 @@
 
 package com.liferay.app.builder.internal.upgrade;
 
-import com.liferay.app.builder.internal.upgrade.v2_2_0.UpgradeSchema;
+import com.liferay.app.builder.internal.upgrade.v2_2_0.SchemaUpgradeProcess;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
@@ -34,19 +34,19 @@ public class AppBuilderServiceUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"1.0.0", "2.0.0",
 			new com.liferay.app.builder.internal.upgrade.v2_0_0.
-				UpgradeAppBuilderApp());
+				AppBuilderAppUpgradeProcess());
 
 		registry.register(
 			"2.0.0", "2.1.0",
 			new com.liferay.app.builder.internal.upgrade.v2_1_0.
-				UpgradeAppBuilderApp());
+				AppBuilderAppUpgradeProcess());
 
 		registry.register(
 			"2.1.0", "2.2.0",
 			new com.liferay.app.builder.internal.upgrade.v2_2_0.
-				UpgradeAppBuilderApp(
+				AppBuilderAppUpgradeProcess(
 					_ddlRecordSetLocalService, _ddmStructureLocalService),
-			new UpgradeSchema(_counterLocalService));
+			new SchemaUpgradeProcess(_counterLocalService));
 	}
 
 	@Reference

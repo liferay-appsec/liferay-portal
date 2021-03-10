@@ -26,10 +26,10 @@ import com.liferay.portal.kernel.util.LoggingTimer;
 /**
  * @author Roberto Díaz
  */
-public class UpgradeDocumentLibraryThumbnailsConfiguration
+public class DocumentLibraryThumbnailsConfigurationUpgradeProcess
 	extends UpgradeProcess {
 
-	public UpgradeDocumentLibraryThumbnailsConfiguration(
+	public DocumentLibraryThumbnailsConfigurationUpgradeProcess(
 		AMCompanyThumbnailConfigurationInitializer
 			amCompanyThumbnailConfigurationInitializer,
 		CompanyLocalService companyLocalService) {
@@ -61,7 +61,7 @@ public class UpgradeDocumentLibraryThumbnailsConfiguration
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		UpgradeDocumentLibraryThumbnailsConfiguration.class);
+		DocumentLibraryThumbnailsConfigurationUpgradeProcess.class);
 
 	private final AMCompanyThumbnailConfigurationInitializer
 		_amCompanyThumbnailConfigurationInitializer;
