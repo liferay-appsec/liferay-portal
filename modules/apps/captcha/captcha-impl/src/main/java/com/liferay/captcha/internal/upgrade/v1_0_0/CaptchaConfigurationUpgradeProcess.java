@@ -24,9 +24,9 @@ import com.liferay.portal.kernel.util.KeyValuePair;
  * @author Pei-Jung Lan
  * @author Drew Brokke
  */
-public class UpgradeCaptchaConfiguration extends UpgradeProcess {
+public class CaptchaConfigurationUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeCaptchaConfiguration(
+	public CaptchaConfigurationUpgradeProcess(
 		PrefsPropsToConfigurationUpgradeHelper
 			prefsPropsToConfigurationUpgradeHelper) {
 

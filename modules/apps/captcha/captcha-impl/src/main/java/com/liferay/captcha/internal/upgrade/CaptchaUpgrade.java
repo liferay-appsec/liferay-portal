@@ -14,8 +14,8 @@
 
 package com.liferay.captcha.internal.upgrade;
 
-import com.liferay.captcha.internal.upgrade.v1_0_0.UpgradeCaptchaConfiguration;
-import com.liferay.captcha.internal.upgrade.v1_1_0.UpgradeCaptchaConfigurationPreferences;
+import com.liferay.captcha.internal.upgrade.v1_0_0.CaptchaConfigurationUpgradeProcess;
+import com.liferay.captcha.internal.upgrade.v1_1_0.CaptchaConfigurationPreferencesUpgradeProcess;
 import com.liferay.portal.configuration.upgrade.PrefsPropsToConfigurationUpgradeHelper;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -36,12 +36,13 @@ public class CaptchaUpgrade implements UpgradeStepRegistrator {
 
 		registry.register(
 			"0.0.1", "1.0.0",
-			new UpgradeCaptchaConfiguration(
+			new CaptchaConfigurationUpgradeProcess(
 				_prefsPropsToConfigurationUpgradeHelper));
 
 		registry.register(
 			"1.0.0", "1.1.0",
-			new UpgradeCaptchaConfigurationPreferences(_configurationAdmin));
+			new CaptchaConfigurationPreferencesUpgradeProcess(
+				_configurationAdmin));
 	}
 
 	@Reference

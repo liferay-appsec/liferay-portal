@@ -25,9 +25,9 @@ import java.sql.ResultSet;
 /**
  * @author Jonathan Lee
  */
-public class UpgradeEntry extends UpgradeProcess {
+public class EntryUpgradeProcess extends UpgradeProcess {
 
-	public UpgradeEntry(UserLocalService userLocalService) {
+	public EntryUpgradeProcess(UserLocalService userLocalService) {
 		_userLocalService = userLocalService;
 	}
 

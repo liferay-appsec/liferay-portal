@@ -14,8 +14,8 @@
 
 package com.liferay.contacts.internal.upgrade;
 
-import com.liferay.contacts.internal.upgrade.v2_0_0.UpgradeEntry;
-import com.liferay.contacts.internal.upgrade.v2_0_2.UpgradeEmailAddress;
+import com.liferay.contacts.internal.upgrade.v2_0_0.EntryUpgradeProcess;
+import com.liferay.contacts.internal.upgrade.v2_0_2.EmailAddressUpgradeProcess;
 import com.liferay.contacts.internal.upgrade.v3_0_0.util.EntryTable;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.upgrade.BaseUpgradeSQLServerDatetime;
@@ -38,11 +38,11 @@ public class ContactsServiceUpgrade implements UpgradeStepRegistrator {
 		// See LPS-65946
 
 		registry.register(
-			"1.0.0", "2.0.1", new UpgradeEntry(_userLocalService));
+			"1.0.0", "2.0.1", new EntryUpgradeProcess(_userLocalService));
 
 		registry.register("2.0.0", "2.0.1", new DummyUpgradeStep());
 
-		registry.register("2.0.1", "2.0.2", new UpgradeEmailAddress());
+		registry.register("2.0.1", "2.0.2", new EmailAddressUpgradeProcess());
 
 		registry.register(
 			"2.0.2", "3.0.0",
