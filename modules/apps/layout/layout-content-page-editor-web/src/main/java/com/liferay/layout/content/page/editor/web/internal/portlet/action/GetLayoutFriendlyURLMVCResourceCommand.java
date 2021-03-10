@@ -55,13 +55,13 @@ public class GetLayoutFriendlyURLMVCResourceCommand
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		long groupId = ParamUtil.getLong(resourceRequest, "groupId");
 		boolean privateLayout = ParamUtil.getBoolean(
 			resourceRequest, "privateLayout");
 		long layoutId = ParamUtil.getLong(resourceRequest, "layoutId");
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
 
 		try {
 			Layout layout = _layoutLocalService.getLayout(
