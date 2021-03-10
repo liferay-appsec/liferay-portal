@@ -96,10 +96,10 @@ public class CommercePermissionUpgradeProcess
 	}
 
 	private void _deleteResourceActions() {
-		for (String commerceActionId : _ACTION_IDS) {
+		for (String actionId : _ACTION_IDS) {
 			ResourceAction resourceAction =
 				_resourceActionLocalService.fetchResourceAction(
-					"90", commerceActionId);
+					"90", actionId);
 
 			if (resourceAction == null) {
 				continue;
@@ -206,25 +206,25 @@ public class CommercePermissionUpgradeProcess
 			ResourcePermission resourcePermission)
 		throws Exception {
 
-		for (String commerceActionId : _ACTION_IDS) {
-			if (!resourcePermission.hasActionId(commerceActionId)) {
+		for (String actionId : _ACTION_IDS) {
+			if (!resourcePermission.hasActionId(actionId)) {
 				continue;
 			}
 
 			String resourceActionName = commerceResourceActionMap.get(
-				commerceActionId);
+				actionId);
 
 			if (resourceActionName == null) {
 				continue;
 			}
 
-			resourcePermission.removeResourceAction(commerceActionId);
+			resourcePermission.removeResourceAction(actionId);
 
 			_resourcePermissionLocalService.setResourcePermissions(
 				resourcePermission.getCompanyId(), resourceActionName,
 				resourcePermission.getScope(), resourcePermission.getPrimKey(),
 				resourcePermission.getRoleId(),
-				new String[] {commerceActionId});
+				new String[] {actionId});
 		}
 	}
 
