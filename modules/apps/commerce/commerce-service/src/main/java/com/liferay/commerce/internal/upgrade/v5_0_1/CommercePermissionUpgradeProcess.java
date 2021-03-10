@@ -48,7 +48,7 @@ public class CommercePermissionUpgradeProcess
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		Map<String, String> commerceResourceActionMap =
+		Map<String, String> resourceActionNames =
 			_getCommerceResourceActionMap();
 
 		StringBundler sb = new StringBundler(6);
@@ -82,8 +82,8 @@ public class CommercePermissionUpgradeProcess
 						resourcePermission);
 				}
 				else if (Objects.equals(name, "90")) {
-					_replaceResourcePermission(
-						commerceResourceActionMap, resourcePermission);
+					_setResourcePermissions(
+						resourceActionNames, resourcePermission);
 				}
 			}
 		}
@@ -118,7 +118,7 @@ public class CommercePermissionUpgradeProcess
 	private Map<String, String> _getCommerceResourceActionMap()
 		throws Exception {
 
-		Map<String, String> commerceResourceActionMap = new HashMap<>();
+		Map<String, String> resourceActionNames = new HashMap<>();
 
 		String sql = _replaceCommerceActionIds(
 			"select actionId, name from ResourceAction where actionId in " +
@@ -130,12 +130,12 @@ public class CommercePermissionUpgradeProcess
 			ResultSet rs = s.executeQuery(sql)) {
 
 			while (rs.next()) {
-				commerceResourceActionMap.put(
+				resourceActionNames.put(
 					rs.getString("actionId"), rs.getString("name"));
 			}
 		}
 
-		return commerceResourceActionMap;
+		return resourceActionNames;
 	}
 
 	private String _replaceCommerceActionIds(
@@ -160,7 +160,7 @@ public class CommercePermissionUpgradeProcess
 			ResourcePermission resourcePermission)
 		throws Exception {
 
-		_setResourcePermission(
+		_setResourcePermissions(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
 			_PORTLET_NAME_COMMERCE_DISCOUNT, resourcePermission.getPrimKey(),
@@ -181,14 +181,14 @@ public class CommercePermissionUpgradeProcess
 			_resourceActionLocalService.getResourceActions(
 				resourcePermission.getName());
 
-		_setResourcePermission(
+		_setResourcePermissions(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
 			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
 			resourcePermission.getRoleId(), resourceActions,
 			resourcePermission.getScope());
 
-		_setResourcePermission(
+		_setResourcePermissions(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
 			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
@@ -199,8 +199,8 @@ public class CommercePermissionUpgradeProcess
 			resourcePermission);
 	}
 
-	private void _replaceResourcePermission(
-			Map<String, String> commerceResourceActionMap,
+	private void _setResourcePermissions(
+			Map<String, String> resourceActionNames,
 			ResourcePermission resourcePermission)
 		throws Exception {
 
@@ -209,7 +209,7 @@ public class CommercePermissionUpgradeProcess
 				continue;
 			}
 
-			String resourceActionName = commerceResourceActionMap.get(actionId);
+			String resourceActionName = resourceActionNames.get(actionId);
 
 			if (resourceActionName == null) {
 				continue;
@@ -224,7 +224,7 @@ public class CommercePermissionUpgradeProcess
 		}
 	}
 
-	private void _setResourcePermission(
+	private void _setResourcePermissions(
 			long companyId, String newName, String oldName, String primKey,
 			long roleId, List<ResourceAction> resourceActions, int scope)
 		throws Exception {
