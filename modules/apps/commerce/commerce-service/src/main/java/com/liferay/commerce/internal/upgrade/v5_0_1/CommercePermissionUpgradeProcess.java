@@ -78,8 +78,7 @@ public class CommercePermissionUpgradeProcess
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							resourceName,
-							_PORTLET_NAME_COMMERCE_PRICE_LIST)) {
+							resourceName, _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
 
 					_replaceCommercePriceListResourcePermission(
 						resourcePermission);
@@ -166,8 +165,8 @@ public class CommercePermissionUpgradeProcess
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
-			_PORTLET_NAME_COMMERCE_DISCOUNT,
-			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
+			_PORTLET_NAME_COMMERCE_DISCOUNT, resourcePermission.getPrimKey(),
+			resourcePermission.getRoleId(),
 			_resourceActionLocalService.getResourceActions(
 				resourcePermission.getName()),
 			resourcePermission.getScope());
@@ -187,16 +186,16 @@ public class CommercePermissionUpgradeProcess
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST,
-			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
-			resourceActions, resourcePermission.getScope());
+			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+			resourcePermission.getRoleId(), resourceActions,
+			resourcePermission.getScope());
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST,
-			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
-			resourceActions, resourcePermission.getScope());
+			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+			resourcePermission.getRoleId(), resourceActions,
+			resourcePermission.getScope());
 
 		_resourcePermissionLocalService.deleteResourcePermission(
 			resourcePermission);
@@ -267,20 +266,20 @@ public class CommercePermissionUpgradeProcess
 		"VIEW_COMMERCE_CHANNELS", "VIEW_COMMERCE_DISCOUNTS"
 	};
 
-	private static final String _PORTLET_NAME_COMMERCE_DISCOUNT_PRICING =
-		"com_liferay_commerce_pricing_web_internal_portlet_" +
-			"CommerceDiscountPortlet";
-
 	private static final String _PORTLET_NAME_COMMERCE_DISCOUNT =
 		"com_liferay_commerce_discount_web_internal_portlet_" +
 			"CommerceDiscountPortlet";
 
-	private static final String _PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING =
+	private static final String _PORTLET_NAME_COMMERCE_DISCOUNT_PRICING =
 		"com_liferay_commerce_pricing_web_internal_portlet_" +
-			"CommercePriceListPortlet";
+			"CommerceDiscountPortlet";
 
 	private static final String _PORTLET_NAME_COMMERCE_PRICE_LIST =
 		"com_liferay_commerce_price_list_web_internal_portlet_" +
+			"CommercePriceListPortlet";
+
+	private static final String _PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING =
+		"com_liferay_commerce_pricing_web_internal_portlet_" +
 			"CommercePriceListPortlet";
 
 	private static final String _PORTLET_NAME_COMMERCE_PROMOTION_PRICING =
