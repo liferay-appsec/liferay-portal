@@ -124,9 +124,11 @@ public interface TranslationEntryLocalService
 	public PersistedModel deletePersistedModel(PersistedModel persistedModel)
 		throws PortalException;
 
-	public void deleteTranslationEntries(long classNameId, long classPK);
+	public void deleteTranslationEntries(long classNameId, long classPK)
+		throws PortalException;
 
-	public void deleteTranslationEntries(String className, long classPK);
+	public void deleteTranslationEntries(String className, long classPK)
+		throws PortalException;
 
 	/**
 	 * Deletes the translation entry with the primary key from the database. Also notifies the appropriate model listeners.

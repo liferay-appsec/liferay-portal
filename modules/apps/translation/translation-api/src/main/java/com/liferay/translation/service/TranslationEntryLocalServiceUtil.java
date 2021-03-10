@@ -116,14 +116,14 @@ public class TranslationEntryLocalServiceUtil {
 		return getService().deletePersistedModel(persistedModel);
 	}
 
-	public static void deleteTranslationEntries(
-		long classNameId, long classPK) {
+	public static void deleteTranslationEntries(long classNameId, long classPK)
+		throws PortalException {
 
 		getService().deleteTranslationEntries(classNameId, classPK);
 	}
 
-	public static void deleteTranslationEntries(
-		String className, long classPK) {
+	public static void deleteTranslationEntries(String className, long classPK)
+		throws PortalException {
 
 		getService().deleteTranslationEntries(className, classPK);
 	}

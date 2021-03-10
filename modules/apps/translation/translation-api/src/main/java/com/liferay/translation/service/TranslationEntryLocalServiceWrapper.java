@@ -116,13 +116,17 @@ public class TranslationEntryLocalServiceWrapper
 	}
 
 	@Override
-	public void deleteTranslationEntries(long classNameId, long classPK) {
+	public void deleteTranslationEntries(long classNameId, long classPK)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_translationEntryLocalService.deleteTranslationEntries(
 			classNameId, classPK);
 	}
 
 	@Override
-	public void deleteTranslationEntries(String className, long classPK) {
+	public void deleteTranslationEntries(String className, long classPK)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		_translationEntryLocalService.deleteTranslationEntries(
 			className, classPK);
 	}
