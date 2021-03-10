@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.instance.lifecycle.PortalInstanceLifecycleManag
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.portal.kernel.messaging.async.Async;
 import com.liferay.portal.kernel.model.Account;
 import com.liferay.portal.kernel.model.Company;
@@ -85,6 +86,7 @@ import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.liveusers.LiveUsers;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
@@ -422,6 +424,59 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 
 		return companyPersistence.fetchByPrimaryKey(virtualHost.getCompanyId());
+	}
+
+	@Override
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompany(
+			UnsafeConsumer<Company, E> unsafeConsumer)
+		throws E {
+
+		forEachCompany(unsafeConsumer, companyLocalService.getCompanies(false));
+	}
+
+	@Override
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompany(
+			UnsafeConsumer<Company, E> unsafeConsumer, List<Company> companies)
+		throws E {
+
+		for (Company company : companies) {
+			try (SafeClosable safeClosable =
+					CompanyThreadLocal.setWithSafeClosable(
+						company.getCompanyId())) {
+
+				unsafeConsumer.accept(company);
+			}
+		}
+	}
+
+	@Override
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompanyId(
+			UnsafeConsumer<Long, E> unsafeConsumer)
+		throws E {
+
+		forEachCompanyId(
+			unsafeConsumer,
+			ListUtil.toLongArray(
+				companyLocalService.getCompanies(false),
+				Company::getCompanyId));
+	}
+
+	@Override
+	@Transactional(enabled = false)
+	public <E extends Exception> void forEachCompanyId(
+			UnsafeConsumer<Long, E> unsafeConsumer, long[] companyIds)
+		throws E {
+
+		for (long companyId : companyIds) {
+			try (SafeClosable safeClosable =
+					CompanyThreadLocal.setWithSafeClosable(companyId)) {
+
+				unsafeConsumer.accept(companyId);
+			}
+		}
 	}
 
 	/**
