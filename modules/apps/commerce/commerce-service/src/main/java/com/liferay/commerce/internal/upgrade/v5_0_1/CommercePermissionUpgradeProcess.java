@@ -72,13 +72,40 @@ public class CommercePermissionUpgradeProcess
 				String name = resourcePermission.getName();
 
 				if (Objects.equals(name, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
-					_replaceCommerceDiscountResourcePermission(
+					_setResourcePermissions(
+						resourcePermission.getCompanyId(),
+						_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
+						_PORTLET_NAME_COMMERCE_DISCOUNT, resourcePermission.getPrimKey(),
+						resourcePermission.getRoleId(),
+						_resourceActionLocalService.getResourceActions(
+							resourcePermission.getName()),
+						resourcePermission.getScope());
+
+					_resourcePermissionLocalService.deleteResourcePermission(
 						resourcePermission);
 				}
 				else if (Objects.equals(
 							name, _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
 
-					_replaceCommercePriceListResourcePermission(
+					List<ResourceAction> resourceActions =
+						_resourceActionLocalService.getResourceActions(
+							resourcePermission.getName());
+
+					_setResourcePermissions(
+						resourcePermission.getCompanyId(),
+						_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
+						_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+						resourcePermission.getRoleId(), resourceActions,
+						resourcePermission.getScope());
+
+					_setResourcePermissions(
+						resourcePermission.getCompanyId(),
+						_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
+						_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+						resourcePermission.getRoleId(), resourceActions,
+						resourcePermission.getScope());
+
+					_resourcePermissionLocalService.deleteResourcePermission(
 						resourcePermission);
 				}
 				else if (Objects.equals(name, "90")) {
@@ -154,49 +181,6 @@ public class CommercePermissionUpgradeProcess
 		}
 
 		return StringUtil.replace(sql, queryPlaceholder, sb.toString());
-	}
-
-	private void _replaceCommerceDiscountResourcePermission(
-			ResourcePermission resourcePermission)
-		throws Exception {
-
-		_setResourcePermissions(
-			resourcePermission.getCompanyId(),
-			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
-			_PORTLET_NAME_COMMERCE_DISCOUNT, resourcePermission.getPrimKey(),
-			resourcePermission.getRoleId(),
-			_resourceActionLocalService.getResourceActions(
-				resourcePermission.getName()),
-			resourcePermission.getScope());
-
-		_resourcePermissionLocalService.deleteResourcePermission(
-			resourcePermission);
-	}
-
-	private void _replaceCommercePriceListResourcePermission(
-			ResourcePermission resourcePermission)
-		throws Exception {
-
-		List<ResourceAction> resourceActions =
-			_resourceActionLocalService.getResourceActions(
-				resourcePermission.getName());
-
-		_setResourcePermissions(
-			resourcePermission.getCompanyId(),
-			_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
-			resourcePermission.getRoleId(), resourceActions,
-			resourcePermission.getScope());
-
-		_setResourcePermissions(
-			resourcePermission.getCompanyId(),
-			_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
-			resourcePermission.getRoleId(), resourceActions,
-			resourcePermission.getScope());
-
-		_resourcePermissionLocalService.deleteResourcePermission(
-			resourcePermission);
 	}
 
 	private void _setResourcePermissions(
