@@ -78,7 +78,8 @@ public class CommercePermissionUpgradeProcess
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							resourceName, _PORTLET_NAME_COMMERCE_PRICE_LIST_WEB)) {
+							resourceName,
+							_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB)) {
 
 					_replaceCommercePriceListResourcePermission(
 						resourcePermission);
@@ -98,8 +99,7 @@ public class CommercePermissionUpgradeProcess
 	private void _deleteResourceActions() {
 		for (String actionId : _ACTION_IDS) {
 			ResourceAction resourceAction =
-				_resourceActionLocalService.fetchResourceAction(
-					"90", actionId);
+				_resourceActionLocalService.fetchResourceAction("90", actionId);
 
 			if (resourceAction == null) {
 				continue;
@@ -165,7 +165,8 @@ public class CommercePermissionUpgradeProcess
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
-			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING, _PORTLET_NAME_COMMERCE_DISCOUNT_WEB,
+			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
+			_PORTLET_NAME_COMMERCE_DISCOUNT_WEB,
 			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
 			_resourceActionLocalService.getResourceActions(
 				resourcePermission.getName()),
@@ -186,16 +187,16 @@ public class CommercePermissionUpgradeProcess
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB, resourcePermission.getPrimKey(),
-			resourcePermission.getRoleId(), resourceActions,
-			resourcePermission.getScope());
+			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB,
+			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
+			resourceActions, resourcePermission.getScope());
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
 			_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
-			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB, resourcePermission.getPrimKey(),
-			resourcePermission.getRoleId(), resourceActions,
-			resourcePermission.getScope());
+			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB,
+			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
+			resourceActions, resourcePermission.getScope());
 
 		_resourcePermissionLocalService.deleteResourcePermission(
 			resourcePermission);
@@ -211,8 +212,7 @@ public class CommercePermissionUpgradeProcess
 				continue;
 			}
 
-			String resourceActionName = commerceResourceActionMap.get(
-				actionId);
+			String resourceActionName = commerceResourceActionMap.get(actionId);
 
 			if (resourceActionName == null) {
 				continue;
@@ -223,8 +223,7 @@ public class CommercePermissionUpgradeProcess
 			_resourcePermissionLocalService.setResourcePermissions(
 				resourcePermission.getCompanyId(), resourceActionName,
 				resourcePermission.getScope(), resourcePermission.getPrimKey(),
-				resourcePermission.getRoleId(),
-				new String[] {actionId});
+				resourcePermission.getRoleId(), new String[] {actionId});
 		}
 	}
 
