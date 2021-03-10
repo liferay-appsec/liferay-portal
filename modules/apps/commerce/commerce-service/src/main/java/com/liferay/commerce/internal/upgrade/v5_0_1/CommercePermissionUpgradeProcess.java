@@ -55,9 +55,9 @@ public class CommercePermissionUpgradeProcess
 
 		sb.append("select ResourcePermissionId from ResourcePermission where ");
 		sb.append("name in ('90', '");
-		sb.append(_COMMERCE_DISCOUNT_WEB_PORTLET);
+		sb.append(_PORTLET_NAME_COMMERCE_DISCOUNT_WEB);
 		sb.append("', '");
-		sb.append(_COMMERCE_PRICE_LIST_WEB_PORTLET);
+		sb.append(_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB);
 		sb.append("')");
 
 		try (Statement s = connection.createStatement(
@@ -72,13 +72,13 @@ public class CommercePermissionUpgradeProcess
 				String resourceName = resourcePermission.getName();
 
 				if (Objects.equals(
-						resourceName, _COMMERCE_DISCOUNT_WEB_PORTLET)) {
+						resourceName, _PORTLET_NAME_COMMERCE_DISCOUNT_WEB)) {
 
 					_replaceCommerceDiscountResourcePermission(
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							resourceName, _COMMERCE_PRICE_LIST_WEB_PORTLET)) {
+							resourceName, _PORTLET_NAME_COMMERCE_PRICE_LIST_WEB)) {
 
 					_replaceCommercePriceListResourcePermission(
 						resourcePermission);
@@ -90,13 +90,13 @@ public class CommercePermissionUpgradeProcess
 			}
 		}
 
-		_deleteResourceActions(_COMMERCE_DISCOUNT_WEB_PORTLET);
-		_deleteResourceActions(_COMMERCE_PRICE_LIST_WEB_PORTLET);
+		_deleteResourceActions(_PORTLET_NAME_COMMERCE_DISCOUNT_WEB);
+		_deleteResourceActions(_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB);
 		_deleteResourceActions();
 	}
 
 	private void _deleteResourceActions() {
-		for (String commerceActionId : _COMMERCE_ACTION_IDS) {
+		for (String commerceActionId : _ACTION_IDS) {
 			ResourceAction resourceAction =
 				_resourceActionLocalService.fetchResourceAction(
 					"90", commerceActionId);
@@ -144,14 +144,14 @@ public class CommercePermissionUpgradeProcess
 	private String _replaceCommerceActionIds(
 		String sql, String queryPlaceholder) {
 
-		StringBundler sb = new StringBundler(_COMMERCE_ACTION_IDS.length * 3);
+		StringBundler sb = new StringBundler(_ACTION_IDS.length * 3);
 
-		for (int i = 0; i < _COMMERCE_ACTION_IDS.length; i++) {
+		for (int i = 0; i < _ACTION_IDS.length; i++) {
 			sb.append(StringPool.APOSTROPHE);
-			sb.append(_COMMERCE_ACTION_IDS[i]);
+			sb.append(_ACTION_IDS[i]);
 			sb.append(StringPool.APOSTROPHE);
 
-			if (i != (_COMMERCE_ACTION_IDS.length - 1)) {
+			if (i != (_ACTION_IDS.length - 1)) {
 				sb.append(", ");
 			}
 		}
@@ -165,7 +165,7 @@ public class CommercePermissionUpgradeProcess
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
-			_COMMERCE_DISCOUNT_PRICING_PORTLET, _COMMERCE_DISCOUNT_WEB_PORTLET,
+			_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING, _PORTLET_NAME_COMMERCE_DISCOUNT_WEB,
 			resourcePermission.getPrimKey(), resourcePermission.getRoleId(),
 			_resourceActionLocalService.getResourceActions(
 				resourcePermission.getName()),
@@ -185,15 +185,15 @@ public class CommercePermissionUpgradeProcess
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
-			_COMMERCE_PRICE_LIST_PRICING_PORTLET,
-			_COMMERCE_PRICE_LIST_WEB_PORTLET, resourcePermission.getPrimKey(),
+			_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
+			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB, resourcePermission.getPrimKey(),
 			resourcePermission.getRoleId(), resourceActions,
 			resourcePermission.getScope());
 
 		_setResourcePermission(
 			resourcePermission.getCompanyId(),
-			_COMMERCE_PROMOTION_PRICING_PORTLET,
-			_COMMERCE_PRICE_LIST_WEB_PORTLET, resourcePermission.getPrimKey(),
+			_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
+			_PORTLET_NAME_COMMERCE_PRICE_LIST_WEB, resourcePermission.getPrimKey(),
 			resourcePermission.getRoleId(), resourceActions,
 			resourcePermission.getScope());
 
@@ -206,7 +206,7 @@ public class CommercePermissionUpgradeProcess
 			ResourcePermission resourcePermission)
 		throws Exception {
 
-		for (String commerceActionId : _COMMERCE_ACTION_IDS) {
+		for (String commerceActionId : _ACTION_IDS) {
 			if (!resourcePermission.hasActionId(commerceActionId)) {
 				continue;
 			}
@@ -248,7 +248,7 @@ public class CommercePermissionUpgradeProcess
 			));
 	}
 
-	private static final String[] _COMMERCE_ACTION_IDS = {
+	private static final String[] _ACTION_IDS = {
 		"ADD_ACCOUNT", "ADD_ACCOUNT_GROUP", "ADD_COMMERCE_BRAND",
 		"ADD_COMMERCE_BOM_DEFINITION", "ADD_COMMERCE_BOM_FOLDER",
 		"ADD_COMMERCE_CATALOG", "ADD_COMMERCE_CHANNEL",
@@ -268,23 +268,23 @@ public class CommercePermissionUpgradeProcess
 		"VIEW_COMMERCE_CHANNELS", "VIEW_COMMERCE_DISCOUNTS"
 	};
 
-	private static final String _COMMERCE_DISCOUNT_PRICING_PORTLET =
+	private static final String _PORTLET_NAME_COMMERCE_DISCOUNT_PRICING =
 		"com_liferay_commerce_pricing_web_internal_portlet_" +
 			"CommerceDiscountPortlet";
 
-	private static final String _COMMERCE_DISCOUNT_WEB_PORTLET =
+	private static final String _PORTLET_NAME_COMMERCE_DISCOUNT_WEB =
 		"com_liferay_commerce_discount_web_internal_portlet_" +
 			"CommerceDiscountPortlet";
 
-	private static final String _COMMERCE_PRICE_LIST_PRICING_PORTLET =
+	private static final String _PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING =
 		"com_liferay_commerce_pricing_web_internal_portlet_" +
 			"CommercePriceListPortlet";
 
-	private static final String _COMMERCE_PRICE_LIST_WEB_PORTLET =
+	private static final String _PORTLET_NAME_COMMERCE_PRICE_LIST_WEB =
 		"com_liferay_commerce_price_list_web_internal_portlet_" +
 			"CommercePriceListPortlet";
 
-	private static final String _COMMERCE_PROMOTION_PRICING_PORTLET =
+	private static final String _PORTLET_NAME_COMMERCE_PROMOTION_PRICING =
 		"com_liferay_commerce_pricing_web_internal_portlet_" +
 			"CommercePromotionPortlet";
 
