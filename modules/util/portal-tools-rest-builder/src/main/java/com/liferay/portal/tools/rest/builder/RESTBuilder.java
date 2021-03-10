@@ -1354,7 +1354,6 @@ public class RESTBuilder {
 
 		Map<String, Schema> allExternalSchemas =
 			OpenAPIUtil.getAllExternalSchemas(openAPIYAML);
-
 		Map<String, Schema> schemas = freeMarkerTool.getSchemas(openAPIYAML);
 
 		MapUtil.merge(allExternalSchemas, schemas);
