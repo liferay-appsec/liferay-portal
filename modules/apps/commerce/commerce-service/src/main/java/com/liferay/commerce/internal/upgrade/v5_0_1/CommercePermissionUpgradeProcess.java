@@ -69,11 +69,15 @@ public class CommercePermissionUpgradeProcess
 					_resourcePermissionLocalService.getResourcePermission(
 						rs.getLong(1));
 
-				if (Objects.equals(resourcePermission.getName(), _PORTLET_NAME_COMMERCE_DISCOUNT)) {
+				if (Objects.equals(
+						resourcePermission.getName(),
+						_PORTLET_NAME_COMMERCE_DISCOUNT)) {
+
 					_setResourcePermissions(
 						resourcePermission.getCompanyId(),
 						_PORTLET_NAME_COMMERCE_DISCOUNT_PRICING,
-						_PORTLET_NAME_COMMERCE_DISCOUNT, resourcePermission.getPrimKey(),
+						_PORTLET_NAME_COMMERCE_DISCOUNT,
+						resourcePermission.getPrimKey(),
 						resourcePermission.getRoleId(),
 						_resourceActionLocalService.getResourceActions(
 							resourcePermission.getName()),
@@ -83,7 +87,8 @@ public class CommercePermissionUpgradeProcess
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							resourcePermission.getName(), _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
+							resourcePermission.getName(),
+							_PORTLET_NAME_COMMERCE_PRICE_LIST)) {
 
 					List<ResourceAction> resourceActions =
 						_resourceActionLocalService.getResourceActions(
@@ -92,14 +97,16 @@ public class CommercePermissionUpgradeProcess
 					_setResourcePermissions(
 						resourcePermission.getCompanyId(),
 						_PORTLET_NAME_COMMERCE_PRICE_LIST_PRICING,
-						_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+						_PORTLET_NAME_COMMERCE_PRICE_LIST,
+						resourcePermission.getPrimKey(),
 						resourcePermission.getRoleId(), resourceActions,
 						resourcePermission.getScope());
 
 					_setResourcePermissions(
 						resourcePermission.getCompanyId(),
 						_PORTLET_NAME_COMMERCE_PROMOTION_PRICING,
-						_PORTLET_NAME_COMMERCE_PRICE_LIST, resourcePermission.getPrimKey(),
+						_PORTLET_NAME_COMMERCE_PRICE_LIST,
+						resourcePermission.getPrimKey(),
 						resourcePermission.getRoleId(), resourceActions,
 						resourcePermission.getScope());
 
