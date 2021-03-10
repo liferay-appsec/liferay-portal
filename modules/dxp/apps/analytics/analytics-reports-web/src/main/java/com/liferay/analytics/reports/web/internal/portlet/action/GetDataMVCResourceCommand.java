@@ -228,7 +228,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 			Collections::emptyList
 		).stream(
 		).map(
-			_endpoints::get
+			_objectValuePairs::get
 		).forEach(
 			objectValuePair -> jsonObject.put(
 				objectValuePair.getKey(),
@@ -492,7 +492,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 
 	private static final Map
 		<AnalyticsReportsInfoItem.Action, ObjectValuePair<String, String>>
-			_endpoints =
+			_objectValuePairs =
 				HashMapBuilder.
 					<AnalyticsReportsInfoItem.Action,
 					 ObjectValuePair<String, String>>put(
