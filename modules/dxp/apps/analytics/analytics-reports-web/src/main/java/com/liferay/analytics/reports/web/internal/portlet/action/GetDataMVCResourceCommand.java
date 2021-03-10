@@ -113,7 +113,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 						getAnalyticsReportsInfoItemObject(infoItemReference)
 			).orElseThrow(
 				() -> new NoSuchModelException(
-					"No Analytics Reports Info Item Object Provider found " +
+					"No analytics reports info item object provider found " +
 						"for " + infoItemReference)
 			);
 
