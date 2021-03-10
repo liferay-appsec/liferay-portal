@@ -69,21 +69,21 @@ public class CommercePermissionUpgradeProcess
 					_resourcePermissionLocalService.getResourcePermission(
 						rs.getLong(1));
 
-				String resourceName = resourcePermission.getName();
+				String name = resourcePermission.getName();
 
 				if (Objects.equals(
-						resourceName, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
+						name, _PORTLET_NAME_COMMERCE_DISCOUNT)) {
 
 					_replaceCommerceDiscountResourcePermission(
 						resourcePermission);
 				}
 				else if (Objects.equals(
-							resourceName, _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
+							name, _PORTLET_NAME_COMMERCE_PRICE_LIST)) {
 
 					_replaceCommercePriceListResourcePermission(
 						resourcePermission);
 				}
-				else if (Objects.equals(resourceName, "90")) {
+				else if (Objects.equals(name, "90")) {
 					_replaceResourcePermission(
 						commerceResourceActionMap, resourcePermission);
 				}
