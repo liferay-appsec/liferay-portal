@@ -21,6 +21,8 @@ JSONObject samlSloRequestInfoJSONObject = (JSONObject)request.getAttribute("SAML
 
 String entityId = samlSloRequestInfoJSONObject.getString("entityId");
 int status = samlSloRequestInfoJSONObject.getInt("status");
+
+String sloLogoutRenderCommand = "/c/portal/saml/slo_logout?p_p_id=" + SamlPortletKeys.SAML + "&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_" + SamlPortletKeys.SAML + "_mvcRenderCommandName=/saml/slo_logout";
 %>
 
 <noscript>
@@ -38,7 +40,7 @@ int status = samlSloRequestInfoJSONObject.getInt("status");
 			<div class="portlet-msg-error">
 				<liferay-ui:message key="single-sign-out-request-failed" />
 
-				<a href="?cmd=logout&entityId=<%= entityId %>">
+				<a href="<%= sloLogoutRenderCommand %>&_<%= SamlPortletKeys.SAML %>_cmd=logout&_<%= SamlPortletKeys.SAML %>_entityId=<%= entityId %>">
 					<liferay-ui:message key="retry" />
 				</a>
 			</div>

@@ -46,6 +46,7 @@ page import="com.liferay.portal.kernel.util.StringUtil" %><%@
 page import="com.liferay.portal.kernel.util.UnicodeProperties" %><%@
 page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
+page import="com.liferay.saml.constants.SamlPortletKeys" %><%@
 page import="com.liferay.saml.constants.SamlProviderConfigurationKeys" %><%@
 page import="com.liferay.saml.constants.SamlWebKeys" %><%@
 page import="com.liferay.saml.persistence.exception.DuplicateSamlIdpSpConnectionSamlSpEntityIdException" %><%@
