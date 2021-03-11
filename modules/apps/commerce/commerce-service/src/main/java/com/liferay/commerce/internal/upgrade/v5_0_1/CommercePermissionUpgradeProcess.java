@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -149,29 +148,10 @@ public class CommercePermissionUpgradeProcess
 	private Map<String, String> _getResourceActionNames() throws Exception {
 		Map<String, String> resourceActionNames = new HashMap<>();
 
-		String sql = _replaceCommerceActionIds(
-			"select actionId, name from ResourceAction where actionId in " +
-				"([$COMMERCE_ACTION_IDS$]) and name != '90'",
-			"[$COMMERCE_ACTION_IDS$]");
+		StringBundler sb = new StringBundler();
 
-		try (Statement statement = connection.createStatement(
-				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-			ResultSet resultSet = statement.executeQuery(sql)) {
-
-			while (resultSet.next()) {
-				resourceActionNames.put(
-					resultSet.getString("actionId"),
-					resultSet.getString("name"));
-			}
-		}
-
-		return resourceActionNames;
-	}
-
-	private String _replaceCommerceActionIds(
-		String sql, String queryPlaceholder) {
-
-		StringBundler sb = new StringBundler(_ACTION_IDS.length * 3);
+		sb.append("select name, actionId from ResourceAction where name != ");
+		sb.append("'90' and actionId in (");
 
 		for (int i = 0; i < _ACTION_IDS.length; i++) {
 			sb.append(StringPool.APOSTROPHE);
@@ -183,7 +163,20 @@ public class CommercePermissionUpgradeProcess
 			}
 		}
 
-		return StringUtil.replace(sql, queryPlaceholder, sb.toString());
+		sb.append(")");
+
+		try (Statement statement = connection.createStatement(
+				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			ResultSet resultSet = statement.executeQuery(sb.toString())) {
+
+			while (resultSet.next()) {
+				resourceActionNames.put(
+					resultSet.getString("actionId"),
+					resultSet.getString("name"));
+			}
+		}
+
+		return resourceActionNames;
 	}
 
 	private void _setResourcePermissions(
