@@ -231,10 +231,6 @@ public class SingleLogoutProfileImpl
 				performIdpFinishLogout(
 					httpServletRequest, httpServletResponse, samlSloContext);
 			}
-			else if (cmd.equals("status")) {
-				performIdpStatus(
-					httpServletRequest, httpServletResponse, samlSloContext);
-			}
 		}
 		catch (Exception exception) {
 			ExceptionHandlerUtil.handleException(exception);
@@ -317,6 +313,54 @@ public class SingleLogoutProfileImpl
 		catch (Exception exception) {
 			ExceptionHandlerUtil.handleException(exception);
 		}
+	}
+
+	@Override
+	public void sendSamlSloRequestInfos(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws Exception {
+
+		httpServletResponse.addHeader(
+			HttpHeaders.CACHE_CONTROL,
+			HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE);
+		httpServletResponse.addHeader(
+			HttpHeaders.PRAGMA, HttpHeaders.PRAGMA_NO_CACHE_VALUE);
+
+		SamlSloContext samlSloContext = getSamlSloContext(
+			httpServletRequest, null);
+
+		if (samlSloContext == null) {
+			redirectToLogout(httpServletRequest, httpServletResponse);
+
+			return;
+		}
+
+		for (SamlSloRequestInfo samlRequestInfo :
+				samlSloContext.getSamlSloRequestInfos()) {
+
+			int status = samlRequestInfo.getStatus();
+
+			if (status == SamlSloRequestInfo.REQUEST_STATUS_INITIATED) {
+				DateTime initiateDateTime = samlRequestInfo.getInitiateTime();
+
+				DateTime expireDateTime = initiateDateTime.plusSeconds(10);
+
+				if (expireDateTime.isBeforeNow()) {
+					samlRequestInfo.setStatus(
+						SamlSloRequestInfo.REQUEST_STATUS_TIMED_OUT);
+					samlRequestInfo.setStatusCode(StatusCode.PARTIAL_LOGOUT);
+				}
+			}
+		}
+
+		httpServletResponse.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+
+		Writer writer = httpServletResponse.getWriter();
+
+		JSONObject jsonObject = samlSloContext.toJSONObject();
+
+		writer.write(jsonObject.toString());
 	}
 
 	@Override
@@ -675,39 +719,6 @@ public class SingleLogoutProfileImpl
 					true);
 			}
 		}
-	}
-
-	protected void performIdpStatus(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse,
-			SamlSloContext samlSloContext)
-		throws Exception {
-
-		for (SamlSloRequestInfo samlRequestInfo :
-				samlSloContext.getSamlSloRequestInfos()) {
-
-			int status = samlRequestInfo.getStatus();
-
-			if (status == SamlSloRequestInfo.REQUEST_STATUS_INITIATED) {
-				DateTime initiateDateTime = samlRequestInfo.getInitiateTime();
-
-				DateTime expireDateTime = initiateDateTime.plusSeconds(10);
-
-				if (expireDateTime.isBeforeNow()) {
-					samlRequestInfo.setStatus(
-						SamlSloRequestInfo.REQUEST_STATUS_TIMED_OUT);
-					samlRequestInfo.setStatusCode(StatusCode.PARTIAL_LOGOUT);
-				}
-			}
-		}
-
-		httpServletResponse.setContentType(ContentTypes.TEXT_JAVASCRIPT);
-
-		Writer writer = httpServletResponse.getWriter();
-
-		JSONObject jsonObject = samlSloContext.toJSONObject();
-
-		writer.write(jsonObject.toString());
 	}
 
 	protected void processIdpLogoutRequest(

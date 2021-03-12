@@ -217,8 +217,9 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 		checkStatus: function () {
 			var instance = this;
 
-			A.io.request('?cmd=status', {
+			A.io.request('/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=2&p_p_state=maximized&p_p_mode=view&p_p_resource_id=/saml/send_saml_slo_request_infos', {
 				dataType: 'JSON',
+				method: 'POST',
 				on: {
 					success: function (event) {
 						var logoutPending = false;

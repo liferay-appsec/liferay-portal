@@ -55,6 +55,11 @@ public interface SingleLogoutProfile {
 			HttpServletResponse httpServletResponse)
 		throws PortalException;
 
+	public void sendSamlSloRequestInfos(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws Exception;
+
 	public void terminateSpSession(
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse);
