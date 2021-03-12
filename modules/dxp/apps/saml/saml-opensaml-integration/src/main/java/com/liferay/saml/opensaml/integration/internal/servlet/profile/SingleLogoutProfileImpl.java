@@ -120,6 +120,27 @@ public class SingleLogoutProfileImpl
 	extends BaseProfile implements SingleLogoutProfile {
 
 	@Override
+	public void initiateIdpSingleLogout(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws Exception {
+
+		SamlSloContext samlSloContext = getSamlSloContext(
+			httpServletRequest, null);
+
+		if (samlSloContext != null) {
+			String redirect = StringBundler.concat(
+				portal.getPortalURL(httpServletRequest), portal.getPathMain(),
+				"/portal/saml/slo_logout");
+
+			httpServletResponse.sendRedirect(redirect);
+		}
+		else {
+			redirectToLogout(httpServletRequest, httpServletResponse);
+		}
+	}
+
+	@Override
 	public boolean isSingleLogoutSupported(
 		HttpServletRequest httpServletRequest) {
 
@@ -190,11 +211,7 @@ public class SingleLogoutProfileImpl
 			httpServletResponse.addHeader(
 				HttpHeaders.PRAGMA, HttpHeaders.PRAGMA_NO_CACHE_VALUE);
 
-			if (requestPath.equals("/c/portal/logout")) {
-				initiateIdpSingleLogout(
-					httpServletRequest, httpServletResponse);
-			}
-			else if (requestPath.equals("/c/portal/saml/slo_logout")) {
+			if (requestPath.equals("/c/portal/saml/slo_logout")) {
 				SamlSloContext samlSloContext = getSamlSloContext(
 					httpServletRequest, null);
 
@@ -486,26 +503,6 @@ public class SingleLogoutProfileImpl
 		}
 
 		return samlSloContext;
-	}
-
-	protected void initiateIdpSingleLogout(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws Exception {
-
-		SamlSloContext samlSloContext = getSamlSloContext(
-			httpServletRequest, null);
-
-		if (samlSloContext != null) {
-			String redirect = StringBundler.concat(
-				portal.getPortalURL(httpServletRequest), portal.getPathMain(),
-				"/portal/saml/slo_logout");
-
-			httpServletResponse.sendRedirect(redirect);
-		}
-		else {
-			redirectToLogout(httpServletRequest, httpServletResponse);
-		}
 	}
 
 	protected void performIdpFinishLogout(
