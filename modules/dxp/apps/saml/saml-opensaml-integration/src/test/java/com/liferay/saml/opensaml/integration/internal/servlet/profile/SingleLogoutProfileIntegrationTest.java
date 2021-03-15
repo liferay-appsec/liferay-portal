@@ -17,8 +17,6 @@ package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.struts.Definition;
-import com.liferay.portal.struts.TilesUtil;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.opensaml.integration.internal.BaseSamlTestCase;
 import com.liferay.saml.opensaml.integration.internal.binding.SamlBinding;
@@ -35,11 +33,9 @@ import com.liferay.saml.persistence.service.SamlIdpSpSessionLocalService;
 import com.liferay.saml.persistence.service.SamlIdpSpSessionLocalServiceUtil;
 import com.liferay.saml.persistence.service.SamlSpSessionLocalService;
 import com.liferay.saml.persistence.service.SamlSpSessionLocalServiceUtil;
-import com.liferay.saml.util.JspUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -59,6 +55,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * @author Matthew Tambara
@@ -105,25 +102,31 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 	@Test
 	public void testPerformIdpSpLogoutInvalidSloRequestInfo() throws Exception {
 		MockHttpServletRequest mockHttpServletRequest =
-			getMockHttpServletRequest(SLO_LOGOUT_URL + "?cmd=logout");
+			getMockHttpServletRequest(
+				SLO_LOGOUT_URL + "&_com_liferay_saml_web_internal_portlet_Sam" +
+					"lPortlet_cmd=logout");
 
 		SamlSloContext samlSloContext = new SamlSloContext(
 			null, _samlIdpSpConnectionLocalService,
 			_samlIdpSpSessionLocalService, userLocalService);
 
-		_singleLogoutProfileImpl.performIdpSpLogout(
-			mockHttpServletRequest, new MockHttpServletResponse(),
-			samlSloContext);
+		MockHttpSession mockHttpSession = new MockHttpSession();
 
-		Definition definition = (Definition)mockHttpServletRequest.getAttribute(
-			TilesUtil.DEFINITION);
+		mockHttpSession.setAttribute(
+			SamlWebKeys.SAML_SLO_CONTEXT, samlSloContext);
 
-		Map<String, String> definitionAttributes = definition.getAttributes();
+		mockHttpServletRequest.setSession(mockHttpSession);
 
-		Assert.assertEquals(
-			JspUtil.PATH_PORTAL_SAML_ERROR,
-			definitionAttributes.get("content"));
-		Assert.assertTrue(Boolean.valueOf(definitionAttributes.get("pop_up")));
+		try {
+			_singleLogoutProfileImpl.performIdpSpLogout(
+				mockHttpServletRequest, new MockHttpServletResponse(),
+				samlSloContext);
+		}
+		catch (Exception exception) {
+			return;
+		}
+
+		Assert.fail();
 	}
 
 	@Test
@@ -153,7 +156,9 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 		);
 
 		MockHttpServletRequest mockHttpServletRequest =
-			getMockHttpServletRequest(SLO_LOGOUT_URL + "?cmd=logout");
+			getMockHttpServletRequest(
+				SLO_LOGOUT_URL + "&_com_liferay_saml_web_internal_portlet_Sam" +
+					"lPortlet_cmd=logout");
 
 		mockHttpServletRequest.setParameter("entityId", SP_ENTITY_ID);
 
@@ -166,6 +171,13 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 			samlIdpSsoSessionImpl, _samlIdpSpConnectionLocalService,
 			_samlIdpSpSessionLocalService, userLocalService);
 
+		MockHttpSession mockHttpSession = new MockHttpSession();
+
+		mockHttpServletRequest.setSession(mockHttpSession);
+
+		mockHttpSession.setAttribute(
+			SamlWebKeys.SAML_SLO_CONTEXT, samlSloContext);
+
 		SamlSloRequestInfo samlSloRequestInfo =
 			samlSloContext.getSamlSloRequestInfo(SP_ENTITY_ID);
 
@@ -174,16 +186,6 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 		_singleLogoutProfileImpl.performIdpSpLogout(
 			mockHttpServletRequest, new MockHttpServletResponse(),
 			samlSloContext);
-
-		Definition definition = (Definition)mockHttpServletRequest.getAttribute(
-			TilesUtil.DEFINITION);
-
-		Map<String, String> definitionAttributes = definition.getAttributes();
-
-		Assert.assertEquals(
-			JspUtil.PATH_PORTAL_SAML_SLO_SP_STATUS,
-			definitionAttributes.get("content"));
-		Assert.assertTrue(Boolean.valueOf(definitionAttributes.get("pop_up")));
 
 		JSONObject jsonObject = (JSONObject)mockHttpServletRequest.getAttribute(
 			SamlWebKeys.SAML_SLO_REQUEST_INFO);
@@ -200,7 +202,10 @@ public class SingleLogoutProfileIntegrationTest extends BaseSamlTestCase {
 		prepareIdentityProvider(IDP_ENTITY_ID);
 
 		MockHttpServletRequest mockHttpServletRequest =
-			getMockHttpServletRequest(SLO_LOGOUT_URL + "?cmd=logout");
+			getMockHttpServletRequest(
+				SLO_LOGOUT_URL + "&_com_liferay_saml_web_internal_portlet_Sam" +
+					"lPortlet_cmd=logout");
+
 		MockHttpServletResponse mockHttpServletResponse =
 			new MockHttpServletResponse();
 
