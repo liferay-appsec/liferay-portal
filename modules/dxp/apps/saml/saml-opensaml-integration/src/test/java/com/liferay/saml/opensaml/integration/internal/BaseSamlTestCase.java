@@ -36,8 +36,10 @@ import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.constants.SamlProviderConfigurationKeys;
 import com.liferay.saml.opensaml.integration.internal.binding.HttpPostBinding;
 import com.liferay.saml.opensaml.integration.internal.binding.HttpRedirectBinding;
@@ -606,8 +608,10 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 		samlBindings.add(new HttpSoap11Binding(parserPool, httpClient));
 	}
 
-	protected static final String ACS_URL =
-		"http://localhost:8080/c/portal/saml/acs";
+	protected static final String ACS_URL = StringBundler.concat(
+		"http://localhost:8080/?p_p_id=", SamlPortletKeys.SAML,
+		"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+		"_javax.portlet.action=/saml/assertion_consumer_service");
 
 	protected static final long COMPANY_ID = 1;
 
@@ -629,13 +633,15 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 
 	protected static final long SESSION_ID = 2;
 
-	protected static final String SLO_LOGOUT_URL =
-		"http://localhost:8080/c/portal/saml/slo_logout";
+	protected static final String SLO_LOGOUT_URL = StringBundler.concat(
+		"http://localhost:8080/?p_p_id=", SamlPortletKeys.SAML,
+		"&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_",
+		SamlPortletKeys.SAML, "_mvcRenderCommandName=/saml/slo_logout");
 
 	protected static final String SP_ENTITY_ID = "testsp";
 
 	protected static final String SSO_URL =
-		"http://localhost:8080/c/portal/saml/sso";
+		"http://localhost:8080/c/portal/saml/redirect/sso";
 
 	protected static final String UNKNOWN_ENTITY_ID = "testunknown";
 
