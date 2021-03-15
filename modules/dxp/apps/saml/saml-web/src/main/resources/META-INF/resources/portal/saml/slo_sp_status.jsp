@@ -38,7 +38,7 @@ int status = samlSloRequestInfoJSONObject.getInt("status");
 			<div class="portlet-msg-error">
 				<liferay-ui:message key="single-sign-out-request-failed" />
 
-				<a href="?cmd=logout&entityId=<%= entityId %>">
+				<a href="/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_sp_status&_com_liferay_saml_web_internal_portlet_SamlPortlet_entityId=<%= entityId %>">
 					<liferay-ui:message key="retry" />
 				</a>
 			</div>

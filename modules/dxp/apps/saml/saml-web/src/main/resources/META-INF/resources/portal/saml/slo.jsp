@@ -63,7 +63,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 		<liferay-ui:message arguments="<%= 5 %>" key="all-service-providers-are-processed.-continuing-sign-out-automatically-in-x-seconds" />
 	</div>
 
-	<a href="?cmd=finish" id="samlCompleteSignOutLink"><liferay-ui:message key="complete-sign-out" /></a>
+	<a href="/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_logout&_com_liferay_saml_web_internal_portlet_SamlPortlet_cmd=finish" id="samlCompleteSignOutLink"><liferay-ui:message key="complete-sign-out" /></a>
 </div>
 
 <noscript>
@@ -79,7 +79,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 	%>
 
 		<div class="saml-sp">
-			<a class="saml-sp-label" href="?cmd=logout&entityId=<%= entityId %>" target="_blank">
+			<a class="saml-sp-label" href="/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_sp_status&_com_liferay_saml_web_internal_portlet_SamlPortlet_entityId=<%= entityId %>" target="_blank">
 				<liferay-ui:message arguments='<%= samlSloRequestInfoJSONObject.getString("name") %>' key="sign-out-from-x" />
 			</a>
 		</div>
@@ -89,7 +89,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 	%>
 
 	<div>
-		<a href="?cmd=finish">
+		<a href="/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_logout&_com_liferay_saml_web_internal_portlet_SamlPortlet_cmd=finish">
 			<liferay-ui:message key="complete-sign-out" />
 		</a>
 	</div>
@@ -173,7 +173,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 		'<div class="saml-sp" id="samlSp{$i}">',
 		'<span class="portlet-msg-progress-label saml-sp-label">{name}</span>',
 		'<a class="hide saml-sp-retry" data-entityId="{entityId}" href="javascript:;"><%= UnicodeLanguageUtil.get(request, "retry") %></a>',
-		'<iframe class="hide-accessible" src="?cmd=logout&entityId={entityId}"></iframe>',
+		'<iframe class="hide-accessible" src="/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_sp_status&_com_liferay_saml_web_internal_portlet_SamlPortlet_entityId={entityId}"></iframe>',
 		'</div>',
 		'</tpl>'
 	);
@@ -257,7 +257,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 		finishLogout: function () {
 			detachHandlers();
 
-			location.href = '?cmd=finish';
+			location.href = '/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_logout&_com_liferay_saml_web_internal_portlet_SamlPortlet_cmd=finish';
 		},
 
 		retryLogout: function (entityId) {
@@ -277,8 +277,7 @@ JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("
 
 				entityNode
 					.one('iframe')
-					.set('src', '?cmd=logout&entityId=' + entityId);
-
+					.set('src', '/?p_p_id=com_liferay_saml_web_internal_portlet_SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=/saml/slo_sp_status&_com_liferay_saml_web_internal_portlet_SamlPortlet_entityId=' + entityId);
 				instance.checkStatus();
 			}
 		},

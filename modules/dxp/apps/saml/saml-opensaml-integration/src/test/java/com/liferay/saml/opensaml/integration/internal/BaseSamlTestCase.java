@@ -36,6 +36,7 @@ import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlProviderConfigurationKeys;
@@ -629,8 +630,11 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 
 	protected static final long SESSION_ID = 2;
 
-	protected static final String SLO_LOGOUT_URL =
-		"http://localhost:8080/c/portal/saml/slo_logout";
+	protected static final String SLO_SP_STATUS_URL = StringBundler.concat(
+		"http://localhost:8080/?p_p_id=com_liferay_saml_web_internal_portlet_",
+		"SamlPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_",
+		"liferay_saml_web_internal_portlet_SamlPortlet_mvcRenderCommandName=",
+		"/saml/slo_sp_status");
 
 	protected static final String SP_ENTITY_ID = "testsp";
 
