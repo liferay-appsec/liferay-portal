@@ -402,7 +402,7 @@ definition {
 			value1 = "Sign In");
 
 		AssertTextEquals(
-			locator1 = "Portlet#PORTLET_CONTENT",
+			locator1 = "Portlet#MESSAGE_ERROR",
 			value1 = "Unable to process SAML request.");
 
 		AssertConsoleTextPresent(value1 = "Validation of protocol message signature failed");
@@ -429,7 +429,7 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			samlEnabled = "true",
 			spURL = "http://www.able.com:9080",
@@ -460,10 +460,12 @@ definition {
 
 		User.logoutPG();
 
+		Pause(locator1 = "20000");
+
 		User.viewLoggedOutPG();
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			samlEnabled = "true",
 			spURL = "http://www.able.com:9080",
@@ -475,7 +477,7 @@ definition {
 
 		SAML.executeIdPInitiatedSSO(
 			autoLogin = "true",
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			samlEnabled = "true",
 			spURL = "http://www.able.com:9080",
@@ -512,7 +514,7 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			spURL = "http://www.able.com:9080",
 			userEmailAddress = "test@liferay.com");
@@ -555,7 +557,7 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			samlEnabled = "true",
 			spURL = "http://www.able.com:9080",
@@ -640,7 +642,7 @@ definition {
 			userEmailAddress = "test@liferay.com");
 
 		AssertTextEquals(
-			locator1 = "Portlet#PORTLET_CONTENT",
+			locator1 = "Portlet#MESSAGE_ERROR",
 			value1 = "Unable to process SAML request.");
 
 		Clustering.viewTextPresentOnSpecificNode(
@@ -677,7 +679,7 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			spURL = "http://www.able.com:9080",
 			userEmailAddress = "test@liferay.com");
@@ -790,7 +792,9 @@ definition {
 
 		Navigator.gotoLoginPage();
 
-		AssertConsoleTextPresent(value1 = "org.opensaml.messaging.handler.MessageHandlerException: Message context was not authenticated");
+		AssertTextEquals(
+			locator1 = "Portlet#MESSAGE_ERROR",
+			value1 = "Unable to process SAML request.");
 	}
 
 	@description = "This is a use case for LPS-129373"
@@ -1175,7 +1179,7 @@ definition {
 		// Verify SP is logged in
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			spURL = "http://www.able.com:9080",
 			userEmailAddress = "test@liferay.com");
@@ -1221,7 +1225,7 @@ definition {
 		// Verify SP is logged in
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			rememberMeChecked = "true",
 			spURL = "http://www.able.com:9080",
@@ -1556,7 +1560,7 @@ definition {
 		var portalURL = PropsUtil.get("portal.url");
 
 		SAML.executeIdPInitiatedSSO(
-			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
+			idpInitiatedSSOURL = "${portalURL}/c/portal/saml/redirect/sso?entityId=samlsp&amp;RelayState=http://www.able.com:9080",
 			password = "test",
 			rememberMeChecked = "true",
 			spURL = "http://www.able.com:9080",
