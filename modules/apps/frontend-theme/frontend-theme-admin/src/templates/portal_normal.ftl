@@ -24,14 +24,22 @@
 	<div id="content-wrapper">
 		<div id="content">
 			<#if selectable>
-				<@liferay_util["include"] page=content_include />
+				<#if (request.getAttribute("contentServletContext"))??>
+					<@liferay_util["include"] page=content_include servletContext=request.getAttribute("contentServletContext")/>
+				<#else>
+					<@liferay_util["include"] page=content_include />
+				</#if>
 			<#else>
 				${portletDisplay.recycle()}
 
 				${portletDisplay.setTitle(the_title)}
 
 				<@liferay_theme["wrap-portlet"] page="portlet.ftl">
-					<@liferay_util["include"] page=content_include />
+					<#if (request.getAttribute("contentServletContext"))??>
+						<@liferay_util["include"] page=content_include servletContext=request.getAttribute("contentServletContext")/>
+					<#else>
+						<@liferay_util["include"] page=content_include />
+					</#if>
 				</@>
 			</#if>
 

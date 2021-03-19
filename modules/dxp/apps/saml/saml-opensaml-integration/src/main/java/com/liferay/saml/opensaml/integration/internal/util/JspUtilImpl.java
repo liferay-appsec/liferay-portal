@@ -72,7 +72,8 @@ public class JspUtilImpl extends JspUtil {
 				_PATH_HTML_COMMON_THEMES_PORTAL);
 
 		if (_servletContext != null) {
-			requestDispatcher = _servletContext.getRequestDispatcher(path);
+			httpServletRequest.setAttribute(
+				"contentServletContext", _servletContext);
 		}
 
 		if (popUp) {
