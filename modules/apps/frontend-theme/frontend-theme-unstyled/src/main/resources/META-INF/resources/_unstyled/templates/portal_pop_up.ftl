@@ -12,7 +12,11 @@
 
 <body class="portal-popup ${css_class}">
 
-<@liferay_util["include"] page=content_include />
+<#if (request.getAttribute("contentServletContext"))??>
+	<@liferay_util["include"] page=content_include servletContext=request.getAttribute("contentServletContext")/>
+<#else>
+	<@liferay_util["include"] page=content_include />
+</#if>
 
 <@liferay_util["include"] page=bottom_ext_include />
 
