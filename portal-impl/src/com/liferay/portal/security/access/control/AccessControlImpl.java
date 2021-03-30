@@ -93,10 +93,12 @@ public class AccessControlImpl implements AccessControl {
 
 		Map<String, Object> settings = accessControlContext.getSettings();
 
+		AuthVerifierPipeline portalAuthVerifierPipeline =
+			AuthVerifierPipeline.getPortalAuthVerifierPipeline();
+
 		if (!settings.containsKey(AuthVerifierPipeline.class.getName())) {
-			authVerifierResult =
-				AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-					verifyRequest(accessControlContext);
+			authVerifierResult = portalAuthVerifierPipeline.verifyRequest(
+				accessControlContext);
 		}
 		else {
 			AuthVerifierPipeline authVerifierPipeline =
@@ -109,9 +111,8 @@ public class AccessControlImpl implements AccessControl {
 			if (authVerifierResult.getState() !=
 					AuthVerifierResult.State.SUCCESS) {
 
-				authVerifierResult =
-					AuthVerifierPipeline.PORTAL_AUTH_VERIFIER_PIPELINE.
-						verifyRequest(accessControlContext);
+				authVerifierResult = portalAuthVerifierPipeline.verifyRequest(
+					accessControlContext);
 			}
 		}
 

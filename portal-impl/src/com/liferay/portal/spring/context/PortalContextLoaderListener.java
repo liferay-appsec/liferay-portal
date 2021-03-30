@@ -50,6 +50,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.module.framework.ModuleFrameworkUtilAdapter;
+import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.servlet.AxisServlet;
 import com.liferay.portal.servlet.PortalSessionListener;
 import com.liferay.portal.spring.aop.DynamicProxyCreator;
@@ -334,6 +335,8 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 		InitUtil.registerSpringInitialized();
 
 		ServletContextPool.put(_portalServletContextName, servletContext);
+
+		AuthVerifierPipeline.getPortalAuthVerifierPipeline();
 
 		ApplicationContext applicationContext =
 			ContextLoader.getCurrentWebApplicationContext();
