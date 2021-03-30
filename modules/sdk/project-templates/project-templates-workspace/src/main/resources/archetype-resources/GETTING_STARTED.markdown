@@ -1,7 +1,7 @@
-#set($h1 = '#')
-#set($h2 = '##')
-#set($h3 = '###')
-#set($h4 = '####')
+#set ($h1 = '#')
+#set ($h2 = '##')
+#set ($h3 = '###')
+#set ($h4 = '####')
 $h1 Getting Started with Liferay Workspace
 
 Complete documentation for Liferay Workspace can be found
@@ -116,6 +116,7 @@ Set this property to override the default setting provided by
 develop and test against. By setting this property, it enables the target
 platform features such as dependency management and OSGi resolve tasks. Use the
 version that matches the Liferay Portal or DXP bundle version in this workspace.
+See GETTING_STARTED#Overwrite-specific-dependency-in-one-project for overrides.
 
 For a list of all available target platform versions, see
 https://bit.ly/2IkAwwW for Liferay Portal and https://bit.ly/2GIyfZF for
@@ -184,3 +185,30 @@ set the above property) and you want to apply the TargetPlatformIDE plugin to
 the root workspace project. This will cause all of the BOM artifacts jars and
 their Java sources to be indexed by your IDE. Setting this property to true can
 slow down your IDE's project synchronization.
+
+$h2 Build Customizations via `build.gradle`
+
+$h3 Overwrite specific dependency in one project
+Set `force = true` to overwrite the version of a specific dependency. See
+`https://docs.gradle.org/current/userguide/dependency_downgrade_and_exclude.html#forced_dependencies_vs_strict_dependencies`.
+
+$h3 Overwrite dependency in multiple projects
+Set the following to overwrite the version of a dependency for the project.
+```
+subprojects {
+	configurations.all {
+		resolutionStrategy.force 'groupId:artifactId:version`
+	}
+}
+```
+
+$h2 platform.bndrun
+
+This file allows each module to be resolved against the target version of
+Liferay. Invoke the operation using the following command:
+`./gradlew resolve`
+
+SUCCESS: The successful result is a list of all the artifacts needed to run
+without any resolution errors.
+FAILURE: A failure will indicate missing a requirement. Correct the missing
+requirement and rerun the task.
