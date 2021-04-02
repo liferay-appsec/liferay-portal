@@ -21,6 +21,7 @@ JSONObject samlSloContextJSONObject = (JSONObject)request.getAttribute("SAML_SLO
 
 JSONArray samlSloRequestInfosJSONArray = samlSloContextJSONObject.getJSONArray("samlSloRequestInfos");
 
+String sendSamlSloRequestInfosResourceCommand = "/?p_p_id=" + SamlPortletKeys.SAML + "&p_p_lifecycle=2&p_p_state=maximized&p_p_mode=view&p_p_resource_id=/saml/send_saml_slo_request_infos";
 String sloLogoutRenderCommand = "/?p_p_id=" + SamlPortletKeys.SAML + "&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_" + SamlPortletKeys.SAML + "_mvcRenderCommandName=/saml/slo_logout";
 %>
 
@@ -219,9 +220,10 @@ String sloLogoutRenderCommand = "/?p_p_id=" + SamlPortletKeys.SAML + "&p_p_lifec
 			var instance = this;
 
 			A.io.request(
-				'<%= sloLogoutRenderCommand %>&_<%= SamlPortletKeys.SAML %>_cmd=status',
+				'<%= sendSamlSloRequestInfosResourceCommand %>&_<%= SamlPortletKeys.SAML %>_cmd=status',
 				{
 					dataType: 'JSON',
+					method: 'POST',
 					on: {
 						success: function(event) {
 							var logoutPending = false;
