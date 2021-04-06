@@ -1003,15 +1003,13 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			HttpServletRequest httpServletRequest)
 		throws PortalException {
 
-		StringBundler sb = new StringBundler(3);
+		StringBundler sb = new StringBundler(6);
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		sb.append(themeDisplay.getPathMain());
-
-		sb.append("/portal/saml/auth_redirect?redirect=");
+		sb.append("/?p_p_id=");
+		sb.append(SamlPortletKeys.SAML);
+		sb.append("&p_p_lifecycle=1&_");
+		sb.append(SamlPortletKeys.SAML);
+		sb.append("_javax.portlet.action=/saml/auth_redirect&redirect=");
 
 		SAMLBindingContext samlBindingContext = messageContext.getSubcontext(
 			SAMLBindingContext.class);
