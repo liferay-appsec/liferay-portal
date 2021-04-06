@@ -12,31 +12,35 @@
  *
  */
 
-package com.liferay.saml.web.internal.struts;
+package com.liferay.saml.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
+ * @author Arthur Chan
  */
 @Component(
-	immediate = true, property = "path=/portal/saml/auth_redirect",
-	service = StrutsAction.class
+	immediate = true,
+	property = {
+		"auth.token.ignore.mvc.action=true",
+		"javax.portlet.name=" + SamlPortletKeys.SAML,
+		"mvc.command.name=/saml/auth_redirect"
+	},
+	service = MVCActionCommand.class
 )
-public class AuthRedirectAction extends BaseSamlStrutsAction {
+public class AuthRedirectMVCActionCommand extends BaseSamlMVCActionCommand {
 
 	@Override
 	public boolean isEnabled() {
@@ -57,27 +61,20 @@ public class AuthRedirectAction extends BaseSamlStrutsAction {
 	}
 
 	@Override
-	protected String doExecute(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
+	protected void doProcessAction(
+			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		String redirect = ParamUtil.getString(httpServletRequest, "redirect");
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
 
 		redirect = _portal.escapeRedirect(redirect);
 
 		if (Validator.isNull(redirect)) {
-			redirect = _portal.getHomeURL(httpServletRequest);
+			redirect = _portal.getHomeURL(
+				_portal.getHttpServletRequest(actionRequest));
 		}
 
-		try {
-			httpServletResponse.sendRedirect(redirect);
-		}
-		catch (IOException ioException) {
-			throw new SystemException(ioException);
-		}
-
-		return null;
+		sendRedirect(actionRequest, actionResponse, redirect);
 	}
 
 	@Reference
