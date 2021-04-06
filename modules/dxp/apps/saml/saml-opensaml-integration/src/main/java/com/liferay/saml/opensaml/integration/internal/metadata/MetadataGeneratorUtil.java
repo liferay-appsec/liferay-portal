@@ -17,6 +17,7 @@ package com.liferay.saml.opensaml.integration.internal.metadata;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.opensaml.integration.internal.util.OpenSamlUtil;
 import com.liferay.saml.runtime.exception.CredentialException;
 import com.liferay.saml.runtime.exception.EntityIdException;
@@ -222,7 +223,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildAssertionConsumerService(
 				SAMLConstants.SAML2_POST_BINDING_URI, 1, true,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/acs"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/assertion_consumer_service"));
 
 		assertionConsumerServices.add(assertionConsumerService);
 
