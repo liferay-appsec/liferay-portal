@@ -134,14 +134,18 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleSignOnService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/sso"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/web_sso"));
 
 		singleSignOnServices.add(singleSignOnService);
 
 		singleSignOnService = OpenSamlUtil.buildSingleSignOnService(
 			SAMLConstants.SAML2_POST_BINDING_URI,
 			StringBundler.concat(
-				portalURL, PortalUtil.getPathMain(), "/portal/saml/sso"));
+				portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+				"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+				"_javax.portlet.action=/saml/web_sso"));
 
 		singleSignOnServices.add(singleSignOnService);
 
