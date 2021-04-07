@@ -156,7 +156,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_POST_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/slo"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo"));
 
 		singleLogoutServices.add(postSingleLogoutService);
 
@@ -164,7 +166,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/slo"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo"));
 
 		singleLogoutServices.add(redirectSingleLogoutService);
 
@@ -253,7 +257,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_POST_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/slo"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo"));
 
 		singleLogoutServices.add(postSingleLogoutService);
 
@@ -261,7 +267,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(), "/portal/saml/slo"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo"));
 
 		singleLogoutServices.add(redirectSingleLogoutService);
 
@@ -269,8 +277,9 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_SOAP11_BINDING_URI,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathMain(),
-					"/portal/saml/slo_soap"));
+					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo_soap"));
 
 		singleLogoutServices.add(soapSingleLogoutService);
 
