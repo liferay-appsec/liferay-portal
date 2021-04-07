@@ -12,14 +12,17 @@
  *
  */
 
-package com.liferay.saml.web.internal.struts;
+package com.liferay.saml.web.internal.portlet.action;
 
-import com.liferay.portal.kernel.struts.StrutsAction;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.saml.constants.SamlPortletKeys;
+import com.liferay.saml.persistence.service.SamlSpIdpConnectionLocalService;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 import com.liferay.saml.runtime.servlet.profile.WebSsoProfile;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -28,10 +31,15 @@ import org.osgi.service.component.annotations.Reference;
  * @author Mika Koivisto
  */
 @Component(
-	immediate = true, property = "path=/portal/saml/sso",
-	service = StrutsAction.class
+	immediate = true,
+	property = {
+		"auth.token.ignore.mvc.action=true",
+		"javax.portlet.name=" + SamlPortletKeys.SAML,
+		"mvc.command.name=/saml/web_sso"
+	},
+	service = MVCActionCommand.class
 )
-public class WebSsoAction extends BaseSamlStrutsAction {
+public class WebSsoMVCActionCommand extends BaseSamlMVCActionCommand {
 
 	@Override
 	public boolean isEnabled() {
@@ -52,16 +60,21 @@ public class WebSsoAction extends BaseSamlStrutsAction {
 	}
 
 	@Override
-	protected String doExecute(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
+	protected void doProcessAction(
+			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
 		_webSsoProfile.processAuthnRequest(
-			httpServletRequest, httpServletResponse);
-
-		return null;
+			_portal.getOriginalServletRequest(
+				_portal.getHttpServletRequest(actionRequest)),
+			_portal.getHttpServletResponse(actionResponse));
 	}
+
+	@Reference
+	private Portal _portal;
+
+	@Reference
+	private SamlSpIdpConnectionLocalService _samlSpIdpConnectionLocalService;
 
 	@Reference(unbind = "-")
 	private WebSsoProfile _webSsoProfile;
