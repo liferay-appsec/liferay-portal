@@ -136,6 +136,12 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 
 		newCookie = cookies.get(CookieKeys.JSESSIONID);
 
+		invocationBuilder = _getLocalhostWebTarget().request();
+
+		invocationBuilder = invocationBuilder.cookie(newCookie);
+
+		_pAuth = _parsePAuthToken(invocationBuilder.get());
+
 		if (newCookie == null) {
 			return null;
 		}
