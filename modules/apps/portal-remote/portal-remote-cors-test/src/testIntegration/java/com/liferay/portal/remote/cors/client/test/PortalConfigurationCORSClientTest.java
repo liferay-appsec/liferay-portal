@@ -106,21 +106,34 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 	}
 
 	private Cookie _getAuthenticatedCookie(String login, String password) {
-		Invocation.Builder invocationBuilder = _getWebTarget(
+
+		System.out.println("INIT - PortalConfigurationCORSClientTest - _getAuthenticatedCookie");
+
+		WebTarget webTarget = _getWebTarget(
 			"web", "guest"
-		).request();
+		);
+		Invocation.Builder invocationBuilder = webTarget.request();
+
+		System.out.println("1 - Get: "+ webTarget.getUri());
 
 		Response response = invocationBuilder.get();
 
+		System.out.println("1 - Response: "+ response.getLocation());
+
 		_pAuth = _parsePAuthToken(response);
+
+		System.out.println("1 - p_auth: "+ _pAuth);
 
 		Map<String, NewCookie> cookies = response.getCookies();
 
 		NewCookie newCookie = cookies.get(CookieKeys.JSESSIONID);
 
-		invocationBuilder = _getWebTarget(
+		System.out.println("1 - Cookie Value: "+ newCookie.getValue());
+
+		webTarget = _getWebTarget(
 			"c", "portal", "login"
-		).request();
+		);
+		invocationBuilder = webTarget.request();
 
 		invocationBuilder = invocationBuilder.cookie(newCookie);
 
@@ -130,21 +143,37 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 		formData.add("password", password);
 		formData.add("p_auth", _pAuth);
 
+		System.out.println("2 - Post using Cookie + Login: "+ webTarget.getUri());
+
 		response = invocationBuilder.post(Entity.form(formData));
+
+		System.out.println("2 - Response: "+ response.getLocation());
 
 		cookies = response.getCookies();
 
 		newCookie = cookies.get(CookieKeys.JSESSIONID);
 
+		System.out.println("2 - Cookie Value: "+ newCookie.getValue());
+
 		invocationBuilder = _getLocalhostWebTarget().request();
 
 		invocationBuilder = invocationBuilder.cookie(newCookie);
 
-		_pAuth = _parsePAuthToken(invocationBuilder.get());
+		System.out.println("3 - Get: "+ _getLocalhostWebTarget().getUri());
+
+		response  = invocationBuilder.get();
+
+		System.out.println("3 - Response: "+response.getLocation());
+
+		_pAuth = _parsePAuthToken(response);
+
+		System.out.println("3 - p_auth: "+_pAuth);
 
 		if (newCookie == null) {
 			return null;
 		}
+
+		System.out.println("END - PortalConfigurationCORSClientTest - _getAuthenticatedCookie");
 
 		return newCookie.toCookie();
 	}
