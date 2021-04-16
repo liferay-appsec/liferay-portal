@@ -59,6 +59,7 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
+	/*
 	@Test
 	public void testCORSUsingBasicWithDefaultConfig() throws Exception {
 		assertJsonWSUrl("/user/get-current-user", HttpMethod.OPTIONS, true);
@@ -81,7 +82,7 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 				PropsValues.class, "CORS_DISABLE_AUTHORIZATION_CONTEXT_CHECK",
 				corsDisableAuthorizationContextCheck);
 		}
-	}
+	}*/
 
 	@Test
 	public void testNoCORSUsingPortalSession() throws Exception {
