@@ -155,11 +155,13 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 
 		System.out.println("2 - Cookie Value: "+ newCookie.getValue());
 
-		invocationBuilder = _getLocalhostWebTarget().request();
+		WebTarget localhostWebTarget = _getLocalhostWebTarget();
+		localhostWebTarget = localhostWebTarget.queryParam("p_auth", _pAuth);
+		invocationBuilder = localhostWebTarget.request();
 
 		invocationBuilder = invocationBuilder.cookie(newCookie);
 
-		System.out.println("3 - Get: "+ _getLocalhostWebTarget().getUri());
+		System.out.println("3 - Get: "+ localhostWebTarget.getUri());
 
 		response  = invocationBuilder.get();
 
