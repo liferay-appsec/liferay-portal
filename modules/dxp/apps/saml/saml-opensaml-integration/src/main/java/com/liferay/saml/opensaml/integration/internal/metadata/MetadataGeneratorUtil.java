@@ -134,9 +134,8 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleSignOnService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
-					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
-					"_javax.portlet.action=/saml/web_sso"));
+					portalURL, PortalUtil.getPathMain(),
+					"/portal/saml/redirect/sso"));
 
 		singleSignOnServices.add(singleSignOnService);
 
@@ -166,9 +165,8 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
-					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
-					"_javax.portlet.action=/saml/slo"));
+					portalURL, PortalUtil.getPathMain(),
+					"/portal/saml/redirect/slo"));
 
 		singleLogoutServices.add(redirectSingleLogoutService);
 
@@ -267,9 +265,8 @@ public class MetadataGeneratorUtil {
 			OpenSamlUtil.buildSingleLogoutService(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI,
 				StringBundler.concat(
-					portalURL, "/?p_p_id=", SamlPortletKeys.SAML,
-					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
-					"_javax.portlet.action=/saml/slo"));
+					portalURL, PortalUtil.getPathMain(),
+					"/portal/saml/redirect/slo"));
 
 		singleLogoutServices.add(redirectSingleLogoutService);
 
