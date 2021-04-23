@@ -59,7 +59,7 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-
+	/*
 	@Test
 	public void testCORSUsingBasicWithDefaultConfig() throws Exception {
 		assertJsonWSUrl("/user/get-current-user", HttpMethod.OPTIONS, true);
@@ -73,8 +73,6 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 				PropsValues.class, "CORS_DISABLE_AUTHORIZATION_CONTEXT_CHECK",
 				true);
 
-
-
 		try {
 			assertJsonWSUrl("/user/get-current-user", HttpMethod.OPTIONS, true);
 			assertJsonWSUrl("/user/get-current-user", HttpMethod.GET, true);
@@ -84,17 +82,15 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 				PropsValues.class, "CORS_DISABLE_AUTHORIZATION_CONTEXT_CHECK",
 				corsDisableAuthorizationContextCheck);
 		}
-	}
+	}*/
 
 	@Test
 	public void testNoCORSUsingPortalSession() throws Exception {
-		boolean disableAuthTokenCheck =
-			ReflectionTestUtil.getAndSetFieldValue(
-				PropsValues.class, "AUTH_TOKEN_CHECK_ENABLED",
-				false);
+		boolean termsOfUseRequired = ReflectionTestUtil.getAndSetFieldValue(
+			PropsValues.class, "TERMS_OF_USE_REQUIRED",
+			false);
 
 		try {
-
 			Cookie authenticatedCookie = _getAuthenticatedCookie(
 				"test@liferay.com", "test");
 
@@ -113,11 +109,12 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 				"Access-Control-Allow-Origin");
 
 			Assert.assertNull(corsHeaderString);
-		}finally {
-				ReflectionTestUtil.setFieldValue(
-					PropsValues.class, "AUTH_TOKEN_CHECK_ENABLED",
-					disableAuthTokenCheck);
-			}
+		}
+		finally {
+			ReflectionTestUtil.setFieldValue(
+				PropsValues.class, "TERMS_OF_USE_REQUIRED",
+				termsOfUseRequired);
+		}
 	}
 
 	private Cookie _getAuthenticatedCookie(String login, String password) {
@@ -169,6 +166,21 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 		newCookie = cookies.get(CookieKeys.JSESSIONID);
 
 		System.out.println("2 - Cookie Value: "+ newCookie.getValue());
+
+		WebTarget localhostWebTarget = _getLocalhostWebTarget();
+		invocationBuilder = localhostWebTarget.request();
+
+		invocationBuilder = invocationBuilder.cookie(newCookie);
+
+		System.out.println("3 - Get: "+ localhostWebTarget.getUri());
+
+		response  = invocationBuilder.get();
+
+		System.out.println("3 - Response: "+response.getLocation());
+
+		_pAuth = _parsePAuthToken(response);
+
+		System.out.println("3 - p_auth: "+_pAuth);
 
 		if (newCookie == null) {
 			return null;
