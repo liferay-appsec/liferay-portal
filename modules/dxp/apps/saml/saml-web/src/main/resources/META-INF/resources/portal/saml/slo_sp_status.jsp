@@ -60,6 +60,8 @@ String sloLogoutRenderCommand = "/c/portal/saml/slo_logout?p_p_id=" + SamlPortle
 
 <aui:script>
 	if (window.parent.Liferay.SAML.SLO) {
-		window.parent.Liferay.SAML.SLO.updateStatus(<%= samlSloRequestInfoJSONObject %>);
+		window.parent.Liferay.SAML.SLO.updateStatus(
+			<%= samlSloRequestInfoJSONObject %>
+		);
 	}
 </aui:script>
