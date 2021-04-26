@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.saml.constants.SamlPortletKeys;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -82,17 +83,32 @@ public class SamlSameSiteLaxCookiesFilterTest {
 
 	@Test
 	public void testACSSameSiteLaxCookiesSupport() throws Exception {
-		_execute(new URL("http://localhost:8080/c/portal/saml/acs"));
+		_execute(
+			new URL(
+				StringBundler.concat(
+					"http://localhost:8080/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/assertion_consumer_service")));
 	}
 
 	@Test
 	public void testSLOSameSiteLaxCookies() throws Exception {
-		_execute(new URL("http://localhost:8080/c/portal/saml/slo"));
+		_execute(
+			new URL(
+				StringBundler.concat(
+					"http://localhost:8080/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/slo")));
 	}
 
 	@Test
 	public void testSSOSameSiteLaxCookies() throws Exception {
-		_execute(new URL("http://localhost:8080/c/portal/saml/sso"));
+		_execute(
+			new URL(
+				StringBundler.concat(
+					"http://localhost:8080/?p_p_id=", SamlPortletKeys.SAML,
+					"&p_p_lifecycle=1&_", SamlPortletKeys.SAML,
+					"_javax.portlet.action=/saml/web_sso")));
 	}
 
 	private void _execute(URL url) throws Exception {
@@ -104,6 +120,7 @@ public class SamlSameSiteLaxCookiesFilterTest {
 
 		httpClient.setDoOutput(true);
 		httpClient.setRequestMethod("POST");
+		httpClient.setRequestProperty("Accept", "text/html");
 
 		try (DataOutputStream dataOutputStream = new DataOutputStream(
 				httpClient.getOutputStream())) {
