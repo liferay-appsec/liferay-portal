@@ -12,30 +12,35 @@
  *
  */
 
-package com.liferay.saml.internal.servlet.filter;
+package com.liferay.saml.web.internal.portlet.filter;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
 import com.liferay.portal.kernel.util.Html;
-import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.constants.SamlPortletKeys;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 
-import java.util.Map;
 import java.util.Objects;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
+import javax.portlet.PortletException;
+import javax.portlet.filter.ActionFilter;
+import javax.portlet.filter.FilterChain;
+import javax.portlet.filter.FilterConfig;
+import javax.portlet.filter.PortletFilter;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -45,50 +50,30 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Stian Sigvartsen
  */
 @Component(
-	immediate = true,
-	property = {
-		"before-filter=Session Id Filter", "dispatcher=REQUEST", "enabled=true",
-		"init-param.url-regex-ignore-pattern=^/html/.+\\.(css|gif|html|ico|jpg|js|png)(\\?.*)?$",
-		"servlet-context-name=",
-		"servlet-filter-name=SAML SameSite Lax Support Filter",
-		"url-pattern=/c/portal/saml/acs", "url-pattern=/c/portal/saml/slo",
-		"url-pattern=/c/portal/saml/sso"
-	},
-	service = Filter.class
+	immediate = true, property = "javax.portlet.name=" + SamlPortletKeys.SAML,
+	service = PortletFilter.class
 )
-public class SamlSameSiteLaxCookiesFilter extends BaseSamlPortalFilter {
+public class SamlSameSiteLaxCookiesPortletFilter implements ActionFilter {
 
 	@Override
-	public boolean isFilterEnabled() {
-		return _enabled;
+	public void destroy() {
 	}
 
 	@Override
-	public boolean isFilterEnabled(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
+	public void doFilter(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			FilterChain filterChain)
+		throws IOException, PortletException {
 
-		if (Objects.equals("GET", httpServletRequest.getMethod()) ||
-			ParamUtil.getBoolean(httpServletRequest, "continue") ||
-			(!ParamUtil.getBoolean(httpServletRequest, "noscript") &&
-			 (httpServletRequest.getSession(false) != null))) {
+		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
+			actionRequest);
 
-			return false;
+		HttpServletResponse httpServletResponse =
+			_portal.getHttpServletResponse(actionResponse);
+
+		if (!isFilterEnabled(httpServletRequest, httpServletResponse)) {
+			filterChain.doFilter(actionRequest, actionResponse);
 		}
-
-		return true;
-	}
-
-	@Activate
-	protected void activate(Map<String, Object> properties) {
-		_enabled = MapUtil.getBoolean(properties, "enabled");
-	}
-
-	@Override
-	protected void doProcessFilter(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, FilterChain filterChain)
-		throws Exception {
 
 		httpServletResponse.setContentType("text/html");
 
@@ -130,8 +115,35 @@ public class SamlSameSiteLaxCookiesFilter extends BaseSamlPortalFilter {
 	}
 
 	@Override
+	public void init(FilterConfig filterConfig) throws PortletException {
+	}
+
 	protected Log getLog() {
 		return _log;
+	}
+
+	protected boolean isFilterEnabled(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		if (Objects.equals("GET", httpServletRequest.getMethod()) ||
+			ParamUtil.getBoolean(httpServletRequest, "continue") ||
+			(!ParamUtil.getBoolean(httpServletRequest, "noscript") &&
+			 (httpServletRequest.getSession(false) != null))) {
+
+			return false;
+		}
+
+		String actionName = httpServletRequest.getParameter(
+			"_" + SamlPortletKeys.SAML + "_javax.portlet.action");
+
+		if (actionName.endsWith("acs") || actionName.endsWith("slo") ||
+			actionName.endsWith("sso")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _processParameter(
@@ -154,9 +166,7 @@ public class SamlSameSiteLaxCookiesFilter extends BaseSamlPortalFilter {
 	};
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		SamlSameSiteLaxCookiesFilter.class);
-
-	private boolean _enabled = true;
+		SamlSameSiteLaxCookiesPortletFilter.class);
 
 	@Reference
 	private Html _html;
@@ -167,7 +177,7 @@ public class SamlSameSiteLaxCookiesFilter extends BaseSamlPortalFilter {
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,
 		policyOption = ReferencePolicyOption.GREEDY,
-		target = "(bundle.symbolic.name=com.liferay.saml.impl)"
+		target = "(bundle.symbolic.name=com.liferay.saml.web)"
 	)
 	private volatile ResourceBundleLoader _resourceBundleLoader;
 
