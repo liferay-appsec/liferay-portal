@@ -59,7 +59,6 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-
 	@Test
 	public void testCORSUsingBasicWithDefaultConfig() throws Exception {
 		assertJsonWSUrl("/user/get-current-user", HttpMethod.OPTIONS, true);
@@ -72,8 +71,6 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 			ReflectionTestUtil.getAndSetFieldValue(
 				PropsValues.class, "CORS_DISABLE_AUTHORIZATION_CONTEXT_CHECK",
 				true);
-
-
 
 		try {
 			assertJsonWSUrl("/user/get-current-user", HttpMethod.OPTIONS, true);
@@ -88,90 +85,65 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 
 	@Test
 	public void testNoCORSUsingPortalSession() throws Exception {
-		boolean disableAuthTokenCheck =
-			ReflectionTestUtil.getAndSetFieldValue(
-				PropsValues.class, "AUTH_TOKEN_CHECK_ENABLED",
-				false);
+		Cookie authenticatedCookie = _getAuthenticatedCookie(
+			"test@liferay.com", "test");
 
-			Cookie authenticatedCookie = _getAuthenticatedCookie(
-				"test@liferay.com", "test");
+		Invocation.Builder invocationBuilder =
+			_getLocalhostWebTarget().request();
 
-			Invocation.Builder invocationBuilder = _getJsonWebTarget(
-				"user", "get-current-user"
-			).request();
-
-			invocationBuilder = invocationBuilder.cookie(authenticatedCookie);
-
-			invocationBuilder = invocationBuilder.header(
-				"Origin", "http://test-cors.com");
-
-			Response response = invocationBuilder.get();
-
-			String corsHeaderString = response.getHeaderString(
-				"Access-Control-Allow-Origin");
-
-			Assert.assertNull(corsHeaderString);
-
-	}
-
-	private Cookie _getAuthenticatedCookie(String login, String password) {
-
-		System.out.println("INIT - PortalConfigurationCORSClientTest - _getAuthenticatedCookie");
-
-		/*WebTarget webTarget = _getWebTarget(
-			"web", "guest"
-		);
-		Invocation.Builder invocationBuilder = webTarget.request();
-
-		System.out.println("1 - Get: "+ webTarget.getUri());
+		invocationBuilder = invocationBuilder.cookie(authenticatedCookie);
 
 		Response response = invocationBuilder.get();
 
-		System.out.println("1 - Response: "+ response.getLocation());
-
 		_pAuth = _parsePAuthToken(response);
 
-		System.out.println("1 - p_auth: "+ _pAuth);
+		invocationBuilder = _getJsonWebTarget(
+			"user", "get-current-user"
+		).request();
+
+		invocationBuilder = invocationBuilder.cookie(authenticatedCookie);
+
+		invocationBuilder = invocationBuilder.header(
+			"Origin", "http://test-cors.com");
+
+		response = invocationBuilder.get();
+
+		String corsHeaderString = response.getHeaderString(
+			"Access-Control-Allow-Origin");
+
+		Assert.assertNull(corsHeaderString);
+	}
+
+	private Cookie _getAuthenticatedCookie(String login, String password) {
+		Invocation.Builder invocationBuilder = _getWebTarget(
+			"web", "guest"
+		).request();
+
+		Response response = invocationBuilder.get();
+
+		_pAuth = _parsePAuthToken(response);
 
 		Map<String, NewCookie> cookies = response.getCookies();
 
 		NewCookie newCookie = cookies.get(CookieKeys.JSESSIONID);
 
-		System.out.println("1 - Cookie Value: "+ newCookie.getValue());*/
-
-		WebTarget webTarget = _getWebTarget(
+		invocationBuilder = _getWebTarget(
 			"c", "portal", "login"
-		);
-		Invocation.Builder invocationBuilder = webTarget.request();
+		).request();
+
+		invocationBuilder = invocationBuilder.cookie(newCookie);
 
 		MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
 
 		formData.add("login", login);
 		formData.add("password", password);
+		formData.add("p_auth", _pAuth);
 
-		System.out.println("2 - Post Login: "+ webTarget.getUri());
+		response = invocationBuilder.post(Entity.form(formData));
 
-		Response response = invocationBuilder.post(Entity.form(formData));
+		cookies = response.getCookies();
 
-		System.out.println("2 - Response: "+ response.getLocation());
-
-		Map<String, NewCookie> cookies =  response.getCookies();
-
-		NewCookie newCookie = cookies.get(CookieKeys.JSESSIONID);
-
-		System.out.println("2 - Cookie Value: "+ newCookie.getValue());
-
-		webTarget = _getLocalhostWebTarget();
-
-		invocationBuilder = webTarget.request();
-
-		Response response2 = invocationBuilder.get();
-
-		_pAuth = _parsePAuthToken(response2);
-
-		System.out.println("PAUTH: "+_pAuth);
-
-		System.out.println("END - PortalConfigurationCORSClientTest - _getAuthenticatedCookie");
+		newCookie = cookies.get(CookieKeys.JSESSIONID);
 
 		if (newCookie == null) {
 			return null;
