@@ -89,7 +89,9 @@ public class PortalConfigurationCORSClientTest extends BaseCORSClientTestCase {
 			"test@liferay.com", "test");
 
 		Invocation.Builder invocationBuilder =
-			_getLocalhostWebTarget().request();
+			_getWebTarget(
+				"web", "guest"
+			).request();
 
 		invocationBuilder = invocationBuilder.cookie(authenticatedCookie);
 
