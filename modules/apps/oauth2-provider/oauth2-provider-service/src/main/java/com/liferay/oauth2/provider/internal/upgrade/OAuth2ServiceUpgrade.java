@@ -73,9 +73,10 @@ public class OAuth2ServiceUpgrade implements UpgradeStepRegistrator {
 		registry.register(
 			"3.0.0", "3.1.0",
 			UpgradeStepFactory.addColumns(
-				OAuth2ApplicationTable.class, "rememberDevice BOOLEAN"),
+				OAuth2ApplicationTable.class, "rememberDevice BOOLEAN null"),
 			UpgradeStepFactory.addColumns(
-				OAuth2ApplicationTable.class, "trustedApplication BOOLEAN"),
+				OAuth2ApplicationTable.class,
+				"trustedApplication BOOLEAN null"),
 			UpgradeStepFactory.addColumns(
 				OAuth2AuthorizationTable.class,
 				"rememberDeviceContent VARCHAR(75) null"));
