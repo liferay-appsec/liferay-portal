@@ -250,9 +250,9 @@ public class CryptoHashTest {
 					cryptoHashResponse1.getHash());
 			});
 
-		autoCloseable2.close();
-
 		autoCloseable1.close();
+
+		autoCloseable2.close();
 
 		Assert.assertTrue(
 			_cryptoHashVerifier.verify(
