@@ -326,41 +326,6 @@ public class CryptoHashTest {
 						"JDJhJDEwJHVxZVh5YjF1dUdHZjZ2UWtvalljU08="))));
 	}
 
-	private <S, R, E extends Throwable> R _callService(
-			BundleContext bundleContext, Class<S> serviceClass,
-			String filterString, UnsafeFunction<S, R, E> unsafeFunction)
-		throws E {
-
-		ServiceReference<S>[] serviceReferences = null;
-
-		try {
-			serviceReferences =
-				(ServiceReference<S>[])bundleContext.getAllServiceReferences(
-					serviceClass.getName(), filterString);
-		}
-		catch (InvalidSyntaxException invalidSyntaxException) {
-			ReflectionUtil.throwException(invalidSyntaxException);
-		}
-
-		if (serviceReferences == null) {
-			return unsafeFunction.apply(null);
-		}
-
-		if (ArrayUtil.isEmpty(serviceReferences)) {
-			return unsafeFunction.apply(null);
-		}
-
-		ServiceReference<S> serviceReference = serviceReferences[0];
-
-		try {
-			return unsafeFunction.apply(
-				bundleContext.getService(serviceReference));
-		}
-		finally {
-			bundleContext.ungetService(serviceReference);
-		}
-	}
-
 	protected Configuration createFactoryConfiguration(
 		BundleContext bundleContext, String factoryPid,
 		Dictionary<String, ?> properties) {
@@ -507,6 +472,50 @@ public class CryptoHashTest {
 	protected static BundleContext bundleContext;
 
 	protected List<AutoCloseable> autoCloseables = new ArrayList<>();
+
+	private <S, R, E extends Throwable> R _callService(
+		BundleContext bundleContext, Class<S> serviceClass, String filterString,
+		UnsafeFunction<S, R, E> unsafeFunction) {
+
+		ServiceReference<S>[] serviceReferences = null;
+
+		try {
+			serviceReferences =
+				(ServiceReference<S>[])bundleContext.getAllServiceReferences(
+					serviceClass.getName(), filterString);
+		}
+		catch (InvalidSyntaxException invalidSyntaxException) {
+			ReflectionUtil.throwException(invalidSyntaxException);
+		}
+
+		try {
+			if (serviceReferences == null) {
+				return unsafeFunction.apply(null);
+			}
+
+			if (ArrayUtil.isEmpty(serviceReferences)) {
+				return unsafeFunction.apply(null);
+			}
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+
+		ServiceReference<S> serviceReference = serviceReferences[0];
+
+		try {
+			return unsafeFunction.apply(
+				bundleContext.getService(serviceReference));
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+		finally {
+			bundleContext.ungetService(serviceReference);
+		}
+
+		return null;
+	}
 
 	private boolean _isIncluded(
 		Dictionary<String, ?> properties1, Dictionary<String, ?> properties2) {
