@@ -117,7 +117,7 @@ public class CryptoHashTest {
 
 		byte[] randomBytes = RandomTestUtil.randomBytes();
 
-		CryptoHashResponse cryptoHashResponse = callService(
+		CryptoHashResponse cryptoHashResponse = _callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(crypto.hash.provider.configuration.name=test-message-digest)",
 			cryptoHashGenerator -> {
@@ -160,7 +160,7 @@ public class CryptoHashTest {
 
 		byte[] randomBytes = RandomTestUtil.randomBytes();
 
-		CryptoHashResponse cryptoHashResponse1 = callService(
+		CryptoHashResponse cryptoHashResponse1 = _callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(crypto.hash.provider.configuration.name=test-message-digest-1)",
 			cryptoHashGenerator -> {
@@ -169,7 +169,7 @@ public class CryptoHashTest {
 				return cryptoHashGenerator.generate(randomBytes);
 			});
 
-		CryptoHashResponse cryptoHashResponse2 = callService(
+		CryptoHashResponse cryptoHashResponse2 = _callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(&(bcrypt.rounds=5)(crypto.hash.provider.factory.name=BCrypt))",
 			cryptoHashGenerator -> {
@@ -189,7 +189,7 @@ public class CryptoHashTest {
 
 	@Test
 	public void testCryptoHashGeneratorWithNoConfiguration() throws Exception {
-		callService(
+		_callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(crypto.hash.provider.configuration.name=test-message-digest)",
 			object -> {
@@ -231,7 +231,7 @@ public class CryptoHashTest {
 
 		byte[] randomBytes = RandomTestUtil.randomBytes();
 
-		CryptoHashResponse cryptoHashResponse1 = callService(
+		CryptoHashResponse cryptoHashResponse1 = _callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(crypto.hash.provider.configuration.name=test-message-digest-1)",
 			cryptoHashGenerator -> {
@@ -240,7 +240,7 @@ public class CryptoHashTest {
 				return cryptoHashGenerator.generate(randomBytes);
 			});
 
-		CryptoHashResponse cryptoHashResponse2 = callService(
+		CryptoHashResponse cryptoHashResponse2 = _callService(
 			bundleContext, CryptoHashGenerator.class,
 			"(crypto.hash.provider.configuration.name=test-message-digest-2)",
 			cryptoHashGenerator -> {
@@ -326,7 +326,7 @@ public class CryptoHashTest {
 						"JDJhJDEwJHVxZVh5YjF1dUdHZjZ2UWtvalljU08="))));
 	}
 
-	protected <S, R, E extends Throwable> R callService(
+	private <S, R, E extends Throwable> R _callService(
 			BundleContext bundleContext, Class<S> serviceClass,
 			String filterString, UnsafeFunction<S, R, E> unsafeFunction)
 		throws E {
