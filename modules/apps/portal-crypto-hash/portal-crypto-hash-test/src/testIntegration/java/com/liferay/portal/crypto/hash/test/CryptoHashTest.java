@@ -104,7 +104,7 @@ public class CryptoHashTest {
 
 	@Test
 	public void testCryptoHashGeneratorWithConfiguration() throws Exception {
-		createFactoryConfiguration(
+		_createFactoryConfiguration(
 			"com.liferay.portal.crypto.hash.provider.message.digest.internal." +
 				"configuration.MessageDigestCryptoHashProviderConfiguration",
 			HashMapDictionaryBuilder.<String, Object>put(
@@ -136,7 +136,7 @@ public class CryptoHashTest {
 	public void testCryptoHashGeneratorWithMultipleConfigurations()
 		throws Exception {
 
-		createFactoryConfiguration(
+		_createFactoryConfiguration(
 			"com.liferay.portal.crypto.hash.provider.message.digest.internal." +
 				"configuration.MessageDigestCryptoHashProviderConfiguration",
 			HashMapDictionaryBuilder.<String, Object>put(
@@ -148,7 +148,7 @@ public class CryptoHashTest {
 				"message.digest.salt.size", "32"
 			).build());
 
-		createFactoryConfiguration(
+		_createFactoryConfiguration(
 			"com.liferay.portal.crypto.hash.provider.bcrypt.internal." +
 				"configuration.BCryptCryptoHashProviderConfiguration",
 			HashMapDictionaryBuilder.<String, Object>put(
@@ -201,7 +201,7 @@ public class CryptoHashTest {
 
 	@Test
 	public void testCryptoHashVerifierWithNoConfigurations() throws Exception {
-		createFactoryConfiguration(
+		_createFactoryConfiguration(
 			"com.liferay.portal.crypto.hash.provider.message.digest.internal." +
 				"configuration.MessageDigestCryptoHashProviderConfiguration",
 			HashMapDictionaryBuilder.<String, Object>put(
@@ -216,7 +216,7 @@ public class CryptoHashTest {
 		AutoCloseable autoCloseable1 = autoCloseables.remove(
 			autoCloseables.size() - 1);
 
-		createFactoryConfiguration(
+		_createFactoryConfiguration(
 			"com.liferay.portal.crypto.hash.provider.bcrypt.internal." +
 				"configuration.BCryptCryptoHashProviderConfiguration",
 			HashMapDictionaryBuilder.<String, Object>put(
@@ -326,9 +326,56 @@ public class CryptoHashTest {
 						"JDJhJDEwJHVxZVh5YjF1dUdHZjZ2UWtvalljU08="))));
 	}
 
-	protected Configuration createFactoryConfiguration(
-		BundleContext bundleContext, String factoryPid,
-		Dictionary<String, ?> properties) {
+	protected static BundleContext bundleContext;
+
+	protected List<AutoCloseable> autoCloseables = new ArrayList<>();
+
+	private <S, R, E extends Throwable> R _callService(
+		BundleContext bundleContext, Class<S> serviceClass, String filterString,
+		UnsafeFunction<S, R, E> unsafeFunction) {
+
+		ServiceReference<S>[] serviceReferences = null;
+
+		try {
+			serviceReferences =
+				(ServiceReference<S>[])bundleContext.getAllServiceReferences(
+					serviceClass.getName(), filterString);
+		}
+		catch (InvalidSyntaxException invalidSyntaxException) {
+			ReflectionUtil.throwException(invalidSyntaxException);
+		}
+
+		try {
+			if (serviceReferences == null) {
+				return unsafeFunction.apply(null);
+			}
+
+			if (ArrayUtil.isEmpty(serviceReferences)) {
+				return unsafeFunction.apply(null);
+			}
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+
+		ServiceReference<S> serviceReference = serviceReferences[0];
+
+		try {
+			return unsafeFunction.apply(
+				bundleContext.getService(serviceReference));
+		}
+		catch (Throwable throwable) {
+			ReflectionUtil.throwException(throwable);
+		}
+		finally {
+			bundleContext.ungetService(serviceReference);
+		}
+
+		return null;
+	}
+
+	private Configuration _createFactoryConfiguration(
+		String factoryPid, Dictionary<String, ?> properties) {
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -407,114 +454,6 @@ public class CryptoHashTest {
 		finally {
 			serviceRegistration.unregister();
 		}
-	}
-
-	protected Configuration createFactoryConfiguration(
-		String factoryPid, Dictionary<String, ?> properties) {
-
-		Configuration configuration = createFactoryConfiguration(
-			bundleContext, factoryPid, properties);
-
-		String configurationPid = configuration.getPid();
-
-		autoCloseables.add(
-			() -> {
-				CountDownLatch countDownLatch = new CountDownLatch(1);
-
-				Dictionary<String, String> registrationProperties =
-					HashMapDictionaryBuilder.put(
-						Constants.SERVICE_PID, factoryPid
-					).build();
-
-				ServiceRegistration<ManagedServiceFactory> serviceRegistration =
-					bundleContext.registerService(
-						ManagedServiceFactory.class,
-						new ManagedServiceFactory() {
-
-							@Override
-							public void deleted(String pid) {
-								if (configurationPid.equals(pid)) {
-									countDownLatch.countDown();
-								}
-							}
-
-							@Override
-							public String getName() {
-								return "Test managed service factory for PID " +
-									factoryPid;
-							}
-
-							@Override
-							public void updated(
-								String pid,
-								Dictionary<String, ?> updatedProperties) {
-							}
-
-						},
-						registrationProperties);
-
-				try {
-					configuration.delete();
-
-					countDownLatch.await(10, TimeUnit.SECONDS);
-				}
-				catch (Exception exception) {
-					_log.error(exception, exception);
-				}
-				finally {
-					serviceRegistration.unregister();
-				}
-			});
-
-		return configuration;
-	}
-
-	protected static BundleContext bundleContext;
-
-	protected List<AutoCloseable> autoCloseables = new ArrayList<>();
-
-	private <S, R, E extends Throwable> R _callService(
-		BundleContext bundleContext, Class<S> serviceClass, String filterString,
-		UnsafeFunction<S, R, E> unsafeFunction) {
-
-		ServiceReference<S>[] serviceReferences = null;
-
-		try {
-			serviceReferences =
-				(ServiceReference<S>[])bundleContext.getAllServiceReferences(
-					serviceClass.getName(), filterString);
-		}
-		catch (InvalidSyntaxException invalidSyntaxException) {
-			ReflectionUtil.throwException(invalidSyntaxException);
-		}
-
-		try {
-			if (serviceReferences == null) {
-				return unsafeFunction.apply(null);
-			}
-
-			if (ArrayUtil.isEmpty(serviceReferences)) {
-				return unsafeFunction.apply(null);
-			}
-		}
-		catch (Throwable throwable) {
-			ReflectionUtil.throwException(throwable);
-		}
-
-		ServiceReference<S> serviceReference = serviceReferences[0];
-
-		try {
-			return unsafeFunction.apply(
-				bundleContext.getService(serviceReference));
-		}
-		catch (Throwable throwable) {
-			ReflectionUtil.throwException(throwable);
-		}
-		finally {
-			bundleContext.ungetService(serviceReference);
-		}
-
-		return null;
 	}
 
 	private boolean _isIncluded(
