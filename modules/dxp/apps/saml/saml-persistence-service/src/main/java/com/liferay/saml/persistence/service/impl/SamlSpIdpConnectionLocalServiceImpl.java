@@ -58,8 +58,6 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		Date now = new Date();
-
 		if (Validator.isNull(samlIdpEntityId)) {
 			throw new SamlSpIdpConnectionSamlIdpEntityIdException(
 				"SAML IDP entity ID is null");
@@ -81,8 +79,6 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			samlSpIdpConnectionPersistence.create(samlSpIdpConnectionId);
 
 		samlSpIdpConnection.setCompanyId(serviceContext.getCompanyId());
-		samlSpIdpConnection.setCreateDate(now);
-		samlSpIdpConnection.setModifiedDate(now);
 		samlSpIdpConnection.setAssertionSignatureRequired(
 			assertionSignatureRequired);
 		samlSpIdpConnection.setClockSkew(clockSkew);
@@ -91,7 +87,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 		samlSpIdpConnection.setForceAuthn(forceAuthn);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
-		samlSpIdpConnection.setMetadataUpdatedDate(now);
+		samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 		samlSpIdpConnection.setUnknownUsersAreStrangers(
 			unknownUsersAreStrangers);
 
@@ -226,8 +222,6 @@ public class SamlSpIdpConnectionLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		Date now = new Date();
-
 		if (Validator.isNull(samlIdpEntityId)) {
 			throw new SamlSpIdpConnectionSamlIdpEntityIdException(
 				"SAML IDP entity ID is null");
@@ -249,8 +243,6 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		}
 
 		samlSpIdpConnection.setCompanyId(serviceContext.getCompanyId());
-		samlSpIdpConnection.setCreateDate(now);
-		samlSpIdpConnection.setModifiedDate(now);
 		samlSpIdpConnection.setAssertionSignatureRequired(
 			assertionSignatureRequired);
 		samlSpIdpConnection.setClockSkew(clockSkew);
@@ -258,7 +250,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 		samlSpIdpConnection.setForceAuthn(forceAuthn);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
-		samlSpIdpConnection.setMetadataUpdatedDate(now);
+		samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 		samlSpIdpConnection.setUnknownUsersAreStrangers(
 			unknownUsersAreStrangers);
 
