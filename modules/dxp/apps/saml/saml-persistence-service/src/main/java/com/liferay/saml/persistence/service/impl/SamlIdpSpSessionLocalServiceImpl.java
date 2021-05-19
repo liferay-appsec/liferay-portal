@@ -63,18 +63,14 @@ public class SamlIdpSpSessionLocalServiceImpl
 					" for ", samlSpEntityId));
 		}
 
-		long companyId = serviceContext.getCompanyId();
-
 		SamlPeerBinding samlPeerBinding =
 			samlPeerBindingPersistence.fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
-				companyId, false, nameIdFormat, null, nameIdValue,
+				user.getCompanyId(), false, nameIdFormat, null, nameIdValue,
 				samlSpEntityId, null);
-
-		long userId = user.getUserId();
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				userId, nameIdFormat, null, null, null, nameIdValue,
+				user.getUserId(), nameIdFormat, null, null, null, nameIdValue,
 				samlSpEntityId);
 		}
 
@@ -84,8 +80,8 @@ public class SamlIdpSpSessionLocalServiceImpl
 		samlIdpSpSession = samlIdpSpSessionPersistence.create(
 			samlIdpSpSessionId);
 
-		samlIdpSpSession.setCompanyId(companyId);
-		samlIdpSpSession.setUserId(userId);
+		samlIdpSpSession.setCompanyId(user.getCompanyId());
+		samlIdpSpSession.setUserId(user.getUserId());
 		samlIdpSpSession.setUserName(user.getFullName());
 		samlIdpSpSession.setSamlIdpSsoSessionId(samlIdpSsoSessionId);
 		samlIdpSpSession.setSamlPeerBindingId(
