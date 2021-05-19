@@ -54,9 +54,6 @@ public class SamlSpSessionLocalServiceImpl
 
 		User user = userLocalService.getUserById(serviceContext.getUserId());
 
-		long samlSpSessionId = counterLocalService.increment(
-			SamlSpSession.class.getName());
-
 		SamlPeerBinding samlPeerBinding =
 			samlPeerBindingPersistence.fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 				user.getCompanyId(), false, nameIdFormat, nameIdNameQualifier,
@@ -77,6 +74,9 @@ public class SamlSpSessionLocalServiceImpl
 				user.getUserId(), nameIdFormat, nameIdNameQualifier,
 				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
 		}
+
+		long samlSpSessionId = counterLocalService.increment(
+			SamlSpSession.class.getName());
 
 		SamlSpSession samlSpSession = samlSpSessionPersistence.create(
 			samlSpSessionId);
