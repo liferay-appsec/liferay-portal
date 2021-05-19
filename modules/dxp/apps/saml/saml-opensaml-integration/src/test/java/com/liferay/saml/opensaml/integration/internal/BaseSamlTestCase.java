@@ -634,9 +634,7 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 		samlBindings.add(new HttpSoap11Binding(parserPool, httpClient));
 	}
 
-	protected void setupSamlPeerBindingsLocalService()
-		throws PortalException {
-
+	protected void setupSamlPeerBindingsLocalService() throws PortalException {
 		samlPeerBindingLocalService = getMockPortletService(
 			SamlPeerBindingLocalServiceUtil.class,
 			SamlPeerBindingLocalService.class);

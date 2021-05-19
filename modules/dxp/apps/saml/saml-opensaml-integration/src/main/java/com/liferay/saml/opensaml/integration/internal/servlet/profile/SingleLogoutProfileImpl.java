@@ -844,7 +844,7 @@ public class SingleLogoutProfileImpl
 
 		if (sessionIndexes.isEmpty()) {
 			List<SamlSpSession> samlSpSessions = new ArrayList<>();
-				//samlSpSessionLocalService.getSamlSpSessions(nameID.getValue());
+			//samlSpSessionLocalService.getSamlSpSessions(nameID.getValue());
 
 			if (samlSpSessions.isEmpty()) {
 				statusCodeURI = StatusCode.UNKNOWN_PRINCIPAL;

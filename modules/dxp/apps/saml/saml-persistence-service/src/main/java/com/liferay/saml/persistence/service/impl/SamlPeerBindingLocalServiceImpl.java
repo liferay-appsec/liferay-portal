@@ -20,8 +20,6 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.saml.persistence.model.SamlPeerBinding;
 import com.liferay.saml.persistence.service.base.SamlPeerBindingLocalServiceBaseImpl;
 
-import java.util.Date;
-
 import org.osgi.service.component.annotations.Component;
 
 /**
