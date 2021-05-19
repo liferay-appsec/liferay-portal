@@ -58,8 +58,6 @@ public class UpdateServiceProviderConnectionMVCActionCommand
 		long samlIdpSpConnectionId = ParamUtil.getLong(
 			uploadPortletRequest, "samlIdpSpConnectionId");
 
-		String samlSpEntityId = ParamUtil.getString(
-			uploadPortletRequest, "samlSpEntityId");
 		int assertionLifetime = ParamUtil.getInteger(
 			uploadPortletRequest, "assertionLifetime");
 		String attributeNames = ParamUtil.getString(
@@ -80,6 +78,8 @@ public class UpdateServiceProviderConnectionMVCActionCommand
 			uploadPortletRequest, "nameIdAttribute");
 		String nameIdFormat = ParamUtil.getString(
 			uploadPortletRequest, "nameIdFormat");
+		String samlSpEntityId = ParamUtil.getString(
+			uploadPortletRequest, "samlSpEntityId");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			SamlIdpSpConnection.class.getName(), uploadPortletRequest);
