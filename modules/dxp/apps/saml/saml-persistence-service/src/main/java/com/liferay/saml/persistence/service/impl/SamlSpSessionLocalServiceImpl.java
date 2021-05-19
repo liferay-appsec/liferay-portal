@@ -176,17 +176,6 @@ public class SamlSpSessionLocalServiceImpl
 		);
 	}
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getSamlSpSessions(long, String, String, String, String,
-	 *             String)}
-	 */
-	@Deprecated
-	@Override
-	public List<SamlSpSession> getSamlSpSessions(String nameIdValue) {
-		throw new UnsupportedOperationException();
-	}
-
 	@Override
 	public SamlSpSession updateSamlSpSession(
 			long samlSpSessionId, String jSessionId)
