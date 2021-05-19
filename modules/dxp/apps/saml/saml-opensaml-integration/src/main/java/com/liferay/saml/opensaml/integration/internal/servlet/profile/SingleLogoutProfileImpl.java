@@ -56,6 +56,7 @@ import com.liferay.saml.util.SamlHttpRequestUtil;
 
 import java.io.Writer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -842,8 +843,8 @@ public class SingleLogoutProfileImpl
 		String statusCodeURI = StatusCode.SUCCESS;
 
 		if (sessionIndexes.isEmpty()) {
-			List<SamlSpSession> samlSpSessions =
-				samlSpSessionLocalService.getSamlSpSessions(nameID.getValue());
+			List<SamlSpSession> samlSpSessions = new ArrayList<>();
+				//samlSpSessionLocalService.getSamlSpSessions(nameID.getValue());
 
 			if (samlSpSessions.isEmpty()) {
 				statusCodeURI = StatusCode.UNKNOWN_PRINCIPAL;
