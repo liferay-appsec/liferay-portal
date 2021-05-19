@@ -74,7 +74,7 @@ public class SamlSpSessionLocalServiceImpl
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				user.getCompanyId(), user.getUserId(), nameIdFormat, nameIdNameQualifier,
+				user.getUserId(), nameIdFormat, nameIdNameQualifier,
 				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
 		}
 
@@ -208,7 +208,7 @@ public class SamlSpSessionLocalServiceImpl
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				user.getCompanyId(), user.getUserId(), nameIdFormat, nameIdNameQualifier,
+				user.getUserId(), nameIdFormat, nameIdNameQualifier,
 				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
 		}
 

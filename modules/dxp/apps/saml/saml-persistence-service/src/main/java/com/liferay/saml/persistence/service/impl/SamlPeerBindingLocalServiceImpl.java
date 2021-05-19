@@ -35,7 +35,7 @@ public class SamlPeerBindingLocalServiceImpl
 	extends SamlPeerBindingLocalServiceBaseImpl {
 
 	public SamlPeerBinding addSamlPeerBinding(
-			long companyId, long userId, String samlNameIdFormat,
+			long userId, String samlNameIdFormat,
 			String samlNameIdNameQualifier, String samlNameIdSpNameQualifier,
 			String samlNameIdSpProvidedId, String samlNameIdValue,
 			String samlPeerEntityId)
@@ -46,7 +46,7 @@ public class SamlPeerBindingLocalServiceImpl
 		SamlPeerBinding samlPeerBinding = samlPeerBindingPersistence.create(
 			counterLocalService.increment(SamlPeerBinding.class.getName()));
 
-		samlPeerBinding.setCompanyId(companyId);
+		samlPeerBinding.setCompanyId(user.getCompanyId());
 		samlPeerBinding.setUserId(user.getUserId());
 		samlPeerBinding.setUserName(user.getFullName());
 		samlPeerBinding.setSamlNameIdFormat(samlNameIdFormat);

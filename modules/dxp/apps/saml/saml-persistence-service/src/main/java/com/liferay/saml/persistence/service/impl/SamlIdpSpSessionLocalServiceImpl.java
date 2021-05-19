@@ -75,7 +75,7 @@ public class SamlIdpSpSessionLocalServiceImpl
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				companyId, userId, nameIdFormat, null, null, null, nameIdValue,
+				userId, nameIdFormat, null, null, null, nameIdValue,
 				samlSpEntityId);
 		}
 
