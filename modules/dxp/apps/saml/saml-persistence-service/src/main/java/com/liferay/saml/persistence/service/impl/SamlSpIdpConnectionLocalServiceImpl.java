@@ -279,7 +279,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		}
 
 		if (Validator.isNotNull(metadataXml)) {
-			samlSpIdpConnection.setMetadataUpdatedDate(now);
+			samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 			samlSpIdpConnection.setMetadataXml(metadataXml);
 		}
 
