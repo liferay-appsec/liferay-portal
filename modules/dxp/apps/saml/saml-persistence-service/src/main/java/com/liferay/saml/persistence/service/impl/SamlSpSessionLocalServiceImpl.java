@@ -63,10 +63,8 @@ public class SamlSpSessionLocalServiceImpl
 				user.getCompanyId(), false, nameIdFormat, nameIdNameQualifier,
 				nameIdValue, samlIdpEntityId, null);
 
-		long userId = user.getUserId();
-
 		if ((samlPeerBinding != null) &&
-			(userId != samlPeerBinding.getUserId())) {
+			(user.getUserId() != samlPeerBinding.getUserId())) {
 
 			samlPeerBinding.setDeleted(true);
 
@@ -76,7 +74,7 @@ public class SamlSpSessionLocalServiceImpl
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				user.getCompanyId(), userId, nameIdFormat, nameIdNameQualifier,
+				user.getCompanyId(), user.getUserId(), nameIdFormat, nameIdNameQualifier,
 				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
 		}
 
@@ -84,7 +82,7 @@ public class SamlSpSessionLocalServiceImpl
 			samlSpSessionId);
 
 		samlSpSession.setCompanyId(user.getCompanyId());
-		samlSpSession.setUserId(userId);
+		samlSpSession.setUserId(user.getUserId());
 		samlSpSession.setUserName(user.getFullName());
 		samlSpSession.setCreateDate(now);
 		samlSpSession.setModifiedDate(now);
@@ -215,28 +213,24 @@ public class SamlSpSessionLocalServiceImpl
 			String sessionIndex, ServiceContext serviceContext)
 		throws PortalException {
 
-		long companyId = serviceContext.getCompanyId();
+		User user = userLocalService.getUserById(serviceContext.getUserId());
 
 		SamlPeerBinding samlPeerBinding =
 			samlPeerBindingPersistence.fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
-				companyId, false, nameIdFormat, nameIdNameQualifier,
-				nameIdValue, samlIdpEntityId, null);
-
-		User user = userLocalService.getUserById(serviceContext.getUserId());
-
-		long userId = user.getUserId();
+				user.getCompanyId(), false, nameIdFormat,
+				nameIdNameQualifier, nameIdValue, samlIdpEntityId, null);
 
 		if (samlPeerBinding == null) {
 			samlPeerBinding = _samlPeerBindingLocalService.addSamlPeerBinding(
-				companyId, userId, nameIdFormat, nameIdNameQualifier,
+				user.getCompanyId(), user.getUserId(), nameIdFormat, nameIdNameQualifier,
 				nameIdSPNameQualifier, null, nameIdValue, samlIdpEntityId);
 		}
 
 		SamlSpSession samlSpSession = samlSpSessionPersistence.findByPrimaryKey(
 			samlSpSessionId);
 
-		samlSpSession.setCompanyId(companyId);
-		samlSpSession.setUserId(userId);
+		samlSpSession.setCompanyId(user.getCompanyId());
+		samlSpSession.setUserId(user.getUserId());
 		samlSpSession.setUserName(user.getFullName());
 		samlSpSession.setModifiedDate(new Date());
 		samlSpSession.setSamlPeerBindingId(
