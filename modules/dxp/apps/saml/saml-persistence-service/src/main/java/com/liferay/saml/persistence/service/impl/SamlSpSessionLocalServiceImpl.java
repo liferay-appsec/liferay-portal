@@ -53,7 +53,6 @@ public class SamlSpSessionLocalServiceImpl
 		throws PortalException {
 
 		User user = userLocalService.getUserById(serviceContext.getUserId());
-		Date now = new Date();
 
 		long samlSpSessionId = counterLocalService.increment(
 			SamlSpSession.class.getName());
@@ -84,8 +83,6 @@ public class SamlSpSessionLocalServiceImpl
 		samlSpSession.setCompanyId(user.getCompanyId());
 		samlSpSession.setUserId(user.getUserId());
 		samlSpSession.setUserName(user.getFullName());
-		samlSpSession.setCreateDate(now);
-		samlSpSession.setModifiedDate(now);
 		samlSpSession.setSamlPeerBindingId(
 			samlPeerBinding.getSamlPeerBindingId());
 		samlSpSession.setAssertionXml(assertionXml);
