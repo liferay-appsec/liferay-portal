@@ -58,8 +58,6 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 		long samlSpIdpConnectionId = ParamUtil.getLong(
 			uploadPortletRequest, "samlSpIdpConnectionId");
 
-		String samlIdpEntityId = ParamUtil.getString(
-			uploadPortletRequest, "samlIdpEntityId");
 		boolean assertionSignatureRequired = ParamUtil.getBoolean(
 			uploadPortletRequest, "assertionSignatureRequired");
 		long clockSkew = ParamUtil.getLong(uploadPortletRequest, "clockSkew");
@@ -77,6 +75,8 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 		String name = ParamUtil.getString(uploadPortletRequest, "name");
 		String nameIdFormat = ParamUtil.getString(
 			uploadPortletRequest, "nameIdFormat");
+		String samlIdpEntityId = ParamUtil.getString(
+			uploadPortletRequest, "samlIdpEntityId");
 		boolean signAuthnRequest = ParamUtil.getBoolean(
 			uploadPortletRequest, "signAuthnRequest");
 		String userAttributeMappings = ParamUtil.getString(
@@ -87,19 +87,19 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 
 		if (samlSpIdpConnectionId <= 0) {
 			_samlSpIdpConnectionLocalService.addSamlSpIdpConnection(
-				samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
+				assertionSignatureRequired, clockSkew, enabled,
 				forceAuthn, ldapImportEnabled, metadataUrl,
-				metadataXmlInputStream, name, nameIdFormat, signAuthnRequest,
-				unknownUsersAreStrangers, userAttributeMappings,
-				serviceContext);
+				metadataXmlInputStream, name, nameIdFormat,
+				samlIdpEntityId, signAuthnRequest, unknownUsersAreStrangers,
+				userAttributeMappings, "dynamic", serviceContext);
 		}
 		else {
 			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
-				samlSpIdpConnectionId, samlIdpEntityId,
-				assertionSignatureRequired, clockSkew, enabled, forceAuthn,
-				ldapImportEnabled, metadataUrl, metadataXmlInputStream, name,
-				nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-				userAttributeMappings, serviceContext);
+				samlSpIdpConnectionId, assertionSignatureRequired, clockSkew,
+				enabled, forceAuthn, ldapImportEnabled, metadataUrl,
+				metadataXmlInputStream, name, nameIdFormat, samlIdpEntityId,
+				signAuthnRequest, unknownUsersAreStrangers,
+				userAttributeMappings, "dynamic", serviceContext);
 		}
 	}
 
