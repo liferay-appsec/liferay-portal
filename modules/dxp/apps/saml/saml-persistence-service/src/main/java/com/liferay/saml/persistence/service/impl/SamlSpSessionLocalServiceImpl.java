@@ -68,6 +68,7 @@ public class SamlSpSessionLocalServiceImpl
 			samlPeerBinding.setDeleted(true);
 
 			samlPeerBindingPersistence.update(samlPeerBinding);
+
 			samlPeerBinding = null;
 		}
 
