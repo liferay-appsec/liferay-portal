@@ -25,17 +25,7 @@ import java.util.Date;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * The implementation of the saml peer binding local service.
- *
- * <p>
- * All custom service methods should be put in this class. Whenever methods are added, rerun ServiceBuilder to copy their definitions into the <code>com.liferay.saml.persistence.service.SamlPeerBindingLocalService</code> interface.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
- *
  * @author Mika Koivisto
- * @see SamlPeerBindingLocalServiceBaseImpl
  */
 @Component(
 	property = "model.class.name=com.liferay.saml.persistence.model.SamlPeerBinding",
@@ -44,11 +34,6 @@ import org.osgi.service.component.annotations.Component;
 public class SamlPeerBindingLocalServiceImpl
 	extends SamlPeerBindingLocalServiceBaseImpl {
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never reference this class directly. Use <code>com.liferay.saml.persistence.service.SamlPeerBindingLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>com.liferay.saml.persistence.service.SamlPeerBindingLocalServiceUtil</code>.
-	 */
 	public SamlPeerBinding addSamlPeerBinding(
 			long companyId, long userId, String samlNameIdFormat,
 			String samlNameIdNameQualifier, String samlNameIdSpNameQualifier,
@@ -57,13 +42,11 @@ public class SamlPeerBindingLocalServiceImpl
 		throws PortalException {
 
 		User user = userLocalService.getUserById(userId);
-		Date now = new Date();
 
 		SamlPeerBinding samlPeerBinding = samlPeerBindingPersistence.create(
 			counterLocalService.increment(SamlPeerBinding.class.getName()));
 
 		samlPeerBinding.setCompanyId(companyId);
-		samlPeerBinding.setCreateDate(now);
 		samlPeerBinding.setUserId(user.getUserId());
 		samlPeerBinding.setUserName(user.getFullName());
 		samlPeerBinding.setSamlNameIdFormat(samlNameIdFormat);
