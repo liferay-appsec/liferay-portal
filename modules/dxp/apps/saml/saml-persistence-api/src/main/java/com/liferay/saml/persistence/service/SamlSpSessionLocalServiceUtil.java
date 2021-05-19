@@ -333,16 +333,6 @@ public class SamlSpSessionLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #getSamlSpSessions(long, String, String, String, String,
-	 String)}
-	 */
-	@Deprecated
-	public static List<SamlSpSession> getSamlSpSessions(String nameIdValue) {
-		return getService().getSamlSpSessions(nameIdValue);
-	}
-
-	/**
 	 * Returns the number of saml sp sessions.
 	 *
 	 * @return the number of saml sp sessions

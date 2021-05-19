@@ -371,19 +371,6 @@ public class SamlSpSessionLocalServiceWrapper
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #getSamlSpSessions(long, String, String, String, String,
-	 String)}
-	 */
-	@Deprecated
-	@Override
-	public java.util.List<com.liferay.saml.persistence.model.SamlSpSession>
-		getSamlSpSessions(String nameIdValue) {
-
-		return _samlSpSessionLocalService.getSamlSpSessions(nameIdValue);
-	}
-
-	/**
 	 * Returns the number of saml sp sessions.
 	 *
 	 * @return the number of saml sp sessions

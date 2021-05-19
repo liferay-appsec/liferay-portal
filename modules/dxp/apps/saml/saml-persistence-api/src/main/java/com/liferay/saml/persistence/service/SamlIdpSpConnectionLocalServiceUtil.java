@@ -78,29 +78,6 @@ public class SamlIdpSpConnectionLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlIdpSpConnection(int, String, boolean, boolean,
-	 boolean, boolean, String, InputStream, String, String, String,
-	 String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlIdpSpConnection addSamlIdpSpConnection(
-			String samlSpEntityId, int assertionLifetime, String attributeNames,
-			boolean attributesEnabled, boolean attributesNamespaceEnabled,
-			boolean enabled, boolean encryptionForced, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().addSamlIdpSpConnection(
-			samlSpEntityId, assertionLifetime, attributeNames,
-			attributesEnabled, attributesNamespaceEnabled, enabled,
-			encryptionForced, metadataUrl, metadataXmlInputStream, name,
-			nameIdAttribute, nameIdFormat, serviceContext);
-	}
-
-	/**
 	 * @throws PortalException
 	 */
 	public static PersistedModel createPersistedModel(
@@ -376,30 +353,6 @@ public class SamlIdpSpConnectionLocalServiceUtil {
 			attributesEnabled, attributesNamespaceEnabled, enabled,
 			encryptionForced, metadataUrl, metadataXmlInputStream, name,
 			nameIdAttribute, nameIdFormat, samlSpEntityId, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by { @link
-	 {@link #updateSamlIdpSpConnection(long, int, String, boolean,
-	 boolean, boolean, boolean, String, InputStream, String,
-	 String, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlIdpSpConnection updateSamlIdpSpConnection(
-			long samlIdpSpConnectionId, String samlSpEntityId,
-			int assertionLifetime, String attributeNames,
-			boolean attributesEnabled, boolean attributesNamespaceEnabled,
-			boolean enabled, boolean encryptionForced, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateSamlIdpSpConnection(
-			samlIdpSpConnectionId, samlSpEntityId, assertionLifetime,
-			attributeNames, attributesEnabled, attributesNamespaceEnabled,
-			enabled, encryptionForced, metadataUrl, metadataXmlInputStream,
-			name, nameIdAttribute, nameIdFormat, serviceContext);
 	}
 
 	/**

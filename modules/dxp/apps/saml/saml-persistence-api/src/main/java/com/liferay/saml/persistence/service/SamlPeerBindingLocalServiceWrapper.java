@@ -33,22 +33,17 @@ public class SamlPeerBindingLocalServiceWrapper
 		_samlPeerBindingLocalService = samlPeerBindingLocalService;
 	}
 
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never reference this class directly. Use <code>SamlPeerBindingLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>SamlPeerBindingLocalServiceUtil</code>.
-	 */
 	@Override
 	public com.liferay.saml.persistence.model.SamlPeerBinding
 			addSamlPeerBinding(
-				long companyId, long userId, String samlNameIdFormat,
+				long userId, String samlNameIdFormat,
 				String samlNameIdNameQualifier,
 				String samlNameIdSpNameQualifier, String samlNameIdSpProvidedId,
 				String samlNameIdValue, String samlPeerEntityId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _samlPeerBindingLocalService.addSamlPeerBinding(
-			companyId, userId, samlNameIdFormat, samlNameIdNameQualifier,
+			userId, samlNameIdFormat, samlNameIdNameQualifier,
 			samlNameIdSpNameQualifier, samlNameIdSpProvidedId, samlNameIdValue,
 			samlPeerEntityId);
 	}

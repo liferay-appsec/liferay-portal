@@ -80,54 +80,6 @@ public class SamlSpIdpConnectionLocalServiceUtil {
 	}
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlSpIdpConnection(boolean, long, boolean, boolean,
-	 boolean, String, InputStream, String, String, String,
-	 boolean, boolean, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			boolean unknownUsersAreStrangers, String userAttributeMappings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().addSamlSpIdpConnection(
-			samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
-			forceAuthn, ldapImportEnabled, metadataUrl, metadataXmlInputStream,
-			name, nameIdFormat, signAuthnRequest, unknownUsersAreStrangers,
-			userAttributeMappings, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlSpIdpConnection(String, boolean, long, boolean,
-	 boolean, boolean, String, InputStream, String, String,
-	 boolean, boolean, String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().addSamlSpIdpConnection(
-			samlIdpEntityId, assertionSignatureRequired, clockSkew, enabled,
-			forceAuthn, ldapImportEnabled, metadataUrl, metadataXmlInputStream,
-			name, nameIdFormat, signAuthnRequest, userAttributeMappings,
-			serviceContext);
-	}
-
-	/**
 	 * @throws PortalException
 	 */
 	public static PersistedModel createPersistedModel(
@@ -405,54 +357,6 @@ public class SamlSpIdpConnectionLocalServiceUtil {
 			metadataXmlInputStream, name, nameIdFormat, samlIdpEntityId,
 			signAuthnRequest, unknownUsersAreStrangers, userAttributeMappings,
 			userIdentifierExpression, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #updateSamlSpIdpConnection(long, boolean, long, boolean,
-	 boolean, boolean, String, InputStream, String, String,
-	 String, boolean, boolean, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			boolean unknownUsersAreStrangers, String userAttributeMappings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateSamlSpIdpConnection(
-			samlSpIdpConnectionId, samlIdpEntityId, assertionSignatureRequired,
-			clockSkew, enabled, forceAuthn, ldapImportEnabled, metadataUrl,
-			metadataXmlInputStream, name, nameIdFormat, signAuthnRequest,
-			unknownUsersAreStrangers, userAttributeMappings, serviceContext);
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #updateSamlSpIdpConnection(long, String, boolean, long,
-	 boolean, boolean, boolean, String, InputStream, String,
-	 String, boolean, boolean, String, ServiceContext)}
-	 */
-	@Deprecated
-	public static SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateSamlSpIdpConnection(
-			samlSpIdpConnectionId, samlIdpEntityId, assertionSignatureRequired,
-			clockSkew, enabled, forceAuthn, ldapImportEnabled, metadataUrl,
-			metadataXmlInputStream, name, nameIdFormat, signAuthnRequest,
-			userAttributeMappings, serviceContext);
 	}
 
 	/**

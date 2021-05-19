@@ -87,22 +87,6 @@ public interface SamlIdpSpConnectionLocalService
 		SamlIdpSpConnection samlIdpSpConnection);
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlIdpSpConnection(int, String, boolean, boolean,
-	 boolean, boolean, String, InputStream, String, String, String,
-	 String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlIdpSpConnection addSamlIdpSpConnection(
-			String samlSpEntityId, int assertionLifetime, String attributeNames,
-			boolean attributesEnabled, boolean attributesNamespaceEnabled,
-			boolean enabled, boolean encryptionForced, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
-			ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
 	 * @throws PortalException
 	 */
 	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
@@ -314,23 +298,6 @@ public interface SamlIdpSpConnectionLocalService
 			boolean encryptionForced, String metadataUrl,
 			InputStream metadataXmlInputStream, String name,
 			String nameIdAttribute, String nameIdFormat, String samlSpEntityId,
-			ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by { @link
-	 {@link #updateSamlIdpSpConnection(long, int, String, boolean,
-	 boolean, boolean, boolean, String, InputStream, String,
-	 String, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlIdpSpConnection updateSamlIdpSpConnection(
-			long samlIdpSpConnectionId, String samlSpEntityId,
-			int assertionLifetime, String attributeNames,
-			boolean attributesEnabled, boolean attributesNamespaceEnabled,
-			boolean enabled, boolean encryptionForced, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdAttribute, String nameIdFormat,
 			ServiceContext serviceContext)
 		throws PortalException;
 

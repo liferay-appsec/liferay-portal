@@ -61,14 +61,8 @@ public interface SamlPeerBindingLocalService
 	 *
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.saml.persistence.service.impl.SamlPeerBindingLocalServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the saml peer binding local service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link SamlPeerBindingLocalServiceUtil} if injection and service tracking are not available.
 	 */
-
-	/**
-	 * NOTE FOR DEVELOPERS:
-	 *
-	 * Never reference this class directly. Use <code>SamlPeerBindingLocalService</code> via injection or a <code>org.osgi.util.tracker.ServiceTracker</code> or use <code>SamlPeerBindingLocalServiceUtil</code>.
-	 */
 	public SamlPeerBinding addSamlPeerBinding(
-			long companyId, long userId, String samlNameIdFormat,
+			long userId, String samlNameIdFormat,
 			String samlNameIdNameQualifier, String samlNameIdSpNameQualifier,
 			String samlNameIdSpProvidedId, String samlNameIdValue,
 			String samlPeerEntityId)

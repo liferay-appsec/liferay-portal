@@ -88,39 +88,6 @@ public interface SamlSpIdpConnectionLocalService
 		SamlSpIdpConnection samlSpIdpConnection);
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlSpIdpConnection(boolean, long, boolean, boolean,
-	 boolean, String, InputStream, String, String, String,
-	 boolean, boolean, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			boolean unknownUsersAreStrangers, String userAttributeMappings,
-			ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #addSamlSpIdpConnection(String, boolean, long, boolean,
-	 boolean, boolean, String, InputStream, String, String,
-	 boolean, boolean, String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlSpIdpConnection addSamlSpIdpConnection(
-			String samlIdpEntityId, boolean assertionSignatureRequired,
-			long clockSkew, boolean enabled, boolean forceAuthn,
-			boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
 	 * @throws PortalException
 	 */
 	public PersistedModel createPersistedModel(Serializable primaryKeyObj)
@@ -334,39 +301,6 @@ public interface SamlSpIdpConnectionLocalService
 			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
 			String userAttributeMappings, String userIdentifierExpression,
 			ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #updateSamlSpIdpConnection(long, boolean, long, boolean,
-	 boolean, boolean, String, InputStream, String, String,
-	 String, boolean, boolean, String, String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			boolean unknownUsersAreStrangers, String userAttributeMappings,
-			ServiceContext serviceContext)
-		throws PortalException;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 #updateSamlSpIdpConnection(long, String, boolean, long,
-	 boolean, boolean, boolean, String, InputStream, String,
-	 String, boolean, boolean, String, ServiceContext)}
-	 */
-	@Deprecated
-	public SamlSpIdpConnection updateSamlSpIdpConnection(
-			long samlSpIdpConnectionId, String samlIdpEntityId,
-			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
-			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
-			InputStream metadataXmlInputStream, String name,
-			String nameIdFormat, boolean signAuthnRequest,
-			String userAttributeMappings, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
