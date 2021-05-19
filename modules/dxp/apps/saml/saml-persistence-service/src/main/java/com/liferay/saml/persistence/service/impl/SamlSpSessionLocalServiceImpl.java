@@ -158,7 +158,6 @@ public class SamlSpSessionLocalServiceImpl
 			samlPeerBindingPersistence.findByC_D_SNIF_SNINQ_SNIV_SPEI(
 				companyId, false, nameIdFormat, nameIdNameQualifier,
 				nameIdValue, samlIdpEntityId));
-
 		samlPeerBindings.addAll(
 			samlPeerBindingPersistence.findByC_D_SNIF_SNINQ_SNIV_SPEI(
 				companyId, true, nameIdFormat, nameIdNameQualifier, nameIdValue,
