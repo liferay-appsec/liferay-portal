@@ -26,9 +26,11 @@ definition {
 			samlEntityID = "samlsp",
 			spURL = "http://www.able.com:9080");
 
-		User.logoutPG();
+		User.logoutPG(specificURL = "http://www.able.com:9080");
 
 		User.viewLoggedOutPG();
+
+		User.logoutPG(specificURL = "http://localhost:8080");
 
 		var portalURL = PropsUtil.get("portal.url");
 
@@ -74,9 +76,11 @@ definition {
 			spURL = "http://www.able.com:9080",
 			userEmailAddress = "test@liferay.com");
 
-		User.logoutPG();
+		User.logoutPG(specificURL = "http://www.able.com:9080");
 
 		User.viewLoggedOutPG();
+
+		User.logoutPG(specificURL = "http://localhost:8080");
 
 		// Initiate Single Sign-On via SP
 
