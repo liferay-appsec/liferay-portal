@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.struts.LastPath;
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -38,6 +39,8 @@ import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.webserver.WebServerServlet;
+import com.liferay.saml.constants.SamlPortletKeys;
+import org.apache.ecs.html.S;
 
 import java.util.Map;
 import java.util.Objects;
@@ -168,6 +171,9 @@ public class VirtualHostFilter extends BasePortalFilter {
 			HttpServletResponse httpServletResponse, FilterChain filterChain)
 		throws Exception {
 
+		if (_isSAMLRequest(httpServletRequest))
+			System.out.print("In VHF, ");
+
 		String originalFriendlyURL = HttpUtil.normalizePath(
 			httpServletRequest.getRequestURI());
 
@@ -208,8 +214,14 @@ public class VirtualHostFilter extends BasePortalFilter {
 			_log.debug("Friendly URL " + friendlyURL);
 		}
 
+		if (_isSAMLRequest(httpServletRequest))
+			System.out.print("frientlyURL is: " + friendlyURL);
+
 		if (!friendlyURL.equals(StringPool.SLASH) &&
 			!isValidFriendlyURL(friendlyURL)) {
+
+			if (_isSAMLRequest(httpServletRequest))
+				System.out.print(", it is not valid");
 
 			_log.debug("Friendly URL is not valid");
 
@@ -238,12 +250,19 @@ public class VirtualHostFilter extends BasePortalFilter {
 					RequestDispatcher requestDispatcher =
 						_servletContext.getRequestDispatcher(forwardURL);
 
+					if (_isSAMLRequest(httpServletRequest))
+						if (_isSAMLRequest(httpServletRequest))
+							System.out.println(" i18nLanguageId is not null, forwarding: " + forwardURL);
+
 					requestDispatcher.forward(
 						httpServletRequest, httpServletResponse);
 
 					return;
 				}
 			}
+
+			if (_isSAMLRequest(httpServletRequest))
+				System.out.println(" i18nLanguageId is null, processFilter");
 
 			processFilter(
 				VirtualHostFilter.class.getName(), httpServletRequest,
@@ -260,12 +279,18 @@ public class VirtualHostFilter extends BasePortalFilter {
 		}
 
 		if (layoutSet == null) {
+			if (_isSAMLRequest(httpServletRequest))
+				System.out.println(" LayoutSet is null.");
+
 			processFilter(
 				VirtualHostFilter.class.getName(), httpServletRequest,
 				httpServletResponse, filterChain);
 
 			return;
 		}
+
+		if (_isSAMLRequest(httpServletRequest))
+			System.out.println(" LayoutSet is: " + layoutSet);
 
 		long companyId = PortalInstances.getCompanyId(httpServletRequest);
 
@@ -298,6 +323,9 @@ public class VirtualHostFilter extends BasePortalFilter {
 				friendlyURL = StringUtil.replaceFirst(
 					friendlyURL, PropsValues.WIDGET_SERVLET_MAPPING,
 					StringPool.BLANK);
+
+				if (_isSAMLRequest(httpServletRequest))
+					System.out.println("new friendly URL is: " + friendlyURL);
 			}
 
 			if (friendlyURL.equals(StringPool.SLASH) ||
@@ -308,6 +336,9 @@ public class VirtualHostFilter extends BasePortalFilter {
 
 				if (isDocumentFriendlyURL(
 						httpServletRequest, group.getGroupId(), friendlyURL)) {
+
+					if (_isSAMLRequest(httpServletRequest))
+						System.out.println("It's document friently URL");
 
 					processFilter(
 						VirtualHostFilter.class.getName(), httpServletRequest,
@@ -325,20 +356,41 @@ public class VirtualHostFilter extends BasePortalFilter {
 					String homeURL = PortalUtil.getRelativeHomeURL(
 						httpServletRequest);
 
+					if (_isSAMLRequest(httpServletRequest))
+						System.out.print("Use homeURL, ");
+
 					if (Validator.isNotNull(homeURL)) {
 						friendlyURL = homeURL;
+
+						if (_isSAMLRequest(httpServletRequest))
+							System.out.println("Used");
 					}
 				}
 				else {
+					if (_isSAMLRequest(httpServletRequest))
+						System.out.print("not use homeURL, ");
+
 					if (layoutSet.isPrivateLayout()) {
+						if (_isSAMLRequest(httpServletRequest))
+							System.out.println("is Private Layout, ");
+
 						if (group.isUser()) {
+							if (_isSAMLRequest(httpServletRequest))
+								System.out.println("is GroupUser");
+
 							sb.append(_PRIVATE_USER_SERVLET_MAPPING);
 						}
 						else {
+							if (_isSAMLRequest(httpServletRequest))
+								System.out.println("is not GroupUser");
+
 							sb.append(_PRIVATE_GROUP_SERVLET_MAPPING);
 						}
 					}
 					else {
+						if (_isSAMLRequest(httpServletRequest))
+							System.out.println("is not Private Layout");
+
 						sb.append(_PUBLIC_GROUP_SERVLET_MAPPING);
 					}
 
@@ -349,6 +401,10 @@ public class VirtualHostFilter extends BasePortalFilter {
 			String forwardURLString = friendlyURL;
 
 			if (sb.index() > 0) {
+
+				if (_isSAMLRequest(httpServletRequest))
+					System.out.println("not empty sb");
+
 				sb.append(friendlyURL);
 
 				forwardURLString = sb.toString();
@@ -358,6 +414,9 @@ public class VirtualHostFilter extends BasePortalFilter {
 				_log.debug("Forward to " + forwardURLString);
 			}
 
+			if (_isSAMLRequest(httpServletRequest))
+				System.out.println("forwarding to: " + forwardURLString);
+
 			RequestDispatcher requestDispatcher =
 				_servletContext.getRequestDispatcher(forwardURLString);
 
@@ -366,10 +425,24 @@ public class VirtualHostFilter extends BasePortalFilter {
 		catch (Exception exception) {
 			_log.error(exception, exception);
 
+			if (_isSAMLRequest(httpServletRequest))
+				System.out.println(exception.getMessage());
+
 			processFilter(
 				VirtualHostFilter.class.getName(), httpServletRequest,
 				httpServletResponse, filterChain);
 		}
+	}
+
+	private boolean _isSAMLRequest(HttpServletRequest request) {
+		String actionName = ParamUtil.getString(
+			request, '_' + SamlPortletKeys.SAML + "_javax.portlet.action");
+
+		if (actionName != null && !actionName.isEmpty()) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private String _findLanguageId(String friendlyURL) {

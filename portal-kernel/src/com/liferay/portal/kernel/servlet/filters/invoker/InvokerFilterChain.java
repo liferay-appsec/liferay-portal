@@ -66,10 +66,32 @@ public class InvokerFilterChain implements FilterChain {
 
 	@Override
 	public void doFilter(
-			ServletRequest servletRequest, ServletResponse servletResponse)
+		ServletRequest servletRequest, ServletResponse servletResponse)
 		throws IOException, ServletException {
 
+		HttpServletRequest hsr = (HttpServletRequest)servletRequest;
+
+		String fullURL = getFullURLForSamlRelated(hsr);
+
+		if (fullURL != null && !fullURL.equals("")) {
+			System.out.println(
+				"-------------start invokerFilterChain----------------");
+
+			System.out.println(
+				"Incoming request is: " + fullURL + " , METHOD: " +
+				hsr.getMethod() + ", contains Session: " + hsr.getSession(false));
+
+			System.out.println(
+				"Current thread is: " + Thread.currentThread().getName() +
+				", id: " + Thread.currentThread().getId());
+		}
+
 		if (_filters != null) {
+			if (fullURL != null && !fullURL.equals("")) {
+				System.out.print(
+					"There are " + _filters.size() + " Filters in this chain. ");
+			}
+
 			HttpServletRequest httpServletRequest =
 				(HttpServletRequest)servletRequest;
 			HttpServletResponse httpServletResponse =
@@ -78,9 +100,14 @@ public class InvokerFilterChain implements FilterChain {
 			while (_index < _filters.size()) {
 				Filter filter = _filters.get(_index++);
 
+				if (fullURL != null && !fullURL.equals("")) {
+					System.out.print(
+						filter.getClass().getSimpleName() + " at Index: " +
+						(_index - 1));
+				}
+
 				if (filter instanceof LiferayFilter) {
 					LiferayFilter liferayFilter = (LiferayFilter)filter;
-
 					if (!liferayFilter.isFilterEnabled() ||
 						!liferayFilter.isFilterEnabled(
 							httpServletRequest, httpServletResponse)) {
@@ -89,6 +116,9 @@ public class InvokerFilterChain implements FilterChain {
 							_log.debug(
 								"Skip disabled filter " + filter.getClass());
 						}
+						if (fullURL != null && !fullURL.equals("")) {
+							System.out.println(" is skipped as it's a disabled LiferayFilter");
+						}
 
 						continue;
 					}
@@ -96,6 +126,10 @@ public class InvokerFilterChain implements FilterChain {
 
 				if (filter instanceof DirectCallFilter) {
 					try {
+						if (fullURL != null && !fullURL.equals("")) {
+							System.out.println(" is a DirectCallFilter");
+						}
+
 						processDirectCallFilter(
 							filter, httpServletRequest, httpServletResponse);
 					}
@@ -113,14 +147,25 @@ public class InvokerFilterChain implements FilterChain {
 					}
 				}
 				else {
+					if (fullURL != null && !fullURL.equals("")) {
+						System.out.println(" is an other type of Filter");
+					}
+
 					processDoFilter(
 						filter, httpServletRequest, httpServletResponse);
 				}
 
+				if (fullURL != null && !fullURL.equals("")) {
+					System.out.println(
+						"-------------end invokerFilterChain, processed a Filter----------------");
+				}
 				return;
 			}
 		}
-
+		if (fullURL != null && !fullURL.equals("")) {
+			System.out.println(
+				"-------------end invokerFilterChain, no filters----------------");
+		}
 		_filterChain.doFilter(servletRequest, servletResponse);
 	}
 
@@ -129,8 +174,8 @@ public class InvokerFilterChain implements FilterChain {
 	}
 
 	protected void processDirectCallFilter(
-			Filter filter, HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
+		Filter filter, HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse)
 		throws Exception {
 
 		if (filter instanceof WrapHttpServletRequestFilter) {
@@ -201,8 +246,8 @@ public class InvokerFilterChain implements FilterChain {
 	}
 
 	protected void processDoFilter(
-			Filter filter, ServletRequest servletRequest,
-			ServletResponse servletResponse)
+		Filter filter, ServletRequest servletRequest,
+		ServletResponse servletResponse)
 		throws IOException, ServletException {
 
 		Thread currentThread = Thread.currentThread();
@@ -227,4 +272,63 @@ public class InvokerFilterChain implements FilterChain {
 	private List<Filter> _filters;
 	private int _index;
 
+	public static String getFullURLForSamlRelated(HttpServletRequest request) {
+		if (request == null || request.getRequestURL() == null) {
+			return "";
+		}
+
+		try{
+			String requestURL = request.getRequestURL().toString();
+
+			if (requestURL.contains("/combo")) {
+				return "";
+			}
+			if (requestURL.contains("/html")) {
+				return "";
+			}
+			if (requestURL.contains("/o")) {
+				return "";
+			}
+			if (requestURL.contains("/image")) {
+				return "";
+			}
+			if (requestURL.contains("/documents")) {
+				return "";
+			}
+			if (requestURL.contains("/control_panel")) {
+				return "";
+			}
+			if (requestURL.contains("/c/portal/update")) {
+				return "";
+			}
+
+			String queryString = request.getQueryString();
+
+			if (queryString == null || queryString.equals("")) {
+
+				if (requestURL.endsWith("web/guest")) {
+					return "";
+				}
+
+				if (requestURL.endsWith("web/guest/home")) {
+					return "";
+				}
+
+				return requestURL;
+			}
+
+			if (queryString.contains("navigation")) {
+				return "";
+			}
+
+			if (queryString.contains("p_v_l_s_g_id")) {
+				return "";
+			}
+
+			return requestURL + '?' + queryString;
+		}
+		catch (Exception e) {
+			return "Excetion: " + e.getMessage();
+		}
+	}
 }
