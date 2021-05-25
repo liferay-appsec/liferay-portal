@@ -436,7 +436,7 @@ public class VirtualHostFilter extends BasePortalFilter {
 
 	private boolean _isSAMLRequest(HttpServletRequest request) {
 		String actionName = ParamUtil.getString(
-			request, '_' + SamlPortletKeys.SAML + "_javax.portlet.action");
+			request, "_com_liferay_saml_web_internal_portlet_SamlPortlet_javax.portlet.action");
 
 		if (actionName != null && !actionName.isEmpty()) {
 			return true;
