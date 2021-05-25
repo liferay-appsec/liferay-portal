@@ -39,7 +39,6 @@ import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.webserver.WebServerServlet;
-import com.liferay.saml.constants.SamlPortletKeys;
 import org.apache.ecs.html.S;
 
 import java.util.Map;
