@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.service.VirtualHostLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.SetUtil;
@@ -51,6 +52,7 @@ import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -167,6 +169,11 @@ public class PortalInstances {
 				if (virtualHostnames.isEmpty()) {
 					httpServletRequest.setAttribute(
 						WebKeys.VIRTUAL_HOST_LAYOUT_SET, layoutSet);
+				}
+				else if (_isSAMLRequest(httpServletRequest)) {
+					for (String key : virtualHostnames.keySet()) {
+						System.out.println(key + " " + virtualHostnames.get(key));
+					}
 				}
 			}
 			catch (Exception exception) {
@@ -511,6 +518,17 @@ public class PortalInstances {
 	private static final Set<String> _virtualHostsIgnoreHosts;
 	private static final Set<String> _virtualHostsIgnorePaths;
 	private static String[] _webIds;
+
+	private static boolean _isSAMLRequest(HttpServletRequest request) {
+		String actionName = ParamUtil.getString(
+			request, "_com_liferay_saml_web_internal_portlet_SamlPortlet_javax.portlet.action");
+
+		if (actionName != null && !actionName.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
 
 	static {
 		_companyIds = new long[0];
