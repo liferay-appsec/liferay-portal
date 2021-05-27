@@ -16,6 +16,9 @@ package com.liferay.portal.action;
 
 import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.constants.ActionConstants;
@@ -41,6 +44,17 @@ public class LogoutAction implements Action {
 				httpServletRequest, httpServletResponse);
 
 			httpServletRequest.setAttribute(WebKeys.LOGOUT, Boolean.TRUE);
+
+			if (Validator.isNull(
+					PropsUtil.get(PropsKeys.DEFAULT_LOGOUT_PAGE_PATH))) {
+
+				httpServletRequest.setAttribute(WebKeys.REFERER, "/");
+			}
+			else {
+				httpServletRequest.setAttribute(
+					WebKeys.REFERER,
+					PropsUtil.get(PropsKeys.DEFAULT_LOGOUT_PAGE_PATH));
+			}
 
 			return actionMapping.getActionForward(
 				ActionConstants.COMMON_REFERER);
