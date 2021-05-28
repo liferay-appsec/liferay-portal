@@ -52,20 +52,33 @@ public class SamlSpSessionUpgradeProcess extends UpgradeProcess {
 
 			int latestSamlPeerBindingId = _getLatestSamlPeerBindingId();
 
-			runSQL(
-				StringBundler.concat(
-					"insert into SamlPeerBinding (samlPeerBindingId, ",
-					"companyId, createDate, userId, userName, deleted, ",
-					"samlNameIdFormat, samlNameIdNameQualifier, ",
-					"samlNameIdSpProvidedId, samlNameIdValue, ",
-					"samlPeerEntityId) select min(samlSpSessionId) + ",
-					-samlSpSessionIdOffset + latestSamlPeerBindingId,
-					", companyId, min(createDate), userId, userName, '0' as ",
-					"deleted, nameIdFormat, nameIdNameQualifier, null as ",
-					"nameIdSpProvidedId, nameIdValue, samlIdpEntityId from ",
-					"SamlSpSession group by companyId, userId, userName, ",
-					"nameIdFormat, nameIdNameQualifier, ",
-					"nameIdSPNameQualifier, nameIdValue, samlIdpEntityId"));
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						"select samlSpSessionId from SamlSpSession");
+				ResultSet resultSet = preparedStatement.executeQuery()) {
+
+				if (resultSet.next()) {
+					int samlSpSessionId = resultSet.getInt(1);
+
+					int calculatedSamlSpSessionId =
+						samlSpSessionId + -samlSpSessionIdOffset +
+							latestSamlPeerBindingId;
+
+					runSQL(
+						StringBundler.concat(
+							"insert into SamlPeerBinding (samlPeerBindingId, ",
+							"companyId, createDate, userId, userName, ",
+							"deleted, samlNameIdFormat, ",
+							"samlNameIdNameQualifier, samlNameIdSpProvidedId, ",
+							"samlNameIdValue, samlPeerEntityId) select ",
+							calculatedSamlSpSessionId, " as samlSpSessionId,",
+							"companyId, createDate, userId, userName, '0' as ",
+							"deleted, nameIdFormat, nameIdNameQualifier, null ",
+							"as nameIdSpProvidedId, nameIdValue, ",
+							"samlIdpEntityId from SamlSpSession where ",
+							"samlSpSessionId = ", samlSpSessionId));
+				}
+			}
 
 			runSQL(
 				StringBundler.concat(
