@@ -188,8 +188,8 @@ public class ExpandoUserFieldExpressionHandler
 
 			expandoValue.setCompanyId(user.getCompanyId());
 			expandoValue.setClassName(User.class.getName());
-			expandoValue.setClassPK(user.getUserId());
 			expandoValue.setColumnId(column.getColumnId());
+			expandoValue.setClassPK(user.getUserId());
 		}
 
 		return expandoValue;
