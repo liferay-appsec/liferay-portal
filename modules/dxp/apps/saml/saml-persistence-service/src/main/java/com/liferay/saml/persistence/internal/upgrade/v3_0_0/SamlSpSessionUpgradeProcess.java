@@ -39,6 +39,12 @@ public class SamlSpSessionUpgradeProcess extends UpgradeProcess {
 					new AlterTableAddColumn("samlPeerBindingId", "LONG null"));
 			}
 
+			runSQL(
+				StringBundler.concat(
+					"DELETE FROM SamlPeerBinding WHERE ",
+					"SamlPeerBinding.samlPeerBindingId NOT IN (SELECT ",
+					"samlPeerBindingId FROM SamlIdpSpSession)"));
+
 			int samlSpSessionIdOffset = _getSamlSpSessionIdOffset();
 
 			int latestSamlPeerBindingId = _getLatestSamlPeerBindingId();
