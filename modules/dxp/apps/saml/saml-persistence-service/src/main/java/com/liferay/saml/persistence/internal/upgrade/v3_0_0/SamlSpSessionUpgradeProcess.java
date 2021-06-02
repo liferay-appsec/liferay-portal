@@ -79,7 +79,6 @@ public class SamlSpSessionUpgradeProcess extends UpgradeProcess {
 							latestSamlPeerBindingId;
 
 					runSQL(
-						connection,
 						StringBundler.concat(
 							"insert into SamlPeerBinding (samlPeerBindingId, ",
 							"companyId, createDate, userId, userName, ",
