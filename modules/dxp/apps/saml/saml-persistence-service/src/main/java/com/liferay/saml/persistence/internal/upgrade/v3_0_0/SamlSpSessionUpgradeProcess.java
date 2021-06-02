@@ -46,18 +46,17 @@ public class SamlSpSessionUpgradeProcess extends UpgradeProcess {
 			try (PreparedStatement preparedStatement =
 					connection.prepareStatement(
 						StringBundler.concat(
-							"select min(samlIdpSpSessionId) as ",
-							"samlIdpSpSessionId, companyId, min(createDate) ",
-							"as createDate, userId, userName, nameIdFormat, ",
+							"select min(samlSpSessionId) as samlSpSessionId, ",
+							"companyId, min(createDate) as createDate, ",
+							"userId, userName, nameIdFormat, ",
 							"nameIdNameQualifier, nameIdValue, samlSpEntityId ",
-							"from SamlIdpSpSession group by companyId, ",
-							"userId, userName, samlSpEntityId, nameIdFormat, ",
+							"from SamlSpSession group by companyId, userId, ",
+							"userName, samlSpEntityId, nameIdFormat, ",
 							"nameIdValue"));
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				while (resultSet.next()) {
-					int samlIdpSpSessionId = resultSet.getInt(
-						"samlIdpSpSessionId");
+					int samlSpSessionId = resultSet.getInt("samlSpSessionId");
 					long companyId = resultSet.getLong("companyId");
 					Timestamp createDate = resultSet.getTimestamp("createDate");
 					long userId = resultSet.getLong("userId");
@@ -70,7 +69,7 @@ public class SamlSpSessionUpgradeProcess extends UpgradeProcess {
 						"samlSpEntityId");
 
 					int samlPeerBindingId =
-						samlIdpSpSessionId + -samlSpSessionIdOffset +
+						samlSpSessionId + -samlSpSessionIdOffset +
 							latestSamlPeerBindingId;
 
 					runSQL(
