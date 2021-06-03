@@ -40,6 +40,8 @@ public class SamlIdpSpSessionUpgradeProcess extends UpgradeProcess {
 					new AlterTableAddColumn("samlPeerBindingId", "LONG null"));
 			}
 
+			runSQL("DELETE FROM SamlPeerBinding");
+
 			int samlIdpSpSessionIdOffset = 0;
 
 			try (PreparedStatement preparedStatement =
