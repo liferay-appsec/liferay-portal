@@ -64,12 +64,12 @@ public class SamlIdpSpSessionUpgradeProcess extends UpgradeProcess {
 					"samlNameIdValue, samlPeerEntityId) select ",
 					"min(samlIdpSpSessionId) + ",
 					-samlIdpSpSessionIdOffset + latestSamlPeerBindingId,
-					", companyId, min(createDate), userId, userName, '0' as ",
-					"deleted, nameIdFormat, null as nameIdNameQualifier, null ",
-					"as samlNameIdSpNameQualifier, null as ",
-					"nameIdSpProvidedId, nameIdValue, samlSpEntityId from ",
-					"SamlIdpSpSession group by companyId, userId, userName, ",
-					"samlSpEntityId, nameIdFormat, nameIdValue"));
+					" as samlPeerBindingId, companyId, min(createDate), ",
+					"userId, userName, '0' as deleted, nameIdFormat, null as ",
+					"nameIdNameQualifier, null as samlNameIdSpNameQualifier, ",
+					"null as nameIdSpProvidedId, nameIdValue, samlSpEntityId ",
+					"from SamlIdpSpSession group by companyId, userId, ",
+					"userName, samlSpEntityId, nameIdFormat, nameIdValue"));
 
 			runSQL(
 				StringBundler.concat(
