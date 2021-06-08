@@ -121,8 +121,6 @@ public class SiteNavigationMenuAddPortletToolbarContributor
 			LanguageUtil.get(
 				_portal.getHttpServletRequest(portletRequest), "add-page"));
 
-		Layout layout = themeDisplay.getLayout();
-
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
 		urlMenuItem.setURL(
@@ -139,7 +137,12 @@ public class SiteNavigationMenuAddPortletToolbarContributor
 			).setParameter(
 				"portletResource", portletDisplay.getPortletName()
 			).setParameter(
-				"privateLayout", layout.isPrivateLayout()
+				"privateLayout",
+				() -> {
+					Layout layout = themeDisplay.getLayout();
+
+					return layout.isPrivateLayout();
+				}
 			).buildString());
 
 		return urlMenuItem;

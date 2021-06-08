@@ -1427,15 +1427,17 @@ definition {
 			locator1 = "TextInput#ENTER_AGAIN",
 			value1 = "${newPassword}");
 
-		if ("${requirePasswordReset}" == "true") {
-			Check(
-				checkboxName = "Require Password Reset",
-				locator1 = "Checkbox#ANY_CHECKBOX");
-		}
-		else {
-			Uncheck(
-				checkboxName = "Require Password Reset",
-				locator1 = "Checkbox#ANY_CHECKBOX");
+		if (IsElementPresent(checkboxName = "Require Password Reset", locator1 = "Checkbox#ANY_CHECKBOX")) {
+			if ("${requirePasswordReset}" == "true") {
+				Check(
+					checkboxName = "Require Password Reset",
+					locator1 = "Checkbox#ANY_CHECKBOX");
+			}
+			else {
+				Uncheck(
+					checkboxName = "Require Password Reset",
+					locator1 = "Checkbox#ANY_CHECKBOX");
+			}
 		}
 
 		PortletEntry.save();
@@ -2059,6 +2061,11 @@ definition {
 
 		if (isSet(virtualHostsURL)) {
 			Navigator.openSpecificURL(url = "${virtualHostsURL}/web/guest?SM_USER=${userEmailAddress}");
+		}
+		else if (isSet(nodePort)) {
+			var baseURL = "http://localhost:${nodePort}";
+
+			Navigator.openSpecificURL(url = "${baseURL}/web/guest?SM_USER=${userEmailAddress}");
 		}
 		else {
 			var baseURL = PropsUtil.get("portal.url");

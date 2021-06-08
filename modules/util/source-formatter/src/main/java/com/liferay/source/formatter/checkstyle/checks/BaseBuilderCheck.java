@@ -549,11 +549,17 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 			return;
 		}
 
-		DetailAST lastDependentIdentDetailAST = dependentIdentDetailASTList.get(
-			dependentIdentDetailASTList.size() - 1);
+		String variableName = identDetailAST.getText();
 
-		if (lastDependentIdentDetailAST.getLineNo() > endlineNumber) {
-			return;
+		for (int i = dependentIdentDetailASTList.size() - 1; i >= 0; i--) {
+			DetailAST dependentIdentDetailAST = dependentIdentDetailASTList.get(
+				i);
+
+			if (variableName.equals(dependentIdentDetailAST.getText()) &&
+				(dependentIdentDetailAST.getLineNo() > endlineNumber)) {
+
+				return;
+			}
 		}
 
 		matchingMethodName = _getInlineExpressionMethodName(
@@ -586,10 +592,53 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 			return;
 		}
 
-		String variableName = identDetailAST.getText();
-
 		for (DetailAST additionalDependentDetailAST :
 				additionalDependentDetailASTList) {
+
+			List<DetailAST> assignDetailASTList = getAllChildTokens(
+				additionalDependentDetailAST, true, TokenTypes.ASSIGN);
+
+			for (DetailAST assignDetailAST : assignDetailASTList) {
+				String assignVariableName = null;
+
+				DetailAST firstChildDetailAST = assignDetailAST.getFirstChild();
+
+				if (firstChildDetailAST.getType() == TokenTypes.IDENT) {
+					assignVariableName = firstChildDetailAST.getText();
+				}
+				else {
+					DetailAST previousSiblingDetailAST =
+						assignDetailAST.getPreviousSibling();
+
+					if ((previousSiblingDetailAST != null) &&
+						(previousSiblingDetailAST.getType() ==
+							TokenTypes.IDENT)) {
+
+						assignVariableName = previousSiblingDetailAST.getText();
+					}
+				}
+
+				if (assignVariableName == null) {
+					return;
+				}
+
+				if (!variableName.equals(assignVariableName)) {
+					for (int i = dependentIdentDetailASTList.size() - 1; i >= 0;
+						 i--) {
+
+						DetailAST dependentIdentDetailAST =
+							dependentIdentDetailASTList.get(i);
+
+						if (assignVariableName.equals(
+								dependentIdentDetailAST.getText()) &&
+							(dependentIdentDetailAST.getLineNo() >
+								endlineNumber)) {
+
+							return;
+						}
+					}
+				}
+			}
 
 			List<DetailAST> methodCallDetailASTList = getAllChildTokens(
 				additionalDependentDetailAST, true, TokenTypes.METHOD_CALL);

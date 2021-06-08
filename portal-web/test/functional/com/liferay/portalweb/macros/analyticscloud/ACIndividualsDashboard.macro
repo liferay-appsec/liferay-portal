@@ -4,6 +4,18 @@ definition {
 		Click(locator1 = "ACIndividualsDashboard#ADD_BREAKDOWN_BUTTON");
 	}
 
+	macro assertCustomRangeNotApplied {
+		var key_timeRange = "${timeRange}";
+
+		AssertElementNotPresent(locator1 = "ACIndividualsDashboard#INDIVIDUALS_ACTIVITIES_TIME_RANGE");
+	}
+
+	macro assertIndividualsActivitiesTimeRange {
+		var key_timeRange = "${timeRange}";
+
+		AssertElementPresent(locator1 = "ACIndividualsDashboard#INDIVIDUALS_ACTIVITIES_TIME_RANGE");
+	}
+
 	macro clickBreakdownTab {
 		var key_tabName = "${tabName}";
 
@@ -14,6 +26,33 @@ definition {
 		Click(locator1 = "ACIndividualsDashboard#DELETE_BREAKDOWN_BUTTON");
 	}
 
+	macro goToDistributionTab {
+		ACNavigation.switchTab(tabName = "Distribution");
+	}
+
+	macro goToInterestsTab {
+		ACNavigation.switchTab(tabName = "Interests");
+	}
+
+	macro goToKnownIndividualDetails {
+		var key_individualName = "${individualName}";
+		Click(locator1 = "ACIndividualsDashboard#KNOWN_INDIVIDUALS_LIST_ITEMS");
+	}
+
+	macro goToKnownIndividualsTab {
+		ACNavigation.switchTab(tabName = "Known Individuals");
+	}
+
+	macro goToOverviewTab {
+		ACNavigation.switchTab(tabName = "Overview");
+	}
+
+	macro goToTabName {
+		var key_tabName = "${tabName}";
+
+		Click(locator1 = "ACIndividualsDashboard#INDIVIDUALS_TAB");
+	}
+
 	macro nameBreakdown {
 		Type(
 			locator1 = "ACIndividualsDashboard#BREAKDOWN_NAME_FIELD",
@@ -22,6 +61,14 @@ definition {
 
 	macro saveBreakdown {
 		Click(locator1 = "ACIndividualsDashboard#SAVE_BREAKDOWN_BUTTON");
+	}
+
+	macro viewTotalIndividualsCount {
+		var key_individualCount = "${individualCount}";
+
+		AssertTextEquals(
+			locator1 = "ACIndividualsDashboard#TOTAL_INDIVIDUALS",
+			value1 = "${individualCount}");
 	}
 
 }

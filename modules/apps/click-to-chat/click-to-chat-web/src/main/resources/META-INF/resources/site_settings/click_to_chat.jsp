@@ -25,7 +25,7 @@ ClickToChatConfiguration clickToChatConfiguration = (ClickToChatConfiguration)re
 		<label class="control-label">
 			<liferay-ui:message key="site-settings-strategy" />
 
-			<liferay-ui:icon-help message="site-settings-strategy-description" />
+			<liferay-ui:icon-help message='<%= LanguageUtil.format(resourceBundle, "site-settings-strategy-description", "click-to-chat") %>' />
 		</label>
 	</div>
 
@@ -143,4 +143,9 @@ ClickToChatConfiguration clickToChatConfiguration = (ClickToChatConfiguration)re
 			clickToChatChatProviderLearnMessageElement.classList.add('hide');
 		}
 	}
+
+	<portlet:namespace />toggleClickToChatChatProviderLearnMessage(
+		'<%= clickToChatConfiguration.chatProviderId() %>',
+		true
+	);
 </script>

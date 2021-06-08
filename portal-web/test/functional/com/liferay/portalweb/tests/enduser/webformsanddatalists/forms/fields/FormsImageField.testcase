@@ -54,14 +54,39 @@ definition {
 	}
 
 	@description = "Verify that an image can be uploaded"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanUploadAnImage {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133043 CanBeUploaded pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Image");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.selectImageUpload(
+			fileName = "Document_1.jpg",
+			navTab = "Documents and Media",
+			rowNumber = "1");
+
+		FormPortlet.submitSuccessfully();
+
+		FormPortlet.viewSuccessPage(
+			successPageDescription = "Your information was successfully received. Thank you for filling out the form.",
+			successPageTitle = "Thank you.");
 	}
 
 	@description = "Verify that an image can be uploaded from Liferay Documents and Media"
@@ -87,14 +112,58 @@ definition {
 	}
 
 	@description = "Verify that an Image Description can be added to an uploaded Image"
-	@ignore = "Test Stub"
 	@priority = "4"
 	test DescriptionCanBeAdded {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133048 DescriptionCanBeAdded pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Image",
+			formPageNumber = "0");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormPortlet.waitFormRenderer(text = "Submit");
+
+		Click(locator1 = "FormFields#UPLOAD_ON_WIDGET");
+
+		ItemSelector.uploadFile(
+			navTab = "Documents and Media",
+			uploadFileName = "Document_1.jpg");
+
+		Form.editImageDescription(
+			descriptionContent = "Test Image Description",
+			descriptionPosition = "1");
+
+		FormPortlet.submitSuccessfully();
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Content & Data",
+			portlet = "Forms");
+
+		FormsAdminNavigator.gotoViewEntries();
+
+		FormsAdminNavigator.gotoView();
+
+		FormsAdmin.viewImageEntry(
+			fieldDescription = "Test Image Description",
+			fieldLabel = "Image",
+			fieldName = "Image");
 	}
 
 	@description = "Verify that a help text can be added to an Image Field"
@@ -142,14 +211,36 @@ definition {
 	}
 
 	@description = "Verify that the Field Reference can be edited"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test ReferenceCanBeEdited {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133042 ReferenceCanBeEdited pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Image");
+
+		Form.gotoAdvancedTab();
+
+		Form.editFieldReferenceMetal(fieldValue = "Image1234");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		Form.viewFieldReference(
+			fieldName = "Image",
+			key_fieldReference = "Image1234");
 	}
 
 	@description = "Verify that an image added to the Image Field can be removed by clicking the Clear button"

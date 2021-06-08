@@ -81,7 +81,8 @@ definition {
 
 	@description = "This test checks that an inline image can be added to a blog."
 	@priority = "4"
-	@refactorneeded
+	@refactordone
+	@uitest
 	test CanAddEntryWithInlineImage {
 		BlogsNavigator.openToAddEntry(siteURLKey = "guest");
 
@@ -154,7 +155,8 @@ definition {
 
 	@description = "This checks that a user can change the publish date for a scheduled entry to the present and publish it."
 	@priority = "4"
-	@refactorneeded
+	@refactordone
+	@uitest
 	test CanChangeAScheduledEntryToThePresentAndPublish {
 		property test.name.skip.portal.instance = "BlogsUsecase#CanChangeAScheduledEntryToThePresentAndPublish";
 
@@ -193,20 +195,8 @@ definition {
 
 	@description = "This test covers LPS-127212 and LPS-128781. This ensures that a blog title can be imported to a site when a duplicate title already exists."
 	@priority = "4"
-	@refactorneeded
+	@refactordone
 	test CanImportBlogWhenDuplicateTitleExists {
-		JSONGroup.addGroup(groupName = "Target Site Name");
-
-		JSONBlog.addEntry(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title",
-			groupName = "Target Site Name");
-
-		JSONBlog.addEntry(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title",
-			groupName = "Target Site Name");
-
 		JSONGroup.addGroup(groupName = "Source Site Name");
 
 		JSONBlog.addEntry(
@@ -216,17 +206,15 @@ definition {
 
 		BlogsNavigator.openBlogsAdmin(siteURLKey = "source-site-name");
 
-		LAR.exportPortlet(larFileName = "Blogs.portlet.lar");
+		LAR.importPortlet(
+			larFileName = "Blogs.portlet.lar",
+			uploadFrom = "dependencies");
 
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "target-site-name");
-
-		LAR.importPortlet(larFileName = "Blogs.portlet.lar");
-
-		BlogsNavigator.openBlogsAdmin(siteURLKey = "target-site-name");
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "source-site-name");
 
 		LexiconEntry.changeDisplayStyle(displayStyle = "table");
 
-		for (var i : list "1,2,3") {
+		for (var i : list "1,2") {
 			AssertTextEquals(
 				key_rowNumber = "${i}",
 				locator1 = "ContentRow#ENTRY_CONTENT_ROW_NUMBER_TD_2",
@@ -236,48 +224,28 @@ definition {
 
 	@description = "This checks that a blog entry with a comment can be imported with no data loss."
 	@priority = "4"
-	@refactorneeded
+	@refactordone
 	test CanImportEntryWithComment {
-		JSONBlog.addEntry(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title");
+		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
+
+		LAR.importPortlet(
+			larFileName = "BlogWithComment.lar",
+			uploadFrom = "dependencies");
+
+		Navigator.gotoPage(pageName = "Blogs Page");
 
 		BlogsNavigator.openToBlogEntry(
-			entryTitle = "Blogs Entry Title",
-			layoutName = "Blogs Page",
-			siteURLKey = "guest");
-
-		Comments.addPG(entryComment = "Blogs Entry Comment");
-
-		Navigator.gotoPage(pageName = "Blogs Page");
-
-		LAR.exportPortlet(larFileName = "Blogs.portlet.lar");
-
-		Navigator.gotoPage(pageName = "Blogs Page");
-
-		BlogsEntry.tearDownCP();
-
-		Navigator.gotoPage(pageName = "Blogs Page");
-
-		LAR.importPortlet(larFileName = "Blogs.portlet.lar");
-
-		BlogsNavigator.openToBlogEntry(
-			entryTitle = "Blogs Entry Title",
+			entryTitle = "Blog Entry Title",
 			layoutName = "Blogs Page",
 			siteURLKey = "guest");
 
 		BlogsEntry.viewPG(
-			entryContent = "Blogs Entry Content",
-			entryTitle = "Blogs Entry Title");
-
-		BlogsNavigator.openToBlogEntry(
-			entryTitle = "Blogs Entry Title",
-			layoutName = "Blogs Page",
-			siteURLKey = "guest");
+			entryContent = "Blog Entry Content",
+			entryTitle = "Blog Entry Title");
 
 		Comments.viewPG(
 			commentCount = "1",
-			entryComment = "Blogs Entry Comment",
+			entryComment = "Blog Entry Comment",
 			userFullName = "Test Test");
 	}
 
@@ -308,64 +276,6 @@ definition {
 		BlogsEntry.viewEntryPG(
 			entryContent = "Blogs Entry Content",
 			entryTitle = "Blogs Entry Title");
-	}
-
-	@description = "This test covers LPS-102033. It ensures that the comment only appears under the respective Blog Entry."
-	@priority = "3"
-	@refactorneeded
-	test CommentsAreViewableInAP {
-		JSONLayout.deletePublicLayout(
-			groupName = "Guest",
-			layoutName = "Blogs Page");
-
-		JSONLayout.addPublicLayout(
-			groupName = "Guest",
-			layoutName = "Asset Publisher Page");
-
-		JSONLayout.addWidgetToPublicLayout(
-			column = "1",
-			groupName = "Guest",
-			layoutName = "Asset Publisher Page",
-			widgetName = "Asset Publisher");
-
-		JSONBlog.addEntry(
-			entryContent = "Blogs Entry Content 1",
-			entryTitle = "Blogs Entry Title 1");
-
-		JSONBlog.addEntry(
-			entryContent = "Blogs Entry Content 2",
-			entryTitle = "Blogs Entry Title 2");
-
-		Navigator.gotoPage(pageName = "Asset Publisher Page");
-
-		AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Comments");
-
-		Navigator.gotoPage(pageName = "Asset Publisher Page");
-
-		Comments.addPG(entryComment = "Blogs Entry Title 2 Comment");
-
-		Navigator.gotoPage(pageName = "Asset Publisher Page");
-
-		BlogsEntry.viewEntryViaAPPG(
-			assetTitle = "Blogs Entry Title 1",
-			entryContent = "Blogs Entry Content 1",
-			entryTitle = "Blogs Entry Title 1");
-
-		Comments.viewNoPG(
-			entryComment = "Blogs Entry Title 2 Comment",
-			userFullName = "Test Test");
-
-		Navigator.gotoPage(pageName = "Asset Publisher Page");
-
-		BlogsEntry.viewEntryViaAPPG(
-			assetTitle = "Blogs Entry Title 2",
-			entryContent = "Blogs Entry Content 2",
-			entryTitle = "Blogs Entry Title 2");
-
-		Comments.viewPG(
-			commentCount = "1",
-			entryComment = "Blogs Entry Title 2 Comment",
-			userFullName = "Test Test");
 	}
 
 	@priority = "4"

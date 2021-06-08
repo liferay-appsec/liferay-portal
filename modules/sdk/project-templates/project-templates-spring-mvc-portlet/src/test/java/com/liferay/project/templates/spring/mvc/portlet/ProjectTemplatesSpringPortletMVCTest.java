@@ -116,51 +116,7 @@ public class ProjectTemplatesSpringPortletMVCTest
 			gradleProjectDir,
 			"src/main/java/com/test/controller/UserController.java");
 
-		if (_liferayVersion.equals("7.0.6")) {
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
-				"liferay-display_7_0_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
-				"liferay-portlet-app_7_0_0.dtd");
-		}
-		else if (_liferayVersion.equals("7.1.3")) {
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
-				"liferay-display_7_1_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
-				"liferay-portlet-app_7_1_0.dtd");
-		}
-		else if (_liferayVersion.equals("7.2.1")) {
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
-				"liferay-display_7_2_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
-				"liferay-portlet-app_7_2_0.dtd");
-		}
-		else if (_liferayVersion.startsWith("7.3")) {
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
-				"liferay-display_7_3_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
-				"liferay-portlet-app_7_3_0.dtd");
-		}
-		else if (_liferayVersion.startsWith("7.4")) {
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-display.xml",
-				"liferay-display_7_4_0.dtd");
-
-			testContains(
-				gradleProjectDir, "src/main/webapp/WEB-INF/liferay-portlet.xml",
-				"liferay-portlet-app_7_4_0.dtd");
-		}
+		testTemplateWarPortletDTD(gradleProjectDir, _liferayVersion);
 
 		if (_liferayVersion.startsWith("7.0")) {
 			testContains(

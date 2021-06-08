@@ -112,9 +112,7 @@ definition {
 	test DefaultTitlePersistsUponFirstlyTranslatingForAnotherLocale {
 		WebContentStructures.addCP();
 
-		Navigator.gotoNavTab(navTab = "Fieldsets");
-
-		Click(locator1 = "FormViewBuilder#CREATE_NEW_FIELD_SETS");
+		DataEngine.gotoCreateNewFieldset();
 
 		Navigator.gotoNavTab(navTab = "Fields");
 
@@ -1119,8 +1117,6 @@ definition {
 			fieldNameList = "Text",
 			fieldsetName = "Fieldset Name",
 			localeList = "pt-BR");
-
-		Refresh();
 
 		WebContentStructures.addLocalization(
 			locale = "pt-BR",

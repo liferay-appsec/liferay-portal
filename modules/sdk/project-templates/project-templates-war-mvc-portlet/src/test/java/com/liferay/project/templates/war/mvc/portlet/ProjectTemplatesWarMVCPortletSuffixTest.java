@@ -19,6 +19,8 @@ import com.liferay.project.templates.BaseProjectTemplatesTestCase;
 import com.liferay.project.templates.extensions.util.Validator;
 import com.liferay.project.templates.util.FileTestUtil;
 
+import java.io.File;
+
 import java.net.URI;
 
 import java.util.Arrays;
@@ -73,9 +75,11 @@ public class ProjectTemplatesWarMVCPortletSuffixTest
 
 	@Test
 	public void testBuildTemplateWarMvcPortlet() throws Exception {
-		testBuildTemplatePortlet(
+		File gradleProjectDir = testBuildTemplatePortlet(
 			temporaryFolder, "war-mvc-portlet", "portlet-portlet", "portlet",
 			_liferayVersion, mavenExecutor, _gradleDistribution);
+
+		testTemplateWarPortletDTD(gradleProjectDir, _liferayVersion);
 	}
 
 	@Rule

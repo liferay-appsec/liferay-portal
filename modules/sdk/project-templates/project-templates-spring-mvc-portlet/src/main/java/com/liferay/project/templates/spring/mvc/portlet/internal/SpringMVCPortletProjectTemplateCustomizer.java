@@ -14,6 +14,8 @@
 
 package com.liferay.project.templates.spring.mvc.portlet.internal;
 
+import aQute.bnd.version.Version;
+
 import com.liferay.project.templates.extensions.ProjectTemplateCustomizer;
 import com.liferay.project.templates.extensions.ProjectTemplatesArgs;
 import com.liferay.project.templates.extensions.util.FileUtil;
@@ -57,7 +59,9 @@ public class SpringMVCPortletProjectTemplateCustomizer
 
 		File buildDir = projectPath.toFile();
 
-		File viewsDir = new File(buildDir, "src/main/webapp/WEB-INF/views");
+		File webappDir = new File(buildDir, "src/main/webapp");
+
+		File viewsDir = new File(webappDir, "WEB-INF/views");
 
 		String packageName = projectTemplatesArgs.getPackageName();
 
@@ -79,6 +83,29 @@ public class SpringMVCPortletProjectTemplateCustomizer
 		if (viewType.equals("jsp") || framework.equals("portletmvc4spring")) {
 			FileUtil.deleteDir(spring4JavaPkgDir.toPath());
 		}
+
+		Version version = Version.parseVersion(
+			projectTemplatesArgs.getLiferayVersion());
+
+		int minorVersion = version.getMinor();
+
+		String minorVersionString = String.valueOf(minorVersion);
+
+		File liferayPortletXML = new File(
+			webappDir, "WEB-INF/liferay-display.xml");
+
+		File liferayDisplayXML = new File(
+			webappDir, "WEB-INF/liferay-portlet.xml");
+
+		FileUtil.replaceString(
+			liferayDisplayXML, "7.0", "7." + minorVersionString);
+		FileUtil.replaceString(
+			liferayDisplayXML, "7_0", "7_" + minorVersionString);
+
+		FileUtil.replaceString(
+			liferayPortletXML, "7.0", "7." + minorVersionString);
+		FileUtil.replaceString(
+			liferayPortletXML, "7_0", "7_" + minorVersionString);
 	}
 
 	@Override

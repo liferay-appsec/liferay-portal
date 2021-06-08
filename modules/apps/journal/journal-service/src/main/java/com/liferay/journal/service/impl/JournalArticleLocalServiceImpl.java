@@ -7599,15 +7599,12 @@ public class JournalArticleLocalServiceImpl
 				cacheable = _journalDefaultTemplateProvider.isCacheable();
 			}
 
-			Map<String, Object> contextObjects =
-				HashMapBuilder.<String, Object>put(
-					"friendlyURLs", _getFriendlyURLMap(article, themeDisplay)
-				).build();
-
 			content = JournalUtil.transform(
 				themeDisplay, tokens, viewMode, languageId, document,
 				portletRequestModel, script, langType, propagateException,
-				contextObjects);
+				HashMapBuilder.<String, Object>put(
+					"friendlyURLs", _getFriendlyURLMap(article, themeDisplay)
+				).build());
 
 			if (!pageFlow) {
 				JournalServiceConfiguration journalServiceConfiguration =

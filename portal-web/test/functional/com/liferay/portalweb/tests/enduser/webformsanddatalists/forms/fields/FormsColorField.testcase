@@ -32,25 +32,71 @@ definition {
 	}
 
 	@description = "Verify that a Color Field can be created"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeCreated {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133131 CanBeCreated pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Color");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		AssertElementPresent(
+			key_name = "Color",
+			locator1 = "FormFields#FIELD_TARGET_LABEL");
 	}
 
 	@description = "Verify that a Color Field can be deleted"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeDeleted {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133133 CanBeDeleted pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Color");
+
+		Form.closeSidebar();
+
+		Form.gotoAddField(
+			fieldPositionNumber = "1",
+			fieldType = "Numeric");
+
+		Form.closeSidebar();
+
+		FormsAdminNavigator.gotoDeleteField(fieldName = "Color");
+
+		FormFields.viewDeletedFieldLabel(fieldName = "Color");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormFields.viewDeletedFieldLabel(fieldName = "Color");
 	}
 
 	@description = "Verify that a Color Field can be duplicated"
@@ -65,25 +111,86 @@ definition {
 	}
 
 	@description = "Verify that a Color Field can be edited"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeEdited {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133132 CanBeEdited pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Color");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormsAdminNavigator.gotoEditField(fieldName = "Color");
+
+		FormViewBuilder.editFieldLabel(
+			fieldLabel = "Color",
+			label = "Test Color");
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "Test Color");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "Test Color");
+
+		FormViewBuilder.validateNoFieldLabel(fieldLabel = "Color");
 	}
 
 	@description = "Verify that a Color Field can be required"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeRequired {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133134 CanBeRequired pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Color",
+			formPageNumber = "0");
+
+		FormFields.enableSwitcher(fieldName = "Required Field");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormViewBuilder.validateFieldLabelRequired(fieldLabel = "Color");
+
+		FormPortlet.waitFormRenderer(text = "Submit");
+
+		FormPortlet.submitWithValidationError(validationErrorMessage = "This field is required.");
+
+		FormFields.editColor(
+			colorSwatchItem = "FF0D0D",
+			fieldLabel = "Color");
+
+		FormPortlet.submitSuccessfully();
 	}
 
 	@description = "Verify that a Color Field can be set to repeatable"
@@ -164,14 +271,36 @@ definition {
 	}
 
 	@description = "Verify that the Field Reference can be changed"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test ReferenceCanBeEdited {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-133139 ReferenceCanBeEdited pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Color");
+
+		Form.gotoAdvancedTab();
+
+		Form.editFieldReferenceMetal(fieldValue = "Color1234");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		Form.viewFieldReference(
+			fieldName = "Color",
+			key_fieldReference = "Color1234");
 	}
 
 	@description = "Verify that the Field Type can be changed"

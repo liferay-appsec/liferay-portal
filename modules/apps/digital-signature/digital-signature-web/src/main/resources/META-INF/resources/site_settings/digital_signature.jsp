@@ -20,6 +20,22 @@
 DigitalSignatureConfiguration digitalSignatureConfiguration = (DigitalSignatureConfiguration)request.getAttribute(DigitalSignatureConfiguration.class.getName());
 %>
 
+<div class="form-group row">
+	<div class="col-md-12">
+		<label class="control-label">
+			<liferay-ui:message key="site-settings-strategy" />
+
+			<liferay-ui:icon-help message='<%= LanguageUtil.format(resourceBundle, "site-settings-strategy-description", "digital-signature") %>' />
+		</label>
+	</div>
+
+	<c:if test="<%= Validator.isNotNull(digitalSignatureConfiguration.siteSettingsStrategy()) %>">
+		<div class="col-md-12">
+			<liferay-ui:message key='<%= "site-settings-strategy-" + digitalSignatureConfiguration.siteSettingsStrategy() %>' />
+		</div>
+	</c:if>
+</div>
+
 <div class="row">
 	<div class="col-md-12">
 
@@ -38,6 +54,13 @@ DigitalSignatureConfiguration digitalSignatureConfiguration = (DigitalSignatureC
 </div>
 
 <div id="<%= liferayPortletResponse.getNamespace() + "digitalSignatureProviderCredentials" %>">
+	<div class="mb-4">
+		<liferay-learn:message
+			key="docusign-credentials-help"
+			resource="digital-signature-web"
+		/>
+	</div>
+
 	<div class="form-group row">
 		<div class="col-md-6">
 			<aui:input disabled="<%= disabled %>" label="api-username" name="apiUsername" type="text" value="<%= GetterUtil.getString(request.getAttribute(DigitalSignatureWebKeys.DIGITAL_SIGNATURE_API_USERNAME)) %>" />

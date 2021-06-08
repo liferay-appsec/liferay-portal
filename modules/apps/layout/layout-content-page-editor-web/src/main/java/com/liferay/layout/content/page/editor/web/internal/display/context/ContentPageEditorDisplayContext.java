@@ -353,10 +353,6 @@ public class ContentPageEditorDisplayContext {
 					return layout.isDraft();
 				}
 			).put(
-				"dropdownWidgetTopperEnabled",
-				_ffLayoutContentPageEditorConfiguration.
-					dropdownWidgetTopperEnabled()
-			).put(
 				"duplicateItemURL",
 				getFragmentEntryActionURL(
 					"/layout_content_page_editor/duplicate_item")
@@ -629,7 +625,9 @@ public class ContentPageEditorDisplayContext {
 			).put(
 				"pageContents",
 				ContentUtil.getPageContentsJSONArray(
-					httpServletRequest, themeDisplay.getPlid())
+					httpServletRequest,
+					PortalUtil.getHttpServletResponse(_renderResponse),
+					themeDisplay.getPlid())
 			).put(
 				"permissions",
 				HashMapBuilder.<String, Object>put(

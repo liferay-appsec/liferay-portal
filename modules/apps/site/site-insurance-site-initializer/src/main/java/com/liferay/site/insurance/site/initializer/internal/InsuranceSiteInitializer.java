@@ -213,7 +213,6 @@ public class InsuranceSiteInitializer implements SiteInitializer {
 			Map<String, String> resourcesMap)
 		throws Exception {
 
-		String name = pageJSONObject.getString("name");
 		String type = StringUtil.toLowerCase(pageJSONObject.getString("type"));
 
 		Layout layout = _layoutLocalService.addLayout(
@@ -221,7 +220,7 @@ public class InsuranceSiteInitializer implements SiteInitializer {
 			pageJSONObject.getBoolean("private"),
 			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
 			HashMapBuilder.put(
-				LocaleUtil.getSiteDefault(), name
+				LocaleUtil.getSiteDefault(), pageJSONObject.getString("name")
 			).build(),
 			new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(),
 			type, null, false, false, new HashMap<>(), _serviceContext);

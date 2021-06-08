@@ -317,23 +317,27 @@ public class ItemSelectorImpl implements ItemSelector {
 		String itemSelectedEventName,
 		ItemSelectorCriterion... itemSelectorCriteria) {
 
-		StringBundler sb = new StringBundler(itemSelectorCriteria.length * 2);
-
-		for (ItemSelectorCriterion itemSelectorCriterion :
-				itemSelectorCriteria) {
-
-			sb.append(
-				ItemSelectorKeyUtil.getItemSelectorCriterionKey(
-					itemSelectorCriterion.getClass()));
-			sb.append(StringPool.COMMA);
-		}
-
-		if (itemSelectorCriteria.length > 0) {
-			sb.setIndex(sb.index() - 1);
-		}
-
 		Map<String, String[]> parameters = HashMapBuilder.put(
-			PARAMETER_CRITERIA, new String[] {sb.toString()}
+			PARAMETER_CRITERIA,
+			() -> {
+				StringBundler sb = new StringBundler(
+					itemSelectorCriteria.length * 2);
+
+				for (ItemSelectorCriterion itemSelectorCriterion :
+						itemSelectorCriteria) {
+
+					sb.append(
+						ItemSelectorKeyUtil.getItemSelectorCriterionKey(
+							itemSelectorCriterion.getClass()));
+					sb.append(StringPool.COMMA);
+				}
+
+				if (itemSelectorCriteria.length > 0) {
+					sb.setIndex(sb.index() - 1);
+				}
+
+				return new String[] {sb.toString()};
+			}
 		).put(
 			PARAMETER_ITEM_SELECTED_EVENT_NAME,
 			new String[] {itemSelectedEventName}

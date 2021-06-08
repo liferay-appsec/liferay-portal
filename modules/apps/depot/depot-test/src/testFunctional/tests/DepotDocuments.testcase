@@ -112,9 +112,12 @@ definition {
 			depotDescription = "This is the description of a depot",
 			depotName = "Test Depot Name");
 
-		DepotNavigator.openDepotDocumentsAndMediaAdmin(depotName = "Test Depot Name");
+		JSONDocument.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder Name",
+			groupName = "Test Depot Name");
 
-		DMFolder.addCP(dmFolderName = "DM Folder Name");
+		DepotNavigator.openDepotDocumentsAndMediaAdmin(depotName = "Test Depot Name");
 
 		DMFolder.deleteCP(dmFolderName = "DM Folder Name");
 
@@ -145,6 +148,7 @@ definition {
 	@description = "This test edits the title and description of a document in a depot."
 	@priority = "5"
 	@refactorneeded
+	@uitest
 	test EditDocument {
 		property portal.acceptance = "true";
 
@@ -177,6 +181,7 @@ definition {
 	@description = "This ensures that a folder can be edited in a depot."
 	@priority = "5"
 	@refactorneeded
+	@uitest
 	test EditFolder {
 		JSONDepot.addDepot(
 			depotDescription = "This is the description of a depot",
@@ -255,11 +260,10 @@ definition {
 			dmDocumentTitle = "DM Document Title",
 			groupName = "Test Depot Name");
 
-		DepotNavigator.openDepotDocumentsAndMediaAdmin(depotName = "Test Depot Name");
-
-		DMFolder.addCP(
+		JSONDocument.addFolder(
 			dmFolderDescription = "DM Folder Description",
-			dmFolderName = "DM Folder Name");
+			dmFolderName = "DM Folder Name",
+			groupName = "Test Depot Name");
 
 		DepotNavigator.openDepotDocumentsAndMediaAdmin(depotName = "Test Depot Name");
 

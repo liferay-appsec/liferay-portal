@@ -171,13 +171,13 @@ message.
 	</target>
 
 	<target name="bom-all">
+		<echo>Manually run "ant all" or "ant snapshot-bundle" to initialize the bundle.</echo>
+
 		<setup-sdk />
 
-		<gradle-execute setupbinariescache="false" task="lockBOMDependencyVersion">
+		<gradle-execute setupbinariescache="false" task="deployReleng">
 			<arg value="--build-file=${project.dir}/modules/releng.gradle" />
 		</gradle-execute>
-
-		<antcall target="all" />
 	</target>
 
 	<target name="clean">
@@ -592,6 +592,28 @@ message.
 		>
 			<include name="liferay-*${lp.version.dtd}.dtd" />
 		</DTDDoc>
+	</target>
+
+	<target name="generate-config-env">
+		<pathconvert pathsep="," property="configuration.java.files">
+			<fileset
+				dir="modules"
+				excludes=""
+				includes="**/apps/**/configuration/*Configuration.java"
+			>
+			</fileset>
+		</pathconvert>
+
+		<java
+			classname="com.liferay.portal.tools.ConfigurationEnvBuilder"
+			classpathref="project.classpath"
+			dir="${project.dir}/modules"
+			fork="${fork.mode}"
+			newenvironment="true"
+		>
+			<arg value="configuration.java.files=${configuration.java.files}" />
+			<arg value="output.file=${project.dir}/modules/configuration-env.txt" />
+		</java>
 	</target>
 
 	<target name="install-portal-snapshots">

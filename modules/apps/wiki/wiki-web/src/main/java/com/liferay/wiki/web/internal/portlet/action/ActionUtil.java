@@ -242,14 +242,17 @@ public class ActionUtil {
 		LiferayPortletResponse liferayPortletResponse =
 			PortalUtil.getLiferayPortletResponse(portletResponse);
 
-		WikiNode sourceNode = sourcePage.getNode();
-
 		PortletURL viewPageURL = PortletURLBuilder.createRenderURL(
 			liferayPortletResponse
 		).setMVCRenderCommandName(
 			"wiki/view"
 		).setParameter(
-			"nodeName", sourceNode.getName()
+			"nodeName",
+			() -> {
+				WikiNode sourceNode = sourcePage.getNode();
+
+				return sourceNode.getName();
+			}
 		).build();
 
 		PortletURL editPageURL = PortletURLBuilder.createRenderURL(

@@ -1,0 +1,71 @@
+@component-name = "portal-analytics-cloud"
+definition {
+
+	property analytics.cloud.enabled = "true";
+	property minimum.slave.ram = "32";
+	property portal.release = "false";
+	property portal.upstream = "true";
+	property testray.main.component.name = "Analytics Cloud";
+
+	setUp {
+		ACUtils.launchAC();
+
+		ACSettings.takeTokenFromAnalyticsCloud();
+
+		TestCase.setUpPortalInstance();
+
+		ACUtils.launchDXP();
+	}
+
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		ACUtils.tearDownDXP();
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+	}
+
+	@description = "Set custom range filter with empty data for individual activity"
+	@priority = "5"
+	test CanSetEmptyDataCustomRangeOnIndividualActivitiesCard {
+		Navigator.openURL();
+		ACUtils.addSiteAndPage();
+		ACUtils.createDMAndAddToPage();
+		ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
+
+		for (var n : list "1,2,3,4") {
+			Navigator.gotoSitePage(
+				pageName = "AC Page",
+				siteName = "Site Name");
+
+			DMNavigator.gotoDocumentCP(dmDocumentTitle = "DM AC Title");
+		}
+
+		Pause(locator1 = "10000");
+
+		ACUtils.closeAllSessions();
+
+		Pause(locator1 = "30000");
+
+		ACUtils.launchAC();
+
+		ACProperties.switchProperty(propertyName = "Liferay DXP");
+
+		ACNavigation.goToIndividuals();
+
+		ACTimeFilter.setCustomRange(
+			endDay = "13",
+			endMonth = "July",
+			endYear = "2020",
+			startDay = "1",
+			startMonth = "July",
+			startYear = "2020");
+
+		ACTimeFilter.assertCurrentTimeFilterRange(timeFilterRange = "Jul 1, 2020 - Jul 13, 2020");
+
+		AssertElementNotPresent(locator1 = "ACIndividualsDashboard#ACTIVE_INDIVIDUAL_CHART");
+	}
+
+}

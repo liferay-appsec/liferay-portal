@@ -565,20 +565,23 @@ public class DataEngineExpandoBridgeImpl implements ExpandoBridge {
 
 		DataDefinitionField dataDefinitionField = new DataDefinitionField();
 
-		Map<String, DDMFormField> settingsDDMFormFields =
-			SettingsDDMFormFieldsUtil.getSettingsDDMFormFields(
-				_ddmFormFieldTypeServicesTracker, fieldType);
-
-		DDMFormField settingsDDMFormField = settingsDDMFormFields.get(
-			"dataType");
-
-		LocalizedValue localizedValue =
-			settingsDDMFormField.getPredefinedValue();
-
 		dataDefinitionField.setCustomProperties(
 			HashMapBuilder.<String, Object>put(
 				"dataType",
-				localizedValue.getString(localizedValue.getDefaultLocale())
+				() -> {
+					Map<String, DDMFormField> settingsDDMFormFields =
+						SettingsDDMFormFieldsUtil.getSettingsDDMFormFields(
+							_ddmFormFieldTypeServicesTracker, fieldType);
+
+					DDMFormField settingsDDMFormField =
+						settingsDDMFormFields.get("dataType");
+
+					LocalizedValue localizedValue =
+						settingsDDMFormField.getPredefinedValue();
+
+					return localizedValue.getString(
+						localizedValue.getDefaultLocale());
+				}
 			).build());
 
 		dataDefinitionField.setDefaultValue(

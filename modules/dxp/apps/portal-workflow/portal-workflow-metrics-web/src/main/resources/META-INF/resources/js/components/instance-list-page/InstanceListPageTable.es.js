@@ -34,7 +34,10 @@ const Table = ({items, totalCount}) => {
 					</ClayTable.Cell>
 
 					<ClayTable.Cell headingCell style={{width: '13%'}}>
-						{Liferay.Language.get('item-subject')}
+						<ListHeadItem
+							name="assetType"
+							title={Liferay.Language.get('item-subject')}
+						/>
 					</ClayTable.Cell>
 
 					<ClayTable.Cell headingCell style={{width: '14%'}}>

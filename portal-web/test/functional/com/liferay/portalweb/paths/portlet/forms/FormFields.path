@@ -9,6 +9,11 @@
 </thead>
 <tbody>
 <tr>
+	<td>ANY_CHECKBOX_CHECKED</td>
+	<td>//label[contains(.,'${checkboxName}')]/input[@type='checkbox' and @checked]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>FIELD_ADD</td>
 	<td>//div[contains(@class,'form-field-repeatable-toolbar')]//a[contains(@class,'add-button')]</td>
 	<td></td>
@@ -229,6 +234,17 @@
 	<td></td>
 	<td></td>
 </tr>
+<!--IMAGE-->
+<tr>
+	<td>IMAGE_FIELD_DESCRIPTION</td>
+	<td>//div[contains(@class,'form-group')]//input[@type='text' and @value='${key_description}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td></td>
+	<td></td>
+	<td></td>
+</tr>
 <!--GRID-->
 <tr>
 	<td>GRID_OPTIONS_OPTION_DELETE_ROW_BUTTON</td>
@@ -268,6 +284,16 @@
 <tr>
 	<td>GRID_OPTIONS_DRAG_ICON_2</td>
 	<td>//div[contains(@class,'form-group') and contains(.//label, '${key_gridField}')]//div[@class='ddm-options-target'][${key_rowNumber2}]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>GRID_OPTIONS_OPTION_ROW_NAME</td>
+	<td>//legend[text()='${key_fieldName}']/following-sibling::div[1]//..//tr[${key_rowNumber}]/td[contains(.,'${key_optionName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>GRID_OPTIONS_OPTION_COL_NAME</td>
+	<td>//legend[text()='${key_fieldName}']/following-sibling::div[1]//..//tr[${key_rowNumber}]/th[contains(.,'${key_optionName}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -483,7 +509,7 @@
 </tr>
 <tr>
 	<td>SELECT_OPTIONS_FIELD_BY_ROW_PREVIEW</td>
-	<td>//button[contains(text(),'${key_fieldName}') and contains(@data-testid, '${key_rowPosition}')]</td>
+	<td>//button[contains(text(),'${key_optionValue}') and contains(@data-testid, '${key_rowPosition}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -504,6 +530,11 @@
 <tr>
 	<td>SELECT_SINGLE_SELECTION_ROW_OPTION</td>
 	<td>//div[@class='ddm-field' and contains(@data-field-name,'${key_fieldName}')][${key_rowNumber}]//span[text()='${key_optionValue}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SELECT_SINGLE_SELECTION_ROW_OPTION_INPUT</td>
+	<td>//div[@class='ddm-field' and contains(@data-field-name,'${key_fieldName}')][${key_rowNumber}]//span[text()='${key_optionValue}']/../..//input</td>
 	<td></td>
 </tr>
 <tr>
@@ -552,6 +583,11 @@
 <tr>
 	<td>VALIDATION_ARGUMENT_OPTION</td>
 	<td>//div[contains(@data-field-name,'validation')]//ul[contains(@class,'results-chosen')]//li[contains(.,'${key_validationArgument}')] | //div[contains(@class,'dropdown-menu') and contains(@class,'show')]//ul[contains(@class,'list-unstyled')]//button[contains(text(),'${key_validationArgument}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VALIDATION_ARGUMENT_OPTION_TARGET_INPUT</td>
+	<td>//div[contains(@class,'dropdown-menu') and contains(@class,'show')]//ul[contains(@class,'list-unstyled')]//button[text()='${key_validationArgument}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -638,6 +674,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>UPLOAD_ON_WIDGET_ON_ANY_ROW</td>
+	<td>//div[@class='ddm-field'][${key_rowNumber}]//button[contains(text(),'Select')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>UPLOAD_ON_DUPLICATE_FIELD</td>
 	<td>//div[@class='ddm-field'][2]//button[contains(text(),'Select')]</td>
 	<td></td>
@@ -684,6 +725,13 @@
 	<td>//td[contains(@class,'lfr-image-column')]</td>
 	<td></td>
 </tr>
+<!--TRANSLATION-->
+<tr>
+	<td>TRANSLATION_LIST</td>
+	<td>xpath=//ul[@class='nav nav-underline lfr-translationmanager']//li[@class='nav-item'][${key_position}]/..//span[contains(text(),'${key_language}')]</td>
+	<td></td>
+</tr>
+
 </tbody>
 </table>
 </body>

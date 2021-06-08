@@ -104,8 +104,6 @@ public class MenuItemProvider {
 				PortalUtil.getHttpServletRequest(portletRequest),
 				"file-upload"));
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
 		urlMenuItem.setURL(
 			PortletURLBuilder.create(
 				_getPortletURL(themeDisplay, portletRequest)
@@ -120,7 +118,13 @@ public class MenuItemProvider {
 			).setParameter(
 				"folderId", folderId
 			).setParameter(
-				"portletResource", portletDisplay.getId()
+				"portletResource",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
+
+					return portletDisplay.getId();
+				}
 			).setParameter(
 				"repositoryId", _getRepositoryId(folder, themeDisplay)
 			).buildString());
@@ -150,8 +154,6 @@ public class MenuItemProvider {
 			LanguageUtil.get(
 				PortalUtil.getHttpServletRequest(portletRequest), "folder"));
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
 		urlMenuItem.setURL(
 			PortletURLBuilder.create(
 				_getPortletURL(themeDisplay, portletRequest)
@@ -164,7 +166,13 @@ public class MenuItemProvider {
 			).setParameter(
 				"parentFolderId", folderId
 			).setParameter(
-				"portletResource", portletDisplay.getId()
+				"portletResource",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
+
+					return portletDisplay.getId();
+				}
 			).setParameter(
 				"repositoryId", _getRepositoryId(folder, themeDisplay)
 			).buildString());
@@ -200,8 +208,6 @@ public class MenuItemProvider {
 		urlMenuItem.setLabel(
 			LanguageUtil.get(resourceBundle, "multiple-files-upload"));
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
 		urlMenuItem.setURL(
 			PortletURLBuilder.create(
 				_getPortletURL(themeDisplay, portletRequest)
@@ -212,7 +218,13 @@ public class MenuItemProvider {
 			).setParameter(
 				"folderId", folderId
 			).setParameter(
-				"portletResource", portletDisplay.getId()
+				"portletResource",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
+
+					return portletDisplay.getId();
+				}
 			).setParameter(
 				"repositoryId", _getRepositoryId(folder, themeDisplay)
 			).buildString());
@@ -282,8 +294,6 @@ public class MenuItemProvider {
 			LanguageUtil.get(
 				PortalUtil.getHttpServletRequest(portletRequest), "shortcut"));
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
 		urlMenuItem.setURL(
 			PortletURLBuilder.create(
 				_getPortletURL(themeDisplay, portletRequest)
@@ -294,7 +304,13 @@ public class MenuItemProvider {
 			).setParameter(
 				"folderId", folderId
 			).setParameter(
-				"portletResource", portletDisplay.getId()
+				"portletResource",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
+
+					return portletDisplay.getId();
+				}
 			).setParameter(
 				"repositoryId", _getRepositoryId(folder, themeDisplay)
 			).buildString());
@@ -341,8 +357,6 @@ public class MenuItemProvider {
 
 		urlMenuItem.setLabel(label);
 
-		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
-
 		urlMenuItem.setURL(
 			PortletURLBuilder.create(
 				_getPortletURL(themeDisplay, portletRequest)
@@ -357,7 +371,13 @@ public class MenuItemProvider {
 			).setParameter(
 				"folderId", _getFolderId(folder)
 			).setParameter(
-				"portletResource", portletDisplay.getId()
+				"portletResource",
+				() -> {
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
+
+					return portletDisplay.getId();
+				}
 			).setParameter(
 				"repositoryId", _getRepositoryId(folder, themeDisplay)
 			).buildString());

@@ -313,6 +313,18 @@ definition {
 			value1 = "${formName}");
 	}
 
+	macro editPageDescription {
+		ScrollWebElementIntoView(locator1 = "Form#PAGE_DESCRIPTION_FIELD");
+
+		WaitForElementPresent(
+			locator1 = "Form#PAGE_DESCRIPTION_FIELD",
+			value1 = "${formPageDescriptionName}");
+
+		Type(
+			locator1 = "Form#PAGE_DESCRIPTION_FIELD",
+			value1 = "${formPageDescriptionName}");
+	}
+
 	macro editPageTitle {
 		var key_titleNumber = "${formTitleNumber}";
 
@@ -687,17 +699,16 @@ definition {
 		AssertElementPresent(locator1 = "Form#ALT_PAGINATION_SUCCESS_PAGE");
 	}
 
-	macro viewFieldReferenceFromTextField {
+	macro viewFieldReference {
 		Click(
-			key_fieldName = "Text",
-			key_fieldPositionNumber = "1",
-			locator1 = "Form#FIELD_BODY_IN_SPECIFIC_POSITION");
+			key_fieldName = "${fieldName}",
+			locator1 = "Form#FIELD_BODY");
 
 		Form.gotoAdvancedTab();
 
 		AssertTextEquals(
 			locator1 = "Form#FIELD_REFERENCE",
-			value1 = "${key_fieldReferenceText}");
+			value1 = "${key_fieldReference}");
 	}
 
 	macro viewFormDescription {
@@ -760,9 +771,9 @@ definition {
 			value1 = "Draft");
 	}
 
-	macro viewSelectFromListOnPreview {
+	macro viewSelectFromListOptionOnPreview {
 		AssertElementPresent(
-			key_fieldName = "${fieldName}",
+			key_optionValue = "${optionValue}",
 			key_rowPosition = "${rowPosition}",
 			locator1 = "FormFields#SELECT_OPTIONS_FIELD_BY_ROW_PREVIEW");
 	}

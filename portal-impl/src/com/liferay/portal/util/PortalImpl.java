@@ -4146,8 +4146,6 @@ public class PortalImpl implements Portal {
 	public String getPortalURL(Layout layout, ThemeDisplay themeDisplay)
 		throws PortalException {
 
-		String serverName = themeDisplay.getServerName();
-
 		if (layout == null) {
 			layout = themeDisplay.getLayout();
 		}
@@ -4166,7 +4164,8 @@ public class PortalImpl implements Portal {
 		}
 
 		return getPortalURL(
-			serverName, themeDisplay.getServerPort(), themeDisplay.isSecure());
+			themeDisplay.getServerName(), themeDisplay.getServerPort(),
+			themeDisplay.isSecure());
 	}
 
 	@Override

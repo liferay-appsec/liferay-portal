@@ -236,14 +236,11 @@ public class CommerceCurrencyLocalServiceImpl
 					serviceContext.getLocale(), jsonObject.getString("name")
 				).build();
 
-				StringBundler sb = new StringBundler(3);
-
-				sb.append(symbol);
-				sb.append(StringPool.SPACE);
-				sb.append(CommerceCurrencyConstants.DEFAULT_FORMAT_PATTERN);
-
 				Map<Locale, String> formatPatternMap = HashMapBuilder.put(
-					serviceContext.getLocale(), sb.toString()
+					serviceContext.getLocale(),
+					StringBundler.concat(
+						symbol, StringPool.SPACE,
+						CommerceCurrencyConstants.DEFAULT_FORMAT_PATTERN)
 				).build();
 
 				RoundingMode roundingMode =

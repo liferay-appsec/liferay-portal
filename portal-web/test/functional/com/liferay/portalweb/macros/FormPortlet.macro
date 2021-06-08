@@ -59,6 +59,22 @@ definition {
 		FormPortlet.clickSubmit();
 	}
 
+	macro submitAndViewSuccessPage {
+		FormPortlet.submit();
+
+		if (!(isSet(successPageDescription))) {
+			var successPageDescription = "Your information was successfully received. Thank you for filling out the form.";
+		}
+
+		if (!(isSet(successPageTitle))) {
+			var successPageTitle = "Thank you.";
+		}
+
+		FormPortlet.viewSuccessPage(
+			successPageDescription = "${successPageDescription}",
+			successPageTitle = "${successPageTitle}");
+	}
+
 	macro submitLocalizedSuccessfully {
 		AssertClick(
 			locator1 = "Button#MAIN_CONTENT_SUBMIT",
@@ -75,6 +91,22 @@ definition {
 		WaitForElementPresent(locator1 = "Message#SUCCESS_DISMISSIBLE");
 
 		Alert.viewSuccessMessage();
+	}
+
+	macro submitSuccessfullyAndViewSuccessPage {
+		FormPortlet.submitSuccessfully();
+
+		if (!(isSet(successPageDescription))) {
+			var successPageDescription = "Your information was successfully received. Thank you for filling out the form.";
+		}
+
+		if (!(isSet(successPageTitle))) {
+			var successPageTitle = "Thank you.";
+		}
+
+		FormPortlet.viewSuccessPage(
+			successPageDescription = "${successPageDescription}",
+			successPageTitle = "${successPageTitle}");
 	}
 
 	macro submitWithError {

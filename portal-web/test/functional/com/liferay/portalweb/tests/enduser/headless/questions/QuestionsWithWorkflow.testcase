@@ -41,6 +41,8 @@ definition {
 	@description = "Validate if a user can answer a question that was posted before the workflow was enabled."
 	@priority = "4"
 	test CanAddAnswerViaJSONAfterEnablingWorkflow {
+		property test.name.skip.portal.instance = "QuestionsWidgetActions#CanAddAnswerViaJSONAfterEnablingWorkflow";
+
 		JSONMBMessage.addCategory(
 			categoryDescription = "Description",
 			categoryName = "Questions Test Category",
@@ -80,6 +82,8 @@ definition {
 	@description = "Validate if a question can be approved."
 	@priority = "4"
 	test CanApproveQuestion {
+		property test.name.skip.portal.instance = "QuestionsWidgetActions#CanApproveQuestion";
+
 		Questions.openToConfigInSystemSettings(portlet = "Message Boards Moderation Workflow");
 
 		SystemSettings.configureSystemSetting(
@@ -133,9 +137,50 @@ definition {
 			titleField = "Title AddQuestion");
 	}
 
+	@description = "Validate if a user can view a question with history router when enabling MB Moderation."
+	@priority = "3"
+	test CanSetHistoryRouterWithWorkflow {
+		property test.name.skip.portal.instance = "QuestionsWidgetActions#CanSetHistoryRouterWithWorkflow";
+
+		Questions.openToConfigInSystemSettings(portlet = "Questions");
+
+		SystemSettings.editTextAreaSetting(
+			settingName = "Set Base Path for History Router",
+			settingValue = "/questions-page");
+
+		SystemSettings.saveConfiguration();
+
+		Questions.openToConfigInSystemSettings(portlet = "Message Boards Moderation Workflow");
+
+		SystemSettings.configureSystemSetting(
+			enableSetting = "true",
+			settingFieldName = "Enable Message Boards Moderation");
+
+		JSONMBMessage.addCategory(
+			categoryDescription = "Description",
+			categoryName = "Questions Test Category",
+			userEmailAddress = "test@liferay.com");
+
+		JSONQuestions.addQuestion(
+			bodyField = "Body AddQuestion",
+			categoryName = "Questions Test Category",
+			groupName = "Guest",
+			titleField = "Title AddQuestion");
+
+		Questions.openToQuestionDetails(
+			friendlyURL = "questions-page",
+			historyRouter = "true",
+			questionsTitle = "title-addquestion",
+			topicName = "questions-test-category");
+
+		Questions.viewStatus(status = "pending");
+	}
+
 	@description = "Validate if the pending status can be returned through JSON once MB moderation Workflow is enabled."
 	@priority = "4"
 	test PendingStatusCanBeReturnedThroughJSON {
+		property test.name.skip.portal.instance = "QuestionsWidgetActions#PendingStatusCanBeReturnedThroughJSON";
+
 		Questions.openToConfigInSystemSettings(portlet = "Message Boards Moderation Workflow");
 
 		SystemSettings.configureSystemSetting(
@@ -163,6 +208,7 @@ definition {
 	@priority = "4"
 	test RelatedQuestionCanBeViewedAfterApproving {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
+		property test.name.skip.portal.instance = "QuestionsWidgetActions#RelatedQuestionCanBeViewedAfterApproving";
 
 		JSONUser.addUser(
 			userEmailAddress = "userea@liferay.com",

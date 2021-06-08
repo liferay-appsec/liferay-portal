@@ -1,2 +1,8 @@
 {
+	"docusign-credentials-help": {
+		"en_US": {
+			"message": "Get my credentials for DocuSign.",
+			"url": "https://learn.liferay.com"
+		}
+	}
 }

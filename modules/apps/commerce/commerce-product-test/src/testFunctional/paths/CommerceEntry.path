@@ -199,6 +199,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>CURRENCY_COLUMN_VALUE</td>
+	<td>//td[contains(@class,'lfr-name-column')]//*[text()='${key_entryName}']/../..//td[contains(@class,'${key_columnClassName}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>DISCOUNT_TARGET_SELECT</td>
 	<td>//div[label[contains(.,'Target')]]/select</td>
 	<td></td>
@@ -537,6 +542,11 @@
 	<td>//div[contains(@class,'side-panel') and contains(@class,'is-visible')]//iframe</td>
 	<td></td>
 </tr>
+<tr>
+	<td>ANY_IFRAME</td>
+	<td>//iframe[@title='${key_frameTitle}']</td>
+	<td></td>
+</tr>
 <!--PRICE-->
 <tr>
 	<td>INPUT_PRICE</td>
@@ -692,6 +702,11 @@
 <tr>
 	<td>SEARCH_PRODUCT_RELATIONS</td>
 	<td>//input[@data-qa-id='searchInput']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TABLE_SEARCH_BY_NAME_AND_CONTENT</td>
+	<td>//div[@class='dnd-td' and contains(.,'${key_productName}')]/following-sibling::div[contains(text(),'${key_value}')]</td>
 	<td></td>
 </tr>
 <tr>

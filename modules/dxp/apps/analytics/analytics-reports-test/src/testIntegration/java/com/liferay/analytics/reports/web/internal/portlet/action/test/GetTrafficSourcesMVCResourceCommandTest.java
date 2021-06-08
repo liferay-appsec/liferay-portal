@@ -94,14 +94,17 @@ public class GetTrafficSourcesMVCResourceCommandTest {
 		ReflectionTestUtil.setFieldValue(
 			PrefsPropsUtil.class, "_prefsProps", validPrefsPropsWrapper);
 
-		String dataSourceId = validPrefsPropsWrapper.getString(
-			RandomTestUtil.nextLong(), "liferayAnalyticsDataSourceId");
-
 		ReflectionTestUtil.setFieldValue(
 			_mvcResourceCommand, "_http",
 			MockHttpUtil.geHttp(
 				HashMapBuilder.<String, UnsafeSupplier<String, Exception>>put(
-					"/api/1.0/data-sources/" + dataSourceId,
+					() -> {
+						String dataSourceId = validPrefsPropsWrapper.getString(
+							RandomTestUtil.nextLong(),
+							"liferayAnalyticsDataSourceId");
+
+						return "/api/1.0/data-sources/" + dataSourceId;
+					},
 					() -> StringPool.BLANK
 				).put(
 					"/api/1.0/pages/acquisition-channels",

@@ -417,17 +417,20 @@ public class MBMessageLocalServiceImpl extends MBMessageLocalServiceBaseImpl {
 
 		body = getBody(subject, body, format);
 
-		boolean discussion = false;
-
-		if (categoryId == MBCategoryConstants.DISCUSSION_CATEGORY_ID) {
-			discussion = true;
-		}
-
 		body = SanitizerUtil.sanitize(
 			user.getCompanyId(), groupId, userId, MBMessage.class.getName(),
 			messageId, "text/" + format, Sanitizer.MODE_ALL, body,
 			HashMapBuilder.<String, Object>put(
-				"discussion", discussion
+				"discussion",
+				() -> {
+					if (categoryId ==
+							MBCategoryConstants.DISCUSSION_CATEGORY_ID) {
+
+						return true;
+					}
+
+					return false;
+				}
 			).build());
 
 		validate(subject, body);
@@ -1738,9 +1741,7 @@ public class MBMessageLocalServiceImpl extends MBMessageLocalServiceBaseImpl {
 
 		User user = userLocalService.getUser(userId);
 
-		Date now = new Date();
-
-		Date modifiedDate = serviceContext.getModifiedDate(now);
+		Date modifiedDate = serviceContext.getModifiedDate(new Date());
 
 		message.setStatus(status);
 		message.setStatusByUserId(userId);

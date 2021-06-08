@@ -61,11 +61,31 @@ definition {
 	}
 
 	macro editDateCriterion {
-		var key_MonthInput = "${monthInput}";
-		var key_DayInput = "${dayInput}";
-		var key_YearInput = "${yearInput}";
+		var key_year = "${year}";
+		var key_month = "${month}";
+		var key_day = "${day}";
 
 		Click(locator1 = "ACSegments#CALENDAR_INPUT");
+
+		for (var n : list "${repetitionList}") {
+			var key_indexCalendar = "2";
+
+			Click(locator1 = "ACSegments#MONTH_AND_YEAR_CALENDAR");
+
+			Click(locator1 = "ACSegments#YEAR_CALENDAR_OPTION");
+
+			var key_indexCalendar = "1";
+
+			Click(locator1 = "ACSegments#MONTH_AND_YEAR_CALENDAR");
+
+			Click(locator1 = "ACSegments#MONTH_CALENDAR_OPTION");
+
+			Click(locator1 = "ACSegments#DAY_CALENDAR_OPTION");
+
+			var key_year = "${year2}";
+			var key_month = "${month2}";
+			var key_day = "${day2}";
+		}
 	}
 
 	macro editFormControlCriterion {
@@ -101,19 +121,77 @@ definition {
 	}
 
 	macro editWebBehaviorCriterion {
-		var key_AtLeastMostOption = "${atLeastMost}";
+		if (isSet(activitiesOption)) {
+			Select(
+				key_indexField = "${indexField}",
+				locator1 = "ACSegments#ACTIVITIES_CRITERION",
+				value1 = "${activitiesOption}");
+		}
 
-		Click(locator1 = "ACSegments#SELECT_BUTTON");
+		ACSegments.selectDocument(
+			documentTitle = "${searchTerm}",
+			indexField = "${indexField}");
 
-		ACSegments.searchSegment(findSegment = "${searchTerm}");
+		if (isSet(atLeastMost)) {
+			Select(
+				key_indexField = "${indexField}",
+				locator1 = "ACSegments#OCCURENCE_SELECT",
+				value1 = "${atLeastMost}");
+		}
 
-		Click(locator1 = "ACSegments#TABLE_CHECKBOX");
+		if (isSet(occurenceNumber)) {
+			ACSegments.setOccurence(occurenceNumber = "${occurenceNumber}");
+		}
 
-		Click(locator1 = "ACSegments#ADD_BUTTON");
+		if (isSet(timeOption) || isSet(timePeriod)) {
+			ACSegments.editWebBehaviorTimeCriterion(
+				day = "${day}",
+				day2 = "${day2}",
+				indexField = "${indexField}",
+				month = "${month}",
+				month2 = "${month2}",
+				timeOption = "${timeOption}",
+				timePeriod = "${timePeriod}",
+				year = "${year}",
+				year2 = "${year2}");
+		}
+	}
 
-		Select(
-			locator1 = "ACSegments#OPTION_SELECT",
-			value1 = "${atLeastMost}");
+	macro editWebBehaviorTimeCriterion {
+		if (isSet(timeOption)) {
+			Select(
+				key_indexField = "${indexField}",
+				locator1 = "ACSegments#TIME_INPUT_CRITERION_CONJUNCTION",
+				value1 = "${timeOption}");
+		}
+
+		if (isSet(timePeriod)) {
+			if ("${timeOption}" == "since" || !(isSet(timeOption))) {
+				Select(
+					key_indexField = "${indexField}",
+					locator1 = "ACSegments#TIME_INPUT_CRITERION",
+					value1 = "${timePeriod}");
+			}
+		}
+
+		if ("${timeOption}" == "after" || "${timeOption}" == "before" || "${timeOption}" == "on") {
+			ACSegments.editDateCriterion(
+				day = "${day}",
+				month = "${month}",
+				repetitionList = "1",
+				year = "${year}");
+		}
+
+		if ("${timeOption}" == "between") {
+			ACSegments.editDateCriterion(
+				day = "${day}",
+				day2 = "${day2}",
+				month = "${month}",
+				month2 = "${month2}",
+				repetitionList = "1,2",
+				year = "${year}",
+				year2 = "${year2}");
+		}
 	}
 
 	macro goToSidebarAttrributes {
@@ -153,21 +231,27 @@ definition {
 	}
 
 	macro searchSegment {
-		var key_SearchTerm = "${searchTerm}";
+		var searchTerm = "${findSegment}";
 
 		Type(
 			locator1 = "ACSegments#SEARCH_SEGMENT",
 			value1 = "${searchTerm}");
+
+		KeyPress(
+			locator1 = "ACSettings#SEARCH_BAR",
+			value1 = "\ENTER");
 	}
 
 	macro selectDocument {
 		var key_indexField = "${indexField}";
 
-		var key_titleName = "${titleName}";
+		var key_TableMember = "${documentTitle}";
 
 		Click(locator1 = "ACSegments#SELECT_BUTTON");
 
-		Click(locator1 = "ACSegments#SELECT_DOCUMENT");
+		ACSegments.searchSegment(findSegment = "${documentTitle}");
+
+		Click(locator1 = "ACSegments#TABLE_CHECKBOX");
 
 		Click(locator1 = "ACSegments#ADD_BUTTON");
 	}
@@ -179,8 +263,6 @@ definition {
 	}
 
 	macro setOccurence {
-		Click(locator1 = "ACSegments#OCCURENCE_INPUT");
-
 		Type(
 			locator1 = "ACSegments#OCCURENCE_INPUT",
 			value1 = "${occurenceNumber}");

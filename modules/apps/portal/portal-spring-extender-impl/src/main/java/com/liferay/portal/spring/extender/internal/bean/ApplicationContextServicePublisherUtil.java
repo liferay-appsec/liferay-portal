@@ -155,13 +155,16 @@ public class ApplicationContextServicePublisherUtil {
 			return null;
 		}
 
-		Bundle bundle = bundleContext.getBundle();
-
 		HashMapDictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
 				"bean.id", beanName
 			).put(
-				"origin.bundle.symbolic.name", bundle.getSymbolicName()
+				"origin.bundle.symbolic.name",
+				() -> {
+					Bundle bundle = bundleContext.getBundle();
+
+					return bundle.getSymbolicName();
+				}
 			).build();
 
 		if (osgiBeanProperties != null) {

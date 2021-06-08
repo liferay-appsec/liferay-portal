@@ -335,12 +335,10 @@ public class UserImpl extends UserBaseImpl {
 		String profileFriendlyURL = getProfileFriendlyURL();
 
 		if (profileFriendlyURL != null) {
-			String portalURL = themeDisplay.getPortalURL();
-
 			return PortalUtil.addPreservedParameters(
 				themeDisplay,
 				StringBundler.concat(
-					portalURL, PortalUtil.getPathContext(),
+					themeDisplay.getPortalURL(), PortalUtil.getPathContext(),
 					profileFriendlyURL));
 		}
 

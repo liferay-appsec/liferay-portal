@@ -282,7 +282,28 @@ public abstract class BaseCheck extends AbstractCheck {
 		CommonASTWithHiddenTokens commonASTWithHiddenTokens =
 			(CommonASTWithHiddenTokens)detailAST;
 
-		return commonASTWithHiddenTokens.getHiddenBefore();
+		CommonHiddenStreamToken commonHiddenStreamToken =
+			commonASTWithHiddenTokens.getHiddenBefore();
+
+		if (commonHiddenStreamToken != null) {
+			return commonHiddenStreamToken;
+		}
+
+		DetailAST previousSiblingDetailAST = detailAST.getPreviousSibling();
+
+		while (true) {
+			if (previousSiblingDetailAST == null) {
+				return null;
+			}
+
+			commonHiddenStreamToken = getHiddenAfter(previousSiblingDetailAST);
+
+			if (commonHiddenStreamToken != null) {
+				return commonHiddenStreamToken;
+			}
+
+			previousSiblingDetailAST = previousSiblingDetailAST.getLastChild();
+		}
 	}
 
 	protected List<String> getImportNames(DetailAST detailAST) {
@@ -871,29 +892,13 @@ public abstract class BaseCheck extends AbstractCheck {
 		CommonHiddenStreamToken commonHiddenStreamToken = getHiddenBefore(
 			detailAST);
 
-		if (commonHiddenStreamToken != null) {
-			String text = commonHiddenStreamToken.getText();
-
-			return text.contains("PLACEHOLDER");
+		if (commonHiddenStreamToken == null) {
+			return false;
 		}
 
-		DetailAST previousSiblingDetailAST = detailAST.getPreviousSibling();
+		String text = commonHiddenStreamToken.getText();
 
-		while (true) {
-			if (previousSiblingDetailAST == null) {
-				return false;
-			}
-
-			commonHiddenStreamToken = getHiddenAfter(previousSiblingDetailAST);
-
-			if (commonHiddenStreamToken != null) {
-				String text = commonHiddenStreamToken.getText();
-
-				return text.contains("PLACEHOLDER");
-			}
-
-			previousSiblingDetailAST = previousSiblingDetailAST.getLastChild();
-		}
+		return text.contains("PLACEHOLDER");
 	}
 
 	protected boolean isArray(DetailAST detailAST) {
@@ -1085,7 +1090,38 @@ public abstract class BaseCheck extends AbstractCheck {
 			if ((detailAST.getLineNo() < lineNumber) &&
 				(count != dependentIdentDetailASTList.size())) {
 
-				variables.addAll(_getVariables(detailAST, false));
+				if (getEndLineNumber(detailAST) < lineNumber) {
+					variables.addAll(_getVariables(detailAST, false));
+				}
+				else {
+					DetailAST elistDetailAST = getParentWithTokenType(
+						identDetailAST, TokenTypes.ELIST);
+
+					if (elistDetailAST == null) {
+						variables.addAll(_getVariables(detailAST, false));
+					}
+					else {
+						while (true) {
+							if (elistDetailAST == null) {
+								break;
+							}
+
+							DetailAST parentDetailAST =
+								elistDetailAST.getParent();
+
+							if (parentDetailAST.getLineNo() >= lineNumber) {
+								variables.addAll(
+									_getVariables(elistDetailAST, false));
+							}
+							else {
+								break;
+							}
+
+							elistDetailAST = getParentWithTokenType(
+								elistDetailAST, TokenTypes.ELIST);
+						}
+					}
+				}
 			}
 		}
 
@@ -1215,6 +1251,7 @@ public abstract class BaseCheck extends AbstractCheck {
 				typeName.equals("HttpServletRequest") ||
 				typeName.equals("RenderRequest") ||
 				typeName.equals("ResourceRequest") ||
+				typeName.equals("ThemeDisplay") ||
 				typeName.endsWith("PortletRequest")) {
 
 				String methodName = getMethodName(parentDetailAST.getParent());

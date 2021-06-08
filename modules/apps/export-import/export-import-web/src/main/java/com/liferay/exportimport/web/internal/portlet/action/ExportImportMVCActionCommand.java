@@ -243,8 +243,6 @@ public class ExportImportMVCActionCommand extends BaseMVCActionCommand {
 
 		Portlet portlet = ActionUtil.getPortlet(actionRequest);
 
-		Group group = themeDisplay.getScopeGroup();
-
 		Map<String, Serializable> importPortletSettingsMap =
 			_exportImportConfigurationSettingsMapFactory.
 				buildImportPortletSettingsMap(
@@ -254,7 +252,13 @@ public class ExportImportMVCActionCommand extends BaseMVCActionCommand {
 						actionRequest.getParameterMap()
 					).put(
 						"stagingSite",
-						new String[] {String.valueOf(group.isStagingGroup())}
+						() -> {
+							Group group = themeDisplay.getScopeGroup();
+
+							return new String[] {
+								String.valueOf(group.isStagingGroup())
+							};
+						}
 					).build(),
 					themeDisplay.getLocale(), themeDisplay.getTimeZone());
 

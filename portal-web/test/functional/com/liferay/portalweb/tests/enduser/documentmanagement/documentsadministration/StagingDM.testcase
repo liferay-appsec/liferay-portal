@@ -24,13 +24,7 @@ definition {
 
 		Staging.activateStagingCP(siteName = "Site Name");
 
-		Navigator.gotoStagedSitePage(
-			pageName = "Staging DM Page",
-			siteName = "Site Name");
-
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Documents and Media");
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 	}
 
 	@description = "This test covers LPS-126751. It ensures that a user cannot create empty document types or metadata sets."
@@ -305,15 +299,14 @@ definition {
 			dmDocumentTypeFieldNames = "Text",
 			dmDocumentTypeName = "DM Document Type Name");
 
+		JSONDocument.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder Name",
+			groupName = "Site Name-staging");
+
 		ProductMenu.gotoPortlet(
 			category = "Content &amp; Data",
 			portlet = "Documents and Media");
-
-		Refresh();
-
-		DMFolder.addCP(
-			dmFolderDescription = "DM Folder Description",
-			dmFolderName = "DM Folder Name");
 
 		DMFolder.configureWorkflowCP(
 			dmDocumentTypeName = "DM Document Type Name",
@@ -669,9 +662,10 @@ definition {
 	@priority = "5"
 	@refactorneeded
 	test PublishFolderWithWorkflow {
-		DMFolder.addCP(
+		JSONDocument.addFolder(
 			dmFolderDescription = "DM Folder Description",
-			dmFolderName = "DM Folder 1");
+			dmFolderName = "DM Folder 1",
+			groupName = "Site Name-staging");
 
 		DMFolder.configureWorkflowCP(
 			dmFolderName = "DM Folder 1",
@@ -724,26 +718,30 @@ definition {
 	test PublishSubfolderWithDocumentsViaSAP {
 		property test.name.skip.portal.instance = "StagingDM#PublishSubfolderWithDocumentsViaSAP";
 
-		DMFolder.addCP(
+		JSONDocument.addFolder(
 			dmFolderDescription = "DM Folder Description",
-			dmFolderName = "DM Folder 1");
+			dmFolderName = "DM Folder 1",
+			groupName = "Site Name-staging");
 
-		DMFolder.viewCP(dmFolderName = "DM Folder 1");
+		JSONDocument.addFileWithUploadedFile(
+			dmDocumentDescription = "DM Document Description",
+			dmDocumentTitle = "DM Document in Folder 1",
+			folderName = "DM Folder 1",
+			groupName = "Test Depot Name",
+			mimeType = "text/plain",
+			sourceFileName = "Document_1.txt");
 
-		DMDocument.addCP(
-			dmDocumentDescription = "DM Document in Folder 1",
-			dmDocumentFile = "Document_1.txt",
-			dmDocumentTitle = "DM Document in Folder 1");
+		JSONDocument.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder 2",
+			groupName = "Site Name-staging",
+			parentFolderName = "DM Folder 1");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Documents and Media");
+		DMDocument.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		DMFolder.viewCP(
 			dmFolderName = "DM Folder 1",
 			specificNameFolder = "true");
-
-		DMFolder.addCP(dmFolderName = "DM Folder 2");
 
 		DMFolder.viewCP(
 			dmFolderName = "DM Folder 2",
@@ -754,9 +752,7 @@ definition {
 			dmDocumentFile = "Document_2.txt",
 			dmDocumentTitle = "DM Document in Folder 2");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Documents and Media");
+		DMDocument.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		DMFolder.viewCP(dmFolderName = "DM Folder 1");
 
@@ -775,9 +771,7 @@ definition {
 			dmDocumentFile = "Document_3.txt",
 			dmDocumentTitle = "DM Document in Folder 3");
 
-		ProductMenu.gotoPortlet(
-			category = "Content &amp; Data",
-			portlet = "Documents and Media");
+		DMDocument.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		Staging.publishViaSAP(
 			confirmMessage = "Are you sure you want to publish the selected folder?",
@@ -1007,10 +1001,14 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test ViewWebContentWithDeletedImage {
-		DMDocument.addCP(
+		JSONDocument.addFileWithUploadedFile(
 			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_2.jpg",
-			dmDocumentTitle = "Document_2.jpg");
+			dmDocumentTitle = "Document_2.jpg",
+			groupName = "Site Name",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		Staging.publishViaSAP(
 			confirmMessage = "Are you sure you want to publish the selected document?",
@@ -1096,10 +1094,14 @@ definition {
 	@priority = "4"
 	@refactorneeded
 	test ViewWebContentWithRepublishedImage {
-		DMDocument.addCP(
+		JSONDocument.addFileWithUploadedFile(
 			dmDocumentDescription = "DM Document Description",
-			dmDocumentFile = "Document_2.jpg",
-			dmDocumentTitle = "Document_2.jpg");
+			dmDocumentTitle = "Document_2.jpg",
+			groupName = "Site Name",
+			mimeType = "image/jpeg",
+			sourceFileName = "Document_2.jpg");
+
+		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name-staging");
 
 		Staging.publishViaSAP(
 			confirmMessage = "Are you sure you want to publish the selected document?",

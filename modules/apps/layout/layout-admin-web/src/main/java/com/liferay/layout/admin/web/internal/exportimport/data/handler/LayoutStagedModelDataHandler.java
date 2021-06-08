@@ -993,7 +993,18 @@ public class LayoutStagedModelDataHandler
 		importedLayout = _updateCollectionLayoutTypeSettings(
 			portletDataContext, layout, importedLayout);
 
-		portletDataContext.importClassedModel(layout, importedLayout);
+		privateLayout = portletDataContext.isPrivateLayout();
+
+		try {
+			if (layout.isTypeAssetDisplay()) {
+				portletDataContext.setPrivateLayout(false);
+			}
+
+			portletDataContext.importClassedModel(layout, importedLayout);
+		}
+		finally {
+			portletDataContext.setPrivateLayout(privateLayout);
+		}
 	}
 
 	protected void exportLayoutIconImage(

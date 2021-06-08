@@ -38,10 +38,12 @@ const instances = [
 ];
 
 describe('The instance list table should', () => {
+	let container, getAllByRole;
+
 	afterEach(cleanup);
 
-	test('Be rendered with two items', () => {
-		const {getAllByRole} = render(
+	beforeEach(() => {
+		const renderResult = render(
 			<MockRouter>
 				<InstanceListContext.Provider
 					value={{setInstanceId: jest.fn()}}
@@ -55,8 +57,21 @@ describe('The instance list table should', () => {
 			</MockRouter>
 		);
 
+		container = renderResult.container;
+		getAllByRole = renderResult.getAllByRole;
+	});
+
+	test('Be rendered with two items', () => {
 		const instanceRows = getAllByRole('row');
 
 		expect(instanceRows.length).toBe(3);
+	});
+
+	test('Should order by Item Subject', () => {
+		const orderLinks = container.querySelectorAll('.inline-item');
+
+		expect(orderLinks[1].href).toContain(
+			'/1/20/assetType%3Adesc?backPath=%2F'
+		);
 	});
 });

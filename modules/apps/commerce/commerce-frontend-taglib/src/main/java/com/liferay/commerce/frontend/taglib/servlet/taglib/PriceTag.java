@@ -122,11 +122,12 @@ public class PriceTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
+		setServletContext(ServletContextUtil.getServletContext());
+
 		commerceChannelLocalService =
 			ServletContextUtil.getCommerceChannelLocalService();
 		configurationProvider = ServletContextUtil.getConfigurationProvider();
 		_productHelper = ServletContextUtil.getProductHelper();
-		servletContext = ServletContextUtil.getServletContext();
 	}
 
 	public void setQuantity(int quantity) {

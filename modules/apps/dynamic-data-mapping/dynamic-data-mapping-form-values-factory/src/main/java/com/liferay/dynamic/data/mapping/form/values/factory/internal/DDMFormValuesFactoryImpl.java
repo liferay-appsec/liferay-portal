@@ -522,18 +522,31 @@ public class DDMFormValuesFactoryImpl implements DDMFormValuesFactory {
 		HttpServletRequest httpServletRequest, DDMForm ddmForm,
 		DDMFormValues ddmFormValues) {
 
-		String[] availableLocalesString = ParamUtil.getStringValues(
+		String[] availableLocaleStrings = ParamUtil.getStringValues(
 			httpServletRequest, "availableLocales");
 
-		if (ArrayUtil.isEmpty(availableLocalesString)) {
+		if (ArrayUtil.isEmpty(availableLocaleStrings)) {
 			for (Locale availableLocale : ddmForm.getAvailableLocales()) {
 				ddmFormValues.addAvailableLocale(availableLocale);
 			}
 		}
 		else {
-			for (String availableLocaleString : availableLocalesString) {
-				ddmFormValues.addAvailableLocale(
-					LocaleUtil.fromLanguageId(availableLocaleString));
+			long groupId = ParamUtil.getLong(httpServletRequest, "groupId");
+
+			Set<Locale> siteAvailableLocales = LanguageUtil.getAvailableLocales(
+				groupId);
+
+			String[] siteAvailableLocaleStrings = LocaleUtil.toLanguageIds(
+				siteAvailableLocales);
+
+			for (String availableLocaleString : availableLocaleStrings) {
+				if (ArrayUtil.contains(
+						siteAvailableLocaleStrings, availableLocaleString,
+						false)) {
+
+					ddmFormValues.addAvailableLocale(
+						LocaleUtil.fromLanguageId(availableLocaleString));
+				}
 			}
 		}
 	}

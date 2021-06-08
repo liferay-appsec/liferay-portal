@@ -32,58 +32,200 @@ definition {
 	}
 
 	@description = "Verify that a Numeric Field can be created"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeCreated {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132829 CanBeCreated pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric");
+
+		Form.save();
+
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormFields.viewDateLabel(
+			fieldLabel = "Numeric",
+			fieldName = "Numeric");
 	}
 
 	@description = "Verify that a Numeric Field can be deleted"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeDeleted {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132831 CanBeDeleted pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.addTextField(fieldPositionNumber = "0");
+
+		FormViewBuilder.closeSidebar();
+
+		Form.gotoAddField(
+			fieldPositionNumber = "1",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		FormViewBuilder.closeSidebar();
+
+		FormsAdminNavigator.gotoDeleteField(fieldName = "Numeric");
+
+		FormFields.viewDeletedFieldLabel(fieldName = "Numeric");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormFields.viewDeletedFieldLabel(fieldName = "Numeric");
 	}
 
 	@description = "Verify that a Numeric Field can be duplicated"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeDuplicated {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132835 CanBeDuplicated pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric");
+
+		FormViewBuilder.setPlaceholder(fieldValue = "Placeholder Text Test");
+
+		FormViewBuilder.editText(
+			fieldName = "Help Text",
+			fieldValue = "Help Text Test");
+
+		FormFields.duplicateField();
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "Numeric");
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "Copy of Numeric");
+
+		FormViewBuilder.assertPlaceholderTextFormField(
+			key_fieldLabel = "Numeric",
+			placeHolder = "Placeholder Text Test");
+
+		FormViewBuilder.assertPlaceholderTextFormField(
+			key_fieldLabel = "Copy of Numeric",
+			placeHolder = "Placeholder Text Test");
+
+		FormViewBuilder.assertHelpTextPresent(
+			fieldName = "Numeric",
+			fieldValue = "Help Text Test");
+
+		FormViewBuilder.assertHelpTextPresent(
+			fieldName = "Copy of Numeric",
+			fieldValue = "Help Text Test");
 	}
 
 	@description = "Verify that a Numeric Field can be edited"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeEdited {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132830 CanBeEdited pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		Click(
+			key_name = "Numeric",
+			locator1 = "FormFields#FIELD_TARGET_LABEL");
+
+		Form.editFieldLabelMetal(fieldValue = "Test Numeric");
+
+		Form.save();
+
+		FormsAdminNavigator.gotoBack();
+
+		FormsAdminNavigator.gotoEditFormByName(formName = "Form 1");
+
+		FormViewBuilder.validateFieldLabel(fieldLabel = "Test Numeric");
+
+		FormViewBuilder.validateNoFieldLabel(fieldLabel = "Numeric");
 	}
 
 	@description = "Verify that a Numeric Field can be required"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeRequired {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132832 CanBeRequired pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		FormFields.enableSwitcher(fieldName = "Required Field");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormViewBuilder.validateFieldLabelRequired(fieldLabel = "Numeric");
+
+		FormPortlet.waitFormRenderer(text = "Submit");
+
+		FormPortlet.submitWithValidationError(validationErrorMessage = "This field is required.");
+
+		FormFields.editText(
+			fieldName = "Numeric",
+			fieldValue = "123");
+
+		FormPortlet.submitSuccessfully();
 	}
 
 	@description = "Verify that a Numeric Field can accept decimals when the numeric type set to Decimal"
@@ -164,14 +306,55 @@ definition {
 	}
 
 	@description = "Verify that the "Is Less Than Or Equal To" option can be used to validate a Numeric Field"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test CanBeValidatedUsingIsLessThanOrEqualTo {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132853 CanBeValidatedUsingIsLessThanOrEqualTo pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric");
+
+		Form.gotoAdvancedTab();
+
+		FormFields.enableCheckbox(fieldName = "Validation");
+
+		FormFields.editValidationTargetArgument(
+			validationArgument = "Is less than or equal to",
+			validationErrorMessage = "Test Error",
+			validationInput = "123");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.editText(
+			fieldName = "Numeric",
+			fieldValue = "124");
+
+		FormFields.viewFieldValidationErrorMessage(
+			fieldName = "Numeric",
+			fieldValidationErrorMessage = "Test Error");
+
+		FormPortlet.submitWithValidationError(validationErrorMessage = "Test Error");
+
+		FormFields.editText(
+			fieldName = "Numeric",
+			fieldValue = "123");
+
+		FormPortlet.waitForValidationErrorNotPresent(validationErrorMessage = "Test Error");
+
+		FormPortlet.submitAndViewSuccessPage();
 	}
 
 	@description = "Verify that the "Is Not Equal To" option can be used to validate a Numeric Field"
@@ -197,58 +380,187 @@ definition {
 	}
 
 	@description = "Verify that a Numeric Field does not accept decimals by default"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test DoesNotAcceptDecimalsByDefault {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132834 DoesNotAcceptDecimalsByDefault pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		FormFields.selectRadioOption(
+			fieldName = "",
+			radioOption = "Integer");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.editText(
+			fieldName = "Numeric",
+			fieldValue = "123.123");
+
+		FormFields.viewTextValue(
+			fieldName = "Numeric",
+			fieldValue = "123123");
 	}
 
 	@description = "Verify that a help text can be added"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test HelpTextCanBeAdded {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132842 HelpTextCanBeAdded pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		FormViewBuilder.setFieldHelpText(fieldLabel = "Numeric Help Text");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.viewFieldHelpText(
+			fieldHelpText = "Numeric Help Text",
+			fieldName = "Help Text");
+
+		FormFields.editText(
+			fieldName = "Numeric",
+			fieldValue = "123");
+
+		FormPortlet.submitSuccessfully();
+
+		FormPortlet.viewSuccessPage(
+			successPageDescription = "Your information was successfully received. Thank you for filling out the form.",
+			successPageTitle = "Thank you.");
 	}
 
 	@description = "Verify that the Field Label can be edited"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test LabelCanBeEdited {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132840 LabelCanBeEdited pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		Form.editFieldLabelMetal(fieldValue = "Test Numeric");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.viewLabel(
+			fieldLabel = "Test Numeric",
+			fieldName = "Test Numeric");
 	}
 
 	@description = "Verify that the Field Label can be hidden"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test LabelCanBeHidden {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132841 LabelCanBeHidden pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		FormFields.viewFieldLabel(
+			fieldName = "label",
+			fieldValue = "Numeric");
+
+		Form.gotoAdvancedTab();
+
+		FormFields.disableSwitcher(fieldName = "Show Label");
+
+		FormFields.viewFieldLabelNotPresent(fieldLabel = "Numeric");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormFields.viewFieldLabelNotPresent(fieldLabel = "Numeric");
 	}
 
 	@description = "Verify that a Numeric Field only accepts numbers"
-	@ignore = "Test Stub"
 	@priority = "5"
 	test OnlyAcceptsNumbers {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
 
-		// TODO LPS-132833 OnlyAcceptsNumbers pending implementation
+		ProductMenu.gotoPortlet(
+			category = "Content &amp; Data",
+			portlet = "Forms");
 
+		FormsAdminNavigator.gotoAddForm();
+
+		Form.editName(formName = "Form 1");
+
+		Form.gotoAddField(
+			fieldPositionNumber = "0",
+			fieldType = "Numeric",
+			formPageNumber = "0");
+
+		Form.save();
+
+		Form.publishForm();
+
+		FormsAdminNavigator.gotoPublishedForm();
+
+		FormViewBuilder.editText(
+			fieldName = "Numeric",
+			fieldValue = "123abc");
+
+		FormFields.viewTextValue(
+			fieldName = "Numeric",
+			fieldValue = "123");
 	}
 
 	@description = "Verify that a Placeholder Text can be set"

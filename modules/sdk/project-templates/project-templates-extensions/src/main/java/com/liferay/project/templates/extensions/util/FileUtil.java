@@ -277,6 +277,18 @@ public class FileUtil {
 		return properties;
 	}
 
+	public static void replaceString(File file, String search, String replace)
+		throws IOException {
+
+		Path path = file.toPath();
+
+		String content = read(path);
+
+		String newContent = content.replace(search, replace);
+
+		Files.write(path, newContent.getBytes(StandardCharsets.UTF_8));
+	}
+
 	public static void setPosixFilePermissions(
 			Path path, Set<PosixFilePermission> posixFilePermissions)
 		throws IOException {

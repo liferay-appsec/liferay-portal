@@ -24,6 +24,8 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
+import com.liferay.layout.content.page.editor.web.internal.info.display.url.provider.InfoEditURLProviderUtil;
+import com.liferay.layout.content.page.editor.web.internal.layout.display.page.LayoutDisplayPageProviderTrackerUtil;
 import com.liferay.layout.content.page.editor.web.internal.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.layout.structure.LayoutStructureUtil;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
@@ -74,6 +76,7 @@ import java.util.Set;
 import javax.portlet.PortletRequest;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Víctor Galán
@@ -114,7 +117,8 @@ public class ContentUtil {
 	}
 
 	public static JSONArray getPageContentsJSONArray(
-			HttpServletRequest httpServletRequest, long plid)
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, long plid)
 		throws PortalException {
 
 		if (FFLayoutContentPageEditorConfigurationUtil.
@@ -124,7 +128,7 @@ public class ContentUtil {
 				_getLayoutClassedModelPageContentsJSONArray(
 					httpServletRequest, plid),
 				AssetListEntryUsagesUtil.getPageContentsJSONArray(
-					httpServletRequest, plid));
+					httpServletRequest, httpServletResponse, plid));
 		}
 
 		return _getLayoutClassedModelPageContentsJSONArray(

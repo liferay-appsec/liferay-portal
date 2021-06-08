@@ -44,8 +44,11 @@ public class GalleryTag extends IncludeTag {
 
 	@Override
 	public int doStartTag() throws JspException {
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		HttpServletRequest httpServletRequest = getRequest();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		try {
 			_images = _cpContentHelper.getImages(_cpDefinitionId, themeDisplay);
@@ -78,8 +81,9 @@ public class GalleryTag extends IncludeTag {
 	public void setPageContext(PageContext pageContext) {
 		super.setPageContext(pageContext);
 
+		setServletContext(ServletContextUtil.getServletContext());
+
 		_cpContentHelper = ServletContextUtil.getCPContentHelper();
-		servletContext = ServletContextUtil.getServletContext();
 	}
 
 	@Override

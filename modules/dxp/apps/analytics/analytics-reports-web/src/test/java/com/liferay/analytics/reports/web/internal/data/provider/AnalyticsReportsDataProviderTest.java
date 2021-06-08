@@ -275,8 +275,6 @@ public class AnalyticsReportsDataProviderTest {
 
 	@Test
 	public void testGetTotalReads() throws Exception {
-		LocalDate localDate = LocalDate.now();
-
 		AnalyticsReportsDataProvider analyticsReportsDataProvider =
 			new AnalyticsReportsDataProvider(
 				_getHttp(
@@ -284,19 +282,23 @@ public class AnalyticsReportsDataProviderTest {
 						"/read-count", "12345"
 					).put(
 						"/read-counts",
-						JSONUtil.put(
-							"histogram",
-							JSONUtil.put(
+						() -> {
+							LocalDate localDate = LocalDate.now();
+
+							return JSONUtil.put(
+								"histogram",
 								JSONUtil.put(
-									"key",
-									localDate.format(
-										DateTimeFormatter.ISO_LOCAL_DATE)
-								).put(
-									"value", 5
-								))
-						).put(
-							"value", 5
-						).toJSONString()
+									JSONUtil.put(
+										"key",
+										localDate.format(
+											DateTimeFormatter.ISO_LOCAL_DATE)
+									).put(
+										"value", 5
+									))
+							).put(
+								"value", 5
+							).toJSONString();
+						}
 					).build()));
 
 		Long totalReads = analyticsReportsDataProvider.getTotalReads(
@@ -316,8 +318,6 @@ public class AnalyticsReportsDataProviderTest {
 
 	@Test
 	public void testGetTotalViews() throws Exception {
-		LocalDate localDate = LocalDate.now();
-
 		AnalyticsReportsDataProvider analyticsReportsDataProvider =
 			new AnalyticsReportsDataProvider(
 				_getHttp(
@@ -325,19 +325,23 @@ public class AnalyticsReportsDataProviderTest {
 						"/view-count", "12345"
 					).put(
 						"/view-counts",
-						JSONUtil.put(
-							"histogram",
-							JSONUtil.put(
+						() -> {
+							LocalDate localDate = LocalDate.now();
+
+							return JSONUtil.put(
+								"histogram",
 								JSONUtil.put(
-									"key",
-									localDate.format(
-										DateTimeFormatter.ISO_LOCAL_DATE)
-								).put(
-									"value", 5
-								))
-						).put(
-							"value", 5
-						).toJSONString()
+									JSONUtil.put(
+										"key",
+										localDate.format(
+											DateTimeFormatter.ISO_LOCAL_DATE)
+									).put(
+										"value", 5
+									))
+							).put(
+								"value", 5
+							).toJSONString();
+						}
 					).build()));
 
 		Long totalViews = analyticsReportsDataProvider.getTotalViews(
