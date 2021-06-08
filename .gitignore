@@ -198,3 +198,4 @@
 /working.dir.properties
 /WEB-INF
 _sass_cache_*.css
+**/pom.xml
