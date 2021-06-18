@@ -61,6 +61,8 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class HelloWorldPortlet extends MVCPortlet {
 
+	// Silly change for a testing PR
+
 	@Override
 	public void doView(
 			RenderRequest renderRequest, RenderResponse renderResponse)
