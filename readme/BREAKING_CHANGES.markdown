@@ -571,3 +571,26 @@ No immediate action is needed, but it's important to note the return type has ch
 This change was made in order to check if default groups, roles, and/or user groups were added to the given user, or if the user already had these associations.
 
 ---------------------------------------
+
+- **JIRA Ticket:** [LPS-88905](https://issues.liferay.com/browse/LPS-88905)
+
+#### What changed?
+
+CAS SSO modules have been moved from the `portal-security-sso` project
+to a new project named `portal-security-sso-cas`.
+This new projects is deprecated and available to download from Liferay Marketplace.
+
+#### Who is affected?
+
+This affects anyone using CAS SSO as an authentication system.
+
+#### How should I update my code?
+
+If you want to continue using CAS SSO as an authentication system, you must
+download the corresponding module from Liferay Marketplace.
+
+#### Why was this change made?
+
+This is part of an on-going effort to consolidate SSO support and increased focus on open standards.
+
+---------------------------------------
