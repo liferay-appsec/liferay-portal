@@ -28,6 +28,10 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface OpenIdConnectServiceHandler {
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager}
+	 */
+	@Deprecated
 	public boolean hasValidOpenIdConnectSession(HttpSession httpSession)
 		throws OpenIdConnectServiceException.NoOpenIdConnectSessionException;
 
