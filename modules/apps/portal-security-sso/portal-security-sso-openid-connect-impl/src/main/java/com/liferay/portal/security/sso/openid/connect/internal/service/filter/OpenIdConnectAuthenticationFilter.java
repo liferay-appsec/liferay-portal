@@ -22,9 +22,9 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnect;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceHandler;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
+import com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -76,15 +76,9 @@ public class OpenIdConnectAuthenticationFilter extends BaseFilter {
 			return;
 		}
 
-		OpenIdConnectSession openIdConnectSession =
-			(OpenIdConnectSession)httpSession.getAttribute(
-				OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION);
-
-		if (openIdConnectSession != null) {
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"There is another OIDC authentication request after " +
-						"session established");
+		if (_openIdConnectSessionManager.isOpenIdConnectSession(httpSession)) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("User has already been logged in");
 			}
 
 			return;
@@ -148,6 +142,9 @@ public class OpenIdConnectAuthenticationFilter extends BaseFilter {
 
 	@Reference
 	private OpenIdConnectServiceHandler _openIdConnectServiceHandler;
+
+	@Reference
+	private OpenIdConnectSessionManager _openIdConnectSessionManager;
 
 	@Reference
 	private Portal _portal;

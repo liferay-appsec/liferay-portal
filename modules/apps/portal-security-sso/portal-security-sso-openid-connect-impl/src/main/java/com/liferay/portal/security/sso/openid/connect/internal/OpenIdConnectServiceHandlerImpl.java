@@ -26,16 +26,16 @@ import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnectFlowState;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectProvider;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectProviderRegistry;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceHandler;
-import com.liferay.portal.security.sso.openid.connect.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
+import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 import com.liferay.portal.security.sso.openid.connect.internal.auto.login.OpenIdConnectAutoLogin;
 import com.liferay.portal.security.sso.openid.connect.internal.provider.OpenIdConnectSessionProviderImpl;
 import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
+import com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
@@ -98,6 +98,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Thuong Dinh
  * @author Edward C. Han
+ * @author Arthur Chan
  */
 @Component(immediate = true, service = OpenIdConnectServiceHandler.class)
 public class OpenIdConnectServiceHandlerImpl
@@ -179,9 +180,14 @@ public class OpenIdConnectServiceHandlerImpl
 
 		httpSession.setAttribute(OpenIdConnectAutoLogin.USER_ID, userId);
 
-		OfflineOpenIdConnectSessionManager.startOpenIdConnectSession(
-			httpSession, System.currentTimeMillis(), oidcTokens,
-			_getOpenIdConnectSessionImpl(httpSession), userId, userInfo);
+		OfflineOpenIdConnectSessionManager offlineOpenIdConnectSessionManager =
+			(OfflineOpenIdConnectSessionManager)_openIdConnectSessionManager;
+
+		httpSession.setAttribute(
+			OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION_ID,
+			offlineOpenIdConnectSessionManager.startOpenIdConnectSession(
+				oidcTokens,
+				openIdConnectAuthenticationSession.getProviderName()));
 	}
 
 	@Override
@@ -199,37 +205,39 @@ public class OpenIdConnectServiceHandlerImpl
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
-		OpenIdConnectSessionImpl openIdConnectSessionImpl =
-			_getOpenIdConnectSessionImpl(
-				openIdConnectProviderName, httpSession);
+		Long openIdConnectSessionId = (Long)httpSession.getAttribute(
+			OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION_ID);
 
-		if (openIdConnectSessionImpl == null) {
-			openIdConnectSessionImpl = new OpenIdConnectSessionImpl(
-				openIdConnectProviderName, new Nonce(), new State());
+		if (openIdConnectSessionId != null) {
+			OfflineOpenIdConnectSessionManager
+				offlineOpenIdConnectSessionManager =
+					(OfflineOpenIdConnectSessionManager)
+						_openIdConnectSessionManager;
+
+			offlineOpenIdConnectSessionManager.endOpenIdConnectSession(
+				openIdConnectSessionId);
+
+			httpSession.removeAttribute(
+				OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION_ID);
 		}
 
+		Nonce nonce = new Nonce();
+
+		State state = new State();
+
 		URI authenticationRequestURI = _getAuthenticationRequestURI(
-			_getLoginRedirectURI(httpServletRequest),
-			openIdConnectSessionImpl.getNonce(), openIdConnectProvider,
-			Scope.parse(openIdConnectProvider.getScopes()),
-			openIdConnectSessionImpl.getState());
+			_getLoginRedirectURI(httpServletRequest), nonce,
+			openIdConnectProvider,
+			Scope.parse(openIdConnectProvider.getScopes()), state);
 
 		try {
 			httpServletResponse.sendRedirect(
 				authenticationRequestURI.toString());
 
-			openIdConnectSessionImpl.setOpenIdConnectFlowState(
-				OpenIdConnectFlowState.AUTH_REQUESTED);
-
-			OpenIdConnectSessionProviderImpl.setOpenIdConnectSession(
-				httpSession, openIdConnectSessionImpl);
-
 			httpSession.setAttribute(
 				OpenIdConnectAuthenticationSession.SESSION,
 				new OpenIdConnectAuthenticationSession(
-					openIdConnectProviderName,
-					openIdConnectSessionImpl.getNonce(),
-					openIdConnectSessionImpl.getState()));
+					openIdConnectProviderName, nonce, state));
 		}
 		catch (IOException ioException) {
 			throw new SystemException(
@@ -318,43 +326,6 @@ public class OpenIdConnectServiceHandlerImpl
 					uriSyntaxException.getMessage(),
 				uriSyntaxException);
 		}
-	}
-
-	private OpenIdConnectSessionImpl _getOpenIdConnectSessionImpl(
-			HttpSession httpSession)
-		throws OpenIdConnectServiceException.NoOpenIdConnectSessionException {
-
-		OpenIdConnectSession openIdConnectSession =
-			_openIdConnectSessionProviderImpl.getOpenIdConnectSession(
-				httpSession);
-
-		if (!(openIdConnectSession instanceof OpenIdConnectSessionImpl)) {
-			throw new OpenIdConnectServiceException.
-				NoOpenIdConnectSessionException(
-					"HTTP session does contain an OpenId Connect session");
-		}
-
-		return (OpenIdConnectSessionImpl)openIdConnectSession;
-	}
-
-	private OpenIdConnectSessionImpl _getOpenIdConnectSessionImpl(
-		String expectedProviderName, HttpSession httpSession) {
-
-		OpenIdConnectSession openIdConnectSession =
-			_openIdConnectSessionProviderImpl.getOpenIdConnectSession(
-				httpSession);
-
-		if (!(openIdConnectSession instanceof OpenIdConnectSessionImpl)) {
-			return null;
-		}
-
-		if (!expectedProviderName.equals(
-				openIdConnectSession.getOpenIdProviderName())) {
-
-			return null;
-		}
-
-		return (OpenIdConnectSessionImpl)openIdConnectSession;
 	}
 
 	private boolean _hasValidAccessToken(
@@ -626,6 +597,9 @@ public class OpenIdConnectServiceHandlerImpl
 	private OpenIdConnectProviderRegistry
 		<OIDCClientMetadata, OIDCProviderMetadata>
 			_openIdConnectProviderRegistry;
+
+	@Reference
+	private OpenIdConnectSessionManager _openIdConnectSessionManager;
 
 	@Reference
 	private OpenIdConnectSessionProviderImpl _openIdConnectSessionProviderImpl;
