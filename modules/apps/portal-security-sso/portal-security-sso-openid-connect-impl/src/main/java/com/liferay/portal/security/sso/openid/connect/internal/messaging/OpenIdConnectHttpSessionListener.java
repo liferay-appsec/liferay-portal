@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.PortletSessionListenerManager;
-import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 import com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager;
@@ -45,10 +44,6 @@ public class OpenIdConnectHttpSessionListener implements HttpSessionListener {
 	@Override
 	public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
 		HttpSession httpSession = httpSessionEvent.getSession();
-
-		if (httpSession.getAttribute(WebKeys.RENEW_SESSION) != null) {
-			return;
-		}
 
 		Long openIdConnectSessionId = (Long)httpSession.getAttribute(
 			OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION_ID);

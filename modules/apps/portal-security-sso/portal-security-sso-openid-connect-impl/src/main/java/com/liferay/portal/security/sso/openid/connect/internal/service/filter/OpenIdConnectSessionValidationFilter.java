@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.BaseFilter;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnect;
+import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 import com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager;
 
 import javax.servlet.Filter;
@@ -36,7 +37,7 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	immediate = true,
 	property = {
-		"servlet-context-name=",
+		"after-filter=Auto Login Filter", "servlet-context-name=",
 		"servlet-filter-name=OpenId Connect Session Validation Filter",
 		"url-pattern=/*"
 	},
@@ -66,8 +67,18 @@ public class OpenIdConnectSessionValidationFilter extends BaseFilter {
 
 		HttpSession httpSession = httpServletRequest.getSession(false);
 
-		if (_openIdConnectSessionManager.isOpenIdConnectSession(httpSession) &&
-			_openIdConnectSessionManager.isOpenIdConnectSessionExpired(
+		Long openIdConnectSessionId = (Long)httpSession.getAttribute(
+			OpenIdConnectWebKeys.OPEN_ID_CONNECT_SESSION_ID);
+
+		if (!_openIdConnectSessionManager.isOpenIdConnectSession(httpSession)) {
+			processFilter(
+				OpenIdConnectSessionValidationFilter.class.getName(),
+				httpServletRequest, httpServletResponse, filterChain);
+
+			return;
+		}
+
+		if (_openIdConnectSessionManager.isOpenIdConnectSessionExpired(
 				httpSession)) {
 
 			httpSession.invalidate();
@@ -76,6 +87,11 @@ public class OpenIdConnectSessionValidationFilter extends BaseFilter {
 				_portal.getHomeURL(httpServletRequest));
 
 			return;
+		}
+
+		if (httpSession.isNew()) {
+			_openIdConnectSessionManager.manageOpenIdConnectSession(
+				openIdConnectSessionId);
 		}
 
 		processFilter(
