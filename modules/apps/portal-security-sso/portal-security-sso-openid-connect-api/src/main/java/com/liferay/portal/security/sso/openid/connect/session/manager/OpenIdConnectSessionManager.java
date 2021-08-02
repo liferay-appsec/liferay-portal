@@ -14,6 +14,8 @@
 
 package com.liferay.portal.security.sso.openid.connect.session.manager;
 
+import com.liferay.portal.kernel.exception.PortalException;
+
 import javax.servlet.http.HttpSession;
 
 /**
@@ -25,4 +27,9 @@ public interface OpenIdConnectSessionManager {
 
 	public boolean isOpenIdConnectSessionExpired(HttpSession httpSession);
 
+	public long manageOpenIdConnectSession(
+		long openIdConnectSessionId) throws PortalException;
+
+	public void unmanageOpenIdConnectSession(
+		long openIdConnectSessionId);
 }

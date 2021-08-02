@@ -14,10 +14,13 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.messaging;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.PortletSessionListenerManager;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
-import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
+import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 import com.liferay.portal.security.sso.openid.connect.session.manager.OpenIdConnectSessionManager;
 
 import javax.servlet.http.HttpSession;
@@ -54,11 +57,18 @@ public class OpenIdConnectHttpSessionListener implements HttpSessionListener {
 			return;
 		}
 
-		OfflineOpenIdConnectSessionManager offlineOpenIdConnectSessionManager =
-			(OfflineOpenIdConnectSessionManager)_openIdConnectSessionManager;
-
-		offlineOpenIdConnectSessionManager.endOpenIdConnectSession(
+		_openIdConnectSessionManager.unmanageOpenIdConnectSession(
 			openIdConnectSessionId);
+
+		try {
+			_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
+				openIdConnectSessionId);
+		}
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(portalException, portalException);
+			}
+		}
 	}
 
 	@Activate
@@ -70,6 +80,12 @@ public class OpenIdConnectHttpSessionListener implements HttpSessionListener {
 	protected void deactivate() {
 		PortletSessionListenerManager.removeHttpSessionListener(this);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		OpenIdConnectHttpSessionListener.class);
+
+	@Reference
+	private OpenIdConnectSessionLocalService _openIdConnectSessionLocalService;
 
 	@Reference
 	private OpenIdConnectSessionManager _openIdConnectSessionManager;

@@ -66,28 +66,6 @@ import org.osgi.service.component.annotations.Reference;
 public class OfflineOpenIdConnectSessionManager
 	implements OpenIdConnectSessionManager {
 
-	public void endOpenIdConnectSession(long openIdConnectSessionId) {
-		try {
-			_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
-				openIdConnectSessionId);
-		}
-		catch (PortalException portalException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(portalException, portalException);
-			}
-		}
-
-		try {
-			_openIdConnectTokenRefreshScheduler.unschedule(
-				openIdConnectSessionId);
-		}
-		catch (SchedulerException schedulerException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(schedulerException, schedulerException);
-			}
-		}
-	}
-
 	@Override
 	public boolean isOpenIdConnectSession(HttpSession httpSession) {
 		if (httpSession == null) {
@@ -118,8 +96,6 @@ public class OfflineOpenIdConnectSessionManager
 				openIdConnectSessionId);
 
 		if (openIdConnectSession == null) {
-			endOpenIdConnectSession(openIdConnectSessionId);
-
 			return true;
 		}
 
@@ -136,19 +112,15 @@ public class OfflineOpenIdConnectSessionManager
 		return true;
 	}
 
-	public long startOpenIdConnectSession(
-		OIDCTokens oidcTokens, String providerName) {
+	@Override
+	public long manageOpenIdConnectSession(long openIdConnectSessionId)
+		throws PortalException {
 
 		OpenIdConnectSession openIdConnectSession =
-			_openIdConnectSessionLocalService.createOpenIdConnectSession(
-				_counterLocalService.increment(
-					OpenIdConnectSession.class.getName()));
+			_openIdConnectSessionLocalService.getOpenIdConnectSession(
+				openIdConnectSessionId);
 
-		AccessToken accessToken = oidcTokens.getAccessToken();
-
-		_updateOpenIdConnectSession(
-			accessToken, oidcTokens.getIDTokenString(),
-			oidcTokens.getRefreshToken(), openIdConnectSession, providerName);
+		AccessToken accessToken = _getAccessToken(openIdConnectSession);
 
 		if (openIdConnectSession.getRefreshToken() != null) {
 			try {
@@ -165,6 +137,19 @@ public class OfflineOpenIdConnectSessionManager
 		}
 
 		return openIdConnectSession.getOpenIdConnectSessionId();
+	}
+
+	@Override
+	public void unmanageOpenIdConnectSession(long openIdConnectSessionId) {
+		try {
+			_openIdConnectTokenRefreshScheduler.unschedule(
+				openIdConnectSessionId);
+		}
+		catch (SchedulerException schedulerException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(schedulerException, schedulerException);
+			}
+		}
 	}
 
 	@Activate
@@ -288,19 +273,6 @@ public class OfflineOpenIdConnectSessionManager
 
 		_openIdConnectSessionLocalService.updateOpenIdConnectSession(
 			openIdConnectSession);
-	}
-
-	private void _updateOpenIdConnectSession(
-		AccessToken accessToken, String idTokenString,
-		RefreshToken refreshToken, OpenIdConnectSession openIdConnectSession,
-		String providerName) {
-
-		openIdConnectSession.setIdToken(idTokenString);
-
-		openIdConnectSession.setProviderName(providerName);
-
-		_updateOpenIdConnectSession(
-			accessToken, refreshToken, openIdConnectSession);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
