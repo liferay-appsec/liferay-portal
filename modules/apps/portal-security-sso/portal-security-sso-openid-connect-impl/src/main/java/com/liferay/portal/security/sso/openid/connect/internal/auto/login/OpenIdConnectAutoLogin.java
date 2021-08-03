@@ -14,6 +14,7 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.auto.login;
 
+import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.kernel.security.auto.login.BaseAutoLogin;
@@ -35,6 +36,16 @@ import org.osgi.service.component.annotations.Reference;
 public class OpenIdConnectAutoLogin extends BaseAutoLogin {
 
 	public static final String USER_ID = "OPEN_ID_CONNECT_AUTO_LOGIN_USER_ID";
+
+	public static boolean isDuringSessionRenew() {
+		Boolean result = _sessionRenew.get();
+
+		if ((result != null) && result) {
+			return true;
+		}
+
+		return false;
+	}
 
 	@Override
 	protected String[] doLogin(
@@ -67,11 +78,17 @@ public class OpenIdConnectAutoLogin extends BaseAutoLogin {
 			credentials[1] = user.getPassword();
 			credentials[2] = Boolean.TRUE.toString();
 
+			_sessionRenew.set(true);
+
 			return credentials;
 		}
 
 		return null;
 	}
+
+	private static final ThreadLocal<Boolean> _sessionRenew =
+		new CentralizedThreadLocal<>(
+			OpenIdConnectAutoLogin.class + "._sessionRenew");
 
 	@Reference
 	private OpenIdConnect _openIdConnect;
