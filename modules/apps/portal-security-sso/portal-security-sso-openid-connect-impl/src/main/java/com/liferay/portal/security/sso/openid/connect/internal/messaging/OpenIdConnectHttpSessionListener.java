@@ -44,7 +44,8 @@ public class OpenIdConnectHttpSessionListener implements HttpSessionListener {
 
 		if (!_offlineOpenIdConnectSessionManager.isOpenIdConnectSession(
 				httpSession) ||
-			OpenIdConnectAutoLogin.isDuringSessionRenew()) {
+			(httpSession.getAttribute(OpenIdConnectAutoLogin.USER_ID) !=
+				null)) {
 
 			return;
 		}
