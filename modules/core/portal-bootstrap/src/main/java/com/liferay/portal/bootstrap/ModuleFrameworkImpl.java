@@ -282,7 +282,14 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 			_log.debug("Initializing the new OSGi framework instance");
 		}
 
-		_framework.init();
+		ClassLoader classLoader = currentThread.getContextClassLoader();
+
+		try {
+			_framework.init();
+		}
+		finally {
+			currentThread.setContextClassLoader(classLoader);
+		}
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Binding the OSGi framework to the registry API");
@@ -722,10 +729,9 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 		properties.put(
 			FrameworkPropsKeys.OSGI_FRAMEWORK, codeSourceURL.toExternalForm());
 
-		File frameworkFile = new File(codeSourceURL.toURI());
-
 		properties.put(
-			FrameworkPropsKeys.OSGI_INSTALL_AREA, frameworkFile.getParent());
+			FrameworkPropsKeys.OSGI_INSTALL_AREA,
+			PropsValues.MODULE_FRAMEWORK_BASE_DIR);
 
 		// Overrides
 

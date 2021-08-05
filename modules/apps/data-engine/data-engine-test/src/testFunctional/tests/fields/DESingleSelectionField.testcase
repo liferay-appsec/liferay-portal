@@ -33,12 +33,12 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Text",
+		DEBuilder.addField(
+			fieldLabel = "Text",
 			fieldName = "Text");
 
 		WebContentStructures.saveCP();
@@ -51,7 +51,7 @@ definition {
 
 		WebContentNavigator.gotoEditStructure(structureName = "WC Structure Title");
 
-		DataEngine.assertFieldNotPresent(fieldFieldLabel = "Single Selection");
+		DEBuilder.assertFieldNotPresent(fieldLabel = "Single Selection");
 	}
 
 	@description = "This is a test for LRQA-68571. This test verifies that is possible to duplicate the field."
@@ -61,8 +61,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.duplicate(fieldFieldLabel = "Single Selection");
@@ -87,16 +87,13 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
-		for (var index : list "1,2,3") {
-			DataEngine.addFieldOption(
-				fieldFieldLabel = "Single Selection",
-				index = "${index}",
-				optionValue = "Option ${index}");
-		}
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Single Selection",
+			optionValueList = "Option 1,Option 2,Option 3");
 
 		DataEngine.toggleInline(fieldLabel = "Single Selection");
 
@@ -119,6 +116,50 @@ definition {
 			optionLabelList = "Option 1,Option 2,Option 3");
 	}
 
+	@description = "This is a test for LRQA-69037. This test verifies that editing chosen options persists."
+	@priority = "5"
+	test CanEditChosenOptions {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
+			fieldName = "Single Selection");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Single Selection",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DERenderer.inputDataInSingleSelectionField(
+			fieldLabel = "Single Selection",
+			optionValue = "Option 1");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.inputDataInSingleSelectionField(
+			fieldLabel = "Single Selection",
+			optionValue = "Option 2");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSingleSelectionField(
+			fieldLabel = "Single Selection",
+			optionValue = "Option 2");
+	}
+
 	@description = "This is a test for LRQA-68571. This test verifies that Label and Help text can be edited."
 	@priority = "5"
 	test CanEditLabelAndHelpText {
@@ -126,8 +167,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.editFieldTip(
@@ -156,6 +197,158 @@ definition {
 			fieldName = "Single Selection");
 	}
 
+	@description = "This is a test for LRQA-69037. This test verifies that upon duplicating a repeatable field, inputted data on both fields persists."
+	@priority = "5"
+	test CanInputDataOnDuplicatedField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
+			fieldName = "Single Selection");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Single Selection",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		DataEngine.toggleFieldRepeatable(fieldFieldLabel = "Single Selection");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DataEngine.addRepeatableField(fieldLabel = "Single Selection");
+
+		DERenderer.inputDataInSingleSelectionField(
+			fieldIndex = "1",
+			fieldLabel = "Single Selection",
+			optionValue = "Option 1");
+
+		DERenderer.inputDataInSingleSelectionField(
+			fieldIndex = "2",
+			fieldLabel = "Single Selection",
+			optionValue = "Option 2");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSingleSelectionField(
+			fieldIndex = "1",
+			fieldLabel = "Single Selection",
+			optionValue = "Option 1");
+
+		DERenderer.assertDataInSingleSelectionField(
+			fieldIndex = "2",
+			fieldLabel = "Single Selection",
+			optionValue = "Option 2");
+	}
+
+	@description = "This is a test for LRQA-69037. This test verifies that is not possible to publish the Web Content with a blank required field."
+	@priority = "4"
+	test CanNotPublishBlankRequiredField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
+			fieldName = "Single Selection");
+
+		DataEngine.editFieldRequired(fieldFieldLabel = "Single Selection");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		Button.clickPublish();
+
+		FormViewBuilder.validateObjectLabelOptionTextIsShown(text = "This field is required.");
+	}
+
+	@description = "This is a test for LRQA-69037. This test verifies that is possible to remove a duplicated field (repeatable)."
+	@priority = "4"
+	test CanRemoveDuplicatedField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
+			fieldName = "Single Selection");
+
+		DataEngine.toggleFieldRepeatable(fieldFieldLabel = "Single Selection");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DataEngine.addRepeatableField(fieldLabel = "Single Selection");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.removeRepeatableField(fieldLabel = "Single Selection");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DEBuilder.assertFieldNotPresent(
+			fieldLabel = "Single Selection",
+			index = "2");
+	}
+
+	@description = "This is a test for LRQA-69037. This test verifies that chosen options persists."
+	@priority = "5"
+	test CanSelectOptions {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
+			fieldName = "Single Selection");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Single Selection",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DERenderer.inputDataInSingleSelectionField(
+			fieldLabel = "Single Selection",
+			optionValue = "Option 1");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSingleSelectionField(
+			fieldLabel = "Single Selection",
+			optionValue = "Option 1");
+	}
+
 	@description = "This is a test for LRQA-68571. This test verifies that Default Searchable property is 'Disable' when System Setting is left unchecked"
 	@priority = "3"
 	test CanSetDefaultSearchablePropertyToDisable {
@@ -181,8 +374,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.viewFieldSearchable(
@@ -215,8 +408,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.viewFieldSearchable(
@@ -231,8 +424,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.editFieldTip(
@@ -256,8 +449,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
 		DataEngine.toggleShowLabel(fieldLabel = "Single Selection");
@@ -266,7 +459,7 @@ definition {
 
 		WebContentNavigator.gotoEditStructure(structureName = "WC Structure Title");
 
-		DataEngine.assertFieldNotPresent(fieldFieldLabel = "Single Selection");
+		DEBuilder.assertFieldNotPresent(fieldLabel = "Single Selection");
 
 		DataEngine.toggleShowLabel();
 
@@ -286,16 +479,13 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Single Selection",
+		DEBuilder.addField(
+			fieldLabel = "Single Selection",
 			fieldName = "Single Selection");
 
-		for (var index : list "1,2,3") {
-			DataEngine.addFieldOption(
-				fieldFieldLabel = "Single Selection",
-				index = "${index}",
-				optionValue = "Option ${index}");
-		}
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Single Selection",
+			optionValueList = "Option 1,Option 2,Option 3");
 
 		WebContentStructures.saveCP();
 

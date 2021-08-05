@@ -29,10 +29,10 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.portlet.PortletURL;
@@ -60,10 +60,7 @@ public class CommerceOrderListDisplayContext {
 			getClayDataSetActionDropdownItems()
 		throws PortalException {
 
-		List<ClayDataSetActionDropdownItem> clayDataSetActionDropdownItems =
-			new ArrayList<>();
-
-		clayDataSetActionDropdownItems.add(
+		return ListUtil.fromArray(
 			new ClayDataSetActionDropdownItem(
 				PortletURLBuilder.create(
 					PortletProviderUtil.getPortletURL(
@@ -78,17 +75,13 @@ public class CommerceOrderListDisplayContext {
 				"view", "view",
 				LanguageUtil.get(
 					_commerceOrderRequestHelper.getRequest(), "view"),
-				"get", null, null));
-
-		clayDataSetActionDropdownItems.add(
+				"get", null, null),
 			new ClayDataSetActionDropdownItem(
 				"/o/headless-commerce-admin-order/v1.0/orders/{id}", "trash",
 				"delete",
 				LanguageUtil.get(
 					_commerceOrderRequestHelper.getRequest(), "delete"),
 				"delete", "delete", "async"));
-
-		return clayDataSetActionDropdownItems;
 	}
 
 	public int getCommerceOrderNotesCount(CommerceOrder commerceOrder)

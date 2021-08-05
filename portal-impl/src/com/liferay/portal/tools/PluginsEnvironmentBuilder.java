@@ -373,17 +373,10 @@ public class PluginsEnvironmentBuilder {
 	}
 
 	protected List<String> getCommonJars() {
-		List<String> jars = new ArrayList<>();
-
-		jars.add("commons-logging.jar");
-		jars.add("log4j-1.2-api.jar");
-		jars.add("log4j-api.jar");
-		jars.add("log4j-core.jar");
-		jars.add("util-bridges.jar");
-		jars.add("util-java.jar");
-		jars.add("util-taglib.jar");
-
-		return jars;
+		return ListUtil.fromArray(
+			"commons-logging.jar", "log4j-1.2-api.jar", "log4j-api.jar",
+			"log4j-core.jar", "util-bridges.jar", "util-java.jar",
+			"util-taglib.jar");
 	}
 
 	protected List<String> getImportSharedJars(File projectDir)

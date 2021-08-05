@@ -170,25 +170,31 @@ public class CommerceInventoryWarehousesDisplayContext {
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_cpRequestHelper.getRenderResponse()
+		).setKeywords(
+			getKeywords()
+		).setNavigation(
+			getNavigation()
 		).setParameter(
 			"countryTwoLettersISOCode", getCountryTwoLettersIsoCode()
+		).setParameter(
+			"delta",
+			() -> {
+				String delta = ParamUtil.getString(
+					_cpRequestHelper.getRenderRequest(), "delta");
+
+				if (Validator.isNotNull(delta)) {
+					return delta;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
 		).buildPortletURL();
-
-		String delta = ParamUtil.getString(
-			_cpRequestHelper.getRenderRequest(), "delta");
-
-		if (Validator.isNotNull(delta)) {
-			portletURL.setParameter("delta", delta);
-		}
-
-		portletURL.setParameter("keywords", getKeywords());
-		portletURL.setParameter("navigation", getNavigation());
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
-
-		return portletURL;
 	}
 
 	public SearchContainer<CommerceInventoryWarehouse> getSearchContainer()

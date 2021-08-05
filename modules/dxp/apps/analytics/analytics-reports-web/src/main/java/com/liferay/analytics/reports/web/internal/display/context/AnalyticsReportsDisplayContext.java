@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.portlet.ResourceURL;
@@ -64,24 +63,23 @@ public class AnalyticsReportsDisplayContext<T> {
 	}
 
 	public String getHideAnalyticsReportsPanelURL() {
-		PortletURL portletURL = PortletURLBuilder.createActionURL(
+		return PortletURLBuilder.createActionURL(
 			_renderResponse
 		).setActionName(
 			"/analytics_reports/hide_panel"
-		).buildPortletURL();
+		).setRedirect(
+			() -> {
+				String redirect = ParamUtil.getString(
+					_renderRequest, "redirect");
 
-		String redirect = ParamUtil.getString(_renderRequest, "redirect");
+				if (Validator.isNotNull(redirect)) {
+					return redirect;
+				}
 
-		if (Validator.isNotNull(redirect)) {
-			portletURL.setParameter("redirect", redirect);
-		}
-		else {
-			portletURL.setParameter(
-				"redirect",
-				_themeDisplay.getLayoutFriendlyURL(_themeDisplay.getLayout()));
-		}
-
-		return String.valueOf(portletURL);
+				return _themeDisplay.getLayoutFriendlyURL(
+					_themeDisplay.getLayout());
+			}
+		).buildString();
 	}
 
 	public String getLiferayAnalyticsURL() {

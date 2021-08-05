@@ -121,7 +121,10 @@ public class ObjectEntryLocalServiceImpl
 		long objectEntryId = counterLocalService.increment();
 
 		_insertIntoTable(
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId),
+			_getDynamicObjectDefinitionTable(objectDefinitionId), objectEntryId,
+			values);
+		_insertIntoTable(
+			_getExtensionDynamicObjectDefinitionTable(objectDefinitionId),
 			objectEntryId, values);
 
 		ObjectEntry objectEntry = objectEntryPersistence.create(objectEntryId);
@@ -229,7 +232,11 @@ public class ObjectEntryLocalServiceImpl
 		_assetEntryLocalService.deleteEntry(
 			objectDefinition.getClassName(), objectEntry.getObjectEntryId());
 
-		_deleteFromTable(objectDefinition, objectEntry);
+		_deleteFromTable(
+			objectDefinition.getDBTableName(), objectDefinition, objectEntry);
+		_deleteFromTable(
+			objectDefinition.getExtensionDBTableName(), objectDefinition,
+			objectEntry);
 
 		Indexer<ObjectEntry> indexer = IndexerRegistryUtil.getIndexer(
 			objectDefinition.getClassName());
@@ -291,12 +298,21 @@ public class ObjectEntryLocalServiceImpl
 		DynamicObjectDefinitionTable dynamicObjectDefinitionTable =
 			_getDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId());
+		DynamicObjectDefinitionTable extensionDynamicObjectDefinitionTable =
+			_getExtensionDynamicObjectDefinitionTable(
+				objectEntry.getObjectDefinitionId());
 
 		List<Object[]> rows = _list(
 			DSLQueryFactoryUtil.selectDistinct(
 				dynamicObjectDefinitionTable.getSelectExpressions()
 			).from(
 				dynamicObjectDefinitionTable
+			).innerJoinON(
+				extensionDynamicObjectDefinitionTable,
+				dynamicObjectDefinitionTable.getPrimaryKeyColumn(
+				).eq(
+					extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn()
+				)
 			).where(
 				dynamicObjectDefinitionTable.getPrimaryKeyColumn(
 				).eq(
@@ -321,6 +337,8 @@ public class ObjectEntryLocalServiceImpl
 
 		DynamicObjectDefinitionTable dynamicObjectDefinitionTable =
 			_getDynamicObjectDefinitionTable(objectDefinitionId);
+		DynamicObjectDefinitionTable extensionDynamicObjectDefinitionTable =
+			_getExtensionDynamicObjectDefinitionTable(objectDefinitionId);
 
 		Predicate predicate = ObjectEntryTable.INSTANCE.objectDefinitionId.eq(
 			objectDefinitionId);
@@ -347,6 +365,12 @@ public class ObjectEntryLocalServiceImpl
 				ObjectEntryTable.INSTANCE,
 				ObjectEntryTable.INSTANCE.objectEntryId.eq(
 					dynamicObjectDefinitionTable.getPrimaryKeyColumn())
+			).innerJoinON(
+				extensionDynamicObjectDefinitionTable,
+				extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn(
+				).eq(
+					dynamicObjectDefinitionTable.getPrimaryKeyColumn()
+				)
 			).where(
 				predicate
 			).limit(
@@ -466,7 +490,11 @@ public class ObjectEntryLocalServiceImpl
 			objectEntryId);
 
 		_updateTable(
-			_objectDefinitionPersistence.findByPrimaryKey(
+			_getDynamicObjectDefinitionTable(
+				objectEntry.getObjectDefinitionId()),
+			objectEntryId, values);
+		_updateTable(
+			_getExtensionDynamicObjectDefinitionTable(
 				objectEntry.getObjectDefinitionId()),
 			objectEntryId, values);
 
@@ -515,12 +543,13 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _deleteFromTable(
-			ObjectDefinition objectDefinition, ObjectEntry objectEntry)
+			String dbTableName, ObjectDefinition objectDefinition,
+			ObjectEntry objectEntry)
 		throws PortalException {
 
 		runSQL(
 			StringBundler.concat(
-				"delete from ", objectDefinition.getDBTableName(), " where ",
+				"delete from ", dbTableName, " where ",
 				objectDefinition.getPKObjectFieldDBColumnName(), " = ",
 				objectEntry.getObjectEntryId()));
 	}
@@ -532,10 +561,31 @@ public class ObjectEntryLocalServiceImpl
 		// TODO Cache this across the cluster with proper invalidation when the
 		// object definition or its object fields are updated
 
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
 		return new DynamicObjectDefinitionTable(
-			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId),
-			_objectFieldPersistence.findByObjectDefinitionId(
-				objectDefinitionId));
+			objectDefinition,
+			_objectFieldPersistence.findByODI_DTN(
+				objectDefinitionId, objectDefinition.getDBTableName()),
+			objectDefinition.getDBTableName());
+	}
+
+	private DynamicObjectDefinitionTable
+			_getExtensionDynamicObjectDefinitionTable(long objectDefinitionId)
+		throws PortalException {
+
+		// TODO Cache this across the cluster with proper invalidation when the
+		// object definition or its object fields are updated
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		return new DynamicObjectDefinitionTable(
+			objectDefinition,
+			_objectFieldPersistence.findByODI_DTN(
+				objectDefinitionId, objectDefinition.getExtensionDBTableName()),
+			objectDefinition.getExtensionDBTableName());
 	}
 
 	private long _getGroupId(ObjectEntry objectEntry) throws PortalException {
@@ -620,22 +670,22 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _insertIntoTable(
-			ObjectDefinition objectDefinition, long objectEntryId,
-			Map<String, Serializable> values)
+			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
+			long objectEntryId, Map<String, Serializable> values)
 		throws PortalException {
 
 		StringBundler sb = new StringBundler();
 
 		sb.append("insert into ");
-		sb.append(objectDefinition.getDBTableName());
+		sb.append(dynamicObjectDefinitionTable.getName());
 		sb.append(" (");
-		sb.append(objectDefinition.getPKObjectFieldDBColumnName());
+
+		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn =
+			dynamicObjectDefinitionTable.getPrimaryKeyColumn();
+
+		sb.append(primaryKeyColumn.getName());
 
 		int count = 1;
-
-		DynamicObjectDefinitionTable dynamicObjectDefinitionTable =
-			_getDynamicObjectDefinitionTable(
-				objectDefinition.getObjectDefinitionId());
 
 		List<ObjectField> objectFields =
 			dynamicObjectDefinitionTable.getObjectFields();
@@ -665,11 +715,13 @@ public class ObjectEntryLocalServiceImpl
 			count++;
 		}
 
-		if (count == 1) {
-			throw new ObjectEntryValuesException(
-				"No values were provided for object definition " +
-					objectDefinition.getObjectDefinitionId());
-		}
+		/*if (count == 1) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"No values were provided for object entry " +
+						objectEntryId);
+			}
+		}*/
 
 		sb.append(") values (?");
 
@@ -968,21 +1020,17 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _updateTable(
-			ObjectDefinition objectDefinition, long objectEntryId,
-			Map<String, Serializable> values)
+			DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
+			long objectEntryId, Map<String, Serializable> values)
 		throws PortalException {
 
 		StringBundler sb = new StringBundler();
 
 		sb.append("update ");
-		sb.append(objectDefinition.getDBTableName());
+		sb.append(dynamicObjectDefinitionTable.getName());
 		sb.append(" set ");
 
 		int count = 0;
-
-		DynamicObjectDefinitionTable dynamicObjectDefinitionTable =
-			_getDynamicObjectDefinitionTable(
-				objectDefinition.getObjectDefinitionId());
 
 		List<ObjectField> objectFields =
 			dynamicObjectDefinitionTable.getObjectFields();
@@ -1011,13 +1059,22 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		if (count == 0) {
-			throw new ObjectEntryValuesException(
-				"No values were provided for object definition " +
-					objectDefinition.getObjectDefinitionId());
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"No values were provided for object entry " +
+						objectEntryId);
+			}
+
+			return;
 		}
 
 		sb.append(" where ");
-		sb.append(objectDefinition.getPKObjectFieldDBColumnName());
+
+		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn =
+			dynamicObjectDefinitionTable.getPrimaryKeyColumn();
+
+		sb.append(primaryKeyColumn.getName());
+
 		sb.append(" = ?");
 
 		String sql = sb.toString();

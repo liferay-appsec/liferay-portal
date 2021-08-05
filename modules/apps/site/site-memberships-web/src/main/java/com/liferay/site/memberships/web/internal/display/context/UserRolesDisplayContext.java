@@ -154,47 +154,70 @@ public class UserRolesDisplayContext {
 	}
 
 	private PortletURL _getPortletURL() throws PortalException {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCPath(
 			"/users_roles.jsp"
+		).setKeywords(
+			() -> {
+				String keywords = ParamUtil.getString(
+					_renderRequest, "keywords");
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"displayStyle",
+			() -> {
+				String displayStyle = getDisplayStyle();
+
+				if (Validator.isNotNull(displayStyle)) {
+					return displayStyle;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByCol",
+			() -> {
+				String orderByCol = ParamUtil.getString(
+					_renderRequest, "orderByCol", "title");
+
+				if (Validator.isNotNull(orderByCol)) {
+					return orderByCol;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = ParamUtil.getString(
+					_renderRequest, "orderByType", "asc");
+
+				if (Validator.isNotNull(orderByType)) {
+					return orderByType;
+				}
+
+				return null;
+			}
 		).setParameter(
 			"p_u_i_d", _getUserId()
+		).setParameter(
+			"roleType",
+			() -> {
+				int roleType = _getRoleType();
+
+				if (roleType > 0) {
+					return roleType;
+				}
+
+				return null;
+			}
 		).buildPortletURL();
-
-		String displayStyle = getDisplayStyle();
-
-		if (Validator.isNotNull(displayStyle)) {
-			portletURL.setParameter("displayStyle", displayStyle);
-		}
-
-		String keywords = ParamUtil.getString(_renderRequest, "keywords");
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
-
-		String orderByCol = ParamUtil.getString(
-			_renderRequest, "orderByCol", "title");
-
-		if (Validator.isNotNull(orderByCol)) {
-			portletURL.setParameter("orderByCol", orderByCol);
-		}
-
-		String orderByType = ParamUtil.getString(
-			_renderRequest, "orderByType", "asc");
-
-		if (Validator.isNotNull(orderByType)) {
-			portletURL.setParameter("orderByType", orderByType);
-		}
-
-		int roleType = _getRoleType();
-
-		if (roleType > 0) {
-			portletURL.setParameter("roleType", String.valueOf(roleType));
-		}
-
-		return portletURL;
 	}
 
 	private int _getRoleType() {

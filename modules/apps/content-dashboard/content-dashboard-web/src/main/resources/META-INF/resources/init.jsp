@@ -27,14 +27,15 @@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
 
 <%@ page import="com.liferay.asset.kernel.model.AssetVocabulary" %><%@
 page import="com.liferay.content.dashboard.item.action.ContentDashboardItemAction" %><%@
+page import="com.liferay.content.dashboard.web.internal.configuration.FFContentDashboardDocumentConfigurationUtil" %><%@
 page import="com.liferay.content.dashboard.web.internal.constants.ContentDashboardWebKeys" %><%@
 page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardAdminConfigurationDisplayContext" %><%@
 page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardAdminDisplayContext" %><%@
 page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardAdminManagementToolbarDisplayContext" %><%@
-page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardItemTypeItemSelectorViewDisplayContext" %><%@
-page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardItemTypeItemSelectorViewManagementToolbarDisplayContext" %><%@
+page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardItemSubtypeItemSelectorViewDisplayContext" %><%@
+page import="com.liferay.content.dashboard.web.internal.display.context.ContentDashboardItemSubtypeItemSelectorViewManagementToolbarDisplayContext" %><%@
 page import="com.liferay.content.dashboard.web.internal.item.ContentDashboardItem" %><%@
-page import="com.liferay.content.dashboard.web.internal.item.type.ContentDashboardItemType" %><%@
+page import="com.liferay.content.dashboard.web.internal.item.type.ContentDashboardItemSubtype" %><%@
 page import="com.liferay.info.item.InfoItemReference" %><%@
 page import="com.liferay.petra.string.StringPool" %><%@
 page import="com.liferay.portal.kernel.json.JSONUtil" %><%@

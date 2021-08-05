@@ -799,39 +799,19 @@ public class ObjectEntryLocalServiceTest {
 			objectEntry.getObjectEntryId(), values.get("c_testId"));
 		Assert.assertEquals(values.toString(), 14, values.size());
 
-		try {
-			ObjectEntryLocalServiceUtil.updateObjectEntry(
-				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-				new HashMap<String, Serializable>(),
-				ServiceContextTestUtil.getServiceContext());
+		ObjectEntryLocalServiceUtil.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			new HashMap<String, Serializable>(),
+			ServiceContextTestUtil.getServiceContext());
 
-			Assert.fail();
-		}
-		catch (ObjectEntryValuesException objectEntryValuesException) {
-			Assert.assertEquals(
-				"No values were provided for object definition " +
-					_objectDefinition.getObjectDefinitionId(),
-				objectEntryValuesException.getMessage());
-		}
-
-		try {
-			ObjectEntryLocalServiceUtil.updateObjectEntry(
-				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
-				HashMapBuilder.<String, Serializable>put(
-					"c_testId", ""
-				).put(
-					"invalidName", ""
-				).build(),
-				ServiceContextTestUtil.getServiceContext());
-
-			Assert.fail();
-		}
-		catch (ObjectEntryValuesException objectEntryValuesException) {
-			Assert.assertEquals(
-				"No values were provided for object definition " +
-					_objectDefinition.getObjectDefinitionId(),
-				objectEntryValuesException.getMessage());
-		}
+		ObjectEntryLocalServiceUtil.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			HashMapBuilder.<String, Serializable>put(
+				"c_testId", ""
+			).put(
+				"invalidName", ""
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
 	}
 
 	@Test

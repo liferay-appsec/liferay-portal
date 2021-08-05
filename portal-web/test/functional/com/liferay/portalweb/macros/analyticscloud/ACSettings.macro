@@ -20,12 +20,6 @@ definition {
 		Click(locator1 = "ACSettings#KEYWORD_SEND_BUTTON");
 	}
 
-	macro assertDataSourceName {
-		var itemName = "${dataSourceName}";
-
-		AssertElementPresent(locator1 = "ACSettings#ITEM_ON_LIST");
-	}
-
 	@summary = "Asserts the individuals usage value \
 	@param individualUsageValue"
 	macro assertIndividualsUsage() {
@@ -63,6 +57,19 @@ definition {
 			value1 = "${userEmail}");
 	}
 
+	@summary = "Deletes all data source"
+	macro deleteAllDataSource {
+		if (IsElementNotPresent(locator1 = "ACSettings#EXIT_SETTINGS_BUTTON")) {
+			ACNavigation.goToSettings();
+		}
+
+		ACSettings.goToDataSources();
+
+		while (IsElementPresent(locator1 = "ACSettings#ITEM_TABLE")) {
+			ACSettings.deleteDataSource();
+		}
+	}
+
 	@summary = "Deletes all properties \
 	@param propertyList the list of properties you want to delete (optional)"
 	macro deleteAllProperties {
@@ -90,27 +97,27 @@ definition {
 	@summary = "Deletes a specific data source \
 	@param dataSourceName the name of the data source you want to delete"
 	macro deleteDataSource {
-		var itemName = "${dataSourceName}";
-
 		if (IsElementNotPresent(locator1 = "ACSettings#EXIT_SETTINGS_BUTTON")) {
 			ACNavigation.goToSettings();
 		}
 
-		ACSettings.goToDataSources();
-
-		while (IsElementPresent(locator1 = "ACSettings#ITEM_TABLE")) {
+		if (!(isSet(dataSourceName))) {
 			Click(locator1 = "ACSettings#ITEM_TABLE");
-
-			Click(locator1 = "ACSettings#DELETE_BUTTON_DATA_SOURCE");
-
-			Copy(locator1 = "ACSettings#DELETE_CONFIRMATION_MESSAGE");
-
-			Click(locator1 = "ACSettings#DELETE_CONFIRMATION_INPUT");
-
-			Paste(locator1 = "ACSettings#DELETE_CONFIRMATION_INPUT");
-
-			Click(locator1 = "ACSettings#DELETE_CONFIRMATION_BUTTON");
 		}
+
+		if (isSet(dataSourceName)) {
+			ACNavigation.openItem(itemName = "${dataSourceName}");
+		}
+
+		Click(locator1 = "ACSettings#DELETE_BUTTON_DATA_SOURCE");
+
+		Copy(locator1 = "ACSettings#DELETE_CONFIRMATION_MESSAGE");
+
+		Click(locator1 = "ACSettings#DELETE_CONFIRMATION_INPUT");
+
+		Paste(locator1 = "ACSettings#DELETE_CONFIRMATION_INPUT");
+
+		Click(locator1 = "ACSettings#DELETE_CONFIRMATION_BUTTON");
 	}
 
 	macro deleteKeywordCheckbox {

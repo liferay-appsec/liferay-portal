@@ -216,6 +216,14 @@ public class EditPasswordPolicyAssignmentsManagementToolbarDisplayContext {
 			_mvcPath
 		).setRedirect(
 			ParamUtil.getString(_httpServletRequest, "redirect")
+		).setKeywords(
+			() -> {
+				if (Validator.isNotNull(getKeywords())) {
+					return getKeywords();
+				}
+
+				return null;
+			}
 		).setTabs1(
 			"assignees"
 		).setTabs2(
@@ -223,15 +231,12 @@ public class EditPasswordPolicyAssignmentsManagementToolbarDisplayContext {
 		).setParameter(
 			"displayStyle", _displayStyle
 		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
+		).setParameter(
 			"passwordPolicyId", _passwordPolicy.getPasswordPolicyId()
 		).buildPortletURL();
-
-		if (Validator.isNotNull(getKeywords())) {
-			portletURL.setParameter("keywords", getKeywords());
-		}
-
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
 
 		if (_searchContainer != null) {
 			portletURL.setParameter(

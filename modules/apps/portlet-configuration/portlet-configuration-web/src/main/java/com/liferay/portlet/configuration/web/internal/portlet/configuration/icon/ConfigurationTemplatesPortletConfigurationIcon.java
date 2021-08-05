@@ -38,7 +38,6 @@ import com.liferay.portlet.configuration.kernel.util.PortletConfigurationApplica
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 import javax.portlet.WindowState;
 
 import org.osgi.service.component.annotations.Component;
@@ -64,11 +63,7 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
 		try {
-			String redirect = ParamUtil.getString(portletRequest, "redirect");
-			String returnToFullPageURL = ParamUtil.getString(
-				portletRequest, "returnToFullPageURL");
-
-			PortletURL portletURL = PortletURLBuilder.create(
+			return PortletURLBuilder.create(
 				PortletProviderUtil.getPortletURL(
 					portletRequest,
 					PortletConfigurationApplicationType.PortletConfiguration.
@@ -76,31 +71,45 @@ public class ConfigurationTemplatesPortletConfigurationIcon
 					PortletProvider.Action.VIEW)
 			).setMVCPath(
 				"/edit_configuration_templates.jsp"
-			).buildPortletURL();
+			).setRedirect(
+				() -> {
+					String redirect = ParamUtil.getString(
+						portletRequest, "redirect");
 
-			if (Validator.isNotNull(redirect)) {
-				portletURL.setParameter("redirect", redirect);
-			}
+					if (Validator.isNotNull(redirect)) {
+						return redirect;
+					}
 
-			if (Validator.isNotNull(returnToFullPageURL)) {
-				portletURL.setParameter(
-					"returnToFullPageURL", returnToFullPageURL);
-			}
+					return null;
+				}
+			).setPortletResource(
+				() -> {
+					ThemeDisplay themeDisplay =
+						(ThemeDisplay)portletRequest.getAttribute(
+							WebKeys.THEME_DISPLAY);
 
-			portletURL.setParameter(
-				"portletConfiguration", Boolean.TRUE.toString());
+					PortletDisplay portletDisplay =
+						themeDisplay.getPortletDisplay();
 
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)portletRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
+					return portletDisplay.getId();
+				}
+			).setParameter(
+				"portletConfiguration", true
+			).setParameter(
+				"returnToFullPageURL",
+				() -> {
+					String returnToFullPageURL = ParamUtil.getString(
+						portletRequest, "returnToFullPageURL");
 
-			PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
+					if (Validator.isNotNull(returnToFullPageURL)) {
+						return returnToFullPageURL;
+					}
 
-			portletURL.setParameter("portletResource", portletDisplay.getId());
-
-			portletURL.setWindowState(LiferayWindowState.POP_UP);
-
-			return portletURL.toString();
+					return null;
+				}
+			).setWindowState(
+				LiferayWindowState.POP_UP
+			).buildString();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {

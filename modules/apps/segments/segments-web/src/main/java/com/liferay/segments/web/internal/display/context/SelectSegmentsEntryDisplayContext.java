@@ -314,29 +314,34 @@ public class SelectSegmentsEntryDisplayContext {
 	}
 
 	private PortletURL _getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCRenderCommandName(
 			"/segments/select_segments_entry"
-		).buildPortletURL();
+		).setKeywords(
+			() -> {
+				String keywords = _getKeywords();
 
-		String keywords = _getKeywords();
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
 
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
-
-		portletURL.setParameter("displayStyle", getDisplayStyle());
-		portletURL.setParameter("eventName", getEventName());
-		portletURL.setParameter(
+				return null;
+			}
+		).setParameter(
+			"displayStyle", getDisplayStyle()
+		).setParameter(
+			"eventName", getEventName()
+		).setParameter(
 			"excludedSegmentsEntryIds",
-			StringUtil.merge(_getExcludedSegmentsEntryIds()));
-		portletURL.setParameter(
-			"excludedSources", StringUtil.merge(_getExcludedSources()));
-		portletURL.setParameter("orderByCol", _getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
-
-		return portletURL;
+			StringUtil.merge(_getExcludedSegmentsEntryIds())
+		).setParameter(
+			"excludedSources", StringUtil.merge(_getExcludedSources())
+		).setParameter(
+			"orderByCol", _getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
+		).buildPortletURL();
 	}
 
 	private Sort _getSort() {

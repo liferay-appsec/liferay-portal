@@ -36,7 +36,6 @@ import com.liferay.wiki.web.internal.portlet.action.ActionUtil;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -86,25 +85,25 @@ public class NodeSubscriptionPortletConfigurationIcon
 		try {
 			WikiNode node = ActionUtil.getNode(portletRequest);
 
-			PortletURL portletURL = PortletURLBuilder.create(
+			return PortletURLBuilder.create(
 				_portal.getControlPanelPortletURL(
 					portletRequest, WikiPortletKeys.WIKI_ADMIN,
 					PortletRequest.ACTION_PHASE)
 			).setActionName(
 				"/wiki/edit_node"
-			).buildPortletURL();
+			).setCMD(
+				() -> {
+					if (isSubscribed(portletRequest, node)) {
+						return Constants.UNSUBSCRIBE;
+					}
 
-			if (isSubscribed(portletRequest, node)) {
-				portletURL.setParameter(Constants.CMD, Constants.UNSUBSCRIBE);
-			}
-			else {
-				portletURL.setParameter(Constants.CMD, Constants.SUBSCRIBE);
-			}
-
-			portletURL.setParameter("redirect", themeDisplay.getURLCurrent());
-			portletURL.setParameter("nodeId", String.valueOf(node.getNodeId()));
-
-			return portletURL.toString();
+					return Constants.SUBSCRIBE;
+				}
+			).setRedirect(
+				themeDisplay.getURLCurrent()
+			).setParameter(
+				"nodeId", node.getNodeId()
+			).buildString();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {

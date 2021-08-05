@@ -200,8 +200,10 @@ public class ExportImportToolbarDisplayContext {
 	}
 
 	public String getSortingURL() {
-		PortletURL sortingURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			getRenderURL()
+		).setNavigation(
+			ParamUtil.getString(_httpServletRequest, "navigation", "all")
 		).setParameter(
 			"displayStyle",
 			ParamUtil.getString(
@@ -211,28 +213,24 @@ public class ExportImportToolbarDisplayContext {
 		).setParameter(
 			"orderByCol", ParamUtil.getString(_httpServletRequest, "orderByCol")
 		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = ParamUtil.getString(
+					_httpServletRequest, "orderByType");
+
+				if (orderByType.equals("asc")) {
+					return "desc";
+				}
+
+				return "asc";
+			}
+		).setParameter(
 			"privateLayout",
 			ParamUtil.getBoolean(_httpServletRequest, "privateLayout")
-		).buildPortletURL();
-
-		String orderByType = ParamUtil.getString(
-			_httpServletRequest, "orderByType");
-
-		if (orderByType.equals("asc")) {
-			sortingURL.setParameter("orderByType", "desc");
-		}
-		else {
-			sortingURL.setParameter("orderByType", "asc");
-		}
-
-		sortingURL.setParameter(
-			"navigation",
-			ParamUtil.getString(_httpServletRequest, "navigation", "all"));
-		sortingURL.setParameter(
+		).setParameter(
 			"searchContainerId",
-			ParamUtil.getString(_httpServletRequest, "searchContainerId"));
-
-		return sortingURL.toString();
+			ParamUtil.getString(_httpServletRequest, "searchContainerId")
+		).buildString();
 	}
 
 	public List<ViewTypeItem> getViewTypeItems() {

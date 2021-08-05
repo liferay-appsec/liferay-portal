@@ -90,16 +90,6 @@
 				title: editor.lang.common.alignRight,
 			});
 
-			editor.ui.addBalloonToolbarButton('LinkToolbar', {
-				click() {
-					editor.fire('showToolbar', {
-						toolbarCommand: 'linkToolbar',
-					});
-				},
-				icon: 'link',
-				title: editor.lang.link.title,
-			});
-
 			editor.ui.addBalloonToolbarButton('LinkAddOrEdit', {
 				click() {
 					editor.fire('showToolbar', {
@@ -148,21 +138,6 @@
 				title: editor.lang.table.title,
 			});
 
-			editor.ui.addBalloonToolbarButton('TableRow', {
-				icon: 'add-row',
-				title: editor.lang.table.row.menu,
-			});
-
-			editor.ui.addBalloonToolbarButton('TableColumn', {
-				icon: 'add-column',
-				title: editor.lang.table.column.menu,
-			});
-
-			editor.ui.addBalloonToolbarButton('TableCell', {
-				icon: 'add-cell',
-				title: editor.lang.table.cell.menu,
-			});
-
 			editor.ui.addBalloonToolbarButton('TableDelete', {
 				click() {
 					const selection = editor.getSelection();
@@ -183,9 +158,7 @@
 
 			editor.ui.addBalloonToolbarButton('TextLink', {
 				click() {
-					editor.fire('showToolbar', {
-						toolbarCommand: 'linkToolbar',
-					});
+					editor.execCommand('linkToolbar');
 				},
 				icon: 'link',
 				title: editor.lang.link.title,

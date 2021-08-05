@@ -38,8 +38,6 @@ for (String childrenItemId : childrenItemIds) {
 			int collectionCount = renderLayoutStructureDisplayContext.getCollectionCount(collectionStyledLayoutStructureItem);
 
 			String paginationType = collectionStyledLayoutStructureItem.getPaginationType();
-
-			boolean paginationEnabled = FFRenderLayoutStructureConfigurationUtil.collectionDisplayFragmentPaginationEnabled() && (Objects.equals(paginationType, "numeric") || Objects.equals(paginationType, "simple"));
 			%>
 
 			<div class="<%= renderLayoutStructureDisplayContext.getCssClass(collectionStyledLayoutStructureItem) %>" style="<%= renderLayoutStructureDisplayContext.getStyle(collectionStyledLayoutStructureItem) %>">
@@ -61,11 +59,7 @@ for (String childrenItemId : childrenItemIds) {
 
 							List<Object> collection = renderLayoutStructureDisplayContext.getCollection(collectionStyledLayoutStructureItem);
 
-							int maxNumberOfItemsPerPage = Math.min(collectionCount, collectionStyledLayoutStructureItem.getNumberOfItems());
-
-							if (paginationEnabled) {
-								maxNumberOfItemsPerPage = Math.min(collectionCount, collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
-							}
+							int maxNumberOfItemsPerPage = Math.min(collectionCount, collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
 
 							int numberOfRows = (int)Math.ceil((double)maxNumberOfItemsPerPage / collectionStyledLayoutStructureItem.getNumberOfColumns());
 
@@ -115,29 +109,62 @@ for (String childrenItemId : childrenItemIds) {
 				int maxNumberOfItems = Math.min(collectionCount, collectionStyledLayoutStructureItem.getNumberOfItems());
 
 				int numberOfPages = (int)Math.ceil((double)maxNumberOfItems / collectionStyledLayoutStructureItem.getNumberOfItemsPerPage());
+
+				int activePage = Math.max(1, Math.min(numberOfPages, ParamUtil.getInteger(request, "page_number_" + collectionStyledLayoutStructureItem.getItemId(), 1)));
 				%>
 
-				<c:if test="<%= paginationEnabled %>">
-					<div>
-						<react:component
-							module="render_layout_structure/js/CollectionPagination"
-							props='<%=
-								HashMapBuilder.<String, Object>put(
-									"collectionId", collectionStyledLayoutStructureItem.getItemId()
-								).put(
-									"numberOfItems", collectionStyledLayoutStructureItem.getNumberOfItems()
-								).put(
-									"numberOfItemsPerPage", collectionStyledLayoutStructureItem.getNumberOfItemsPerPage()
-								).put(
-									"paginationType", paginationType
-								).put(
-									"totalItems", collectionCount
-								).put(
-									"totalPages", numberOfPages
-								).build()
-							%>'
+				<c:if test='<%= Objects.equals(paginationType, "numeric") %>'>
+					<clay:pagination-bar
+						activeDelta="<%= collectionStyledLayoutStructureItem.getNumberOfItemsPerPage() %>"
+						activePage="<%= activePage %>"
+						additionalProps='<%=
+							HashMapBuilder.<String, Object>put(
+								"collectionId", collectionStyledLayoutStructureItem.getItemId()
+							).put(
+								"numberOfItems", collectionStyledLayoutStructureItem.getNumberOfItems()
+							).put(
+								"numberOfItemsPerPage", collectionStyledLayoutStructureItem.getNumberOfItemsPerPage()
+							).put(
+								"paginationType", paginationType
+							).put(
+								"totalPages", numberOfPages
+							).build()
+						%>'
+						cssClass="pb-2 pt-3"
+						propsTransformer="render_layout_structure/js/NumericCollectionPaginationPropsTransformer"
+						totalItems="<%= collectionStyledLayoutStructureItem.getNumberOfItems() %>"
+					/>
+				</c:if>
+
+				<c:if test='<%= Objects.equals(paginationType, "simple") %>'>
+					<div class="d-flex flex-grow-1 h-100 justify-content-center py-3" id="<%= "paginationButtons_" + collectionStyledLayoutStructureItem.getItemId() %>">
+						<clay:button
+							cssClass="font-weight-semi-bold mr-3 previous text-secondary"
+							disabled="<%= Objects.equals(activePage, 1) %>"
+							displayType="unstyled"
+							id='<%= "paginationPreviousButton_" + collectionStyledLayoutStructureItem.getItemId() %>'
+							label='<%= LanguageUtil.get(request, "previous") %>'
+						/>
+
+						<clay:button
+							cssClass="font-weight-semi-bold ml-3 next text-secondary"
+							disabled="<%= Objects.equals(activePage, numberOfPages) %>"
+							displayType="unstyled"
+							id='<%= "paginationNextButton_" + collectionStyledLayoutStructureItem.getItemId() %>'
+							label='<%= LanguageUtil.get(request, "next") %>'
 						/>
 					</div>
+
+					<liferay-frontend:component
+						context='<%=
+							HashMapBuilder.<String, Object>put(
+								"activePage", activePage
+							).put(
+								"collectionId", collectionStyledLayoutStructureItem.getItemId()
+							).build()
+						%>'
+						module="render_layout_structure/js/SimpleCollectionPagination"
+					/>
 				</c:if>
 			</div>
 		</c:when>

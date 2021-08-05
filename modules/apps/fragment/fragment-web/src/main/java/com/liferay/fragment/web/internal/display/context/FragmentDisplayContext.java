@@ -528,19 +528,20 @@ public class FragmentDisplayContext {
 			return redirect;
 		}
 
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCRenderCommandName(
 			"/fragment/view"
-		).buildPortletURL();
+		).setParameter(
+			"fragmentCollectionId",
+			() -> {
+				if (getFragmentCollectionId() > 0) {
+					return getFragmentCollectionId();
+				}
 
-		if (getFragmentCollectionId() > 0) {
-			portletURL.setParameter(
-				"fragmentCollectionId",
-				String.valueOf(getFragmentCollectionId()));
-		}
-
-		return portletURL.toString();
+				return null;
+			}
+		).buildString();
 	}
 
 	public boolean hasDeletePermission() {
@@ -712,45 +713,65 @@ public class FragmentDisplayContext {
 	}
 
 	private PortletURL _getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCRenderCommandName(
 			"/fragment/view"
+		).setKeywords(
+			() -> {
+				String keywords = _getKeywords();
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"fragmentCollectionId",
+			() -> {
+				long fragmentCollectionId = getFragmentCollectionId();
+
+				if (fragmentCollectionId > 0) {
+					return fragmentCollectionId;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"fragmentCollectionKey",
+			() -> {
+				String fragmentCollectionKey = getFragmentCollectionKey();
+
+				if (Validator.isNotNull(fragmentCollectionKey)) {
+					return fragmentCollectionKey;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByCol",
+			() -> {
+				String orderByCol = _getOrderByCol();
+
+				if (Validator.isNotNull(orderByCol)) {
+					return orderByCol;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByType",
+			() -> {
+				String orderByType = getOrderByType();
+
+				if (Validator.isNotNull(orderByType)) {
+					return orderByType;
+				}
+
+				return null;
+			}
 		).buildPortletURL();
-
-		long fragmentCollectionId = getFragmentCollectionId();
-
-		if (fragmentCollectionId > 0) {
-			portletURL.setParameter(
-				"fragmentCollectionId", String.valueOf(fragmentCollectionId));
-		}
-
-		String fragmentCollectionKey = getFragmentCollectionKey();
-
-		if (Validator.isNotNull(fragmentCollectionKey)) {
-			portletURL.setParameter(
-				"fragmentCollectionKey", fragmentCollectionKey);
-		}
-
-		String keywords = _getKeywords();
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
-
-		String orderByCol = _getOrderByCol();
-
-		if (Validator.isNotNull(orderByCol)) {
-			portletURL.setParameter("orderByCol", orderByCol);
-		}
-
-		String orderByType = getOrderByType();
-
-		if (Validator.isNotNull(orderByType)) {
-			portletURL.setParameter("orderByType", orderByType);
-		}
-
-		return portletURL;
 	}
 
 	private long _getSelectedFragmentCollectionId() {

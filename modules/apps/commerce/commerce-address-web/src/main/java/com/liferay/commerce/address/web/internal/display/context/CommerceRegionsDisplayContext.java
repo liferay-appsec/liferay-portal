@@ -53,21 +53,24 @@ public class CommerceRegionsDisplayContext
 
 	@Override
 	public PortletURL getPortletURL() throws PortalException {
-		PortletURL portletURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			super.getPortletURL()
 		).setMVCRenderCommandName(
 			"/commerce_country/edit_commerce_country"
 		).setParameter(
+			"countryId",
+			() -> {
+				long countryId = getCountryId();
+
+				if (countryId > 0) {
+					return countryId;
+				}
+
+				return null;
+			}
+		).setParameter(
 			"screenNavigationCategoryKey", getScreenNavigationCategoryKey()
 		).buildPortletURL();
-
-		long countryId = getCountryId();
-
-		if (countryId > 0) {
-			portletURL.setParameter("countryId", String.valueOf(countryId));
-		}
-
-		return portletURL;
 	}
 
 	public Region getRegion() throws PortalException {

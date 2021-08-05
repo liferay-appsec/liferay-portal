@@ -870,20 +870,22 @@ public class WorkflowTaskDisplayContext {
 	}
 
 	private PortletURL _getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_liferayPortletResponse
+		).setNavigation(
+			() -> {
+				String navigation = ParamUtil.getString(
+					_httpServletRequest, "navigation");
+
+				if (Validator.isNotNull(navigation)) {
+					return _getNavigation();
+				}
+
+				return null;
+			}
 		).setTabs1(
 			_getTabs1()
 		).buildPortletURL();
-
-		String navigation = ParamUtil.getString(
-			_httpServletRequest, "navigation");
-
-		if (Validator.isNotNull(navigation)) {
-			portletURL.setParameter("navigation", _getNavigation());
-		}
-
-		return portletURL;
 	}
 
 	private Role _getRole(long roleId) {

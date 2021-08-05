@@ -192,10 +192,20 @@ public class EditCommerceAccountUserMVCActionCommand
 	protected String getSaveAndContinueRedirect(ActionRequest actionRequest)
 		throws Exception {
 
-		PortletURL portletURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			PortletProviderUtil.getPortletURL(
 				actionRequest, CommerceAccount.class.getName(),
 				PortletProvider.Action.VIEW)
+		).setMVCRenderCommandName(
+			() -> {
+				String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+
+				if (cmd.equals(_EDIT_ROLES)) {
+					return "/commerce_account/view_commerce_account_user";
+				}
+
+				return "/commerce_account/edit_commerce_account_user";
+			}
 		).setParameter(
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "backURL",
 			() -> {
@@ -226,25 +236,9 @@ public class EditCommerceAccountUserMVCActionCommand
 
 				return backPortletURL.toString();
 			}
-		).buildPortletURL();
-
-		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
-
-		if (cmd.equals(_EDIT_ROLES)) {
-			portletURL.setParameter(
-				"mvcRenderCommandName",
-				"/commerce_account/view_commerce_account_user");
-		}
-		else {
-			portletURL.setParameter(
-				"mvcRenderCommandName",
-				"/commerce_account/edit_commerce_account_user");
-		}
-
-		portletURL.setParameter(
-			"userId", ParamUtil.getString(actionRequest, "userId"));
-
-		return portletURL.toString();
+		).setParameter(
+			"userId", ParamUtil.getString(actionRequest, "userId")
+		).buildString();
 	}
 
 	protected void updatePassword(

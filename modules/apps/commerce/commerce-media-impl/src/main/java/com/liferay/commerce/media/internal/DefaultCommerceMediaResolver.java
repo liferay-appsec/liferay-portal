@@ -145,6 +145,10 @@ public class DefaultCommerceMediaResolver implements CommerceMediaResolver {
 			}
 		}
 
+		if (cpAttachmentFileEntry.isCDNEnabled()) {
+			return cpAttachmentFileEntry.getCDNURL();
+		}
+
 		sb.append("/accounts/");
 		sb.append(commerceAccountId);
 

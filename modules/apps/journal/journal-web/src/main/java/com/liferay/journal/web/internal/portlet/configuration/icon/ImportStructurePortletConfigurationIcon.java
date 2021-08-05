@@ -17,18 +17,18 @@ package com.liferay.journal.web.internal.portlet.configuration.icon;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.web.internal.configuration.FFImportStructureConfiguration;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.configuration.icon.BaseJSPPortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Map;
 
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
+
+import javax.servlet.ServletContext;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marcela Cunha
@@ -43,26 +43,24 @@ import org.osgi.service.component.annotations.Component;
 	service = PortletConfigurationIcon.class
 )
 public class ImportStructurePortletConfigurationIcon
-	extends BasePortletConfigurationIcon {
+	extends BaseJSPPortletConfigurationIcon {
 
 	@Override
-	public String getMessage(PortletRequest portletRequest) {
-		return LanguageUtil.get(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				getLocale(portletRequest), getClass()),
-			"import-structure");
-	}
-
-	@Override
-	public String getURL(
-		PortletRequest portletRequest, PortletResponse portletResponse) {
-
-		return "javascript:;";
+	public String getJspPath() {
+		return "/configuration/icon/import_structure.jsp";
 	}
 
 	@Override
 	public boolean isShow(PortletRequest portletRequest) {
 		return _ffImportStructureConfiguration.enabled();
+	}
+
+	@Override
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.journal.web)", unbind = "-"
+	)
+	public void setServletContext(ServletContext servletContext) {
+		super.setServletContext(servletContext);
 	}
 
 	@Activate

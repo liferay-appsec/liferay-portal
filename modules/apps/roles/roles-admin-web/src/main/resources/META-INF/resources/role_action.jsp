@@ -37,7 +37,7 @@ RoleTypeContributor currentRoleTypeContributor = RoleTypeContributorRetrieverUti
 		<portlet:renderURL var="editURL">
 			<portlet:param name="mvcPath" value="/edit_role.jsp" />
 			<portlet:param name="tabs1" value="details" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
+			<portlet:param name="backURL" value="<%= currentURL %>" />
 			<portlet:param name="roleId" value="<%= String.valueOf(role.getRoleId()) %>" />
 		</portlet:renderURL>
 

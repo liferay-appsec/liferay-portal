@@ -15,13 +15,43 @@
 import '@testing-library/jest-dom/extend-expect';
 import {cleanup, fireEvent, getByText, render} from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
-import React from 'react';
+import React, {useState} from 'react';
 
-import {A11yPanel} from '../../src/main/resources/META-INF/resources/A11yPanel';
+import Occurrence from '../../src/main/resources/META-INF/resources/components/Occurrence';
+import {StackNavigator} from '../../src/main/resources/META-INF/resources/components/StackNavigator';
+import Violation from '../../src/main/resources/META-INF/resources/components/Violation';
+import Violations from '../../src/main/resources/META-INF/resources/components/Violations';
+import {useFilterViolations} from '../../src/main/resources/META-INF/resources/hooks/useFilterViolations';
 import violationsMock from './__fixtures__/violationsMock';
 
+const Panel = () => {
+	const [activePage, setActivePage] = useState(0);
+	const [params, setParams] = useState();
+	const [state, dispatch] = useFilterViolations(violationsMock);
+
+	return (
+		<div className="a11y-panel__sidebar sidebar sidebar-light">
+			<StackNavigator
+				activePage={activePage}
+				onActiveChange={setActivePage}
+				onParamsChange={setParams}
+				params={params}
+			>
+				<Violations
+					onFilterChange={(type, payload) =>
+						dispatch({payload, type})
+					}
+					{...state}
+				/>
+				<Violation violations={state.violations} />
+				<Occurrence violations={state.violations} />
+			</StackNavigator>
+		</div>
+	);
+};
+
 const renderA11yToolSidebar = () => {
-	return render(<A11yPanel violations={violationsMock} />);
+	return render(<Panel />);
 };
 
 describe('A11yPanel', () => {
@@ -42,7 +72,6 @@ describe('A11yPanel', () => {
 
 			const prioritiesFixture = [
 				'critical',
-				'critical',
 				'serious',
 				'moderate',
 				'minor',
@@ -58,7 +87,7 @@ describe('A11yPanel', () => {
 		it('in violations list, a violation needs render a label with the respective number of occurrences', () => {
 			const {getAllByRole} = renderA11yToolSidebar();
 
-			const occurrencesCountFixture = [3, 3, 2, 3, 3];
+			const occurrencesCountFixture = [3, 2, 2, 3];
 
 			const tabs = getAllByRole('tab');
 
@@ -115,7 +144,7 @@ describe('A11yPanel', () => {
 					expect(getByTestId('moderate')).not.toBeChecked();
 					expect(getByTestId('minor')).not.toBeChecked();
 
-					expect(getAllByRole('tab').length).toBe(2);
+					expect(getAllByRole('tab').length).toBe(1);
 				});
 
 				it('when selecting CRITICAL, SERIOUS impacts it shows only corresponding violations', () => {
@@ -139,7 +168,7 @@ describe('A11yPanel', () => {
 
 					expect(
 						getAllByText(/aria-required-parent-crit/i).length
-					).toBe(2);
+					).toBe(1);
 					expect(
 						getAllByText(/aria-required-parent-ser/i).length
 					).toBe(1);
@@ -167,7 +196,7 @@ describe('A11yPanel', () => {
 
 					expect(
 						getAllByText(/aria-required-parent-crit/i).length
-					).toBe(2);
+					).toBe(1);
 					expect(
 						getAllByText(/aria-required-parent-ser/i).length
 					).toBe(1);
@@ -199,7 +228,7 @@ describe('A11yPanel', () => {
 
 					expect(
 						getAllByText(/aria-required-parent-crit/i).length
-					).toBe(2);
+					).toBe(1);
 					expect(
 						getAllByText(/aria-required-parent-ser/i).length
 					).toBe(1);
@@ -258,7 +287,7 @@ describe('A11yPanel', () => {
 
 	describe('Violation', () => {
 		it('list all occurrences for the given violation', () => {
-			const {getAllByRole} = renderA11yToolSidebar();
+			const {getAllByRole, getAllByText} = renderA11yToolSidebar();
 
 			const [firstViolation] = getAllByRole('tab');
 
@@ -270,24 +299,14 @@ describe('A11yPanel', () => {
 
 			expect(occurrences.length).toBe(3);
 
-			const occurrencesFixture = [
-				'occurrence 1',
-				'occurrence 2',
-				'occurrence 3',
-			];
-
-			occurrences.forEach((occurrence, index) =>
-				expect(
-					getByText(occurrence, occurrencesFixture[index])
-				).toBeInTheDocument()
-			);
+			expect(getAllByText('occurrence-x').length).toBe(3);
 		});
 
 		it('navigates to the desired occurrence when clicking', () => {
 			const {
 				getAllByRole,
+				getAllByText,
 				getByText,
-				queryByText,
 			} = renderA11yToolSidebar();
 
 			const [firstViolation] = getAllByRole('tab');
@@ -306,9 +325,9 @@ describe('A11yPanel', () => {
 				)
 			).toBeInTheDocument();
 
-			expect(getByText('occurrence 1')).toBeInTheDocument();
+			expect(getAllByText('occurrence-x')[0]).toBeInTheDocument();
 
-			expect(queryByText('occurrence 3')).not.toBeInTheDocument();
+			expect(getAllByText('occurrence-x')[2]).toBeUndefined();
 		});
 	});
 

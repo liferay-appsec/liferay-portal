@@ -751,23 +751,27 @@ public class LayoutsAdminDisplayContext {
 
 		breadcrumbEntry.setTitle(LanguageUtil.get(httpServletRequest, "pages"));
 
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
-			_liferayPortletResponse
-		).setTabs1(
-			getTabs1()
-		).setParameter(
-			"selPlid", LayoutConstants.DEFAULT_PLID
-		).buildPortletURL();
+		breadcrumbEntry.setURL(
+			PortletURLBuilder.createRenderURL(
+				_liferayPortletResponse
+			).setTabs1(
+				getTabs1()
+			).setParameter(
+				"displayStyle",
+				() -> {
+					String displayStyle = getDisplayStyle();
 
-		String displayStyle = getDisplayStyle();
+					if (Validator.isNotNull(displayStyle)) {
+						return displayStyle;
+					}
 
-		if (Validator.isNotNull(displayStyle)) {
-			portletURL.setParameter("displayStyle", displayStyle);
-		}
-
-		portletURL.setParameter("firstColumn", Boolean.TRUE.toString());
-
-		breadcrumbEntry.setURL(portletURL.toString());
+					return null;
+				}
+			).setParameter(
+				"firstColumn", true
+			).setParameter(
+				"selPlid", LayoutConstants.DEFAULT_PLID
+			).buildString());
 
 		breadcrumbEntries.add(breadcrumbEntry);
 
@@ -819,21 +823,24 @@ public class LayoutsAdminDisplayContext {
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_liferayPortletResponse
 		).setTabs1(
 			getTabs1()
 		).setParameter(
+			"displayStyle",
+			() -> {
+				String displayStyle = getDisplayStyle();
+
+				if (Validator.isNotNull(displayStyle)) {
+					return displayStyle;
+				}
+
+				return null;
+			}
+		).setParameter(
 			"privateLayout", isPrivateLayout()
 		).buildPortletURL();
-
-		String displayStyle = getDisplayStyle();
-
-		if (Validator.isNotNull(displayStyle)) {
-			portletURL.setParameter("displayStyle", displayStyle);
-		}
-
-		return portletURL;
 	}
 
 	public String getRedirect() {
@@ -929,28 +936,30 @@ public class LayoutsAdminDisplayContext {
 	public String getSelectLayoutCollectionURL(
 		long selPlid, String selectedTab, boolean privateLayout) {
 
-		PortletURL selectLayoutCollectionsURL =
-			PortletURLBuilder.createRenderURL(
-				_liferayPortletResponse
-			).setMVCPath(
-				"/select_layout_collections.jsp"
-			).setRedirect(
-				getRedirect()
-			).setBackURL(
-				_getBackURL()
-			).setParameter(
-				"groupId", getSelGroupId()
-			).setParameter(
-				"privateLayout", privateLayout
-			).setParameter(
-				"selPlid", selPlid
-			).buildPortletURL();
+		return PortletURLBuilder.createRenderURL(
+			_liferayPortletResponse
+		).setMVCPath(
+			"/select_layout_collections.jsp"
+		).setRedirect(
+			getRedirect()
+		).setBackURL(
+			_getBackURL()
+		).setParameter(
+			"groupId", getSelGroupId()
+		).setParameter(
+			"privateLayout", privateLayout
+		).setParameter(
+			"selectedTab",
+			() -> {
+				if (Validator.isNotNull(selectedTab)) {
+					return selectedTab;
+				}
 
-		if (Validator.isNotNull(selectedTab)) {
-			selectLayoutCollectionsURL.setParameter("selectedTab", selectedTab);
-		}
-
-		return selectLayoutCollectionsURL.toString();
+				return null;
+			}
+		).setParameter(
+			"selPlid", selPlid
+		).buildString();
 	}
 
 	public String getSelectLayoutPageTemplateEntryURL(boolean privateLayout)

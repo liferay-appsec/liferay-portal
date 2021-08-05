@@ -18,7 +18,7 @@ import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
 import com.liferay.content.dashboard.web.internal.item.ContentDashboardItem;
-import com.liferay.content.dashboard.web.internal.item.type.ContentDashboardItemType;
+import com.liferay.content.dashboard.web.internal.item.type.ContentDashboardItemSubtype;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.petra.string.StringPool;
@@ -253,7 +253,9 @@ public class ContentDashboardDropdownItemsProviderTest {
 			}
 
 			@Override
-			public ContentDashboardItemType getContentDashboardItemType() {
+			public ContentDashboardItemSubtype
+				getContentDashboardItemSubtype() {
+
 				return null;
 			}
 
@@ -312,6 +314,11 @@ public class ContentDashboardDropdownItemsProviderTest {
 			@Override
 			public String getTitle(Locale locale) {
 				return null;
+			}
+
+			@Override
+			public String getTypeLabel(Locale locale) {
+				return "Web Content";
 			}
 
 			@Override

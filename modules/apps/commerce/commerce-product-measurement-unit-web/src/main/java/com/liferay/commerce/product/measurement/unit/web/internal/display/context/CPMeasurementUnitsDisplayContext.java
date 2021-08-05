@@ -125,23 +125,27 @@ public class CPMeasurementUnitsDisplayContext {
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setParameter(
 			"orderByCol", getOrderByCol()
 		).setParameter(
 			"orderByType", getOrderByType()
+		).setParameter(
+			"toolbarItem",
+			() -> {
+				String toolbarItem = ParamUtil.getString(
+					_renderRequest, "toolbarItem");
+
+				if (Validator.isNotNull(toolbarItem)) {
+					return toolbarItem;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"type", getType()
 		).buildPortletURL();
-
-		String toolbarItem = ParamUtil.getString(_renderRequest, "toolbarItem");
-
-		if (Validator.isNotNull(toolbarItem)) {
-			portletURL.setParameter("toolbarItem", toolbarItem);
-		}
-
-		portletURL.setParameter("type", String.valueOf(getType()));
-
-		return portletURL;
 	}
 
 	public CPMeasurementUnit getPrimaryCPMeasurementUnit()

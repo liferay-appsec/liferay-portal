@@ -15,7 +15,6 @@
 package com.liferay.template.web.internal.display.context;
 
 import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
-import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateServiceUtil;
 import com.liferay.dynamic.data.mapping.util.comparator.TemplateIdComparator;
@@ -60,24 +59,20 @@ public abstract class BaseTemplateDisplayContext
 	implements TemplateDisplayContext {
 
 	public BaseTemplateDisplayContext(
-		DDMWebConfiguration ddmWebConfiguration,
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse) {
 
-		_ddmWebConfiguration = ddmWebConfiguration;
 		this.liferayPortletRequest = liferayPortletRequest;
 		_liferayPortletResponse = liferayPortletResponse;
 
+		_ddmWebConfiguration =
+			(DDMWebConfiguration)liferayPortletRequest.getAttribute(
+				DDMWebConfiguration.class.getName());
 		_httpServletRequest = PortalUtil.getHttpServletRequest(
 			liferayPortletRequest);
-
 		themeDisplay = (ThemeDisplay)liferayPortletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
-
-	public abstract String getAddPermissionActionId();
-
-	public abstract long[] getClassNameIds();
 
 	public List<DropdownItem> getDDMTemplateActionDropdownItems(
 			DDMTemplate ddmTemplate)
@@ -87,7 +82,7 @@ public abstract class BaseTemplateDisplayContext
 			ddmTemplateActionDropdownItemsProvider =
 				new DDMTemplateActionDropdownItemsProvider(
 					isAddDDMTemplateEnabled(), ddmTemplate, _httpServletRequest,
-					_liferayPortletResponse);
+					_liferayPortletResponse, getTabs1());
 
 		return ddmTemplateActionDropdownItemsProvider.getActionDropdownItems();
 	}
@@ -108,6 +103,8 @@ public abstract class BaseTemplateDisplayContext
 			"/edit_ddm_template.jsp"
 		).setRedirect(
 			themeDisplay.getURLCurrent()
+		).setTabs1(
+			getTabs1()
 		).setParameter(
 			"ddmTemplateId", ddmTemplate.getTemplateId()
 		).buildString();
@@ -122,21 +119,11 @@ public abstract class BaseTemplateDisplayContext
 			_httpServletRequest, group.getScopeLabel(themeDisplay));
 	}
 
-	public String getDDMTemplateType(DDMTemplate ddmTemplate) {
-		String type = ddmTemplate.getType();
-
-		if (!type.equals(DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY)) {
-			return type;
-		}
-
-		return getTemplateType(ddmTemplate.getClassNameId());
-	}
-
 	public List<NavigationItem> getNavigationItems() {
 		return NavigationItemListBuilder.add(
 			navigationItem -> {
 				navigationItem.setActive(
-					Objects.equals(_getTabs1(), "information-templates"));
+					Objects.equals(getTabs1(), "information-templates"));
 				navigationItem.setHref(
 					_liferayPortletResponse.createRenderURL(), "tabs1",
 					"information-templates");
@@ -147,7 +134,7 @@ public abstract class BaseTemplateDisplayContext
 		).add(
 			navigationItem -> {
 				navigationItem.setActive(
-					Objects.equals(_getTabs1(), "widget-templates"));
+					Objects.equals(getTabs1(), "widget-templates"));
 				navigationItem.setHref(
 					_liferayPortletResponse.createRenderURL(), "tabs1",
 					"widget-templates");
@@ -157,9 +144,16 @@ public abstract class BaseTemplateDisplayContext
 		).build();
 	}
 
-	public abstract long getResourceClassNameId();
+	public String getTabs1() {
+		if (_tabs1 != null) {
+			return _tabs1;
+		}
 
-	public abstract String getResourceName(long classNameId);
+		_tabs1 = ParamUtil.getString(
+			liferayPortletRequest, "tabs1", "information-templates");
+
+		return _tabs1;
+	}
 
 	public SearchContainer<DDMTemplate> getTemplateSearchContainer() {
 		if (_ddmTemplateSearchContainer != null) {
@@ -200,8 +194,6 @@ public abstract class BaseTemplateDisplayContext
 
 		return _ddmTemplateSearchContainer;
 	}
-
-	public abstract String getTemplateType(long classNameId);
 
 	public boolean isAddDDMTemplateEnabled() {
 		if (!_ddmWebConfiguration.enableTemplateCreation()) {
@@ -260,19 +252,8 @@ public abstract class BaseTemplateDisplayContext
 		return PortletURLBuilder.createRenderURL(
 			_liferayPortletResponse
 		).setTabs1(
-			_getTabs1()
+			getTabs1()
 		).buildPortletURL();
-	}
-
-	private String _getTabs1() {
-		if (_tabs1 != null) {
-			return _tabs1;
-		}
-
-		_tabs1 = ParamUtil.getString(
-			liferayPortletRequest, "tabs1", "information-templates");
-
-		return _tabs1;
 	}
 
 	private OrderByComparator<DDMTemplate> _getTemplateOrderByComparator() {

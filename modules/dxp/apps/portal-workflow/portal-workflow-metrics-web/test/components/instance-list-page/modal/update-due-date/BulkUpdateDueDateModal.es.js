@@ -9,7 +9,7 @@
  * distribution rights of the Software.
  */
 
-import {fireEvent, render} from '@testing-library/react';
+import {act, fireEvent, render} from '@testing-library/react';
 import React, {useState} from 'react';
 
 import {InstanceListContext} from '../../../../../src/main/resources/META-INF/resources/js/components/instance-list-page/InstanceListPageProvider.es';
@@ -115,7 +115,7 @@ const ContainerMock = ({children}) => {
 describe('The BulkReassignModal component should', () => {
 	let getAllByRole, getAllByText, getByText, renderResult;
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		renderResult = render(<BulkUpdateDueDateModal />, {
 			wrapper: ContainerMock,
 		});
@@ -124,10 +124,12 @@ describe('The BulkReassignModal component should', () => {
 		getAllByText = renderResult.getAllByText;
 		getByText = renderResult.getByText;
 
-		jest.runAllTimers();
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render "Select tasks" step with fetch error and retrying', () => {
+	it('Render "Select tasks" step with fetch error and retrying', async () => {
 		const alertError = getByText('your-request-has-failed');
 		const emptyStateMessage = getByText('unable-to-retrieve-data');
 		const retryBtn = getByText('retry');
@@ -136,9 +138,13 @@ describe('The BulkReassignModal component should', () => {
 		expect(emptyStateMessage).toBeTruthy();
 
 		fireEvent.click(retryBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render "Select tasks" step with items', async () => {
+	it('Render "Select tasks" step with items', async () => {
 		const assigneeFilter = getByText('assignee');
 		const cancelBtn = getByText('cancel');
 		const checkAllButton = document.querySelectorAll(
@@ -180,7 +186,11 @@ describe('The BulkReassignModal component should', () => {
 
 		expect(checkAllButton.checked).toBe(false);
 
-		await fireEvent.click(checkAllButton);
+		fireEvent.click(checkAllButton);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		let label = getByText('x-of-x-selected');
 
@@ -191,13 +201,17 @@ describe('The BulkReassignModal component should', () => {
 
 		const clearButton = getByText('clear');
 
-		await fireEvent.click(clearButton);
+		fireEvent.click(clearButton);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		expect(checkbox1.checked).toBe(false);
 		expect(checkbox2.checked).toBe(false);
 		expect(checkAllButton.checked).toBe(false);
 
-		await fireEvent.click(checkbox1);
+		fireEvent.click(checkbox1);
 
 		label = getByText('x-of-x-selected');
 
@@ -206,13 +220,17 @@ describe('The BulkReassignModal component should', () => {
 		expect(checkAllButton.checked).toBe(false);
 		expect(label).toBeTruthy();
 
-		await fireEvent.click(checkbox1);
+		fireEvent.click(checkbox1);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		expect(checkbox1.checked).toBe(false);
 		expect(checkbox2.checked).toBe(false);
 		expect(checkAllButton.checked).toBe(false);
 
-		await fireEvent.click(checkAllButton);
+		fireEvent.click(checkAllButton);
 
 		label = getByText('x-of-x-selected');
 
@@ -232,9 +250,13 @@ describe('The BulkReassignModal component should', () => {
 		expect(nextBtn).not.toBeDisabled();
 
 		fireEvent.click(nextBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render "Select tasks" step with next error and retrying', () => {
+	it('Render "Select tasks" step with next error and retrying', async () => {
 		const alertError = getByText('your-request-has-failed');
 		const nextBtn = getByText('next');
 
@@ -244,9 +266,13 @@ describe('The BulkReassignModal component should', () => {
 		fireEvent.click(nextBtn);
 
 		expect(nextBtn).toBeDisabled();
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render "Update tasks due dates" step with items and back to previous step', async () => {
+	it('Render "Update tasks due dates" step with items and back to previous step', async () => {
 		const modal = document.querySelector('.modal');
 		const nextBtn = getByText('done');
 		const previousBtn = getByText('previous');
@@ -257,18 +283,30 @@ describe('The BulkReassignModal component should', () => {
 
 		expect(header).toHaveTextContent('update-tasks-due-dates');
 
-		await fireEvent.click(previousBtn);
+		fireEvent.click(previousBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		expect(header).toHaveTextContent('select-tasks-to-update');
 
-		await fireEvent.click(nextBtn);
+		fireEvent.click(nextBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		expect(header).toHaveTextContent('update-tasks-due-dates');
 
-		await fireEvent.click(nextBtn);
+		fireEvent.click(nextBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render "Update tasks due dates" step with update fetch error and retrying', async () => {
+	it('Render "Update tasks due dates" step with update fetch error and retrying', async () => {
 		const alertError = getByText(
 			'your-request-has-failed select-done-to-retry'
 		);
@@ -276,7 +314,11 @@ describe('The BulkReassignModal component should', () => {
 
 		expect(alertError).toBeTruthy();
 
-		await fireEvent.click(nextBtn);
+		fireEvent.click(nextBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 
 		const alertToast = await document.querySelector('.alert-dismissible');
 

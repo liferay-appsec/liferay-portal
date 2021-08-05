@@ -9,7 +9,7 @@
  * distribution rights of the Software.
  */
 
-import {fireEvent, render} from '@testing-library/react';
+import {act, fireEvent, render} from '@testing-library/react';
 import React, {useState} from 'react';
 
 import {InstanceListContext} from '../../../../../src/main/resources/META-INF/resources/js/components/instance-list-page/InstanceListPageProvider.es';
@@ -69,7 +69,7 @@ describe('The SingleUpdateDueDateModal component should', () => {
 			.mockResolvedValue({data: {items: []}}),
 	};
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		const renderResult = render(
 			<MockRouter client={clientMock} isAmPm>
 				<SingleUpdateDueDateModal />
@@ -82,10 +82,12 @@ describe('The SingleUpdateDueDateModal component should', () => {
 		getByPlaceholderText = renderResult.getByPlaceholderText;
 		getByText = renderResult.getByText;
 
-		jest.runAllTimers();
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal with error message and retry', () => {
+	it('Render modal with error message and retry', async () => {
 		const alertError = getByText('your-request-has-failed');
 		const emptyStateMessage = getByText('unable-to-retrieve-data');
 		const retryBtn = getByText('retry');
@@ -94,9 +96,13 @@ describe('The SingleUpdateDueDateModal component should', () => {
 		expect(emptyStateMessage).toBeTruthy();
 
 		fireEvent.click(retryBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal with form inputs with defaultValues', () => {
+	it('Render modal with form inputs with defaultValues', async () => {
 		const cancelBtn = getByText('cancel');
 		const commentInput = getByPlaceholderText('write-a-note');
 		const dateInput = getByPlaceholderText('MM/DD/YYYY');
@@ -107,7 +113,7 @@ describe('The SingleUpdateDueDateModal component should', () => {
 		expect(timeInput.value).toBe('10:00 AM');
 		expect(commentInput.value).toBe('');
 		expect(cancelBtn).not.toHaveAttribute('disabled');
-		expect(doneBtn).toHaveAttribute('disabled');
+		expect(doneBtn).not.toHaveAttribute('disabled');
 
 		const newDate = '01/01';
 		const newTime = '12:00';
@@ -128,9 +134,13 @@ describe('The SingleUpdateDueDateModal component should', () => {
 		expect(doneBtn).not.toHaveAttribute('disabled');
 
 		fireEvent.click(doneBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal reassign error and retry', () => {
+	it('Render modal reassign error and retry', async () => {
 		const alertError = getByText(
 			'your-request-has-failed select-done-to-retry'
 		);
@@ -140,9 +150,13 @@ describe('The SingleUpdateDueDateModal component should', () => {
 		expect(doneBtn).not.toHaveAttribute('disabled');
 
 		fireEvent.click(doneBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render alert with success message and close modal', () => {
+	it('Render alert with success message and close modal', () => {
 		const alertToast = document.querySelector('.alert-dismissible');
 		const alertClose = alertToast.children[1];
 

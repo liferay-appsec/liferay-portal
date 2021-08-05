@@ -130,8 +130,9 @@ public class ObjectDefinitionLocalServiceImpl
 			systemObjectDefinitionMetadata.getObjectFields();
 
 		List<ObjectField> oldObjectFields =
-			_objectFieldPersistence.findByObjectDefinitionId(
-				objectDefinition.getObjectDefinitionId());
+			_objectFieldPersistence.findByODI_DTN(
+				objectDefinition.getObjectDefinitionId(),
+				objectDefinition.getDBTableName());
 
 		for (ObjectField oldObjectField : oldObjectFields) {
 			if (!_hasObjectField(newObjectFields, oldObjectField)) {
@@ -145,7 +146,7 @@ public class ObjectDefinitionLocalServiceImpl
 				newObjectField.getName());
 
 			if (oldObjectField == null) {
-				_objectFieldLocalService.addObjectField(
+				_objectFieldLocalService.addSystemObjectField(
 					userId, objectDefinition.getObjectDefinitionId(),
 					newObjectField.getDBColumnName(), false, false, "",
 					newObjectField.getName(), newObjectField.isRequired(),
@@ -225,9 +226,11 @@ public class ObjectDefinitionLocalServiceImpl
 			ResourceConstants.SCOPE_INDIVIDUAL,
 			objectDefinition.getObjectDefinitionId());
 
-		if ((objectDefinition.getStatus() ==
-				WorkflowConstants.STATUS_APPROVED) &&
-			!objectDefinition.isSystem()) {
+		if (objectDefinition.isSystem()) {
+			_dropTable(objectDefinition.getExtensionDBTableName());
+		}
+		else if (objectDefinition.getStatus() ==
+					WorkflowConstants.STATUS_APPROVED) {
 
 			for (ResourceAction resourceAction :
 					_resourceActionLocalService.getResourceActions(
@@ -253,7 +256,8 @@ public class ObjectDefinitionLocalServiceImpl
 					resourceAction);
 			}
 
-			_dropTable(objectDefinition);
+			_dropTable(objectDefinition.getDBTableName());
+			_dropTable(objectDefinition.getExtensionDBTableName());
 
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
@@ -338,11 +342,9 @@ public class ObjectDefinitionLocalServiceImpl
 
 		objectDefinition = objectDefinitionPersistence.update(objectDefinition);
 
-		List<ObjectField> objectFields =
-			_objectFieldPersistence.findByObjectDefinitionId(
-				objectDefinitionId);
-
-		_createTable(objectDefinition, objectFields);
+		_createTable(objectDefinition.getDBTableName(), objectDefinition);
+		_createTable(
+			objectDefinition.getExtensionDBTableName(), objectDefinition);
 
 		ObjectDefinition finalObjectDefinition = objectDefinition;
 
@@ -564,28 +566,49 @@ public class ObjectDefinitionLocalServiceImpl
 
 		if (objectFields != null) {
 			for (ObjectField objectField : objectFields) {
-				_objectFieldLocalService.addObjectField(
-					userId, objectDefinitionId, objectField.getDBColumnName(),
-					objectField.getIndexed(), objectField.getIndexedAsKeyword(),
-					objectField.getIndexedLanguageId(), objectField.getName(),
-					objectField.isRequired(), objectField.getType());
+				if (system) {
+					_objectFieldLocalService.addSystemObjectField(
+						userId, objectDefinitionId,
+						objectField.getDBColumnName(), objectField.getIndexed(),
+						objectField.getIndexedAsKeyword(),
+						objectField.getIndexedLanguageId(),
+						objectField.getName(), objectField.isRequired(),
+						objectField.getType());
+				}
+				else {
+					_objectFieldLocalService.addCustomObjectField(
+						userId, objectDefinitionId, objectField.getIndexed(),
+						objectField.getIndexedAsKeyword(),
+						objectField.getIndexedLanguageId(),
+						objectField.getName(), objectField.isRequired(),
+						objectField.getType());
+				}
 			}
+		}
+
+		if (system) {
+			_createTable(
+				objectDefinition.getExtensionDBTableName(), objectDefinition);
 		}
 
 		return objectDefinition;
 	}
 
 	private void _createTable(
-		ObjectDefinition objectDefinition, List<ObjectField> objectFields) {
+		String dbTableName, ObjectDefinition objectDefinition) {
 
 		DynamicObjectDefinitionTable dynamicObjectDefinitionTable =
-			new DynamicObjectDefinitionTable(objectDefinition, objectFields);
+			new DynamicObjectDefinitionTable(
+				objectDefinition,
+				_objectFieldPersistence.findByODI_DTN(
+					objectDefinition.getObjectDefinitionId(), dbTableName),
+				dbTableName);
 
 		runSQL(dynamicObjectDefinitionTable.getCreateTableSQL());
 	}
 
-	private void _dropTable(ObjectDefinition objectDefinition) {
-		String sql = "drop table " + objectDefinition.getDBTableName();
+	private void _dropTable(String dbTableName) {
+		String sql = "drop table " + dbTableName;
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("SQL: " + sql);

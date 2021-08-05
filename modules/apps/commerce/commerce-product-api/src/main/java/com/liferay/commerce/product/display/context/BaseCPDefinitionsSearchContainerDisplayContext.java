@@ -23,12 +23,12 @@ import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.portlet.PortletException;
@@ -77,21 +77,12 @@ public abstract class BaseCPDefinitionsSearchContainerDisplayContext<T>
 	public List<ManagementBarFilterItem> getManagementBarStatusFilterItems()
 		throws PortalException, PortletException {
 
-		List<ManagementBarFilterItem> managementBarFilterItems =
-			new ArrayList<>();
-
-		managementBarFilterItems.add(
-			getManagementBarFilterItem(WorkflowConstants.STATUS_ANY));
-		managementBarFilterItems.add(
-			getManagementBarFilterItem(WorkflowConstants.STATUS_DRAFT));
-		managementBarFilterItems.add(
-			getManagementBarFilterItem(WorkflowConstants.STATUS_SCHEDULED));
-		managementBarFilterItems.add(
-			getManagementBarFilterItem(WorkflowConstants.STATUS_APPROVED));
-		managementBarFilterItems.add(
+		return ListUtil.fromArray(
+			getManagementBarFilterItem(WorkflowConstants.STATUS_ANY),
+			getManagementBarFilterItem(WorkflowConstants.STATUS_DRAFT),
+			getManagementBarFilterItem(WorkflowConstants.STATUS_SCHEDULED),
+			getManagementBarFilterItem(WorkflowConstants.STATUS_APPROVED),
 			getManagementBarFilterItem(WorkflowConstants.STATUS_EXPIRED));
-
-		return managementBarFilterItems;
 	}
 
 	public String getManagementBarStatusFilterValue() {

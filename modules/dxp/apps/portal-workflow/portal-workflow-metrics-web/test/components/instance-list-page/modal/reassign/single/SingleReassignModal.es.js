@@ -9,7 +9,7 @@
  * distribution rights of the Software.
  */
 
-import {fireEvent, render} from '@testing-library/react';
+import {act, fireEvent, render} from '@testing-library/react';
 import React from 'react';
 
 import {InstanceListContext} from '../../../../../../src/main/resources/META-INF/resources/js/components/instance-list-page/InstanceListPageProvider.es';
@@ -82,7 +82,7 @@ describe('The SingleReassignModal component should', () => {
 			.mockResolvedValue({data: {items: []}}),
 	};
 
-	beforeAll(() => {
+	beforeAll(async () => {
 		const renderResult = render(
 			<MockRouter client={clientMock}>
 				<SingleReassignModal />
@@ -94,10 +94,12 @@ describe('The SingleReassignModal component should', () => {
 
 		getByText = renderResult.getByText;
 
-		jest.runAllTimers();
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal with error message and retry', () => {
+	it('Render modal with error message and retry', async () => {
 		const alertError = getByText('your-request-has-failed');
 		const emptyStateMessage = getByText('unable-to-retrieve-data');
 		const retryBtn = getByText('retry');
@@ -106,9 +108,13 @@ describe('The SingleReassignModal component should', () => {
 		expect(emptyStateMessage).toBeTruthy();
 
 		fireEvent.click(retryBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal with items', () => {
+	it('Render modal with items', async () => {
 		const cancelBtn = getByText('cancel');
 		const reassignBtn = getByText('reassign');
 		const table = document.querySelector('.table');
@@ -132,11 +138,12 @@ describe('The SingleReassignModal component should', () => {
 
 		fireEvent.click(reassignBtn);
 
-		expect(cancelBtn).toHaveAttribute('disabled');
-		expect(reassignBtn).toHaveAttribute('disabled');
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render modal reassign error and retry', () => {
+	it('Render modal reassign error and retry', async () => {
 		const alertError = getByText('your-request-has-failed');
 		const reassignBtn = getByText('reassign');
 
@@ -144,9 +151,13 @@ describe('The SingleReassignModal component should', () => {
 		expect(reassignBtn).not.toHaveAttribute('disabled');
 
 		fireEvent.click(reassignBtn);
+
+		await act(async () => {
+			jest.runAllTimers();
+		});
 	});
 
-	test('Render alert with success message and close modal', async () => {
+	it('Render alert with success message and close modal', async () => {
 		const alertToast = document.querySelector('.alert-dismissible');
 
 		const alertClose = alertToast.children[1];

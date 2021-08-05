@@ -1,0 +1,6 @@
+Bundle-Name: Liferay Site Initializer Testray
+Bundle-SymbolicName: com.liferay.site.initializer.testray
+Bundle-Version: 1.0.0
+Provide-Capability:\
+	liferay.site.initializer;\
+		\

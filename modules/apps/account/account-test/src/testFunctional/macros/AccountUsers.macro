@@ -9,14 +9,14 @@ definition {
 
 		AssertClick(
 			key_accountName = "${accountName}",
-			locator1 = "Account#CHOOSE_ACCOUNT",
+			locator1 = "AccountUsers#SELECT_AN_ACCOUNT_CHOOSE_BUTTON",
 			value1 = "Choose");
 
 		SelectFrame(value1 = "relative=top");
 
 		WaitForElementPresent(
 			key_accountName = "${accountName}",
-			locator1 = "Account#ADD_USER_HEADER");
+			locator1 = "AccountUsers#ADD_NEW_USER_HEADER");
 
 		Type(
 			locator1 = "UsersAndOrganizationsEditUser#DETAILS_SCREEN_NAME_FIELD",
@@ -127,9 +127,9 @@ definition {
 
 	macro viewEntryAccounts {
 		AssertElementPresent(
-			key_rowEntry = "${accountUserName}",
-			key_rowEntryAccount = "${accountName}",
-			locator1 = "Account#ENTRY_CONTENT_ENTRY_ACCOUNTS");
+			key_rowNumber = "${accountRowNumber}",
+			locator1 = "ContentRow#ENTRY_CONTENT_ROW_NUMBER_TD_5",
+			value1 = "${accountName}");
 	}
 
 	macro viewValidDomains {

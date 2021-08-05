@@ -360,26 +360,27 @@ public class CalendarDisplayContext {
 	}
 
 	public PortletURL getPortletURL() {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCPath(
 			"/view.jsp"
+		).setKeywords(
+			() -> {
+				String keywords = getKeywords();
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
 		).setTabs1(
 			"resources"
+		).setParameter(
+			"active", ParamUtil.getString(_renderRequest, "active")
+		).setParameter(
+			"scope", ParamUtil.getString(_renderRequest, "scope")
 		).buildPortletURL();
-
-		String keywords = getKeywords();
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
-
-		portletURL.setParameter(
-			"active", ParamUtil.getString(_renderRequest, "active"));
-		portletURL.setParameter(
-			"scope", ParamUtil.getString(_renderRequest, "scope"));
-
-		return portletURL;
 	}
 
 	public SearchContainer<?> getSearch() {

@@ -329,4 +329,57 @@ describe('Treeview', () => {
 			expect(queryByText('sandro polo')).not.toBeInTheDocument();
 		});
 	});
+
+	describe('Treeview controls icon visibility in TreeviewCard', () => {
+		it('rendering the icon if present', () => {
+			const nodes = [
+				{
+					icon: 'emoji',
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: 'react',
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('lexicon-icon').length
+			).toBe(2);
+			expect(
+				container.getElementsByClassName('lexicon-icon-emoji').length
+			).toBe(1);
+			expect(
+				container.getElementsByClassName('lexicon-icon-react').length
+			).toBe(1);
+		});
+
+		it('not rendering icon if not present or falsy', () => {
+			const nodes = [
+				{
+					id: '1',
+					name: 'Belt',
+				},
+				{
+					icon: null,
+					id: '2',
+					name: 'Clara',
+				},
+			];
+
+			const {container} = render(
+				<Treeview NodeComponent={Treeview.Card} nodes={nodes} />
+			);
+
+			expect(
+				container.getElementsByClassName('lexicon-icon').length
+			).toBe(0);
+		});
+	});
 });

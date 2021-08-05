@@ -132,6 +132,25 @@ definition {
 			locator1 = "DataEngineBuilder#FIELD_ACTIONS_CONTAINER_INDEXED");
 	}
 
+	macro assertFieldNotPresent {
+		if (!(isSet(index))) {
+			var index = "1";
+		}
+
+		if (IsElementPresent(locator1 = "Modal#MODAL")) {
+			AssertElementNotPresent(
+				index = "${index}",
+				key_fieldLabel = "${fieldLabel}",
+				locator1 = "DataEngineBuilder#FIELD_LABEL_IN_MODAL_INDEXED");
+		}
+		else {
+			AssertElementNotPresent(
+				index = "${index}",
+				key_fieldLabel = "${fieldLabel}",
+				locator1 = "DataEngineBuilder#FIELD_LABEL_INDEXED");
+		}
+	}
+
 	macro assertFieldOptionLabels {
 		Navigator.gotoSidebarTab(tabName = "Builder");
 

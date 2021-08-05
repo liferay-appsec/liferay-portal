@@ -37,7 +37,6 @@ import com.liferay.wiki.web.internal.portlet.action.ActionUtil;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -86,26 +85,27 @@ public class PageSubscriptionPortletConfigurationIcon
 		try {
 			WikiPage page = ActionUtil.getPage(portletRequest);
 
-			PortletURL portletURL = PortletURLBuilder.create(
+			return PortletURLBuilder.create(
 				_portal.getControlPanelPortletURL(
 					portletRequest, WikiPortletKeys.WIKI_ADMIN,
 					PortletRequest.ACTION_PHASE)
 			).setActionName(
 				"/wiki/edit_page"
-			).buildPortletURL();
+			).setCMD(
+				() -> {
+					if (isSubscribed(portletRequest, page)) {
+						return Constants.UNSUBSCRIBE;
+					}
 
-			if (isSubscribed(portletRequest, page)) {
-				portletURL.setParameter(Constants.CMD, Constants.UNSUBSCRIBE);
-			}
-			else {
-				portletURL.setParameter(Constants.CMD, Constants.SUBSCRIBE);
-			}
-
-			portletURL.setParameter("redirect", themeDisplay.getURLCurrent());
-			portletURL.setParameter("nodeId", String.valueOf(page.getNodeId()));
-			portletURL.setParameter("title", page.getTitle());
-
-			return portletURL.toString();
+					return Constants.SUBSCRIBE;
+				}
+			).setRedirect(
+				themeDisplay.getURLCurrent()
+			).setParameter(
+				"nodeId", page.getNodeId()
+			).setParameter(
+				"title", page.getTitle()
+			).buildString();
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {

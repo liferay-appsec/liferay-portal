@@ -138,19 +138,24 @@ public class ItemSelectorRepositoryEntryManagementToolbarDisplayContext {
 	}
 
 	public PortletURL getCurrentSortingURL() throws PortletException {
-		PortletURL currentSortingURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			PortletURLUtil.clone(_getPortletURL(), _liferayPortletResponse)
 		).setParameter(
 			"orderByCol", _getOrderByCol()
 		).setParameter(
 			"orderByType", getOrderByType()
+		).setParameter(
+			"scope",
+			() -> {
+				if (_repositoryEntryBrowserDisplayContext.
+						isSearchEverywhere()) {
+
+					return "everywhere";
+				}
+
+				return null;
+			}
 		).buildPortletURL();
-
-		if (_repositoryEntryBrowserDisplayContext.isSearchEverywhere()) {
-			currentSortingURL.setParameter("scope", "everywhere");
-		}
-
-		return currentSortingURL;
 	}
 
 	public List<DropdownItem> getFilterDropdownItems() {

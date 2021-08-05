@@ -53,6 +53,8 @@ definition {
 	@description = "This test adds an account specific role and ensures this role is not shared across accounts"
 	@priority = "4"
 	test AccountSpecificRoleIsNotSharedAcrossAccounts {
+		property portal.acceptance = "true";
+
 		JSONAccountEntry.addAccountEntry(
 			accountEntryDescription = "Account with Role",
 			accountEntryName = "Account with Role",
@@ -89,6 +91,8 @@ definition {
 	@description = "This test makes sure that only one user can be assigned to a Person Account. When you add another person to a Person Account with assigned user, it will only replace the existing user and not add another one."
 	@priority = "4"
 	test AddingSecondUserToPersonAccountWillReplaceFirstUser {
+		property portal.acceptance = "true";
+
 		Accounts.openAccountsAdmin();
 
 		Accounts.addPersonAccount(
@@ -113,16 +117,18 @@ definition {
 
 		AccountUsers.viewEntryAccounts(
 			accountName = "Person Account",
-			accountUserName = "userfn2");
+			accountRowNumber = "2");
 
 		AccountUsers.viewEntryAccounts(
 			accountName = "No Assigned Account",
-			accountUserName = "userfn1");
+			accountRowNumber = "1");
 	}
 
 	@description = "This test adds and removes a user assignee to an account specific role."
 	@priority = "4"
 	test CanAddAndRemoveAssigneeToAccountSpecificRole {
+		property portal.acceptance = "true";
+
 		JSONAccountEntry.addAccountEntry(
 			accountEntryDescription = "Account Description",
 			accountEntryName = "Account Name",
@@ -275,6 +281,8 @@ definition {
 	@description = "This test asserts that users can add more than one domain to a business account."
 	@priority = "4"
 	test CanAddMultipleDomainsToAccount {
+		property portal.acceptance = "true";
+
 		AccountConfiguration.enableAccountEmailDomain();
 
 		Accounts.openAccountsAdmin();
@@ -291,7 +299,7 @@ definition {
 		for (var domainName : list "liferay.com,Google.com,si-na.com,9teen.com") {
 			AssertElementPresent(
 				key_domainName = "${domainName}",
-				locator1 = "Account#DOMAIN_TABLE_NAME");
+				locator1 = "Account#VALID_DOMAINS_DOMAIN_NAME");
 		}
 	}
 
@@ -395,6 +403,8 @@ definition {
 	@description = "This test deactivates an active account and asserts account displays in correct filter."
 	@priority = "4"
 	test CanDeactivateAccount {
+		property portal.acceptance = "true";
+
 		for (var accountNumber : list "1,2,3") {
 			Accounts.openAccountsAdmin();
 
@@ -717,6 +727,8 @@ definition {
 	@description = "This test updates an account's name and description and asserts change saves successfully."
 	@priority = "5"
 	test CanEditNameAndDescription {
+		property portal.acceptance = "true";
+
 		Accounts.openAccountsAdmin();
 
 		Accounts.addBusinessAccount(
@@ -841,35 +853,43 @@ definition {
 
 		LexiconEntry.gotoEntry(rowEntry = "Account Remove Address");
 
-		for (var addressDataType : list "shipping,billing") {
-			Accounts.setDefaultAddress(
-				addressDataType = "${addressDataType}",
-				addressName = "Liferay Dalian Software Co., Ltd.");
+		Accounts.setDefaultShippingAddress(
+			addressDataType = "${addressDataType}",
+			addressName = "Liferay Dalian Software Co., Ltd.");
 
-			Accounts.viewAddress(
-				addressCity = "Dalian",
-				addressCountry = "China",
-				addressDataType = "${addressDataType}",
-				addressName = "Liferay Dalian Software Co., Ltd.",
-				addressPostalCode = "116023",
-				addressRegion = "Liaoning Sheng",
-				addressStreet1 = "537 Huangpu Road Taide Building,",
-				addressStreet2 = "High-Tech Zone",
-				addressStreet3 = "1005",
-				phoneNumber = "+86 (0)411 88120855");
-		}
+		Accounts.viewDefaultShippingAddress(
+			addressCity = "Dalian",
+			addressCountry = "China",
+			addressName = "Liferay Dalian Software Co., Ltd.",
+			addressPostalCode = "116023",
+			addressRegion = "Liaoning Sheng",
+			addressStreet1 = "537 Huangpu Road Taide Building,",
+			addressStreet2 = "High-Tech Zone",
+			addressStreet3 = "1005",
+			phoneNumber = "+86 (0)411 88120855");
 
-		Accounts.removeAddress(
-			accountName = "Account Remove Address",
-			addressDataType = "billing");
+		Accounts.setDefaultBillingAddress(
+			addressDataType = "${addressDataType}",
+			addressName = "Liferay Dalian Software Co., Ltd.");
+
+		Accounts.viewDefaultBillingAddress(
+			addressCity = "Dalian",
+			addressCountry = "China",
+			addressName = "Liferay Dalian Software Co., Ltd.",
+			addressPostalCode = "116023",
+			addressRegion = "Liaoning Sheng",
+			addressStreet1 = "537 Huangpu Road Taide Building,",
+			addressStreet2 = "High-Tech Zone",
+			addressStreet3 = "1005",
+			phoneNumber = "+86 (0)411 88120855");
+
+		Accounts.removeDefaultBillingAddress(accountName = "Account Remove Address");
 
 		Accounts.openAccountsAdmin();
 
 		LexiconEntry.gotoEntry(rowEntry = "Account Remove Address");
 
-		Accounts.removeAddress(
-			accountName = "Account Remove Address",
-			addressDataType = "shipping");
+		Accounts.removeDefaultShippingAddress(accountName = "Account Remove Address");
 
 		Accounts.openAccountsAdmin();
 
@@ -904,11 +924,11 @@ definition {
 
 		AssertElementPresent(
 			key_domainName = "liferay.com",
-			locator1 = "Account#DOMAIN_TABLE_NAME");
+			locator1 = "Account#VALID_DOMAINS_DOMAIN_NAME");
 
 		AssertElementNotPresent(
 			key_domainName = "Google.com",
-			locator1 = "Account#DOMAIN_TABLE_NAME");
+			locator1 = "Account#VALID_DOMAINS_DOMAIN_NAME");
 	}
 
 	@description = "This test removes a blocked domain in Instance Settings."
@@ -972,6 +992,8 @@ definition {
 	@description = "This test removes a user from a person account"
 	@priority = "4"
 	test CanRemoveUserFromPersonAccount {
+		property portal.acceptance = "true";
+
 		Accounts.openAccountsAdmin();
 
 		Accounts.addPersonAccount(
@@ -1102,14 +1124,11 @@ definition {
 
 		LexiconEntry.gotoEntry(rowEntry = "Account with Default Address");
 
-		Accounts.setDefaultAddress(
-			addressDataType = "shipping",
-			addressName = "Liferay Japan K. K.");
+		Accounts.setDefaultShippingAddress(addressName = "Liferay Japan K. K.");
 
-		Accounts.viewAddress(
+		Accounts.viewDefaultShippingAddress(
 			addressCity = "Shibuya-ku",
 			addressCountry = "Japan",
-			addressDataType = "shipping",
 			addressName = "Liferay Japan K. K.",
 			addressPostalCode = "150-0021",
 			addressRegion = "Tokyo",
@@ -1117,41 +1136,42 @@ definition {
 			addressStreet2 = "1-26-7 Ebisu Nishi",
 			phoneNumber = "+81 3-5456-5796");
 
-		Accounts.setDefaultAddress(
-			addressDataType = "billing",
-			addressName = "Liferay, Inc.");
+		Accounts.setDefaultBillingAddress(addressName = "Liferay, Inc.");
 
-		Accounts.viewAddress(
+		Accounts.viewDefaultBillingAddress(
 			addressCity = "Diamond Bar",
 			addressCountry = "United States",
-			addressDataType = "billing",
 			addressName = "Liferay, Inc.",
 			addressPostalCode = "91765",
 			addressRegion = "California",
 			addressStreet1 = "1400 Montefino Ave",
 			phoneNumber = "+1-877-LIFERAY (1-877-543-3729)");
 
-		Accounts.setDefaultAddress(
-			addressDataType = "shipping",
-			addressName = "Liferay Dalian Software Co., Ltd.");
+		Accounts.changeDefaultShippingAddress(addressName = "Liferay Dalian Software Co., Ltd.");
 
-		Accounts.setDefaultAddress(
-			addressDataType = "billing",
-			addressName = "Liferay Dalian Software Co., Ltd.");
+		Accounts.changeDefaultBillingAddress(addressName = "Liferay Dalian Software Co., Ltd.");
 
-		for (var addressDataType : list "shipping,billing") {
-			Accounts.viewAddress(
-				addressCity = "Dalian",
-				addressCountry = "China",
-				addressDataType = "${addressDataType}",
-				addressName = "Liferay Dalian Software Co., Ltd.",
-				addressPostalCode = "116023",
-				addressRegion = "Liaoning Sheng",
-				addressStreet1 = "537 Huangpu Road Taide Building,",
-				addressStreet2 = "High-Tech Zone",
-				addressStreet3 = "1005",
-				phoneNumber = "+86 (0)411 88120855");
-		}
+		Accounts.viewDefaultBillingAddress(
+			addressCity = "Dalian",
+			addressCountry = "China",
+			addressName = "Liferay Dalian Software Co., Ltd.",
+			addressPostalCode = "116023",
+			addressRegion = "Liaoning Sheng",
+			addressStreet1 = "537 Huangpu Road Taide Building,",
+			addressStreet2 = "High-Tech Zone",
+			addressStreet3 = "1005",
+			phoneNumber = "+86 (0)411 88120855");
+
+		Accounts.viewDefaultShippingAddress(
+			addressCity = "Dalian",
+			addressCountry = "China",
+			addressName = "Liferay Dalian Software Co., Ltd.",
+			addressPostalCode = "116023",
+			addressRegion = "Liaoning Sheng",
+			addressStreet1 = "537 Huangpu Road Taide Building,",
+			addressStreet2 = "High-Tech Zone",
+			addressStreet3 = "1005",
+			phoneNumber = "+86 (0)411 88120855");
 	}
 
 	@description = "This tests canceling account creation will not save it."
@@ -1205,6 +1225,8 @@ definition {
 	@description = "This test makes sure the default account roles are present in Roles Admin."
 	@priority = "4"
 	test DefaultAccountRolesArePresent {
+		property portal.acceptance = "true";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Users",
 			panel = "Control Panel",
@@ -1264,7 +1286,7 @@ definition {
 
 		LexiconEntry.gotoEntry(rowEntry = "Business Account");
 
-		AssertElementNotPresent(locator1 = "Account#DOMAIN_SECTION");
+		AssertElementNotPresent(locator1 = "Account#VALID_DOMAINS_HEADING");
 
 		Accounts.gotoAssigneeTab(assigneeTab = "Users");
 
@@ -1335,7 +1357,7 @@ definition {
 		Accounts.gotoEdit(accountName = "Person Account");
 
 		AssertClick(
-			locator1 = "Account#USER_SELECT",
+			locator1 = "Account#USER_SELECT_BUTTON",
 			value1 = "Select");
 
 		SelectFrame(locator1 = "IFrame#ASSIGN_USER");
@@ -1347,6 +1369,7 @@ definition {
 	@priority = "3"
 	test NoWarningDisplaysWhenAddingAUserWithValidDomain {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
+		property portal.acceptance = "true";
 
 		AccountConfiguration.enableAccountEmailDomain();
 
@@ -1398,6 +1421,8 @@ definition {
 	@description = "This test replaces user in Person Account with another existing user. It asserts that first user was replaced by the second user and isn't assigned to the account anymore."
 	@priority = "5"
 	test SelectingUserWillReplaceExistingUserInPersonAccount {
+		property portal.acceptance = "true";
+
 		Accounts.openAccountsAdmin();
 
 		Accounts.addBusinessAccount(

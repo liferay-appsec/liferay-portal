@@ -51,6 +51,7 @@ import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -193,10 +194,7 @@ public class CPDefinitionsDisplayContext
 			getClayDataSetActionDropdownItems()
 		throws PortalException {
 
-		List<ClayDataSetActionDropdownItem> clayDataSetActionDropdownItems =
-			new ArrayList<>();
-
-		clayDataSetActionDropdownItems.add(
+		return ListUtil.fromArray(
 			new ClayDataSetActionDropdownItem(
 				PortletURLBuilder.create(
 					PortletProviderUtil.getPortletURL(
@@ -211,16 +209,12 @@ public class CPDefinitionsDisplayContext
 					CPDefinitionScreenNavigationConstants.CATEGORY_KEY_DETAILS
 				).buildString(),
 				"view", "view", LanguageUtil.get(httpServletRequest, "view"),
-				"get", null, null));
-
-		clayDataSetActionDropdownItems.add(
+				"get", null, null),
 			new ClayDataSetActionDropdownItem(
 				"/o/headless-commerce-admin-catalog/v1.0/products/{productId}",
 				"trash", "delete",
 				LanguageUtil.get(httpServletRequest, "delete"), "delete",
-				"delete", "async"));
-
-		clayDataSetActionDropdownItems.add(
+				"delete", "async"),
 			new ClayDataSetActionDropdownItem(
 				PortletURLBuilder.create(
 					PortletURLFactoryUtil.create(
@@ -237,8 +231,6 @@ public class CPDefinitionsDisplayContext
 				"paste", "duplicate",
 				LanguageUtil.get(httpServletRequest, "duplicate"), "post",
 				"update", "modal"));
-
-		return clayDataSetActionDropdownItems;
 	}
 
 	public long[] getCommerceAccountGroupRelCommerceAccountGroupIds()

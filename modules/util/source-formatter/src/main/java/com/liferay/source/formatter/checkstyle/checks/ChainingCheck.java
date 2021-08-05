@@ -174,7 +174,7 @@ public class ChainingCheck extends BaseCheck {
 
 			_checkAllowedChaining(methodCallDetailAST);
 
-			List<String> chainedMethodNames = _getChainedMethodNames(
+			List<String> chainedMethodNames = getChainedMethodNames(
 				methodCallDetailAST);
 
 			_checkRequiredChaining(methodCallDetailAST, chainedMethodNames);
@@ -255,7 +255,7 @@ public class ChainingCheck extends BaseCheck {
 			return;
 		}
 
-		List<String> chainedMethodNames = _getChainedMethodNames(
+		List<String> chainedMethodNames = getChainedMethodNames(
 			methodCallDetailAST);
 
 		if (_isAllowedChainingMethodCall(
@@ -454,37 +454,6 @@ public class ChainingCheck extends BaseCheck {
 			}
 
 			parentDetailAST = parentDetailAST.getParent();
-		}
-	}
-
-	private List<String> _getChainedMethodNames(DetailAST methodCallDetailAST) {
-		List<String> chainedMethodNames = new ArrayList<>();
-
-		chainedMethodNames.add(getMethodName(methodCallDetailAST));
-
-		while (true) {
-			DetailAST parentDetailAST = methodCallDetailAST.getParent();
-
-			if (parentDetailAST.getType() != TokenTypes.DOT) {
-				return chainedMethodNames;
-			}
-
-			DetailAST grandParentDetailAST = parentDetailAST.getParent();
-
-			if (grandParentDetailAST.getType() != TokenTypes.METHOD_CALL) {
-				DetailAST siblingDetailAST =
-					methodCallDetailAST.getNextSibling();
-
-				if (siblingDetailAST.getType() == TokenTypes.IDENT) {
-					chainedMethodNames.add(siblingDetailAST.getText());
-				}
-
-				return chainedMethodNames;
-			}
-
-			methodCallDetailAST = grandParentDetailAST;
-
-			chainedMethodNames.add(getMethodName(methodCallDetailAST));
 		}
 	}
 

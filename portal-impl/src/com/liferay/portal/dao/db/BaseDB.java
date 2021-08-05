@@ -607,29 +607,39 @@ public abstract class BaseDB implements DB {
 	public void updateIndexes(
 			Connection connection, String tablesSQL, String indexesSQL,
 			boolean dropIndexes)
-		throws IOException, SQLException {
+		throws Exception {
 
-		List<Index> indexes = getIndexes(connection);
+		process(
+			companyId -> {
+				if (Validator.isNotNull(companyId) && _log.isInfoEnabled()) {
+					_log.info(
+						"Updating database indexes for company " + companyId);
+				}
 
-		Set<String> validIndexNames = null;
+				List<Index> indexes = getIndexes(connection);
 
-		if (dropIndexes) {
-			validIndexNames = dropIndexes(
-				connection, tablesSQL, indexesSQL, indexes);
-		}
-		else {
-			validIndexNames = new HashSet<>();
+				Set<String> validIndexNames = null;
 
-			for (Index index : indexes) {
-				String indexName = StringUtil.toUpperCase(index.getIndexName());
+				if (dropIndexes) {
+					validIndexNames = dropIndexes(
+						connection, tablesSQL, indexesSQL, indexes);
+				}
+				else {
+					validIndexNames = new HashSet<>();
 
-				validIndexNames.add(indexName);
-			}
-		}
+					for (Index index : indexes) {
+						String indexName = StringUtil.toUpperCase(
+							index.getIndexName());
 
-		indexesSQL = _applyMaxStringIndexLengthLimitation(indexesSQL);
+						validIndexNames.add(indexName);
+					}
+				}
 
-		addIndexes(connection, indexesSQL, validIndexNames);
+				addIndexes(
+					connection,
+					_applyMaxStringIndexLengthLimitation(indexesSQL),
+					validIndexNames);
+			});
 	}
 
 	protected BaseDB(DBType dbType, int majorVersion, int minorVersion) {

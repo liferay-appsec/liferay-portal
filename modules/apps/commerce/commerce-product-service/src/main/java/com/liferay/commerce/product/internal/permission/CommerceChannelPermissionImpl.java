@@ -118,18 +118,14 @@ public class CommerceChannelPermissionImpl
 			CommerceChannel commerceChannel, String actionId)
 		throws PortalException {
 
-		if (permissionChecker.isCompanyAdmin(commerceChannel.getCompanyId()) ||
-			permissionChecker.isOmniadmin()) {
-
+		if (permissionChecker.isCompanyAdmin(commerceChannel.getCompanyId())) {
 			return true;
 		}
 
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(),
-				CommerceChannel.class.getName(),
+				commerceChannel.getCompanyId(), CommerceChannel.class.getName(),
 				commerceChannel.getCommerceChannelId(),
-				permissionChecker.getUserId(), actionId) &&
-			(commerceChannel.getUserId() == permissionChecker.getUserId())) {
+				commerceChannel.getUserId(), actionId)) {
 
 			return true;
 		}

@@ -28,6 +28,10 @@ $white: #fff;
 
 			.card-body {
 				padding: 0.5rem;
+
+				.card-row {
+					min-height: 2rem;
+				}
 			}
 
 			&.form-check-middle-left .card-horizontal > .card-body {

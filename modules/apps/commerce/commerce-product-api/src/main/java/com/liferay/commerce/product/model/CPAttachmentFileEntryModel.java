@@ -281,6 +281,42 @@ public interface CPAttachmentFileEntryModel
 	public void setFileEntryId(long fileEntryId);
 
 	/**
+	 * Returns the cdn enabled of this cp attachment file entry.
+	 *
+	 * @return the cdn enabled of this cp attachment file entry
+	 */
+	public boolean getCDNEnabled();
+
+	/**
+	 * Returns <code>true</code> if this cp attachment file entry is cdn enabled.
+	 *
+	 * @return <code>true</code> if this cp attachment file entry is cdn enabled; <code>false</code> otherwise
+	 */
+	public boolean isCDNEnabled();
+
+	/**
+	 * Sets whether this cp attachment file entry is cdn enabled.
+	 *
+	 * @param cdnEnabled the cdn enabled of this cp attachment file entry
+	 */
+	public void setCDNEnabled(boolean cdnEnabled);
+
+	/**
+	 * Returns the cdn url of this cp attachment file entry.
+	 *
+	 * @return the cdn url of this cp attachment file entry
+	 */
+	@AutoEscape
+	public String getCDNURL();
+
+	/**
+	 * Sets the cdn url of this cp attachment file entry.
+	 *
+	 * @param cdnURL the cdn url of this cp attachment file entry
+	 */
+	public void setCDNURL(String cdnURL);
+
+	/**
 	 * Returns the display date of this cp attachment file entry.
 	 *
 	 * @return the display date of this cp attachment file entry

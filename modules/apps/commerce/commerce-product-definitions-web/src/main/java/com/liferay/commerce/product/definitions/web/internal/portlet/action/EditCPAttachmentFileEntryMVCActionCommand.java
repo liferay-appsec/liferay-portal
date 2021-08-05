@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -145,6 +146,10 @@ public class EditCPAttachmentFileEntryMVCActionCommand
 			actionRequest, "cpDefinitionId");
 		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
 
+		String cdnURL = ParamUtil.getString(actionRequest, "cdnURL");
+
+		boolean cdnEnabled = Validator.isNotNull(cdnURL);
+
 		int displayDateMonth = ParamUtil.getInteger(
 			actionRequest, "displayDateMonth");
 		int displayDateDay = ParamUtil.getInteger(
@@ -198,22 +203,23 @@ public class EditCPAttachmentFileEntryMVCActionCommand
 
 		if (cpAttachmentFileEntryId > 0) {
 			_cpAttachmentFileEntryService.updateCPAttachmentFileEntry(
-				cpAttachmentFileEntryId, fileEntryId, displayDateMonth,
+				cpAttachmentFileEntryId, fileEntryId, cdnEnabled, cdnURL,
+				displayDateMonth, displayDateDay, displayDateYear,
+				displayDateHour, displayDateMinute, expirationDateMonth,
+				expirationDateDay, expirationDateYear, expirationDateHour,
+				expirationDateMinute, neverExpire, titleMap, ddmFormValues,
+				priority, type, serviceContext);
+		}
+		else {
+			_cpAttachmentFileEntryService.addCPAttachmentFileEntry(
+				serviceContext.getScopeGroupId(),
+				_portal.getClassNameId(CPDefinition.class), cpDefinitionId,
+				fileEntryId, cdnEnabled, cdnURL, displayDateMonth,
 				displayDateDay, displayDateYear, displayDateHour,
 				displayDateMinute, expirationDateMonth, expirationDateDay,
 				expirationDateYear, expirationDateHour, expirationDateMinute,
 				neverExpire, titleMap, ddmFormValues, priority, type,
 				serviceContext);
-		}
-		else {
-			_cpAttachmentFileEntryService.addCPAttachmentFileEntry(
-				serviceContext.getUserId(), serviceContext.getScopeGroupId(),
-				_portal.getClassNameId(CPDefinition.class), cpDefinitionId,
-				fileEntryId, displayDateMonth, displayDateDay, displayDateYear,
-				displayDateHour, displayDateMinute, expirationDateMonth,
-				expirationDateDay, expirationDateYear, expirationDateHour,
-				expirationDateMinute, neverExpire, titleMap, ddmFormValues,
-				priority, type, serviceContext);
 		}
 	}
 

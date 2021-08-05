@@ -320,6 +320,52 @@ definition {
 			spNameID = "${spEntityID}");
 	}
 
+	@description = "Delete SAML certificate from a Service Provider's settings"
+	macro deleteSPCertificate {
+		User.firstLoginUI(
+			specificURL = "${specificURL}",
+			userEmailAddress = "${userEmailAddress}");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Security",
+			panel = "Control Panel",
+			portlet = "SAML Admin");
+
+		SAMLRole.deleteCertificate();
+
+		User.logoutPG(specificURL = "${specificURL}");
+
+		User.viewLoggedOutPG();
+	}
+
+	@description = "Enable encryption on Service Provider connection"
+	macro enableEncryptionOnSPConnection {
+		if (isSet(userEmailAddress)) {
+			User.firstLoginUI(
+				password = "test",
+				specificURL = "${idpURL}",
+				userEmailAddress = "${userEmailAddress}");
+		}
+		else {
+			User.firstLoginUI(
+				password = "test",
+				specificURL = "${idpURL}",
+				userEmailAddress = "test@liferay.com");
+		}
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Security",
+			panel = "Control Panel",
+			portlet = "SAML Admin");
+
+		SAMLNavigation.gotoServiceProviderConnection();
+
+		SAMLPortlet.configureServiceProviderConnection(
+			forceEncryption = "enable",
+			samlEntityID = "${samlEntityID}");
+		User.logoutPG(specificURL = "${idpURL}");
+	}
+
 	@description = "Enable SAML debug logs at localhost"
 	macro enableSAMLDebugLogs {
 

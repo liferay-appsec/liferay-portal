@@ -14,10 +14,8 @@
 
 package com.liferay.template.web.internal.display.context;
 
-import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -33,20 +31,14 @@ public class WidgetTemplatesTemplateDisplayContext
 	extends BaseTemplateDisplayContext {
 
 	public WidgetTemplatesTemplateDisplayContext(
-		DDMWebConfiguration ddmWebConfiguration,
 		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse,
-		PortletDisplayTemplate portletDisplayTemplate) {
+		LiferayPortletResponse liferayPortletResponse) {
 
-		super(
-			ddmWebConfiguration, liferayPortletRequest, liferayPortletResponse);
+		super(liferayPortletRequest, liferayPortletResponse);
 
-		_portletDisplayTemplate = portletDisplayTemplate;
-	}
-
-	@Override
-	public String getAddPermissionActionId() {
-		return ActionKeys.ADD_PORTLET_DISPLAY_TEMPLATE;
+		_portletDisplayTemplate =
+			(PortletDisplayTemplate)liferayPortletRequest.getAttribute(
+				PortletDisplayTemplate.class.getName());
 	}
 
 	@Override
@@ -82,15 +74,7 @@ public class WidgetTemplatesTemplateDisplayContext
 	}
 
 	@Override
-	public String getResourceName(long classNameId) {
-		TemplateHandler templateHandler =
-			TemplateHandlerRegistryUtil.getTemplateHandler(classNameId);
-
-		return templateHandler.getResourceName();
-	}
-
-	@Override
-	public String getTemplateType(long classNameId) {
+	public String getTemplateTypeLabel(long classNameId) {
 		TemplateHandler templateHandler =
 			TemplateHandlerRegistryUtil.getTemplateHandler(classNameId);
 

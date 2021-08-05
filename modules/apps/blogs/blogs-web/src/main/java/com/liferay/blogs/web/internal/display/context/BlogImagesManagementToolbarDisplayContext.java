@@ -171,32 +171,48 @@ public class BlogImagesManagementToolbarDisplayContext
 			_liferayPortletResponse
 		).setMVCRenderCommandName(
 			"/blogs/view"
+		).setKeywords(
+			() -> {
+				String keywords = ParamUtil.getString(
+					_httpServletRequest, "keywords");
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
 		).setNavigation(
 			"images"
+		).setParameter(
+			"cur",
+			() -> {
+				int cur = ParamUtil.getInteger(
+					_httpServletRequest, SearchContainer.DEFAULT_CUR_PARAM);
+
+				if (cur > 0) {
+					return cur;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"delta",
+			() -> {
+				int delta = ParamUtil.getInteger(
+					_httpServletRequest, SearchContainer.DEFAULT_DELTA_PARAM);
+
+				if (delta > 0) {
+					return delta;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
 		).buildPortletURL();
-
-		int delta = ParamUtil.getInteger(
-			_httpServletRequest, SearchContainer.DEFAULT_DELTA_PARAM);
-
-		if (delta > 0) {
-			portletURL.setParameter("delta", String.valueOf(delta));
-		}
-
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
-
-		int cur = ParamUtil.getInteger(
-			_httpServletRequest, SearchContainer.DEFAULT_CUR_PARAM);
-
-		if (cur > 0) {
-			portletURL.setParameter("cur", String.valueOf(cur));
-		}
-
-		String keywords = ParamUtil.getString(_httpServletRequest, "keywords");
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
 
 		return new ViewTypeItemList(portletURL, getDisplayStyle()) {
 			{
@@ -208,19 +224,22 @@ public class BlogImagesManagementToolbarDisplayContext
 	}
 
 	private PortletURL _getCurrentSortingURL() {
-		PortletURL sortingURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			getPortletURL()
+		).setKeywords(
+			() -> {
+				String keywords = ParamUtil.getString(
+					_httpServletRequest, "keywords");
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
 		).setParameter(
 			SearchContainer.DEFAULT_CUR_PARAM, "0"
 		).buildPortletURL();
-
-		String keywords = ParamUtil.getString(_httpServletRequest, "keywords");
-
-		if (Validator.isNotNull(keywords)) {
-			sortingURL.setParameter("keywords", keywords);
-		}
-
-		return sortingURL;
 	}
 
 	private List<DropdownItem> _getOrderByDropdownItems() {

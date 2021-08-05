@@ -44,12 +44,12 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.KeyValuePair;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -466,14 +466,11 @@ public class DDMRESTDataProviderTest {
 	}
 
 	protected List<KeyValuePair> createKeyValuePairs() {
-		List<KeyValuePair> keyValuePairs = new ArrayList<>();
-
-		keyValuePairs.add(new KeyValuePair("france", "France"));
-		keyValuePairs.add(new KeyValuePair("spain", "Spain"));
-		keyValuePairs.add(new KeyValuePair("united-states", "United States"));
-		keyValuePairs.add(new KeyValuePair("brazil", "Brazil"));
-
-		return keyValuePairs;
+		return ListUtil.fromArray(
+			new KeyValuePair("france", "France"),
+			new KeyValuePair("spain", "Spain"),
+			new KeyValuePair("united-states", "United States"),
+			new KeyValuePair("brazil", "Brazil"));
 	}
 
 	protected long saveDDMDataProviderInstance(

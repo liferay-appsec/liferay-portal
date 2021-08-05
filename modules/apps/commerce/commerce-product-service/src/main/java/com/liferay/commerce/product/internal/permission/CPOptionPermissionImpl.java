@@ -111,17 +111,13 @@ public class CPOptionPermissionImpl implements CPOptionPermission {
 			String actionId)
 		throws PortalException {
 
-		if (permissionChecker.isCompanyAdmin(cpOption.getCompanyId()) ||
-			permissionChecker.isOmniadmin()) {
-
+		if (permissionChecker.isCompanyAdmin(cpOption.getCompanyId())) {
 			return true;
 		}
 
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(), CPOption.class.getName(),
-				cpOption.getCPOptionId(), permissionChecker.getUserId(),
-				actionId) &&
-			(cpOption.getUserId() == permissionChecker.getUserId())) {
+				cpOption.getCompanyId(), CPOption.class.getName(),
+				cpOption.getCPOptionId(), cpOption.getUserId(), actionId)) {
 
 			return true;
 		}

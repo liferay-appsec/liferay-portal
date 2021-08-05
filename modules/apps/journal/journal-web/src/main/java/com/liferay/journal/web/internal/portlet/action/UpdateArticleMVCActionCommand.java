@@ -80,7 +80,6 @@ import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletPreferences;
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -448,9 +447,7 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 			String redirect)
 		throws Exception {
 
-		String languageId = ParamUtil.getString(actionRequest, "languageId");
-
-		PortletURL portletURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			PortletURLFactoryUtil.create(
 				actionRequest, JournalPortletKeys.JOURNAL,
 				PortletRequest.RENDER_PHASE)
@@ -467,21 +464,27 @@ public class UpdateArticleMVCActionCommand extends BaseMVCActionCommand {
 		).setParameter(
 			"groupId", article.getGroupId()
 		).setParameter(
+			"languageId",
+			() -> {
+				String languageId = ParamUtil.getString(
+					actionRequest, "languageId");
+
+				if (Validator.isNotNull(languageId)) {
+					return languageId;
+				}
+
+				return null;
+			}
+		).setParameter(
 			"referringPortletResource",
 			ParamUtil.getString(actionRequest, "referringPortletResource")
 		).setParameter(
 			"resourcePrimKey", article.getResourcePrimKey()
 		).setParameter(
 			"version", article.getVersion()
-		).buildPortletURL();
-
-		if (Validator.isNotNull(languageId)) {
-			portletURL.setParameter("languageId", languageId);
-		}
-
-		portletURL.setWindowState(actionRequest.getWindowState());
-
-		return portletURL.toString();
+		).setWindowState(
+			actionRequest.getWindowState()
+		).buildString();
 	}
 
 	protected void sendEditArticleRedirect(

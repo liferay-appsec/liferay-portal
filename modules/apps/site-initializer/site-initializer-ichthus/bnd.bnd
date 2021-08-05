@@ -1,0 +1,6 @@
+Bundle-Name: Liferay Site Initializer Ichthus
+Bundle-SymbolicName: com.liferay.site.initializer.ichthus
+Bundle-Version: 1.0.0
+Provide-Capability:\
+	liferay.site.initializer;\
+		\

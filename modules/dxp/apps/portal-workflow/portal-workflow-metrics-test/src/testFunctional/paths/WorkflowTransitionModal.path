@@ -41,6 +41,16 @@
 	<td></td>
 </tr>
 <tr>
+	<td>TRANSITION_MODAL_ASSERT_REVIEW_TASK_1</td>
+	<td>//div[@class='panel'][1]//p[contains(text(),'${key_taskName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TRANSITION_MODAL_ASSERT_REVIEW_TASK_2</td>
+	<td>//div[@class='panel'][2]//p[contains(text(),'${key_taskName}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>TRANSITION_TASK_NAME</td>
 	<td>//p[contains(text(),'${key_taskName}')]</td>
 	<td></td>

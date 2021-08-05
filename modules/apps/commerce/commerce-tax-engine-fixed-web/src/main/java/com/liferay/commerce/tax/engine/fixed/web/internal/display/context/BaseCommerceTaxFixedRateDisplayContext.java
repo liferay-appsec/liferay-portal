@@ -167,45 +167,61 @@ public class BaseCommerceTaxFixedRateDisplayContext {
 	}
 
 	public PortletURL getPortletURL() throws PortalException {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			commerceTaxFixedRateRequestHelper.getLiferayPortletResponse()
 		).setMVCRenderCommandName(
 			"/commerce_tax_methods/edit_commerce_tax_method"
+		).setRedirect(
+			() -> {
+				String redirect = ParamUtil.getString(
+					commerceTaxFixedRateRequestHelper.getRequest(), "redirect");
+
+				if (Validator.isNotNull(redirect)) {
+					return redirect;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"commerceTaxMethodId",
+			() -> {
+				CommerceTaxMethod commerceTaxMethod = getCommerceTaxMethod();
+
+				if (commerceTaxMethod != null) {
+					return commerceTaxMethod.getCommerceTaxMethodId();
+				}
+
+				return null;
+			}
+		).setParameter(
+			"delta",
+			() -> {
+				String delta = ParamUtil.getString(
+					commerceTaxFixedRateRequestHelper.getRequest(), "delta");
+
+				if (Validator.isNotNull(delta)) {
+					return delta;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"engineKey",
+			() -> {
+				String engineKey = ParamUtil.getString(
+					commerceTaxFixedRateRequestHelper.getRequest(),
+					"engineKey");
+
+				if (Validator.isNotNull(engineKey)) {
+					return engineKey;
+				}
+
+				return null;
+			}
 		).setParameter(
 			"screenNavigationCategoryKey",
 			getSelectedScreenNavigationCategoryKey()
 		).buildPortletURL();
-
-		String redirect = ParamUtil.getString(
-			commerceTaxFixedRateRequestHelper.getRequest(), "redirect");
-
-		if (Validator.isNotNull(redirect)) {
-			portletURL.setParameter("redirect", redirect);
-		}
-
-		CommerceTaxMethod commerceTaxMethod = getCommerceTaxMethod();
-
-		if (commerceTaxMethod != null) {
-			portletURL.setParameter(
-				"commerceTaxMethodId",
-				String.valueOf(commerceTaxMethod.getCommerceTaxMethodId()));
-		}
-
-		String engineKey = ParamUtil.getString(
-			commerceTaxFixedRateRequestHelper.getRequest(), "engineKey");
-
-		if (Validator.isNotNull(engineKey)) {
-			portletURL.setParameter("engineKey", engineKey);
-		}
-
-		String delta = ParamUtil.getString(
-			commerceTaxFixedRateRequestHelper.getRequest(), "delta");
-
-		if (Validator.isNotNull(delta)) {
-			portletURL.setParameter("delta", delta);
-		}
-
-		return portletURL;
 	}
 
 	public String getScreenNavigationCategoryKey() {

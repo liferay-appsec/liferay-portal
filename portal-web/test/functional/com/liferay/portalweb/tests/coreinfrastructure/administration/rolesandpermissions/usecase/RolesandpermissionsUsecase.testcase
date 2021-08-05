@@ -624,12 +624,9 @@ definition {
 			layoutName = "Dynamic Data Lists Page",
 			layoutTemplate = "1 Column");
 
-		JSONLayout.addWidgetToPublicLayout(
-			groupName = "Guest",
-			layoutName = "Dynamic Data Lists Page",
-			widgetName = "Dynamic Data Lists Display");
-
 		Navigator.gotoPage(pageName = "Dynamic Data Lists Page");
+
+		Portlet.addPG(portletName = "Dynamic Data Lists Display");
 
 		DDLList.addViaDDLDisplayPG(
 			ddlListDescription = "Liferay Employee Profiles",
@@ -1624,6 +1621,8 @@ definition {
 
 	@priority = "4"
 	test ViewAutomaticAssignedRoles {
+		property portal.acceptance = "true";
+
 		ApplicationsMenu.gotoPortlet(
 			category = "Users",
 			panel = "Control Panel",

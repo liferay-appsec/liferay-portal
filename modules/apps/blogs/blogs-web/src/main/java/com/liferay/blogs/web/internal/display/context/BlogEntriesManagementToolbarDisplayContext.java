@@ -294,19 +294,21 @@ public class BlogEntriesManagementToolbarDisplayContext
 	}
 
 	private PortletURL _getCurrentSortingURL() {
-		PortletURL sortingURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			getPortletURL()
 		).setMVCRenderCommandName(
 			"/blogs/view"
+		).setKeywords(
+			() -> {
+				if (_isSearch()) {
+					return _getKeywords();
+				}
+
+				return null;
+			}
 		).setParameter(
 			SearchContainer.DEFAULT_CUR_PARAM, "0"
 		).buildPortletURL();
-
-		if (_isSearch()) {
-			sortingURL.setParameter("keywords", _getKeywords());
-		}
-
-		return sortingURL;
 	}
 
 	private String _getKeywords() {

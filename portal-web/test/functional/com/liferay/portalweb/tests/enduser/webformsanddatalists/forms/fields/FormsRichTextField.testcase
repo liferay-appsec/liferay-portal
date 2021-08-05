@@ -107,6 +107,7 @@ definition {
 	test CanBeDuplicated {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
+		property portal.upstream = "quarantine";
 
 		ProductMenu.gotoPortlet(
 			category = "Content &amp; Data",
@@ -467,6 +468,7 @@ definition {
 	test PredefinedValueCanBeAdded {
 		property forms.functional = "true";
 		property portal.acceptance = "false";
+		property portal.upstream = "quarantine";
 
 		ProductMenu.gotoPortlet(
 			category = "Content &amp; Data",

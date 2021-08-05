@@ -468,15 +468,9 @@ public class MasterLayoutsImporterTest {
 
 		@Override
 		public List<FragmentEntry> getFragmentEntries() {
-			List<FragmentEntry> fragmentEntries = new ArrayList<>();
-
-			fragmentEntries.add(
-				_getFragmentEntry(TEST_MASTER_PAGE_FRAGMENT_ENTRY_1, 0));
-
-			fragmentEntries.add(
+			return ListUtil.fromArray(
+				_getFragmentEntry(TEST_MASTER_PAGE_FRAGMENT_ENTRY_1, 0),
 				_getFragmentEntry(TEST_MASTER_PAGE_FRAGMENT_ENTRY_2, 0));
-
-			return fragmentEntries;
 		}
 
 		@Override

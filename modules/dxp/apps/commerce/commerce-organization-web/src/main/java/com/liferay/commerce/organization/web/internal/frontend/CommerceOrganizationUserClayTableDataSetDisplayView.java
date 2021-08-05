@@ -55,8 +55,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.portlet.PortletURL;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
@@ -209,29 +207,30 @@ public class CommerceOrganizationUserClayTableDataSetDisplayView
 			long userId, HttpServletRequest httpServletRequest)
 		throws PortalException {
 
-		PortletURL viewURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			PortletProviderUtil.getPortletURL(
 				httpServletRequest, Organization.class.getName(),
 				PortletProvider.Action.MANAGE)
 		).setMVCRenderCommandName(
 			"viewCommerceOrganizationUser"
-		).buildPortletURL();
-
-		long organizationId = ParamUtil.getLong(
-			httpServletRequest, "organizationId");
-
-		if (organizationId > 0) {
-			viewURL.setParameter(
-				"organizationId", String.valueOf(organizationId));
-		}
-
-		viewURL.setParameter("userId", String.valueOf(userId));
-
-		viewURL.setParameter(
+		).setParameter(
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "backURL",
-			_portal.getCurrentURL(httpServletRequest));
+			_portal.getCurrentURL(httpServletRequest)
+		).setParameter(
+			"organizationId",
+			() -> {
+				long organizationId = ParamUtil.getLong(
+					httpServletRequest, "organizationId");
 
-		return viewURL.toString();
+				if (organizationId > 0) {
+					return organizationId;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"userId", userId
+		).buildString();
 	}
 
 	@Reference

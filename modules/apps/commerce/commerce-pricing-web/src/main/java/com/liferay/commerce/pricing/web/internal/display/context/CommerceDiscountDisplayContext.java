@@ -250,10 +250,7 @@ public class CommerceDiscountDisplayContext extends BasePricingDisplayContext {
 			getDiscountClayDataSetActionDropdownItems()
 		throws PortalException {
 
-		List<ClayDataSetActionDropdownItem> clayDataSetActionDropdownItems =
-			new ArrayList<>();
-
-		clayDataSetActionDropdownItems.add(
+		return ListUtil.fromArray(
 			new ClayDataSetActionDropdownItem(
 				PortletURLBuilder.create(
 					PortletProviderUtil.getPortletURL(
@@ -273,21 +270,15 @@ public class CommerceDiscountDisplayContext extends BasePricingDisplayContext {
 					"usePercentage", "{usePercentage}"
 				).buildString(),
 				"pencil", "edit", LanguageUtil.get(httpServletRequest, "edit"),
-				"get", null, null));
-
-		clayDataSetActionDropdownItems.add(
+				"get", null, null),
 			new ClayDataSetActionDropdownItem(
 				null, "trash", "delete",
 				LanguageUtil.get(httpServletRequest, "delete"), "delete",
-				"delete", "headless"));
-
-		clayDataSetActionDropdownItems.add(
+				"delete", "headless"),
 			new ClayDataSetActionDropdownItem(
 				_getManageDiscountPermissionsURL(), null, "permissions",
 				LanguageUtil.get(httpServletRequest, "permissions"), "get",
 				"permissions", "modal-permissions"));
-
-		return clayDataSetActionDropdownItems;
 	}
 
 	public String getDiscountCPDefinitionApiURL() throws PortalException {

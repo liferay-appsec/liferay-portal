@@ -167,14 +167,22 @@ ContentDashboardAdminDisplayContext contentDashboardAdminDisplayContext = (Conte
 						</span>
 					</liferay-ui:search-container-column-text>
 
+					<c:if test="<%= FFContentDashboardDocumentConfigurationUtil.documentEnabled() %>">
+						<liferay-ui:search-container-column-text
+							cssClass="table-cell-expand-smaller text-truncate"
+							name="type"
+							value="<%= HtmlUtil.escape(contentDashboardItem.getTypeLabel(locale)) %>"
+						/>
+					</c:if>
+
 					<%
-					ContentDashboardItemType contentDashboardItemType = contentDashboardItem.getContentDashboardItemType();
+					ContentDashboardItemSubtype contentDashboardItemSubtype = contentDashboardItem.getContentDashboardItemSubtype();
 					%>
 
 					<liferay-ui:search-container-column-text
-						cssClass="table-cell-expand-smaller"
+						cssClass="table-cell-expand-smaller text-truncate"
 						name="subtype"
-						value="<%= HtmlUtil.escape(contentDashboardItemType.getLabel(locale)) %>"
+						value="<%= HtmlUtil.escape(contentDashboardItemSubtype.getLabel(locale)) %>"
 					/>
 
 					<liferay-ui:search-container-column-text

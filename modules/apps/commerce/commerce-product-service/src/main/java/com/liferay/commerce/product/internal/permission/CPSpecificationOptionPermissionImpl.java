@@ -121,19 +121,16 @@ public class CPSpecificationOptionPermissionImpl
 		throws PortalException {
 
 		if (permissionChecker.isCompanyAdmin(
-				cpSpecificationOption.getCompanyId()) ||
-			permissionChecker.isOmniadmin()) {
+				cpSpecificationOption.getCompanyId())) {
 
 			return true;
 		}
 
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(),
+				cpSpecificationOption.getCompanyId(),
 				CPSpecificationOption.class.getName(),
 				cpSpecificationOption.getCPSpecificationOptionId(),
-				permissionChecker.getUserId(), actionId) &&
-			(cpSpecificationOption.getUserId() ==
-				permissionChecker.getUserId())) {
+				cpSpecificationOption.getUserId(), actionId)) {
 
 			return true;
 		}

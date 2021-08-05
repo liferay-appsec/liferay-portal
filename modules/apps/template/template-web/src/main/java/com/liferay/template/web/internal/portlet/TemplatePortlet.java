@@ -50,7 +50,9 @@ import org.osgi.service.component.annotations.Reference;
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
+		"com.liferay.portlet.css-class-wrapper=portlet-template",
 		"com.liferay.portlet.display-category=category.hidden",
+		"com.liferay.portlet.header-portlet-css=/css/main.css",
 		"com.liferay.portlet.preferences-owned-by-group=true",
 		"com.liferay.portlet.preferences-unique-per-layout=false",
 		"com.liferay.portlet.private-request-attributes=false",
@@ -81,7 +83,6 @@ public class TemplatePortlet extends MVCPortlet {
 			renderRequest.setAttribute(
 				WebKeys.PORTLET_DISPLAY_CONTEXT,
 				new InformationTemplatesTemplateDisplayContext(
-					_ddmWebConfiguration, _infoItemServiceTracker,
 					_portal.getLiferayPortletRequest(renderRequest),
 					_portal.getLiferayPortletResponse(renderResponse)));
 		}
@@ -89,10 +90,8 @@ public class TemplatePortlet extends MVCPortlet {
 			renderRequest.setAttribute(
 				WebKeys.PORTLET_DISPLAY_CONTEXT,
 				new WidgetTemplatesTemplateDisplayContext(
-					_ddmWebConfiguration,
 					_portal.getLiferayPortletRequest(renderRequest),
-					_portal.getLiferayPortletResponse(renderResponse),
-					_portletDisplayTemplate));
+					_portal.getLiferayPortletResponse(renderResponse)));
 		}
 
 		super.render(renderRequest, renderResponse);
@@ -103,6 +102,21 @@ public class TemplatePortlet extends MVCPortlet {
 	protected void activate(Map<String, Object> properties) {
 		_ddmWebConfiguration = ConfigurableUtil.createConfigurable(
 			DDMWebConfiguration.class, properties);
+	}
+
+	@Override
+	protected void doDispatch(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws IOException, PortletException {
+
+		renderRequest.setAttribute(
+			DDMWebConfiguration.class.getName(), _ddmWebConfiguration);
+		renderRequest.setAttribute(
+			InfoItemServiceTracker.class.getName(), _infoItemServiceTracker);
+		renderRequest.setAttribute(
+			PortletDisplayTemplate.class.getName(), _portletDisplayTemplate);
+
+		super.doDispatch(renderRequest, renderResponse);
 	}
 
 	private volatile DDMWebConfiguration _ddmWebConfiguration;

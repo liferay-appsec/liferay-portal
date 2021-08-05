@@ -30,8 +30,11 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.servlet.filters.i18n.I18nFilter;
+import com.liferay.portal.util.PropsValues;
 
 import java.util.Locale;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -129,14 +132,7 @@ public class AssetDisplayPageFriendlyURLProviderImpl
 				ThemeDisplay clonedThemeDisplay =
 					(ThemeDisplay)themeDisplay.clone();
 
-				String languageId = LocaleUtil.toLanguageId(locale);
-
-				clonedThemeDisplay.setI18nLanguageId(languageId);
-
-				clonedThemeDisplay.setI18nPath(_getI18nPath(locale));
-
-				clonedThemeDisplay.setLanguageId(languageId);
-				clonedThemeDisplay.setLocale(locale);
+				_setThemeDisplayI18n(clonedThemeDisplay, locale);
 
 				return _portal.getGroupFriendlyURL(
 					group.getPublicLayoutSet(), clonedThemeDisplay);
@@ -158,6 +154,27 @@ public class AssetDisplayPageFriendlyURLProviderImpl
 		}
 
 		return StringPool.SLASH + locale.toLanguageTag();
+	}
+
+	private void _setThemeDisplayI18n(
+		ThemeDisplay themeDisplay, Locale locale) {
+
+		String i18nPath = null;
+
+		Set<String> languageIds = I18nFilter.getLanguageIds();
+
+		if ((languageIds.contains(locale.toString()) &&
+			 (PropsValues.LOCALE_PREPEND_FRIENDLY_URL_STYLE == 1) &&
+			 !locale.equals(LocaleUtil.getDefault())) ||
+			(PropsValues.LOCALE_PREPEND_FRIENDLY_URL_STYLE == 2)) {
+
+			i18nPath = _getI18nPath(locale);
+		}
+
+		themeDisplay.setI18nLanguageId(locale.toString());
+		themeDisplay.setI18nPath(i18nPath);
+		themeDisplay.setLanguageId(LocaleUtil.toLanguageId(locale));
+		themeDisplay.setLocale(locale);
 	}
 
 	@Reference

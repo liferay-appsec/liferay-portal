@@ -28,7 +28,9 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.bean.BeanParamUtil;
 import com.liferay.portal.kernel.editor.configuration.EditorConfiguration;
 import com.liferay.portal.kernel.editor.configuration.EditorConfigurationFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
@@ -44,6 +46,9 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.segments.constants.SegmentsExperienceConstants;
+import com.liferay.segments.model.SegmentsExperience;
+import com.liferay.segments.service.SegmentsExperienceServiceUtil;
 import com.liferay.translation.constants.TranslationPortletKeys;
 import com.liferay.translation.info.field.TranslationInfoFieldChecker;
 import com.liferay.translation.model.TranslationEntry;
@@ -56,6 +61,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
@@ -76,6 +82,7 @@ public class TranslateDisplayContext {
 		BooleanSupplier booleanSupplier, String className, long classPK,
 		InfoForm infoForm, LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse, Object object,
+		String segmentsExperienceId,
 		InfoItemFieldValues sourceInfoItemFieldValues, String sourceLanguageId,
 		InfoItemFieldValues targetInfoItemFieldValues, String targetLanguageId,
 		TranslationInfoFieldChecker translationInfoFieldChecker) {
@@ -88,6 +95,7 @@ public class TranslateDisplayContext {
 		_infoForm = infoForm;
 		_liferayPortletResponse = liferayPortletResponse;
 		_object = object;
+		_segmentsExperienceId = segmentsExperienceId;
 		_sourceInfoItemFieldValues = sourceInfoItemFieldValues;
 		_sourceLanguageId = sourceLanguageId;
 		_targetInfoItemFieldValues = targetInfoItemFieldValues;
@@ -151,7 +159,9 @@ public class TranslateDisplayContext {
 		return _infoForm.getInfoFieldSetEntries();
 	}
 
-	public Map<String, Object> getInfoFieldSetEntriesData() {
+	public Map<String, Object> getInfoFieldSetEntriesData()
+		throws PortalException {
+
 		List<HashMap<String, Object>> infoFieldSetEntries = new ArrayList<>();
 
 		for (InfoFieldSetEntry infoFieldSetEntry : getInfoFieldSetEntries()) {
@@ -229,7 +239,7 @@ public class TranslateDisplayContext {
 		}
 
 		return HashMapBuilder.<String, Object>put(
-			"aditionalFields",
+			"additionalFields",
 			HashMapBuilder.<String, Object>put(
 				"redirect", ParamUtil.getString(_httpServletRequest, "redirect")
 			).put(
@@ -239,6 +249,10 @@ public class TranslateDisplayContext {
 			).build()
 		).put(
 			"autoTranslateEnabled", isAutoTranslateEnabled()
+		).put(
+			"currentUrl", PortalUtil.getCurrentCompleteURL(_httpServletRequest)
+		).put(
+			"experiencesSelectorData", _getExperiencesSelectorData()
 		).put(
 			"getAutoTranslateURL", getAutoTranslateURL()
 		).put(
@@ -383,8 +397,6 @@ public class TranslateDisplayContext {
 
 	public Map<String, Object> getTranslateLanguagesSelectorData() {
 		return HashMapBuilder.<String, Object>put(
-			"currentUrl", PortalUtil.getCurrentCompleteURL(_httpServletRequest)
-		).put(
 			"sourceAvailableLanguages", _availableSourceLanguageIds
 		).put(
 			"sourceLanguageId", _sourceLanguageId
@@ -447,6 +459,64 @@ public class TranslateDisplayContext {
 
 	public boolean isSaveButtonDisabled() {
 		return _isAvailableTargetLanguageIdsEmpty();
+	}
+
+	private Map<String, Object> _getExperiencesSelectorData()
+		throws PortalException {
+
+		if (!Objects.equals(_className, Layout.class.getName())) {
+			return null;
+		}
+
+		List<SegmentsExperience> segmentsExperiences =
+			SegmentsExperienceServiceUtil.getSegmentsExperiences(
+				_groupId, PortalUtil.getClassNameId(Layout.class.getName()),
+				_classPK, true);
+
+		boolean addedDefault = false;
+
+		HashMap<String, String> defaultExperience = HashMapBuilder.put(
+			"label",
+			SegmentsExperienceConstants.getDefaultSegmentsExperienceName(
+				_themeDisplay.getLocale())
+		).put(
+			"value",
+			String.valueOf((Object)SegmentsExperienceConstants.ID_DEFAULT)
+		).build();
+
+		List<Map<String, String>> options = new ArrayList<>();
+
+		for (SegmentsExperience segmentsExperience : segmentsExperiences) {
+			if ((segmentsExperience.getPriority() <
+					SegmentsExperienceConstants.PRIORITY_DEFAULT) &&
+				!addedDefault) {
+
+				options.add(defaultExperience);
+
+				addedDefault = true;
+			}
+
+			options.add(
+				HashMapBuilder.put(
+					"label",
+					segmentsExperience.getName(_themeDisplay.getLocale())
+				).put(
+					"value",
+					String.valueOf(segmentsExperience.getSegmentsExperienceId())
+				).build());
+		}
+
+		if (!addedDefault) {
+			options.add(defaultExperience);
+		}
+
+		return HashMapBuilder.<String, Object>put(
+			"label", LanguageUtil.get(_httpServletRequest, "experience")
+		).put(
+			"options", options
+		).put(
+			"value", _segmentsExperienceId
+		).build();
 	}
 
 	private long _getGroupId() {
@@ -514,6 +584,7 @@ public class TranslateDisplayContext {
 	private final InfoForm _infoForm;
 	private final LiferayPortletResponse _liferayPortletResponse;
 	private final Object _object;
+	private final String _segmentsExperienceId;
 	private final InfoItemFieldValues _sourceInfoItemFieldValues;
 	private final String _sourceLanguageId;
 	private final Locale _sourceLocale;

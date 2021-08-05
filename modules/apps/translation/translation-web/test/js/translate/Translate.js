@@ -19,12 +19,13 @@ import React from 'react';
 import Translate from '../../../src/main/resources/META-INF/resources/js/translate/Translate';
 
 const baseProps = {
-	aditionalFields: {
+	additionalFields: {
 		redirect: 'http://redirect-url',
 		sourceLanguageId: 'en_US',
 		targetLanguageId: 'es_ES',
 	},
 	autoTranslateEnabled: true,
+	currentUrl: 'http://current-url',
 	getAutoTranslateURL: 'http://translation-url/auto_translate',
 	infoFieldSetEntries: [
 		{
@@ -86,7 +87,6 @@ const baseProps = {
 	targetLanguageId: 'es_ES',
 	targetLanguageIdTitle: 'es-ES',
 	translateLanguagesSelectorData: {
-		currentUrl: 'http://current-url',
 		sourceAvailableLanguages: ['en_US', 'es_ES'],
 		sourceLanguageId: 'en_US',
 		targetAvailableLanguages: [
@@ -133,6 +133,28 @@ describe('Translate', () => {
 
 	it('renders with auto-translate enabled', () => {
 		const {asFragment} = renderComponent(baseProps);
+
+		expect(asFragment()).toMatchSnapshot();
+	});
+
+	it('renders with experiences selector', () => {
+		const {asFragment} = renderComponent({
+			...baseProps,
+			experiencesSelectorData: {
+				label: 'Experience',
+				options: [
+					{
+						label: 'Default',
+						value: '0',
+					},
+					{
+						label: 'Experience 1',
+						value: '1',
+					},
+				],
+				value: '0',
+			},
+		});
 
 		expect(asFragment()).toMatchSnapshot();
 	});

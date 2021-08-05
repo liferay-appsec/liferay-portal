@@ -27,8 +27,6 @@ import java.util.List;
  */
 public interface TemplateDisplayContext {
 
-	public String getAddPermissionActionId();
-
 	public long[] getClassNameIds();
 
 	public List<DropdownItem> getDDMTemplateActionDropdownItems(
@@ -41,17 +39,15 @@ public interface TemplateDisplayContext {
 	public String getDDMTemplateScope(DDMTemplate ddmTemplate)
 		throws PortalException;
 
-	public String getDDMTemplateType(DDMTemplate ddmTemplate);
-
 	public List<NavigationItem> getNavigationItems();
 
 	public long getResourceClassNameId();
 
-	public String getResourceName(long classNameId);
+	public String getTabs1();
 
 	public SearchContainer<DDMTemplate> getTemplateSearchContainer();
 
-	public String getTemplateType(long classNameId);
+	public String getTemplateTypeLabel(long classNameId);
 
 	public boolean isAddDDMTemplateEnabled();
 

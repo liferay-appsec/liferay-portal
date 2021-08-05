@@ -76,25 +76,23 @@ function Item({totalCount, ...instance}) {
 
 	return (
 		<ClayTable.Row className={checked ? 'table-active' : ''}>
-			<ClayTable.Cell>
-				<div className="table-first-element-group">
-					<ClayCheckbox
-						checked={checked}
-						disabled={disableCheckbox}
-						onChange={handleCheck}
-					/>
+			<ClayTable.Cell className="table-first-element-group">
+				<ClayCheckbox
+					checked={checked}
+					disabled={disableCheckbox}
+					onChange={handleCheck}
+				/>
 
-					<span
-						className={`ml-2 sticker sticker-sm ${slaStatusIconInfo?.bgColor}`}
-					>
-						<span className="inline-item">
-							<ClayIcon
-								className={slaStatusIconInfo?.textColor}
-								symbol={slaStatusIconInfo?.name}
-							/>
-						</span>
+				<span
+					className={`ml-2 sticker sticker-sm ${slaStatusIconInfo?.bgColor}`}
+				>
+					<span className="inline-item">
+						<ClayIcon
+							className={slaStatusIconInfo?.textColor}
+							symbol={slaStatusIconInfo?.name}
+						/>
 					</span>
-				</div>
+				</span>
 			</ClayTable.Cell>
 
 			<ClayTable.Cell>

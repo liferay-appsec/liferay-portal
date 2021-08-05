@@ -611,22 +611,24 @@ public abstract class BasePortletExportImportTestCase
 			PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX +
 				ddmTemplate.getTemplateKey();
 
-		Map<String, String[]> preferenceMap = HashMapBuilder.put(
-			"displayStyle", new String[] {displayStyle}
-		).put(
-			"displayStyleGroupId",
-			new String[] {String.valueOf(ddmTemplate.getGroupId())}
-		).build();
-
-		if (scopeType.equals("layout")) {
-			preferenceMap.put(
-				"lfrScopeLayoutUuid", new String[] {layout.getUuid()});
-		}
-
-		preferenceMap.put("lfrScopeType", new String[] {scopeType});
-
 		PortletPreferences portletPreferences = getImportedPortletPreferences(
-			preferenceMap);
+			HashMapBuilder.put(
+				"displayStyle", new String[] {displayStyle}
+			).put(
+				"displayStyleGroupId",
+				new String[] {String.valueOf(ddmTemplate.getGroupId())}
+			).put(
+				"lfrScopeLayoutUuid",
+				() -> {
+					if (scopeType.equals("layout")) {
+						return new String[] {layout.getUuid()};
+					}
+
+					return null;
+				}
+			).put(
+				"lfrScopeType", new String[] {scopeType}
+			).build());
 
 		String importedDisplayStyle = portletPreferences.getValue(
 			"displayStyle", StringPool.BLANK);

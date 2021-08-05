@@ -46,7 +46,6 @@ import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
 import com.liferay.layout.responsive.ResponsiveLayoutStructureUtil;
-import com.liferay.layout.taglib.internal.FFRenderLayoutStructureConfigurationUtil;
 import com.liferay.layout.util.constants.LayoutDataItemTypeConstants;
 import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.ContainerStyledLayoutStructureItem;
@@ -103,7 +102,7 @@ public class RenderLayoutStructureDisplayContext {
 
 	public static final String PAGE_NUMBER_PARAM_PREFIX = "page_number_";
 
-	public static final String PAGINATION_TYPE_REGULAR = "regular";
+	public static final String PAGINATION_TYPE_NUMERIC = "numeric";
 
 	public static final String PAGINATION_TYPE_SIMPLE = "simple";
 
@@ -194,13 +193,14 @@ public class RenderLayoutStructureDisplayContext {
 		String paginationType =
 			collectionStyledLayoutStructureItem.getPaginationType();
 
-		if (FFRenderLayoutStructureConfigurationUtil.
-				collectionDisplayFragmentPaginationEnabled() &&
-			(Objects.equals(paginationType, PAGINATION_TYPE_REGULAR) ||
-			 Objects.equals(paginationType, PAGINATION_TYPE_SIMPLE))) {
+		if (Objects.equals(paginationType, PAGINATION_TYPE_NUMERIC) ||
+			Objects.equals(paginationType, PAGINATION_TYPE_SIMPLE)) {
+
+			HttpServletRequest originalHttpServletRequest =
+				PortalUtil.getOriginalServletRequest(_httpServletRequest);
 
 			int currentPage = ParamUtil.getInteger(
-				_httpServletRequest,
+				originalHttpServletRequest,
 				PAGE_NUMBER_PARAM_PREFIX +
 					collectionStyledLayoutStructureItem.getItemId());
 

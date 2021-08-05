@@ -15,7 +15,7 @@
 import ClayAlert from '@clayui/alert';
 import ClayLayout from '@clayui/layout';
 import {useIsMounted} from '@liferay/frontend-js-react-web';
-import {fetch} from 'frontend-js-web';
+import {fetch, navigate} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useMemo, useReducer, useState} from 'react';
 
@@ -23,6 +23,7 @@ import TranslateActionBar from './components/TranslateActionBar';
 import TranslateFieldSetEntries from './components/TranslateFieldSetEntries';
 import TranslateHeader from './components/TranslateHeader';
 import {FETCH_STATUS} from './constants';
+import {setURLParameters} from './utils';
 
 const ACTION_TYPES = {
 	UPDATE_FETCH_STATUS: 'UPDATE_FETCH_STATUS',
@@ -80,8 +81,10 @@ const reducer = (state, action) => {
 };
 
 const Translate = ({
-	aditionalFields,
+	additionalFields,
 	autoTranslateEnabled = false,
+	currentUrl,
+	experiencesSelectorData,
 	getAutoTranslateURL,
 	infoFieldSetEntries,
 	portletNamespace,
@@ -118,6 +121,26 @@ const Translate = ({
 		fields: targetFields,
 		formHasChanges: false,
 	});
+
+	const confirmChangesBeforeReload = (parameters = {}) => {
+		const url = setURLParameters(
+			Liferay.Util.ns(portletNamespace, parameters),
+			currentUrl
+		);
+
+		if (!state.formHasChanges) {
+			navigate(url);
+		}
+		else if (
+			confirm(
+				Liferay.Language.get(
+					'are-you-sure-you-want-to-leave-the-page-you-may-lose-your-changes'
+				)
+			)
+		) {
+			navigate(url);
+		}
+	};
 
 	const handleOnSaveDraft = () => {
 		setWorkflowAction(workflowActions.SAVE_DRAFT);
@@ -265,7 +288,7 @@ const Translate = ({
 				name={`${portletNamespace}workflowAction`}
 				type="hidden"
 			/>
-			{Object.entries(aditionalFields).map(([name, value]) => (
+			{Object.entries(additionalFields).map(([name, value]) => (
 				<input
 					defaultValue={value}
 					key={name}
@@ -276,9 +299,10 @@ const Translate = ({
 
 			<TranslateActionBar
 				autoTranslateEnabled={autoTranslateEnabled}
+				confirmChangesBeforeReload={confirmChangesBeforeReload}
+				experienceSelectorData={experiencesSelectorData}
 				fetchAutoTranslateFields={fetchAutoTranslateFieldsBulk}
 				fetchAutoTranslateStatus={state.fetchAutoTranslateStatus}
-				formHasChanges={state.formHasChanges}
 				onSaveButtonClick={handleOnSaveDraft}
 				portletNamespace={portletNamespace}
 				publishButtonDisabled={publishButtonDisabled}
@@ -324,6 +348,17 @@ const Translate = ({
 
 Translate.propTypes = {
 	autoTranslateEnabled: PropTypes.bool,
+	currentUrl: PropTypes.string.isRequired,
+	experiencesSelectorData: PropTypes.shape({
+		label: PropTypes.string.isRequired,
+		options: PropTypes.arrayOf(
+			PropTypes.shape({
+				label: PropTypes.string.isRequired,
+				value: PropTypes.string.isRequired,
+			})
+		),
+		value: PropTypes.string.isRequired,
+	}),
 	getAutoTranslateURL: PropTypes.string.isRequired,
 	infoFieldSetEntries: PropTypes.arrayOf(
 		PropTypes.shape({
@@ -340,7 +375,7 @@ Translate.propTypes = {
 					targetContentDir: PropTypes.string,
 				})
 			),
-			legend: PropTypes.string,
+			legend: PropTypes.string.isRequired,
 		})
 	),
 	portletNamespace: PropTypes.string.isRequired,

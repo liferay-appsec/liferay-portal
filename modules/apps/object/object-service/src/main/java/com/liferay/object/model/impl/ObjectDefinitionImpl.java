@@ -45,6 +45,11 @@ public class ObjectDefinitionImpl extends ObjectDefinitionBaseImpl {
 	}
 
 	@Override
+	public String getExtensionDBTableName() {
+		return getDBTableName() + "_x";
+	}
+
+	@Override
 	public String getPortletId() {
 		if (isSystem()) {
 			throw new UnsupportedOperationException();

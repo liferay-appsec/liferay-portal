@@ -12,185 +12,192 @@
  * details.
  */
 
-import './A11y.scss';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 
-import ClayIcon from '@clayui/icon';
-import ClayList from '@clayui/list';
-import ClayPopover from '@clayui/popover';
-import {ReactPortal} from '@liferay/frontend-js-react-web';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-
-import useA11y from './useA11y';
+import {ErrorBoundary} from './components/ErrorBoundary';
+import {NotFound} from './components/NotFound';
+import Occurrence from './components/Occurrence';
+import {StackNavigator} from './components/StackNavigator';
+import Violation from './components/Violation';
+import {ViolationPopover} from './components/ViolationPopover';
+import Violations from './components/Violations';
+import useA11y from './hooks/useA11y';
+import {TYPES, useFilterViolations} from './hooks/useFilterViolations';
 
 import type {A11yCheckerOptions} from './A11yChecker';
-import type {Violation as TViolation} from './useA11y';
 
-const rectAttrs: Array<keyof DOMRect> = [
-	'bottom',
-	'height',
-	'left',
-	'right',
-	'top',
-	'width',
-];
-
-interface IRectState {
-	rect: DOMRect | undefined;
-	hasRectChanged: boolean;
-}
-
-const DOMRectStub = {} as DOMRect;
-
-const rectChanged = (a: DOMRect, b: DOMRect = DOMRectStub) =>
-	rectAttrs.some((prop) => a[prop] !== b[prop]);
-
-const useObserveRect = (
-	callback: (rect: DOMRect | undefined) => void,
-	node: Element | null
-) => {
-	const rafIdRef = useRef<number>();
-
-	const run = useCallback(
-		(node: Element, state: IRectState) => {
-			const newRect = node.getBoundingClientRect();
-
-			if (rectChanged(newRect, state.rect)) {
-				state.rect = newRect;
-
-				callback(state.rect);
-			}
-
-			rafIdRef.current = window.requestAnimationFrame(() =>
-				run(node, state)
-			);
-		},
-		[callback]
-	);
-
-	useEffect(() => {
-		if (node) {
-			run(node, {
-				hasRectChanged: false,
-				rect: undefined,
-			});
-
-			return () => {
-				if (rafIdRef.current) {
-					cancelAnimationFrame(rafIdRef.current);
-				}
-			};
-		}
-	}, [node, run]);
+type Params = {
+	name?: string;
+	ruleId?: string;
+	target?: string;
 };
-
-const Overlay = React.forwardRef<
-	HTMLDivElement,
-	React.ButtonHTMLAttributes<HTMLDivElement>
->(({style, ...othersProps}, ref) => (
-	<ReactPortal
-		{...othersProps}
-		className="a11y-overlay"
-		ref={ref}
-		style={style}
-	>
-		<div className="a11y-indicator">
-			<ClayIcon symbol="info-circle" />
-		</div>
-		<div className="a11y-backdrop" />
-	</ReactPortal>
-));
-
-type ViolationProps = {
-	modifyIndex: number;
-	target: string;
-	violations: Array<TViolation>;
-};
-
-function Violation({target, violations}: ViolationProps) {
-	const [visible, setVisible] = useState(false);
-	const [bounds, setBounds] = useState<React.CSSProperties>();
-
-	const node = useMemo(() => document.querySelector(target), [target]);
-
-	useObserveRect(
-		useCallback(
-			(bounds) => {
-				bounds = bounds ?? (node as Element).getBoundingClientRect();
-
-				setBounds({
-					height: bounds.height,
-					left: bounds.left,
-					top: bounds.top,
-					width: bounds.width,
-				});
-			},
-			[node]
-		),
-		node
-	);
-
-	return (
-		<ClayPopover
-			className="a11y-popover"
-			header={
-				<>
-					<div className="inline-item">
-						<ClayIcon
-							className="text-danger"
-							symbol="info-circle"
-						/>
-					</div>
-					<div className="inline-item inline-item-after">
-						<span>
-							{Liferay.Language.get('accessibility-violations')}
-						</span>
-					</div>
-				</>
-			}
-			onShowChange={setVisible}
-			show={visible}
-			trigger={<Overlay style={bounds} />}
-		>
-			<div className="list-group">
-				{violations.map(({help, id, impact}) => (
-					<button
-						className="list-group-item list-group-item-action list-group-item-flex list-group-item-flush"
-						key={id}
-					>
-						<ClayList.ItemField expand>
-							<ClayList.ItemTitle>
-								{id}{' '}
-								<span className="text-secondary">{`- ${impact}`}</span>
-							</ClayList.ItemTitle>
-							<ClayList.ItemText subtext>
-								{help}
-							</ClayList.ItemText>
-						</ClayList.ItemField>
-						<ClayList.ItemField>
-							<ClayIcon
-								className="text-secondary"
-								symbol="angle-right"
-							/>
-						</ClayList.ItemField>
-					</button>
-				))}
-			</div>
-		</ClayPopover>
-	);
-}
 
 export function A11y(props: Omit<A11yCheckerOptions, 'callback'>) {
 	const violations = useA11y(props);
 
-	if (violations) {
-		return violations.map(({target, ...otherProps}, index) => (
-			<Violation
-				key={`${target}:${index}`}
-				target={target}
-				{...otherProps}
-			/>
-		));
+	const [state, dispatch] = useFilterViolations(violations);
+
+	const [params, setParams] = useState<Params>();
+
+	const [activePage, setActivePage] = useState(0);
+
+	const nodes = Object.keys(violations.nodes);
+
+	useLayoutEffect(() => {
+		if (nodes.length > 0) {
+			document.body.classList.add('a11y-body');
+
+			return () => {
+				document.body.classList.remove('a11y-body');
+			};
+		}
+	}, [nodes]);
+
+	const onParamsChange = useCallback(
+		(newParams: Params) => {
+			if (newParams?.ruleId) {
+				dispatch({
+					payload: {key: 'id', value: newParams.ruleId},
+					type: TYPES.ADD_FILTER,
+				});
+			}
+			else if (params?.ruleId) {
+				dispatch({
+					payload: {key: 'id', value: params.ruleId},
+					type: TYPES.REMOVE_FILTER,
+				});
+			}
+
+			if (newParams?.target) {
+				dispatch({
+					payload: {key: 'nodes', value: newParams.target},
+					type: TYPES.ADD_FILTER,
+				});
+			}
+			else if (params?.target) {
+				dispatch({
+					payload: {key: 'nodes', value: params.target},
+					type: TYPES.REMOVE_FILTER,
+				});
+			}
+
+			setParams(newParams);
+		},
+		[dispatch, params]
+	);
+
+	if (nodes.length === 0) {
+		return null;
 	}
 
-	return null;
+	return (
+		<>
+			{Object.keys(state.violations.nodes).map((target, index) => (
+				<ViolationPopover
+					key={`${target}:${index}`}
+					onClick={(target, ruleId) => {
+						dispatch({
+							payload: {key: 'id', value: ruleId},
+							type: TYPES.ADD_FILTER,
+						});
+						dispatch({
+							payload: {key: 'nodes', value: target},
+							type: TYPES.ADD_FILTER,
+						});
+						setActivePage(2);
+						setParams({
+							name: Liferay.Util.sub(
+								Liferay.Language.get('occurrence-x'),
+								'1'
+							),
+							ruleId,
+							target,
+						});
+					}}
+					rules={state.violations.rules}
+					target={target}
+					violations={Object.keys(state.violations.nodes[target])}
+				/>
+			))}
+
+			<div className="a11y-panel__sidebar sidebar sidebar-light">
+				<StackNavigator<Params>
+					activePage={activePage}
+					onActiveChange={setActivePage}
+					onParamsChange={onParamsChange}
+					params={params}
+				>
+					<Violations
+						onFilterChange={(type, payload) =>
+							dispatch({payload, type})
+						}
+						{...state}
+					/>
+
+					<ErrorBoundary
+						fallback={
+							<NotFound
+								description={Liferay.Language.get(
+									'the-rule-was-not-found-it-is-common-when-the-elements-corresponding-to-the-rule-no-longer-exist-in-the-dom'
+								)}
+								onClick={() => {
+									const {ruleId} = params as Required<Params>;
+
+									dispatch({
+										payload: {
+											key: 'id',
+											value: ruleId,
+										},
+										type: TYPES.REMOVE_FILTER,
+									});
+									setActivePage(0);
+									setParams(undefined);
+								}}
+								title={Liferay.Language.get('rule-not-found')}
+							/>
+						}
+					>
+						<Violation violations={state.violations} />
+					</ErrorBoundary>
+
+					<ErrorBoundary
+						fallback={
+							<NotFound
+								description={Liferay.Language.get(
+									'the-occurrence-was-not-found-it-is-common-when-the-element-no-longer-exists-in-the-dom'
+								)}
+								onClick={() => {
+									const {ruleId, target} = params as Required<
+										Params
+									>;
+
+									dispatch({
+										payload: {
+											key: 'nodes',
+											value: target,
+										},
+										type: TYPES.REMOVE_FILTER,
+									});
+									dispatch({
+										payload: {
+											key: 'id',
+											value: ruleId,
+										},
+										type: TYPES.REMOVE_FILTER,
+									});
+									setActivePage(0);
+									setParams(undefined);
+								}}
+								title={Liferay.Language.get(
+									'occurrence-not-found'
+								)}
+							/>
+						}
+					>
+						<Occurrence violations={state.violations} />
+					</ErrorBoundary>
+				</StackNavigator>
+			</div>
+		</>
+	);
 }

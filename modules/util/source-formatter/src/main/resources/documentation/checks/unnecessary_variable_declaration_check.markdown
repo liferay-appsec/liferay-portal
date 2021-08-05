@@ -46,6 +46,28 @@ public String method(String a, String b) {
 }
 ```
 
+### Example
+
+Incorrect:
+
+```java
+public List<String> method() {
+	List<String> list = new ArrayList<>();
+
+	list.add("a");
+	list.add("b");
+
+	return list;
+}
+```
+
+Correct:
+
+```java
+public List<String> method() {
+	return new ListUtil.fromArray("a", "b");
+}
+```
 ---
 
 Use `String.valueOf()` to combine lines.

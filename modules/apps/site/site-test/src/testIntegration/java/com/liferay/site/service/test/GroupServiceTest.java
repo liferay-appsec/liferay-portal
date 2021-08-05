@@ -181,6 +181,21 @@ public class GroupServiceTest {
 	}
 
 	@Test
+	public void testChangeLocaleFromCurrentToAvailableAndBackAgain()
+		throws Exception {
+
+		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
+
+		_testUpdateDisplaySettings(
+			_group.getGroupId(), Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
+			Arrays.asList(LocaleUtil.US), LocaleUtil.US, false);
+		_testUpdateDisplaySettings(
+			_group.getGroupId(), Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
+			Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US), LocaleUtil.US,
+			false);
+	}
+
+	@Test
 	public void testDeleteGroupRemovesSharedPortletPreferences()
 		throws Exception {
 
@@ -948,15 +963,19 @@ public class GroupServiceTest {
 
 	@Test
 	public void testInvalidChangeAvailableLanguageIds() throws Exception {
+		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
+
 		_testUpdateDisplaySettings(
-			Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
+			_group.getGroupId(), Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
 			Arrays.asList(LocaleUtil.GERMANY, LocaleUtil.US), null, true);
 	}
 
 	@Test
 	public void testInvalidChangeDefaultLanguageId() throws Exception {
+		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
+
 		_testUpdateDisplaySettings(
-			Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
+			_group.getGroupId(), Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US),
 			Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US), LocaleUtil.GERMANY,
 			true);
 	}
@@ -1246,14 +1265,20 @@ public class GroupServiceTest {
 
 	@Test
 	public void testValidChangeAvailableLanguageIds() throws Exception {
+		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
+
 		_testUpdateDisplaySettings(
+			_group.getGroupId(),
 			Arrays.asList(LocaleUtil.GERMANY, LocaleUtil.SPAIN, LocaleUtil.US),
 			Arrays.asList(LocaleUtil.SPAIN, LocaleUtil.US), null, false);
 	}
 
 	@Test
 	public void testValidChangeDefaultLanguageId() throws Exception {
+		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
+
 		_testUpdateDisplaySettings(
+			_group.getGroupId(),
 			Arrays.asList(LocaleUtil.GERMANY, LocaleUtil.SPAIN, LocaleUtil.US),
 			Arrays.asList(LocaleUtil.GERMANY, LocaleUtil.SPAIN, LocaleUtil.US),
 			LocaleUtil.GERMANY, false);
@@ -1344,7 +1369,7 @@ public class GroupServiceTest {
 	}
 
 	private void _testUpdateDisplaySettings(
-			Collection<Locale> portalAvailableLocales,
+			long groupId, Collection<Locale> portalAvailableLocales,
 			Collection<Locale> groupAvailableLocales, Locale groupDefaultLocale,
 			boolean expectFailure)
 		throws Exception {
@@ -1355,11 +1380,9 @@ public class GroupServiceTest {
 			TestPropsValues.getCompanyId(), portalAvailableLocales,
 			LocaleUtil.getDefault());
 
-		_group = GroupTestUtil.addGroup(GroupConstants.DEFAULT_PARENT_GROUP_ID);
-
 		try {
 			GroupTestUtil.updateDisplaySettings(
-				_group.getGroupId(), groupAvailableLocales, groupDefaultLocale);
+				groupId, groupAvailableLocales, groupDefaultLocale);
 
 			Assert.assertFalse(expectFailure);
 		}

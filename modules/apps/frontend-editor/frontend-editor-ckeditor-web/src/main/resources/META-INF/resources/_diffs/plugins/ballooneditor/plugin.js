@@ -19,6 +19,8 @@
 		return;
 	}
 
+	const PANEL_PADDING = 14;
+
 	const SELECTION_DIRECTION = {
 		BOTTOM_TO_TOP: 1,
 		TOP_TO_BOTTOM: 0,
@@ -29,16 +31,16 @@
 			const eventListeners = [];
 
 			editor.on('contentDom', () => {
-				const document = editor.document;
+				const editable = editor.editable();
 
 				eventListeners.push(
-					document.on('keyup', () => {
+					editable.on('keyup', () => {
 						editor.forceNextSelectionCheck();
 					})
 				);
 
 				eventListeners.push(
-					document.on('mouseup', () => {
+					editable.on('mouseup', () => {
 						editor.forceNextSelectionCheck();
 					})
 				);
@@ -68,8 +70,6 @@
 		},
 
 		onLoad() {
-			CKEDITOR.ui.balloonPanel.DEFAULT_PANEL_PADDING = 14;
-
 			const getSelectionDirection = (selection) => {
 				let direction = SELECTION_DIRECTION.TOP_TO_BOTTOM;
 
@@ -103,8 +103,6 @@
 				elementOrSelection,
 				options
 			) {
-				const padding = CKEDITOR.ui.balloonPanel.DEFAULT_PANEL_PADDING;
-
 				if (options instanceof CKEDITOR.dom.element || !options) {
 					options = {focusElement: options};
 				}
@@ -121,8 +119,10 @@
 
 				const panelRect = this.parts.panel.getClientRect(true);
 
-				const ranges = elementOrSelection.getRanges();
-				const type = elementOrSelection.getType();
+				const selection = this.editor.getSelection();
+
+				const ranges = selection.getRanges();
+				const type = selection.getType();
 
 				let triangleSide = 'bottom';
 				let x = 0;
@@ -145,9 +145,7 @@
 					let selectionDirection = SELECTION_DIRECTION.TOP_TO_BOTTOM;
 
 					if (firstSelectedRect !== lastSelectedRect) {
-						selectionDirection = getSelectionDirection(
-							this.editor.getSelection()
-						);
+						selectionDirection = getSelectionDirection(selection);
 					}
 
 					if (firstSelectedRect === lastSelectedRect) {
@@ -155,7 +153,10 @@
 							firstSelectedRect.x +
 							firstSelectedRect.width / 2 -
 							panelRect.width / 2;
-						y = firstSelectedRect.y - panelRect.height - padding;
+						y =
+							firstSelectedRect.y -
+							panelRect.height -
+							PANEL_PADDING;
 
 						triangleSide = 'bottom';
 					}
@@ -163,7 +164,10 @@
 						selectionDirection === SELECTION_DIRECTION.BOTTOM_TO_TOP
 					) {
 						x = firstSelectedRect.x - panelRect.width / 2;
-						y = firstSelectedRect.y - panelRect.height - padding;
+						y =
+							firstSelectedRect.y -
+							panelRect.height -
+							PANEL_PADDING;
 
 						triangleSide = 'bottom';
 					}
@@ -177,13 +181,13 @@
 						y =
 							lastSelectedRect.y +
 							lastSelectedRect.height +
-							padding;
+							PANEL_PADDING;
 
 						triangleSide = 'top';
 					}
 				}
 				else if (type === CKEDITOR.SELECTION_ELEMENT) {
-					let selectedElement = elementOrSelection.getSelectedElement();
+					let selectedElement = selection.getSelectedElement();
 
 					if (!selectedElement) {
 						selectedElement = ranges && ranges[0].startContainer;
@@ -200,18 +204,18 @@
 					y =
 						selectedElementClientRect.y -
 						panelRect.height -
-						padding;
+						PANEL_PADDING;
 				}
 
 				const editable = this.editor.editable();
 
 				const editableRect = editable.getClientRect(true);
 
-				if (editableRect.width < panelRect.width + padding) {
-					x = editableRect.x + padding;
+				if (editableRect.width < panelRect.width + PANEL_PADDING) {
+					x = editableRect.x + PANEL_PADDING;
 				}
 				else if (x < editableRect.x) {
-					x = editableRect.x + padding;
+					x = editableRect.x + PANEL_PADDING;
 				}
 				else if (
 					x + panelRect.width >
@@ -221,7 +225,7 @@
 						editableRect.x +
 						editableRect.width -
 						panelRect.width -
-						padding;
+						PANEL_PADDING;
 				}
 
 				this.move(y, x);
@@ -232,6 +236,17 @@
 					(options.focusElement || this.parts.panel).focus();
 				}
 			};
+
+			CKEDITOR.ui.balloonPanel.prototype.templateDefinitions.panel =
+				'<div' +
+				' aria-labelledby="cke_{name}_arialbl"' +
+				' class="cke {id} cke_reset_all cke_chrome cke_balloon cke_editor_{name} cke_{langDir} lfr-balloon-editor lfr-tooltip-scope"' +
+				' dir="{langDir}"' +
+				' lang="{langCode}"' +
+				' role="dialog"' +
+				' style="{style}"' +
+				' tabindex="-1"' +
+				'></div>';
 
 			CKEDITOR.plugins.balloontoolbar.context.prototype._loadButtons = function () {
 				const buttons = this.options.buttons;
@@ -353,9 +368,14 @@
 						}
 					);
 
+					const selectedElement = selection.getSelectedElement();
+
+					const startElement = selection.getStartElement();
+
 					if (
-						!selection.getSelectedElement() &&
-						!selection.getSelectedText()
+						!selectedElement &&
+						(!selection.getSelectedText() ||
+							startElement.getName() === 'a')
 					) {
 						return;
 					}
@@ -364,15 +384,16 @@
 				}
 			};
 
+			const originalShowBlockFn = CKEDITOR.ui.panel.prototype.showBlock;
+
 			CKEDITOR.ui.panel.prototype.showBlock = function (name) {
 				if (!this.name) {
 					this.name = name;
+
+					return originalShowBlockFn.call(this, this.name);
 				}
 
-				return CKEDITOR.ui.panel.prototype.showBlock.call(
-					this,
-					this.name
-				);
+				return originalShowBlockFn.call(this, name);
 			};
 		},
 
@@ -382,6 +403,7 @@
 			'imagealt',
 			'insertbutton',
 			'linktoolbar',
+			'tabletoolbar',
 			'toolbarbuttons',
 		],
 	});

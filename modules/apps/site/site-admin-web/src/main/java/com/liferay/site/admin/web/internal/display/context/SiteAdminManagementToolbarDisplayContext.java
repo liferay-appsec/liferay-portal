@@ -37,8 +37,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
 
-import javax.portlet.PortletURL;
-
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -114,26 +112,31 @@ public class SiteAdminManagementToolbarDisplayContext
 		}
 
 		try {
-			PortletURL addSiteURL = PortletURLBuilder.createRenderURL(
-				liferayPortletResponse
-			).setMVCRenderCommandName(
-				"/site_admin/select_site_initializer"
-			).setRedirect(
-				themeDisplay.getURLCurrent()
-			).buildPortletURL();
-
-			Group group = _siteAdminDisplayContext.getGroup();
-
-			if ((group != null) &&
-				_siteAdminDisplayContext.hasAddChildSitePermission(group)) {
-
-				addSiteURL.setParameter(
-					"parentGroupId", String.valueOf(group.getGroupId()));
-			}
-
 			return CreationMenuBuilder.addPrimaryDropdownItem(
 				dropdownItem -> {
-					dropdownItem.setHref(addSiteURL.toString());
+					dropdownItem.setHref(
+						PortletURLBuilder.createRenderURL(
+							liferayPortletResponse
+						).setMVCRenderCommandName(
+							"/site_admin/select_site_initializer"
+						).setRedirect(
+							themeDisplay.getURLCurrent()
+						).setParameter(
+							"parentGroupId",
+							() -> {
+								Group group =
+									_siteAdminDisplayContext.getGroup();
+
+								if ((group != null) &&
+									_siteAdminDisplayContext.
+										hasAddChildSitePermission(group)) {
+
+									return group.getGroupId();
+								}
+
+								return null;
+							}
+						).buildString());
 					dropdownItem.setLabel(
 						LanguageUtil.get(httpServletRequest, "add"));
 				}

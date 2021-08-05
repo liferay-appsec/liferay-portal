@@ -14,15 +14,12 @@
 
 package com.liferay.template.web.internal.display.context;
 
-import com.liferay.dynamic.data.mapping.configuration.DDMWebConfiguration;
-import com.liferay.dynamic.data.mapping.constants.DDMActionKeys;
 import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.template.constants.TemplatePortletKeys;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -35,20 +32,14 @@ public class InformationTemplatesTemplateDisplayContext
 	extends BaseTemplateDisplayContext {
 
 	public InformationTemplatesTemplateDisplayContext(
-		DDMWebConfiguration ddmWebConfiguration,
-		InfoItemServiceTracker infoItemServiceTracker,
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse) {
 
-		super(
-			ddmWebConfiguration, liferayPortletRequest, liferayPortletResponse);
+		super(liferayPortletRequest, liferayPortletResponse);
 
-		_infoItemServiceTracker = infoItemServiceTracker;
-	}
-
-	@Override
-	public String getAddPermissionActionId() {
-		return DDMActionKeys.ADD_TEMPLATE;
+		_infoItemServiceTracker =
+			(InfoItemServiceTracker)liferayPortletRequest.getAttribute(
+				InfoItemServiceTracker.class.getName());
 	}
 
 	@Override
@@ -61,11 +52,10 @@ public class InformationTemplatesTemplateDisplayContext
 			_infoItemServiceTracker.getInfoItemClassNames(
 				InfoItemFormProvider.class);
 
-		Stream<String> infoItemClassNamesStream =
-			infoItemClassNames.stream();
+		Stream<String> infoItemClassNamesStream = infoItemClassNames.stream();
 
 		_classNameIds = infoItemClassNamesStream.mapToLong(
-			className -> PortalUtil.getClassNameId(className)
+			PortalUtil::getClassNameId
 		).toArray();
 
 		return _classNameIds;
@@ -84,12 +74,7 @@ public class InformationTemplatesTemplateDisplayContext
 	}
 
 	@Override
-	public String getResourceName(long classNameId) {
-		return TemplatePortletKeys.TEMPLATE;
-	}
-
-	@Override
-	public String getTemplateType(long classNameId) {
+	public String getTemplateTypeLabel(long classNameId) {
 		return ResourceActionsUtil.getModelResource(
 			themeDisplay.getLocale(), PortalUtil.getClassName(classNameId));
 	}

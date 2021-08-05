@@ -42,7 +42,6 @@ import java.util.Map;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletURL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -122,29 +121,38 @@ public class EditCommercePaymentMethodGroupRelMVCActionCommand
 		ActionRequest actionRequest, long commercePaymentMethodGroupRelId,
 		String mvcRenderCommandName) {
 
-		PortletURL portletURL = PortletURLBuilder.create(
+		return PortletURLBuilder.create(
 			_portal.getControlPanelPortletURL(
 				actionRequest, CPPortletKeys.COMMERCE_CHANNELS,
 				PortletRequest.RENDER_PHASE)
 		).setMVCRenderCommandName(
 			mvcRenderCommandName
+		).setRedirect(
+			() -> {
+				String redirect = ParamUtil.getString(
+					actionRequest, "redirect");
+
+				if (Validator.isNotNull(redirect)) {
+					return redirect;
+				}
+
+				return null;
+			}
 		).setParameter(
 			"commercePaymentMethodGroupRelId", commercePaymentMethodGroupRelId
-		).buildPortletURL();
+		).setParameter(
+			"engineKey",
+			() -> {
+				String engineKey = ParamUtil.getString(
+					actionRequest, "engineKey");
 
-		String redirect = ParamUtil.getString(actionRequest, "redirect");
+				if (Validator.isNotNull(engineKey)) {
+					return engineKey;
+				}
 
-		if (Validator.isNotNull(redirect)) {
-			portletURL.setParameter("redirect", redirect);
-		}
-
-		String engineKey = ParamUtil.getString(actionRequest, "engineKey");
-
-		if (Validator.isNotNull(engineKey)) {
-			portletURL.setParameter("engineKey", engineKey);
-		}
-
-		return portletURL.toString();
+				return null;
+			}
+		).buildString();
 	}
 
 	protected CommercePaymentMethodGroupRel updateCommercePaymentMethodGroupRel(

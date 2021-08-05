@@ -948,29 +948,30 @@ public class PortalImpl implements Portal {
 			return null;
 		}
 
-		String domain = uri.getHost();
+		String path = uri.getPath();
 
-		String protocol = uri.getScheme();
+		if (Validator.isNotNull(path) && url.startsWith(path)) {
 
-		if (domain == null) {
-			if (uri.getPath() == null) {
-				return null;
-			}
-
-			// Specs allow URL of protocol followed by path, but we do not
-
-			if (protocol != null) {
-				return null;
-			}
-
-			// The URL is a relative path
+			// Relative URL
 
 			return url;
 		}
 
-		// Specs regard URL starting with double slashes as valid, but we do not
+		String protocol = uri.getScheme();
 
 		if (protocol == null) {
+
+			// Protocol is required
+
+			return null;
+		}
+
+		String domain = uri.getHost();
+
+		if (Validator.isNull(domain)) {
+
+			// Absolute URL must have a domain
+
 			return null;
 		}
 
@@ -8773,7 +8774,9 @@ public class PortalImpl implements Portal {
 		String siteGroupFriendlyURL, String layoutFriendlyURL,
 		String groupFriendlyURL) {
 
-		if (groupFriendlyURL.contains(_PUBLIC_GROUP_SERVLET_MAPPING)) {
+		if (groupFriendlyURL.contains(
+				_PUBLIC_GROUP_SERVLET_MAPPING + StringPool.SLASH)) {
+
 			if (groupFriendlyURL.contains(
 					StringBundler.concat(
 						_PUBLIC_GROUP_SERVLET_MAPPING, siteGroupFriendlyURL,

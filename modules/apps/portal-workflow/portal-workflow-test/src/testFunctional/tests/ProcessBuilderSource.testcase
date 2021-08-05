@@ -24,6 +24,15 @@ definition {
 		}
 	}
 
+	@description = "LPS-135888 - Verify that is possible to assign Account role type for role assignments trough XML Source"
+	@ignore = "Test Stub"
+	@priority = "5"
+	test CanAssignAccoutRoleTroughtSource {
+
+		// TODO LRQA-69112 CanAssignAccoutRoleTroughtSource pending implementation
+
+	}
+
 	@description = "Verify that the user can delete a Not Published process"
 	@priority = "3"
 	test CanDeleteUnpublishedWorkflow {
@@ -112,7 +121,6 @@ definition {
 	}
 
 	@description = "Verify that the user is able to import a XML file"
-	@ignore = "Test Stub"
 	@priority = "4"
 	test CanImportXMLFile {
 		property test.name.skip.portal.instance = "ProcessBuilderSource#CanImportXMLFile";
@@ -303,7 +311,6 @@ definition {
 	}
 
 	@description = "Verify that the user is able to save a untitled Workflow"
-	@ignore = "Test Stub"
 	@priority = "2"
 	test CanSaveUntitledWorkflow {
 		property test.name.skip.portal.instance = "ProcessBuilderSource#CanSaveUntitledWorkflow";
@@ -591,11 +598,27 @@ definition {
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_REVISION_BY_ROW");
 	}
 
+	@description = "LPS-135888 - Verify that the Single Approver Workflow comes with the Account Member and Account Administrator role names assigned"
+	@ignore = "Test Stub"
+	@priority = "4"
+	test SingleApproverSourceComesWithAccountMemberAndAdminAssigned {
+
+		// TODO LRQA-69111 SingleApproverSourceComesWithAccountMemberAndAdminAssigned pending implementation
+
+	}
+
+	@description = "LPS-135888 - Verify that the Single Approver Workflow comes with the Account role assigned"
+	@ignore = "Test Stub"
+	@priority = "5"
+	test SingleApproverSourceComesWithAccountRoleAssigned {
+
+		// TODO LRQA-69110 SingleApproverSourceComesWithAccountRoleAssigned pending implementation
+
+	}
+
 	@description = "Verify that the time format in Details tab is following the system language"
 	@priority = "3"
 	test TimeFormatFollowsSystemLanguageInDetails {
-		property portal.upstream = "quarantine";
-
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -608,12 +631,10 @@ definition {
 		Click.clickAt(locator1 = "Icon#INFO");
 
 		AssertElementPresent(
-			key_infoValue = "PM",
 			key_titleValue = "Created",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS");
 
 		AssertElementPresent(
-			key_infoValue = "PM",
 			key_titleValue = "Last Modified",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS");
 
@@ -637,21 +658,23 @@ definition {
 		Click(locator1 = "Icon#INFO");
 
 		AssertElementNotPresent(
-			key_infoValue = "PM",
 			key_titleValue = "Criado",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS");
 
 		AssertElementNotPresent(
-			key_infoValue = "PM",
 			key_titleValue = "Última Modificação",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS");
+
+		UserBar.gotoDropdownItem(dropdownItem = "Configurações da Conta");
+
+		MyAccount.changeUserLanguage(
+			languageName = "English (United States)",
+			saveButton = "Salvar");
 	}
 
 	@description = "Verify that the time format in Revision History tab is following the system language"
 	@priority = "4"
 	test TimeFormatFollowsSystemLanguageInRevision {
-		property portal.upstream = "quarantine";
-
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -669,10 +692,9 @@ definition {
 			key_tabName = "Revision History",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_TAB");
 
-		AssertTextEquals.assertPartialText(
+		AssertElementPresent(
 			key_rowNumber = "1",
-			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_REVISION_BY_ROW",
-			value1 = "PM");
+			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_REVISION_BY_ROW");
 
 		UserBar.gotoDropdownItem(dropdownItem = "Account Settings");
 
@@ -697,10 +719,33 @@ definition {
 			key_tabName = "Histórico de revisão",
 			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_TAB");
 
-		AssertTextNotEquals.assertNotPartialText(
+		AssertElementNotPresent(
 			key_rowNumber = "1",
-			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_REVISION_BY_ROW",
-			value1 = "PM");
+			locator1 = "ProcessBuilderSource#PROCESS_DETAILS_REVISION_BY_ROW");
+
+		UserBar.gotoDropdownItem(dropdownItem = "Configurações da Conta");
+
+		MyAccount.changeUserLanguage(
+			languageName = "English (United States)",
+			saveButton = "Salvar");
+	}
+
+	@description = "LPS-135888 - Verify that the XML source version is updated for a new workflow"
+	@ignore = "Test Stub"
+	@priority = "3"
+	test XMLSourceVersionIsUpdatedForNewWorkfow {
+
+		// TODO LRQA-69114 XMLSourceVersionIsUpdatedForNewWorkfow pending implementation
+
+	}
+
+	@description = "LPS-135888 - Verify that the XML source version is updated for Single Approver"
+	@ignore = "Test Stub"
+	@priority = "3"
+	test XMLSourceVersionIsUpdatedForSingleApprover {
+
+		// TODO LRQA-69113 XMLSourceVersionIsUpdatedForSingleApprover pending implementation
+
 	}
 
 }

@@ -17,14 +17,7 @@ package com.liferay.journal.web.internal.portlet.configuration.icon;
 import com.liferay.journal.web.internal.configuration.FFImportStructureConfiguration;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
-import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portletmvc4spring.test.mock.web.portlet.MockPortletResponse;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.portlet.PortletRequest;
 
@@ -33,10 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -52,27 +43,13 @@ public class ImportStructurePortletConfigurationIconTest {
 		ReflectionTestUtil.setFieldValue(
 			_importStructurePortletConfigurationIcon,
 			"_ffImportStructureConfiguration", _ffImportStructureConfiguration);
-
-		setUpPortletRequest();
-		setUpLanguageUtil();
-		setUpResourceBundleUtil();
-		setUpThemeDisplay();
 	}
 
 	@Test
-	public void testGetMessage() {
+	public void testGetJspPath() {
 		Assert.assertEquals(
-			"Import Structure",
-			_importStructurePortletConfigurationIcon.getMessage(
-				_portletRequest));
-	}
-
-	@Test
-	public void testGetUrl() {
-		Assert.assertEquals(
-			"javascript:;",
-			_importStructurePortletConfigurationIcon.getURL(
-				_portletRequest, new MockPortletResponse()));
+			"/configuration/icon/import_structure.jsp",
+			_importStructurePortletConfigurationIcon.getJspPath());
 	}
 
 	@Test
@@ -99,45 +76,6 @@ public class ImportStructurePortletConfigurationIconTest {
 		);
 	}
 
-	protected void setUpLanguageUtil() {
-		PowerMockito.mockStatic(LanguageUtil.class);
-
-		Mockito.when(
-			LanguageUtil.get(
-				Matchers.any(ResourceBundle.class),
-				Matchers.eq("import-structure"))
-		).thenReturn(
-			"Import Structure"
-		);
-	}
-
-	protected void setUpPortletRequest() {
-		Mockito.when(
-			_portletRequest.getAttribute(WebKeys.THEME_DISPLAY)
-		).thenReturn(
-			_themeDisplay
-		);
-	}
-
-	protected void setUpResourceBundleUtil() {
-		PowerMockito.mockStatic(ResourceBundleUtil.class);
-
-		PowerMockito.when(
-			ResourceBundleUtil.getModuleAndPortalResourceBundle(
-				Matchers.any(Locale.class), Matchers.any(Class.class))
-		).thenReturn(
-			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
-		);
-	}
-
-	protected void setUpThemeDisplay() {
-		Mockito.when(
-			_themeDisplay.getLocale()
-		).thenReturn(
-			LocaleUtil.US
-		);
-	}
-
 	private final FFImportStructureConfiguration
 		_ffImportStructureConfiguration = Mockito.mock(
 			FFImportStructureConfiguration.class);
@@ -146,6 +84,5 @@ public class ImportStructurePortletConfigurationIconTest {
 			new ImportStructurePortletConfigurationIcon();
 	private final PortletRequest _portletRequest = Mockito.mock(
 		PortletRequest.class);
-	private final ThemeDisplay _themeDisplay = Mockito.mock(ThemeDisplay.class);
 
 }

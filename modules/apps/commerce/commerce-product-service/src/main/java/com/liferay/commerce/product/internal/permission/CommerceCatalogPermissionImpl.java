@@ -117,18 +117,14 @@ public class CommerceCatalogPermissionImpl
 			CommerceCatalog commerceCatalog, String actionId)
 		throws PortalException {
 
-		if (permissionChecker.isCompanyAdmin(commerceCatalog.getCompanyId()) ||
-			permissionChecker.isOmniadmin()) {
-
+		if (permissionChecker.isCompanyAdmin(commerceCatalog.getCompanyId())) {
 			return true;
 		}
 
 		if (permissionChecker.hasOwnerPermission(
-				permissionChecker.getCompanyId(),
-				CommerceCatalog.class.getName(),
+				commerceCatalog.getCompanyId(), CommerceCatalog.class.getName(),
 				commerceCatalog.getCommerceCatalogId(),
-				permissionChecker.getUserId(), actionId) &&
-			(commerceCatalog.getUserId() == permissionChecker.getUserId())) {
+				commerceCatalog.getUserId(), actionId)) {
 
 			return true;
 		}

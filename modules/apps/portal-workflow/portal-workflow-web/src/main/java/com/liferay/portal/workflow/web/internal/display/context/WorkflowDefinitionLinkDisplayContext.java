@@ -251,23 +251,34 @@ public class WorkflowDefinitionLinkDisplayContext {
 			_liferayPortletResponse
 		).setMVCPath(
 			"/view.jsp"
+		).setKeywords(
+			() -> {
+				String keywords = ParamUtil.getString(
+					_httpServletRequest, "keywords");
+
+				if (Validator.isNotNull(keywords)) {
+					return keywords;
+				}
+
+				return null;
+			}
 		).setTabs1(
 			"default-configuration"
 		).setParameter(
+			"delta",
+			() -> {
+				String delta = ParamUtil.getString(
+					_httpServletRequest, "delta");
+
+				if (Validator.isNotNull(delta)) {
+					return delta;
+				}
+
+				return null;
+			}
+		).setParameter(
 			"tab", WorkflowWebKeys.WORKFLOW_TAB_DEFINITION_LINK
 		).buildPortletURL();
-
-		String delta = ParamUtil.getString(_httpServletRequest, "delta");
-
-		if (Validator.isNotNull(delta)) {
-			portletURL.setParameter("delta", delta);
-		}
-
-		String keywords = ParamUtil.getString(_httpServletRequest, "keywords");
-
-		if (Validator.isNotNull(keywords)) {
-			portletURL.setParameter("keywords", keywords);
-		}
 
 		String orderByType = ParamUtil.getString(
 			_httpServletRequest, "orderByType", "asc");

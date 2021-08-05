@@ -33,12 +33,12 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Text",
+		DEBuilder.addField(
+			fieldLabel = "Text",
 			fieldName = "Text");
 
 		WebContentStructures.saveCP();
@@ -61,8 +61,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.duplicate(fieldFieldLabel = "Select from List");
@@ -87,16 +87,13 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
-		for (var index : list "1,2,3,4,5") {
-			DataEngine.addFieldOption(
-				fieldFieldLabel = "Select from List",
-				index = "${index}",
-				optionValue = "Option ${index}");
-		}
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Select from List",
+			optionValueList = "Option 1,Option 2,Option 3,Option 4,Option 5");
 
 		WebContentStructures.saveCP();
 
@@ -131,6 +128,50 @@ definition {
 			optionLabelList = "Option 4,Option 5");
 	}
 
+	@description = "This is a test for LRQA-69036. This test verifies that editing chosen options persists."
+	@priority = "5"
+	test CanEditChosenOptions {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
+			fieldName = "Select from List");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Select from List",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DERenderer.inputDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			optionValue = "Option 1");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.inputDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			optionValue = "Option 2");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			optionValue = "Option 2");
+	}
+
 	@description = "This is a test for LRQA-68540. This test verifies that Label and Help text can be edited."
 	@priority = "5"
 	test CanEditLabelAndHelpText {
@@ -138,8 +179,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.editFieldTip(
@@ -168,6 +209,158 @@ definition {
 			fieldName = "Select from List");
 	}
 
+	@description = "This is a test for LRQA-69036. This test verifies that upon duplicating a repeatable field, inputted data on both fields persists."
+	@priority = "5"
+	test CanInputDataOnDuplicatedField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
+			fieldName = "Select from List");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Select from List",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		DataEngine.toggleFieldRepeatable(fieldFieldLabel = "Select from List");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DataEngine.addRepeatableField(fieldLabel = "Select from List");
+
+		DERenderer.inputDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			index = "1",
+			optionValue = "Option 1");
+
+		DERenderer.inputDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			index = "2",
+			optionValue = "Option 2");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			index = "1",
+			optionValue = "Option 1");
+
+		DERenderer.assertDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			index = "2",
+			optionValue = "Option 2");
+	}
+
+	@description = "This is a test for LRQA-69036. This test verifies that is not possible to publish the Web Content with a blank required field."
+	@priority = "4"
+	test CanNotPublishBlankRequiredField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
+			fieldName = "Select from List");
+
+		DataEngine.editFieldRequired(fieldFieldLabel = "Select from List");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		Button.clickPublish();
+
+		FormViewBuilder.validateObjectLabelOptionTextIsShown(text = "This field is required.");
+	}
+
+	@description = "This is a test for LRQA-69036. This test verifies that is possible to remove a duplicated field (repeatable)."
+	@priority = "4"
+	test CanRemoveDuplicatedField {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
+			fieldName = "Select from List");
+
+		DataEngine.toggleFieldRepeatable(fieldFieldLabel = "Select from List");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DataEngine.addRepeatableField(fieldLabel = "Select from List");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.removeRepeatableField(fieldLabel = "Select from List");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DEBuilder.assertFieldNotPresent(
+			fieldLabel = "Select from List",
+			index = "2");
+	}
+
+	@description = "This is a test for LRQA-69036. This test verifies that chosen options persists."
+	@priority = "5"
+	test CanSelectOptions {
+		NavItem.gotoStructures();
+
+		WebContentStructures.addCP(structureName = "WC Structure Title");
+
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
+			fieldName = "Select from List");
+
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Select from List",
+			optionValueList = "Option 1,Option 2,Option 3");
+
+		WebContentStructures.saveCP();
+
+		NavItem.gotoWebContent();
+
+		WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Title");
+
+		PortletEntry.inputTitle(title = "Web Content Title");
+
+		DERenderer.inputDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			optionValue = "Option 1");
+
+		Button.clickPublish();
+
+		WebContentNavigator.gotoEditCP(webContentTitle = "Web Content Title");
+
+		DERenderer.assertDataInSelectFromListField(
+			fieldLabel = "Select from List",
+			optionValue = "Option 1");
+	}
+
 	@description = "This is a test for LRQA-68540. This test verifies that Default Searchable property is 'Disable' when System Setting is left unchecked"
 	@priority = "3"
 	test CanSetDefaultSearchablePropertyToDisable {
@@ -193,8 +386,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.viewFieldSearchable(
@@ -227,8 +420,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.viewFieldSearchable(
@@ -243,8 +436,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.editFieldTip(
@@ -268,8 +461,8 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
 		DataEngine.toggleShowLabel(fieldLabel = "Select from List");
@@ -298,16 +491,13 @@ definition {
 
 		WebContentStructures.addCP(structureName = "WC Structure Title");
 
-		DataEngine.addField(
-			fieldFieldLabel = "Select from List",
+		DEBuilder.addField(
+			fieldLabel = "Select from List",
 			fieldName = "Select from List");
 
-		for (var index : list "1,2,3") {
-			DataEngine.addFieldOption(
-				fieldFieldLabel = "Select from List",
-				index = "${index}",
-				optionValue = "Option ${index}");
-		}
+		DEBuilder.addFieldOptions(
+			fieldLabel = "Select from List",
+			optionValueList = "Option 1,Option 2,Option 3");
 
 		WebContentStructures.saveCP();
 

@@ -26,7 +26,7 @@ definition {
 		PortletEntry.inputName(name = "${accountName}");
 
 		AssertClick(
-			locator1 = "Account#ACCOUNT_DOMAIN_ADD_LINK",
+			locator1 = "Account#VALID_DOMAINS_ADD_BUTTON",
 			value1 = "Add");
 
 		SelectFrame(locator1 = "IFrame#ADD_DOMAIN");
@@ -40,7 +40,7 @@ definition {
 		for (var domainName : list "${domainNames}") {
 			AssertElementPresent(
 				key_domainName = "${domainName}",
-				locator1 = "Account#DOMAIN_TABLE_NAME");
+				locator1 = "Account#VALID_DOMAINS_DOMAIN_NAME");
 		}
 
 		Button.clickSave();
@@ -256,14 +256,14 @@ definition {
 	}
 
 	macro addNewUserToPersonAccount {
-		AssertElementPresent(locator1 = "Account#USER_SELECT");
+		AssertElementPresent(locator1 = "Account#USER_SELECT_BUTTON");
 
 		if (!(IsElementPresent(locator1 = "Message#EMPTY_INFO_DEPOT_HIDE"))) {
 			Alert.viewMutedMessage(muteMessage = "Assign a user to this person account.");
 		}
 
 		AssertClick(
-			locator1 = "Account#USER_SELECT",
+			locator1 = "Account#USER_SELECT_BUTTON",
 			value1 = "Select");
 
 		SelectFrame(locator1 = "IFrame#ASSIGN_USER");
@@ -458,14 +458,14 @@ definition {
 	}
 
 	macro assignExistingUserToPersonAccount {
-		AssertElementPresent(locator1 = "Account#USER_SELECT");
+		AssertElementPresent(locator1 = "Account#USER_SELECT_BUTTON");
 
 		if (!(IsElementPresent(locator1 = "Message#EMPTY_INFO_DEPOT_HIDE"))) {
 			Alert.viewMutedMessage(muteMessage = "Assign a user to this person account.");
 		}
 
 		AssertClick(
-			locator1 = "Account#USER_SELECT",
+			locator1 = "Account#USER_SELECT_BUTTON",
 			value1 = "Select");
 
 		SelectFrame(locator1 = "IFrame#ASSIGN_USER");
@@ -474,7 +474,7 @@ definition {
 
 		AssertClick(
 			key_accountUserName = "${accountUserName}",
-			locator1 = "Account#CHOOSE_ACCOUNT_USER",
+			locator1 = "Account#ASSIGN_USER_CHOOSE_BUTTON",
 			value1 = "Choose");
 
 		SelectFrame(value1 = "relative=top");
@@ -560,6 +560,58 @@ definition {
 		SelectFrameTop();
 
 		Button.click(button = "Assign");
+
+		Alert.viewSuccessMessage();
+	}
+
+	macro changeDefaultBillingAddress {
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_CHANGE_DEFAULT_BILLING",
+			value1 = "Change");
+
+		SelectFrame(
+			key_title = "Set Default Billing Address",
+			locator1 = "IFrame#MODAL_ANY");
+
+		AssertElementPresent(
+			key_filterScope = "Type: Billing",
+			locator1 = "ManagementBar#FILTER_RESULTS_SCOPE");
+
+		Click(
+			key_addressName = "${addressName}",
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SELECT_ADDRESS_RADIO");
+
+		SelectFrameTop();
+
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SAVE_BUTTON",
+			value1 = "Save");
+
+		Alert.viewSuccessMessage();
+	}
+
+	macro changeDefaultShippingAddress {
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_CHANGE_DEFAULT_SHIPPING",
+			value1 = "Change");
+
+		SelectFrame(
+			key_title = "Set Default Shipping Address",
+			locator1 = "IFrame#MODAL_ANY");
+
+		AssertElementPresent(
+			key_filterScope = "Type: Shipping",
+			locator1 = "ManagementBar#FILTER_RESULTS_SCOPE");
+
+		Click(
+			key_addressName = "${addressName}",
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SELECT_ADDRESS_RADIO");
+
+		SelectFrameTop();
+
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SAVE_BUTTON",
+			value1 = "Save");
 
 		Alert.viewSuccessMessage();
 	}
@@ -772,19 +824,6 @@ definition {
 		Navigator.openWithAppendToBaseURL(urlAppend = "group/control_panel/manage?p_p_id=com_liferay_account_admin_web_internal_portlet_AccountEntriesAdminPortlet");
 	}
 
-	macro removeAddress {
-		Click(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#REMOVE_ACCOUNT_DEFAULT_ADDRESS");
-
-		PortletEntry.save();
-
-		AssertTextEquals(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "Not Set");
-	}
-
 	macro removeAssignee {
 		var key_assigneeName = "${assigneeName}";
 
@@ -806,57 +845,95 @@ definition {
 		Alert.viewSuccessMessage();
 	}
 
+	macro removeDefaultBillingAddress {
+		Click(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_REMOVE_DEFAULT_BILLING");
+
+		PortletEntry.save();
+
+		AssertTextEquals(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "Not Set");
+	}
+
+	macro removeDefaultShippingAddress {
+		Click(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_REMOVE_DEFAULT_SHIPPING");
+
+		PortletEntry.save();
+
+		AssertTextEquals(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "Not Set");
+	}
+
 	macro removeDomain {
 		LexiconEntry.gotoEntry(rowEntry = "${accountName}");
 
 		Click(
 			key_domainName = "${domainName}",
-			locator1 = "Account#DOMAIN_REMOVE_DOMAIN");
+			locator1 = "Account#VALID_DOMAINS_REMOVE_TOOLTIP");
 
 		PortletEntry.save();
 
 		AssertElementNotPresent(
 			key_domainName = "${domainName}",
-			locator1 = "Account#DOMAIN_REMOVE_DOMAIN");
+			locator1 = "Account#VALID_DOMAINS_REMOVE_TOOLTIP");
 	}
 
-	macro setDefaultAddress {
-		AssertElementPresent(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SECTION");
+	macro setDefaultBillingAddress {
+		AssertElementPresent(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_HEADING");
 
-		if (IsElementPresent(key_addressDataType = "${addressDataType}",key_text = "Set Default Address", locator1 = "Account#SET_ACCOUNT_DEFAULT_ADDRESS")) {
-			AssertClick(
-				key_addressDataType = "${addressDataType}",
-				key_text = "Set Default Address",
-				locator1 = "Account#SET_ACCOUNT_DEFAULT_ADDRESS",
-				value1 = "Set Default Address");
-		}
-		else {
-			AssertClick(
-				key_addressDataType = "${addressDataType}",
-				key_text = "Change",
-				locator1 = "Account#SET_ACCOUNT_DEFAULT_ADDRESS",
-				value1 = "Change");
-		}
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SET_DEFAULT_BILLING",
+			value1 = "Set Default Address");
 
 		Pause(locator1 = "3000");
 
 		SelectFrame(
-			key_title = StringUtil.upperCaseFirstLetter("${addressDataType}"),
+			key_title = "Set Default Billing Address",
 			locator1 = "IFrame#MODAL_ANY");
 
 		AssertElementPresent(
-			key_addressDataType = StringUtil.upperCaseFirstLetter("${addressDataType}"),
-			key_filterScope = "Type: ${key_addressDataType}",
+			key_filterScope = "Type: Billing",
 			locator1 = "ManagementBar#FILTER_RESULTS_SCOPE");
 
 		Click(
 			key_addressName = "${addressName}",
-			locator1 = "Account#SELECT_ADDRESS_RADIO");
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SELECT_ADDRESS_RADIO");
 
 		SelectFrameTop();
 
 		AssertClick(
-			locator1 = "Account#SAVE_BUTTON",
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SAVE_BUTTON",
+			value1 = "Save");
+
+		Alert.viewSuccessMessage();
+	}
+
+	macro setDefaultShippingAddress {
+		AssertElementPresent(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_HEADING");
+
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SET_DEFAULT_SHIPPING",
+			value1 = "Set Default Address");
+
+		Pause(locator1 = "3000");
+
+		SelectFrame(
+			key_title = "Set Default Shipping Address",
+			locator1 = "IFrame#MODAL_ANY");
+
+		AssertElementPresent(
+			key_filterScope = "Type: Shipping",
+			locator1 = "ManagementBar#FILTER_RESULTS_SCOPE");
+
+		Click(
+			key_addressName = "${addressName}",
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SELECT_ADDRESS_RADIO");
+
+		SelectFrameTop();
+
+		AssertClick(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SAVE_BUTTON",
 			value1 = "Save");
 
 		Alert.viewSuccessMessage();
@@ -928,72 +1005,6 @@ definition {
 		}
 	}
 
-	macro viewAddress {
-		if ("${addressDataType}" == "billing") {
-			AssertElementPresent(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESS_BILLING");
-		}
-		else {
-			AssertElementPresent(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESS_SHIPPING");
-		}
-
-		AssertTextEquals.assertPartialText(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "${addressName}");
-
-		AssertTextEquals.assertPartialText(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "${addressStreet1}");
-
-		AssertTextEquals.assertPartialText(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "${addressCountry}");
-
-		AssertTextEquals.assertPartialText(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "${addressCity}");
-
-		AssertTextEquals.assertPartialText(
-			key_addressDataType = "${addressDataType}",
-			locator1 = "Account#ACCOUNT_ADDRESSES",
-			value1 = "${addressPostalCode}");
-
-		if (isSet(addressRegion)) {
-			AssertTextEquals.assertPartialText(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESSES",
-				value1 = "${addressRegion}");
-		}
-
-		if (isSet(addressStreet2)) {
-			AssertTextEquals.assertPartialText(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESSES",
-				value1 = "${addressStreet2}");
-		}
-
-		if (isSet(addressStreet3)) {
-			AssertTextEquals.assertPartialText(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESSES",
-				value1 = "${addressStreet3}");
-		}
-
-		if (isSet(phoneNumber)) {
-			AssertTextEquals.assertPartialText(
-				key_addressDataType = "${addressDataType}",
-				locator1 = "Account#ACCOUNT_ADDRESSES",
-				value1 = "${phoneNumber}");
-		}
-	}
-
 	macro viewAssignee {
 		AssertTextEquals.assertPartialText(
 			key_tableEntry = "${assigneeName}",
@@ -1005,6 +1016,102 @@ definition {
 		AssertElementPresent(
 			key_tab = "${navTab}",
 			locator1 = "NavTab#TAB_LINK");
+	}
+
+	macro viewDefaultBillingAddress {
+		AssertElementPresent(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_BILLING_TEXT");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "${addressName}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "${addressStreet1}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "${addressCountry}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "${addressCity}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+			value1 = "${addressPostalCode}");
+
+		if (isSet(addressRegion)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+				value1 = "${addressRegion}");
+		}
+
+		if (isSet(addressStreet2)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+				value1 = "${addressStreet2}");
+		}
+
+		if (isSet(addressStreet3)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+				value1 = "${addressStreet3}");
+		}
+
+		if (isSet(phoneNumber)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_BILLING_ADDRESS",
+				value1 = "${phoneNumber}");
+		}
+	}
+
+	macro viewDefaultShippingAddress {
+		AssertElementPresent(locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_SHIPPING_TEXT");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "${addressName}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "${addressStreet1}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "${addressCountry}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "${addressCity}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+			value1 = "${addressPostalCode}");
+
+		if (isSet(addressRegion)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+				value1 = "${addressRegion}");
+		}
+
+		if (isSet(addressStreet2)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+				value1 = "${addressStreet2}");
+		}
+
+		if (isSet(addressStreet3)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+				value1 = "${addressStreet3}");
+		}
+
+		if (isSet(phoneNumber)) {
+			AssertTextEquals.assertPartialText(
+				locator1 = "Account#DEFAULT_ACCOUNT_ADDRESSES_DEFAULT_SHIPPING_ADDRESS",
+				value1 = "${phoneNumber}");
+		}
 	}
 
 	macro viewInactiveAccount {

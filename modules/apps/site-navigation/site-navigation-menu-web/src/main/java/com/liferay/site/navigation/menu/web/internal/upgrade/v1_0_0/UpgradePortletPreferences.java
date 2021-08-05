@@ -23,6 +23,9 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.site.navigation.menu.web.internal.constants.SiteNavigationMenuPortletKeys;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.portlet.PortletPreferences;
 import javax.portlet.ReadOnlyException;
 
@@ -45,9 +48,15 @@ public class UpgradePortletPreferences
 		String displayStyle = GetterUtil.getString(
 			portletPreferences.getValue("displayStyle", null));
 
+		List<String> displayStyleOutOfTheBox = Arrays.asList(
+			"relative-with-breadcrumb", "from-level-2-with-title",
+			"from-level-1-with-title,from-level-1",
+			"from-level-1-to-all-sublevels", "from-level-0");
+
 		if (Validator.isNull(displayStyle) ||
 			displayStyle.startsWith(
-				PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX)) {
+				PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX) ||
+			!displayStyleOutOfTheBox.contains(displayStyle)) {
 
 			return;
 		}

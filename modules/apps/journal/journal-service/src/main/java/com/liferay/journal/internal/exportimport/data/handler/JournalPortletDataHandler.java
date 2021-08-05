@@ -17,9 +17,15 @@ package com.liferay.journal.internal.exportimport.data.handler;
 import com.liferay.changeset.model.ChangesetCollection;
 import com.liferay.changeset.service.ChangesetCollectionLocalService;
 import com.liferay.changeset.service.ChangesetEntryLocalService;
+import com.liferay.data.engine.service.DEDataDefinitionFieldLinkLocalService;
+import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalService;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
+import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLayoutLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.dynamic.data.mapping.service.DDMStructureVersionLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.exportimport.kernel.lar.BasePortletDataHandler;
 import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
@@ -239,6 +245,44 @@ public class JournalPortletDataHandler extends BasePortletDataHandler {
 		_ddmTemplateLocalService.deleteTemplates(
 			portletDataContext.getScopeGroupId(),
 			_portal.getClassNameId(DDMStructure.class));
+
+		List<DDMStructure> ddmStructures =
+			_ddmStructureLocalService.getStructures(
+				portletDataContext.getScopeGroupId(),
+				_portal.getClassNameId(JournalArticle.class));
+
+		for (DDMStructure ddmStructure : ddmStructures) {
+			_deDataDefinitionFieldLinkLocalService.
+				deleteDEDataDefinitionFieldLinks(
+					_portal.getClassNameId(DDMStructure.class),
+					ddmStructure.getStructureId());
+
+			List<DDMStructureVersion> ddmStructureVersions =
+				_ddmStructureVersionLocalService.getStructureVersions(
+					ddmStructure.getStructureId());
+
+			for (DDMStructureVersion ddmStructureVersion :
+					ddmStructureVersions) {
+
+				List<DDMStructureLayout> ddmStructureLayouts =
+					_ddmStructureLayoutLocalService.getStructureLayouts(
+						ddmStructure.getGroupId(),
+						ddmStructure.getClassNameId(),
+						ddmStructureVersion.getStructureVersionId());
+
+				for (DDMStructureLayout ddmStructureLayout :
+						ddmStructureLayouts) {
+
+					_deDataDefinitionFieldLinkLocalService.
+						deleteDEDataDefinitionFieldLinks(
+							_portal.getClassNameId(DDMStructureLayout.class),
+							ddmStructureLayout.getStructureLayoutId());
+				}
+			}
+
+			_ddlRecordSetLocalService.deleteDDMStructureRecordSets(
+				ddmStructure.getStructureId());
+		}
 
 		_ddmStructureLocalService.deleteStructures(
 			portletDataContext.getScopeGroupId(),
@@ -734,8 +778,22 @@ public class JournalPortletDataHandler extends BasePortletDataHandler {
 	@Reference
 	private ChangesetEntryLocalService _changesetEntryLocalService;
 
+	@Reference
+	private DDLRecordSetLocalService _ddlRecordSetLocalService;
+
+	@Reference
+	private DDMStructureLayoutLocalService _ddmStructureLayoutLocalService;
+
 	private DDMStructureLocalService _ddmStructureLocalService;
+
+	@Reference
+	private DDMStructureVersionLocalService _ddmStructureVersionLocalService;
+
 	private DDMTemplateLocalService _ddmTemplateLocalService;
+
+	@Reference
+	private DEDataDefinitionFieldLinkLocalService
+		_deDataDefinitionFieldLinkLocalService;
 
 	@Reference
 	private ExportImportHelper _exportImportHelper;

@@ -46,15 +46,12 @@ portletDisplay.setShowBackIcon(true);
 
 						<div class="publication-description"><%= HtmlUtil.escape(ctCollection.getDescription()) %></div>
 					</li>
-
-					<c:if test="<%= CTCollectionPermission.contains(permissionChecker, ctCollection, ActionKeys.PERMISSIONS) %>">
-						<li class="tbar-item">
-							<react:component
-								module="publications/js/ManageCollaborators"
-								props="<%= publicationsDisplayContext.getCollaboratorsReactData(ctCollection) %>"
-							/>
-						</li>
-					</c:if>
+					<li class="tbar-item">
+						<react:component
+							module="publications/js/ManageCollaborators"
+							props="<%= publicationsDisplayContext.getCollaboratorsReactData(ctCollection) %>"
+						/>
+					</li>
 
 					<c:if test="<%= CTCollectionPermission.contains(permissionChecker, ctCollection, CTActionKeys.PUBLISH) %>">
 						<c:if test="<%= PropsValues.SCHEDULER_ENABLED %>">
@@ -132,6 +129,12 @@ portletDisplay.setShowBackIcon(true);
 						<div class="publication-description"><%= HtmlUtil.escape(ctCollection.getDescription()) %></div>
 					</li>
 					<li class="tbar-item">
+						<react:component
+							module="publications/js/ManageCollaborators"
+							props="<%= publicationsDisplayContext.getCollaboratorsReactData(ctCollection) %>"
+						/>
+					</li>
+					<li class="tbar-item">
 						<a class="btn btn-secondary btn-sm disabled" type="button">
 							<span class="inline-item inline-item-before">
 								<clay:icon
@@ -187,6 +190,12 @@ portletDisplay.setShowBackIcon(true);
 						</div>
 
 						<div class="publication-description"><%= HtmlUtil.escape(viewChangesDisplayContext.getScheduledDescription()) %></div>
+					</li>
+					<li class="tbar-item">
+						<react:component
+							module="publications/js/ManageCollaborators"
+							props="<%= publicationsDisplayContext.getCollaboratorsReactData(ctCollection) %>"
+						/>
 					</li>
 
 					<c:if test="<%= CTCollectionPermission.contains(permissionChecker, ctCollection, CTActionKeys.PUBLISH) && PropsValues.SCHEDULER_ENABLED %>">
@@ -245,6 +254,12 @@ portletDisplay.setShowBackIcon(true);
 						%>
 
 						<div class="publication-description"><%= HtmlUtil.escape(description.concat(LanguageUtil.format(resourceBundle, "published-by-x-on-x", new Object[] {ctCollection.getUserName(), format.format(ctCollection.getStatusDate())}, false))) %></div>
+					</li>
+					<li class="tbar-item">
+						<react:component
+							module="publications/js/ManageCollaborators"
+							props="<%= publicationsDisplayContext.getCollaboratorsReactData(ctCollection) %>"
+						/>
 					</li>
 					<li class="tbar-item">
 						<c:choose>

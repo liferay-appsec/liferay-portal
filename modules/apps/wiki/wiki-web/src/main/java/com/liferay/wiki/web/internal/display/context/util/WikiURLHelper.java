@@ -149,19 +149,22 @@ public class WikiURLHelper {
 	}
 
 	protected PortletURL getWikiNodeBaseURL(WikiNode node) {
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_liferayPortletResponse
+		).setParameter(
+			"categoryId",
+			() -> {
+				long categoryId = _wikiRequestHelper.getCategoryId();
+
+				if (categoryId > 0) {
+					return "0";
+				}
+
+				return null;
+			}
 		).setParameter(
 			"nodeName", node.getName()
 		).buildPortletURL();
-
-		long categoryId = _wikiRequestHelper.getCategoryId();
-
-		if (categoryId > 0) {
-			portletURL.setParameter("categoryId", "0");
-		}
-
-		return portletURL;
 	}
 
 	private final LiferayPortletResponse _liferayPortletResponse;

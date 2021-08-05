@@ -459,13 +459,7 @@ public class DLAdminManagementToolbarDisplayContext
 			return null;
 		}
 
-		int curEntry = ParamUtil.getInteger(_httpServletRequest, "curEntry");
-		int deltaEntry = ParamUtil.getInteger(
-			_httpServletRequest, "deltaEntry");
-
 		long folderId = _getFolderId();
-
-		long fileEntryTypeId = _getFileEntryTypeId();
 
 		String keywords = ParamUtil.getString(_httpServletRequest, "keywords");
 
@@ -491,23 +485,44 @@ public class DLAdminManagementToolbarDisplayContext
 
 				return HtmlUtil.escapeJS(navigation);
 			}
+		).setParameter(
+			"curEntry",
+			() -> {
+				int curEntry = ParamUtil.getInteger(
+					_httpServletRequest, "curEntry");
+
+				if (curEntry > 0) {
+					return curEntry;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"deltaEntry",
+			() -> {
+				int deltaEntry = ParamUtil.getInteger(
+					_httpServletRequest, "deltaEntry");
+
+				if (deltaEntry > 0) {
+					return deltaEntry;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"fileEntryTypeId",
+			() -> {
+				long fileEntryTypeId = _getFileEntryTypeId();
+
+				if (fileEntryTypeId != -1) {
+					return fileEntryTypeId;
+				}
+
+				return null;
+			}
+		).setParameter(
+			"folderId", folderId
 		).buildPortletURL();
-
-		if (curEntry > 0) {
-			displayStyleURL.setParameter("curEntry", String.valueOf(curEntry));
-		}
-
-		if (deltaEntry > 0) {
-			displayStyleURL.setParameter(
-				"deltaEntry", String.valueOf(deltaEntry));
-		}
-
-		displayStyleURL.setParameter("folderId", String.valueOf(folderId));
-
-		if (fileEntryTypeId != -1) {
-			displayStyleURL.setParameter(
-				"fileEntryTypeId", String.valueOf(fileEntryTypeId));
-		}
 
 		return new ViewTypeItemList(displayStyleURL, _getDisplayStyle()) {
 			{
@@ -720,17 +735,24 @@ public class DLAdminManagementToolbarDisplayContext
 	}
 
 	private List<DropdownItem> _getOrderByDropdownItems() {
-		final Map<String, String> orderColumns = HashMapBuilder.put(
+		Map<String, String> orderColumns = HashMapBuilder.put(
 			"creationDate", "create-date"
+		).put(
+			"downloads",
+			() -> {
+				if (_getFileEntryTypeId() == -1) {
+					return "downloads";
+				}
+
+				return null;
+			}
+		).put(
+			"modifiedDate", "modified-date"
+		).put(
+			"size", "size"
+		).put(
+			"title", "name"
 		).build();
-
-		if (_getFileEntryTypeId() == -1) {
-			orderColumns.put("downloads", "downloads");
-		}
-
-		orderColumns.put("modifiedDate", "modified-date");
-		orderColumns.put("size", "size");
-		orderColumns.put("title", "name");
 
 		return new DropdownItemList() {
 			{

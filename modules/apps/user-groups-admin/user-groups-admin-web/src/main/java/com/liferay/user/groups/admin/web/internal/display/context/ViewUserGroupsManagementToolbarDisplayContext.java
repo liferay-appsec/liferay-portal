@@ -145,24 +145,33 @@ public class ViewUserGroupsManagementToolbarDisplayContext {
 			_renderResponse
 		).setMVCPath(
 			"/view.jsp"
+		).setKeywords(
+			() -> {
+				if (Validator.isNotNull(getKeywords())) {
+					return getKeywords();
+				}
+
+				return null;
+			}
+		).setParameter(
+			"displayStyle", _displayStyle
+		).setParameter(
+			"orderByCol", getOrderByCol()
+		).setParameter(
+			"orderByType", getOrderByType()
+		).setParameter(
+			"viewUserGroupsRedirect",
+			() -> {
+				String viewUserGroupsRedirect = ParamUtil.getString(
+					_httpServletRequest, "viewUserGroupsRedirect");
+
+				if (Validator.isNotNull(viewUserGroupsRedirect)) {
+					return viewUserGroupsRedirect;
+				}
+
+				return null;
+			}
 		).buildPortletURL();
-
-		String viewUserGroupsRedirect = ParamUtil.getString(
-			_httpServletRequest, "viewUserGroupsRedirect");
-
-		if (Validator.isNotNull(viewUserGroupsRedirect)) {
-			portletURL.setParameter(
-				"viewUserGroupsRedirect", viewUserGroupsRedirect);
-		}
-
-		portletURL.setParameter("displayStyle", _displayStyle);
-
-		if (Validator.isNotNull(getKeywords())) {
-			portletURL.setParameter("keywords", getKeywords());
-		}
-
-		portletURL.setParameter("orderByCol", getOrderByCol());
-		portletURL.setParameter("orderByType", getOrderByType());
 
 		if (_userGroupSearch != null) {
 			portletURL.setParameter(

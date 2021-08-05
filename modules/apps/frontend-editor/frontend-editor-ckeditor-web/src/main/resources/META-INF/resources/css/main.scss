@@ -65,16 +65,96 @@
 	}
 }
 
-.lfr-ballon-editor-insert-button {
-	align-items: center;
+.lfr-balloon-editor-insert-button {
 	background: white;
 	border: 0.75px solid #0b5fff;
-	border-radius: 3px;
+	border-radius: 2px;
 	color: #0b5fff;
-	display: flex;
-	flex-direction: row;
-	font-size: 1.1em;
-	font-weight: bolder;
-	height: 28px;
-	width: 28px;
+	height: 24px;
+	width: 24px;
+}
+
+.cke_toolbar {
+	&.cke_toolbar__a11yhelpbtn {
+		float: right;
+
+		.cke_toolgroup,
+		.cke_toolgroup:hover {
+			border-width: 0;
+			margin-bottom: 0;
+			margin-top: 5px;
+		}
+
+		.cke_button {
+			.cke_button_icon {
+				display: none;
+			}
+
+			.cke_button__a11ybtn_label {
+				display: inline;
+
+				&:after {
+					border: 1px solid transparent;
+					content: 'Alt+0';
+					margin-left: 5px;
+					padding: 3px;
+				}
+
+				&.mac:after {
+					content: 'Option+0';
+				}
+			}
+		}
+	}
+}
+
+.cke_widget_embedurl,
+.cke_widget_videoembed {
+	.embed-help-message {
+		color: #fff;
+		font-weight: 600;
+		opacity: 0;
+		position: absolute;
+		text-align: center;
+		top: 50%;
+		transform: translateY(-50%);
+		transition: opacity 0.15s ease-in-out;
+		width: 100%;
+		z-index: 1;
+	}
+
+	.embed-responsive {
+		.embed-responsive-16by9 {
+			iframe {
+				@extend .embed-responsive-item !optional;
+			}
+		}
+	}
+
+	.cke_widget_mask {
+		background-color: #000;
+		cursor: pointer;
+		opacity: 0;
+		transition: opacity 0.15s ease-in-out;
+	}
+
+	&.cke_widget_wrapper {
+		&:hover,
+		&.cke_widget_focused {
+			.cke_widget_element {
+				outline: none;
+			}
+		}
+
+		&.cke_widget_selected {
+			.cke_widget_mask {
+				height: 100%;
+				opacity: 0.6;
+			}
+
+			.embed-help-message {
+				opacity: 1;
+			}
+		}
+	}
 }

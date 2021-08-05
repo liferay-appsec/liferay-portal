@@ -52,20 +52,19 @@ public class DLEditFileShortcutDisplayContext {
 	}
 
 	public String getEditFileShortcutURL() {
-		PortletURL portletURL = PortletURLBuilder.createActionURL(
+		return PortletURLBuilder.createActionURL(
 			_liferayPortletResponse
 		).setActionName(
 			"/document_library/edit_file_shortcut"
-		).buildPortletURL();
+		).setCMD(
+			() -> {
+				if (_getFileShortcut() == null) {
+					return Constants.ADD;
+				}
 
-		if (_getFileShortcut() == null) {
-			portletURL.setParameter(Constants.CMD, Constants.ADD);
-		}
-		else {
-			portletURL.setParameter(Constants.CMD, Constants.UPDATE);
-		}
-
-		return portletURL.toString();
+				return Constants.UPDATE;
+			}
+		).buildString();
 	}
 
 	public long getFileShortcutId() {

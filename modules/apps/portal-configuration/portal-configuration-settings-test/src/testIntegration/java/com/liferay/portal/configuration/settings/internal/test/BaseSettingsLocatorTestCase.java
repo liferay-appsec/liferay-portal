@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -188,23 +187,26 @@ public abstract class BaseSettingsLocatorTestCase {
 			Serializable propertyValue)
 		throws Exception {
 
-		Dictionary<String, Object> properties =
-			HashMapDictionaryBuilder.<String, Object>put(
-				scope.getPropertyKey(), scopePK
-			).build();
-
-		if (Validator.isNotNull(propertyKey) &&
-			Validator.isNotNull(propertyValue)) {
-
-			properties.put(propertyKey, propertyValue);
-		}
-
 		String value = RandomTestUtil.randomString();
 
-		properties.put(SettingsLocatorTestConstants.TEST_KEY, value);
-
 		String pid = ConfigurationTestUtil.createFactoryConfiguration(
-			factoryPid + ".scoped", properties);
+			factoryPid + ".scoped",
+			HashMapDictionaryBuilder.<String, Object>put(
+				scope.getPropertyKey(), scopePK
+			).put(
+				propertyKey,
+				() -> {
+					if (Validator.isNotNull(propertyKey) &&
+						Validator.isNotNull(propertyValue)) {
+
+						return propertyValue;
+					}
+
+					return null;
+				}
+			).put(
+				SettingsLocatorTestConstants.TEST_KEY, value
+			).build());
 
 		_factoryConfigurationPids.add(pid);
 

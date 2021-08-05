@@ -263,6 +263,7 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PortletKeys;
@@ -1036,17 +1037,10 @@ public class DataFactory {
 	public List<PortletPreferencesModel>
 		newAssetPublisherPortletPreferencesModels(long plid) {
 
-		List<PortletPreferencesModel> portletPreferencesModels =
-			new ArrayList<>(3);
-
-		portletPreferencesModels.add(
-			newPortletPreferencesModel(plid, BlogsPortletKeys.BLOGS));
-		portletPreferencesModels.add(
-			newPortletPreferencesModel(plid, JournalPortletKeys.JOURNAL));
-		portletPreferencesModels.add(
+		return ListUtil.fromArray(
+			newPortletPreferencesModel(plid, BlogsPortletKeys.BLOGS),
+			newPortletPreferencesModel(plid, JournalPortletKeys.JOURNAL),
 			newPortletPreferencesModel(plid, WikiPortletKeys.WIKI));
-
-		return portletPreferencesModels;
 	}
 
 	public List<PortletPreferenceValueModel>
@@ -2814,7 +2808,7 @@ public class DataFactory {
 
 		// PK fields
 
-		cpOptionValueModel.setCPOptionId(_counter.get());
+		cpOptionValueModel.setCPOptionValueId(_counter.get());
 
 		// Audit fields
 
@@ -3044,20 +3038,12 @@ public class DataFactory {
 	public List<PortletPreferencesModel> newDDLPortletPreferencesModels(
 		long plid) {
 
-		List<PortletPreferencesModel> portletPreferencesModels =
-			new ArrayList<>(3);
-
-		portletPreferencesModels.add(
+		return ListUtil.fromArray(
 			newPortletPreferencesModel(
-				plid, DDLPortletKeys.DYNAMIC_DATA_LISTS_DISPLAY));
-		portletPreferencesModels.add(
-			newPortletPreferencesModel(
-				plid, DDLPortletKeys.DYNAMIC_DATA_LISTS));
-		portletPreferencesModels.add(
+				plid, DDLPortletKeys.DYNAMIC_DATA_LISTS_DISPLAY),
+			newPortletPreferencesModel(plid, DDLPortletKeys.DYNAMIC_DATA_LISTS),
 			newPortletPreferencesModel(
 				plid, DDMPortletKeys.DYNAMIC_DATA_MAPPING));
-
-		return portletPreferencesModels;
 	}
 
 	public List<PortletPreferenceValueModel> newDDLPortletPreferenceValueModels(
@@ -4504,12 +4490,9 @@ public class DataFactory {
 	public List<LayoutSetModel> newLayoutSetModels(
 		long groupId, String themeId) {
 
-		List<LayoutSetModel> layoutSetModels = new ArrayList<>(2);
-
-		layoutSetModels.add(newLayoutSetModel(groupId, true, themeId));
-		layoutSetModels.add(newLayoutSetModel(groupId, false, themeId));
-
-		return layoutSetModels;
+		return ListUtil.fromArray(
+			newLayoutSetModel(groupId, true, themeId),
+			newLayoutSetModel(groupId, false, themeId));
 	}
 
 	public List<MBCategoryModel> newMBCategoryModels(long groupId) {
@@ -6567,20 +6550,13 @@ public class DataFactory {
 	protected List<ResourcePermissionModel> newResourcePermissionModels(
 		String name, String primKey, long ownerId) {
 
-		List<ResourcePermissionModel> resourcePermissionModels =
-			new ArrayList<>(3);
-
-		resourcePermissionModels.add(
+		return ListUtil.fromArray(
 			newResourcePermissionModel(
-				name, primKey, _guestRoleModel.getRoleId(), 0));
-		resourcePermissionModels.add(
+				name, primKey, _guestRoleModel.getRoleId(), 0),
 			newResourcePermissionModel(
-				name, primKey, _ownerRoleModel.getRoleId(), ownerId));
-		resourcePermissionModels.add(
+				name, primKey, _ownerRoleModel.getRoleId(), ownerId),
 			newResourcePermissionModel(
 				name, primKey, _siteMemberRoleModel.getRoleId(), 0));
-
-		return resourcePermissionModels;
 	}
 
 	protected RoleModel newRoleModel(String name, int type) {

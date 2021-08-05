@@ -392,7 +392,15 @@ public class HtmlImplTest {
 	}
 
 	@Test
-	public void testStripHtmlWithScripTag() {
+	public void testStripHtmlWithNoscriptTag() {
+		Assert.assertEquals(
+			"Hello World!",
+			_htmlImpl.stripHtml(
+				"<body>Hello<noscript>No JavaScript</noscript> World!</body>"));
+	}
+
+	@Test
+	public void testStripHtmlWithScriptTag() {
 		Assert.assertEquals(
 			"Hello World!",
 			_htmlImpl.stripHtml(

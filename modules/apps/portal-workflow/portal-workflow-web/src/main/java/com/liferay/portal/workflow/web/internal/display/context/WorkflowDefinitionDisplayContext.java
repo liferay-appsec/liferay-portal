@@ -418,8 +418,20 @@ public class WorkflowDefinitionDisplayContext {
 	public String getSortingURL(HttpServletRequest httpServletRequest)
 		throws PortletException {
 
-		PortletURL portletURL = PortletURLBuilder.createRenderURL(
+		return PortletURLBuilder.createRenderURL(
 			_workflowDefinitionRequestHelper.getLiferayPortletResponse()
+		).setParameter(
+			"definitionsNavigation",
+			() -> {
+				String definitionsNavigation = ParamUtil.getString(
+					httpServletRequest, "definitionsNavigation");
+
+				if (Validator.isNotNull(definitionsNavigation)) {
+					return definitionsNavigation;
+				}
+
+				return null;
+			}
 		).setParameter(
 			"orderByType",
 			() -> {
@@ -432,17 +444,7 @@ public class WorkflowDefinitionDisplayContext {
 
 				return "asc";
 			}
-		).buildPortletURL();
-
-		String definitionsNavigation = ParamUtil.getString(
-			httpServletRequest, "definitionsNavigation");
-
-		if (Validator.isNotNull(definitionsNavigation)) {
-			portletURL.setParameter(
-				"definitionsNavigation", definitionsNavigation);
-		}
-
-		return portletURL.toString();
+		).buildString();
 	}
 
 	public String getTitle(WorkflowDefinition workflowDefinition) {
