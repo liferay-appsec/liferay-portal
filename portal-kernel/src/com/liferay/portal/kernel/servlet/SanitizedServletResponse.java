@@ -47,38 +47,12 @@ import javax.servlet.http.HttpSession;
  */
 public class SanitizedServletResponse extends HttpServletResponseWrapper {
 
-	public static void disableXSSAuditor(
-		HttpServletResponse httpServletResponse) {
-
-		httpServletResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
-	}
-
-	public static void disableXSSAuditor(PortletResponse portletResponse) {
-		disableXSSAuditor(PortalUtil.getHttpServletResponse(portletResponse));
-	}
-
-	public static void disableXSSAuditorOnNextRequest(
-		HttpServletRequest httpServletRequest) {
-
-		HttpSession session = httpServletRequest.getSession();
-
-		session.setAttribute(_DISABLE_XSS_AUDITOR, Boolean.TRUE);
-	}
-
-	public static void disableXSSAuditorOnNextRequest(
-		PortletRequest portletRequest) {
-
-		disableXSSAuditorOnNextRequest(
-			PortalUtil.getHttpServletRequest(portletRequest));
-	}
-
 	public static HttpServletResponse getSanitizedServletResponse(
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse) {
 
 		setXContentOptions(httpServletRequest, httpServletResponse);
 		setXFrameOptions(httpServletRequest, httpServletResponse);
-		setXXSSProtection(httpServletRequest, httpServletResponse);
 
 		return httpServletResponse;
 	}
@@ -161,31 +135,9 @@ public class SanitizedServletResponse extends HttpServletResponseWrapper {
 		httpServletResponse.setHeader(HttpHeaders.X_FRAME_OPTIONS, "DENY");
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
-	 */
-	@Deprecated
-	protected static void setXXSSProtection(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
-
-		HttpSession session = httpServletRequest.getSession(false);
-
-		if ((session != null) &&
-			(session.getAttribute(_DISABLE_XSS_AUDITOR) != null)) {
-
-			session.removeAttribute(_DISABLE_XSS_AUDITOR);
-
-			httpServletResponse.setHeader(HttpHeaders.X_XSS_PROTECTION, "0");
-		}
-	}
-
 	private SanitizedServletResponse(HttpServletResponse httpServletResponse) {
 		super(httpServletResponse);
 	}
-
-	private static final String _DISABLE_XSS_AUDITOR =
-		SanitizedServletResponse.class.getName() + "DISABLE_XSS_AUDITOR";
 
 	private static final boolean _X_CONTENT_TYPE_OPTIONS =
 		GetterUtil.getBoolean(
