@@ -14,9 +14,12 @@
 
 package com.liferay.portal.security.access.control;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControlPolicy;
 import com.liferay.portal.kernel.security.access.control.AccessControlThreadLocal;
 import com.liferay.portal.kernel.security.access.control.AccessControlled;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.registry.Registry;
 import com.liferay.registry.RegistryUtil;
 import com.liferay.registry.ServiceReference;
@@ -42,23 +45,39 @@ public class AccessControlAdvisorImpl implements AccessControlAdvisor {
 			AccessControlled accessControlled)
 		throws SecurityException {
 
-		if (AccessControlThreadLocal.isRemoteAccess()) {
-			for (AccessControlPolicy accessControlPolicy :
+		try {
+			if (AccessControlThreadLocal.isRemoteAccess()) {
+				for (AccessControlPolicy accessControlPolicy :
 					_accessControlPolicies) {
 
-				accessControlPolicy.onServiceRemoteAccess(
-					method, arguments, accessControlled);
+					accessControlPolicy.onServiceRemoteAccess(
+						method, arguments, accessControlled);
+				}
+			}
+			else {
+				for (AccessControlPolicy accessControlPolicy :
+					_accessControlPolicies) {
+
+					accessControlPolicy.onServiceAccess(
+						method, arguments, accessControlled);
+				}
 			}
 		}
-		else {
-			for (AccessControlPolicy accessControlPolicy :
-					_accessControlPolicies) {
-
-				accessControlPolicy.onServiceAccess(
-					method, arguments, accessControlled);
+		catch (SecurityException securityException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(securityException, securityException);
 			}
+
+			if (PropsValues.ACCESS_CONTROL_SHOW_SECURITY_EXCEPTION_DETAIL) {
+				throw securityException;
+			}
+
+			throw new SecurityException("Access Denied");
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		AccessControlAdvisorImpl.class.getName());
 
 	private static final List<AccessControlPolicy> _accessControlPolicies =
 		new CopyOnWriteArrayList<>();
