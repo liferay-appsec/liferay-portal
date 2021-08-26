@@ -3,8 +3,8 @@ create table OpenIdConnectSession (
 	openIdConnectSessionId LONG not null primary key,
 	companyId LONG,
 	modifiedDate DATE null,
-	accessToken VARCHAR(2048) null,
-	idToken VARCHAR(2048) null,
+	accessToken TEXT null,
+	idToken TEXT null,
 	providerName VARCHAR(75) null,
-	refreshToken VARCHAR(512) null
+	refreshToken TEXT null
 );
