@@ -311,14 +311,6 @@ public class VerifyProperties extends VerifyProcess {
 			"com.liferay.portal.util.HttpImpl.proxy.auth.type"
 		},
 		{
-			"com.liferay.util.Http.proxy.ntlm.domain",
-			"com.liferay.portal.util.HttpImpl.proxy.ntlm.domain"
-		},
-		{
-			"com.liferay.util.Http.proxy.ntlm.host",
-			"com.liferay.portal.util.HttpImpl.proxy.ntlm.host"
-		},
-		{
 			"com.liferay.util.Http.proxy.password",
 			"com.liferay.portal.util.HttpImpl.proxy.password"
 		},
@@ -1271,34 +1263,6 @@ public class VerifyProperties extends VerifyProcess {
 		{
 			"nested.portlets.layout.template.unsupported",
 			"layout.template.unsupported", "com.liferay.nested.portlets.web"
-		},
-
-		// NTLM
-
-		{
-			"ntlm.auth.enabled", "enabled",
-			"com.liferay.portal.security.sso.ntlm"
-		},
-		{"ntlm.auth.domain", "domain", "com.liferay.portal.security.sso.ntlm"},
-		{
-			"ntlm.auth.domain.controller", "domain.controller",
-			"com.liferay.portal.security.sso.ntlm"
-		},
-		{
-			"ntlm.auth.domain.controller.name", "domain.controller.name",
-			"com.liferay.portal.security.sso.ntlm"
-		},
-		{
-			"ntlm.auth.negotiate.flags", "negotiate.flags",
-			"com.liferay.portal.security.sso.ntlm"
-		},
-		{
-			"ntlm.auth.service.account", "service.account",
-			"com.liferay.portal.security.sso.ntlm"
-		},
-		{
-			"ntlm.auth.service.password", "service.password",
-			"com.liferay.portal.security.sso.ntlm"
 		},
 
 		// OpenID
