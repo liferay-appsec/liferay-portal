@@ -77,7 +77,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.AuthSchemes;
@@ -183,15 +182,6 @@ public class HttpImpl implements Http {
 		if (_PROXY_AUTH_TYPE.equals("username-password")) {
 			_proxyCredentials = new UsernamePasswordCredentials(
 				_PROXY_USERNAME, _PROXY_PASSWORD);
-
-			_proxyAuthPrefs.add(AuthSchemes.NTLM);
-		}
-		else if (_PROXY_AUTH_TYPE.equals("ntlm")) {
-			_proxyCredentials = new NTCredentials(
-				_PROXY_USERNAME, _PROXY_PASSWORD, _PROXY_NTLM_HOST,
-				_PROXY_NTLM_DOMAIN);
-
-			_proxyAuthPrefs.add(0, AuthSchemes.NTLM);
 		}
 		else {
 			_proxyCredentials = null;
@@ -2044,12 +2034,6 @@ public class HttpImpl implements Http {
 
 	private static final String _PROXY_HOST = GetterUtil.getString(
 		SystemProperties.get("http.proxyHost"));
-
-	private static final String _PROXY_NTLM_DOMAIN = GetterUtil.getString(
-		PropsUtil.get(HttpImpl.class.getName() + ".proxy.ntlm.domain"));
-
-	private static final String _PROXY_NTLM_HOST = GetterUtil.getString(
-		PropsUtil.get(HttpImpl.class.getName() + ".proxy.ntlm.host"));
 
 	private static final String _PROXY_PASSWORD = GetterUtil.getString(
 		PropsUtil.get(HttpImpl.class.getName() + ".proxy.password"));

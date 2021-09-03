@@ -60,7 +60,6 @@ import org.apache.http.auth.AuthScheme;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.ChallengeState;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
@@ -1082,11 +1081,6 @@ public abstract class BaseJSONWebServiceClientImpl
 	}
 
 	private Credentials _getProxyCredentials() {
-		if ("ntlm".equalsIgnoreCase(_proxyAuthType)) {
-			return new NTCredentials(
-				_proxyLogin, _proxyPassword, _proxyWorkstation, _proxyDomain);
-		}
-
 		return new UsernamePasswordCredentials(_proxyLogin, _proxyPassword);
 	}
 
