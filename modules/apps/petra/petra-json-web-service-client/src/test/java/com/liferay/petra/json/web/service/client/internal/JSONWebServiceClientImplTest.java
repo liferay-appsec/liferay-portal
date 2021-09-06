@@ -70,30 +70,6 @@ public class JSONWebServiceClientImplTest
 	}
 
 	@Test
-	public void testActivateForNTLMProxy() throws Exception {
-		JSONWebServiceClientImpl jsonWebServiceClientImpl =
-			new JSONWebServiceClientImpl();
-
-		Map<String, Object> properties = getBaseProperties();
-
-		properties.put("proxyAuthType", "ntlm");
-		properties.put("proxyDomain", "liferay.com");
-		properties.put("proxyWorkstation", "lrdcom2003");
-
-		jsonWebServiceClientImpl.activate(properties);
-
-		Assert.assertEquals(
-			properties.get("proxyAuthType"),
-			jsonWebServiceClientImpl.getProxyAuthType());
-		Assert.assertEquals(
-			properties.get("proxyDomain"),
-			jsonWebServiceClientImpl.getProxyDomain());
-		Assert.assertEquals(
-			properties.get("proxyWorkstation"),
-			jsonWebServiceClientImpl.getProxyWorkstation());
-	}
-
-	@Test
 	public void testActivateWithHeaders() throws Exception {
 		JSONWebServiceClientImpl jsonWebServiceClientImpl =
 			new JSONWebServiceClientImpl();

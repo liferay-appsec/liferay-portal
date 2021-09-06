@@ -147,8 +147,8 @@ public interface S3StoreConfiguration {
 
 	@Meta.AD(
 		deflt = "none", description = "proxy-auth-type-help",
-		name = "proxy-auth-type",
-		optionValues = {"username-password", "ntlm", "none"}, required = false
+		name = "proxy-auth-type", optionValues = {"username-password", "none"},
+		required = false
 	)
 	public String proxyAuthType();
 
@@ -163,17 +163,5 @@ public interface S3StoreConfiguration {
 		name = "proxy-password", required = false, type = Meta.Type.Password
 	)
 	public String proxyPassword();
-
-	@Meta.AD(
-		description = "ntlm-proxy-domain-help", name = "ntlm-proxy-domain",
-		required = false
-	)
-	public String ntlmProxyDomain();
-
-	@Meta.AD(
-		description = "ntlm-proxy-workstation-help",
-		name = "ntlm-proxy-workstation", required = false
-	)
-	public String ntlmProxyWorkstation();
 
 }

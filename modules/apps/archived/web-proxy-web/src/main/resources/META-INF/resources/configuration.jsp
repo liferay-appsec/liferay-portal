@@ -42,7 +42,6 @@
 				<aui:select name="preferences--proxyAuthentication--" value="<%= proxyAuthentication %>">
 					<aui:option label="none" />
 					<aui:option label="basic" />
-					<aui:option label="ntlm" />
 				</aui:select>
 
 				<aui:input cssClass="lfr-input-text-container" name="preferences--proxyAuthenticationUsername--" value="<%= proxyAuthenticationUsername %>" />
