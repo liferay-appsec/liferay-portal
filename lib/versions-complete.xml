@@ -2958,30 +2958,6 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>com.liferay.portal.security.sso.cas.impl.jar!bcpkix-jdk15on.jar</file-name>
-				<version>1.61</version>
-				<project-name>Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs</project-name>
-				<project-url>http://www.bouncycastle.org/java.html</project-url>
-				<licenses>
-					<license>
-						<license-name>Bouncy Castle Licence</license-name>
-						<license-url>http://www.bouncycastle.org/licence.html</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>com.liferay.portal.security.sso.cas.impl.jar!bcprov-jdk15on.jar</file-name>
-				<version>1.61</version>
-				<project-name>Bouncy Castle Provider</project-name>
-				<project-url>http://www.bouncycastle.org/java.html</project-url>
-				<licenses>
-					<license>
-						<license-name>Bouncy Castle Licence</license-name>
-						<license-url>http://www.bouncycastle.org/licence.html</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>com.liferay.portal.security.sso.cas.impl.jar!cas-client-core.jar</file-name>
 				<version>3.6.1</version>
 				<project-name>Jasig CAS Client for Java - Core</project-name>
@@ -5720,7 +5696,19 @@
 			</library>
 			<library>
 				<file-name>lib/portal/bcmail.jar</file-name>
-				<version>1.61.LIFERAY-PATCHED-1</version>
+				<version>1.69</version>
+				<project-name>Bouncy Castle</project-name>
+				<project-url>http://www.bouncycastle.org</project-url>
+				<licenses>
+					<license>
+						<license-name>MIT License</license-name>
+						<license-url>http://opensource.org/licenses/MIT</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/bcpkix.jar</file-name>
+				<version>1.69</version>
 				<project-name>Bouncy Castle</project-name>
 				<project-url>http://www.bouncycastle.org</project-url>
 				<licenses>
@@ -5732,7 +5720,7 @@
 			</library>
 			<library>
 				<file-name>lib/portal/bcprov.jar</file-name>
-				<version>1.61.LIFERAY-PATCHED-1</version>
+				<version>1.69</version>
 				<project-name>Bouncy Castle</project-name>
 				<project-url>http://www.bouncycastle.org</project-url>
 				<licenses>
