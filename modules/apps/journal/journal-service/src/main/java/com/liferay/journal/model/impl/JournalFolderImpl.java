@@ -68,6 +68,16 @@ public class JournalFolderImpl extends JournalFolderBaseImpl {
 	}
 
 	@Override
+	public String getParentClassName() {
+		return "com.liferay.journal.model.JournalFolder";
+	}
+
+	@Override
+	public String getParentClassPK() {
+		return String.valueOf(getParentFolderId());
+	}
+
+	@Override
 	public JournalFolder getParentFolder() throws PortalException {
 		if (getParentFolderId() ==
 				JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID) {

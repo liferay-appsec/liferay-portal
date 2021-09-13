@@ -64,6 +64,10 @@ public interface JournalFolder
 	public java.util.List<JournalFolder> getAncestors()
 		throws com.liferay.portal.kernel.exception.PortalException;
 
+	public String getParentClassName();
+
+	public String getParentClassPK();
+
 	public JournalFolder getParentFolder()
 		throws com.liferay.portal.kernel.exception.PortalException;
 

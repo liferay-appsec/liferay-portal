@@ -172,6 +172,10 @@ public interface JournalArticle
 	@Deprecated
 	public String getLegacyTitle();
 
+	public String getParentClassName();
+
+	public String getParentClassPK();
+
 	public String getSmallImageType()
 		throws com.liferay.portal.kernel.exception.PortalException;
 

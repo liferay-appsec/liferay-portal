@@ -436,6 +436,18 @@ public interface ResourcePermissionLocalService
 	public Map<String, List<ResourcePermission>>
 		getIndividualPortletResourcePermissions(long companyId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Set<Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String name, int scope,
+			String resourcePrimKey, String actionId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public Set<Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String className, int scope,
+			String resourcePrimKey, String primKey, String actionId)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *

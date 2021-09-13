@@ -484,6 +484,25 @@ public class ResourcePermissionLocalServiceUtil {
 		return getService().getIndividualPortletResourcePermissions(companyId);
 	}
 
+	public static Set<Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String name, int scope,
+			String resourcePrimKey, String actionId)
+		throws PortalException {
+
+		return getService().getInheritedRoleIdCombinations(
+			companyId, groupId, name, scope, resourcePrimKey, actionId);
+	}
+
+	public static Set<Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String className, int scope,
+			String resourcePrimKey, String primKey, String actionId)
+		throws PortalException {
+
+		return getService().getInheritedRoleIdCombinations(
+			companyId, groupId, className, scope, resourcePrimKey, primKey,
+			actionId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *

@@ -572,6 +572,16 @@ public class JournalArticleImpl extends JournalArticleBaseImpl {
 		return _title;
 	}
 
+	@Override
+	public String getParentClassName() {
+		return "com.liferay.journal.model.JournalFolder";
+	}
+
+	@Override
+	public String getParentClassPK() {
+		return String.valueOf(getFolderId());
+	}
+
 	@JSON
 	@Override
 	public Date getReviewDate() {

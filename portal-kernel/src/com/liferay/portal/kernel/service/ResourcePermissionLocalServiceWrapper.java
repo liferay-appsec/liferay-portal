@@ -526,6 +526,27 @@ public class ResourcePermissionLocalServiceWrapper
 			getIndividualPortletResourcePermissions(companyId);
 	}
 
+	@Override
+	public java.util.Set<java.util.Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String name, int scope,
+			String resourcePrimKey, String actionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _resourcePermissionLocalService.getInheritedRoleIdCombinations(
+			companyId, groupId, name, scope, resourcePrimKey, actionId);
+	}
+
+	@Override
+	public java.util.Set<java.util.Set<String>> getInheritedRoleIdCombinations(
+			long companyId, long groupId, String className, int scope,
+			String resourcePrimKey, String primKey, String actionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _resourcePermissionLocalService.getInheritedRoleIdCombinations(
+			companyId, groupId, className, scope, resourcePrimKey, primKey,
+			actionId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *

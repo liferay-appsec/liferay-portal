@@ -709,6 +709,16 @@ public class JournalArticleWrapper
 		return model.getMvccVersion();
 	}
 
+	@Override
+	public String getParentClassName() {
+		return model.getParentClassName();
+	}
+
+	@Override
+	public String getParentClassPK() {
+		return model.getParentClassPK();
+	}
+
 	/**
 	 * Returns the primary key of this journal article.
 	 *
