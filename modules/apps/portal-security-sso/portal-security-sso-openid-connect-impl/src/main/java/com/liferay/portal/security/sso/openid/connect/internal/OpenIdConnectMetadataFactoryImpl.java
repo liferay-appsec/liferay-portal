@@ -229,8 +229,11 @@ public class OpenIdConnectMetadataFactoryImpl
 		List<JWSAlgorithm> jwsAlgorithms =
 			oidcProviderMetadata.getIDTokenJWSAlgs();
 
-		if (ListUtil.isNotEmpty(jwsAlgorithms)) {
+		if (ListUtil.isNotEmpty(jwsAlgorithms) && (jwsAlgorithms.size() == 1)) {
 			_oidcClientMetadata.setIDTokenJWSAlg(jwsAlgorithms.get(0));
+		}
+		else {
+			_oidcClientMetadata.setIDTokenJWSAlg(JWSAlgorithm.RS256);
 		}
 
 		_oidcClientMetadata.setJWKSetURI(oidcProviderMetadata.getJWKSetURI());
