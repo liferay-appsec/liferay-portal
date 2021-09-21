@@ -18,9 +18,13 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectProvider;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 
+import com.nimbusds.jose.Algorithm;
+import com.nimbusds.jose.Header;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jwt.JWT;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.ErrorObject;
@@ -133,8 +137,7 @@ public class OpenIdConnectTokenRequestUtil {
 			OIDCTokens oidcTokens = oidcTokenResponse.getOIDCTokens();
 
 			_validate(
-				clientID, nonce, openIdConnectProvider.getOIDCClientMetadata(),
-				oidcProviderMetadata, oidcTokens,
+				clientID, nonce, oidcProviderMetadata, oidcTokens,
 				openIdConnectProvider.getTokenConnectionTimeout());
 
 			return oidcTokens;
@@ -157,21 +160,26 @@ public class OpenIdConnectTokenRequestUtil {
 
 	private static IDTokenClaimsSet _validate(
 			ClientID clientID, Nonce nonce,
-			OIDCClientMetadata oidcClientMetadata,
 			OIDCProviderMetadata oidcProviderMetadata, OIDCTokens oidcTokens,
 			int tokenConnectionTimeout)
 		throws OpenIdConnectServiceException.TokenException {
 
 		try {
+			JWT idToken = oidcTokens.getIDToken();
+
+			Header header = idToken.getHeader();
+
+			Algorithm algorithm = header.getAlgorithm();
+
 			URI uri = oidcProviderMetadata.getJWKSetURI();
 
 			IDTokenValidator idTokenValidator = new IDTokenValidator(
 				oidcProviderMetadata.getIssuer(), clientID,
-				oidcClientMetadata.getIDTokenJWSAlg(), uri.toURL(),
+				JWSAlgorithm.parse(algorithm.getName()), uri.toURL(),
 				new DefaultResourceRetriever(
 					tokenConnectionTimeout, tokenConnectionTimeout));
 
-			return idTokenValidator.validate(oidcTokens.getIDToken(), nonce);
+			return idTokenValidator.validate(idToken, nonce);
 		}
 		catch (BadJOSEException | JOSEException exception) {
 			throw new OpenIdConnectServiceException.TokenException(
