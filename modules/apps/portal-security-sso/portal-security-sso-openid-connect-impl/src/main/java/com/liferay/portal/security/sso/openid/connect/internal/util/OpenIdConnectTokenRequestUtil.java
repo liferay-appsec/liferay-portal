@@ -54,6 +54,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 
+import java.util.Objects;
+
 import net.minidev.json.JSONObject;
 
 /**
@@ -173,13 +175,27 @@ public class OpenIdConnectTokenRequestUtil {
 
 			URI uri = oidcProviderMetadata.getJWKSetURI();
 
-			IDTokenValidator idTokenValidator = new IDTokenValidator(
-				oidcProviderMetadata.getIssuer(), clientID,
-				JWSAlgorithm.parse(algorithm.getName()), uri.toURL(),
-				new DefaultResourceRetriever(
-					tokenConnectionTimeout, tokenConnectionTimeout));
+			String name = algorithm.getName();
 
-			return idTokenValidator.validate(idToken, nonce);
+			for (JWSAlgorithm jwsAlgorithm :
+					oidcProviderMetadata.getIDTokenJWSAlgs()) {
+
+				if (Objects.equals(jwsAlgorithm.getName(), name)) {
+					IDTokenValidator idTokenValidator = new IDTokenValidator(
+						oidcProviderMetadata.getIssuer(), clientID,
+						JWSAlgorithm.parse(name), uri.toURL(),
+						new DefaultResourceRetriever(
+							tokenConnectionTimeout, tokenConnectionTimeout));
+
+					return idTokenValidator.validate(idToken, nonce);
+				}
+			}
+
+			throw new OpenIdConnectServiceException.TokenException(
+				StringBundler.concat(
+					"Signing algorithm ", name,
+					" rejected by OpenId Connect client: ",
+					clientID.getValue()));
 		}
 		catch (BadJOSEException | JOSEException exception) {
 			throw new OpenIdConnectServiceException.TokenException(

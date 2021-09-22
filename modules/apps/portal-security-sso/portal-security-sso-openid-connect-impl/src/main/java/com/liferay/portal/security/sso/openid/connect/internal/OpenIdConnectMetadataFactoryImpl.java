@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 
 import com.nimbusds.jose.JWEAlgorithm;
@@ -38,7 +39,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import net.minidev.json.JSONObject;
 
@@ -75,14 +81,24 @@ public class OpenIdConnectMetadataFactoryImpl
 			_oidcProviderMetadata.setAuthorizationEndpointURI(
 				new URI(authorizationEndPointURL));
 
-			List<JWSAlgorithm> jwsAlgorithms = new ArrayList<>();
+			if ((idTokenSigningAlgValues == null) ||
+				(idTokenSigningAlgValues.length == 0)) {
 
-			for (String idTokenSigningAlgValue : idTokenSigningAlgValues) {
+				idTokenSigningAlgValues = new String[] {"RS256"};
+			}
+
+			List<JWSAlgorithm> jwsAlgorithms = new ArrayList<>();
+			_allowedIdTokenSigningAlgValues = new HashSet<>();
+
+			for (String idTokenSigningAlgValue :
+					_processAllowedIdTokenSigningAlgValues(
+						idTokenSigningAlgValues)) {
+
 				jwsAlgorithms.add(JWSAlgorithm.parse(idTokenSigningAlgValue));
+				_allowedIdTokenSigningAlgValues.add(idTokenSigningAlgValue);
 			}
 
 			_oidcProviderMetadata.setIDTokenJWSAlgs(jwsAlgorithms);
-
 			_oidcProviderMetadata.setTokenEndpointURI(
 				new URI(tokenEndPointURL));
 			_oidcProviderMetadata.setUserInfoEndpointURI(
@@ -110,16 +126,20 @@ public class OpenIdConnectMetadataFactoryImpl
 	public OpenIdConnectMetadataFactoryImpl(
 		String providerName, URL discoveryEndPointURL) {
 
-		this(providerName, discoveryEndPointURL, 0);
+		this(providerName, discoveryEndPointURL, 0, null);
 	}
 
 	public OpenIdConnectMetadataFactoryImpl(
-		String providerName, URL discoveryEndPointURL,
-		long cacheInMilliseconds) {
+		String providerName, URL discoveryEndPointURL, long cacheInMilliseconds,
+		String[] allowedIdTokenSigningAlgValues) {
 
 		_providerName = providerName;
 		_discoveryEndPointURL = discoveryEndPointURL;
 		_cacheInMilliseconds = cacheInMilliseconds;
+
+		_allowedIdTokenSigningAlgValues = new HashSet<>(
+			_processAllowedIdTokenSigningAlgValues(
+				allowedIdTokenSigningAlgValues));
 	}
 
 	@Override
@@ -189,6 +209,22 @@ public class OpenIdConnectMetadataFactoryImpl
 
 			_oidcProviderMetadata = OIDCProviderMetadata.parse(jsonObject);
 
+			if (_allowedIdTokenSigningAlgValues != null) {
+				List<JWSAlgorithm> idTokenJWSAlgs =
+					_oidcProviderMetadata.getIDTokenJWSAlgs();
+
+				Stream<JWSAlgorithm> stream = idTokenJWSAlgs.stream();
+
+				_oidcProviderMetadata.setIDTokenJWSAlgs(
+					stream.filter(
+						jwsAlgorithm ->
+							_allowedIdTokenSigningAlgValues.contains(
+								jwsAlgorithm.getName())
+					).collect(
+						Collectors.toList()
+					));
+			}
+
 			refreshClientMetadata(_oidcProviderMetadata);
 
 			_lastRefreshTimestamp = time;
@@ -236,9 +272,30 @@ public class OpenIdConnectMetadataFactoryImpl
 		_oidcClientMetadata.setJWKSetURI(oidcProviderMetadata.getJWKSetURI());
 	}
 
+	private List<String> _processAllowedIdTokenSigningAlgValues(
+		String[] allowedIdTokenSigningAlgValues) {
+
+		List<String> allowedIdTokenSigningAlgValuesList = new ArrayList<>();
+
+		if (allowedIdTokenSigningAlgValues != null) {
+			Collections.addAll(
+				allowedIdTokenSigningAlgValuesList,
+				allowedIdTokenSigningAlgValues);
+		}
+
+		allowedIdTokenSigningAlgValuesList.removeIf(Validator::isBlank);
+
+		if (allowedIdTokenSigningAlgValuesList.isEmpty()) {
+			allowedIdTokenSigningAlgValuesList.add("RS256");
+		}
+
+		return allowedIdTokenSigningAlgValuesList;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		OpenIdConnectMetadataFactoryImpl.class);
 
+	private final Set<String> _allowedIdTokenSigningAlgValues;
 	private final long _cacheInMilliseconds;
 	private final URL _discoveryEndPointURL;
 	private long _lastRefreshTimestamp;

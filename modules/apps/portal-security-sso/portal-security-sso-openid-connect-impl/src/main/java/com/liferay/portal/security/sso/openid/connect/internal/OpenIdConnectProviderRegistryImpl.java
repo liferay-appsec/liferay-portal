@@ -212,7 +212,8 @@ public class OpenIdConnectProviderRegistryImpl
 				openIdConnectProviderConfiguration.providerName(),
 				new URL(openIdConnectProviderConfiguration.discoveryEndPoint()),
 				openIdConnectProviderConfiguration.
-					discoveryEndPointCacheInMillis());
+					discoveryEndPointCacheInMillis(),
+				openIdConnectProviderConfiguration.idTokenSigningAlgValues());
 		}
 
 		return new OpenIdConnectMetadataFactoryImpl(
