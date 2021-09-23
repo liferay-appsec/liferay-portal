@@ -171,6 +171,24 @@ public class OpenIdConnectTokenRequestUtil {
 
 			Algorithm algorithm = header.getAlgorithm();
 
+			boolean supportedAlgorithm = false;
+
+			for (JWSAlgorithm jwsAlgorithm :
+					oidcProviderMetadata.getIDTokenJWSAlgs()) {
+
+				String algorithmName = algorithm.getName();
+
+				if (algorithmName.equals(jwsAlgorithm.getName())) {
+					supportedAlgorithm = true;
+
+					break;
+				}
+			}
+
+			if (!supportedAlgorithm) {
+				throw new BadJOSEException("Unsupported Algorithm used");
+			}
+
 			URI uri = oidcProviderMetadata.getJWKSetURI();
 
 			IDTokenValidator idTokenValidator = new IDTokenValidator(
