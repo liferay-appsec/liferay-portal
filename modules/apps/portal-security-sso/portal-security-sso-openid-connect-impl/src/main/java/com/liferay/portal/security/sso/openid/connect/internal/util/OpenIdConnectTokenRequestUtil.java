@@ -54,6 +54,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 
+import java.util.Objects;
+
 import net.minidev.json.JSONObject;
 
 /**
@@ -171,33 +173,29 @@ public class OpenIdConnectTokenRequestUtil {
 
 			Algorithm algorithm = header.getAlgorithm();
 
-			boolean supportedAlgorithm = false;
+			String algorithmName = algorithm.getName();
 
 			for (JWSAlgorithm jwsAlgorithm :
 					oidcProviderMetadata.getIDTokenJWSAlgs()) {
 
-				String algorithmName = algorithm.getName();
+				if (Objects.equals(jwsAlgorithm.getName(), algorithmName)) {
+					URI uri = oidcProviderMetadata.getJWKSetURI();
 
-				if (algorithmName.equals(jwsAlgorithm.getName())) {
-					supportedAlgorithm = true;
+					IDTokenValidator idTokenValidator = new IDTokenValidator(
+						oidcProviderMetadata.getIssuer(), clientID,
+						JWSAlgorithm.parse(algorithmName), uri.toURL(),
+						new DefaultResourceRetriever(
+							tokenConnectionTimeout, tokenConnectionTimeout));
 
-					break;
+					return idTokenValidator.validate(idToken, nonce);
 				}
 			}
 
-			if (!supportedAlgorithm) {
-				throw new BadJOSEException("Unsupported Algorithm used");
-			}
-
-			URI uri = oidcProviderMetadata.getJWKSetURI();
-
-			IDTokenValidator idTokenValidator = new IDTokenValidator(
-				oidcProviderMetadata.getIssuer(), clientID,
-				JWSAlgorithm.parse(algorithm.getName()), uri.toURL(),
-				new DefaultResourceRetriever(
-					tokenConnectionTimeout, tokenConnectionTimeout));
-
-			return idTokenValidator.validate(idToken, nonce);
+			throw new OpenIdConnectServiceException.TokenException(
+				StringBundler.concat(
+					"The ID Token is signed using ", algorithmName,
+					" which is unsupported for OpenId Connect client ",
+					clientID.getValue()));
 		}
 		catch (BadJOSEException | JOSEException exception) {
 			throw new OpenIdConnectServiceException.TokenException(
