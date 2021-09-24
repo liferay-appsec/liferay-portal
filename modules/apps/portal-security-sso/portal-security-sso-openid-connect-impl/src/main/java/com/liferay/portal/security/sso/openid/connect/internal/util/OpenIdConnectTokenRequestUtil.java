@@ -15,6 +15,7 @@
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectProvider;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 
@@ -139,7 +140,8 @@ public class OpenIdConnectTokenRequestUtil {
 			OIDCTokens oidcTokens = oidcTokenResponse.getOIDCTokens();
 
 			_validate(
-				clientID, nonce, oidcProviderMetadata, oidcTokens,
+				clientID, nonce, openIdConnectProvider.getOIDCClientMetadata(),
+				oidcProviderMetadata, oidcTokens,
 				openIdConnectProvider.getTokenConnectionTimeout());
 
 			return oidcTokens;
@@ -162,11 +164,15 @@ public class OpenIdConnectTokenRequestUtil {
 
 	private static IDTokenClaimsSet _validate(
 			ClientID clientID, Nonce nonce,
+			OIDCClientMetadata oidcClientMetadata,
 			OIDCProviderMetadata oidcProviderMetadata, OIDCTokens oidcTokens,
 			int tokenConnectionTimeout)
 		throws OpenIdConnectServiceException.TokenException {
 
 		try {
+			JWSAlgorithm expectedIdTokenJWSAlg =
+				oidcClientMetadata.getIDTokenJWSAlg();
+
 			JWT idToken = oidcTokens.getIDToken();
 
 			Header header = idToken.getHeader();
@@ -174,6 +180,16 @@ public class OpenIdConnectTokenRequestUtil {
 			Algorithm algorithm = header.getAlgorithm();
 
 			String algorithmName = algorithm.getName();
+
+			if (!Validator.isBlank(expectedIdTokenJWSAlg.getName()) &&
+				!algorithmName.equals(expectedIdTokenJWSAlg.getName())) {
+
+				throw new OpenIdConnectServiceException.TokenException(
+					StringBundler.concat(
+						"The ID Token is signed using an unexpected ",
+						"algorithm. Expected ", expectedIdTokenJWSAlg.getName(),
+						", got ", algorithmName));
+			}
 
 			for (JWSAlgorithm jwsAlgorithm :
 					oidcProviderMetadata.getIDTokenJWSAlgs()) {
