@@ -856,3 +856,26 @@ Access the native OSGi API using the system bundle's `org.osgi.framework.BundleC
 The native OSGi API makes the bridged API unnecessary.
 
 ---------------------------------------
+
+### OpenId Connect provider signing algorithm must be configured if different to RS256
+
+- **Date:** 2021-Sep-30
+- **JIRA Ticket:** LPS-138756
+
+#### What changed?
+
+The portal's OpenId Connect client now requires admins to explicitly state the ID Token signing algorithm agreed with the provider.
+
+#### Who is affected?
+
+Anyone integrating OpenId Connect providers that sign ID Tokens using a different signing algorithm to the **first** algorithm listed as their supported signing algorithms. The list is served by the provider's Discovery Endpoint, or configured offline in portal.
+
+#### How should I update my code?
+
+Review the "OpenId Connect Provider Connection" configuration(s). Specify the agreed algorithm in "Registered ID Token Signing Algorithm".
+
+#### Why was this change made?
+
+In order to better support all signing algorithms supported by OpenId Connect providers.
+
+---------------------------------------
