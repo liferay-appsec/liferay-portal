@@ -223,9 +223,9 @@ public class OpenIdConnectMetadataFactoryImpl
 	}
 
 	/**
-	 * By specification, client metadata has nothing to with provider metadata,
-	 * but in order to minimize potential breaking changes, we will leave the
-	 * rest unchanged for now.
+	 * Client metadata has nothing to with provider metadata, but in order to
+	 * minimize potential breaking changes, we will leave this behavior even
+	 * though it is goes beyond the specification.
 	 */
 	protected synchronized void refreshClientMetadata(
 		OIDCProviderMetadata oidcProviderMetadata) {
