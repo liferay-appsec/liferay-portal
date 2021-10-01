@@ -256,10 +256,7 @@ public class OpenIdConnectMetadataFactoryImpl
 				JWSAlgorithm jwsAlgorithm =
 					_oidcClientMetadata.getIDTokenJWSAlg();
 
-				_log.warn(
-					"No registered Id Token signing algorithm was specified " +
-						"in configuration, using default " +
-							jwsAlgorithm.getName());
+				_log.warn("Using default " + jwsAlgorithm.getName());
 			}
 		}
 	}
