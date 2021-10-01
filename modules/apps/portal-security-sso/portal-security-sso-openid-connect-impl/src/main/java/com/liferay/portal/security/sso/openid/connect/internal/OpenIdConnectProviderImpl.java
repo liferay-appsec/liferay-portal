@@ -23,9 +23,6 @@ import com.nimbusds.openid.connect.sdk.rp.OIDCClientMetadata;
 /**
  * @author Thuong Dinh
  * @author Edward C. Han
- *
- * Future reference: the whole class does not really follow OIDC specs,
- * rework of discovery and client registration will be done in LPS-139642
  */
 public class OpenIdConnectProviderImpl
 	implements OpenIdConnectProvider<OIDCClientMetadata, OIDCProviderMetadata> {
@@ -34,6 +31,8 @@ public class OpenIdConnectProviderImpl
 		String name, String clientId, String clientSecret, String scopes,
 		OpenIdConnectMetadataFactory openIdConnectMetadataFactory,
 		int tokenConnectionTimeout) {
+
+		// TODO LPS-139642
 
 		_name = name;
 		_clientId = clientId;

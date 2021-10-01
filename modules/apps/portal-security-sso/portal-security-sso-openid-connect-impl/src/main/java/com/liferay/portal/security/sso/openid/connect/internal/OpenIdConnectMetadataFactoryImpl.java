@@ -47,9 +47,6 @@ import org.apache.commons.lang3.time.StopWatch;
 
 /**
  * @author Edward C. Han
- *
- * Future reference: the whole class does not really follow OIDC specs,
- * rework of discovery and client registration will be done in LPS-139642
  */
 public class OpenIdConnectMetadataFactoryImpl
 	implements OpenIdConnectMetadataFactory {
@@ -61,6 +58,8 @@ public class OpenIdConnectMetadataFactoryImpl
 			String authorizationEndPointURL, String tokenEndPointURL,
 			String userInfoEndPointURL)
 		throws OpenIdConnectServiceException.ProviderException {
+
+		// TODO LPS-139642
 
 		_providerName = providerName;
 
