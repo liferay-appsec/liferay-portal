@@ -37,7 +37,10 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.ldap.SafeLdapContext;
+import com.liferay.portal.security.ldap.SafeLdapFilter;
+import com.liferay.portal.security.ldap.SafeLdapFilterConstraints;
 import com.liferay.portal.security.ldap.SafeLdapFilterTemplate;
+import com.liferay.portal.security.ldap.SafeLdapName;
 import com.liferay.portal.security.ldap.SafeLdapNameFactory;
 import com.liferay.portal.security.ldap.SafePortalLDAP;
 import com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration;
@@ -50,6 +53,7 @@ import com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportCon
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
@@ -364,9 +368,24 @@ public class LDAPAuth implements Authenticator {
 
 			SearchResult searchResult = enumeration.nextElement();
 
+			SafeLdapName userSafeLdapName = SafeLdapNameFactory.from(
+				searchResult);
+
+			LDAPImportConfiguration ldapImportConfiguration =
+				_ldapImportConfigurationProvider.getConfiguration(companyId);
+
+			String importMethod = ldapImportConfiguration.importMethod();
+
+			if (importMethod.equals(_IMPORT_BY_GROUP) &&
+				!belongsToLDAPServerGroups(
+					ldapServerConfiguration, safeLdapContext,
+					userSafeLdapName)) {
+
+				return DNE;
+			}
+
 			Attributes attributes = _portalLDAP.getUserAttributes(
-				ldapServerId, companyId, safeLdapContext,
-				SafeLdapNameFactory.from(searchResult));
+				ldapServerId, companyId, safeLdapContext, userSafeLdapName);
 
 			// Authenticate
 
@@ -646,6 +665,37 @@ public class LDAPAuth implements Authenticator {
 		return SUCCESS;
 	}
 
+	protected boolean belongsToLDAPServerGroups(
+			LDAPServerConfiguration ldapServerConfiguration,
+			SafeLdapContext safeLdapContext, SafeLdapName userSafeLdapName)
+		throws Exception {
+
+		SafeLdapFilter groupsFilter = LDAPUtil.getGroupSearchSafeLdapFilter(
+			ldapServerConfiguration, _ldapFilterValidator);
+
+		Properties groupMappings = _ldapSettings.getGroupMappings(
+			ldapServerConfiguration.ldapServerId(),
+			ldapServerConfiguration.companyId());
+
+		String groupMappingsUser = groupMappings.getProperty("user");
+
+		if (Validator.isNull(groupMappingsUser)) {
+			return false;
+		}
+
+		List<SearchResult> searchResults = new ArrayList<>(1);
+
+		_portalLDAP.getGroups(
+			ldapServerConfiguration.companyId(), safeLdapContext, new byte[0],
+			1, LDAPUtil.getBaseDNSafeLdapName(ldapServerConfiguration),
+			groupsFilter.and(
+				SafeLdapFilterConstraints.eq(
+					groupMappingsUser, userSafeLdapName)),
+			searchResults);
+
+		return !searchResults.isEmpty();
+	}
+
 	protected LDAPAuthResult getFailedLDAPAuthResult(Map<String, Object> env) {
 		Map<String, LDAPAuthResult> failedLDAPAuthResults =
 			_failedLDAPAuthResults.get();
@@ -809,6 +859,8 @@ public class LDAPAuth implements Authenticator {
 	protected void setUserLocalService(UserLocalService userLocalService) {
 		_userLocalService = userLocalService;
 	}
+
+	private static final String _IMPORT_BY_GROUP = "group";
 
 	private static final Log _log = LogFactoryUtil.getLog(LDAPAuth.class);
 
