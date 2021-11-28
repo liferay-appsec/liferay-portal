@@ -374,7 +374,7 @@ definition {
 			User.viewLoggedOutPG();
 		}
 
-		// Authorize the new application
+		// Authorize the new application 
 
 		task ("Authorize app and launch request") {
 			OAuth2.authorizeMyApplication(
