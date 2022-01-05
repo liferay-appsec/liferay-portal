@@ -107,10 +107,6 @@ public abstract class BaseProcessorImpl
 			V[] values = _processorContext.getValueArray(
 				clazz, fieldExpression);
 
-			if ((values == null) || (values.length == 0)) {
-				return;
-			}
-
 			_patchingQueue.add(
 				object -> unsafeBiConsumer.accept(object, values));
 		}
@@ -131,7 +127,7 @@ public abstract class BaseProcessorImpl
 			handleUnsafeStringArray(
 				fieldExpression,
 				(object, values) -> biConsumer.accept(
-					object, GetterUtil.getBoolean(values[0])));
+					object, GetterUtil.getBoolean(_head(values))));
 		}
 
 		@Override
@@ -151,7 +147,7 @@ public abstract class BaseProcessorImpl
 			handleUnsafeStringArray(
 				fieldExpression,
 				(object, values) -> biConsumer.accept(
-					object, GetterUtil.getLong(values[0])));
+					object, GetterUtil.getLong(_head(values))));
 		}
 
 		@Override
@@ -169,7 +165,7 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, values) -> biConsumer.accept(object, values[0]));
+				(object, values) -> biConsumer.accept(object, _head(values)));
 		}
 
 		@Override
@@ -186,7 +182,16 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, values) -> unsafeBiConsumer.accept(object, values[0]));
+				(object, values) -> unsafeBiConsumer.accept(
+					object, _head(values)));
+		}
+
+		private <V> V _head(V[] values) {
+			if ((values == null) || (values.length == 0)) {
+				return null;
+			}
+
+			return values[0];
 		}
 
 		private final Queue<UnsafeConsumer<T, ?>> _patchingQueue =
