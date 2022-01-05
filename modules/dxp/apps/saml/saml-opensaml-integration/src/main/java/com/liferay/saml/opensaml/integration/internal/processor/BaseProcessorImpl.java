@@ -30,7 +30,6 @@ import com.liferay.saml.opensaml.integration.processor.context.ProcessorContext;
 import java.io.Serializable;
 
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,7 +38,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 /**
  * @author Stian Sigvartsen
@@ -132,11 +130,8 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, values) -> {
-					for (String value : values) {
-						biConsumer.accept(object, GetterUtil.getBoolean(value));
-					}
-				});
+				(object, values) -> biConsumer.accept(
+					object, GetterUtil.getBoolean(values[0])));
 		}
 
 		@Override
@@ -145,15 +140,8 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, value) -> {
-					boolean[] booleanArray = new boolean[value.length];
-
-					for (int i = 0; i < booleanArray.length; i++) {
-						booleanArray[i] = GetterUtil.getBoolean(value[i]);
-					}
-
-					biConsumer.accept(object, booleanArray);
-				});
+				(object, value) -> biConsumer.accept(
+					object, GetterUtil.getBooleanValues(value)));
 		}
 
 		@Override
@@ -162,16 +150,8 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, values) -> {
-					for (String value : values) {
-						try {
-							biConsumer.accept(object, Long.parseLong(value));
-						}
-						catch (NumberFormatException numberFormatException) {
-							throw numberFormatException;
-						}
-					}
-				});
+				(object, values) -> biConsumer.accept(
+					object, GetterUtil.getLong(values[0])));
 		}
 
 		@Override
@@ -180,15 +160,7 @@ public abstract class BaseProcessorImpl
 
 			handleUnsafeStringArray(
 				fieldExpression,
-				(object, value) -> {
-					Stream<String> stream = Arrays.stream(value);
-
-					biConsumer.accept(
-						object,
-						stream.mapToLong(
-							Long::parseLong
-						).toArray());
-				});
+				(object, value) -> GetterUtil.getLongValues(value));
 		}
 
 		@Override
@@ -204,9 +176,7 @@ public abstract class BaseProcessorImpl
 		public void mapStringArray(
 			String fieldExpression, BiConsumer<T, String[]> biConsumer) {
 
-			handleUnsafeStringArray(
-				fieldExpression,
-				(object, values) -> biConsumer.accept(object, values));
+			handleUnsafeStringArray(fieldExpression, biConsumer::accept);
 		}
 
 		@Override
