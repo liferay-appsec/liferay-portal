@@ -251,6 +251,15 @@ public abstract class BaseProcessorImpl
 			return (V[])map.get(fieldExpression);
 		}
 
+		@Override
+		public boolean isDefined(Class<?> clazz, String fieldExpression) {
+			if (getValueArray(clazz, fieldExpression) != null) {
+				return true;
+			}
+
+			return false;
+		}
+
 		private final String _prefix;
 
 	}
