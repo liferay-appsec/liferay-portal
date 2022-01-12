@@ -51,6 +51,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -215,6 +216,24 @@ public class DefaultUserResolver implements UserResolver {
 		return String.valueOf(values.get(0));
 	}
 
+	private String[] _getValuesAsString(
+		String key, Map<String, List<Serializable>> attributesMap) {
+
+		List<Serializable> values = attributesMap.get(key);
+
+		if (ListUtil.isEmpty(values)) {
+			return null;
+		}
+
+		Stream<Serializable> stream = values.stream();
+
+		return stream.map(
+			String::valueOf
+		).toArray(
+			String[]::new
+		);
+	}
+
 	private User _importUser(
 			long companyId, SamlSpIdpConnection samlSpIdpConnection,
 			String subjectNameIdentifier, String nameIdFormat,
@@ -331,7 +350,7 @@ public class DefaultUserResolver implements UserResolver {
 
 		for (String key : attributesMap.keySet()) {
 			userProcessor.setValueArray(
-				key, new String[] {_getValueAsString(key, attributesMap)});
+				key, _getValuesAsString(key, attributesMap));
 		}
 
 		return userProcessor.process(serviceContext);
