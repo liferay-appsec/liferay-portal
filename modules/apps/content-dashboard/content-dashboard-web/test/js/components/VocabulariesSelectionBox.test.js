@@ -12,7 +12,7 @@
  * details.
  */
 
-import {cleanup, fireEvent, render} from '@testing-library/react';
+import {fireEvent, render} from '@testing-library/react';
 import React from 'react';
 
 import '@testing-library/jest-dom/extend-expect';
@@ -100,6 +100,12 @@ const mockPropsWithoutSelected = {
 			site: 2,
 			value: 'region',
 		},
+		{
+			global: false,
+			label: 'Another Region (Extra site)',
+			site: 3,
+			value: 'another-region',
+		},
 	],
 	portletNamespace:
 		'_com_liferay_content_dashboard_web_portlet_ContentDashboardAdminPortlet_',
@@ -108,10 +114,6 @@ const mockPropsWithoutSelected = {
 };
 
 describe('VocabulariesSelectionBox', () => {
-	beforeEach(() => {
-		cleanup();
-	});
-
 	it('renders a VocabulariesSelectionBox with selected and not selected vocabularies', () => {
 		const {container, getByText} = render(
 			<VocabulariesSelectionBox {...mockProps} />
@@ -152,7 +154,7 @@ describe('VocabulariesSelectionBox', () => {
 			'#_com_liferay_content_dashboard_web_portlet_ContentDashboardAdminPortlet_currentAssetVocabularyIds option'
 		);
 
-		expect(availableVocabularies.length).toBe(6);
+		expect(availableVocabularies.length).toBe(7);
 		expect(selectedVocabularies.length).toBe(0);
 
 		const availableSelect = container.querySelector(
@@ -168,7 +170,7 @@ describe('VocabulariesSelectionBox', () => {
 			'#_com_liferay_content_dashboard_web_portlet_ContentDashboardAdminPortlet_currentAssetVocabularyIds option'
 		);
 
-		expect(availableVocabulariesAfterLTR.length).toBe(5);
+		expect(availableVocabulariesAfterLTR.length).toBe(6);
 		expect(selectedVocabulariesAfterLTR.length).toBe(1);
 
 		// Region  vocabulary must be disabled now becasue is from another site
@@ -179,7 +181,7 @@ describe('VocabulariesSelectionBox', () => {
 		expect(disabledVocabularies.length).toBe(1);
 	});
 
-	it('moves a vocabulary from right to left enabling vocabularies from other sites', () => {
+	it('moves a vocabulary from right to left maintaining the vocabulary selected after moving it', () => {
 		const {container} = render(<VocabulariesSelectionBox {...mockProps} />);
 
 		const selectedSelect = container.querySelector(
@@ -198,16 +200,15 @@ describe('VocabulariesSelectionBox', () => {
 		expect(availableVocabulariesAfterRTL.length).toBe(4);
 		expect(selectedVocabulariesAfterRTL.length).toBe(1);
 
-		// There must be no disbled vocabularies because we have only one vocabulary selected
-		// and it is from Global site
+		// There must be one disbled vocabulary because Region is from site 2
 
 		const disabledVocabularies = container.querySelectorAll(
 			'#availableAssetVocabularyIds option:disabled'
 		);
-		expect(disabledVocabularies.length).toBe(0);
+		expect(disabledVocabularies.length).toBe(1);
 	});
 
-	it('prevents to move more than two vocaularies from Available to In Use', () => {
+	it('prevents to move more than two vocabularies from Available to In Use', () => {
 		const {container} = render(
 			<VocabulariesSelectionBox {...mockPropsWithoutSelected} />
 		);
@@ -244,6 +245,29 @@ describe('VocabulariesSelectionBox', () => {
 		);
 
 		expect(checkedVocabularies.length).toBe(3);
+		expect(leftToRightButton.disabled).toBe(true);
+	});
+
+	it('prevents to move non-global vocabularies from different sites, when selecting then via click and hold', () => {
+		const {container} = render(
+			<VocabulariesSelectionBox {...mockPropsWithoutSelected} />
+		);
+
+		const availableSelect = container.querySelector(
+			'#availableAssetVocabularyIds'
+		);
+
+		userEvent.selectOptions(availableSelect, ['region', 'another-region']);
+		fireEvent.change(availableSelect);
+
+		const checkedVocabularies = container.querySelectorAll(
+			'#availableAssetVocabularyIds option:checked'
+		);
+		const leftToRightButton = container.querySelector(
+			'.transfer-button-ltr'
+		);
+
+		expect(checkedVocabularies.length).toBe(2);
 		expect(leftToRightButton.disabled).toBe(true);
 	});
 });

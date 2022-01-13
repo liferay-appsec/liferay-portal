@@ -23,6 +23,10 @@
 		"cssVariableMapping": "color-brand-primary",
 		"value": "#0B5FFF"
 	},
+	"colorFocus": {
+		"cssVariableMapping": "color-focus",
+		"value": "#004AD7"
+	},
 	"colorNeutral1": {
 		"cssVariableMapping": "color-neutral-1",
 		"value": "#F7F8F9"
@@ -70,5 +74,9 @@
 	"fontFamilySansSerif": {
 		"cssVariableMapping": "font-family-sans-serif",
 		"value": "\"Source Sans Pro\", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'"
+	},
+	"fontWeightNormal": {
+		"cssVariableMapping": "font-weight-normal",
+		"value": "400"
 	}
 }

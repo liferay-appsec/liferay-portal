@@ -18,7 +18,6 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -121,7 +120,7 @@ public class TokenAutoLogin extends BaseAutoLogin {
 			return null;
 		}
 
-		User user = getUser(companyId, login, tokenCompanyServiceSettings);
+		User user = _getUser(companyId, login, tokenCompanyServiceSettings);
 
 		addRedirect(httpServletRequest);
 
@@ -134,10 +133,27 @@ public class TokenAutoLogin extends BaseAutoLogin {
 		return credentials;
 	}
 
-	protected User getUser(
+	@Reference(unbind = "-")
+	protected void setConfigurationProvider(
+		ConfigurationProvider configurationProvider) {
+
+		_configurationProvider = configurationProvider;
+	}
+
+	@Reference(unbind = "-")
+	protected void setUserImporter(UserImporter userImporter) {
+		_userImporter = userImporter;
+	}
+
+	@Reference(unbind = "-")
+	protected void setUserLocalService(UserLocalService userLocalService) {
+		_userLocalService = userLocalService;
+	}
+
+	private User _getUser(
 			long companyId, String login,
 			TokenConfiguration tokenCompanyServiceSettings)
-		throws PortalException {
+		throws Exception {
 
 		User user = null;
 
@@ -197,23 +213,6 @@ public class TokenAutoLogin extends BaseAutoLogin {
 		}
 
 		return user;
-	}
-
-	@Reference(unbind = "-")
-	protected void setConfigurationProvider(
-		ConfigurationProvider configurationProvider) {
-
-		_configurationProvider = configurationProvider;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserImporter(UserImporter userImporter) {
-		_userImporter = userImporter;
-	}
-
-	@Reference(unbind = "-")
-	protected void setUserLocalService(UserLocalService userLocalService) {
-		_userLocalService = userLocalService;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(TokenAutoLogin.class);

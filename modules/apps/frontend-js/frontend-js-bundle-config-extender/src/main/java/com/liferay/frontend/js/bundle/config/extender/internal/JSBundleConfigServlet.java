@@ -77,10 +77,6 @@ public class JSBundleConfigServlet extends HttpServlet {
 		_componentContext = componentContext;
 	}
 
-	protected JSBundleConfigTracker getJSBundleConfigTracker() {
-		return _jsBundleConfigTracker;
-	}
-
 	@Override
 	protected void service(
 			HttpServletRequest httpServletRequest,

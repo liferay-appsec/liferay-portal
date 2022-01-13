@@ -63,6 +63,16 @@ public class SXPBlueprintSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+		if (sxpBlueprint.getActions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(sxpBlueprint.getActions()));
+		}
+
 		if (sxpBlueprint.getConfiguration() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -160,6 +170,20 @@ public class SXPBlueprintSerDes {
 			sb.append("\"");
 		}
 
+		if (sxpBlueprint.getSchemaVersion() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemaVersion\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(sxpBlueprint.getSchemaVersion()));
+
+			sb.append("\"");
+		}
+
 		if (sxpBlueprint.getTitle() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -219,6 +243,13 @@ public class SXPBlueprintSerDes {
 
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		if (sxpBlueprint.getActions() == null) {
+			map.put("actions", null);
+		}
+		else {
+			map.put("actions", String.valueOf(sxpBlueprint.getActions()));
+		}
 
 		if (sxpBlueprint.getConfiguration() == null) {
 			map.put("configuration", null);
@@ -280,6 +311,15 @@ public class SXPBlueprintSerDes {
 				liferayToJSONDateFormat.format(sxpBlueprint.getModifiedDate()));
 		}
 
+		if (sxpBlueprint.getSchemaVersion() == null) {
+			map.put("schemaVersion", null);
+		}
+		else {
+			map.put(
+				"schemaVersion",
+				String.valueOf(sxpBlueprint.getSchemaVersion()));
+		}
+
 		if (sxpBlueprint.getTitle() == null) {
 			map.put("title", null);
 		}
@@ -322,7 +362,14 @@ public class SXPBlueprintSerDes {
 			SXPBlueprint sxpBlueprint, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "configuration")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				if (jsonParserFieldValue != null) {
+					sxpBlueprint.setActions(
+						(Map)SXPBlueprintSerDes.toMap(
+							(String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "configuration")) {
 				if (jsonParserFieldValue != null) {
 					sxpBlueprint.setConfiguration(
 						ConfigurationSerDes.toDTO(
@@ -370,6 +417,11 @@ public class SXPBlueprintSerDes {
 				if (jsonParserFieldValue != null) {
 					sxpBlueprint.setModifiedDate(
 						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemaVersion")) {
+				if (jsonParserFieldValue != null) {
+					sxpBlueprint.setSchemaVersion((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "title")) {

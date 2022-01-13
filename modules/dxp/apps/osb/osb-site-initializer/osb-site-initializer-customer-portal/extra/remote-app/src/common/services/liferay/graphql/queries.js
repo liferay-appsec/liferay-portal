@@ -1,3 +1,14 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 import {gql} from '@apollo/client';
 
 export const getSetupDXPCloudInfo = gql`
@@ -52,6 +63,24 @@ export const getAccountSubscriptionsTerms = gql`
 	}
 `;
 
+export const getStructuredContentFolders = gql`
+	query getStructuredContentFolders($siteKey: String!, $filter: String) {
+		structuredContentFolders(siteKey: $siteKey, filter: $filter) {
+			items {
+				id
+				name
+				structuredContents {
+					items {
+						friendlyUrlPath
+						id
+						key
+					}
+				}
+			}
+		}
+	}
+`;
+
 export const getAccountSubscriptions = gql`
 	query getAccountSubscriptions($filter: String) {
 		c {
@@ -77,11 +106,9 @@ export const addAccountFlag = gql`
 	mutation addAccountFlag($accountFlag: InputC_AccountFlag!) {
 		c {
 			createAccountFlag(AccountFlag: $accountFlag) {
-				accountFlagId
 				accountKey
 				name
-				userUuid
-				value
+				finished
 			}
 		}
 	}
@@ -166,8 +193,19 @@ export const getAccountRolesAndAccountFlags = gql`
 				items {
 					accountKey
 					name
-					userUuid
+					finished
 				}
+			}
+		}
+	}
+`;
+
+export const getAccountRoles = gql`
+	query getAccountRoles($accountId: Long!) {
+		accountAccountRoles(accountId: $accountId) {
+			items {
+				id
+				name
 			}
 		}
 	}
@@ -208,11 +246,11 @@ export const getKoroneikiAccounts = gql`
 					accountKey
 					code
 					dxpVersion
-					partner
-					maxRequestors
 					liferayContactEmailAddress
 					liferayContactName
 					liferayContactRole
+					maxRequestors
+					partner
 					region
 					slaCurrent
 					slaCurrentEndDate
@@ -236,19 +274,6 @@ export const getUserAccount = gql`
 			id
 			image
 			name
-		}
-	}
-`;
-
-export const getAccountSubscriptionsGroups = gql`
-	query getAccountSubscriptionGroups($accountSubscriptionGroupERC: String) {
-		c {
-			accountSubscriptions(filter: $accountSubscriptionGroupERC) {
-				items {
-					name
-					accountSubscriptionGroupERC
-				}
-			}
 		}
 	}
 `;

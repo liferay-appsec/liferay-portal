@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
-import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -76,11 +75,19 @@ public class AccountOrganizationSearchContainerFactory {
 		}
 
 		searchContainer.setOrderByCol(orderByCol);
-
 		searchContainer.setOrderByType(
 			SearchOrderByUtil.getOrderByType(
 				liferayPortletRequest, AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
 				"organization-order-by-type", "asc"));
+
+		String keywords = ParamUtil.getString(
+			liferayPortletRequest, "keywords", null);
+
+		searchContainer.setResultsAndTotal(
+			_accountOrganizationRetriever.searchAccountOrganizations(
+				accountEntryId, keywords, searchContainer.getStart(),
+				searchContainer.getDelta(), searchContainer.getOrderByCol(),
+				Objects.equals(searchContainer.getOrderByType(), "desc")));
 
 		if (AccountEntryPermission.contains(
 				PermissionCheckerFactoryUtil.create(
@@ -90,18 +97,6 @@ public class AccountOrganizationSearchContainerFactory {
 			searchContainer.setRowChecker(
 				new EmptyOnClickRowChecker(liferayPortletResponse));
 		}
-
-		String keywords = ParamUtil.getString(
-			liferayPortletRequest, "keywords", null);
-
-		BaseModelSearchResult<Organization> baseModelSearchResult =
-			_accountOrganizationRetriever.searchAccountOrganizations(
-				accountEntryId, keywords, searchContainer.getStart(),
-				searchContainer.getDelta(), searchContainer.getOrderByCol(),
-				Objects.equals(searchContainer.getOrderByType(), "desc"));
-
-		searchContainer.setResults(baseModelSearchResult.getBaseModels());
-		searchContainer.setTotal(baseModelSearchResult.getLength());
 
 		return searchContainer;
 	}

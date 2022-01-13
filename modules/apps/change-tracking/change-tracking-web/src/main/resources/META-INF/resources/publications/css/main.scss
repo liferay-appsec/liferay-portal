@@ -325,6 +325,11 @@ table.publications-render-view {
 		.dropdown button {
 			font-size: 0.875rem;
 		}
+
+		.simple-toggle-switch {
+			margin-bottom: 0;
+			margin-right: 12px;
+		}
 	}
 
 	td.publications-render-view-content {
@@ -412,6 +417,14 @@ table.publications-render-view {
 
 	.nav-item-expand .navbar-nav {
 		flex-grow: 1;
+	}
+
+	.navbar-nav .nav-link {
+		cursor: pointer;
+	}
+
+	.navbar-nav .nav-link.disabled {
+		cursor: not-allowed;
 	}
 
 	.publications-changes-content {
@@ -514,5 +527,9 @@ table.publications-render-view {
 
 	.sidenav-content {
 		padding-top: 20px;
+	}
+
+	table td.publications-header-td {
+		padding: 0;
 	}
 }

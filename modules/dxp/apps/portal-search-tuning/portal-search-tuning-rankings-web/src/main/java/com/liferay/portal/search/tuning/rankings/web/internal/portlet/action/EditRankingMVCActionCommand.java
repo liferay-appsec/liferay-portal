@@ -89,39 +89,66 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 			new EditRankingMVCActionRequest(actionRequest);
 
 		if (editRankingMVCActionRequest.isCmd(Constants.ADD)) {
-			add(actionRequest, actionResponse, editRankingMVCActionRequest);
+			_add(actionRequest, actionResponse, editRankingMVCActionRequest);
 		}
 		else if (editRankingMVCActionRequest.isCmd(Constants.UPDATE)) {
-			update(actionRequest, actionResponse, editRankingMVCActionRequest);
+			_update(actionRequest, actionResponse, editRankingMVCActionRequest);
 		}
 		else if (editRankingMVCActionRequest.isCmd(Constants.DELETE)) {
-			delete(actionRequest, actionResponse, editRankingMVCActionRequest);
+			_delete(actionRequest, actionResponse, editRankingMVCActionRequest);
 		}
 		else if (editRankingMVCActionRequest.isCmd(
 					ResultRankingsConstants.DEACTIVATE)) {
 
-			deactivate(
+			_deactivate(
 				actionRequest, actionResponse, editRankingMVCActionRequest,
 				true);
 		}
 		else if (editRankingMVCActionRequest.isCmd(
 					ResultRankingsConstants.ACTIVATE)) {
 
-			deactivate(
+			_deactivate(
 				actionRequest, actionResponse, editRankingMVCActionRequest,
 				false);
 		}
 	}
 
-	protected void add(
+	protected String getIndexName(ActionRequest actionRequest) {
+		return indexNameBuilder.getIndexName(
+			portal.getCompanyId(actionRequest));
+	}
+
+	protected RankingIndexName getRankingIndexName() {
+		return rankingIndexNameBuilder.getRankingIndexName(_companyId);
+	}
+
+	@Reference
+	protected DuplicateQueryStringsDetector duplicateQueryStringsDetector;
+
+	@Reference
+	protected IndexNameBuilder indexNameBuilder;
+
+	@Reference
+	protected Portal portal;
+
+	@Reference
+	protected RankingIndexNameBuilder rankingIndexNameBuilder;
+
+	@Reference
+	protected RankingIndexReader rankingIndexReader;
+
+	@Reference
+	protected RankingStorageAdapter rankingStorageAdapter;
+
+	private void _add(
 			ActionRequest actionRequest, ActionResponse actionResponse,
 			EditRankingMVCActionRequest editRankingMVCActionRequest)
 		throws Exception {
 
 		try {
-			Ranking ranking = doAdd(actionRequest, editRankingMVCActionRequest);
+			Ranking ranking = _add(actionRequest, editRankingMVCActionRequest);
 
-			String redirect = getSaveAndContinueRedirect(
+			String redirect = _getSaveAndContinueRedirect(
 				actionRequest, ranking,
 				editRankingMVCActionRequest.getRedirect());
 
@@ -146,51 +173,7 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	protected void deactivate(
-			ActionRequest actionRequest, ActionResponse actionResponse,
-			EditRankingMVCActionRequest editRankingMVCActionRequest,
-			boolean inactive)
-		throws Exception {
-
-		try {
-			doDeactivate(actionRequest, editRankingMVCActionRequest, inactive);
-
-			sendRedirect(
-				actionRequest, actionResponse,
-				editRankingMVCActionRequest.getRedirect());
-		}
-		catch (Exception exception) {
-			if (exception instanceof DuplicateAliasStringException) {
-				SessionErrors.add(
-					actionRequest, DuplicateAliasStringException.class);
-			}
-			else if (exception instanceof DuplicateQueryStringException) {
-				SessionErrors.add(
-					actionRequest, DuplicateQueryStringException.class);
-			}
-			else {
-				SessionErrors.add(actionRequest, Exception.class);
-			}
-
-			hideDefaultErrorMessage(actionRequest);
-
-			sendRedirect(actionRequest, actionResponse);
-		}
-	}
-
-	protected void delete(
-			ActionRequest actionRequest, ActionResponse actionResponse,
-			EditRankingMVCActionRequest editRankingMVCActionRequest)
-		throws IOException, PortalException {
-
-		doDelete(actionRequest, editRankingMVCActionRequest);
-
-		sendRedirect(
-			actionRequest, actionResponse,
-			editRankingMVCActionRequest.getRedirect());
-	}
-
-	protected Ranking doAdd(
+	private Ranking _add(
 		ActionRequest actionRequest,
 		EditRankingMVCActionRequest editRankingMVCActionRequest) {
 
@@ -234,7 +217,39 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 		return optional.get();
 	}
 
-	protected void doDeactivate(
+	private void _deactivate(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			EditRankingMVCActionRequest editRankingMVCActionRequest,
+			boolean inactive)
+		throws Exception {
+
+		try {
+			_deactivate(actionRequest, editRankingMVCActionRequest, inactive);
+
+			sendRedirect(
+				actionRequest, actionResponse,
+				editRankingMVCActionRequest.getRedirect());
+		}
+		catch (Exception exception) {
+			if (exception instanceof DuplicateAliasStringException) {
+				SessionErrors.add(
+					actionRequest, DuplicateAliasStringException.class);
+			}
+			else if (exception instanceof DuplicateQueryStringException) {
+				SessionErrors.add(
+					actionRequest, DuplicateQueryStringException.class);
+			}
+			else {
+				SessionErrors.add(actionRequest, Exception.class);
+			}
+
+			hideDefaultErrorMessage(actionRequest);
+
+			sendRedirect(actionRequest, actionResponse);
+		}
+	}
+
+	private void _deactivate(
 			ActionRequest actionRequest,
 			EditRankingMVCActionRequest editRankingMVCActionRequest,
 			boolean inactive)
@@ -258,10 +273,22 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 		}
 	}
 
-	protected void doDelete(
+	private void _delete(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			EditRankingMVCActionRequest editRankingMVCActionRequest)
+		throws Exception {
+
+		_delete(actionRequest, editRankingMVCActionRequest);
+
+		sendRedirect(
+			actionRequest, actionResponse,
+			editRankingMVCActionRequest.getRedirect());
+	}
+
+	private void _delete(
 			ActionRequest actionRequest,
 			EditRankingMVCActionRequest editRankingMVCActionRequest)
-		throws PortalException {
+		throws Exception {
 
 		String[] rankingDocumentIds = _getRankingDocumentIds(
 			actionRequest, editRankingMVCActionRequest);
@@ -271,153 +298,6 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 				getRankingIndexName(), rankingDocumentId);
 		}
 	}
-
-	protected void doUpdate(
-			ActionRequest actionRequest,
-			EditRankingMVCActionRequest editRankingMVCActionRequest)
-		throws PortalException {
-
-		String id = editRankingMVCActionRequest.getResultsRankingUid();
-
-		RankingIndexName rankingIndexName =
-			rankingIndexNameBuilder.getRankingIndexName(
-				portal.getCompanyId(actionRequest));
-
-		Optional<Ranking> optional = rankingIndexReader.fetchOptional(
-			rankingIndexName, id);
-
-		if (!optional.isPresent()) {
-			return;
-		}
-
-		Ranking ranking = optional.get();
-
-		_guardDuplicateQueryStrings(editRankingMVCActionRequest, ranking);
-
-		Ranking.RankingBuilder rankingBuilder = new Ranking.RankingBuilder(
-			ranking);
-
-		String[] hiddenIdsAdded = ParamUtil.getStringValues(
-			actionRequest, "hiddenIdsAdded");
-		String[] hiddenIdsRemoved = ParamUtil.getStringValues(
-			actionRequest, "hiddenIdsRemoved");
-
-		rankingBuilder.aliases(
-			_getAliases(editRankingMVCActionRequest)
-		).hiddenDocumentIds(
-			_update(
-				ranking.getHiddenDocumentIds(), hiddenIdsAdded,
-				hiddenIdsRemoved)
-		).inactive(
-			_isInactive(editRankingMVCActionRequest)
-		).indexName(
-			getIndexName(actionRequest)
-		).name(
-			_getNameForUpdate(ranking.getName(), editRankingMVCActionRequest)
-		);
-
-		List<Ranking.Pin> pins = new ArrayList<>();
-
-		String[] pinnedIds = ParamUtil.getStringValues(
-			actionRequest, "pinnedIds");
-
-		for (int i = 0; i < pinnedIds.length; i++) {
-			pins.add(new Ranking.Pin(i, pinnedIds[i]));
-		}
-
-		if (ListUtil.isNotEmpty(pins)) {
-			rankingBuilder.pins(pins);
-		}
-		else {
-			rankingBuilder.pins(null);
-		}
-
-		rankingStorageAdapter.update(
-			getRankingIndexName(), rankingBuilder.build());
-	}
-
-	protected String getIndexName(ActionRequest actionRequest) {
-		return indexNameBuilder.getIndexName(
-			portal.getCompanyId(actionRequest));
-	}
-
-	protected RankingIndexName getRankingIndexName() {
-		return rankingIndexNameBuilder.getRankingIndexName(_companyId);
-	}
-
-	protected String getSaveAndContinueRedirect(
-			ActionRequest actionRequest, Ranking ranking, String redirect)
-		throws Exception {
-
-		PortletConfig portletConfig = (PortletConfig)actionRequest.getAttribute(
-			JavaConstants.JAVAX_PORTLET_CONFIG);
-
-		LiferayPortletURL portletURL = PortletURLFactoryUtil.create(
-			actionRequest, portletConfig.getPortletName(),
-			PortletRequest.RENDER_PHASE);
-
-		portletURL.setParameter(
-			"mvcRenderCommandName", "/result_rankings/edit_results_rankings");
-		portletURL.setParameter(Constants.CMD, Constants.UPDATE, false);
-		portletURL.setParameter("redirect", redirect, false);
-		portletURL.setParameter(
-			"resultsRankingUid", ranking.getRankingDocumentId(), false);
-		portletURL.setParameter(
-			EditRankingMVCActionRequest.PARAM_ALIASES,
-			StringUtil.merge(ranking.getAliases(), StringPool.COMMA), false);
-		portletURL.setParameter(
-			EditRankingMVCActionRequest.PARAM_KEYWORDS,
-			ranking.getQueryString(), false);
-		portletURL.setWindowState(actionRequest.getWindowState());
-
-		return portletURL.toString();
-	}
-
-	protected void update(
-			ActionRequest actionRequest, ActionResponse actionResponse,
-			EditRankingMVCActionRequest editRankingMVCActionRequest)
-		throws IOException {
-
-		try {
-			doUpdate(actionRequest, editRankingMVCActionRequest);
-
-			sendRedirect(
-				actionRequest, actionResponse,
-				editRankingMVCActionRequest.getRedirect());
-		}
-		catch (Exception exception) {
-			if (exception instanceof DuplicateAliasStringException) {
-				SessionErrors.add(actionRequest, Exception.class);
-
-				actionResponse.setRenderParameter(
-					"mvcRenderCommandName",
-					"/result_rankings/edit_results_rankings");
-			}
-			else {
-				SessionErrors.add(actionRequest, Exception.class);
-
-				actionResponse.setRenderParameter("mvcPath", "/error.jsp");
-			}
-		}
-	}
-
-	@Reference
-	protected DuplicateQueryStringsDetector duplicateQueryStringsDetector;
-
-	@Reference
-	protected IndexNameBuilder indexNameBuilder;
-
-	@Reference
-	protected Portal portal;
-
-	@Reference
-	protected RankingIndexNameBuilder rankingIndexNameBuilder;
-
-	@Reference
-	protected RankingIndexReader rankingIndexReader;
-
-	@Reference
-	protected RankingStorageAdapter rankingStorageAdapter;
 
 	private boolean _detectedDuplicateQueryStrings(
 		Ranking ranking, Collection<String> queryStrings) {
@@ -522,6 +402,34 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 		return rankings;
 	}
 
+	private String _getSaveAndContinueRedirect(
+			ActionRequest actionRequest, Ranking ranking, String redirect)
+		throws Exception {
+
+		PortletConfig portletConfig = (PortletConfig)actionRequest.getAttribute(
+			JavaConstants.JAVAX_PORTLET_CONFIG);
+
+		LiferayPortletURL portletURL = PortletURLFactoryUtil.create(
+			actionRequest, portletConfig.getPortletName(),
+			PortletRequest.RENDER_PHASE);
+
+		portletURL.setParameter(
+			"mvcRenderCommandName", "/result_rankings/edit_results_rankings");
+		portletURL.setParameter(Constants.CMD, Constants.UPDATE, false);
+		portletURL.setParameter("redirect", redirect, false);
+		portletURL.setParameter(
+			"resultsRankingUid", ranking.getRankingDocumentId(), false);
+		portletURL.setParameter(
+			EditRankingMVCActionRequest.PARAM_ALIASES,
+			StringUtil.merge(ranking.getAliases(), StringPool.COMMA), false);
+		portletURL.setParameter(
+			EditRankingMVCActionRequest.PARAM_KEYWORDS,
+			ranking.getQueryString(), false);
+		portletURL.setWindowState(actionRequest.getWindowState());
+
+		return portletURL.toString();
+	}
+
 	private void _guardDuplicateQueryStrings(
 		EditRankingMVCActionRequest editRankingMVCActionRequest,
 		List<Ranking> rankings) {
@@ -588,6 +496,98 @@ public class EditRankingMVCActionCommand extends BaseMVCActionCommand {
 
 	private String _stripUpdateSpecial(String string) {
 		return string.substring(_UPDATE_SPECIAL.length());
+	}
+
+	private void _update(
+			ActionRequest actionRequest, ActionResponse actionResponse,
+			EditRankingMVCActionRequest editRankingMVCActionRequest)
+		throws IOException {
+
+		try {
+			_update(actionRequest, editRankingMVCActionRequest);
+
+			sendRedirect(
+				actionRequest, actionResponse,
+				editRankingMVCActionRequest.getRedirect());
+		}
+		catch (Exception exception) {
+			if (exception instanceof DuplicateAliasStringException) {
+				SessionErrors.add(actionRequest, Exception.class);
+
+				actionResponse.setRenderParameter(
+					"mvcRenderCommandName",
+					"/result_rankings/edit_results_rankings");
+			}
+			else {
+				SessionErrors.add(actionRequest, Exception.class);
+
+				actionResponse.setRenderParameter("mvcPath", "/error.jsp");
+			}
+		}
+	}
+
+	private void _update(
+			ActionRequest actionRequest,
+			EditRankingMVCActionRequest editRankingMVCActionRequest)
+		throws PortalException {
+
+		String id = editRankingMVCActionRequest.getResultsRankingUid();
+
+		RankingIndexName rankingIndexName =
+			rankingIndexNameBuilder.getRankingIndexName(
+				portal.getCompanyId(actionRequest));
+
+		Optional<Ranking> optional = rankingIndexReader.fetchOptional(
+			rankingIndexName, id);
+
+		if (!optional.isPresent()) {
+			return;
+		}
+
+		Ranking ranking = optional.get();
+
+		_guardDuplicateQueryStrings(editRankingMVCActionRequest, ranking);
+
+		Ranking.RankingBuilder rankingBuilder = new Ranking.RankingBuilder(
+			ranking);
+
+		String[] hiddenIdsAdded = ParamUtil.getStringValues(
+			actionRequest, "hiddenIdsAdded");
+		String[] hiddenIdsRemoved = ParamUtil.getStringValues(
+			actionRequest, "hiddenIdsRemoved");
+
+		rankingBuilder.aliases(
+			_getAliases(editRankingMVCActionRequest)
+		).hiddenDocumentIds(
+			_update(
+				ranking.getHiddenDocumentIds(), hiddenIdsAdded,
+				hiddenIdsRemoved)
+		).inactive(
+			_isInactive(editRankingMVCActionRequest)
+		).indexName(
+			getIndexName(actionRequest)
+		).name(
+			_getNameForUpdate(ranking.getName(), editRankingMVCActionRequest)
+		);
+
+		List<Ranking.Pin> pins = new ArrayList<>();
+
+		String[] pinnedIds = ParamUtil.getStringValues(
+			actionRequest, "pinnedIds");
+
+		for (int i = 0; i < pinnedIds.length; i++) {
+			pins.add(new Ranking.Pin(i, pinnedIds[i]));
+		}
+
+		if (ListUtil.isNotEmpty(pins)) {
+			rankingBuilder.pins(pins);
+		}
+		else {
+			rankingBuilder.pins(null);
+		}
+
+		rankingStorageAdapter.update(
+			getRankingIndexName(), rankingBuilder.build());
 	}
 
 	private List<String> _update(

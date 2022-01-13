@@ -21,7 +21,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
-import com.liferay.object.web.internal.object.entries.constants.ObjectEntriesClayDataSetDisplayNames;
+import com.liferay.object.web.internal.object.entries.constants.ObjectEntriesFDSNames;
 import com.liferay.object.web.internal.object.entries.frontend.taglib.clay.data.set.data.model.RelatedModel;
 import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  */
 @Component(
-	property = "clay.data.provider.key=" + ObjectEntriesClayDataSetDisplayNames.RELATED_MODELS,
+	property = "clay.data.provider.key=" + ObjectEntriesFDSNames.RELATED_MODELS,
 	service = ClayDataSetActionProvider.class
 )
 public class RelatedModelDataSetActionProvider

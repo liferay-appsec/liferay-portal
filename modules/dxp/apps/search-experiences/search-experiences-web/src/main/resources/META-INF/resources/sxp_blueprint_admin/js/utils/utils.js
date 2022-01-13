@@ -15,6 +15,19 @@ import {CONFIG_PREFIX} from './constants';
 import {INPUT_TYPES} from './inputTypes';
 
 /**
+ * Function to get valid classNames and return them sorted.
+ *
+ * @param {Array} items Array of objects with classNames
+ * @return {Array} Array of classNames
+ */
+export function filterAndSortClassNames(items) {
+	return items
+		.map(({className}) => className)
+		.filter((item) => item)
+		.sort();
+}
+
+/**
  * Function used to identify whether a required value is not undefined
  *
  * Examples:
@@ -67,7 +80,7 @@ export function isEmpty(value, type = '') {
  * @return {String} The converted JSON string.
  */
 export function parseAndPrettifyJSON(json) {
-	if (!isDefined(json)) {
+	if (!isDefined(json) || json === '') {
 		return '';
 	}
 
@@ -81,6 +94,18 @@ export function parseAndPrettifyJSON(json) {
 
 		return json;
 	}
+}
+
+/**
+ * Function to remove duplicates in an array.
+ *
+ * @param {Array} items Array of items with repeated values
+ * @return {Array}
+ */
+export function removeDuplicates(items) {
+	return items.filter(
+		(item, position, self) => self.indexOf(item) === position
+	);
 }
 
 /**
@@ -295,7 +320,10 @@ export function getConfigurationEntry({sxpElement, uiConfigurationValues}) {
 		sxpElement.elementDefinition?.uiConfiguration
 	).fieldSets;
 
-	if (fieldSets.length > 0) {
+	if (
+		fieldSets.length > 0 &&
+		!isCustomJSONSXPElement(uiConfigurationValues)
+	) {
 		let flattenJSON = JSON.stringify(
 			sxpElement.elementDefinition?.configuration || {}
 		);
@@ -541,89 +569,14 @@ export function getUIConfigurationValues(sxpElement = {}) {
 }
 
 /**
- * Function for transforming the framework configuration's `clause_contributor`
- * object to an object of clause contributors with `enabled` state.
- *
- * Example:
- * getClauseContributorsState({
- * 		clauseContributorsExcludes: [
- * 			'com.liferay.account.internal.search.spi.model.query.contributor.AccountGroupKeywordQueryContributor',
- * 		],
- * 		clauseContributorsIncludes: [
- * 			'com.liferay.account.internal.search.spi.model.query.contributor.AccountEntryKeywordQueryContributor',
- * 			'com.liferay.address.internal.search.spi.model.query.contributor.AddressKeywordQueryContributor'
- * 		]
- * 	});
- * => {com.liferay.account.internal.search.spi.model.query.contributor.AccountEntryKeywordQueryContributor: true,
- *		com.liferay.account.internal.search.spi.model.query.contributor.AccountGroupKeywordQueryContributor: false,
- *		com.liferay.address.internal.search.spi.model.query.contributor.AddressKeywordQueryContributor: true}
- *
- * @param {object} { clauseContributorsExcludes, clauseContributorsIncludes } The framework configuration's
- * clause contributors object
- * @return {object} An object of enabled state for each contributor
+ * Used for handling if the element instance is a custom JSON element. This
+ * function makes it easier to globally handle the logic for differentiating
+ * between a custom JSON element and a standard element.
+ * @param {object} uiConfigurationValues
+ * @returns {boolean}
  */
-export function getClauseContributorsState({
-	clauseContributorsExcludes,
-	clauseContributorsIncludes,
-}) {
-	const clauseContributorsState = {};
-
-	if (Array.isArray(clauseContributorsExcludes)) {
-		clauseContributorsExcludes.forEach((exclude) => {
-			clauseContributorsState[exclude] = false;
-		});
-	}
-
-	if (Array.isArray(clauseContributorsIncludes)) {
-		clauseContributorsIncludes.forEach((include) => {
-			clauseContributorsState[include] = true;
-		});
-	}
-
-	return clauseContributorsState;
-}
-
-/**
- * Function for transforming the `enabled` state object to the framework
- * configuration's clause contributors object.
- *
- * Example:
- * getClauseContributorsConfig(
- *		{
- *			'com.liferay.account.internal.search.spi.model.query.contributor.AccountEntryKeywordQueryContributor': true,
- *			'com.liferay.account.internal.search.spi.model.query.contributor.AccountGroupKeywordQueryContributor': false,
- *			'com.liferay.address.internal.search.spi.model.query.contributor.AddressKeywordQueryContributor': true
- *		}
- *	);
- * => {
- * 		clauseContributorsExcludes: [
- * 			'com.liferay.account.internal.search.spi.model.query.contributor.AccountGroupKeywordQueryContributor',
- * 		],
- * 		clauseContributorsIncludes: [
- * 			'com.liferay.account.internal.search.spi.model.query.contributor.AccountEntryKeywordQueryContributor',
- * 			'com.liferay.address.internal.search.spi.model.query.contributor.AddressKeywordQueryContributor'
- * 		]
- * 	}
- *
- * @param {object} clauseContributorsEnabledState State object that tracks whether clause is enabled/disabled
- * @return {object} The framework configuration's clause contributors object
- */
-export function getClauseContributorsConfig(
-	clauseContributorsEnabledState = {}
-) {
-	const clauseContributorsExcludes = [];
-	const clauseContributorsIncludes = [];
-
-	Object.keys(clauseContributorsEnabledState).forEach((key) => {
-		if (clauseContributorsEnabledState[key]) {
-			clauseContributorsIncludes.push(key);
-		}
-		else {
-			clauseContributorsExcludes.push(key);
-		}
-	});
-
-	return {clauseContributorsExcludes, clauseContributorsIncludes};
+export function isCustomJSONSXPElement(uiConfigurationValues) {
+	return isDefined(uiConfigurationValues.sxpElement);
 }
 
 /**

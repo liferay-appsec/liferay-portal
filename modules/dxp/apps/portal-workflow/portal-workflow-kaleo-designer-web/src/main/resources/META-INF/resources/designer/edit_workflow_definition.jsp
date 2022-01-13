@@ -27,20 +27,20 @@ portletDisplay.setURLBack(
 		"/view.jsp"
 	).buildString());
 
-String title = (kaleoDefinitionVersion == null) ? LanguageUtil.get(request, "new-workflow") : kaleoDefinitionVersion.getTitle(locale);
-
-renderResponse.setTitle(title);
+renderResponse.setTitle((kaleoDefinitionVersion == null) ? LanguageUtil.get(request, "new-workflow-definition") : LanguageUtil.get(request, "edit-workflow-definition"));
 %>
 
 <react:component
 	module="designer/js/definition-builder/DefinitionBuilder"
 	props='<%=
 		HashMapBuilder.<String, Object>put(
+			"definitionName", (kaleoDefinitionVersion == null) ? null : kaleoDefinitionVersion.getName()
+		).put(
 			"displayNames", LocaleUtil.toDisplayNames(LanguageUtil.getAvailableLocales(), locale)
 		).put(
 			"languageIds", LocaleUtil.toLanguageIds(LanguageUtil.getAvailableLocales())
 		).put(
-			"title", title
+			"title", (kaleoDefinitionVersion == null) ? LanguageUtil.get(request, "new-workflow") : kaleoDefinitionVersion.getTitle(locale)
 		).put(
 			"translations", (kaleoDefinitionVersion == null) ? new HashMap<>() : kaleoDefinitionVersion.getTitleMap()
 		).put(

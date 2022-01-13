@@ -33,7 +33,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.util.comparator.RoleNameComparator;
 import com.liferay.portal.vulcan.util.TransformUtil;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -62,8 +61,6 @@ public class AccountRoleDisplaySearchContainerFactory {
 			SearchOrderByUtil.getOrderByType(
 				liferayPortletRequest, AccountPortletKeys.ACCOUNT_ENTRIES_ADMIN,
 				"account-role-order-by-type", "asc"));
-		searchContainer.setRowChecker(
-			new AccountRoleRowChecker(liferayPortletResponse));
 
 		String keywords = ParamUtil.getString(
 			liferayPortletRequest, "keywords");
@@ -85,21 +82,22 @@ public class AccountRoleDisplaySearchContainerFactory {
 				new RoleNameComparator(
 					Objects.equals(searchContainer.getOrderByType(), "asc")));
 
-		List<AccountRoleDisplay> accountRoleDisplays = TransformUtil.transform(
-			baseModelSearchResult.getBaseModels(),
-			accountRole -> {
-				if (!AccountRoleConstants.isImpliedRole(
-						accountRole.getRole())) {
+		searchContainer.setResultsAndTotal(
+			() -> TransformUtil.transform(
+				baseModelSearchResult.getBaseModels(),
+				accountRole -> {
+					if (!AccountRoleConstants.isImpliedRole(
+							accountRole.getRole())) {
 
-					return AccountRoleDisplay.of(accountRole);
-				}
+						return AccountRoleDisplay.of(accountRole);
+					}
 
-				return null;
-			});
+					return null;
+				}),
+			baseModelSearchResult.getLength());
 
-		searchContainer.setResults(accountRoleDisplays);
-
-		searchContainer.setTotal(baseModelSearchResult.getLength());
+		searchContainer.setRowChecker(
+			new AccountRoleRowChecker(liferayPortletResponse));
 
 		return searchContainer;
 	}

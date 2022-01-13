@@ -17,6 +17,7 @@ package com.liferay.jenkins.results.parser;
 import java.io.File;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -27,6 +28,16 @@ public class PortalAppReleaseJob extends BaseJob implements PortalTestClassJob {
 	@Override
 	public Set<String> getDistTypes() {
 		return Collections.emptySet();
+	}
+
+	@Override
+	public List<String> getJobPropertyOptions() {
+		List<String> jobPropertyOptions = super.getJobPropertyOptions();
+
+		jobPropertyOptions.add(
+			_portalGitWorkingDirectory.getUpstreamBranchName());
+
+		return jobPropertyOptions;
 	}
 
 	@Override
@@ -62,28 +73,6 @@ public class PortalAppReleaseJob extends BaseJob implements PortalTestClassJob {
 				"test.properties"));
 
 		readJobProperties();
-	}
-
-	@Override
-	protected Set<String> getRawBatchNames() {
-		BuildProfile buildProfile = getBuildProfile();
-
-		if (buildProfile == null) {
-			buildProfile = BuildProfile.PORTAL;
-		}
-
-		String testBatchName = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(), "test.batch.names", false, getJobName(),
-			buildProfile.toString());
-
-		if (JenkinsResultsParserUtil.isNullOrEmpty(testBatchName)) {
-			testBatchName = JenkinsResultsParserUtil.getProperty(
-				getJobProperties(), "test.batch.names", false, getJobName(),
-				_portalGitWorkingDirectory.getUpstreamBranchName(),
-				buildProfile.toString());
-		}
-
-		return getSetFromString(testBatchName);
 	}
 
 	private final PortalGitWorkingDirectory _portalGitWorkingDirectory;

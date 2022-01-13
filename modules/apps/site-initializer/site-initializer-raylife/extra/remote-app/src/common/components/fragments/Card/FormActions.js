@@ -1,12 +1,33 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
+import classNames from 'classnames';
 import React, {useState} from 'react';
 import {useFormContext} from 'react-hook-form';
 import ProgressSavedModal from '../../../../routes/get-a-quote/components/containers/Forms/Modal/ProgressSaved';
 
 import {WarningBadge} from '../Badges/Warning';
 
-export function CardFormActions({isValid = true, onNext, onPrevious, onSave}) {
+export function CardFormActions({
+	isMobileDevice = false,
+	isValid = true,
+	onNext,
+	onPrevious,
+	onSave,
+}) {
 	const {
 		formState: {errors},
 		getValues,
@@ -43,8 +64,12 @@ export function CardFormActions({isValid = true, onNext, onPrevious, onSave}) {
 					{errors?.continueButton?.message || errorModal}
 				</WarningBadge>
 			)}
-			<div className="d-flex justify-content-between mt-5">
-				{onPrevious && (
+			<div
+				className={classNames('d-flex justify-content-between', {
+					'mt-5': !isMobileDevice,
+				})}
+			>
+				{!isMobileDevice && onPrevious && (
 					<ClayButton
 						className="btn-borderless btn-style-neutral font-weight-bolder previous text-paragraph text-small-caps"
 						displayType="null"
@@ -54,8 +79,10 @@ export function CardFormActions({isValid = true, onNext, onPrevious, onSave}) {
 					</ClayButton>
 				)}
 
-				<div className="d-flex">
-					{onSave && (
+				<div
+					className={classNames('d-flex', {'w-100': isMobileDevice})}
+				>
+					{!isMobileDevice && onSave && (
 						<ClayButton
 							className="font-weight-bolder mr-3 save-exit text-paragraph text-small-caps"
 							disabled={!email || emailHasError || loading}
@@ -68,7 +95,10 @@ export function CardFormActions({isValid = true, onNext, onPrevious, onSave}) {
 
 					{onNext && (
 						<ClayButton
-							className="btn-solid btn-style-secondary continue font-weight-bolder text-paragraph text-small-caps"
+							className={classNames(
+								'btn-solid btn-style-secondary continue font-weight-bolder text-paragraph text-small-caps',
+								{'w-100': isMobileDevice}
+							)}
 							disabled={!isValid}
 							onClick={onNext}
 						>

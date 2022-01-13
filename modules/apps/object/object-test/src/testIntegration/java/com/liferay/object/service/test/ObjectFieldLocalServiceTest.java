@@ -455,6 +455,7 @@ public class ObjectFieldLocalServiceTest {
 			objectDefinition.getObjectDefinitionId(), false, true, "",
 			LocalizedMapUtil.getLocalizedMap("able"), "able", false, "Long");
 
+		Assert.assertEquals("able_", objectField.getDBColumnName());
 		Assert.assertFalse(objectField.isIndexed());
 		Assert.assertTrue(objectField.isIndexedAsKeyword());
 		Assert.assertEquals("", objectField.getIndexedLanguageId());
@@ -469,6 +470,7 @@ public class ObjectFieldLocalServiceTest {
 			objectField.getObjectFieldId(), 0, false, true, "",
 			LocalizedMapUtil.getLocalizedMap("able"), "able", false, "Long");
 
+		Assert.assertEquals("able_", objectField.getDBColumnName());
 		Assert.assertFalse(objectField.isIndexed());
 		Assert.assertTrue(objectField.isIndexedAsKeyword());
 		Assert.assertEquals("", objectField.getIndexedLanguageId());
@@ -486,6 +488,7 @@ public class ObjectFieldLocalServiceTest {
 			objectField.getObjectFieldId(), 0, true, false, indexedLanguageId,
 			LocalizedMapUtil.getLocalizedMap("baker"), "baker", true, "String");
 
+		Assert.assertEquals("baker_", objectField.getDBColumnName());
 		Assert.assertTrue(objectField.isIndexed());
 		Assert.assertFalse(objectField.isIndexedAsKeyword());
 		Assert.assertEquals(
@@ -506,6 +509,7 @@ public class ObjectFieldLocalServiceTest {
 			LocalizedMapUtil.getLocalizedMap("charlie"), "charlie", false,
 			"Integer");
 
+		Assert.assertEquals("baker_", objectField.getDBColumnName());
 		Assert.assertTrue(objectField.isIndexed());
 		Assert.assertFalse(objectField.isIndexedAsKeyword());
 		Assert.assertEquals(

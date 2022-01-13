@@ -17,6 +17,7 @@ package com.liferay.object.util;
 import com.liferay.portal.kernel.util.LocaleUtil;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -25,8 +26,45 @@ import java.util.Map;
  */
 public class LocalizedMapUtil {
 
+	public static Map<String, String> getLanguageIdMap(
+		Map<Locale, String> localizedMap) {
+
+		Map<String, String> languageIdMap = new HashMap<>();
+
+		localizedMap.forEach(
+			(locale, value) -> languageIdMap.put(
+				LocaleUtil.toLanguageId(locale), value));
+
+		return Collections.unmodifiableMap(languageIdMap);
+	}
+
+	public static Map<Locale, String> getLocalizedMap(
+		Map<String, String> i18nMap) {
+
+		Map<Locale, String> localizedMap = new HashMap<>();
+
+		if (i18nMap == null) {
+			return localizedMap;
+		}
+
+		for (Map.Entry<String, String> entry : i18nMap.entrySet()) {
+			Locale locale = _getLocale(entry.getKey());
+			String value = entry.getValue();
+
+			if ((locale != null) && (value != null)) {
+				localizedMap.put(locale, value);
+			}
+		}
+
+		return localizedMap;
+	}
+
 	public static Map<Locale, String> getLocalizedMap(String label) {
 		return Collections.singletonMap(LocaleUtil.getDefault(), label);
+	}
+
+	private static Locale _getLocale(String languageId) {
+		return LocaleUtil.fromLanguageId(languageId, true, false);
 	}
 
 }

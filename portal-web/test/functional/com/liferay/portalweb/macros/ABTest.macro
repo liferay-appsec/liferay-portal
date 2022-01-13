@@ -92,6 +92,16 @@ definition {
 		Click(locator1 = "ABTest#SAVE_VARIANT_NAME_BUTTON");
 	}
 
+	macro deleteABTestInAC {
+		Click(
+			key_text = "ellipsis-v",
+			locator1 = "Icon#ANY");
+
+		MenuItem.clickNoError(menuItem = "Delete Test");
+
+		Button.clickDelete();
+	}
+
 	macro deleteVariant {
 		if (!(isSet(key_index))) {
 			var key_index = "1";
@@ -195,7 +205,7 @@ definition {
 
 		Click(locator1 = "ABTest#SELECT_CLICKABLE_ELEMENT");
 
-		var idelement = selenium.getAttribute(locator1 = "//div//div[contains(@class,'text-truncate')]@title");
+		var idelement = selenium.getAttribute("//div[contains(@class,'text-truncate')]@title");
 		var idelement = StringUtil.substring("${idelement}", "1", "19");
 
 		Click(locator1 = "ABTest#X_BUTTON_TARGET_ID_ELEMENT");

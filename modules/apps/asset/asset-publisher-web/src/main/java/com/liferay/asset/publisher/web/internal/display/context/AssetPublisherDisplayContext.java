@@ -188,11 +188,9 @@ public class AssetPublisherDisplayContext {
 			return _assetListEntry;
 		}
 
-		long assetListEntryId = GetterUtil.getLong(
-			_portletPreferences.getValue("assetListEntryId", null));
-
 		_assetListEntry = AssetListEntryServiceUtil.fetchAssetListEntry(
-			assetListEntryId);
+			GetterUtil.getLong(
+				_portletPreferences.getValue("assetListEntryId", null)));
 
 		return _assetListEntry;
 	}
@@ -442,16 +440,15 @@ public class AssetPublisherDisplayContext {
 
 		SearchContainer<AssetEntry> searchContainer = getSearchContainer();
 
-		searchContainer.setTotal(assetEntries.size());
-
-		assetEntries = assetEntries.subList(
-			searchContainer.getStart(), searchContainer.getResultEnd());
-
-		searchContainer.setResults(assetEntries);
+		searchContainer.setResultsAndTotal(
+			() -> assetEntries.subList(
+				searchContainer.getStart(), searchContainer.getResultEnd()),
+			assetEntries.size());
 
 		List<AssetEntryResult> assetEntryResults = new ArrayList<>();
 
-		assetEntryResults.add(new AssetEntryResult(assetEntries));
+		assetEntryResults.add(
+			new AssetEntryResult(searchContainer.getResults()));
 
 		_assetEntryResults = assetEntryResults;
 
@@ -693,12 +690,9 @@ public class AssetPublisherDisplayContext {
 			return _availableClassNameIds;
 		}
 
-		long[] availableClassNameIds =
-			AssetRendererFactoryRegistryUtil.getClassNameIds(
-				_themeDisplay.getCompanyId(), true);
-
 		_availableClassNameIds = ArrayUtil.filter(
-			availableClassNameIds,
+			AssetRendererFactoryRegistryUtil.getClassNameIds(
+				_themeDisplay.getCompanyId(), true),
 			availableClassNameId -> {
 				Indexer<?> indexer = IndexerRegistryUtil.getIndexer(
 					PortalUtil.getClassName(availableClassNameId));
@@ -1242,11 +1236,8 @@ public class AssetPublisherDisplayContext {
 		long[] groupIds = PortalUtil.getCurrentAndAncestorSiteGroupIds(
 			getReferencedModelsGroupIds());
 
-		List<AssetVocabulary> vocabularies =
-			AssetVocabularyServiceUtil.getGroupsVocabularies(groupIds);
-
-		vocabularies = ListUtil.filter(
-			vocabularies,
+		List<AssetVocabulary> vocabularies = ListUtil.filter(
+			AssetVocabularyServiceUtil.getGroupsVocabularies(groupIds),
 			vocabulary -> {
 				long[] classNameIds = vocabulary.getSelectedClassNameIds();
 

@@ -10,461 +10,158 @@
  *
  */
 
-import {COL_TYPES_FIELD, STR_BLANK, xmlNamespace} from './constants';
-import XMLSchemaUtil from './xmlSchemaUtil';
-import XMLUtil from './xmlUtil';
+import {defaultLanguageId} from '../constants';
+import {removeNewLine, replaceTabSpaces} from '../util/utils';
+import {DEFAULT_LANGUAGE} from './constants';
+import XMLDefinition from './xmlDefinition';
 
-const isNumber = (value) => value instanceof Number;
-
-const isString = (value) => value instanceof String;
-
-let ATTRS;
-
-export default function XMLDefinition(config) {
+export default function DeserializeUtil(content) {
 	const instance = this;
-	ATTRS = {};
 
-	const value = instance.sanitizeDefinitionXML(config.value);
-
-	if (!value || XMLUtil.validateDefinition(value)) {
-		const parser = new DOMParser();
-
-		instance.definitionDoc = parser.parseFromString(value, 'text/xml');
-	}
-
-	const metadata = instance.getDefinitionMetadata();
-
-	if (metadata) {
-		instance.setAttrs(metadata);
-	}
+	instance.definition = new XMLDefinition({
+		value: content,
+	});
 }
 
-XMLDefinition.prototype = {
-	forEachField(fn) {
+DeserializeUtil.prototype = {
+	getElements() {
 		const instance = this;
 
-		COL_TYPES_FIELD.forEach((item) => {
-			const fieldData = instance.translate(item);
+		const elements = [];
 
-			if (fn && !fieldData.error) {
-				fn.call(instance, item, fieldData);
-			}
-		});
-	},
+		instance.definition.forEachField((tagName, fieldData) => {
+			fieldData.results.forEach((node) => {
+				const position = {};
+				let type = tagName;
 
-	getAttrs() {
-		return {
-			...ATTRS,
-			description: {
-				validator: isString,
-				value: STR_BLANK,
-			},
-			name: {
-				validator: isString,
-			},
-			value: {},
-			version: {
-				validator: isNumber,
-				value: 1,
-			},
-			xmlNamespace: {value: xmlNamespace},
-		};
-	},
+				if (node.initial) {
+					type = 'start';
+				}
 
-	getDefinitionMetadata() {
-		const instance = this;
+				const metadata = JSON.parse(node.metadata);
 
-		const output = XMLSchemaUtil.applySchema(
-			{
-				metaFields: {
-					description: '//workflow-definition/description',
-					name: '//workflow-definition/name',
-					version: '//workflow-definition/version',
-				},
-			},
-			instance.definitionDoc
-		);
+				if (metadata.terminal) {
+					type = 'end';
+				}
 
-		return output.meta;
-	},
+				position.x = metadata.xy[0];
+				position.y = metadata.xy[1];
 
-	getSchemaActions(key, tagName) {
-		return {
-			key: key || 'actions',
-			schema: {
-				resultFields: [
-					{
-						key: 'description',
-						locator: 'description',
-					},
-					{
-						key: 'executionType',
-						locator: 'execution-type',
-					},
-					{
-						key: 'name',
-						locator: 'name',
-					},
-					{
-						key: 'priority',
-						locator: 'priority',
-					},
-					{
-						key: 'script',
-						locator: 'script',
-					},
-					{
-						key: 'scriptLanguage',
-						locator: 'script-language',
-					},
-				],
-				resultListLocator: tagName || 'action',
-			},
-		};
-	},
+				let label = {};
 
-	getSchemaAssignments(key, tagName) {
-		return {
-			key: key || 'assignments',
-			schema: {
-				resultFields: [
-					{
-						key: 'address',
-						locator: 'address',
-					},
-					{
-						key: 'resourceActions',
-						schema: {
-							resultFields: [
-								{
-									key: 'resourceAction',
-									locator: 'resource-action',
-								},
-							],
-							resultListLocator: 'resource-actions',
-						},
-					},
-					{
-						key: 'roleId',
-						schema: {
-							resultFields: [
-								{
-									key: 'roleId',
-									locator: 'role-id',
-								},
-								{
-									key: 'roleNameAC',
-									locator: 'role-name-ac',
-								},
-							],
-							resultListLocator: 'role',
-						},
-					},
-					{
-						key: 'roleType',
-						schema: {
-							resultFields: [
-								{
-									key: 'autoCreate',
-									locator: 'auto-create',
-								},
-								{
-									key: 'roleName',
-									locator: 'name',
-								},
-								{
-									key: 'roleType',
-									locator: 'role-type',
-								},
-							],
-							resultListLocator: 'role',
-						},
-					},
-					{
-						key: 'scriptedAssignment',
-						schema: {
-							resultFields: [
-								{
-									key: 'script',
-									locator: 'script',
-								},
-								{
-									key: 'scriptLanguage',
-									locator: 'script-language',
-								},
-							],
-							resultListLocator: 'scripted-assignment',
-						},
-					},
-					{
-						key: 'scriptedRecipient',
-						schema: {
-							resultFields: [
-								{
-									key: 'script',
-									locator: 'script',
-								},
-								{
-									key: 'scriptLanguage',
-									locator: 'script-language',
-								},
-							],
-							resultListLocator: 'scripted-recipient',
-						},
-					},
-					{
-						key: 'taskAssignees',
-						locator: 'assignees',
-					},
-					{
-						key: 'user',
-						schema: {
-							resultFields: [
-								{
-									key: 'emailAddress',
-									locator: 'email-address',
-								},
-								{
-									key: 'fullName',
-									locator: 'full-name',
-								},
-								{
-									key: 'screenName',
-									locator: 'screen-name',
-								},
-								{
-									key: 'userId',
-									locator: 'user-id',
-								},
-							],
-							resultListLocator: 'user',
-						},
-					},
-					{
-						key: 'receptionType',
-						locator: '@receptionType',
-					},
-				],
-				resultListLocator: tagName || 'assignments',
-			},
-		};
-	},
+				if (Array.isArray(node.labels)) {
+					node.labels?.map((itemLabel) => {
+						Object.entries(itemLabel).map(([key, value]) => {
+							label[key] = replaceTabSpaces(removeNewLine(value));
+						});
+					});
+				}
+				else {
+					label = {[defaultLanguageId]: node.name};
+				}
 
-	getSchemaNotifications(key, tagName, assignmentKey, assignmentTagName) {
-		const instance = this;
+				const data = {
+					description: node.description,
+					label,
+					script: node.script,
+				};
 
-		assignmentKey = assignmentKey || 'recipients';
-		assignmentTagName = assignmentTagName || 'recipients';
+				if (type === 'task') {
+					data.scriptLanguage =
+						node.scriptLanguage || DEFAULT_LANGUAGE;
+				}
 
-		return {
-			key: key || 'notifications',
-			schema: {
-				resultFields: [
-					{
-						key: 'description',
-						locator: 'description',
-					},
-					{
-						key: 'executionType',
-						locator: 'execution-type',
-					},
-					{
-						key: 'name',
-						locator: 'name',
-					},
-					{
-						key: 'notificationTypes',
-						schema: {
-							resultFields: [
-								{
-									key: 'notificationType',
-									locator: '.',
-								},
-							],
-							resultListLocator: 'notification-type',
-						},
-					},
-					{
-						key: 'template',
-						locator: 'template',
-					},
-					{
-						key: 'templateLanguage',
-						locator: 'template-language',
-					},
-					instance.getSchemaAssignments(
-						assignmentKey,
-						assignmentTagName
-					),
-				],
-				resultListLocator: tagName || 'notification',
-			},
-		};
-	},
+				let nodeId;
 
-	getSchemaTaskTimers(key, tagNode) {
-		const instance = this;
+				if (node.id) {
+					nodeId = node.id;
+				}
+				else if (node.name) {
+					nodeId = node.name;
+				}
+				else {
+					return;
+				}
 
-		return {
-			key: key || 'taskTimers',
-			schema: {
-				resultFields: [
-					{
-						key: 'blocking',
-						locator: 'blocking',
-					},
-					{
-						key: 'delay',
-						schema: {
-							resultFields: [
-								{
-									key: 'duration',
-									locator: 'duration',
-								},
-								{
-									key: 'scale',
-									locator: 'scale',
-								},
-							],
-							resultListLocator: 'delay',
-						},
-					},
-					{
-						key: 'description',
-						locator: 'description',
-					},
-					{
-						key: 'name',
-						locator: 'name',
-					},
-					{
-						key: 'recurrence',
-						schema: {
-							resultFields: [
-								{
-									key: 'duration',
-									locator: 'duration',
-								},
-								{
-									key: 'scale',
-									locator: 'scale',
-								},
-							],
-							resultListLocator: 'recurrence',
-						},
-					},
-					instance.getSchemaActions('timerActions', 'timer-action'),
-					instance.getSchemaAssignments(
-						'reassignments',
-						'reassignments'
-					),
-					instance.getSchemaNotifications(
-						'timerNotifications',
-						'timer-notification'
-					),
-				],
-				resultListLocator: tagNode || 'task-timer',
-			},
-		};
-	},
+				// To be removed after next stories
 
-	getSchemaTransitions(key, tagName) {
-		return {
-			key: key || 'transitions',
-			schema: {
-				resultFields: [
-					{
-						key: 'default',
-						locator: 'default',
-					},
-					{
-						key: 'name',
-						locator: 'name',
-					},
-					{
-						key: 'target',
-						locator: 'target',
-					},
-				],
-				resultListLocator: tagName || 'transition',
-			},
-		};
-	},
+				if (
+					type !== 'start' &&
+					type !== 'end' &&
+					type !== 'state' &&
+					type !== 'task'
+				) {
+					type = 'state';
+				}
 
-	sanitizeDefinitionXML(value) {
-		const instance = this;
-
-		value = decodeURIComponent(value);
-
-		value = value.replace(/\s*(<!\[CDATA\[)/g, '$1');
-		value = value.replace(/(\]\]>)\s*/g, '$1');
-
-		instance.updateXMLNamespace(value);
-
-		return value.replace(/(<workflow-definition)[^>]*(>)/, '$1$2');
-	},
-
-	set(key, value) {
-		ATTRS[key] = value;
-	},
-
-	setAttrs(attrs) {
-		Object.entries(attrs).forEach(([key, value]) => {
-			ATTRS[key] = value;
-		});
-	},
-
-	translate(tagName) {
-		const instance = this;
-
-		const schema = {
-			resultFields: [
-				'description',
-				'id',
-				'initial',
-				{
-					key: 'labels',
-					locator: 'labels',
-				},
-				'metadata',
-				'script',
-				{
-					key: 'scriptLanguage',
-					locator: 'script-language',
-				},
-				instance.getSchemaActions(),
-				instance.getSchemaAssignments(),
-				instance.getSchemaNotifications(),
-				instance.getSchemaTaskTimers(),
-				instance.getSchemaTransitions(),
-			],
-			resultListLocator: tagName,
-		};
-
-		return XMLSchemaUtil.applySchema(schema, instance.definitionDoc);
-	},
-
-	updateXMLNamespace(definition) {
-		const instance = this;
-
-		const workflowDefinition = /(<workflow-definition)[^>]*(>)/.exec(
-			definition
-		);
-
-		if (workflowDefinition) {
-			const xmlns = /xmlns="([^"]*)"/.exec(workflowDefinition);
-			const xmlnsXsi = /xmlns:xsi="([^"]*)"/.exec(workflowDefinition);
-			const xsiSchemaLocation = /xsi:schemaLocation="([^"]*)"/.exec(
-				workflowDefinition
-			);
-
-			if (xmlns && xmlnsXsi && xsiSchemaLocation) {
-				instance.set('xmlNamespace', {
-					'xmlns': xmlns[1],
-					'xmlns:xsi': xmlnsXsi[1],
-					'xsi:schemaLocation': xsiSchemaLocation[1],
+				elements.push({
+					data,
+					id: nodeId,
+					position,
+					type,
 				});
-			}
-		}
+
+				if (node.transitions) {
+					node.transitions.forEach((transition) => {
+						let label = {};
+
+						if (Array.isArray(transition.labels)) {
+							transition.labels?.map((itemLabel) => {
+								Object.entries(itemLabel).map(
+									([key, value]) => {
+										label[key] = replaceTabSpaces(
+											removeNewLine(value)
+										);
+									}
+								);
+							});
+						}
+						else {
+							label = {[defaultLanguageId]: transition.name};
+						}
+
+						let transitionId;
+
+						if (transition.id) {
+							transitionId = transition.id;
+						}
+						else if (transition.name) {
+							transitionId = transition.name;
+						}
+						else {
+							return;
+						}
+
+						elements.push({
+							arrowHeadType: 'arrowclosed',
+							data: {
+								defaultEdge: JSON.parse(transition.default),
+								label,
+							},
+							id: transitionId,
+							source: nodeId,
+							target: transition.target,
+							type: 'transition',
+						});
+					});
+				}
+			});
+		});
+
+		return elements;
+	},
+
+	getMetadata() {
+		const instance = this;
+
+		return instance.definition.getDefinitionMetadata();
+	},
+
+	updateXMLDefinition(content) {
+		const instance = this;
+
+		instance.definition = new XMLDefinition({
+			value: content,
+		});
 	},
 };

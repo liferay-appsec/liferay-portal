@@ -114,7 +114,7 @@ Export-Package:\
 	\
 	com.thoughtworks.xstream.*;version='1.4.17',\
 	\
-	io.netty.*,\
+	io.netty.*;version='4.1',\
 	\
 	java_cup.runtime.*;version='2.7.1',\
 	\
@@ -181,14 +181,6 @@ Export-Package:\
 	org.apache.commons.beanutils.expression;version='1.9.4',\
 	org.apache.commons.beanutils.locale;version='1.9.4',\
 	org.apache.commons.beanutils.locale.converters;version='1.9.4',\
-	org.apache.commons.chain;version='1.2',\
-	org.apache.commons.chain.config;version='1.2',\
-	org.apache.commons.chain.generic;version='1.2',\
-	org.apache.commons.chain.impl;version='1.2',\
-	org.apache.commons.chain.web;version='1.2',\
-	org.apache.commons.chain.web.faces;version='1.2',\
-	org.apache.commons.chain.web.portlet;version='1.2',\
-	org.apache.commons.chain.web.servlet;version='1.2',\
 	org.apache.commons.codec;version='1.9',\
 	org.apache.commons.codec.binary;version='1.9',\
 	org.apache.commons.codec.digest;version='1.9',\
@@ -222,20 +214,20 @@ Export-Package:\
 	org.apache.commons.logging;version="1.2",\
 	org.apache.commons.logging.impl;version="1.2",\
 	org.apache.commons.validator.routines;version='1.5.1',\
-	org.apache.log4j;version='2.17.0',\
-	org.apache.log4j.spi;version='2.17.0',\
-	org.apache.logging.log4j;version='2.17.0',\
-	org.apache.logging.log4j.core;version='2.17.0',\
-	org.apache.logging.log4j.core.appender;version='2.17.0',\
-	org.apache.logging.log4j.core.config;version='2.17.0',\
-	org.apache.logging.log4j.core.config.composite;version='2.17.0',\
-	org.apache.logging.log4j.core.config.xml;version='2.17.0',\
-	org.apache.logging.log4j.core.impl;version='2.17.0',\
-	org.apache.logging.log4j.core.layout;version='2.17.0',\
-	org.apache.logging.log4j.core.selector;version='2.17.0',\
-	org.apache.logging.log4j.core.util;version='2.17.0',\
-	org.apache.logging.log4j.message;version='2.17.0',\
-	org.apache.logging.log4j.spi;version='2.17.0',\
+	org.apache.log4j;version='2.17.1',\
+	org.apache.log4j.spi;version='2.17.1',\
+	org.apache.logging.log4j;version='2.17.1',\
+	org.apache.logging.log4j.core;version='2.17.1',\
+	org.apache.logging.log4j.core.appender;version='2.17.1',\
+	org.apache.logging.log4j.core.config;version='2.17.1',\
+	org.apache.logging.log4j.core.config.composite;version='2.17.1',\
+	org.apache.logging.log4j.core.config.xml;version='2.17.1',\
+	org.apache.logging.log4j.core.impl;version='2.17.1',\
+	org.apache.logging.log4j.core.layout;version='2.17.1',\
+	org.apache.logging.log4j.core.selector;version='2.17.1',\
+	org.apache.logging.log4j.core.util;version='2.17.1',\
+	org.apache.logging.log4j.message;version='2.17.1',\
+	org.apache.logging.log4j.spi;version='2.17.1',\
 	org.apache.naming.java,\
 	org.apache.regexp;version='2.7.1',\
 	org.apache.tika.*;version='1.26.0',\
@@ -325,7 +317,6 @@ Provide-Capability:\
 	@../../../lib/portal/asm.jar,\
 	@../../../lib/portal/ccpp.jar,\
 	@../../../lib/portal/commons-beanutils.jar,\
-	@../../../lib/portal/commons-chain.jar,\
 	@../../../lib/portal/commons-codec.jar,\
 	@../../../lib/portal/commons-collections.jar,\
 	@../../../lib/portal/commons-compress.jar,\
@@ -345,7 +336,12 @@ Provide-Capability:\
 	@../../../lib/portal/log4j-1.2-api.jar,\
 	@../../../lib/portal/log4j-api.jar,\
 	@../../../lib/portal/log4j-core.jar,\
-	@../../../lib/portal/netty-all.jar,\
+	@../../../lib/portal/netty-buffer.jar,\
+	@../../../lib/portal/netty-codec.jar,\
+	@../../../lib/portal/netty-common.jar,\
+	@../../../lib/portal/netty-handler.jar,\
+	@../../../lib/portal/netty-resolver.jar,\
+	@../../../lib/portal/netty-transport.jar,\
 	@../../../lib/portal/persistence.jar,\
 	@../../../lib/portal/portlet.jar,\
 	@../../../lib/portal/portletmvc4spring-framework.jar,\

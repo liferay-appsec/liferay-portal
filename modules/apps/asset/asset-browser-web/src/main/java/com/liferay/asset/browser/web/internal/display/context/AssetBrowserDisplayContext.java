@@ -19,7 +19,6 @@ import com.liferay.asset.browser.web.internal.constants.AssetBrowserPortletKeys;
 import com.liferay.asset.browser.web.internal.search.AddAssetEntryChecker;
 import com.liferay.asset.browser.web.internal.search.AssetBrowserSearch;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
-import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.asset.util.AssetHelper;
@@ -98,39 +97,32 @@ public class AssetBrowserDisplayContext {
 		AssetBrowserSearch assetBrowserSearch = new AssetBrowserSearch(
 			_renderRequest, getPortletURL());
 
-		if (isMultipleSelection()) {
-			assetBrowserSearch.setRowChecker(
-				new AddAssetEntryChecker(
-					_renderResponse, getRefererAssetEntryId()));
-		}
-
 		assetBrowserSearch.setOrderByCol(getOrderByCol());
 		assetBrowserSearch.setOrderByType(getOrderByType());
 
 		if (AssetBrowserWebConfigurationValues.SEARCH_WITH_DATABASE) {
-			long[] subtypeSelectionIds = null;
+			long[] subtypeSelectionIds = ArrayUtil.filter(
+				new long[] {getSubtypeSelectionId()}, id -> id > 0);
 
-			if (getSubtypeSelectionId() > 0) {
-				subtypeSelectionIds = new long[] {getSubtypeSelectionId()};
-			}
-
-			int total = AssetEntryLocalServiceUtil.getEntriesCount(
-				_getFilterGroupIds(), _getClassNameIds(), subtypeSelectionIds,
-				_getKeywords(), _getKeywords(), _getKeywords(), _getKeywords(),
-				_getListable(), false, false);
-
-			assetBrowserSearch.setTotal(total);
-
-			List<AssetEntry> assetEntries =
-				AssetEntryLocalServiceUtil.getEntries(
+			assetBrowserSearch.setResultsAndTotal(
+				() -> AssetEntryLocalServiceUtil.getEntries(
 					_getFilterGroupIds(), _getClassNameIds(),
 					subtypeSelectionIds, _getKeywords(), _getKeywords(),
 					_getKeywords(), _getKeywords(), _getListable(), false,
 					false, assetBrowserSearch.getStart(),
 					assetBrowserSearch.getEnd(), "modifiedDate",
-					StringPool.BLANK, getOrderByType(), StringPool.BLANK);
+					StringPool.BLANK, getOrderByType(), StringPool.BLANK),
+				AssetEntryLocalServiceUtil.getEntriesCount(
+					_getFilterGroupIds(), _getClassNameIds(),
+					subtypeSelectionIds, _getKeywords(), _getKeywords(),
+					_getKeywords(), _getKeywords(), _getListable(), false,
+					false));
 
-			assetBrowserSearch.setResults(assetEntries);
+			if (isMultipleSelection()) {
+				assetBrowserSearch.setRowChecker(
+					new AddAssetEntryChecker(
+						_renderResponse, getRefererAssetEntryId()));
+			}
 
 			return assetBrowserSearch;
 		}
@@ -154,10 +146,10 @@ public class AssetBrowserDisplayContext {
 			sort = new Sort(null, Sort.SCORE_TYPE, false);
 		}
 		else if (Objects.equals(getOrderByCol(), "title")) {
-			String sortFieldName = Field.getSortableFieldName(
-				"localized_title_".concat(themeDisplay.getLanguageId()));
-
-			sort = new Sort(sortFieldName, Sort.STRING_TYPE, !orderByAsc);
+			sort = new Sort(
+				Field.getSortableFieldName(
+					"localized_title_".concat(themeDisplay.getLanguageId())),
+				Sort.STRING_TYPE, !orderByAsc);
 		}
 
 		Hits hits = AssetEntryLocalServiceUtil.search(
@@ -167,9 +159,14 @@ public class AssetBrowserDisplayContext {
 			_getStatuses(), assetBrowserSearch.getStart(),
 			assetBrowserSearch.getEnd(), sort);
 
-		assetBrowserSearch.setResults(_assetHelper.getAssetEntries(hits));
+		assetBrowserSearch.setResultsAndTotal(
+			() -> _assetHelper.getAssetEntries(hits), hits.getLength());
 
-		assetBrowserSearch.setTotal(hits.getLength());
+		if (isMultipleSelection()) {
+			assetBrowserSearch.setRowChecker(
+				new AddAssetEntryChecker(
+					_renderResponse, getRefererAssetEntryId()));
+		}
 
 		_assetBrowserSearch = assetBrowserSearch;
 
@@ -346,12 +343,10 @@ public class AssetBrowserDisplayContext {
 			(ThemeDisplay)_httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		long selectedGroupId = ParamUtil.getLong(
-			_httpServletRequest, "selectedGroupId");
-
 		try {
 			return PortalUtil.getSharedContentSiteGroupIds(
-				themeDisplay.getCompanyId(), selectedGroupId,
+				themeDisplay.getCompanyId(),
+				ParamUtil.getLong(_httpServletRequest, "selectedGroupId"),
 				themeDisplay.getUserId());
 		}
 		catch (PortalException portalException) {
@@ -443,13 +438,10 @@ public class AssetBrowserDisplayContext {
 
 		PortletDisplay portletDisplay = themeDisplay.getPortletDisplay();
 
-		boolean showBreadcrumb = ParamUtil.getBoolean(
-			_httpServletRequest, "showBreadcrumb");
-
 		if (Objects.equals(
 				ItemSelectorPortletKeys.ITEM_SELECTOR,
 				portletDisplay.getPortletName()) ||
-			showBreadcrumb) {
+			ParamUtil.getBoolean(_httpServletRequest, "showBreadcrumb")) {
 
 			return true;
 		}
@@ -564,10 +556,9 @@ public class AssetBrowserDisplayContext {
 	private Boolean _getListable() {
 		Boolean listable = null;
 
-		String listableValue = ParamUtil.getString(
-			_httpServletRequest, "listable", null);
+		if (Validator.isNotNull(
+				ParamUtil.getString(_httpServletRequest, "listable", null))) {
 
-		if (Validator.isNotNull(listableValue)) {
 			listable = ParamUtil.getBoolean(
 				_httpServletRequest, "listable", true);
 		}

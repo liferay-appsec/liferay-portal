@@ -1,9 +1,23 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import {axios} from '../../../common/services/liferay/api';
 import {STORAGE_KEYS, Storage} from '../../../common/services/liferay/storage';
 
 const DeliveryAPI = 'o/headless-commerce-admin-order';
 
-export function createOrder(accountId, channelId, skuId, product) {
+export function createOrder(accountId, channelId, skuId) {
 	const raylifeApplicationForm = JSON.parse(
 		Storage.getItem(STORAGE_KEYS.APPLICATION_FORM)
 	);
@@ -38,28 +52,25 @@ export function createOrder(accountId, channelId, skuId, product) {
 		currencyCode: 'USD',
 		orderItems: [
 			{
-				discountAmount: product.promo,
-				finalPrice: product.promo,
 				quantity: 1,
 				skuId,
-				unitPrice: product.price,
 			},
 		],
 		orderStatus: 2,
 		shippingAddress: userAddress,
 		shippingAmount: 0,
 		shippingWithTaxAmount: 0,
-		subtotal: product.price,
-		total: product.promo ? product.promo : product.price,
 	};
 
 	return axios.post(`${DeliveryAPI}/v1.0/orders`, payload);
 }
 
-export function updateOrderPaymentMethod(paymentMethod, total, orderId) {
+export function updateOrder(paymentMethod, orderItem, orderId) {
 	const payload = {
+		orderItems: [orderItem],
 		paymentMethod,
-		total,
+		subtotal: orderItem.finalPrice,
+		total: orderItem.finalPrice,
 	};
 
 	return axios.patch(`${DeliveryAPI}/v1.0/orders/${orderId}`, payload);

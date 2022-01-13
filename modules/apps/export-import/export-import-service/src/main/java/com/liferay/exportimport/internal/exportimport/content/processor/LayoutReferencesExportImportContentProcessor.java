@@ -320,19 +320,17 @@ public class LayoutReferencesExportImportContentProcessor
 					url = url.substring(pathContext.length());
 				}
 
-				if (!url.startsWith(StringPool.SLASH)) {
-					continue;
-				}
-
 				pos = url.indexOf(StringPool.SLASH, 1);
 
-				String localePath = StringPool.BLANK;
+				if (pos == -1) {
+					pos = url.length();
+				}
 
 				Locale locale = null;
 
-				if (pos != -1) {
-					localePath = url.substring(0, pos);
+				String localePath = url.substring(0, pos);
 
+				if (localePath.length() > 1) {
 					locale = LocaleUtil.fromLanguageId(
 						localePath.substring(1), true, false);
 				}
@@ -377,6 +375,10 @@ public class LayoutReferencesExportImportContentProcessor
 							}
 						}
 					}
+				}
+
+				if (!url.startsWith(StringPool.SLASH)) {
+					continue;
 				}
 
 				boolean privateLayout = false;
@@ -971,19 +973,17 @@ public class LayoutReferencesExportImportContentProcessor
 				url = url.substring(pathContext.length());
 			}
 
-			if (!url.startsWith(StringPool.SLASH)) {
-				continue;
-			}
-
 			int pos = url.indexOf(StringPool.SLASH, 1);
 
-			String localePath = StringPool.BLANK;
+			if (pos == -1) {
+				pos = url.length();
+			}
 
 			Locale locale = null;
 
-			if (pos != -1) {
-				localePath = url.substring(0, pos);
+			String localePath = url.substring(0, pos);
 
+			if (localePath.length() > 1) {
 				locale = LocaleUtil.fromLanguageId(
 					localePath.substring(1), true, false);
 			}
@@ -1022,6 +1022,10 @@ public class LayoutReferencesExportImportContentProcessor
 						}
 					}
 				}
+			}
+
+			if (!url.startsWith(StringPool.SLASH)) {
+				continue;
 			}
 
 			boolean privateLayout = false;

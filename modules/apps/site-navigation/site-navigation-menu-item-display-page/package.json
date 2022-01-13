@@ -1,9 +1,15 @@
 {
+	"dependencies": {
+		"@clayui/button": "3.40.0",
+		"@clayui/form": "3.42.0",
+		"@clayui/icon": "3.40.0",
+		"@clayui/localized-input": "3.43.0"
+	},
 	"name": "@liferay/site-navigation-menu-item-display-page",
 	"scripts": {
 		"build": "liferay-npm-scripts build",
 		"checkFormat": "liferay-npm-scripts check",
 		"format": "liferay-npm-scripts fix"
 	},
-	"version": "1.0.20"
+	"version": "1.0.23"
 }

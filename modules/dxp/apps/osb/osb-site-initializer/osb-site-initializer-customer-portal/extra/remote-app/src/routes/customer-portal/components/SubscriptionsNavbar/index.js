@@ -1,56 +1,41 @@
-import {useQuery} from '@apollo/client';
-import React, {useEffect, useState} from 'react';
-import {getAccountSubscriptionGroups} from '../../../../common/services/liferay/graphql/queries';
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
 
-const SubscriptionsNavbar = ({accountKey, setSelectedSubscriptionGroup}) => {
-	const [subscriptionsTags, setSubscriptionsTags] = useState(() => []);
+import React, {useEffect} from 'react';
 
-	const {
-		data: accountSubscriptions,
-		loading: isAccountSubscriptionsLoading,
-	} = useQuery(getAccountSubscriptionGroups, {
-		variables: {
-			filter: `accountKey eq '${accountKey}' and hasActivation eq true`,
-		},
-	});
-
+const SubscriptionsNavbar = ({
+	setSelectedSubscriptionGroup,
+	subscriptionGroups,
+}) => {
 	useEffect(() => {
-		if (accountSubscriptions) {
-			const accountSubsciptionsItems =
-				accountSubscriptions?.c?.accountSubscriptionGroups?.items || [];
-
-			setSubscriptionsTags(accountSubsciptionsItems);
-
-			if (accountSubsciptionsItems.length) {
-				setSelectedSubscriptionGroup(accountSubsciptionsItems[0]?.name);
-			}
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [accountSubscriptions, subscriptionsTags]);
+		setSelectedSubscriptionGroup(subscriptionGroups[0]?.name);
+	}, [setSelectedSubscriptionGroup, subscriptionGroups]);
 
 	return (
 		<div className="rounded-pill">
-			{!isAccountSubscriptionsLoading && (
-				<>
-					<nav className="my-4">
-						{subscriptionsTags &&
-							subscriptionsTags.map((tag) => (
-								<button
-									className="mr-2"
-									key={tag.name}
-									onClick={(event) =>
-										setSelectedSubscriptionGroup(
-											event.target.value
-										)
-									}
-									value={tag.name}
-								>
-									{tag.name}
-								</button>
-							))}
-					</nav>
-				</>
-			)}
+			<nav className="my-4 pt-2">
+				{subscriptionGroups &&
+					subscriptionGroups.map((tag) => (
+						<button
+							className="mr-2"
+							key={tag.name}
+							onClick={(event) =>
+								setSelectedSubscriptionGroup(event.target.value)
+							}
+							value={tag.name}
+						>
+							{tag.name}
+						</button>
+					))}
+			</nav>
 		</div>
 	);
 };

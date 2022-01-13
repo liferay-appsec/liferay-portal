@@ -59,7 +59,8 @@ public class SXPBlueprintLocalServiceImpl
 	public SXPBlueprint addSXPBlueprint(
 			long userId, String configurationJSON,
 			Map<Locale, String> descriptionMap, String elementInstancesJSON,
-			Map<Locale, String> titleMap, ServiceContext serviceContext)
+			String schemaVersion, Map<Locale, String> titleMap,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_validate(configurationJSON, titleMap, serviceContext);
@@ -76,6 +77,7 @@ public class SXPBlueprintLocalServiceImpl
 		sxpBlueprint.setConfigurationJSON(configurationJSON);
 		sxpBlueprint.setDescriptionMap(descriptionMap);
 		sxpBlueprint.setElementInstancesJSON(elementInstancesJSON);
+		sxpBlueprint.setSchemaVersion(schemaVersion);
 		sxpBlueprint.setTitleMap(titleMap);
 		sxpBlueprint.setStatus(WorkflowConstants.STATUS_DRAFT);
 		sxpBlueprint.setStatusByUserId(user.getUserId());
@@ -168,7 +170,8 @@ public class SXPBlueprintLocalServiceImpl
 	public SXPBlueprint updateSXPBlueprint(
 			long userId, long sxpBlueprintId, String configurationJSON,
 			Map<Locale, String> descriptionMap, String elementInstancesJSON,
-			Map<Locale, String> titleMap, ServiceContext serviceContext)
+			String schemaVersion, Map<Locale, String> titleMap,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_validate(configurationJSON, titleMap, serviceContext);

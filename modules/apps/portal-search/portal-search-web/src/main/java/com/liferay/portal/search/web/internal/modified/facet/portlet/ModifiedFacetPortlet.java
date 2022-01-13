@@ -39,8 +39,6 @@ import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchRe
 
 import java.io.IOException;
 
-import java.util.Optional;
-
 import javax.portlet.Portlet;
 import javax.portlet.PortletException;
 import javax.portlet.RenderRequest;
@@ -90,7 +88,7 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 			portletSharedSearchRequest.search(renderRequest);
 
 		ModifiedFacetDisplayContext modifiedFacetDisplayContext =
-			buildDisplayContext(portletSharedSearchResponse, renderRequest);
+			_buildDisplayContext(portletSharedSearchResponse, renderRequest);
 
 		if (modifiedFacetDisplayContext.isRenderNothing()) {
 			renderRequest.setAttribute(
@@ -103,7 +101,22 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		super.render(renderRequest, renderResponse);
 	}
 
-	protected ModifiedFacetDisplayContext buildDisplayContext(
+	protected CalendarFactory calendarFactory;
+	protected DateFormatFactory dateFormatFactory;
+
+	@Reference
+	protected Http http;
+
+	@Reference
+	protected ModifiedFacetFactory modifiedFacetFactory;
+
+	@Reference
+	protected Portal portal;
+
+	@Reference
+	protected PortletSharedSearchRequest portletSharedSearchRequest;
+
+	private ModifiedFacetDisplayContext _buildDisplayContext(
 		PortletSharedSearchResponse portletSharedSearchResponse,
 		RenderRequest renderRequest) {
 
@@ -113,21 +126,21 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 					renderRequest));
 
 		ModifiedFacetDisplayBuilder modifiedFacetDisplayBuilder =
-			createModifiedFacetDisplayBuilder(
-				getCalendarFactory(), getDateFormatFactory(), http,
+			_createModifiedFacetDisplayBuilder(
+				_getCalendarFactory(), _getDateFormatFactory(), http,
 				renderRequest);
 
 		modifiedFacetDisplayBuilder.setCurrentURL(
 			portal.getCurrentURL(renderRequest));
 		modifiedFacetDisplayBuilder.setFacet(
-			portletSharedSearchResponse.getFacet(getFieldName()));
+			portletSharedSearchResponse.getFacet(_getFieldName()));
 
-		ThemeDisplay themeDisplay = getThemeDisplay(renderRequest);
+		ThemeDisplay themeDisplay = _getThemeDisplay(renderRequest);
 
 		modifiedFacetDisplayBuilder.setLocale(themeDisplay.getLocale());
 
 		modifiedFacetDisplayBuilder.setPaginationStartParameterName(
-			getPaginationStartParameterName(portletSharedSearchResponse));
+			_getPaginationStartParameterName(portletSharedSearchResponse));
 
 		String parameterName =
 			modifiedFacetPortletPreferences.getParameterName();
@@ -158,7 +171,7 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		return modifiedFacetDisplayBuilder.build();
 	}
 
-	protected ModifiedFacetDisplayBuilder createModifiedFacetDisplayBuilder(
+	private ModifiedFacetDisplayBuilder _createModifiedFacetDisplayBuilder(
 		CalendarFactory calendarFactory, DateFormatFactory dateFormatFactory,
 		Http http, RenderRequest renderRequest) {
 
@@ -171,7 +184,7 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		}
 	}
 
-	protected CalendarFactory getCalendarFactory() {
+	private CalendarFactory _getCalendarFactory() {
 
 		// See LPS-72507 and LPS-76500
 
@@ -182,7 +195,7 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		return CalendarFactoryUtil.getCalendarFactory();
 	}
 
-	protected DateFormatFactory getDateFormatFactory() {
+	private DateFormatFactory _getDateFormatFactory() {
 
 		// See LPS-72507 and LPS-76500
 
@@ -193,13 +206,13 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		return DateFormatFactoryUtil.getDateFormatFactory();
 	}
 
-	protected String getFieldName() {
+	private String _getFieldName() {
 		Facet facet = modifiedFacetFactory.newInstance(null);
 
 		return facet.getFieldName();
 	}
 
-	protected String getPaginationStartParameterName(
+	private String _getPaginationStartParameterName(
 		PortletSharedSearchResponse portletSharedSearchResponse) {
 
 		SearchResponse searchResponse =
@@ -210,33 +223,11 @@ public class ModifiedFacetPortlet extends MVCPortlet {
 		return searchRequest.getPaginationStartParameterName();
 	}
 
-	protected ModifiedFacetPortletPreferencesImpl getPortletPreferences(
-		RenderRequest renderRequest) {
-
-		return new ModifiedFacetPortletPreferencesImpl(
-			Optional.ofNullable(renderRequest.getPreferences()));
-	}
-
-	protected ThemeDisplay getThemeDisplay(RenderRequest renderRequest) {
+	private ThemeDisplay _getThemeDisplay(RenderRequest renderRequest) {
 		ThemeDisplaySupplier themeDisplaySupplier =
 			new PortletRequestThemeDisplaySupplier(renderRequest);
 
 		return themeDisplaySupplier.getThemeDisplay();
 	}
-
-	protected CalendarFactory calendarFactory;
-	protected DateFormatFactory dateFormatFactory;
-
-	@Reference
-	protected Http http;
-
-	@Reference
-	protected ModifiedFacetFactory modifiedFacetFactory;
-
-	@Reference
-	protected Portal portal;
-
-	@Reference
-	protected PortletSharedSearchRequest portletSharedSearchRequest;
 
 }

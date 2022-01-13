@@ -2,16 +2,6 @@ html#{$cadmin-selector} {
 	.lfr-simulation-device {
 		background-color: rgba(255, 255, 255, 0.95);
 
-		&--prevent-events {
-			.lfr-device {
-				cursor: not-allowed;
-			}
-
-			iframe#simulationDeviceIframe {
-				pointer-events: none;
-			}
-		}
-
 		.lfr-device-size-status-content {
 			border-radius: 3px;
 			box-shadow: 0 0 1px #fff;
@@ -19,6 +9,16 @@ html#{$cadmin-selector} {
 		}
 
 		.lfr-device {
+			opacity: 1;
+			pointer-events: all;
+			visibility: visible;
+
+			&.lfr-device--is-navigating {
+				opacity: 0;
+				pointer-events: none;
+				visibility: hidden;
+			}
+
 			&:after,
 			&:before {
 				box-shadow: #111 0 1px 0;
@@ -47,6 +47,17 @@ html#{$cadmin-selector} {
 			}
 		}
 
+		.loading-animation-simulation-device {
+			align-items: center;
+			display: flex;
+			height: 100%;
+			justify-content: center;
+			left: 0;
+			position: absolute;
+			top: 0;
+			width: 100%;
+		}
+
 		.modal-dialog {
 			max-width: none;
 
@@ -70,8 +81,74 @@ html#{$cadmin-selector} {
 		}
 
 		&.smartphone,
-		&.tablet {
+		&.tablet,
+		&.desktop {
 			background: #333;
+		}
+
+		&.smartphone,
+		&.tablet,
+		&.desktop,
+		&.custom {
+			.modal-body.dialog-iframe-bd {
+				margin-top: 0;
+			}
+		}
+
+		&.desktop {
+			border-radius: 16px;
+			padding: 24px;
+		}
+
+		&.custom,
+		&.resizable-device {
+			background-color: var(--btn-outline-primary-hover-border-color);
+			padding: 2px;
+
+			&.show {
+				overflow: visible;
+
+				.yui3-resize-handle {
+					display: none;
+
+					&-tl,
+					&-tr,
+					&-bl,
+					&-br {
+						display: block;
+					}
+				}
+
+				.yui3-resize-handle-inner {
+					&-tl,
+					&-tr,
+					&-bl,
+					&-br {
+						background-image: url(/o/frontend-js-aui-web/aui/resize-base/assets/skins/sam/arrows.png);
+						background-repeat: no-repeat;
+						display: block;
+						height: 15px;
+						overflow: hidden;
+						text-indent: -99999em;
+						width: 15px;
+					}
+
+					&-bl {
+						bottom: 0;
+						right: -18px;
+					}
+
+					&-tl {
+						bottom: -15px;
+						right: -18px;
+					}
+
+					&-tr {
+						bottom: -15px;
+						right: 0;
+					}
+				}
+			}
 		}
 	}
 }

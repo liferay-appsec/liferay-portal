@@ -88,7 +88,7 @@ public class DeletionSystemEventExporter {
 					new StagedModelType(Layout.class));
 			}
 
-			exportedSystemEventIds = doExportDeletionSystemEvents(
+			exportedSystemEventIds = _exportDeletionSystemEvents(
 				portletDataContext, rootElement,
 				deletionSystemEventStagedModelTypes);
 		}
@@ -189,35 +189,10 @@ public class DeletionSystemEventExporter {
 		}
 	}
 
-	protected List<Long> doExportDeletionSystemEvents(
-			PortletDataContext portletDataContext, Element rootElement,
-			Set<StagedModelType> deletionSystemEventStagedModelTypes)
-		throws PortalException {
-
-		List<Long> systemEventIds = new ArrayList<>();
-
-		ActionableDynamicQuery actionableDynamicQuery =
-			SystemEventLocalServiceUtil.getActionableDynamicQuery();
-
-		actionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> doAddCriteria(
-				portletDataContext, deletionSystemEventStagedModelTypes,
-				dynamicQuery));
-		actionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
-		actionableDynamicQuery.setPerformActionMethod(
-			(SystemEvent systemEvent) -> {
-				exportDeletionSystemEvent(
-					portletDataContext, systemEvent, rootElement);
-
-				systemEventIds.add(systemEvent.getSystemEventId());
-			});
-
-		actionableDynamicQuery.performActions();
-
-		return systemEventIds;
+	private DeletionSystemEventExporter() {
 	}
 
-	protected void exportDeletionSystemEvent(
+	private void _exportDeletionSystemEvent(
 		PortletDataContext portletDataContext, SystemEvent systemEvent,
 		Element deletionSystemEventsElement) {
 
@@ -290,7 +265,32 @@ public class DeletionSystemEventExporter {
 				systemEvent.getReferrerClassNameId()));
 	}
 
-	private DeletionSystemEventExporter() {
+	private List<Long> _exportDeletionSystemEvents(
+			PortletDataContext portletDataContext, Element rootElement,
+			Set<StagedModelType> deletionSystemEventStagedModelTypes)
+		throws Exception {
+
+		List<Long> systemEventIds = new ArrayList<>();
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			SystemEventLocalServiceUtil.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> doAddCriteria(
+				portletDataContext, deletionSystemEventStagedModelTypes,
+				dynamicQuery));
+		actionableDynamicQuery.setCompanyId(portletDataContext.getCompanyId());
+		actionableDynamicQuery.setPerformActionMethod(
+			(SystemEvent systemEvent) -> {
+				_exportDeletionSystemEvent(
+					portletDataContext, systemEvent, rootElement);
+
+				systemEventIds.add(systemEvent.getSystemEventId());
+			});
+
+		actionableDynamicQuery.performActions();
+
+		return systemEventIds;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -952,6 +952,10 @@ public class JenkinsResultsParserUtil {
 
 				urlString = urlString.replaceAll("\\+", "%20");
 
+				urlString = urlString.replaceAll("%21", "!");
+				urlString = urlString.replaceAll("%25", "%");
+				urlString = urlString.replaceAll("%2B", "+");
+
 				return urlString;
 			}
 			catch (UnsupportedEncodingException unsupportedEncodingException) {
@@ -981,12 +985,20 @@ public class JenkinsResultsParserUtil {
 			try {
 				String queryParameterValue = matcher.group(2);
 
-				queryParameterValue = queryParameterValue.replaceAll(
-					"\\+", " ");
+				queryParameterValue = URLEncoder.encode(
+					queryParameterValue, StandardCharsets.UTF_8.name());
 
-				sb.append(
-					URLEncoder.encode(
-						queryParameterValue, StandardCharsets.UTF_8.name()));
+				queryParameterValue = queryParameterValue.replaceAll(
+					"\\+", "%20");
+
+				queryParameterValue = queryParameterValue.replaceAll(
+					"%21", "!");
+				queryParameterValue = queryParameterValue.replaceAll(
+					"%25", "%");
+				queryParameterValue = queryParameterValue.replaceAll(
+					"%2B", "+");
+
+				sb.append(queryParameterValue);
 			}
 			catch (UnsupportedEncodingException unsupportedEncodingException) {
 				throw new RuntimeException(unsupportedEncodingException);
@@ -1481,6 +1493,10 @@ public class JenkinsResultsParserUtil {
 		}
 
 		return cacheFile.length();
+	}
+
+	public static File getCanonicalFile(File file) {
+		return new File(getCanonicalPath(file));
 	}
 
 	public static String getCanonicalPath(File file) {
@@ -2499,7 +2515,8 @@ public class JenkinsResultsParserUtil {
 	}
 
 	public static String getPropertyName(
-		Properties properties, String basePropertyName, String... opts) {
+		Properties properties, boolean useBasePropertyName,
+		String basePropertyName, String... opts) {
 
 		if ((opts == null) || (opts.length == 0)) {
 			return basePropertyName;
@@ -2577,7 +2594,17 @@ public class JenkinsResultsParserUtil {
 			return propertyName;
 		}
 
-		return basePropertyName;
+		if (useBasePropertyName) {
+			return basePropertyName;
+		}
+
+		return null;
+	}
+
+	public static String getPropertyName(
+		Properties properties, String basePropertyName, String... opts) {
+
+		return getPropertyName(properties, true, basePropertyName, opts);
 	}
 
 	public static List<String> getPropertyOptions(String propertyName) {

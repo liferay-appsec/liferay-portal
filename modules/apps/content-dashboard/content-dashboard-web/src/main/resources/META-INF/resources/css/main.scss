@@ -70,6 +70,28 @@ html#{$cadmin-selector} {
 			opacity: 1;
 		}
 
+		// Table
+
+		.table-autofit {
+			.lfr-small-column {
+				max-width: 110px;
+			}
+
+			.lfr-title-column {
+				max-width: 170px;
+				min-width: 170px;
+			}
+		}
+
+		.category-label {
+			max-width: 90px;
+		}
+
+		.category-label-see-more {
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
 		// Sidebar
 
 		.loading-indicator-wrapper {
@@ -171,6 +193,19 @@ html#{$cadmin-selector} {
 
 		.sidebar-wrapper {
 			padding-right: $sidebarWidth;
+		}
+	}
+
+	.categories-popover {
+		max-width: 264px;
+
+		.popover-body {
+			max-height: 172px;
+			overflow-y: auto;
+		}
+
+		.label {
+			margin: 0 8px 8px 0;
 		}
 	}
 }

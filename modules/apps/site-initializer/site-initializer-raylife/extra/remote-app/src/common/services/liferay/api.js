@@ -1,57 +1,27 @@
-import baseAxios from 'axios';
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
+import _axios from 'axios';
+import {Liferay} from '../../utils/liferay';
 
 const {REACT_APP_LIFERAY_API = window.location.origin} = process.env;
 
-/**
- * @returns {string} Liferay Authentication Token
- */
-export function getLiferayAuthenticationToken() {
-	try {
-		// eslint-disable-next-line no-undef
-		const token = Liferay.authToken;
-
-		return token;
-	}
-	catch (error) {
-		console.warn('Not able to find Liferay auth token\n', error);
-
-		return '';
-	}
-}
-
-const baseFetch = async (url, {body, method = 'GET'} = {}) => {
-	const liferayAPIUrl = new URL(`${REACT_APP_LIFERAY_API}/${url}`);
-
-	// eslint-disable-next-line @liferay/portal/no-global-fetch
-	const response = await fetch(liferayAPIUrl, {
-		...(body && {body: JSON.stringify(body)}),
-		headers: {
-			'Content-Type': 'application/json',
-			'x-csrf-token': getLiferayAuthenticationToken(),
-		},
-		method,
-	});
-
-	const data = await response.json();
-
-	return {data};
-};
-
-const LiferayFetchAPI = {
-	delete: (url) => baseFetch(url, {method: 'DELETE'}),
-	get: (url) => baseFetch(url),
-	patch: (url, options) => baseFetch(url, {...options, method: 'PATCH'}),
-	post: (url, options) => baseFetch(url, {...options, method: 'POST'}),
-	put: (url, options) => baseFetch(url, {...options, method: 'PUT'}),
-};
-
-const axios = baseAxios.create({
+const axios = _axios.create({
 	baseURL: REACT_APP_LIFERAY_API,
 	headers: {
-		'x-csrf-token': getLiferayAuthenticationToken(),
+		'x-csrf-token': Liferay.authToken,
 	},
 });
 
-export {REACT_APP_LIFERAY_API, axios};
-
-export default LiferayFetchAPI;
+export {axios};

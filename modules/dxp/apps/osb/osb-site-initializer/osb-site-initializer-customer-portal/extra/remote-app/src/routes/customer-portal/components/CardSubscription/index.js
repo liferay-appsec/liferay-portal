@@ -1,3 +1,14 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 import {useModal} from '@clayui/modal';
 import {useState} from 'react';
 import getDateCustomFormat from '../../utils/dateCustomFormat';
@@ -37,10 +48,10 @@ const CardSubscription = ({
 				/>
 			)}
 			<div
-				className="card-subscription mr-4"
+				className="card-subscription d-flex mr-4"
 				onClick={() => setVisible(true)}
 			>
-				<div className="card-body">
+				<div className="align-self-center d-flex flex-column mx-auto pb-4 pt-3 px-4">
 					<div
 						className="d-flex head-text justify-content-center mb-1 row"
 						type="text"

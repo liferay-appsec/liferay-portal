@@ -23,8 +23,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.framework.ThrowableCollector;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.IOException;
@@ -248,18 +251,20 @@ public abstract class BaseDBProcess implements DBProcess {
 			String exceptionMessage)
 		throws Exception {
 
-		try (Statement statement = connection.createStatement();
-			ResultSet resultSet = statement.executeQuery(sqlQuery)) {
+		try (Statement statement = connection.createStatement()) {
+			statement.setFetchSize(_UPGRADE_CONCURRENT_FETCH_SIZE);
 
-			_processConcurrently(
-				() -> {
-					if (resultSet.next()) {
-						return unsafeFunction.apply(resultSet);
-					}
+			try (ResultSet resultSet = statement.executeQuery(sqlQuery)) {
+				_processConcurrently(
+					() -> {
+						if (resultSet.next()) {
+							return unsafeFunction.apply(resultSet);
+						}
 
-					return null;
-				},
-				unsafeConsumer, exceptionMessage);
+						return null;
+					},
+					unsafeConsumer, exceptionMessage);
+			}
 		}
 	}
 
@@ -322,6 +327,16 @@ public abstract class BaseDBProcess implements DBProcess {
 						return null;
 					});
 
+				if (futures.size() >=
+						_UPGRADE_CONCURRENT_PROCESS_FUTURE_LIST_MAX_SIZE) {
+
+					for (Future<Void> curFuture : futures) {
+						curFuture.get();
+					}
+
+					futures.clear();
+				}
+
 				futures.add(future);
 			}
 		}
@@ -343,6 +358,15 @@ public abstract class BaseDBProcess implements DBProcess {
 			ReflectionUtil.throwException(throwable);
 		}
 	}
+
+	private static final int _UPGRADE_CONCURRENT_FETCH_SIZE =
+		GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.UPGRADE_CONCURRENT_FETCH_SIZE));
+
+	private static final int _UPGRADE_CONCURRENT_PROCESS_FUTURE_LIST_MAX_SIZE =
+		GetterUtil.getInteger(
+			PropsUtil.get(
+				PropsKeys.UPGRADE_CONCURRENT_PROCESS_FUTURE_LIST_MAX_SIZE));
 
 	private static final Log _log = LogFactoryUtil.getLog(BaseDBProcess.class);
 

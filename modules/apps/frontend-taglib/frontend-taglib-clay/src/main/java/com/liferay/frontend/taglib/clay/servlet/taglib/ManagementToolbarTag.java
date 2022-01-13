@@ -14,6 +14,7 @@
 
 package com.liferay.frontend.taglib.clay.servlet.taglib;
 
+import com.liferay.frontend.taglib.clay.internal.configuration.FFManagementToolbarConfigurationUtil;
 import com.liferay.frontend.taglib.clay.internal.servlet.taglib.BaseContainerTag;
 import com.liferay.frontend.taglib.clay.internal.servlet.taglib.display.context.ManagementToolbarDefaults;
 import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.ManagementToolbarDisplayContext;
@@ -657,6 +658,9 @@ public class ManagementToolbarTag extends BaseContainerTag {
 		props.put("selectAllURL", getSelectAllURL());
 		props.put("selectable", isSelectable());
 		props.put("showCreationMenu", isShowCreationMenu());
+		props.put(
+			"showDesignImprovementsFF",
+			FFManagementToolbarConfigurationUtil.showDesignImprovements());
 		props.put("showInfoButton", isShowInfoButton());
 		props.put("showResultsBar", isShowResultsBar());
 		props.put("showSearch", isShowSearch());
@@ -1007,7 +1011,10 @@ public class ManagementToolbarTag extends BaseContainerTag {
 
 			jspWriter.write("</button></li>");
 
-			if (isShowInfoButton()) {
+			if (!FFManagementToolbarConfigurationUtil.
+					showDesignImprovements() &&
+				isShowInfoButton()) {
+
 				jspWriter.write("<li class=\"nav-item\"><button class=\"");
 				jspWriter.write(" nav-link nav-link-monospaced btn");
 				jspWriter.write(" btn-monospaced btn-unstyled\" type=\"button");
@@ -1055,6 +1062,23 @@ public class ManagementToolbarTag extends BaseContainerTag {
 				linkTag.doTag(pageContext);
 
 				jspWriter.write("</li>");
+			}
+
+			if (FFManagementToolbarConfigurationUtil.showDesignImprovements() &&
+				isShowInfoButton()) {
+
+				jspWriter.write("<li class=\"nav-item\"><button class=\"");
+				jspWriter.write(" nav-link nav-link-monospaced btn");
+				jspWriter.write(" btn-monospaced btn-unstyled\" type=\"button");
+				jspWriter.write("\">");
+
+				iconTag = new IconTag();
+
+				iconTag.setSymbol("info-circle-open");
+
+				iconTag.doTag(pageContext);
+
+				jspWriter.write("</button></li>");
 			}
 
 			jspWriter.write("</ul>");

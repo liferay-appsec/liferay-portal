@@ -1,66 +1,73 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 import {
 	PRODUCTS,
 	SLA_NAMES,
-	WEB_CONTENTS,
 	WEB_CONTENTS_BY_LIFERAY_VERSION,
 } from './constants';
 
-const getDXPVersionWebContent = (dxpVersion) => {
-	if (dxpVersion) {
-		return WEB_CONTENTS_BY_LIFERAY_VERSION[dxpVersion];
-	}
-
-	return WEB_CONTENTS_BY_LIFERAY_VERSION['7.4'];
-};
-
-export function getWebContents(slaCurrentVersionAndProducts) {
-	const [slaCurrent, dxpVersion, ...products] = slaCurrentVersionAndProducts;
+export function getWebContents({dxpVersion, slaCurrent, subscriptionGroups}) {
 	const webContents = [];
 
 	if (
-		products.some(
-			(product) =>
-				product === PRODUCTS.dxp ||
-				product === PRODUCTS.portal ||
-				product === PRODUCTS.commerce
+		subscriptionGroups.some(
+			({name}) =>
+				name === PRODUCTS.dxp ||
+				name === PRODUCTS.portal ||
+				name === PRODUCTS.commerce
 		) ||
-		!products.some(
-			(product) => product === PRODUCTS.partnership || PRODUCTS.dxp_cloud
+		!subscriptionGroups.some(
+			({name}) =>
+				name === PRODUCTS.partnership || name === PRODUCTS.dxp_cloud
 		)
 	) {
-		webContents.push(WEB_CONTENTS['WEB-CONTENT-ACTION-01']);
+		webContents.push('WEB-CONTENT-ACTION-01');
 	}
 	if (
-		!products.some((product) => product === PRODUCTS.partnership) &&
+		!subscriptionGroups.some(({name}) => name === PRODUCTS.partnership) &&
 		slaCurrent !== SLA_NAMES.limited_subscription
 	) {
-		webContents.push(WEB_CONTENTS['WEB-CONTENT-ACTION-02']);
+		webContents.push('WEB-CONTENT-ACTION-02');
 	}
 	if (
-		products.some(
-			(product) =>
-				product === PRODUCTS.dxp || product === PRODUCTS.dxp_cloud
+		subscriptionGroups.some(
+			({name}) => name === PRODUCTS.dxp || name === PRODUCTS.dxp_cloud
 		)
 	) {
-		webContents.push(WEB_CONTENTS['WEB-CONTENT-ACTION-03']);
+		webContents.push('WEB-CONTENT-ACTION-03');
 	}
 	if (
-		products.some(
-			(product) =>
-				product === PRODUCTS.dxp || product === PRODUCTS.dxp_cloud
+		subscriptionGroups.some(
+			({name}) => name === PRODUCTS.dxp || name === PRODUCTS.dxp_cloud
 		)
 	) {
-		webContents.push(getDXPVersionWebContent(dxpVersion));
+		webContents.push(
+			dxpVersion
+				? WEB_CONTENTS_BY_LIFERAY_VERSION[dxpVersion]
+				: WEB_CONTENTS_BY_LIFERAY_VERSION['7.4']
+		);
 	}
 	if (
-		!products.some((product) => product === PRODUCTS.analytics_cloud) &&
-		(!products.some((product) => product === PRODUCTS.portal) ||
-			products.some(
-				(product) =>
-					product === PRODUCTS.dxp || product === PRODUCTS.dxp_cloud
-			))
+		!subscriptionGroups.some(
+			({name}) => name === PRODUCTS.analytics_cloud
+		) &&
+		(!subscriptionGroups.some(({name}) => name === PRODUCTS.portal) ||
+			(subscriptionGroups.some(({name}) => name === PRODUCTS.portal) &&
+				subscriptionGroups.some(
+					({name}) =>
+						name === PRODUCTS.dxp || name === PRODUCTS.dxp_cloud
+				)))
 	) {
-		webContents.push(WEB_CONTENTS['WEB-CONTENT-ACTION-09']);
+		webContents.push('WEB-CONTENT-ACTION-09');
 	}
 
 	return webContents;

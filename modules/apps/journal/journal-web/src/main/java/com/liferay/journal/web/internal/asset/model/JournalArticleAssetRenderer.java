@@ -404,7 +404,7 @@ public class JournalArticleAssetRenderer
 		}
 
 		if (!_isShowDisplayPage(themeDisplay.getScopeGroupId(), _article)) {
-			return getHitLayoutURL(noSuchEntryRedirect, themeDisplay);
+			return _getHitLayoutURL(noSuchEntryRedirect, themeDisplay);
 		}
 
 		if (_assetDisplayPageFriendlyURLProvider != null) {
@@ -486,7 +486,7 @@ public class JournalArticleAssetRenderer
 
 		httpServletRequest.setAttribute(
 			WebKeys.JOURNAL_ARTICLE_DISPLAY,
-			getArticleDisplay(httpServletRequest, httpServletResponse));
+			_getArticleDisplay(httpServletRequest));
 
 		return super.include(httpServletRequest, httpServletResponse, template);
 	}
@@ -547,10 +547,9 @@ public class JournalArticleAssetRenderer
 		_journalConverter = journalConverter;
 	}
 
-	protected JournalArticleDisplay getArticleDisplay(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws PortalException {
+	private JournalArticleDisplay _getArticleDisplay(
+			HttpServletRequest httpServletRequest)
+		throws Exception {
 
 		boolean workflowAssetPreview = GetterUtil.getBoolean(
 			httpServletRequest.getAttribute(WebKeys.WORKFLOW_ASSET_PREVIEW));
@@ -583,8 +582,8 @@ public class JournalArticleAssetRenderer
 		}
 
 		int articlePage = ParamUtil.getInteger(httpServletRequest, "page", 1);
-		PortletRequestModel portletRequestModel = getPortletRequestModel(
-			httpServletRequest, httpServletResponse);
+		PortletRequestModel portletRequestModel = _getPortletRequestModel(
+			httpServletRequest);
 
 		if (!workflowAssetPreview && _article.isApproved()) {
 			return _journalContent.getDisplay(
@@ -598,9 +597,9 @@ public class JournalArticleAssetRenderer
 			portletRequestModel, themeDisplay);
 	}
 
-	protected String getHitLayoutURL(
+	private String _getHitLayoutURL(
 			String noSuchEntryRedirect, ThemeDisplay themeDisplay)
-		throws PortalException {
+		throws Exception {
 
 		List<LayoutClassedModelUsage> layoutClassedModelUsages =
 			LayoutClassedModelUsageLocalServiceUtil.getLayoutClassedModelUsages(
@@ -625,9 +624,8 @@ public class JournalArticleAssetRenderer
 		return noSuchEntryRedirect;
 	}
 
-	protected PortletRequestModel getPortletRequestModel(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
+	private PortletRequestModel _getPortletRequestModel(
+		HttpServletRequest httpServletRequest) {
 
 		PortletRequest portletRequest =
 			(PortletRequest)httpServletRequest.getAttribute(

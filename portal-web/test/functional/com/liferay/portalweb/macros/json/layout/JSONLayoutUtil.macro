@@ -12,6 +12,10 @@ definition {
 
 		var widget = JSONLayoutUtil._generateWidget(widgetName = "${widgetName}");
 
+		if (isSet(remoteAppEntryId)) {
+			var widget = StringUtil.replace("${widget}", "remoteAppEntryId", "${remoteAppEntryId}");
+		}
+
 		if (contains("${typeSettings}", "column-${column}=")) {
 			var typeSettings = StringUtil.regexReplaceFirst("${typeSettings}", "(column-${column}=[^%]*)", "$1,${widget}");
 		}
@@ -180,6 +184,9 @@ definition {
 		}
 		else if ("${widgetName}" == "User Statistics") {
 			var portletId = "com_liferay_social_user_statistics_web_portlet_SocialUserStatisticsPortlet";
+		}
+		else if ("${widgetName}" == "Vanilla Counter") {
+			var portletId = "com_liferay_remote_app_web_internal_portlet_RemoteAppEntryPortlet_remoteAppEntryId";
 		}
 		else if ("${widgetName}" == "Web Content Display") {
 			var portletId = "com_liferay_journal_content_web_portlet_JournalContentPortlet";

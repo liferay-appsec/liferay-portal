@@ -28,11 +28,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DecimalStyle;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -43,7 +45,10 @@ import org.osgi.service.component.annotations.Component;
  */
 @Component(
 	immediate = true,
-	property = "ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DATE,
+	property = {
+		"ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DATE,
+		"ddm.form.field.type.name=" + DDMFormFieldTypeConstants.DATE_TIME
+	},
 	service = {
 		DateDDMFormFieldValueRenderer.class, DDMFormFieldValueRenderer.class
 	}
@@ -63,22 +68,38 @@ public class DateDDMFormFieldValueRenderer
 			return StringPool.BLANK;
 		}
 
-		LocalDate localDate = DateParameterUtil.getLocalDate(valueString);
-
 		Locale locale = Optional.ofNullable(
 			LocaleThreadLocal.getThemeDisplayLocale()
 		).orElse(
 			defaultLocale
 		);
 
-		SimpleDateFormat simpleDateFormat =
-			(SimpleDateFormat)DateFormat.getDateInstance(
+		SimpleDateFormat simpleDateFormat = null;
+
+		boolean dateTime = Pattern.matches(
+			"^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{2}$", valueString);
+
+		if (dateTime) {
+			simpleDateFormat = (SimpleDateFormat)DateFormat.getDateTimeInstance(
+				DateFormat.SHORT, DateFormat.SHORT, locale);
+		}
+		else {
+			simpleDateFormat = (SimpleDateFormat)DateFormat.getDateInstance(
 				DateFormat.SHORT, locale);
+		}
 
 		String pattern = simpleDateFormat.toPattern();
 
 		if (StringUtils.countMatches(pattern, "d") == 1) {
 			pattern = StringUtil.replace(pattern, 'd', "dd");
+		}
+
+		if (StringUtils.countMatches(pattern, "h") == 1) {
+			pattern = StringUtil.replace(pattern, 'h', "hh");
+		}
+
+		if (StringUtils.countMatches(pattern, "H") == 1) {
+			pattern = StringUtil.replace(pattern, 'H', "HH");
 		}
 
 		if (StringUtils.countMatches(pattern, "M") == 1) {
@@ -91,6 +112,16 @@ public class DateDDMFormFieldValueRenderer
 
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
 			pattern, locale);
+
+		if (dateTime) {
+			LocalDateTime localDateTime = DateParameterUtil.getLocalDateTime(
+				valueString);
+
+			return localDateTime.format(
+				dateTimeFormatter.withDecimalStyle(DecimalStyle.of(locale)));
+		}
+
+		LocalDate localDate = DateParameterUtil.getLocalDate(valueString);
 
 		return localDate.format(
 			dateTimeFormatter.withDecimalStyle(DecimalStyle.of(locale)));

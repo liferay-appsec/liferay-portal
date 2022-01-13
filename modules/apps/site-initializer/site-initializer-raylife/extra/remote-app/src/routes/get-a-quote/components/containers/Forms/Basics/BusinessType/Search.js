@@ -1,29 +1,48 @@
-import ClayButton from '@clayui/button';
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
 
+import ClayButton from '@clayui/button';
+import classNames from 'classnames';
 import React, {useEffect, useState} from 'react';
 import {useFormContext} from 'react-hook-form';
 import {WarningBadge} from '../../../../../../../common/components/fragments/Badges/Warning';
+import {MoreInfoButton} from '../../../../../../../common/components/fragments/Buttons/MoreInfo';
 import {SearchInput} from '../../../../../../../common/components/fragments/Forms/Input/Search';
 import {useDebounce} from '../../../../../../../common/hooks/useDebounce';
 import {calculatePercentage} from '../../../../../../../common/utils';
+import {TIP_EVENT} from '../../../../../../../common/utils/events';
 import {useStepWizard} from '../../../../../hooks/useStepWizard';
+import {useTriggerContext} from '../../../../../hooks/useTriggerContext';
 import {getTaxonomyCategories} from '../../../../../services/TaxonomyVolucabularies';
 import {AVAILABLE_STEPS, TOTAL_OF_FIELD} from '../../../../../utils/constants';
 import {getLoadedContentFlag, truncateSearch} from '../../../../../utils/util';
 import BusinessTypeRadioGroup from './BusinessTypeRadioGroup';
 
-import InfoPanelButton from './InfoPanelButton';
+const templateName = 'i-am-unable-to-find-my-industry';
 
 const MAX_LENGTH_TO_TRUNCATE = 18;
 
 export function BusinessTypeSearch({
 	form,
+	isMobileDevice = false,
 	setNewSelectedProduct,
 	taxonomyVocabularyId,
 }) {
 	const [taxonomyCategories, setTaxonomyCategories] = useState([]);
 	const [error, setError] = useState();
 	const {register, setValue} = useFormContext();
+	const {isSelected, updateState} = useTriggerContext();
 
 	const {selectedStep, setPercentage} = useStepWizard();
 	const [isLoading, setIsLoading] = useState(false);
@@ -95,8 +114,12 @@ export function BusinessTypeSearch({
 		<>
 			<div className="mb-5">
 				<SearchInput
-					className="bg-neutral-1 font-weight-bold px-4 py-0 search text-neutral-10 text-paragraph-lg"
+					className={classNames(
+						'bg-neutral-1 font-weight-bold px-4 py-0 search text-neutral-10 text-paragraph-lg',
+						{'pr-7': isMobileDevice}
+					)}
 					defaultValue=""
+					isMobileDevice={isMobileDevice}
 					label="Search for your primary industry and then select it from the list."
 					placeholder="Begin typing to show options..."
 					required
@@ -105,12 +128,14 @@ export function BusinessTypeSearch({
 							'Please, search for a business type in order to proceed.',
 					})}
 				>
-					<ClayButton
-						className="font-weight-bolder ml-3 search text-paragraph text-small-caps"
-						displayType="primary"
-					>
-						Search
-					</ClayButton>
+					{!isMobileDevice && (
+						<ClayButton
+							className="font-weight-bolder ml-3 search text-paragraph text-small-caps"
+							displayType="primary"
+						>
+							Search
+						</ClayButton>
+					)}
 				</SearchInput>
 
 				<p className="mt-1 paragraph">
@@ -138,7 +163,13 @@ export function BusinessTypeSearch({
 			{error && <WarningBadge>{error}</WarningBadge>}
 
 			{businessSearchDebounced && !isLoading && (
-				<InfoPanelButton selectedStep={selectedStep} />
+				<MoreInfoButton
+					callback={() => updateState(templateName)}
+					event={TIP_EVENT}
+					label="I am unable to find my industry"
+					selected={isSelected(templateName)}
+					value={{step: selectedStep, templateName}}
+				/>
 			)}
 		</>
 	);

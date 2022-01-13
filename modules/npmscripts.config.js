@@ -18,9 +18,9 @@ const CHECK_AND_FIX_GLOBS = [
 	'/{,dxp/}*.{js,ts}',
 	'/{,dxp/}apps/*/*/*.{js,ts,tsx}',
 	'/{,dxp/}apps/*/*/*/*.{js,ts,tsx}',
-	'/{,dxp/}apps/*/*/*/{src,test}/**/*.{js,scss,ts,tsx}',
+	'/{,dxp/}apps/*/*/*/{src,test,extra}/**/*.{js,scss,ts,tsx}',
 	'/{,dxp/}apps/*/*/*/{src}/**/*.{jsp,jspf}',
-	'/{,dxp/}apps/*/*/{src,test}/**/*.{js,scss,ts,tsx}',
+	'/{,dxp/}apps/*/*/{src,test,extra}/**/*.{js,scss,ts,tsx}',
 	'/{,dxp/}apps/*/*/{src}/**/*.{jsp,jspf}',
 ];
 
@@ -55,6 +55,9 @@ module.exports = {
 						'/': '*',
 					},
 					'@liferay/frontend-taglib': {
+						'/': '*',
+					},
+					'@liferay/layout-content-page-editor-web': {
 						'/': '*',
 					},
 					'@liferay/map-common': {

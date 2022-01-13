@@ -1,10 +1,20 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 import {useQuery} from '@apollo/client';
 import classNames from 'classnames';
 import {useState} from 'react';
 import {LiferayTheme} from '../../../../common/services/liferay';
 import {getKoroneikiAccounts} from '../../../../common/services/liferay/graphql/queries';
 import {PARAMS_KEYS} from '../../../../common/services/liferay/search-params';
-import Banner from '../../components/Banner';
 import ProjectCard from '../../components/ProjectCard';
 import SearchProject from '../../components/SearchProject';
 import {status} from '../../utils/constants';
@@ -48,7 +58,7 @@ const Home = ({userAccount}) => {
 	const koroneikiAccountsData = data?.c?.koroneikiAccounts?.items || [];
 
 	const nextPage = (project) => {
-		window.location.href = `${window.location.origin}${liferaySiteName}/overview?${PARAMS_KEYS.PROJECT_APPLICATION_EXTERNAL_REFERENCE_CODE}=${project.accountKey}`;
+		window.location.href = `${window.location.origin}/${liferaySiteName}/overview?${PARAMS_KEYS.PROJECT_APPLICATION_EXTERNAL_REFERENCE_CODE}=${project.accountKey}`;
 	};
 
 	const projects =
@@ -94,60 +104,65 @@ const Home = ({userAccount}) => {
 	const withManyProjects = projects.length > PROJECT_THRESHOLD_COUNT;
 
 	return (
-		<>
+		<div
+			className={classNames({
+				'mx-auto project-cards-container-sm': withManyProjects,
+				'project-cards-container': !withManyProjects,
+			})}
+		>
 			<div
-				className={classNames('mb-5 mt-5', {
-					'pb-2': withManyProjects,
+				className={classNames({
+					'd-flex flex-column w-100': withManyProjects,
+					'ml-3': !withManyProjects,
 				})}
 			>
-				<Banner userName={userAccount.name} />
-			</div>
-			<div
-				className={classNames('mx-auto', {
-					'col-5 mx-auto project-cards-container': withManyProjects,
-					'col-8 pl-6': !withManyProjects,
-				})}
-			>
-				<div className="d-flex flex-column w-100">
-					{withManyProjects && (
-						<div className="align-items-center d-flex justify-content-between mb-4 mr-5">
-							<SearchProject
-								onChange={setKeyword}
-								value={keyword}
-							/>
+				{withManyProjects && (
+					<div className="align-items-center d-flex justify-content-between mb-4">
+						<SearchProject onChange={setKeyword} value={keyword} />
 
-							<h5 className="m-0 text-neutral-7">
-								{projects.length} projects
-							</h5>
-						</div>
-					)}
+						<h5 className="m-0 text-neutral-7">
+							{keyword
+								? `${projectsFiltered.length} result${
+										projectsFiltered.length === 1 ? '' : 's'
+								  }`
+								: `${projects.length} project${
+										projects.length === 1 ? '' : 's'
+								  }`}
+						</h5>
+					</div>
+				)}
 
-					{!loading ? (
-						<div
-							className={classNames('d-flex flex-wrap', {
-								'home-projects': !withManyProjects,
-								'home-projects-sm pt-2': withManyProjects,
-							})}
-						>
-							{projectsFiltered.map((project, index) => (
+				{!loading ? (
+					<div
+						className={classNames('d-flex flex-wrap', {
+							'home-projects px-5': !withManyProjects,
+							'home-projects-sm pt-2': withManyProjects,
+						})}
+					>
+						{projectsFiltered.length ? (
+							projectsFiltered.map((project, index) => (
 								<ProjectCard
 									isSmall={withManyProjects}
 									key={index}
 									onClick={() => nextPage(project)}
 									{...project}
 								/>
-							))}
-						</div>
-					) : (
-						<div className="d-flex flex-wrap home-projects">
-							<ProjectCard.Skeleton />
+							))
+						) : (
+							<p className="mx-auto">
+								No projects match these criteria.
+							</p>
+						)}
+					</div>
+				) : (
+					<div className="d-flex flex-wrap home-projects">
+						<ProjectCard.Skeleton />
 
-							<ProjectCard.Skeleton />
-						</div>
-					)}
-				</div>
+						<ProjectCard.Skeleton />
+					</div>
+				)}
 			</div>
-		</>
+		</div>
 	);
 };
 

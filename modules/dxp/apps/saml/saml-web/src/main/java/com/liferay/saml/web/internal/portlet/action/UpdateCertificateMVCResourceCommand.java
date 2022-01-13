@@ -38,8 +38,6 @@ import com.liferay.saml.web.internal.upload.CertificateUploadResponseHandler;
 import com.liferay.saml.web.internal.util.SamlTempFileEntryUtil;
 import com.liferay.upload.UploadHandler;
 
-import java.io.IOException;
-
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
@@ -60,7 +58,37 @@ import org.osgi.service.component.annotations.Reference;
 public class UpdateCertificateMVCResourceCommand
 	extends BaseMVCResourceCommand {
 
-	protected void addTempFile(
+	@Override
+	protected void doServeResource(
+			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		PermissionChecker permissionChecker =
+			themeDisplay.getPermissionChecker();
+
+		if (!permissionChecker.isCompanyAdmin()) {
+			throw new PrincipalException();
+		}
+
+		String cmd = ParamUtil.get(
+			resourceRequest, Constants.CMD, Constants.GET_TEMP);
+
+		if (cmd.equals(Constants.ADD_TEMP)) {
+			_addTempFile(resourceRequest, resourceResponse);
+		}
+		else if (cmd.equals(Constants.DELETE_TEMP)) {
+			_deleteTempFile(resourceRequest, resourceResponse, themeDisplay);
+		}
+		else if (cmd.equals(Constants.GET_TEMP)) {
+			_includeTempFileName(
+				resourceRequest, resourceResponse, themeDisplay.getUser());
+		}
+	}
+
+	private void _addTempFile(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
@@ -70,7 +98,7 @@ public class UpdateCertificateMVCResourceCommand
 			resourceResponse);
 	}
 
-	protected void deleteTempFile(
+	private void _deleteTempFile(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse,
 			ThemeDisplay themeDisplay)
 		throws Exception {
@@ -103,40 +131,10 @@ public class UpdateCertificateMVCResourceCommand
 			resourceRequest, resourceResponse, jsonObject);
 	}
 
-	@Override
-	protected void doServeResource(
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		PermissionChecker permissionChecker =
-			themeDisplay.getPermissionChecker();
-
-		if (!permissionChecker.isCompanyAdmin()) {
-			throw new PrincipalException();
-		}
-
-		String cmd = ParamUtil.get(
-			resourceRequest, Constants.CMD, Constants.GET_TEMP);
-
-		if (cmd.equals(Constants.ADD_TEMP)) {
-			addTempFile(resourceRequest, resourceResponse);
-		}
-		else if (cmd.equals(Constants.DELETE_TEMP)) {
-			deleteTempFile(resourceRequest, resourceResponse, themeDisplay);
-		}
-		else if (cmd.equals(Constants.GET_TEMP)) {
-			includeTempFileName(
-				resourceRequest, resourceResponse, themeDisplay.getUser());
-		}
-	}
-
-	protected void includeTempFileName(
+	private void _includeTempFileName(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse,
 			User user)
-		throws IOException {
+		throws Exception {
 
 		String selectUploadedFile = ParamUtil.getString(
 			resourceRequest, "selectUploadedFile");

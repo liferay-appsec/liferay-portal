@@ -14,11 +14,14 @@
 
 package com.liferay.segments.web.internal.display.context;
 
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -31,9 +34,13 @@ import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsWebKeys;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperience;
+import com.liferay.segments.model.SegmentsExperiment;
+import com.liferay.segments.model.SegmentsExperimentRel;
+import com.liferay.segments.model.SegmentsExperimentRelTable;
 import com.liferay.segments.service.SegmentsEntryLocalServiceUtil;
 import com.liferay.segments.service.SegmentsExperienceLocalServiceUtil;
 import com.liferay.segments.service.SegmentsExperimentLocalServiceUtil;
+import com.liferay.segments.service.SegmentsExperimentRelLocalServiceUtil;
 
 import java.util.List;
 
@@ -57,13 +64,13 @@ public class SegmentsExperienceSelectorDisplayContext {
 		JSONArray segmentsExperiencesJSONArray =
 			JSONFactoryUtil.createJSONArray();
 
+		boolean addedDefault = false;
+
 		List<SegmentsExperience> segmentsExperiences =
 			SegmentsExperienceLocalServiceUtil.getSegmentsExperiences(
 				_themeDisplay.getScopeGroupId(),
 				PortalUtil.getClassNameId(Layout.class.getName()),
 				_themeDisplay.getPlid(), true);
-
-		boolean addedDefault = false;
 
 		for (SegmentsExperience segmentsExperience : segmentsExperiences) {
 			if ((segmentsExperience.getPriority() <
@@ -115,12 +122,11 @@ public class SegmentsExperienceSelectorDisplayContext {
 				_themeDisplay.getLocale());
 		}
 
-		SegmentsExperience controlSegmentsExperience =
-			SegmentsExperimentLocalServiceUtil.fetchControlSegmentExperience(
-				segmentsExperience);
+		SegmentsExperience parentSegmentsExperience =
+			_getParentSegmentExperience(segmentsExperience);
 
-		if (controlSegmentsExperience != null) {
-			segmentsExperience = controlSegmentsExperience;
+		if (parentSegmentsExperience != null) {
+			segmentsExperience = parentSegmentsExperience;
 		}
 
 		return segmentsExperience.getName(_themeDisplay.getLocale());
@@ -199,6 +205,42 @@ public class SegmentsExperienceSelectorDisplayContext {
 		return firstSegmentsExperienceJSONObject;
 	}
 
+	private SegmentsExperience _getParentSegmentExperience(
+		SegmentsExperience segmentsExperience) {
+
+		List<SegmentsExperimentRel> segmentsExperimentRels =
+			SegmentsExperimentRelLocalServiceUtil.dslQuery(
+				DSLQueryFactoryUtil.select(
+					SegmentsExperimentRelTable.INSTANCE
+				).from(
+					SegmentsExperimentRelTable.INSTANCE
+				).where(
+					SegmentsExperimentRelTable.INSTANCE.segmentsExperienceId.eq(
+						segmentsExperience.getSegmentsExperienceId())
+				));
+
+		if (segmentsExperimentRels.isEmpty()) {
+			return null;
+		}
+
+		SegmentsExperimentRel segmentsExperimentRel =
+			segmentsExperimentRels.get(0);
+
+		try {
+			SegmentsExperiment segmentsExperiment =
+				SegmentsExperimentLocalServiceUtil.getSegmentsExperiment(
+					segmentsExperimentRel.getSegmentsExperimentId());
+
+			return SegmentsExperienceLocalServiceUtil.getSegmentsExperience(
+				segmentsExperiment.getSegmentsExperienceId());
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+		}
+
+		return null;
+	}
+
 	private JSONObject _getSegmentsExperienceJSONObject(
 		SegmentsExperience segmentsExperience) {
 
@@ -231,6 +273,9 @@ public class SegmentsExperienceSelectorDisplayContext {
 				segmentsExperience.getSegmentsExperienceId())
 		);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SegmentsExperienceSelectorDisplayContext.class);
 
 	private final HttpServletRequest _httpServletRequest;
 	private final ThemeDisplay _themeDisplay;

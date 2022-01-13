@@ -20,13 +20,10 @@ import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidation;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
-import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.SetUtil;
 
-import java.util.Arrays;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -47,7 +44,7 @@ public class DDMFormTemplateContextFactoryHelperTest extends PowerMockito {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		setUpDDMFormTemplateContextFactoryHelper();
+		_setUpDDMFormTemplateContextFactoryHelper();
 	}
 
 	@Test
@@ -106,7 +103,7 @@ public class DDMFormTemplateContextFactoryHelperTest extends PowerMockito {
 			expectedEvaluableFieldNames, actualEvaluableFieldNames);
 	}
 
-	protected static void setUpDDMFormTemplateContextFactoryHelper()
+	private static void _setUpDDMFormTemplateContextFactoryHelper()
 		throws Exception {
 
 		DDMDataProviderInstance ddmDataProviderInstance = mock(
@@ -130,15 +127,6 @@ public class DDMFormTemplateContextFactoryHelperTest extends PowerMockito {
 
 		_ddmFormTemplateContextFactoryHelper =
 			new DDMFormTemplateContextFactoryHelper();
-	}
-
-	protected DDMFormRule createAutoFillDDMFormRule() {
-		return new DDMFormRule(
-			Arrays.asList(
-				StringBundler.concat(
-					"call('", _DATA_PROVIDER_INSTANCE_UUID,
-					"', 'input=Field1', 'Field2=output')")),
-			"not(equals(getValue('Field1'), 'Option'))");
 	}
 
 	private static final String _DATA_PROVIDER_INSTANCE_UUID =

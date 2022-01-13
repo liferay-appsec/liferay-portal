@@ -15,6 +15,7 @@ import ClayIcon from '@clayui/icon';
 import ClayList from '@clayui/list';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClaySticker from '@clayui/sticker';
+import {useIsMounted} from '@liferay/frontend-js-react-web';
 import getCN from 'classnames';
 import PropTypes from 'prop-types';
 import React, {
@@ -138,7 +139,7 @@ const SXPElementList = ({category, expand, onAddSXPElement, sxpElements}) => {
 function SXPElementSidebar({
 	emptyMessage = Liferay.Language.get('no-query-elements-found'),
 	onAddSXPElement,
-	onToggle,
+	onClose,
 	querySXPElements,
 	visible,
 }) {
@@ -245,7 +246,7 @@ function SXPElementSidebar({
 				<ClayButton
 					aria-label={Liferay.Language.get('close')}
 					displayType="unstyled"
-					onClick={() => onToggle(false)}
+					onClick={onClose}
 					small
 				>
 					<ClayIcon symbol="times" />
@@ -286,8 +287,15 @@ function SXPElementSidebar({
 	);
 }
 
-function AddSXPElementSidebar(props) {
+function AddSXPElementSidebar({
+	emptyMessage,
+	onAddSXPElement,
+	onClose,
+	visible,
+}) {
 	const {defaultLocale} = useContext(ThemeContext);
+	const isMounted = useIsMounted();
+
 	const [querySXPElements, setQuerySXPElements] = useState(null);
 
 	// TODO check pagesize
@@ -298,25 +306,34 @@ function AddSXPElementSidebar(props) {
 				pageSize: 200,
 			}),
 			{method: 'GET'},
-			(responseContent) =>
-				setQuerySXPElements(
-					responseContent.items.map(
-						({
-							description,
-							description_i18n,
-							title,
-							title_i18n,
-							...props
-						}) => ({
-							...props,
-							description_i18n: description_i18n || {
-								[defaultLocale]: description,
-							},
-							title_i18n: title_i18n || {[defaultLocale]: title},
-						})
-					)
-				),
-			() => setQuerySXPElements([])
+			(responseContent) => {
+				if (isMounted()) {
+					setQuerySXPElements(
+						responseContent.items.map(
+							({
+								description,
+								description_i18n,
+								title,
+								title_i18n,
+								...props
+							}) => ({
+								...props,
+								description_i18n: description_i18n || {
+									[defaultLocale]: description,
+								},
+								title_i18n: title_i18n || {
+									[defaultLocale]: title,
+								},
+							})
+						)
+					);
+				}
+			},
+			() => {
+				if (isMounted()) {
+					setQuerySXPElements([]);
+				}
+			}
 		);
 	}, []); //eslint-disable-line
 
@@ -324,13 +341,21 @@ function AddSXPElementSidebar(props) {
 		return null;
 	}
 
-	return <SXPElementSidebar querySXPElements={querySXPElements} {...props} />;
+	return (
+		<SXPElementSidebar
+			emptyMessage={emptyMessage}
+			onAddSXPElement={onAddSXPElement}
+			onClose={onClose}
+			querySXPElements={querySXPElements}
+			visible={visible}
+		/>
+	);
 }
 
 AddSXPElementSidebar.propTypes = {
 	emptyMessage: PropTypes.string,
 	onAddSXPElement: PropTypes.func,
-	onToggle: PropTypes.func,
+	onClose: PropTypes.func,
 	visible: PropTypes.bool,
 };
 

@@ -38,7 +38,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
-import com.liferay.portal.kernel.search.BaseModelSearchResult;
+import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchContextFactory;
@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.workflow.kaleo.forms.constants.KaleoFormsPortletKeys;
 import com.liferay.portal.workflow.kaleo.forms.constants.KaleoFormsWebKeys;
 import com.liferay.portal.workflow.kaleo.forms.model.KaleoProcess;
 import com.liferay.portal.workflow.kaleo.forms.service.permission.KaleoProcessPermission;
@@ -185,7 +186,7 @@ public class KaleoFormsViewRecordsDisplayContext {
 		List<DDMFormField> ddmFormFields = new ArrayList<>();
 
 		for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
-			if (isDDMFormFieldTransient(ddmFormField)) {
+			if (_isDDMFormFieldTransient(ddmFormField)) {
 				continue;
 			}
 
@@ -260,7 +261,7 @@ public class KaleoFormsViewRecordsDisplayContext {
 			navigationItem -> {
 				navigationItem.setActive(true);
 
-				ThemeDisplay themeDisplay = getThemeDisplay();
+				ThemeDisplay themeDisplay = _getThemeDisplay();
 
 				navigationItem.setLabel(
 					HtmlUtil.extractText(
@@ -270,12 +271,27 @@ public class KaleoFormsViewRecordsDisplayContext {
 	}
 
 	public String getOrderByCol() {
-		return ParamUtil.getString(
-			_renderRequest, "orderByCol", "modified-date");
+		if (Validator.isNotNull(_orderByCol)) {
+			return _orderByCol;
+		}
+
+		_orderByCol = SearchOrderByUtil.getOrderByCol(
+			_renderRequest, KaleoFormsPortletKeys.KALEO_FORMS_ADMIN,
+			"view-order-by-col", "modified-date");
+
+		return _orderByCol;
 	}
 
 	public String getOrderByType() {
-		return ParamUtil.getString(_renderRequest, "orderByType", "asc");
+		if (Validator.isNotNull(_orderByType)) {
+			return _orderByType;
+		}
+
+		_orderByType = SearchOrderByUtil.getOrderByType(
+			_renderRequest, KaleoFormsPortletKeys.KALEO_FORMS_ADMIN,
+			"view-order-by-type", "asc");
+
+		return _orderByType;
 	}
 
 	public PortletURL getPortletURL() {
@@ -367,15 +383,13 @@ public class KaleoFormsViewRecordsDisplayContext {
 						_kaleoFormsAdminRequestHelper.getLocale())),
 				false));
 
-		String orderByCol = getOrderByCol();
-		String orderByType = getOrderByType();
-
-		OrderByComparator<DDLRecord> orderByComparator =
-			getDDLRecordOrderByComparator(orderByCol, orderByType);
-
-		_searchContainer.setOrderByCol(orderByCol);
-		_searchContainer.setOrderByComparator(orderByComparator);
-		_searchContainer.setOrderByType(orderByType);
+		_searchContainer.setOrderByCol(getOrderByCol());
+		_searchContainer.setOrderByComparator(
+			getDDLRecordOrderByComparator(getOrderByCol(), getOrderByType()));
+		_searchContainer.setOrderByType(getOrderByType());
+		_searchContainer.setResultsAndTotal(
+			_ddlRecordLocalService.searchDDLRecords(
+				_getSearchContext(_searchContainer)));
 
 		User user = _kaleoFormsAdminRequestHelper.getUser();
 
@@ -383,13 +397,6 @@ public class KaleoFormsViewRecordsDisplayContext {
 			_searchContainer.setRowChecker(
 				new EmptyOnClickRowChecker(_renderResponse));
 		}
-
-		BaseModelSearchResult<DDLRecord> baseModelSearchResult =
-			_ddlRecordLocalService.searchDDLRecords(
-				getSearchContext(_searchContainer));
-
-		_searchContainer.setResults(baseModelSearchResult.getBaseModels());
-		_searchContainer.setTotal(baseModelSearchResult.getLength());
 
 		return _searchContainer;
 	}
@@ -484,7 +491,23 @@ public class KaleoFormsViewRecordsDisplayContext {
 		).build();
 	}
 
-	protected SearchContext getSearchContext(
+	protected boolean hasResults() throws Exception {
+		if (getTotalItems() > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	protected boolean isSearch() {
+		if (Validator.isNotNull(getKeywords())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private SearchContext _getSearchContext(
 		SearchContainer<DDLRecord> searchContainer) {
 
 		SearchContext searchContext = SearchContextFactory.getInstance(
@@ -496,13 +519,13 @@ public class KaleoFormsViewRecordsDisplayContext {
 		searchContext.setAttribute("recordSetScope", _ddlRecordSet.getScope());
 		searchContext.setEnd(searchContainer.getEnd());
 		searchContext.setKeywords(getKeywords());
-		searchContext.setSorts(getSort());
+		searchContext.setSorts(_getSort());
 		searchContext.setStart(searchContainer.getStart());
 
 		return searchContext;
 	}
 
-	protected Sort getSort() {
+	private Sort _getSort() {
 		boolean ascending = false;
 
 		if (Objects.equals("asc", getOrderByType())) {
@@ -519,28 +542,12 @@ public class KaleoFormsViewRecordsDisplayContext {
 			Field.getSortableFieldName(fieldName), Sort.LONG_TYPE, !ascending);
 	}
 
-	protected ThemeDisplay getThemeDisplay() {
+	private ThemeDisplay _getThemeDisplay() {
 		return (ThemeDisplay)_renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 	}
 
-	protected boolean hasResults() throws Exception {
-		if (getTotalItems() > 0) {
-			return true;
-		}
-
-		return false;
-	}
-
-	protected boolean isDDMFormFieldTransient(DDMFormField ddmFormField) {
+	private boolean _isDDMFormFieldTransient(DDMFormField ddmFormField) {
 		if (Validator.isNull(ddmFormField.getDataType())) {
-			return true;
-		}
-
-		return false;
-	}
-
-	protected boolean isSearch() {
-		if (Validator.isNotNull(getKeywords())) {
 			return true;
 		}
 
@@ -554,6 +561,8 @@ public class KaleoFormsViewRecordsDisplayContext {
 	private List<DDMFormField> _ddmFormFields;
 	private final KaleoFormsAdminRequestHelper _kaleoFormsAdminRequestHelper;
 	private final KaleoProcess _kaleoProcess;
+	private String _orderByCol;
+	private String _orderByType;
 	private final RenderRequest _renderRequest;
 	private final RenderResponse _renderResponse;
 	private SearchContainer<DDLRecord> _searchContainer;

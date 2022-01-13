@@ -188,6 +188,7 @@ public abstract class BaseSXPElementResourceTestCase {
 		SXPElement sxpElement = randomSXPElement();
 
 		sxpElement.setDescription(regex);
+		sxpElement.setSchemaVersion(regex);
 		sxpElement.setTitle(regex);
 		sxpElement.setUserName(regex);
 
@@ -198,6 +199,7 @@ public abstract class BaseSXPElementResourceTestCase {
 		sxpElement = SXPElementSerDes.toDTO(json);
 
 		Assert.assertEquals(regex, sxpElement.getDescription());
+		Assert.assertEquals(regex, sxpElement.getSchemaVersion());
 		Assert.assertEquals(regex, sxpElement.getTitle());
 		Assert.assertEquals(regex, sxpElement.getUserName());
 	}
@@ -733,6 +735,14 @@ public abstract class BaseSXPElementResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (sxpElement.getActions() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("createDate", additionalAssertFieldName)) {
 				if (sxpElement.getCreateDate() == null) {
 					valid = false;
@@ -785,6 +795,14 @@ public abstract class BaseSXPElementResourceTestCase {
 
 			if (Objects.equals("readOnly", additionalAssertFieldName)) {
 				if (sxpElement.getReadOnly() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (sxpElement.getSchemaVersion() == null) {
 					valid = false;
 				}
 
@@ -914,6 +932,17 @@ public abstract class BaseSXPElementResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)sxpElement1.getActions(),
+						(Map)sxpElement2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("createDate", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						sxpElement1.getCreateDate(),
@@ -994,6 +1023,17 @@ public abstract class BaseSXPElementResourceTestCase {
 			if (Objects.equals("readOnly", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						sxpElement1.getReadOnly(), sxpElement2.getReadOnly())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						sxpElement1.getSchemaVersion(),
+						sxpElement2.getSchemaVersion())) {
 
 					return false;
 				}
@@ -1139,6 +1179,11 @@ public abstract class BaseSXPElementResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
+		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("createDate")) {
 			if (operator.equals("between")) {
 				sb = new StringBundler();
@@ -1235,6 +1280,14 @@ public abstract class BaseSXPElementResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("schemaVersion")) {
+			sb.append("'");
+			sb.append(String.valueOf(sxpElement.getSchemaVersion()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("title")) {
 			sb.append("'");
 			sb.append(String.valueOf(sxpElement.getTitle()));
@@ -1312,6 +1365,8 @@ public abstract class BaseSXPElementResourceTestCase {
 				id = RandomTestUtil.randomLong();
 				modifiedDate = RandomTestUtil.nextDate();
 				readOnly = RandomTestUtil.randomBoolean();
+				schemaVersion = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				title = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				type = RandomTestUtil.randomInt();
 				userName = StringUtil.toLowerCase(

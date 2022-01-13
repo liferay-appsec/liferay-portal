@@ -122,20 +122,6 @@ public class ModuleApplicationContextRegistrator {
 		}
 	}
 
-	protected void stop() {
-		ApplicationContextServicePublisherUtil.unregisterContext(
-			_serviceRegistrations);
-
-		PortletBeanLocatorUtil.setBeanLocator(
-			_extendeeBundle.getSymbolicName(), null);
-
-		_dataSourceServiceRegistration.unregister();
-
-		_dataSourceServiceRegistration = null;
-
-		_moduleApplicationContext.close();
-	}
-
 	private void _registerDataSource() {
 		if (_dataSourceServiceRegistration == null) {
 			BundleContext bundleContext = _extendeeBundle.getBundleContext();

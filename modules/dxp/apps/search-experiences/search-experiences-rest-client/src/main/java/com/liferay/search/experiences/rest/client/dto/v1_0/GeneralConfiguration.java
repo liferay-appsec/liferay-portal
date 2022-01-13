@@ -148,6 +148,27 @@ public class GeneralConfiguration implements Cloneable, Serializable {
 
 	protected Boolean includeResponseString;
 
+	public String getLanguageId() {
+		return languageId;
+	}
+
+	public void setLanguageId(String languageId) {
+		this.languageId = languageId;
+	}
+
+	public void setLanguageId(
+		UnsafeSupplier<String, Exception> languageIdUnsafeSupplier) {
+
+		try {
+			languageId = languageIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String languageId;
+
 	public String getQueryString() {
 		return queryString;
 	}

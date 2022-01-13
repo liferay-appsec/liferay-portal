@@ -1,3 +1,17 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import React, {useEffect, useState} from 'react';
 import {FormProvider, useForm} from 'react-hook-form';
 import {Template} from '../../common/components/Template';
@@ -5,6 +19,7 @@ import ClayIconProvider from '../../common/context/ClayIconProvider';
 import {LiferayAdapt} from '../../common/services/liferay/adapter';
 import {STORAGE_KEYS, Storage} from '../../common/services/liferay/storage';
 import {AppContextProvider} from './context/AppContextProvider';
+import WebContentProvider from './context/WebContentProvider';
 import {getRaylifeApplicationById} from './services/RaylifeApplication';
 import {getLoadedContentFlag} from './utils/util';
 
@@ -31,13 +46,15 @@ const Providers = ({children, initialValues}) => {
 	});
 
 	return (
-		<AppContextProvider>
-			<ClayIconProvider>
-				<FormProvider {...form}>
-					<Template>{children}</Template>
-				</FormProvider>
-			</ClayIconProvider>
-		</AppContextProvider>
+		<ClayIconProvider>
+			<AppContextProvider>
+				<WebContentProvider>
+					<FormProvider {...form}>
+						<Template>{children}</Template>
+					</FormProvider>
+				</WebContentProvider>
+			</AppContextProvider>
+		</ClayIconProvider>
 	);
 };
 

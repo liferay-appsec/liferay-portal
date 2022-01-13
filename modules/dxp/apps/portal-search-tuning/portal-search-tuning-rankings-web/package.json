@@ -25,7 +25,6 @@
 	},
 	"jest": {
 		"setupFilesAfterEnv": [
-			"@testing-library/react/cleanup-after-each",
 			"<rootDir>/test/js/setup.es.js"
 		],
 		"testPathIgnorePatterns": [
@@ -43,5 +42,5 @@
 		"storybook": "liferay-npm-scripts storybook",
 		"test": "liferay-npm-scripts test"
 	},
-	"version": "3.0.22"
+	"version": "3.0.24"
 }

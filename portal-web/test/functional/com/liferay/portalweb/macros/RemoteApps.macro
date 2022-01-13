@@ -53,6 +53,24 @@ definition {
 		PortletEntry.publish();
 	}
 
+	macro addCustomElementMultipleURLs {
+		LexiconEntry.gotoAdd();
+
+		Select(
+			locator1 = "Select#TYPE",
+			value1 = "Custom Element");
+
+		RemoteAppsEntry.addCustomElementMultipleURLs(
+			entryCSSURL1 = "https://liferay.github.io/liferay-frontend-projects/index1.css",
+			entryCSSURL2 = "https://liferay.github.io/liferay-frontend-projects/index2.css",
+			entryHTMLName = "vanilla-counter",
+			entryName = "Vanilla Counter",
+			entryURL1 = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index1.js",
+			entryURL2 = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index2.js");
+
+		PortletEntry.publish();
+	}
+
 	macro assertCustomElementFields {
 		AssertTextEquals(
 			custom_entryName = "${entryName}",
@@ -83,6 +101,44 @@ definition {
 			key_text = "Properties",
 			locator1 = "RemoteAppsEntry#REMOTE_APPS_PROPERTIES",
 			value1 = "${entryProperties}");
+	}
+
+	macro assertCustomElementMultipleURLFields {
+		AssertTextEquals(
+			custom_entryName = "Vanilla Counter",
+			key_text = "Name",
+			locator1 = "TextInput#ANY",
+			value1 = "Vanilla Counter");
+
+		AssertTextEquals(
+			custom_entryHTMLName = "vanilla-counter",
+			key_text = "HTML Element Name",
+			locator1 = "TextInput#ANY",
+			value1 = "vanilla-counter");
+
+		AssertTextEquals(
+			key_id = "customElementURLs",
+			key_index = "1",
+			locator1 = "RemoteAppsEntry#URL_ROW_INDEX",
+			value1 = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index1.js");
+
+		AssertTextEquals(
+			key_id = "customElementURLs",
+			key_index = "2",
+			locator1 = "RemoteAppsEntry#URL_ROW_INDEX",
+			value1 = "https://liferay.github.io/liferay-frontend-projects/vanilla-counter/index2.js");
+
+		AssertTextEquals(
+			key_id = "customElementCSSURLs",
+			key_index = "1",
+			locator1 = "RemoteAppsEntry#URL_ROW_INDEX",
+			value1 = "https://liferay.github.io/liferay-frontend-projects/index1.css");
+
+		AssertTextEquals(
+			key_id = "customElementCSSURLs",
+			key_index = "2",
+			locator1 = "RemoteAppsEntry#URL_ROW_INDEX",
+			value1 = "https://liferay.github.io/liferay-frontend-projects/index2.css");
 	}
 
 	macro assertTableEntryNameNotPresent {
@@ -132,6 +188,23 @@ definition {
 			value1 = "${entryProperties}");
 
 		PortletEntry.publish();
+	}
+
+	macro getRemoteAppEntryIdValue {
+		WaitForSPARefresh();
+
+		RemoteApps.goToRemoteAppsPortlet();
+
+		Click(
+			key_tableEntryName = "Vanilla Counter",
+			locator1 = "RemoteApps#TABLE_ENTRY_NAME_REMOTE_TABLE");
+
+		var currentURL = Navigator.getCurrentURL();
+
+		var findWhereIdBegins = StringUtil.extractLast("${currentURL}", "remoteAppEntryId=");
+		var remoteAppEntryIdValue = StringUtil.extractFirst("${findWhereIdBegins}", "&_com_liferay_remote_app_admin_web_portlet_RemoteAppAdminPortlet_redirect");
+
+		return "${remoteAppEntryIdValue}";
 	}
 
 	macro getRemoteAppEntryName {

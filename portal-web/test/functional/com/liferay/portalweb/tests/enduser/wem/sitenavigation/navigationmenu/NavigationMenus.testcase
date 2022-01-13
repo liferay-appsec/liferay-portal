@@ -180,9 +180,7 @@ definition {
 		task ("Add the Display Page type items in navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntryMenuItem(
-				menuItem = "Edit",
-				rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Add the Display Page items to the navigation menu") {
@@ -299,7 +297,7 @@ definition {
 		task ("Navigate to the navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Add a page item") {
@@ -353,7 +351,7 @@ definition {
 
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Add a URL item to the navigation menu") {
@@ -417,7 +415,7 @@ definition {
 
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Add a URL item to the navigation menu") {
@@ -492,9 +490,7 @@ definition {
 		task ("Navigate to the Global navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "global");
 
-			LexiconEntry.gotoEntryMenuItem(
-				menuItem = "Edit",
-				rowEntry = "Global Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Global Navigation Menu Name");
 		}
 
 		task ("Assert no Page option in drop down list") {
@@ -912,19 +908,19 @@ definition {
 		task ("Navigate to the first navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name 1");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name 1");
 		}
 
 		task ("Assert the first navigation menu has only the first page already added as items") {
 			NavigationMenusAdmin.viewItem(itemName = "Page 1");
 
-			NavigationMenusAdmin.viewNoItem(itemName = "Page 2");
+			NavigationMenusAdmin.viewItemNotPresent(itemNameList = "Page 2");
 		}
 
 		task ("Navigate to the second navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name 2");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name 2");
 		}
 
 		task ("Assert the second navigation menu has both pages already added as items") {
@@ -936,7 +932,7 @@ definition {
 		task ("Disable the option to offer new pages for the first navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name 1");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name 1");
 
 			NavigationMenusAdmin.toggleAutomaticallyAddNewPagesToMenu(toggleValue = "disable");
 		}
@@ -953,9 +949,62 @@ definition {
 		task ("Assert the third page was not added to the first navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name 1");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name 1");
 
-			NavigationMenusAdmin.viewNoItem(itemName = "Page 3");
+			NavigationMenusAdmin.viewItemNotPresent(itemNameList = "Page 3");
+		}
+	}
+
+	@description = "This is a test for LPS-137577. The category should be added under the nearest ancestor selected."
+	@priority = "4"
+	test ViewCategoryAddedToNearestAncestor {
+		property osgi.module.configuration.file.names = "com.liferay.asset.categories.item.selector.web.internal.configuration.FFAssetCategoriesItemSelectorConfiguration.config:com.liferay.site.navigation.admin.web.internal.configuration.FFSiteNavigationAdminConfiguration.config:com.liferay.site.navigation.menu.item.display.page.internal.configuration.FFDisplayPageSiteNavigationMenuItemConfiguration.config";
+		property osgi.module.configurations = "categoriesMultipleSelectionEnabled=&quot;true&quot;:categoriesMultipleSelectionEnabled=&quot;true&quot;:multipleSelectionEnabled=B&quot;true&quot;";
+
+		task ("Add three hierarchy levels categories to a vocabulary within a site") {
+			JSONCategory.addVocabulary(
+				groupName = "Test Site Name",
+				title = "Vocabulary Name");
+
+			JSONCategory.addCategory(
+				groupName = "Test Site Name",
+				title = "Category Name",
+				vocabularyName = "Vocabulary Name");
+
+			JSONCategory.addSubcategory(
+				groupName = "Test Site Name",
+				parentCategoryName = "Category Name",
+				title = "Subcategory Name",
+				vocabularyName = "Vocabulary Name");
+
+			JSONCategory.addSubcategory(
+				groupName = "Test Site Name",
+				parentCategoryName = "Subcategory Name",
+				title = "SubSubcategory Name",
+				vocabularyName = "Vocabulary Name");
+		}
+
+		task ("Add a navigation menu") {
+			JSONSitenavigation.addSiteNavigationMenu(
+				groupName = "Test Site Name",
+				siteNavigationMenuName = "Navigation Menu Name");
+		}
+
+		task ("Add first and third category into Navigation Menu") {
+			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
+
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
+
+			NavigationMenusAdmin.addCategoryItem(assetTitleList = "Category Name,SubSubcategory Name");
+		}
+
+		task ("View third level of category is nested to first category") {
+			NavigationMenusAdmin.viewItemNested(
+				groupName = "Test Site Name",
+				itemNameList = "SubSubcategory Name",
+				parentItemNameList = "Category Name",
+				site = "true",
+				siteNavigationMenuName = "Navigation Menu Name");
 		}
 	}
 
@@ -1016,7 +1065,7 @@ definition {
 		task ("Navigate to the navigation menu") {
 			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
 
-			LexiconEntry.gotoEntry(rowEntry = "Navigation Menu Name");
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
 
 			WaitForPageLoad();
 		}
@@ -1030,18 +1079,14 @@ definition {
 		}
 
 		task ("View the hierachy of page items") {
-			for (var n : list "1,2,3") {
-				NavigationMenusAdmin.viewItemNotNested(itemName = "Test Page Name ${n}");
-			}
+			NavigationMenusAdmin.viewItemNotNested(itemNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
 
-			for (var n : list "1,2,3") {
-				NavigationMenusAdmin.viewItemNested(
-					groupName = "Test Site Name",
-					itemName = "Child Page ${n}",
-					parentItemName = "Test Page Name ${n}",
-					site = "true",
-					siteNavigationMenuName = "Navigation Menu Name");
-			}
+			NavigationMenusAdmin.viewItemNested(
+				groupName = "Test Site Name",
+				itemNameList = "Child Page 1,Child Page 2,Child Page 3",
+				parentItemNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3",
+				site = "true",
+				siteNavigationMenuName = "Navigation Menu Name");
 		}
 
 		task ("Change back to the original order of the second parent page item and third parent page item") {
@@ -1053,18 +1098,87 @@ definition {
 		}
 
 		task ("View the hierachy of page items") {
-			for (var n : list "1,2,3") {
-				NavigationMenusAdmin.viewItemNotNested(itemName = "Test Page Name ${n}");
-			}
+			NavigationMenusAdmin.viewItemNotNested(itemNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3");
 
-			for (var n : list "1,2,3") {
-				NavigationMenusAdmin.viewItemNested(
-					groupName = "Test Site Name",
-					itemName = "Child Page ${n}",
-					parentItemName = "Test Page Name ${n}",
-					site = "true",
-					siteNavigationMenuName = "Navigation Menu Name");
-			}
+			NavigationMenusAdmin.viewItemNested(
+				groupName = "Test Site Name",
+				itemNameList = "Child Page 1,Child Page 2,Child Page 3",
+				parentItemNameList = "Test Page Name 1,Test Page Name 2,Test Page Name 3",
+				site = "true",
+				siteNavigationMenuName = "Navigation Menu Name");
+		}
+	}
+
+	@description = "This is a test for LPS-137577. The modal confirmation is displayed when delete a item with children."
+	@priority = "4"
+	test ViewModalWhenDeleteItemWithChildren {
+		property osgi.module.configuration.file.names = "com.liferay.asset.categories.item.selector.web.internal.configuration.FFAssetCategoriesItemSelectorConfiguration.config:com.liferay.site.navigation.admin.web.internal.configuration.FFSiteNavigationAdminConfiguration.config:com.liferay.site.navigation.menu.item.display.page.internal.configuration.FFDisplayPageSiteNavigationMenuItemConfiguration.config";
+		property osgi.module.configurations = "categoriesMultipleSelectionEnabled=&quot;true&quot;:categoriesMultipleSelectionEnabled=&quot;true&quot;:multipleSelectionEnabled=B&quot;true&quot;";
+
+		task ("Add three hierarchy levels categories to a vocabulary within a site") {
+			JSONCategory.addVocabulary(
+				groupName = "Test Site Name",
+				title = "Vocabulary Name");
+
+			JSONCategory.addCategory(
+				groupName = "Test Site Name",
+				title = "Category Name",
+				vocabularyName = "Vocabulary Name");
+
+			JSONCategory.addSubcategory(
+				groupName = "Test Site Name",
+				parentCategoryName = "Category Name",
+				title = "Subcategory Name",
+				vocabularyName = "Vocabulary Name");
+
+			JSONCategory.addSubcategory(
+				groupName = "Test Site Name",
+				parentCategoryName = "Subcategory Name",
+				title = "SubSubcategory Name",
+				vocabularyName = "Vocabulary Name");
+		}
+
+		task ("Add a navigation menu") {
+			JSONSitenavigation.addSiteNavigationMenu(
+				groupName = "Test Site Name",
+				siteNavigationMenuName = "Navigation Menu Name");
+		}
+
+		task ("Add all categories into Navigation Menu") {
+			NavigationMenusAdmin.openNavigationMenusAdmin(siteURLKey = "test-site-name");
+
+			NavigationMenusAdmin.editMenu(navigationMenuName = "Navigation Menu Name");
+
+			NavigationMenusAdmin.addCategoryItem(assetTitleList = "Category Name,Subcategory Name,SubSubcategory Name");
+		}
+
+		task ("Delete only the second leve item that has child") {
+			NavigationMenusAdmin.deleteItem(
+				actionName = "Only delete this item",
+				itemName = "Subcategory Name");
+		}
+
+		task ("View Subcategory is not shown") {
+			NavigationMenusAdmin.viewItemNotPresent(itemNameList = "Subcategory Name");
+		}
+
+		task ("View third level of category is nested to first category") {
+			NavigationMenusAdmin.viewItemNested(
+				groupName = "Test Site Name",
+				itemNameList = "SubSubcategory Name",
+				parentItemNameList = "Category Name",
+				site = "true",
+				siteNavigationMenuName = "Navigation Menu Name");
+		}
+
+		task ("Delete first level of a item and children") {
+			NavigationMenusAdmin.deleteItem(
+				actionName = "Delete item and children",
+				itemName = "Category Name");
+		}
+
+		task ("View categories are not shown") {
+			NavigationMenusAdmin.viewItemNotPresent(itemNameList = "Category Name,SubSubcategory Name");
 		}
 	}
 

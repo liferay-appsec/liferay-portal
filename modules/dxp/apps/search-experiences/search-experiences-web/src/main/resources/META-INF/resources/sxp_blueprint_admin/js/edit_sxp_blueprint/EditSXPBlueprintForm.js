@@ -12,22 +12,30 @@
 import ClayButton from '@clayui/button';
 import ClayToolbar from '@clayui/toolbar';
 import getCN from 'classnames';
-import {useFormik} from 'formik';
+import {setNestedObjectValues, useFormik} from 'formik';
 import {fetch, navigate} from 'frontend-js-web';
 import {PropTypes} from 'prop-types';
-import React, {useCallback, useContext, useRef, useState} from 'react';
+import React, {
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 
 import PageToolbar from '../shared/PageToolbar';
 import SubmitWarningModal from '../shared/SubmitWarningModal';
 import ThemeContext from '../shared/ThemeContext';
-import {DEFAULT_ERROR} from '../utils/constants';
-import {addParams} from '../utils/fetch';
+import {DEFAULT_ERROR, SIDEBARS} from '../utils/constants';
+import {addParams, fetchData} from '../utils/fetch';
 import {INPUT_TYPES} from '../utils/inputTypes';
 import {openErrorToast, openSuccessToast} from '../utils/toasts';
 import {
 	cleanUIConfiguration,
+	filterAndSortClassNames,
 	getConfigurationEntry,
 	getUIConfigurationValues,
+	isCustomJSONSXPElement,
 	isDefined,
 	parseCustomSXPElement,
 	transformToSearchContextAttributes,
@@ -40,16 +48,15 @@ import {
 } from '../utils/validation';
 import AddSXPElementSidebar from './AddSXPElementSidebar';
 import PreviewSidebar from './PreviewSidebar';
-import ClauseContributorsTab from './clause_contributors_tab/index';
+import ClauseContributorsSidebar from './clause_contributors_sidebar/index';
+import ConfigurationTab from './configuration_tab/index';
 import QueryBuilderTab from './query_builder_tab/index';
-import SettingsTab from './settings_tab/index';
 
 // Tabs in display order
 /* eslint-disable sort-keys */
 const TABS = {
 	'query-builder': Liferay.Language.get('query-builder'),
-	'clause-contributors': Liferay.Language.get('clause-contributors'),
-	'settings': Liferay.Language.get('settings'),
+	'configuration': Liferay.Language.get('configuration'),
 };
 /* eslint-enable sort-keys */
 
@@ -61,89 +68,41 @@ function EditSXPBlueprintForm({
 	initialTitle = {},
 	sxpBlueprintId,
 }) {
-	const {defaultLocale, namespace, redirectURL} = useContext(ThemeContext);
+	const {defaultLocale, locale, namespace, redirectURL} = useContext(
+		ThemeContext
+	);
+
+	const formRef = useRef();
+	const sxpElementIdCounterRef = useRef(
+		initialSXPElementInstances.length || 0
+	);
 
 	const [errors, setErrors] = useState([]);
 	const [previewInfo, setPreviewInfo] = useState(() => ({
 		loading: false,
 		results: {},
 	}));
-	const [showSidebar, setShowSidebar] = useState(true);
-	const [showPreview, setShowPreview] = useState(false);
+	const [openSidebar, setOpenSidebar] = useState(SIDEBARS.ADD_SXP_ELEMENT);
 	const [showSubmitWarningModal, setShowSubmitWarningModal] = useState(false);
 	const [tab, setTab] = useState('query-builder');
 
-	const formRef = useRef();
-
-	const sxpElementIdCounterRef = useRef(
-		initialSXPElementInstances.length || 0
+	const [indexFields, setIndexFields] = useState(null);
+	const [keywordQueryContributors, setKeywordQueryContributors] = useState(
+		null
 	);
-
-	const _getFormInput = (key) => {
-		for (const pair of new FormData(formRef.current).entries()) {
-			if (pair[0].includes(`${namespace}${key}`)) {
-				return pair[1];
-			}
-		}
-
-		return '';
-	};
+	const [
+		modelPrefilterContributors,
+		setModelPrefilterContributors,
+	] = useState(null);
+	const [
+		queryPrefilterContributors,
+		setQueryPrefilterContributors,
+	] = useState(null);
+	const [searchableTypes, setSearchableTypes] = useState(null);
 
 	/**
-	 * Formats the form values for the "configuration" parameter to send to
-	 * the server. Sets defaults so the JSON.parse calls don't break.
-	 * @param {Object} values Form values
-	 * @return {Object}
+	 * This method must go before the useFormik hook.
 	 */
-	const _getConfiguration = ({
-		advancedConfig,
-		aggregationConfig,
-		applyIndexerClauses,
-		frameworkConfig,
-		highlightConfig,
-		parameterConfig,
-		sortConfig,
-	}) => ({
-		advancedConfiguration: advancedConfig ? JSON.parse(advancedConfig) : {},
-		aggregationConfiguration: aggregationConfig
-			? JSON.parse(aggregationConfig)
-			: {},
-		generalConfiguration: frameworkConfig,
-		highlightConfiguration: highlightConfig
-			? JSON.parse(highlightConfig)
-			: {},
-		parameterConfiguration: parameterConfig
-			? JSON.parse(parameterConfig)
-			: {},
-		queryConfiguration: {
-			applyIndexerClauses,
-		},
-		sortConfiguration: sortConfig ? JSON.parse(sortConfig) : {},
-	});
-
-	const _getElementInstances = (values) =>
-		values.elementInstances.map(
-			({
-				id, // eslint-disable-line
-				sxpElement,
-				sxpElementId,
-				type,
-				uiConfigurationValues,
-			}) => ({
-				configurationEntry: getConfigurationEntry({
-					sxpElement,
-					uiConfigurationValues,
-				}),
-				sxpElement: parseCustomSXPElement(
-					sxpElement,
-					uiConfigurationValues
-				),
-				sxpElementId,
-				type,
-				uiConfigurationValues,
-			})
-		);
-
 	const _handleFormikSubmit = async (values) => {
 		let configuration;
 		let elementInstances;
@@ -251,6 +210,9 @@ function EditSXPBlueprintForm({
 		}
 	};
 
+	/**
+	 * This method must go before the useFormik hook.
+	 */
 	const _handleFormikValidate = (values) => {
 		const errors = {};
 
@@ -274,7 +236,10 @@ function EditSXPBlueprintForm({
 				const fieldSets = cleanUIConfiguration(uiConfiguration)
 					.fieldSets;
 
-				if (fieldSets.length > 0) {
+				if (
+					fieldSets.length > 0 &&
+					!isCustomJSONSXPElement(uiConfigurationValues)
+				) {
 					fieldSets.map(({fields}) => {
 						fields.map(({name, type, typeOptions = {}}) => {
 							const configValue = uiConfigurationValues[name];
@@ -300,7 +265,7 @@ function EditSXPBlueprintForm({
 						});
 					});
 				}
-				else if (!uiConfiguration) {
+				else if (isCustomJSONSXPElement(uiConfigurationValues)) {
 					const configValue = uiConfigurationValues?.sxpElement;
 
 					const configError =
@@ -324,7 +289,7 @@ function EditSXPBlueprintForm({
 			errors.elementInstances = elementInstancesArray;
 		}
 
-		// Validate all JSON inputs on the settings tab
+		// Validate all JSON inputs on the configuration tab
 
 		[
 			'advancedConfig',
@@ -366,7 +331,10 @@ function EditSXPBlueprintForm({
 					id: index,
 				})
 			),
-			frameworkConfig: initialConfiguration.generalConfiguration || {},
+			frameworkConfig: initialConfiguration.generalConfiguration || {
+				clauseContributorsExcludes: [],
+				clauseContributorsIncludes: [],
+			},
 			highlightConfig: JSON.stringify(
 				initialConfiguration.highlightConfiguration,
 				null,
@@ -386,6 +354,113 @@ function EditSXPBlueprintForm({
 		onSubmit: _handleFormikSubmit,
 		validate: _handleFormikValidate,
 	});
+
+	useEffect(() => {
+		fetchData(
+			`/o/search-experiences-rest/v1.0/searchable-asset-names/${locale}`,
+			{method: 'GET'},
+			(responseContent) => setSearchableTypes(responseContent.items),
+			() => setSearchableTypes([])
+		);
+
+		fetchData(
+			`/o/search-experiences-rest/v1.0/field-mapping-infos`,
+			{method: 'GET'},
+			(responseContent) => setIndexFields(responseContent.items),
+			() => setIndexFields([])
+		);
+
+		[
+			{
+				setProperty: setKeywordQueryContributors,
+				url:
+					'/o/search-experiences-rest/v1.0/keyword-query-contributors',
+			},
+			{
+				setProperty: setModelPrefilterContributors,
+				url:
+					'/o/search-experiences-rest/v1.0/model-prefilter-contributors',
+			},
+			{
+				setProperty: setQueryPrefilterContributors,
+				url:
+					'/o/search-experiences-rest/v1.0/query-prefilter-contributors',
+			},
+		].forEach(({setProperty, url}) =>
+			fetchData(
+				url,
+				{method: 'GET'},
+				(responseContent) =>
+					setProperty(filterAndSortClassNames(responseContent.items)),
+				() => setProperty([])
+			)
+		);
+	}, []); //eslint-disable-line
+
+	/**
+	 * Formats the form values for the "configuration" parameter to send to
+	 * the server. Sets defaults so the JSON.parse calls don't break.
+	 * @param {Object} values Form values
+	 * @return {Object}
+	 */
+	const _getConfiguration = ({
+		advancedConfig,
+		aggregationConfig,
+		applyIndexerClauses,
+		frameworkConfig,
+		highlightConfig,
+		parameterConfig,
+		sortConfig,
+	}) => ({
+		advancedConfiguration: advancedConfig ? JSON.parse(advancedConfig) : {},
+		aggregationConfiguration: aggregationConfig
+			? JSON.parse(aggregationConfig)
+			: {},
+		generalConfiguration: frameworkConfig,
+		highlightConfiguration: highlightConfig
+			? JSON.parse(highlightConfig)
+			: {},
+		parameterConfiguration: parameterConfig
+			? JSON.parse(parameterConfig)
+			: {},
+		queryConfiguration: {
+			applyIndexerClauses,
+		},
+		sortConfiguration: sortConfig ? JSON.parse(sortConfig) : {},
+	});
+
+	const _getElementInstances = (values) =>
+		values.elementInstances.map(
+			({
+				id, // eslint-disable-line
+				sxpElement,
+				sxpElementId,
+				type,
+				uiConfigurationValues,
+			}) => ({
+				configurationEntry: getConfigurationEntry({
+					sxpElement,
+					uiConfigurationValues,
+				}),
+				sxpElement: parseCustomSXPElement(
+					sxpElement,
+					uiConfigurationValues
+				),
+				sxpElementId,
+				type,
+				uiConfigurationValues,
+			})
+		);
+
+	const _getFormInput = (key) => {
+		for (const pair of new FormData(formRef.current).entries()) {
+			if (pair[0].includes(`${namespace}${key}`)) {
+				return pair[1];
+			}
+		}
+
+		return '';
+	};
 
 	const _handleAddSXPElement = (sxpElement) => {
 		if (formik.touched?.elementInstances) {
@@ -412,6 +487,25 @@ function EditSXPBlueprintForm({
 		});
 	};
 
+	const _handleApplyIndexerClausesChange = (value) => {
+		formik.setFieldValue('applyIndexerClauses', value);
+	};
+
+	const _handleChangeTab = (tab) => {
+		if (
+			tab !== 'query-builder' &&
+			openSidebar === SIDEBARS.CLAUSE_CONTRIBUTORS
+		) {
+			setOpenSidebar('');
+		}
+
+		setTab(tab);
+	};
+
+	const _handleCloseSidebar = () => {
+		setOpenSidebar('');
+	};
+
 	const _handleDeleteSXPElement = (id) => {
 		const index = formik.values.elementInstances.findIndex(
 			(item) => item.id === id
@@ -436,7 +530,19 @@ function EditSXPBlueprintForm({
 		});
 	};
 
-	const _handleFetchPreviewSearch = (value, delta, page, attributes) => {
+	/**
+	 * Used by the preview sidebar to perform searches.
+	 * @param {string} query The keyword search query
+	 * @param {number} delta The number of results to return
+	 * @param {number} page The page to return
+	 * @param {Array} attributes The search context attributes
+	 */
+	const _handleFetchPreviewSearch = async (
+		query,
+		delta,
+		page,
+		attributes
+	) => {
 		setPreviewInfo((previewInfo) => ({
 			...previewInfo,
 			loading: true,
@@ -448,20 +554,41 @@ function EditSXPBlueprintForm({
 		try {
 			configuration = _getConfiguration(formik.values);
 			elementInstances = _getElementInstances(formik.values);
+
+			// Touch inputs with errors to show validation errors.
+
+			const errors = await formik.validateForm();
+
+			formik.setTouched(setNestedObjectValues(errors, true));
+
+			// Don't perform a search if there are missing required fields.
+
+			if (!formik.isValid) {
+				throw Liferay.Language.get(
+					'the-configuration-has-missing-or-invalid-values'
+				);
+			}
 		}
 		catch (error) {
-			setPreviewInfo({
-				loading: false,
-				results: {
-					errors: [
-						{
-							msg: Liferay.Language.get(
-								'the-configuration-has-missing-or-invalid-values'
-							),
-						},
-					],
-				},
-			});
+
+			// Add a delay so the loading indicator is visible before showing
+			// the error message. This provides feedback that a new search has
+			// been made.
+
+			setTimeout(() => {
+				setPreviewInfo({
+					loading: false,
+					results: {
+						errors: [
+							{
+								msg: Liferay.Language.get(
+									'the-configuration-has-missing-or-invalid-values'
+								),
+							},
+						],
+					},
+				});
+			}, 100);
 
 			if (process.env.NODE_ENV === 'development') {
 				console.error(error);
@@ -483,7 +610,7 @@ function EditSXPBlueprintForm({
 			addParams('/o/search-experiences-rest/v1.0/search', {
 				page,
 				pageSize: delta,
-				query: value,
+				query,
 			}),
 			{
 				body: JSON.stringify({
@@ -494,6 +621,7 @@ function EditSXPBlueprintForm({
 							emptySearchEnabled: true,
 							explain: true,
 							includeResponseString: true,
+							languageId: Liferay.ThemeDisplay.getLanguageId(),
 						},
 						searchContextAttributes: transformToSearchContextAttributes(
 							attributes
@@ -517,18 +645,7 @@ function EditSXPBlueprintForm({
 			.then((responseContent) => {
 				setPreviewInfo({
 					loading: false,
-					results: {
-						...responseContent,
-						warnings: !formik.isValid
-							? [
-									{
-										msg: Liferay.Language.get(
-											'the-configuration-has-missing-or-invalid-values'
-										),
-									},
-							  ]
-							: [],
-					},
+					results: responseContent,
 				});
 			})
 			.catch(() => {
@@ -537,7 +654,7 @@ function EditSXPBlueprintForm({
 						loading: false,
 						results: resultsError,
 					});
-				}, 1000);
+				}, 100);
 			});
 	};
 
@@ -572,9 +689,6 @@ function EditSXPBlueprintForm({
 		[formik]
 	);
 
-	const _handleApplyIndexerClausesChange = (value) =>
-		formik.setFieldValue('applyIndexerClauses', value);
-
 	const _handleSubmit = (event) => {
 		event.preventDefault();
 
@@ -589,11 +703,15 @@ function EditSXPBlueprintForm({
 		}
 	};
 
+	const _handleToggleSidebar = (type) => () => {
+		setOpenSidebar(openSidebar === type ? '' : type);
+	};
+
 	const _renderTabContent = () => {
 		switch (tab) {
-			case 'settings':
+			case 'configuration':
 				return (
-					<SettingsTab
+					<ConfigurationTab
 						advancedConfig={formik.values.advancedConfig}
 						aggregationConfig={formik.values.aggregationConfig}
 						errors={formik.errors}
@@ -605,41 +723,70 @@ function EditSXPBlueprintForm({
 						touched={formik.touched}
 					/>
 				);
-			case 'clause-contributors':
-				return (
-					<ClauseContributorsTab
-						applyIndexerClauses={formik.values.applyIndexerClauses}
-						frameworkConfig={formik.values.frameworkConfig}
-						onApplyIndexerClausesChange={
-							_handleApplyIndexerClausesChange
-						}
-						onFrameworkConfigChange={_handleFrameworkConfigChange}
-					/>
-				);
 			default:
 				return (
 					<>
 						<AddSXPElementSidebar
 							onAddSXPElement={_handleAddSXPElement}
-							onToggle={setShowSidebar}
-							visible={showSidebar}
+							onClose={_handleCloseSidebar}
+							visible={openSidebar === SIDEBARS.ADD_SXP_ELEMENT}
+						/>
+
+						<ClauseContributorsSidebar
+							frameworkConfig={formik.values.frameworkConfig}
+							initialClauseContributorsList={[
+								{
+									label: 'KeywordQueryContributor',
+									value: keywordQueryContributors,
+								},
+								{
+									label: 'ModelPrefilterContributor',
+									value: modelPrefilterContributors,
+								},
+								{
+									label: 'QueryPrefilterContributor',
+									value: queryPrefilterContributors,
+								},
+							]}
+							onClose={_handleCloseSidebar}
+							onFrameworkConfigChange={
+								_handleFrameworkConfigChange
+							}
+							visible={
+								openSidebar === SIDEBARS.CLAUSE_CONTRIBUTORS
+							}
 						/>
 
 						<div
-							className={getCN('query-builder', {
-								'open-preview': showPreview,
-								'open-sidebar': showSidebar,
+							className={getCN({
+								'open-add-sxp-element':
+									openSidebar === SIDEBARS.ADD_SXP_ELEMENT,
+								'open-clause-contributors':
+									openSidebar ===
+									SIDEBARS.CLAUSE_CONTRIBUTORS,
 							})}
 						>
 							<QueryBuilderTab
+								applyIndexerClauses={
+									formik.values.applyIndexerClauses
+								}
+								clauseContributorsList={[
+									...keywordQueryContributors,
+									...modelPrefilterContributors,
+									...queryPrefilterContributors,
+								]}
 								elementInstances={
 									formik.values.elementInstances
 								}
 								entityJSON={entityJSON}
 								errors={formik.errors.elementInstances}
 								frameworkConfig={formik.values.frameworkConfig}
+								indexFields={indexFields}
 								isSubmitting={
 									formik.isSubmitting || previewInfo.loading
+								}
+								onApplyIndexerClausesChange={
+									_handleApplyIndexerClausesChange
 								}
 								onBlur={formik.handleBlur}
 								onChange={formik.handleChange}
@@ -647,12 +794,11 @@ function EditSXPBlueprintForm({
 								onFrameworkConfigChange={
 									_handleFrameworkConfigChange
 								}
-								onToggleSidebar={() => {
-									setShowPreview(false);
-									setShowSidebar(!showSidebar);
-								}}
+								openSidebar={openSidebar}
+								searchableTypes={searchableTypes}
 								setFieldTouched={formik.setFieldTouched}
 								setFieldValue={formik.setFieldValue}
+								setOpenSidebar={setOpenSidebar}
 								touched={formik.touched.elementInstances}
 							/>
 						</div>
@@ -660,6 +806,16 @@ function EditSXPBlueprintForm({
 				);
 		}
 	};
+
+	if (
+		!indexFields ||
+		!keywordQueryContributors ||
+		!modelPrefilterContributors ||
+		!queryPrefilterContributors ||
+		!searchableTypes
+	) {
+		return null;
+	}
 
 	return (
 		<form ref={formRef}>
@@ -679,7 +835,7 @@ function EditSXPBlueprintForm({
 				initialTitle={initialTitle}
 				isSubmitting={formik.isSubmitting}
 				onCancel={redirectURL}
-				onChangeTab={setTab}
+				onChangeTab={_handleChangeTab}
 				onSubmit={_handleSubmit}
 				tab={tab}
 				tabs={TABS}
@@ -688,13 +844,10 @@ function EditSXPBlueprintForm({
 					<ClayButton
 						borderless
 						className={getCN({
-							active: showPreview,
+							active: openSidebar === SIDEBARS.PREVIEW,
 						})}
 						displayType="secondary"
-						onClick={() => {
-							setShowSidebar(false);
-							setShowPreview(!showPreview);
-						}}
+						onClick={_handleToggleSidebar(SIDEBARS.PREVIEW)}
 						small
 					>
 						{Liferay.Language.get('preview')}
@@ -705,18 +858,18 @@ function EditSXPBlueprintForm({
 			<PreviewSidebar
 				errors={previewInfo.results.errors}
 				loading={previewInfo.loading}
+				onClose={_handleCloseSidebar}
 				onFetchResults={_handleFetchPreviewSearch}
 				onFocusSXPElement={_handleFocusSXPElement}
-				onToggle={setShowPreview}
 				responseString={previewInfo.results.responseString}
 				totalHits={previewInfo.results.totalHits}
-				visible={showPreview}
+				visible={openSidebar === SIDEBARS.PREVIEW}
 				warnings={previewInfo.results.warnings}
 			/>
 
 			<div
 				className={getCN({
-					'open-preview': showPreview,
+					'open-preview': openSidebar === SIDEBARS.PREVIEW,
 				})}
 			>
 				{_renderTabContent()}

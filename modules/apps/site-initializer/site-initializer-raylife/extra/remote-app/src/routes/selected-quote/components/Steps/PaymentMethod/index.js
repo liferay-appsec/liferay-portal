@@ -1,66 +1,121 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import ClayButton from '@clayui/button';
 import {ClayCheckbox} from '@clayui/form';
 import classNames from 'classnames';
 import {useContext, useEffect, useState} from 'react';
-import {LiferayService} from '../../../../../common/services/liferay';
-import {SelectedQuoteContext} from '../../../context/SelectedQuoteContextProvider';
+import {getLiferaySiteName} from '../../../../../common/utils/liferay';
+import {getWebDavUrl} from '../../../../../common/utils/webdav';
+import {
+	ACTIONS,
+	SelectedQuoteContext,
+} from '../../../context/SelectedQuoteContextProvider';
 import {getPaymentMethodURL, getPaymentMethods} from '../../../services/Cart';
-import {updateOrderPaymentMethod} from '../../../services/Order';
+import {createOrder, updateOrder} from '../../../services/Order';
+import {SKU} from '../../../utils/constants';
 import RadioButton from './RadioButton';
+
+const PRODUCT_DISCOUNT = 0.05;
 
 const PaymentMethod = () => {
 	const [agree, setAgree] = useState(false);
-	const [{orderId, product}] = useContext(SelectedQuoteContext);
 	const [methods, setMethods] = useState([]);
-	const productDiscounted = Number(product.price) * 0.95;
-	const productPromo = Number(product.price) * 0.05;
+	const [
+		{
+			accountId,
+			commerce: {channel, skus},
+			orderId,
+			product,
+		},
+		dispatch,
+	] = useContext(SelectedQuoteContext);
+
+	const productPrice = Number(product.price);
+	const promoPrice = productPrice * PRODUCT_DISCOUNT;
+	const productDiscount = productPrice - promoPrice;
+
+	const checkedMethod = methods.find(({checked}) => checked);
+
+	const setPaymentMethods = async () => {
+		const getSkuByName = (name) =>
+			skus.find(({sku}) => sku === name) || skus[0];
+
+		const installmentSKU = getSkuByName(SKU.INSTALLMENT);
+		const fullPriceSKU = getSkuByName(SKU.PAY_IN_FULL);
+
+		const {data = {}} = await getPaymentMethods(orderId);
+		const {items: paymentMethods} = data;
+
+		setMethods(
+			paymentMethods.map((item) => ({
+				checked: false,
+				image: `${getWebDavUrl()}/${item.key.replace('-', '_')}.svg`,
+				options: [
+					{
+						checked: true,
+						description: `Save $${promoPrice.toLocaleString(
+							'en-US'
+						)}`,
+						id: 0,
+						orderItem: {
+							discountAmount: promoPrice,
+							finalPrice: productDiscount,
+							quantity: 1,
+							skuId: fullPriceSKU.id,
+							unitPrice: productDiscount,
+						},
+						title: `Pay in full – $${productDiscount.toLocaleString(
+							'en-US'
+						)}`,
+					},
+					{
+						checked: false,
+						description: '',
+						id: 1,
+						orderItem: {
+							finalPrice: product.price / 2,
+							quantity: 1,
+							skuId: installmentSKU.id,
+							unitPrice: product.price / 2,
+						},
+						title: `2 payments of $${Number(
+							product.price / 2
+						).toLocaleString('en-US')}`,
+					},
+				],
+				title: item.name,
+				value: item.key,
+			}))
+		);
+	};
+
+	useEffect(() => {
+		if (!orderId) {
+			createOrder(accountId, channel.id, skus[0].id).then((response) =>
+				dispatch({
+					payload: response.data.id,
+					type: ACTIONS.SET_ORDER_ID,
+				})
+			);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [orderId]);
 
 	useEffect(() => {
 		if (orderId) {
-			getPaymentMethods(orderId).then((response) => {
-				const {
-					data: {items},
-				} = response;
-
-				const siteName = LiferayService.getLiferaySiteName().replace(
-					'/web/',
-					''
-				);
-
-				const methodList = items.map((item) => ({
-					checked: false,
-					image: `/webdav/${siteName}/document_library/${item.key.replace(
-						'-',
-						'_'
-					)}.svg`,
-					options: [
-						{
-							checked: true,
-							description: `Save $${productPromo.toLocaleString(
-								'en-US'
-							)}`,
-							id: 0,
-							title: `Pay in full – $${productDiscounted.toLocaleString(
-								'en-US'
-							)}`,
-						},
-						{
-							checked: false,
-							description: `1 additional payment of $${Number(
-								product.price / 2
-							).toLocaleString('en-US')}`,
-							id: 1,
-							title: `2 payments of $${Number(
-								product.price / 2
-							).toLocaleString('en-US')}`,
-						},
-					],
-					title: item.name,
-					value: item.key,
-				}));
-
-				setMethods(methodList);
-			});
+			setPaymentMethods();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [orderId]);
@@ -76,7 +131,7 @@ const PaymentMethod = () => {
 
 	const onSelectedOption = (optionId) => {
 		setMethods(
-			methods?.map((method) => ({
+			methods.map((method) => ({
 				...method,
 				options: method.options.map((option) => ({
 					...option,
@@ -87,48 +142,17 @@ const PaymentMethod = () => {
 	};
 
 	const onClickPayNow = async (method) => {
-		await updateOrderPaymentMethod(method.value, product.price, orderId);
+		const {orderItem} = method.options.find(({checked}) => checked);
+
+		await updateOrder(method.value, orderItem, orderId);
 
 		const {data: paymentMethodURL} = await getPaymentMethodURL(
 			orderId,
-			`${origin}${LiferayService.getLiferaySiteName()}/congrats`
+			`${origin}${getLiferaySiteName()}/congrats`
 		);
 
 		window.location.href = paymentMethodURL;
 	};
-
-	const showOptions = (method) =>
-		method.options.map((option, index) => (
-			<div
-				className={classNames(
-					'align-items-center c-mr-3 c-px-5 c-py-3 d-flex d-flex flex-column justify-content-center rounded-sm',
-					{
-						'border': !option.checked,
-						'selected': option.checked,
-						'shadow-lg': option.checked,
-						'type-payment-card-solid': option.checked,
-					}
-				)}
-				key={index}
-				onClick={() => onSelectedOption(option.id)}
-			>
-				<div>
-					<p className="text-center text-link-md">{option.title}</p>
-
-					<p
-						className={classNames('text-center', {
-							'font-weight-bold text-accent-5 text-paragraph-xs':
-								option.checked,
-							'text-paragraph-xs': !option.checked,
-						})}
-					>
-						{option.description}
-					</p>
-				</div>
-			</div>
-		));
-
-	const checkedMethod = methods.find(({checked}) => checked);
 
 	return (
 		<div className="c-mb-4 c-mt-5 ml-6">
@@ -145,18 +169,16 @@ const PaymentMethod = () => {
 							selected={method.checked}
 							value={method.value}
 						>
-							<>
-								<div className="align-items-center d-flex justify-content-center">
-									<div>
-										<img
-											className="bg-neutral-0 border c-p-1 card-outlined pay-card-image rounded-sm"
-											src={method.image}
-										/>
-									</div>
+							<div className="align-items-center d-flex justify-content-center">
+								<div>
+									<img
+										className="bg-neutral-0 border c-p-1 card-outlined pay-card-image rounded-sm"
+										src={method.image}
+									/>
 								</div>
+							</div>
 
-								<p>{method.title}</p>
-							</>
+							<p>{method.title}</p>
 						</RadioButton>
 					</div>
 				))}
@@ -170,7 +192,43 @@ const PaymentMethod = () => {
 						{checkedMethod.options.length ? (
 							<>
 								<div className="c-mb-3 d-flex flex-row">
-									{showOptions(checkedMethod)}
+									{checkedMethod.options.map(
+										(option, index) => (
+											<div
+												className={classNames(
+													'align-items-center c-mr-3 c-px-5 c-py-3 d-flex flex-column justify-content-center rounded-sm',
+													{
+														'border': !option.checked,
+														'selected shadow-lg type-payment-card-solid':
+															option.checked,
+													}
+												)}
+												key={index}
+												onClick={() =>
+													onSelectedOption(option.id)
+												}
+											>
+												<div>
+													<p className="text-center text-link-md">
+														{option.title}
+													</p>
+
+													<p
+														className={classNames(
+															'text-center',
+															{
+																'font-weight-bold text-accent-5 text-paragraph-xs':
+																	option.checked,
+																'text-paragraph-xs': !option.checked,
+															}
+														)}
+													>
+														{option.description}
+													</p>
+												</div>
+											</div>
+										)
+									)}
 								</div>
 								<div className="d-flex flex-row">
 									<div className="agree-check c-mr-2">

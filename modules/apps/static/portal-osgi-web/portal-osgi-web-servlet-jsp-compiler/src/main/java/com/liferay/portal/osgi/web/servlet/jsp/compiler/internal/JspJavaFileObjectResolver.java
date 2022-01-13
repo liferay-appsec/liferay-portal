@@ -47,7 +47,6 @@ import java.util.Set;
 import javax.tools.JavaFileObject;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -81,13 +80,13 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 		}
 
 		javaFileObjects.addAll(
-			toJavaFileObjects(
+			_toJavaFileObjects(
 				_jspBundleWiring.getBundle(),
 				_jspBundleWiring.listResources(
 					packagePath, "*.class", options)));
 
 		javaFileObjects.addAll(
-			toJavaFileObjects(
+			_toJavaFileObjects(
 				_bundleWiring.getBundle(),
 				_bundleWiring.listResources(packagePath, "*.class", options)));
 
@@ -101,24 +100,11 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 
 			if (packageNames.contains(packageName)) {
 				javaFileObjects.addAll(
-					doResolveClasses(entry.getKey(), packagePath, options));
+					_resolveClasses(entry.getKey(), packagePath, options));
 			}
 		}
 
 		return javaFileObjects;
-	}
-
-	protected Collection<JavaFileObject> doResolveClasses(
-		BundleWiring bundleWiring, String path, int options) {
-
-		Bundle bundle = bundleWiring.getBundle();
-
-		if (bundle.getBundleId() == 0) {
-			return handleSystemBundle(bundleWiring, path);
-		}
-
-		return toJavaFileObjects(
-			bundle, bundleWiring.listResources(path, "*.class", options));
 	}
 
 	protected String getClassName(String classResourceName) {
@@ -129,7 +115,7 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 			classResourceName, CharPool.SLASH, CharPool.PERIOD);
 	}
 
-	protected JavaFileObject getJavaFileObject(
+	private JavaFileObject _getJavaFileObject(
 		URL resourceURL, String resourceName) {
 
 		String protocol = resourceURL.getProtocol();
@@ -163,7 +149,7 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 		return null;
 	}
 
-	protected Collection<JavaFileObject> handleSystemBundle(
+	private Collection<JavaFileObject> _handleSystemBundle(
 		BundleWiring bundleWiring, String path) {
 
 		Collection<JavaFileObject> javaFileObjects = _javaFileObjects.get(path);
@@ -280,24 +266,20 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 		return javaFileObjects;
 	}
 
-	protected boolean isExportsPackage(
-		BundleWiring bundleWiring, String packageName) {
+	private Collection<JavaFileObject> _resolveClasses(
+		BundleWiring bundleWiring, String path, int options) {
 
-		List<BundleCapability> bundleCapabilities =
-			bundleWiring.getCapabilities("osgi.wiring.package");
+		Bundle bundle = bundleWiring.getBundle();
 
-		for (BundleCapability bundleCapability : bundleCapabilities) {
-			Map<String, Object> attributes = bundleCapability.getAttributes();
-
-			if (packageName.equals(attributes.get("osgi.wiring.package"))) {
-				return true;
-			}
+		if (bundle.getBundleId() == 0) {
+			return _handleSystemBundle(bundleWiring, path);
 		}
 
-		return false;
+		return _toJavaFileObjects(
+			bundle, bundleWiring.listResources(path, "*.class", options));
 	}
 
-	protected Collection<JavaFileObject> toJavaFileObjects(
+	private Collection<JavaFileObject> _toJavaFileObjects(
 		Bundle bundle, Collection<String> resources) {
 
 		if ((resources == null) || resources.isEmpty()) {
@@ -308,7 +290,7 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 			resources.size());
 
 		for (String resource : resources) {
-			JavaFileObject javaFileObject = getJavaFileObject(
+			JavaFileObject javaFileObject = _getJavaFileObject(
 				bundle.getResource(resource), resource);
 
 			if (javaFileObject != null) {

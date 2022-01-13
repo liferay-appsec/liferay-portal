@@ -20,6 +20,7 @@ import {
 } from 'react-flow-renderer';
 
 import {DefinitionBuilderContext} from '../../../DefinitionBuilderContext';
+import {defaultLanguageId} from '../../../constants';
 import {DiagramBuilderContext} from '../../DiagramBuilderContext';
 import MarkerEndDefinition, {markerEndId} from './MarkerEndDefinition';
 import {getEdgeParams} from './utils';
@@ -38,9 +39,7 @@ function Edge(props) {
 		targetX,
 		targetY,
 	} = props;
-	const {defaultLanguageId, selectedLanguageId} = useContext(
-		DefinitionBuilderContext
-	);
+	const {selectedLanguageId} = useContext(DefinitionBuilderContext);
 	const {selectedItem, setSelectedItem} = useContext(DiagramBuilderContext);
 
 	let edgeLabel = label[defaultLanguageId];
@@ -145,7 +144,7 @@ function Edge(props) {
 
 			<EdgeText
 				className="reaft-flow-__edge-text"
-				label={edgeLabel.toUpperCase()}
+				label={edgeLabel?.toUpperCase()}
 				labelBgBorderRadius="13px"
 				labelBgPadding={[8, 4]}
 				labelBgStyle={{

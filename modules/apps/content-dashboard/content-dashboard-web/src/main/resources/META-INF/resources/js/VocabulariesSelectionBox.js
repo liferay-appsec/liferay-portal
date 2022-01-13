@@ -16,6 +16,11 @@ import {ClayDualListBox} from '@clayui/form';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef, useState} from 'react';
 
+const MAX_VOCABULARIES_ON_GRAPH = 2;
+
+const getItemByvalue = (array, value) =>
+	array.find((item) => item.value === value);
+
 const VocabulariesSelectionBox = ({
 	leftBoxName,
 	leftList,
@@ -30,6 +35,11 @@ const VocabulariesSelectionBox = ({
 	const [leftElements, rightElements] = items;
 
 	const selectorRef = useRef();
+
+	const previousLeftElementsRef = useRef();
+	useEffect(() => {
+		previousLeftElementsRef.current = leftElements;
+	});
 
 	const enableAllOptions = () => {
 		const options = Array.from(
@@ -67,14 +77,85 @@ const VocabulariesSelectionBox = ({
 
 	const handleLeftSelectionChange = () => {
 		leftSelected.forEach((selectedVocabularyValue) => {
-			const vocabulary = leftElements.find(
-				(elem) => elem.value === selectedVocabularyValue
+			const vocabulary = getItemByvalue(
+				leftElements,
+				selectedVocabularyValue
 			);
+
 			if (!vocabulary.global) {
 				disableOptionsFromOtherSites(vocabulary);
 			}
 		});
 	};
+
+	const handleDisableLeftToRight = () => {
+		const noRoomForCurrentSelection =
+			leftSelected.length + rightElements.length >
+			MAX_VOCABULARIES_ON_GRAPH;
+
+		if (
+			leftSelected.length < MAX_VOCABULARIES_ON_GRAPH &&
+			!noRoomForCurrentSelection
+		) {
+			return false;
+		}
+
+		const itemsAsFlattenedArray = items.flat();
+		const firstSelectedItemAsControlItem = getItemByvalue(
+			itemsAsFlattenedArray,
+			leftSelected[0]
+		);
+
+		const allSitesAreNonGlobal = leftSelected.every((itemValue) => {
+			const currentItem = getItemByvalue(
+				itemsAsFlattenedArray,
+				itemValue
+			);
+
+			return !currentItem?.global;
+		});
+
+		const mixedNonGlobalSites = leftSelected.some((itemValue) => {
+			const currentItem = getItemByvalue(
+				itemsAsFlattenedArray,
+				itemValue
+			);
+
+			return currentItem.site !== firstSelectedItemAsControlItem.site;
+		});
+
+		return (
+			noRoomForCurrentSelection ||
+			(allSitesAreNonGlobal && mixedNonGlobalSites)
+		);
+	};
+
+	const maintainSelectedVocabularies = () => {
+		const previousLeftElements = previousLeftElementsRef.current;
+
+		if (typeof previousLeftElements === 'undefined') {
+			return;
+		}
+
+		if (previousLeftElements.length < leftElements.length) {
+			const intersection = leftElements.filter(
+				(x) => !previousLeftElements.includes(x)
+			);
+			const newLeftSelection = intersection.map((elem) => elem.value);
+			previousLeftElementsRef.current = leftElements;
+			setLeftSelected(newLeftSelection);
+		}
+		else if (previousLeftElements.length > leftElements.length) {
+			const intersection = previousLeftElements.filter(
+				(x) => !leftElements.includes(x)
+			);
+			const newRightSelection = intersection.map((elem) => elem.value);
+			previousLeftElementsRef.current = leftElements;
+			setRightSelected(newRightSelection);
+		}
+	};
+
+	maintainSelectedVocabularies();
 
 	useEffect(() => {
 		enableAllOptions();
@@ -93,7 +174,7 @@ const VocabulariesSelectionBox = ({
 		<div ref={selectorRef}>
 			<ClayDualListBox
 				className="vocabularies-selection"
-				disableLTR={leftSelected.length + rightElements.length > 2}
+				disableLTR={handleDisableLeftToRight()}
 				disableRTL={rightElements.length === 0}
 				items={items}
 				left={{

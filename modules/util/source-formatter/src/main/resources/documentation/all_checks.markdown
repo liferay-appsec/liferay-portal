@@ -166,6 +166,7 @@ JavaBooleanUsageCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prev
 JavaClassNameCheck | [Naming Conventions](naming_conventions_checks.markdown#naming-conventions-checks) | .java | Checks if class names follow naming conventions. |
 JavaCleanUpMethodSuperCleanUpCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Checks that `cleanUp` method in `*Tag` class with `@Override` annotation calls the `cleanUp` method of the superclass. |
 [JavaCleanUpMethodVariablesCheck](checks/java_clean_up_method_variables_check.markdown#javacleanupmethodvariablescheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Checks that variables in `Tag` classes get cleaned up properly. |
+JavaCollapseImportsCheck | [Performance](performance_checks.markdown#performance-checks) | .java | Collapses imports that use wildcard |
 [JavaCollatorUtilCheck](checks/java_collator_util_check.markdown#javacollatorutilcheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Checks for correct use of `Collator`. |
 [JavaComponentActivateCheck](checks/java_component_activate_check.markdown#javacomponentactivatecheck) | [Naming Conventions](naming_conventions_checks.markdown#naming-conventions-checks) | .java | Checks if methods with annotation `@Activate` or `@Deactivate` follow naming conventions. |
 JavaComponentAnnotationsCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Performs several checks on classes with `@Component` annotation. |
@@ -400,6 +401,7 @@ UnusedParameterCheck | [Performance](performance_checks.markdown#performance-che
 UnusedVariableCheck | [Performance](performance_checks.markdown#performance-checks) | .java | Finds variables that are declared, but not used. |
 UnwrappedVariableInfoCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java | Finds cases where the variable should be wrapped into an inner class in order to defer array elements initialization. |
 UpgradeDeprecatedAPICheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Finds calls to deprecated classes, constructors, fields or methods after an upgrade |
+UpgradeJavaCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Performs upgrade checks for `java` files |
 UpgradeRemovedAPICheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | .java | Finds cases where calls are made to removed API after an upgrade. |
 [ValidatorEqualsCheck](checks/validator_equals_check.markdown#validatorequalscheck) | [Performance](performance_checks.markdown#performance-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl or .vm | Checks that there are no calls to `Validator.equals(Object, Object)`. |
 ValidatorIsNullCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl or .vm | Ensures that only variable of type `Long`, `Serializable` or `String` is passed to method `com.liferay.portal.kernel.util.Validator.isNull`. |

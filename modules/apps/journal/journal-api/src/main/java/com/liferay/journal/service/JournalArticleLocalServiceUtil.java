@@ -1704,6 +1704,13 @@ public class JournalArticleLocalServiceUtil {
 			orderByComparator);
 	}
 
+	public static List<Long> getArticlesClassPKsWithDefaultDisplayPage(
+		long groupId, long classTypeId) {
+
+		return getService().getArticlesClassPKsWithDefaultDisplayPage(
+			groupId, classTypeId);
+	}
+
 	/**
 	 * Returns the number of web content articles belonging to the group.
 	 *

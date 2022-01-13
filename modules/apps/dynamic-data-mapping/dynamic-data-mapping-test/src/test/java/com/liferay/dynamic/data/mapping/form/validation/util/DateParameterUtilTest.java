@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import org.junit.Assert;
@@ -62,6 +63,17 @@ public class DateParameterUtilTest {
 	}
 
 	@Test
+	public void testGetLocalDateTime() {
+		LocalDateTime localDateTime = DateParameterUtil.getLocalDateTime(
+			"2021-10-28 1:00");
+
+		Assert.assertEquals("2021-10-28T01:00", localDateTime.toString());
+
+		Assert.assertNull(DateParameterUtil.getLocalDateTime(null));
+		Assert.assertNull(DateParameterUtil.getLocalDateTime(StringPool.BLANK));
+	}
+
+	@Test
 	public void testGetParameterBlank() {
 		Assert.assertEquals(
 			StringPool.BLANK,
@@ -73,6 +85,16 @@ public class DateParameterUtilTest {
 			StringPool.BLANK,
 			DateParameterUtil.getParameter(
 				null, null, StringPool.OPEN_CURLY_BRACE, null));
+	}
+
+	@Test
+	public void testGetParameterBlankWithDateField() {
+		String parameter = _getParameter(
+			"dateField", "Date12345678", "endsOn", "1", "dateField", "days");
+
+		Assert.assertEquals(
+			StringPool.BLANK,
+			DateParameterUtil.getParameter(null, "endsOn", parameter, null));
 	}
 
 	@Test

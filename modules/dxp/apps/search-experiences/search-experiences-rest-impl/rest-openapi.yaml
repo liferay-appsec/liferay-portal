@@ -121,6 +121,8 @@ components:
                             type: boolean
                         includeResponseString:
                             type: boolean
+                        languageId:
+                            type: string
                         queryString:
                             type: string
                         searchableAssetTypes:
@@ -349,6 +351,13 @@ components:
                     type: string
         SXPBlueprint:
             properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            type: string
+                        type: object
+                    readOnly: true
+                    type: object
                 configuration:
                     $ref: "#/components/schemas/Configuration"
                 createDate:
@@ -370,6 +379,8 @@ components:
                 modifiedDate:
                     format: date
                     type: string
+                schemaVersion:
+                    type: string
                 title:
                     type: string
                 title_i18n:
@@ -381,6 +392,13 @@ components:
             type: object
         SXPElement:
             properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            type: string
+                        type: object
+                    readOnly: true
+                    type: object
                 createDate:
                     format: date
                     type: string
@@ -402,6 +420,8 @@ components:
                     type: string
                 readOnly:
                     type: boolean
+                schemaVersion:
+                    type: string
                 title:
                     type: string
                 title_i18n:

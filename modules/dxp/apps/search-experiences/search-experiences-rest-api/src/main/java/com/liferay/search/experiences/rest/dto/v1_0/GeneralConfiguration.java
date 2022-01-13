@@ -207,6 +207,34 @@ public class GeneralConfiguration implements Serializable {
 	protected Boolean includeResponseString;
 
 	@Schema
+	public String getLanguageId() {
+		return languageId;
+	}
+
+	public void setLanguageId(String languageId) {
+		this.languageId = languageId;
+	}
+
+	@JsonIgnore
+	public void setLanguageId(
+		UnsafeSupplier<String, Exception> languageIdUnsafeSupplier) {
+
+		try {
+			languageId = languageIdUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String languageId;
+
+	@Schema
 	public String getQueryString() {
 		return queryString;
 	}
@@ -395,6 +423,20 @@ public class GeneralConfiguration implements Serializable {
 			sb.append("\"includeResponseString\": ");
 
 			sb.append(includeResponseString);
+		}
+
+		if (languageId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"languageId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(languageId));
+
+			sb.append("\"");
 		}
 
 		if (queryString != null) {

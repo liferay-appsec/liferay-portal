@@ -64,6 +64,36 @@ public class SXPBlueprint implements Serializable {
 
 	@Schema
 	@Valid
+	public Map<String, Map<String, String>> getActions() {
+		return actions;
+	}
+
+	public void setActions(Map<String, Map<String, String>> actions) {
+		this.actions = actions;
+	}
+
+	@JsonIgnore
+	public void setActions(
+		UnsafeSupplier<Map<String, Map<String, String>>, Exception>
+			actionsUnsafeSupplier) {
+
+		try {
+			actions = actionsUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Map<String, Map<String, String>> actions;
+
+	@Schema
+	@Valid
 	public Configuration getConfiguration() {
 		return configuration;
 	}
@@ -262,6 +292,34 @@ public class SXPBlueprint implements Serializable {
 	protected Date modifiedDate;
 
 	@Schema
+	public String getSchemaVersion() {
+		return schemaVersion;
+	}
+
+	public void setSchemaVersion(String schemaVersion) {
+		this.schemaVersion = schemaVersion;
+	}
+
+	@JsonIgnore
+	public void setSchemaVersion(
+		UnsafeSupplier<String, Exception> schemaVersionUnsafeSupplier) {
+
+		try {
+			schemaVersion = schemaVersionUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String schemaVersion;
+
+	@Schema
 	public String getTitle() {
 		return title;
 	}
@@ -377,6 +435,16 @@ public class SXPBlueprint implements Serializable {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+		if (actions != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(actions));
+		}
+
 		if (configuration != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -465,6 +533,20 @@ public class SXPBlueprint implements Serializable {
 			sb.append("\"");
 
 			sb.append(liferayToJSONDateFormat.format(modifiedDate));
+
+			sb.append("\"");
+		}
+
+		if (schemaVersion != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemaVersion\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(schemaVersion));
 
 			sb.append("\"");
 		}

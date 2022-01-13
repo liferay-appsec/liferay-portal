@@ -283,11 +283,11 @@ public class CPAttachmentFileEntryIndexer
 	protected void doReindex(String[] ids) throws Exception {
 		long companyId = GetterUtil.getLong(ids[0]);
 
-		reindexCPAttachmentFileEntries(companyId);
+		_reindexCPAttachmentFileEntries(companyId);
 	}
 
-	protected void reindexCPAttachmentFileEntries(long companyId)
-		throws PortalException {
+	private void _reindexCPAttachmentFileEntries(long companyId)
+		throws Exception {
 
 		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
 			_cpAttachmentFileEntryLocalService.

@@ -14,7 +14,6 @@
 
 package com.liferay.change.tracking.internal.helper;
 
-import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.internal.mapping.CTMappingTableInfoImpl;
 import com.liferay.change.tracking.mapping.CTMappingTableInfo;
 import com.liferay.petra.string.StringBundler;
@@ -41,11 +40,13 @@ import java.util.Map;
 public class CTTableMapperHelper {
 
 	public CTTableMapperHelper(
-		CTService<?> ctService, String tableName, String leftColumnName) {
+		CTService<?> ctService, String tableName, String leftColumnName,
+		Class<?> leftModelClass) {
 
 		_ctService = ctService;
 		_tableName = tableName;
 		_leftColumnName = leftColumnName;
+		_leftModelClass = leftModelClass;
 	}
 
 	public void delete(long ctCollectionId) throws Exception {
@@ -69,17 +70,25 @@ public class CTTableMapperHelper {
 
 	public CTMappingTableInfo getCTMappingTableInfo(long ctCollectionId) {
 		List<Map.Entry<Long, Long>> addedMappings = _getCTMappingChangeList(
-			ctCollectionId, CTConstants.CT_CHANGE_TYPE_ADDITION);
+			ctCollectionId, true);
 		List<Map.Entry<Long, Long>> removedMappings = _getCTMappingChangeList(
-			ctCollectionId, CTConstants.CT_CHANGE_TYPE_DELETION);
+			ctCollectionId, false);
 
 		if (addedMappings.isEmpty() && removedMappings.isEmpty()) {
 			return null;
 		}
 
 		return new CTMappingTableInfoImpl(
-			_tableName, _leftColumnName, _rightColumnName, addedMappings,
-			removedMappings);
+			_tableName, _leftColumnName, _leftModelClass, _rightColumnName,
+			_rightModelClass, addedMappings, removedMappings);
+	}
+
+	public Class<?> getLeftModelClass() {
+		return _leftModelClass;
+	}
+
+	public Class<?> getRightModelClass() {
+		return _rightModelClass;
 	}
 
 	public void publish(
@@ -109,6 +118,10 @@ public class CTTableMapperHelper {
 
 	public void setRightColumnName(String rightColumnName) {
 		_rightColumnName = rightColumnName;
+	}
+
+	public void setRightModelClass(Class<?> rightModelClass) {
+		_rightModelClass = rightModelClass;
 	}
 
 	public void undo(long fromCTCollectionId, long toCTCollectionId)
@@ -171,7 +184,7 @@ public class CTTableMapperHelper {
 	}
 
 	private List<Map.Entry<Long, Long>> _getCTMappingChangeList(
-		long ctCollectionId, int ctChangeType) {
+		long ctCollectionId, boolean ctChangeType) {
 
 		CTPersistence<?> ctPersistence = _ctService.getCTPersistence();
 
@@ -278,7 +291,9 @@ public class CTTableMapperHelper {
 
 	private final CTService<?> _ctService;
 	private final String _leftColumnName;
+	private final Class<?> _leftModelClass;
 	private String _rightColumnName;
+	private Class<?> _rightModelClass;
 	private final String _tableName;
 
 }

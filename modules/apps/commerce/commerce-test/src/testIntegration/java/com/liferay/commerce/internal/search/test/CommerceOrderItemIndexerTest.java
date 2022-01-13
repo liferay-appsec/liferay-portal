@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -147,16 +146,6 @@ public class CommerceOrderItemIndexerTest {
 	@Rule
 	public FrutillaRule frutillaRule = new FrutillaRule();
 
-	protected Hits search(String keywords, long commerceOrderId)
-		throws SearchException {
-
-		SearchContext searchContext = _getSearchContext(commerceOrderId);
-
-		searchContext.setKeywords(keywords);
-
-		return _indexer.search(searchContext);
-	}
-
 	private CommerceOrderItem[] _addCommerceOrderItems(int count)
 		throws Exception {
 
@@ -228,7 +217,7 @@ public class CommerceOrderItemIndexerTest {
 			CommerceOrderItem... expectedCommerceOrderItems)
 		throws Exception {
 
-		Hits hits = search(keywords, commerceOrderId);
+		Hits hits = _search(keywords, commerceOrderId);
 
 		_assertSearch(hits, expectedCommerceOrderItems);
 	}
@@ -284,6 +273,16 @@ public class CommerceOrderItemIndexerTest {
 		searchContext.setSorts(SortFactoryUtil.getDefaultSorts());
 
 		return searchContext;
+	}
+
+	private Hits _search(String keywords, long commerceOrderId)
+		throws Exception {
+
+		SearchContext searchContext = _getSearchContext(commerceOrderId);
+
+		searchContext.setKeywords(keywords);
+
+		return _indexer.search(searchContext);
 	}
 
 	@Inject

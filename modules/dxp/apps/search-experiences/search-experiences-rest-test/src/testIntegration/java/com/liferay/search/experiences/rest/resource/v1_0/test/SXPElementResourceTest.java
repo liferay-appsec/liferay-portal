@@ -17,6 +17,7 @@ package com.liferay.search.experiences.rest.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.search.experiences.rest.client.dto.v1_0.SXPElement;
 
 import java.util.Collections;
@@ -49,25 +50,33 @@ public class SXPElementResourceTest extends BaseSXPElementResourceTestCase {
 	public void testPostSXPElement() throws Exception {
 		super.testPostSXPElement();
 
-		// Missing i18n
+		String description = RandomTestUtil.randomString();
+		String title = RandomTestUtil.randomString();
 
 		SXPElement sxpElement = SXPElement.toDTO(
 			JSONUtil.put(
-				"description", RandomTestUtil.randomString()
+				"description", description
 			).put(
-				"title", RandomTestUtil.randomString()
+				"title", title
 			).toJSONString());
 
 		SXPElement postSXPElement = testPostSXPElement_addSXPElement(
 			sxpElement);
 
 		sxpElement.setCreateDate(postSXPElement.getCreateDate());
+
+		sxpElement.setDescription_i18n(
+			Collections.singletonMap(
+				LocaleUtil.toBCP47LanguageId(LocaleUtil.US), description));
 		sxpElement.setId(postSXPElement.getId());
 		sxpElement.setModifiedDate(postSXPElement.getModifiedDate());
-		sxpElement.setUserName(postSXPElement.getUserName());
-
 		sxpElement.setReadOnly(false);
+		sxpElement.setSchemaVersion(postSXPElement.getSchemaVersion());
+		sxpElement.setTitle_i18n(
+			Collections.singletonMap(
+				LocaleUtil.toBCP47LanguageId(LocaleUtil.US), title));
 		sxpElement.setType(0);
+		sxpElement.setUserName(postSXPElement.getUserName());
 
 		Assert.assertEquals(sxpElement.toString(), postSXPElement.toString());
 

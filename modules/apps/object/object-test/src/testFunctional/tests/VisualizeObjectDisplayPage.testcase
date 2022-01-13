@@ -578,7 +578,6 @@ definition {
 	}
 
 	@description = "LPS-137104 - Verify if Objects and its data are displayed as a Content Type and Subtype for a Page Template"
-	@ignore = "true"
 	@priority = "5"
 	test ObjectDisplayedForPageTemplate {
 		property portal.acceptance = "true";
@@ -615,6 +614,8 @@ definition {
 	@description = "LPS-137105 - Verify if the Object entries are rendered when previewing it"
 	@priority = "5"
 	test ObjectEntriesAreRendered {
+		property portal.acceptance = "true";
+
 		ObjectAdmin.openObjectAdmin();
 
 		ObjectAdmin.addNewObject(

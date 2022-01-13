@@ -26,6 +26,7 @@ import com.liferay.xstream.configurator.XStreamConfigurator;
 
 import java.util.List;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -50,6 +51,7 @@ public class MobileDeviceRulesXStreamConfigurator
 		return null;
 	}
 
+	@Activate
 	protected void activate() {
 		_xStreamAliases = new XStreamAlias[] {
 			new XStreamAlias(MDRActionImpl.class, "MDRAction"),

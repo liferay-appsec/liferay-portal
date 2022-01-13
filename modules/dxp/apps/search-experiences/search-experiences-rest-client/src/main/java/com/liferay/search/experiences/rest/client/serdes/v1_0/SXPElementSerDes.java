@@ -59,6 +59,16 @@ public class SXPElementSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+		if (sxpElement.getActions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(sxpElement.getActions()));
+		}
+
 		if (sxpElement.getCreateDate() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -153,6 +163,20 @@ public class SXPElementSerDes {
 			sb.append(sxpElement.getReadOnly());
 		}
 
+		if (sxpElement.getSchemaVersion() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemaVersion\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(sxpElement.getSchemaVersion()));
+
+			sb.append("\"");
+		}
+
 		if (sxpElement.getTitle() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -222,6 +246,13 @@ public class SXPElementSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
+		if (sxpElement.getActions() == null) {
+			map.put("actions", null);
+		}
+		else {
+			map.put("actions", String.valueOf(sxpElement.getActions()));
+		}
+
 		if (sxpElement.getCreateDate() == null) {
 			map.put("createDate", null);
 		}
@@ -286,6 +317,14 @@ public class SXPElementSerDes {
 			map.put("readOnly", String.valueOf(sxpElement.getReadOnly()));
 		}
 
+		if (sxpElement.getSchemaVersion() == null) {
+			map.put("schemaVersion", null);
+		}
+		else {
+			map.put(
+				"schemaVersion", String.valueOf(sxpElement.getSchemaVersion()));
+		}
+
 		if (sxpElement.getTitle() == null) {
 			map.put("title", null);
 		}
@@ -335,7 +374,14 @@ public class SXPElementSerDes {
 			SXPElement sxpElement, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "createDate")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				if (jsonParserFieldValue != null) {
+					sxpElement.setActions(
+						(Map)SXPElementSerDes.toMap(
+							(String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "createDate")) {
 				if (jsonParserFieldValue != null) {
 					sxpElement.setCreateDate(
 						toDate((String)jsonParserFieldValue));
@@ -380,6 +426,11 @@ public class SXPElementSerDes {
 			else if (Objects.equals(jsonParserFieldName, "readOnly")) {
 				if (jsonParserFieldValue != null) {
 					sxpElement.setReadOnly((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemaVersion")) {
+				if (jsonParserFieldValue != null) {
+					sxpElement.setSchemaVersion((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "title")) {

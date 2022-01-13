@@ -123,7 +123,7 @@ Liferay = window.Liferay || {};
 
 			ioConfig.complete = function (response) {
 				if (
-					response !== null &&
+					Object.keys(response).length > 0 &&
 					!Object.prototype.hasOwnProperty.call(response, 'exception')
 				) {
 					if (callbackSuccess) {
@@ -196,8 +196,17 @@ Liferay = window.Liferay || {};
 			},
 			method: 'POST',
 		})
-			.then((response) => response.json())
-			.then(ioConfig.complete)
+			.then((response) =>
+				Promise.all([Promise.resolve(response), response.json()])
+			)
+			.then(([response, content]) => {
+				if (response.ok) {
+					ioConfig.complete(content);
+				}
+				else {
+					ioConfig.error();
+				}
+			})
 			.catch(ioConfig.error);
 	};
 

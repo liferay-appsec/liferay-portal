@@ -59,6 +59,7 @@
 			background-color: #98999B;
 			content: "";
 			display: inline-block;
+			flex-shrink: 0;
 			height: 20px;
 			margin-right: 5px;
 			mask: url(${titleIcon.getData()}) no-repeat 50% 50%;
@@ -79,6 +80,12 @@
 			width: 20px;
 		}
 	</#if>
+
+	@media only screen and (max-width: 992px) {
+		#tip {
+			width: 100%;
+		}
+}
 </style>
 
 <#assign applicationNameSpace = randomNamespace />

@@ -1188,12 +1188,6 @@ public interface PropsKeys {
 	public static final String EHCACHE_SINGLE_VM_CONFIG_LOCATION =
 		"ehcache.single.vm.config.location";
 
-	public static final String EHCACHE_SOCKET_SO_TIMEOUT =
-		"ehcache.socket.so.timeout";
-
-	public static final String EHCACHE_SOCKET_START_PORT =
-		"ehcache.socket.start.port";
-
 	public static final String ENTERPRISE_PRODUCT_NOTIFICATION_ENABLED =
 		"enterprise.product.notification.enabled";
 
@@ -3327,6 +3321,12 @@ public interface PropsKeys {
 
 	public static final String UNICODE_TEXT_NORMALIZER_FORM =
 		"unicode.text.normalizer.form";
+
+	public static final String UPGRADE_CONCURRENT_FETCH_SIZE =
+		"upgrade.concurrent.fetch.size";
+
+	public static final String UPGRADE_CONCURRENT_PROCESS_FUTURE_LIST_MAX_SIZE =
+		"upgrade.concurrent.process.list.max.size";
 
 	public static final String UPGRADE_DATABASE_AUTO_RUN =
 		"upgrade.database.auto.run";

@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
@@ -33,10 +32,24 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 	@Override
 	protected void doUpgrade() throws Exception {
 		upgradeSchema();
-		upgradeLayoutPageTemplateEntryKey();
+		_upgradeLayoutPageTemplateEntryKey();
 	}
 
-	protected void upgradeLayoutPageTemplateEntryKey() throws SQLException {
+	protected void upgradeSchema() throws Exception {
+		alter(
+			LayoutPageTemplateEntryTable.class,
+			new AlterTableAddColumn(
+				"layoutPageTemplateEntryKey", "VARCHAR(75)"));
+	}
+
+	private String _generateLayoutPageTemplateEntryKey(String name) {
+		String layoutPageTemplateEntryKey = StringUtil.toLowerCase(name.trim());
+
+		return StringUtil.replace(
+			layoutPageTemplateEntryKey, CharPool.SPACE, CharPool.DASH);
+	}
+
+	private void _upgradeLayoutPageTemplateEntryKey() throws Exception {
 		try (Statement s = connection.createStatement();
 			ResultSet resultSet = s.executeQuery(
 				"select layoutPageTemplateEntryId, name from " +
@@ -64,20 +77,6 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 
 			preparedStatement.executeBatch();
 		}
-	}
-
-	protected void upgradeSchema() throws Exception {
-		alter(
-			LayoutPageTemplateEntryTable.class,
-			new AlterTableAddColumn(
-				"layoutPageTemplateEntryKey", "VARCHAR(75)"));
-	}
-
-	private String _generateLayoutPageTemplateEntryKey(String name) {
-		String layoutPageTemplateEntryKey = StringUtil.toLowerCase(name.trim());
-
-		return StringUtil.replace(
-			layoutPageTemplateEntryKey, CharPool.SPACE, CharPool.DASH);
 	}
 
 }

@@ -17,7 +17,6 @@ package com.liferay.segments.experiment.web.internal.display.context;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.petra.portlet.url.builder.PortletURLBuilder;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -100,9 +99,9 @@ public class SegmentsExperimentDisplayContext {
 		}
 
 		_data = HashMapBuilder.<String, Object>put(
-			"context", getContext()
+			"context", _getContext()
 		).put(
-			"props", getProps()
+			"props", _getProps()
 		).build();
 
 		return _data;
@@ -112,47 +111,9 @@ public class SegmentsExperimentDisplayContext {
 		return PrefsPropsUtil.getString(companyId, "liferayAnalyticsURL");
 	}
 
-	protected Map<String, Object> getContext() throws PortalException {
-		return HashMapBuilder.<String, Object>put(
-			"contentPageEditorNamespace",
-			_getContentPageEditorPortletNamespace()
-		).put(
-			"endpoints", _getEndpoints()
-		).put(
-			"imagesPath", _getImagesPath()
-		).put(
-			"namespace", _getSegmentsExperimentPortletNamespace()
-		).put(
-			"page", _getPage()
-		).build();
-	}
-
-	protected Map<String, Object> getProps() throws PortalException {
-		Locale locale = _themeDisplay.getLocale();
-
-		return HashMapBuilder.<String, Object>put(
-			"historySegmentsExperiments",
-			_getHistorySegmentsExperimentsJSONArray(locale)
-		).put(
-			"initialSegmentsVariants",
-			_getSegmentsExperimentRelsJSONArray(locale)
-		).put(
-			"segmentsExperiences", _getSegmentsExperiencesJSONArray(locale)
-		).put(
-			"segmentsExperiment", _getSegmentsExperimentJSONObject(locale)
-		).put(
-			"segmentsExperimentGoals",
-			_getSegmentsExperimentGoalsJSONArray(locale)
-		).put(
-			"selectedSegmentsExperienceId", _getSelectedSegmentsExperienceId()
-		).put(
-			"winnerSegmentsVariantId", _getWinnerSegmentsExperienceId()
-		).build();
-	}
-
 	private Optional<SegmentsExperiment> _getActiveSegmentsExperimentOptional(
 			long segmentsExperienceId)
-		throws PortalException {
+		throws Exception {
 
 		Layout layout = _themeDisplay.getLayout();
 
@@ -182,6 +143,21 @@ public class SegmentsExperimentDisplayContext {
 	private String _getContentPageEditorPortletNamespace() {
 		return _portal.getPortletNamespace(
 			ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET);
+	}
+
+	private Map<String, Object> _getContext() throws Exception {
+		return HashMapBuilder.<String, Object>put(
+			"contentPageEditorNamespace",
+			_getContentPageEditorPortletNamespace()
+		).put(
+			"endpoints", _getEndpoints()
+		).put(
+			"imagesPath", _getImagesPath()
+		).put(
+			"namespace", _getSegmentsExperimentPortletNamespace()
+		).put(
+			"page", _getPage()
+		).build();
 	}
 
 	private String _getCreateSegmentsExperimentURL() {
@@ -214,7 +190,7 @@ public class SegmentsExperimentDisplayContext {
 			"/segments_experiment/edit_segments_experiment");
 	}
 
-	private String _getEditSegmentsVariantLayoutURL() throws PortalException {
+	private String _getEditSegmentsVariantLayoutURL() throws Exception {
 		Layout draftLayout = _layoutLocalService.fetchDraftLayout(
 			_themeDisplay.getPlid());
 
@@ -250,7 +226,7 @@ public class SegmentsExperimentDisplayContext {
 			"/segments_experiment/edit_segments_experiment_rel");
 	}
 
-	private Map<String, Object> _getEndpoints() throws PortalException {
+	private Map<String, Object> _getEndpoints() throws Exception {
 		return HashMapBuilder.<String, Object>put(
 			"calculateSegmentsExperimentEstimatedDurationURL",
 			_getCalculateSegmentsExperimentEstimatedDurationURL()
@@ -277,7 +253,7 @@ public class SegmentsExperimentDisplayContext {
 	}
 
 	private JSONArray _getHistorySegmentsExperimentsJSONArray(Locale locale)
-		throws PortalException {
+		throws Exception {
 
 		Layout layout = _themeDisplay.getLayout();
 
@@ -324,12 +300,35 @@ public class SegmentsExperimentDisplayContext {
 		).build();
 	}
 
+	private Map<String, Object> _getProps() throws Exception {
+		Locale locale = _themeDisplay.getLocale();
+
+		return HashMapBuilder.<String, Object>put(
+			"historySegmentsExperiments",
+			_getHistorySegmentsExperimentsJSONArray(locale)
+		).put(
+			"initialSegmentsVariants",
+			_getSegmentsExperimentRelsJSONArray(locale)
+		).put(
+			"segmentsExperiences", _getSegmentsExperiencesJSONArray(locale)
+		).put(
+			"segmentsExperiment", _getSegmentsExperimentJSONObject(locale)
+		).put(
+			"segmentsExperimentGoals",
+			_getSegmentsExperimentGoalsJSONArray(locale)
+		).put(
+			"selectedSegmentsExperienceId", _getSelectedSegmentsExperienceId()
+		).put(
+			"winnerSegmentsVariantId", _getWinnerSegmentsExperienceId()
+		).build();
+	}
+
 	private String _getRunSegmentsExperimenttURL() {
 		return _getSegmentsExperimentActionURL(
 			"/segments_experiment/run_segments_experiment");
 	}
 
-	private long _getSegmentsExperienceId() throws PortalException {
+	private long _getSegmentsExperienceId() throws Exception {
 		SegmentsExperiment segmentsExperiment = _getSegmentsExperiment();
 
 		if (segmentsExperiment != null) {
@@ -340,7 +339,7 @@ public class SegmentsExperimentDisplayContext {
 	}
 
 	private JSONArray _getSegmentsExperiencesJSONArray(Locale locale)
-		throws PortalException {
+		throws Exception {
 
 		List<SegmentsExperience> segmentsExperiences =
 			_segmentsExperienceService.getSegmentsExperiences(
@@ -392,7 +391,7 @@ public class SegmentsExperimentDisplayContext {
 		return segmentsExperiencesJSONArray;
 	}
 
-	private SegmentsExperiment _getSegmentsExperiment() throws PortalException {
+	private SegmentsExperiment _getSegmentsExperiment() throws Exception {
 		if (_segmentsExperiment != null) {
 			return _segmentsExperiment;
 		}
@@ -443,7 +442,7 @@ public class SegmentsExperimentDisplayContext {
 	}
 
 	private JSONObject _getSegmentsExperimentJSONObject(Locale locale)
-		throws PortalException {
+		throws Exception {
 
 		return SegmentsExperimentUtil.toSegmentsExperimentJSONObject(
 			locale, _getSegmentsExperiment());
@@ -455,7 +454,7 @@ public class SegmentsExperimentDisplayContext {
 	}
 
 	private JSONArray _getSegmentsExperimentRelsJSONArray(Locale locale)
-		throws PortalException {
+		throws Exception {
 
 		SegmentsExperiment segmentsExperiment = _getSegmentsExperiment();
 

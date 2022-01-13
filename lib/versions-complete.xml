@@ -2585,6 +2585,30 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>com.liferay.portal.odata.impl.jar!netty-codec-http.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Codec/HTTP</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.portal.odata.impl.jar!netty-common.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Common</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
 				<file-name>com.liferay.portal.odata.impl.jar!odata-commons-api.jar</file-name>
 				<version>4.7.1</version>
 				<project-name>odata-commons-api</project-name>
@@ -3160,7 +3184,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch7.impl.jar!org.apache.logging.log4j.core.jar</file-name>
-				<version>2.17.0.LIFERAY-PATCHED-1</version>
+				<version>2.17.1.LIFERAY-PATCHED-1</version>
 				<project-name>Apache Log4j Core</project-name>
 				<project-url>https://www.apache.org/</project-url>
 				<licenses>
@@ -3172,7 +3196,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch7.impl.jar!org.apache.logging.log4j.jar</file-name>
-				<version>2.17.0.LIFERAY-PATCHED-1</version>
+				<version>2.17.1.LIFERAY-PATCHED-1</version>
 				<project-name>Apache Log4j API</project-name>
 				<project-url>https://www.apache.org/</project-url>
 				<licenses>
@@ -4160,6 +4184,18 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>com.liferay.portal.url.rewrite.filter.jar!urlrewritefilter.jar</file-name>
+				<version>4.0.4</version>
+				<project-name>UrlRewriteFilter</project-name>
+				<project-url>http://www.tuckey.org/urlrewrite/</project-url>
+				<licenses>
+					<license>
+						<license-name>BSD</license-name>
+						<license-url>http://www.opensource.org/licenses/bsd-license.php</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
 				<file-name>com.liferay.portal.vulcan.api.jar!jackson-dataformat-xml.jar</file-name>
 				<version>2.9.8</version>
 				<project-name>Jackson-dataformat-XML</project-name>
@@ -4351,6 +4387,18 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>com.liferay.portal.vulcan.impl.jar!jackson-module-jaxb-annotations.jar</file-name>
+				<version>2.9.8</version>
+				<project-name>Jackson module: JAXB Annotations</project-name>
+				<project-url>https://github.com/FasterXML/jackson-modules-base</project-url>
+				<licenses>
+					<license>
+						<license-name>The Apache Software License, Version 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!java-dataloader.jar</file-name>
 				<version>2.1.1</version>
 				<project-name>java-dataloader</project-name>
@@ -4484,6 +4532,90 @@
 					<license>
 						<license-name>The MIT License (MIT)</license-name>
 						<license-url>http://opensource.org/licenses/MIT</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-codec-dns.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Codec/DNS</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-codec-http.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Codec/HTTP</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-codec-http2.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Codec/HTTP2</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-codec-socks.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Codec/Socks</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-common.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Common</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-handler-proxy.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Handler/Proxy</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>com.liferay.push.notifications.sender.apple.jar!netty-resolver-dns.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty/Resolver/DNS</project-name>
+				<project-url>https://netty.io/</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
@@ -5430,7 +5562,7 @@
 			</library>
 			<library>
 				<file-name>lib/development/mariadb.jar</file-name>
-				<version>1.1.9</version>
+				<version>2.7.4</version>
 				<project-name>MariaDB Connector/J</project-name>
 				<project-url>https://downloads.mariadb.org/connector-java</project-url>
 				<licenses>
@@ -5940,42 +6072,6 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>lib/portal/antlr2.jar</file-name>
-				<version>2.7.7</version>
-				<project-name>ANTLR</project-name>
-				<project-url>http://www.antlr.org</project-url>
-				<licenses>
-					<license>
-						<license-name>BSD Style License</license-name>
-						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/antlr3-runtime.jar</file-name>
-				<version>3.0.1</version>
-				<project-name>ANTLR</project-name>
-				<project-url>http://www.antlr.org</project-url>
-				<licenses>
-					<license>
-						<license-name>BSD Style License</license-name>
-						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/antlr3.jar</file-name>
-				<version>3.0.1</version>
-				<project-name>ANTLR</project-name>
-				<project-url>http://www.antlr.org</project-url>
-				<licenses>
-					<license>
-						<license-name>BSD Style License</license-name>
-						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>lib/portal/asm-analysis.jar</file-name>
 				<version>7.0</version>
 				<project-name>ASM</project-name>
@@ -6061,19 +6157,6 @@
 				<comments>See modules/third-party/org-apache-axis/patches.</comments>
 			</library>
 			<library>
-				<file-name>lib/portal/bsf.jar</file-name>
-				<version>2.4.0</version>
-				<project-name>Bean Scripting Framework</project-name>
-				<project-url>http://jakarta.apache.org/bsf</project-url>
-				<licenses>
-					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
-						<copyright-notice>Copyright (c) 2002-2006 The Apache Software Foundation.</copyright-notice>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>lib/portal/c3p0.jar</file-name>
 				<version>0.9.5.4</version>
 				<project-name>C3P0</project-name>
@@ -6139,18 +6222,6 @@
 				<version>1.9.4</version>
 				<project-name>Commons Beanutils</project-name>
 				<project-url>http://commons.apache.org/beanutils</project-url>
-				<licenses>
-					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/commons-chain.jar</file-name>
-				<version>1.2</version>
-				<project-name>Commons Chain</project-name>
-				<project-url>http://commons.apache.org/chain</project-url>
 				<licenses>
 					<license>
 						<license-name>Apache License 2.0</license-name>
@@ -6380,22 +6451,6 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>lib/portal/concurrent.jar</file-name>
-				<version>1.3.4</version>
-				<project-name>Concurrent</project-name>
-				<project-url>http://g.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html</project-url>
-				<licenses>
-					<license>
-						<license-name>Public Domain</license-name>
-						<license-url>http://en.wikipedia.org/wiki/Public_domain</license-url>
-					</license>
-					<license>
-						<license-name>Technology License From Sun Microsystems Inc. To Doug Lea</license-name>
-						<license-url>http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/sun-u.c.license.pdf</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>lib/portal/crypt.jar</file-name>
 				<version>1.0</version>
 				<project-name>Manticore UFC Crypt</project-name>
@@ -6405,16 +6460,6 @@
 						<license-name>LGPL 2.1</license-name>
 						<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>
 					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/curvesapi.jar</file-name>
-				<version>1.06</version>
-				<project-name>curvesapi</project-name>
-				<project-url>https://github.com/virtuald/curvesapi</project-url>
-				<licenses>
-					<license-name>BSD Style License</license-name>
-					<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
 				</licenses>
 			</library>
 			<library>
@@ -6463,34 +6508,6 @@
 					<license>
 						<license-name>Apache License 2.0</license-name>
 						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/freshcookies-security.jar</file-name>
-				<version>0.60</version>
-				<project-name>Freshcookies</project-name>
-				<project-url>http://freshcookies.org/freshcookies-security</project-url>
-				<licenses>
-					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/gif89.jar</file-name>
-				<version>1.0</version>
-				<project-name>Gif89Encoder</project-name>
-				<project-url>http://jmge.net/java/gifenc</project-url>
-				<licenses>
-					<license>
-						<license-name>GIF89 Public Domain</license-name>
-					</license>
-					<license>
-						<license-name>BSD Style License</license-name>
-						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
-						<copyright-notice>Copyright (c) 1996 by Jef Poskanzer &lt;jef@acme.com&gt;. All rights reserved.</copyright-notice>
 					</license>
 				</licenses>
 			</library>
@@ -7007,18 +7024,6 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>lib/portal/jrcs-diff.jar</file-name>
-				<version>0.3.0</version>
-				<project-name>JRCS diff utilities</project-name>
-				<project-url>http://www.suigeneris.org/kb/display/jrcs/JRCS+Home</project-url>
-				<licenses>
-					<license>
-						<license-name>Apache License 1.1</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-1.1</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>lib/portal/json-java.jar</file-name>
 				<version>20180813</version>
 				<project-name>JSON in Java</project-name>
@@ -7120,7 +7125,7 @@
 			</library>
 			<library>
 				<file-name>lib/portal/log4j-1.2-api.jar</file-name>
-				<version>2.17.0</version>
+				<version>2.17.1</version>
 				<project-name>Log4j 1.x Compatibility API</project-name>
 				<project-url>http://logging.apache.org/log4j</project-url>
 				<licenses>
@@ -7132,7 +7137,7 @@
 			</library>
 			<library>
 				<file-name>lib/portal/log4j-api.jar</file-name>
-				<version>2.17.0.LIFERAY-PATCHED-1</version>
+				<version>2.17.1.LIFERAY-PATCHED-1</version>
 				<project-name>Log4j API</project-name>
 				<project-url>http://logging.apache.org/log4j</project-url>
 				<licenses>
@@ -7144,7 +7149,7 @@
 			</library>
 			<library>
 				<file-name>lib/portal/log4j-core.jar</file-name>
-				<version>2.17.0.LIFERAY-PATCHED-1</version>
+				<version>2.17.1.LIFERAY-PATCHED-1</version>
 				<project-name>Log4j Core</project-name>
 				<project-url>http://logging.apache.org/log4j</project-url>
 				<licenses>
@@ -7263,8 +7268,68 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>lib/portal/netty-all.jar</file-name>
-				<version>4.1.68.Final</version>
+				<file-name>lib/portal/netty-buffer.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty</project-name>
+				<project-url>http://netty.io</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/netty-codec.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty</project-name>
+				<project-url>http://netty.io</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/netty-common.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty</project-name>
+				<project-url>http://netty.io</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/netty-handler.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty</project-name>
+				<project-url>http://netty.io</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/netty-resolver.jar</file-name>
+				<version>4.1.72.Final</version>
+				<project-name>Netty</project-name>
+				<project-url>http://netty.io</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/netty-transport.jar</file-name>
+				<version>4.1.72.Final</version>
 				<project-name>Netty</project-name>
 				<project-url>http://netty.io</project-url>
 				<licenses>
@@ -7888,18 +7953,6 @@
 					<license>
 						<license-name>LGPL 2.1</license-name>
 						<license-url>http://www.gnu.org/licenses/lgpl-2.1.html</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
-				<file-name>lib/portal/urlrewritefilter.jar</file-name>
-				<version>4.0.4</version>
-				<project-name>URL Rewrite Filter</project-name>
-				<project-url>http://tuckey.org/urlrewrite</project-url>
-				<licenses>
-					<license>
-						<license-name>BSD Style License</license-name>
-						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
 					</license>
 				</licenses>
 			</library>

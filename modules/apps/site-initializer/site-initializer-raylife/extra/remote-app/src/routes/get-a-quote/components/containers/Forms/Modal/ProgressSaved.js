@@ -1,14 +1,28 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import ClayIcon from '@clayui/icon';
 import Modal from '../../../../../../common/components/modal';
-import {LiferayService} from '../../../../../../common/services/liferay';
 import {
 	STORAGE_KEYS,
 	Storage,
 } from '../../../../../../common/services/liferay/storage';
 import {clearExitAlert} from '../../../../../../common/utils/exitAlert';
+import {getLiferaySiteName} from '../../../../../../common/utils/liferay';
 import {createQuoteRetrieve} from '../../../../services/QuoteRetrieve';
 
-const liferaySiteName = LiferayService.getLiferaySiteName();
+const liferaySiteName = getLiferaySiteName();
 
 const ProgressSaved = ({email, onClose, productQuote, setError, show}) => {
 	const onSendLinkAndExit = async () => {

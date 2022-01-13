@@ -17,9 +17,10 @@ package com.liferay.account.admin.web.internal.dao.search;
 import com.liferay.account.admin.web.internal.display.AccountGroupDisplay;
 import com.liferay.account.constants.AccountPortletKeys;
 import com.liferay.account.model.AccountGroup;
-import com.liferay.account.service.AccountGroupLocalServiceUtil;
+import com.liferay.account.service.AccountGroupServiceUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
@@ -31,7 +32,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.vulcan.util.TransformUtil;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -40,8 +40,9 @@ import java.util.Objects;
 public class AccountGroupDisplaySearchContainerFactory {
 
 	public static SearchContainer<AccountGroupDisplay> create(
-		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse) {
+			LiferayPortletRequest liferayPortletRequest,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortalException {
 
 		SearchContainer<AccountGroupDisplay>
 			accountGroupDisplaySearchContainer = new SearchContainer(
@@ -55,8 +56,6 @@ public class AccountGroupDisplaySearchContainerFactory {
 			SearchOrderByUtil.getOrderByType(
 				liferayPortletRequest, AccountPortletKeys.ACCOUNT_GROUPS_ADMIN,
 				"account-group-order-by-type", "asc"));
-		accountGroupDisplaySearchContainer.setRowChecker(
-			new EmptyOnClickRowChecker(liferayPortletResponse));
 
 		String keywords = ParamUtil.getString(
 			liferayPortletRequest, "keywords");
@@ -66,7 +65,7 @@ public class AccountGroupDisplaySearchContainerFactory {
 				WebKeys.THEME_DISPLAY);
 
 		BaseModelSearchResult<AccountGroup> baseModelSearchResult =
-			AccountGroupLocalServiceUtil.searchAccountGroups(
+			AccountGroupServiceUtil.searchAccountGroups(
 				themeDisplay.getCompanyId(), keywords,
 				accountGroupDisplaySearchContainer.getStart(),
 				accountGroupDisplaySearchContainer.getEnd(),
@@ -76,14 +75,13 @@ public class AccountGroupDisplaySearchContainerFactory {
 						accountGroupDisplaySearchContainer.getOrderByType(),
 						"asc")));
 
-		List<AccountGroupDisplay> accountGroupDisplays =
-			TransformUtil.transform(
-				baseModelSearchResult.getBaseModels(), AccountGroupDisplay::of);
-
-		accountGroupDisplaySearchContainer.setResults(accountGroupDisplays);
-
-		accountGroupDisplaySearchContainer.setTotal(
+		accountGroupDisplaySearchContainer.setResultsAndTotal(
+			() -> TransformUtil.transform(
+				baseModelSearchResult.getBaseModels(), AccountGroupDisplay::of),
 			baseModelSearchResult.getLength());
+
+		accountGroupDisplaySearchContainer.setRowChecker(
+			new EmptyOnClickRowChecker(liferayPortletResponse));
 
 		return accountGroupDisplaySearchContainer;
 	}

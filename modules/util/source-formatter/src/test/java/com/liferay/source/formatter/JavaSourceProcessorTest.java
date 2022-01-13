@@ -47,6 +47,11 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testCollapseImports() throws Exception {
+		test("CollapseImports.testjava");
+	}
+
+	@Test
 	public void testCombineLines() throws Exception {
 		test("CombineLines.testjava");
 	}
@@ -481,6 +486,17 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testUnusedImport() throws Exception {
 		test("UnusedImport.testjava");
+	}
+
+	@Test
+	public void testUnusedMethods() throws Exception {
+		test(
+			"UnusedMethods.testjava",
+			new String[] {
+				"Method '_getInteger' is unused",
+				"Method '_getString' is unused"
+			},
+			new Integer[] {33, 41});
 	}
 
 	@Test

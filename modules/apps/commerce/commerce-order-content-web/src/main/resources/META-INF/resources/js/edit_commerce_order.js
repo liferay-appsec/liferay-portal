@@ -13,16 +13,18 @@
  */
 
 export default function ({commerceOrderImporterTypeKey, title, url}) {
-	document
-		.querySelector(`.${commerceOrderImporterTypeKey}`)
-		.addEventListener('click', (event) => {
-			event.preventDefault();
+	const commerceOrderImporterTypeKeySelector = document.querySelector(
+		`.${commerceOrderImporterTypeKey}`
+	);
 
-			Liferay.Util.openModal({
-				id: commerceOrderImporterTypeKey,
-				iframeBodyCssClass: '',
-				title,
-				url,
-			});
+	commerceOrderImporterTypeKeySelector.addEventListener('click', (event) => {
+		event.preventDefault();
+
+		Liferay.Util.openModal({
+			id: commerceOrderImporterTypeKey,
+			iframeBodyCssClass: '',
+			title,
+			url,
 		});
+	});
 }

@@ -14,6 +14,8 @@
 
 package com.liferay.jenkins.results.parser;
 
+import com.liferay.jenkins.results.parser.job.property.JobProperty;
+import com.liferay.jenkins.results.parser.job.property.JobPropertyFactory;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
 import com.liferay.jenkins.results.parser.test.clazz.group.BatchTestClassGroup;
 import com.liferay.jenkins.results.parser.test.clazz.group.FunctionalBatchTestClassGroup;
@@ -173,8 +175,27 @@ public abstract class BaseJob implements Job {
 	}
 
 	@Override
-	public String getJobProperty(String key) {
-		return _jobProperties.getProperty(key);
+	public List<File> getJobPropertiesFiles() {
+		return jobPropertiesFiles;
+	}
+
+	@Override
+	public List<String> getJobPropertyOptions() {
+		List<String> jobPropertyOptions = new ArrayList<>();
+
+		jobPropertyOptions.add(String.valueOf(getBuildProfile()));
+
+		String jobName = getJobName();
+
+		jobPropertyOptions.add(jobName);
+
+		if (jobName.contains("(")) {
+			jobPropertyOptions.add(jobName.substring(0, jobName.indexOf("(")));
+		}
+
+		jobPropertyOptions.removeAll(Collections.singleton(null));
+
+		return jobPropertyOptions;
 	}
 
 	@Override
@@ -197,8 +218,23 @@ public abstract class BaseJob implements Job {
 
 		jsonObject.put("batches", batchesJSONArray);
 
-		jsonObject.put("build_profile", getBuildProfile());
+		jsonObject.put("build_profile", String.valueOf(getBuildProfile()));
 		jsonObject.put("job_name", getJobName());
+		jsonObject.put("job_property_options", getJobPropertyOptions());
+
+		JSONArray smokeBatchesJSONArray = new JSONArray();
+
+		if (this instanceof BatchDependentJob) {
+			BatchDependentJob batchDependentJob = (BatchDependentJob)this;
+
+			for (BatchTestClassGroup batchTestClassGroup :
+					batchDependentJob.getDependentBatchTestClassGroups()) {
+
+				smokeBatchesJSONArray.put(batchTestClassGroup.getJSONObject());
+			}
+		}
+
+		jsonObject.put("smoke_batches", smokeBatchesJSONArray);
 
 		if (this instanceof TestSuiteJob) {
 			TestSuiteJob testSuiteJob = (TestSuiteJob)this;
@@ -551,7 +587,24 @@ public abstract class BaseJob implements Job {
 		}
 	}
 
-	protected abstract Set<String> getRawBatchNames();
+	protected JobProperty getJobProperty(String basePropertyName) {
+		return JobPropertyFactory.newJobProperty(
+			basePropertyName, null, null, this, null, null, true);
+	}
+
+	protected JobProperty getJobProperty(
+		String basePropertyName, boolean useBasePropertyName) {
+
+		return JobPropertyFactory.newJobProperty(
+			basePropertyName, null, null, this, null, null,
+			useBasePropertyName);
+	}
+
+	protected Set<String> getRawBatchNames() {
+		JobProperty jobProperty = getJobProperty("test.batch.names");
+
+		return getSetFromString(jobProperty.getValue());
+	}
 
 	protected List<SegmentTestClassGroup> getSegmentTestClassGroups(
 		Set<String> rawBatchNames) {
@@ -579,7 +632,7 @@ public abstract class BaseJob implements Job {
 	protected Set<String> getSetFromString(String string) {
 		Set<String> set = new TreeSet<>();
 
-		if (string == null) {
+		if (JenkinsResultsParserUtil.isNullOrEmpty(string)) {
 			return set;
 		}
 

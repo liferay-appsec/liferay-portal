@@ -1,3 +1,14 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 export const CONTENT_TYPE = {
 	JSON: 'application/json',
 	XML: 'application/xml',
@@ -7,7 +18,7 @@ export const CUSTOM_EVENTS = {
 	MENU_PAGE: 'customer-portal-menu-selected',
 	PROJECT: 'customer-portal-project-loading',
 	QUICK_LINKS: 'customer-portal-quick-links',
-	SUBSCRIPTION_GROUPS: 'cp-tip-container-primary',
+	SUBSCRIPTION_GROUPS: 'customer-portal-subscription-groups-loading',
 	USER_ACCOUNT: 'customer-portal-select-user-loading',
 };
 
@@ -20,6 +31,12 @@ export const SLA_NAMES = {
 	limited_subscription: 'Limited Subscription',
 };
 
+export const SUBSCRIPTIONS_STATUS = {
+	active: 'Active',
+	expired: 'Expired',
+	future: 'Future',
+};
+
 export const status = {
 	active: 1,
 	expired: 2,
@@ -30,24 +47,12 @@ export const STATUS_CODE = {
 	SUCCESS: 200,
 };
 
-export const WEB_CONTENTS = {
-	'WEB-CONTENT-ACTION-01': 'WEB-CONTENT-ACTION-01',
-	'WEB-CONTENT-ACTION-02': 'WEB-CONTENT-ACTION-02',
-	'WEB-CONTENT-ACTION-03': 'WEB-CONTENT-ACTION-03',
-	'WEB-CONTENT-ACTION-04': 'WEB-CONTENT-ACTION-04',
-	'WEB-CONTENT-ACTION-05': 'WEB-CONTENT-ACTION-05',
-	'WEB-CONTENT-ACTION-06': 'WEB-CONTENT-ACTION-06',
-	'WEB-CONTENT-ACTION-07': 'WEB-CONTENT-ACTION-07',
-	'WEB-CONTENT-ACTION-08': 'WEB-CONTENT-ACTION-08',
-	'WEB-CONTENT-ACTION-09': 'WEB-CONTENT-ACTION-09',
-};
-
 export const WEB_CONTENTS_BY_LIFERAY_VERSION = {
-	'7.0': WEB_CONTENTS['WEB-CONTENT-ACTION-04'],
-	'7.1': WEB_CONTENTS['WEB-CONTENT-ACTION-05'],
-	'7.2': WEB_CONTENTS['WEB-CONTENT-ACTION-06'],
-	'7.3': WEB_CONTENTS['WEB-CONTENT-ACTION-07'],
-	'7.4': WEB_CONTENTS['WEB-CONTENT-ACTION-08'],
+	'7.0': 'WEB-CONTENT-ACTION-04',
+	'7.1': 'WEB-CONTENT-ACTION-05',
+	'7.2': 'WEB-CONTENT-ACTION-06',
+	'7.3': 'WEB-CONTENT-ACTION-07',
+	'7.4': 'WEB-CONTENT-ACTION-08',
 };
 
 export const pages = {

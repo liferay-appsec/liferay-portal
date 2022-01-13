@@ -19,9 +19,11 @@ import ClayDropDown, {ClayDropDownWithItems} from '@clayui/drop-down';
 import {ClayCheckbox, ClayInput, ClayToggle} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
+import ClayLink from '@clayui/link';
 import ClayManagementToolbar, {
 	ClayResultsBar,
 } from '@clayui/management-toolbar';
+import ClayNavigationBar from '@clayui/navigation-bar';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import ClaySticker from '@clayui/sticker';
 import ClayTable from '@clayui/table';
@@ -97,6 +99,7 @@ export default function ChangeTrackingChangesView({
 	columnFromURL,
 	contextView,
 	ctCollectionId,
+	ctMappingInfos,
 	currentUserId,
 	dataURL,
 	defaultLocale,
@@ -112,6 +115,7 @@ export default function ChangeTrackingChangesView({
 	modelData,
 	name,
 	namespace,
+	navigationFromURL,
 	orderByTypeFromURL,
 	pageFromURL,
 	publishURL,
@@ -147,6 +151,8 @@ export default function ChangeTrackingChangesView({
 	const MENU_TYPES = 'MENU_TYPES';
 	const MENU_USERS = 'MENU_USERS';
 	const MVC_RENDER_COMMAND_NAME = '/change_tracking/view_changes';
+	const NAVIGATION_DATA = 'data';
+	const NAVIGATION_RELATIONSHIPS = 'relationships';
 	const PARAM_CHANGE_TYPES = namespace + 'changeTypes';
 	const PARAM_COLUMN = namespace + 'column';
 	const PARAM_DELTA = namespace + 'delta';
@@ -154,6 +160,7 @@ export default function ChangeTrackingChangesView({
 	const PARAM_ENTRY = namespace + 'entry';
 	const PARAM_KEYWORDS = namespace + 'keywords';
 	const PARAM_MVC_RENDER_COMMAND_NAME = namespace + 'mvcRenderCommandName';
+	const PARAM_NAVIGATION = namespace + 'navigation';
 	const PARAM_ORDER_BY_TYPE = namespace + 'orderByType';
 	const PARAM_PAGE = namespace + 'page';
 	const PARAM_SHOW_HIDEABLE = namespace + 'showHideable';
@@ -201,6 +208,7 @@ export default function ChangeTrackingChangesView({
 	params.delete(PARAM_DELTA);
 	params.delete(PARAM_ENTRY);
 	params.delete(PARAM_KEYWORDS);
+	params.delete(PARAM_NAVIGATION);
 	params.delete(PARAM_ORDER_BY_TYPE);
 	params.delete(PARAM_PAGE);
 	params.delete(PARAM_SHOW_HIDEABLE);
@@ -550,9 +558,7 @@ export default function ChangeTrackingChangesView({
 		: !!showHideableFromURL;
 
 	const [ascendingState, setAscendingState] = useState(
-		orderByTypeFromURL === ORDER_BY_TYPE_DESC
-			? ORDER_BY_TYPE_DESC
-			: ORDER_BY_TYPE_ASC
+		orderByTypeFromURL !== ORDER_BY_TYPE_DESC
 	);
 	const [columnState, setColumnState] = useState(
 		columnFromURL ? columnFromURL : COLUMN_TITLE
@@ -729,6 +735,12 @@ export default function ChangeTrackingChangesView({
 		children: initialNode.children,
 		delta: initialDelta,
 		id: initialNode.nodeId,
+		nav:
+			ctMappingInfos.length > 0 &&
+			(changes.length === 0 ||
+				navigationFromURL === NAVIGATION_RELATIONSHIPS)
+				? NAVIGATION_RELATIONSHIPS
+				: NAVIGATION_DATA,
 		node: initialNode,
 		page: calculatePage(
 			initialDelta,
@@ -755,6 +767,7 @@ export default function ChangeTrackingChangesView({
 			entryParam,
 			filters,
 			keywords,
+			navigation,
 			page,
 			showHideable
 		) => {
@@ -774,6 +787,10 @@ export default function ChangeTrackingChangesView({
 				PARAM_DELTA +
 				'=' +
 				delta.toString() +
+				'&' +
+				PARAM_NAVIGATION +
+				'=' +
+				navigation +
 				'&' +
 				PARAM_ORDER_BY_TYPE +
 				'=' +
@@ -832,6 +849,7 @@ export default function ChangeTrackingChangesView({
 			PARAM_DELTA,
 			PARAM_ENTRY,
 			PARAM_KEYWORDS,
+			PARAM_NAVIGATION,
 			PARAM_ORDER_BY_TYPE,
 			PARAM_PAGE,
 			PARAM_SHOW_HIDEABLE,
@@ -860,7 +878,7 @@ export default function ChangeTrackingChangesView({
 		window.history.pushState({path}, document.title, path);
 	};
 
-	const handleNavigationUpdate = useCallback(
+	const navigate = useCallback(
 		(nodeId, resetPage) => {
 			const node = getNode(nodeId);
 
@@ -874,6 +892,7 @@ export default function ChangeTrackingChangesView({
 					getEntryParam(node),
 					filtersState,
 					resultsKeywords,
+					renderState.nav,
 					page,
 					renderState.showHideable
 				)
@@ -888,6 +907,7 @@ export default function ChangeTrackingChangesView({
 				children: node.children,
 				delta: renderState.delta,
 				id: nodeId,
+				nav: renderState.nav,
 				node,
 				page,
 				parents: node.parents,
@@ -974,6 +994,19 @@ export default function ChangeTrackingChangesView({
 				keywords = '';
 			}
 
+			let navigation = params.get(PARAM_NAVIGATION);
+
+			if (
+				ctMappingInfos.length > 0 &&
+				(changes.length === 0 ||
+					navigation === NAVIGATION_RELATIONSHIPS)
+			) {
+				navigation = NAVIGATION_RELATIONSHIPS;
+			}
+			else {
+				navigation = NAVIGATION_DATA;
+			}
+
 			let page = params.get(PARAM_PAGE);
 
 			if (page) {
@@ -1015,19 +1048,20 @@ export default function ChangeTrackingChangesView({
 
 			setAscendingState(ascending);
 			setColumnState(column);
+			setEntrySearchTerms(keywords);
 			setFiltersState(filters);
 			setRenderState({
 				changes: nodes,
 				children: node.children,
 				delta,
 				id: node.nodeId,
+				nav: navigation,
 				node,
 				page: calculatePage(delta, page, nodes.length),
 				parents: node.parents,
 				showHideable,
 			});
 			setResultsKeywords(keywords);
-			setEntrySearchTerms(keywords);
 		},
 		[
 			PARAM_CHANGE_TYPES,
@@ -1035,12 +1069,15 @@ export default function ChangeTrackingChangesView({
 			PARAM_DELTA,
 			PARAM_ENTRY,
 			PARAM_KEYWORDS,
+			PARAM_NAVIGATION,
 			PARAM_ORDER_BY_TYPE,
 			PARAM_PAGE,
 			PARAM_SHOW_HIDEABLE,
 			PARAM_SITES,
 			PARAM_TYPES,
 			PARAM_USERS,
+			changes,
+			ctMappingInfos,
 			filterNodes,
 			getFilters,
 			getNode,
@@ -1296,6 +1333,7 @@ export default function ChangeTrackingChangesView({
 								getEntryParam(renderState.node),
 								filtersState,
 								resultsKeywords,
+								renderState.nav,
 								renderState.page,
 								renderState.showHideable
 							)
@@ -1314,6 +1352,7 @@ export default function ChangeTrackingChangesView({
 							getEntryParam(renderState.node),
 							filtersState,
 							resultsKeywords,
+							renderState.nav,
 							renderState.page,
 							renderState.showHideable
 						)
@@ -1654,7 +1693,7 @@ export default function ChangeTrackingChangesView({
 			rows.push(
 				<ClayTable.Row
 					className="cursor-pointer"
-					onClick={() => handleNavigationUpdate(node.nodeId)}
+					onClick={() => navigate(node.nodeId)}
 				>
 					<ClayTable.Cell>
 						<ClaySticker
@@ -1719,6 +1758,7 @@ export default function ChangeTrackingChangesView({
 				getEntryParam(renderState.node),
 				filters,
 				keywords,
+				renderState.nav,
 				page,
 				renderState.showHideable
 			)
@@ -1731,11 +1771,48 @@ export default function ChangeTrackingChangesView({
 			children: renderState.children,
 			delta: renderState.delta,
 			id: renderState.id,
+			nav: renderState.nav,
 			node: renderState.node,
 			page,
 			parents: renderState.parents,
 			showHideable: renderState.showHideable,
 		});
+
+		window.scrollTo(0, 0);
+	};
+
+	const handleNavigationUpdate = (navigation) => {
+		const filters = {changeTypes: [], sites: [], types: [], users: []};
+		const node = getNode(0);
+
+		pushState(
+			getPath(
+				ascendingState,
+				columnState,
+				renderState.delta,
+				getEntryParam(node),
+				filters,
+				'',
+				navigation,
+				1,
+				renderState.showHideable
+			)
+		);
+
+		setEntrySearchTerms('');
+		setFiltersState(filters);
+		setRenderState({
+			changes: filterNodes(filters, '', renderState.showHideable),
+			children: node.children,
+			delta: renderState.delta,
+			id: 0,
+			nav: navigation,
+			node,
+			page: 1,
+			parents: node.parents,
+			showHideable: renderState.showHideable,
+		});
+		setResultsKeywords('');
 
 		window.scrollTo(0, 0);
 	};
@@ -1769,6 +1846,7 @@ export default function ChangeTrackingChangesView({
 				getEntryParam(renderState.node),
 				filters,
 				resultsKeywords,
+				renderState.nav,
 				page,
 				showHideable
 			)
@@ -1780,6 +1858,7 @@ export default function ChangeTrackingChangesView({
 			children: renderState.children,
 			delta: renderState.delta,
 			id: renderState.id,
+			nav: renderState.nav,
 			node: renderState.node,
 			page,
 			parents: renderState.parents,
@@ -1923,92 +2002,279 @@ export default function ChangeTrackingChangesView({
 	};
 
 	const renderManagementToolbar = () => {
+		if (renderState.nav !== NAVIGATION_DATA) {
+			return '';
+		}
+
 		return (
-			<ClayManagementToolbar>
-				{renderFilterDropdown()}
-
-				{renderState.id > 0 ? (
-					<ClayManagementToolbar.ItemList expand />
-				) : (
-					<ClayManagementToolbar.Search
-						onSubmit={(event) => {
-							event.preventDefault();
-
-							handleFiltersUpdate(
-								filtersState,
-								entrySearchTerms.trim()
-							);
-						}}
-						showMobile={searchMobile}
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell
+						className="publications-header-td"
+						colSpan={5}
 					>
-						<ClayInput.Group>
-							<ClayInput.GroupItem>
-								<ClayInput
-									aria-label={Liferay.Language.get('search')}
-									className="form-control input-group-inset input-group-inset-after"
-									disabled={changes.length === 0}
-									onChange={(event) =>
-										setEntrySearchTerms(event.target.value)
-									}
-									placeholder={`${Liferay.Language.get(
-										'search'
-									)}...`}
-									type="text"
-									value={entrySearchTerms}
-								/>
+						<ClayManagementToolbar>
+							{renderFilterDropdown()}
 
-								<ClayInput.GroupInsetItem after tag="span">
-									<ClayButtonWithIcon
-										className="navbar-breakpoint-d-none"
+							{renderState.id > 0 ? (
+								<ClayManagementToolbar.ItemList expand />
+							) : (
+								<ClayManagementToolbar.Search
+									onSubmit={(event) => {
+										event.preventDefault();
+
+										handleFiltersUpdate(
+											filtersState,
+											entrySearchTerms.trim()
+										);
+									}}
+									showMobile={searchMobile}
+								>
+									<ClayInput.Group>
+										<ClayInput.GroupItem>
+											<ClayInput
+												aria-label={Liferay.Language.get(
+													'search'
+												)}
+												className="form-control input-group-inset input-group-inset-after"
+												disabled={changes.length === 0}
+												onChange={(event) =>
+													setEntrySearchTerms(
+														event.target.value
+													)
+												}
+												placeholder={`${Liferay.Language.get(
+													'search'
+												)}...`}
+												type="text"
+												value={entrySearchTerms}
+											/>
+
+											<ClayInput.GroupInsetItem
+												after
+												tag="span"
+											>
+												<ClayButtonWithIcon
+													className="navbar-breakpoint-d-none"
+													disabled={
+														changes.length === 0
+													}
+													displayType="unstyled"
+													onClick={() =>
+														setSearchMobile(false)
+													}
+													spritemap={spritemap}
+													symbol="times"
+												/>
+
+												<ClayButtonWithIcon
+													disabled={
+														changes.length === 0
+													}
+													displayType="unstyled"
+													spritemap={spritemap}
+													symbol="search"
+													type="submit"
+												/>
+											</ClayInput.GroupInsetItem>
+										</ClayInput.GroupItem>
+									</ClayInput.Group>
+								</ClayManagementToolbar.Search>
+							)}
+
+							<ClayManagementToolbar.ItemList>
+								{renderState.id === 0 && (
+									<ClayManagementToolbar.Item className="navbar-breakpoint-d-none">
+										<ClayButton
+											className="nav-link nav-link-monospaced"
+											disabled={changes.length === 0}
+											displayType="unstyled"
+											onClick={() =>
+												setSearchMobile(true)
+											}
+										>
+											<ClayIcon
+												spritemap={spritemap}
+												symbol="search"
+											/>
+										</ClayButton>
+									</ClayManagementToolbar.Item>
+								)}
+
+								<ClayManagementToolbar.Item className="simple-toggle-switch-reverse">
+									<ClayToggle
 										disabled={changes.length === 0}
-										displayType="unstyled"
-										onClick={() => setSearchMobile(false)}
-										spritemap={spritemap}
-										symbol="times"
+										label={Liferay.Language.get(
+											'show-all-items'
+										)}
+										onToggle={(showHideable) =>
+											handleShowHideableToggle(
+												showHideable
+											)
+										}
+										toggled={renderState.showHideable}
 									/>
+								</ClayManagementToolbar.Item>
+							</ClayManagementToolbar.ItemList>
+						</ClayManagementToolbar>
+					</ClayTable.Cell>
+				</ClayTable.Row>
+			</ClayTable.Head>
+		);
+	};
 
-									<ClayButtonWithIcon
-										disabled={changes.length === 0}
-										displayType="unstyled"
-										spritemap={spritemap}
-										symbol="search"
-										type="submit"
-									/>
-								</ClayInput.GroupInsetItem>
-							</ClayInput.GroupItem>
-						</ClayInput.Group>
-					</ClayManagementToolbar.Search>
-				)}
-
-				<ClayManagementToolbar.ItemList>
-					{renderState.id === 0 && (
-						<ClayManagementToolbar.Item className="navbar-breakpoint-d-none">
-							<ClayButton
-								className="nav-link nav-link-monospaced"
-								disabled={changes.length === 0}
-								displayType="unstyled"
-								onClick={() => setSearchMobile(true)}
+	const renderNavigationBar = () => {
+		return (
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell
+						className="publications-header-td"
+						colSpan={renderState.nav === NAVIGATION_DATA ? 5 : 1}
+					>
+						<ClayNavigationBar spritemap={spritemap}>
+							<ClayNavigationBar.Item
+								active={renderState.nav === NAVIGATION_DATA}
 							>
-								<ClayIcon
-									spritemap={spritemap}
-									symbol="search"
-								/>
-							</ClayButton>
-						</ClayManagementToolbar.Item>
-					)}
+								<ClayLink
+									className={
+										changes.length === 0
+											? 'nav-link btn-link disabled'
+											: 'nav-link'
+									}
+									displayType="unstyled"
+									onClick={
+										changes.length === 0
+											? null
+											: () =>
+													handleNavigationUpdate(
+														NAVIGATION_DATA
+													)
+									}
+								>
+									{Liferay.Language.get('data')}
+								</ClayLink>
+							</ClayNavigationBar.Item>
 
-					<ClayManagementToolbar.Item className="simple-toggle-switch-reverse">
-						<ClayToggle
-							disabled={changes.length === 0}
-							label={Liferay.Language.get('show-all-items')}
-							onToggle={(showHideable) =>
-								handleShowHideableToggle(showHideable)
-							}
-							toggled={renderState.showHideable}
-						/>
-					</ClayManagementToolbar.Item>
-				</ClayManagementToolbar.ItemList>
-			</ClayManagementToolbar>
+							<ClayNavigationBar.Item
+								active={
+									renderState.nav === NAVIGATION_RELATIONSHIPS
+								}
+							>
+								<ClayLink
+									className={
+										ctMappingInfos.length === 0
+											? 'nav-link btn-link disabled'
+											: 'nav-link'
+									}
+									displayType="unstyled"
+									onClick={
+										ctMappingInfos.length === 0
+											? null
+											: () =>
+													handleNavigationUpdate(
+														NAVIGATION_RELATIONSHIPS
+													)
+									}
+								>
+									{Liferay.Language.get('relationships')}
+								</ClayLink>
+							</ClayNavigationBar.Item>
+						</ClayNavigationBar>
+					</ClayTable.Cell>
+				</ClayTable.Row>
+			</ClayTable.Head>
+		);
+	};
+
+	const renderPaginationBar = () => {
+		let items = renderState.changes;
+
+		if (renderState.nav === NAVIGATION_RELATIONSHIPS) {
+			items = ctMappingInfos;
+		}
+
+		if (!items || items.length <= 5) {
+			return '';
+		}
+
+		return (
+			<ClayPaginationBarWithBasicItems
+				activeDelta={renderState.delta}
+				activePage={calculatePage(
+					renderState.delta,
+					renderState.page,
+					items.length
+				)}
+				deltas={[4, 8, 20, 40, 60].map((size) => ({
+					label: size,
+				}))}
+				ellipsisBuffer={3}
+				onDeltaChange={(delta) => {
+					if (delta === renderState.delta) {
+						return;
+					}
+
+					const page = calculatePage(
+						delta,
+						renderState.page,
+						items.length
+					);
+
+					pushState(
+						getPath(
+							ascendingState,
+							columnState,
+							delta,
+							getEntryParam(renderState.node),
+							filtersState,
+							resultsKeywords,
+							renderState.nav,
+							page,
+							renderState.showHideable
+						)
+					);
+
+					setRenderState({
+						changes: renderState.changes,
+						children: renderState.children,
+						delta,
+						id: renderState.id,
+						nav: renderState.nav,
+						node: renderState.node,
+						page,
+						parents: renderState.parents,
+						showHideable: renderState.showHideable,
+					});
+				}}
+				onPageChange={(page) => {
+					pushState(
+						getPath(
+							ascendingState,
+							columnState,
+							renderState.delta,
+							getEntryParam(renderState.node),
+							filtersState,
+							resultsKeywords,
+							renderState.nav,
+							page,
+							renderState.showHideable
+						)
+					);
+
+					setRenderState({
+						changes: renderState.changes,
+						children: renderState.children,
+						delta: renderState.delta,
+						id: renderState.id,
+						nav: renderState.nav,
+						node: renderState.node,
+						page,
+						parents: renderState.parents,
+						showHideable: renderState.showHideable,
+					});
+				}}
+				totalItems={items.length}
+			/>
 		);
 	};
 
@@ -2179,22 +2445,175 @@ export default function ChangeTrackingChangesView({
 		return <ClayResultsBar>{items}</ClayResultsBar>;
 	};
 
+	const renderTableBody = () => {
+		if (renderState.nav === NAVIGATION_RELATIONSHIPS) {
+			let items = ctMappingInfos.slice(0);
+
+			items.sort((a, b) => {
+				if (a.name < b.name) {
+					if (ascendingState) {
+						return -1;
+					}
+
+					return 1;
+				}
+
+				if (a.name > b.name) {
+					if (ascendingState) {
+						return 1;
+					}
+
+					return -1;
+				}
+
+				return 0;
+			});
+
+			if (items.length > 5) {
+				items = items.slice(
+					renderState.delta * (renderState.page - 1),
+					renderState.delta * renderState.page
+				);
+			}
+
+			return (
+				<ClayTable.Body>
+					{items.map((ctMappingInfo) => (
+						<ClayTable.Row key={ctMappingInfo.tableName}>
+							<ClayTable.Cell>
+								<strong>{ctMappingInfo.name}</strong>
+
+								{' (' + ctMappingInfo.description + ')'}
+							</ClayTable.Cell>
+						</ClayTable.Row>
+					))}
+				</ClayTable.Body>
+			);
+		}
+
+		return (
+			<ClayTable.Body>
+				{getTableRows(filterDisplayNodes(renderState.changes))}
+			</ClayTable.Body>
+		);
+	};
+
+	const renderTableHead = () => {
+		if (renderState.nav === NAVIGATION_RELATIONSHIPS) {
+			return (
+				<ClayTable.Head>
+					<ClayTable.Row>
+						<ClayTable.Cell headingCell>
+							<ClayButton
+								displayType="unstyled"
+								onClick={() => {
+									pushState(
+										getPath(
+											!ascendingState,
+											columnState,
+											renderState.delta,
+											getEntryParam(renderState.node),
+											filtersState,
+											resultsKeywords,
+											renderState.nav,
+											renderState.page,
+											renderState.showHideable
+										)
+									);
+
+									setAscendingState(!ascendingState);
+								}}
+							>
+								{Liferay.Language.get('name')}
+
+								<span className="inline-item inline-item-after">
+									<ClayIcon
+										spritemap={spritemap}
+										symbol={
+											ascendingState
+												? 'order-list-down'
+												: 'order-list-up'
+										}
+									/>
+								</span>
+							</ClayButton>
+						</ClayTable.Cell>
+					</ClayTable.Row>
+				</ClayTable.Head>
+			);
+		}
+
+		if (!renderState.changes || renderState.changes.length === 0) {
+			return (
+				<ClayTable.Head>
+					<ClayTable.Row>
+						<ClayTable.Cell colSpan={5}>
+							<div className="taglib-empty-result-message">
+								<div className="taglib-empty-search-result-message-header" />
+
+								<div className="sheet-text text-center">
+									{Liferay.Language.get(
+										'there-are-no-changes-to-display-in-this-view'
+									)}
+								</div>
+							</div>
+						</ClayTable.Cell>
+					</ClayTable.Row>
+				</ClayTable.Head>
+			);
+		}
+
+		return (
+			<ClayTable.Head>
+				<ClayTable.Row>
+					<ClayTable.Cell headingCell>
+						{getColumnHeader(
+							COLUMN_USER,
+							Liferay.Language.get('user')
+						)}
+					</ClayTable.Cell>
+
+					<ClayTable.Cell headingCell>
+						{getColumnHeader(
+							COLUMN_SITE,
+							Liferay.Language.get('site')
+						)}
+					</ClayTable.Cell>
+
+					<ClayTable.Cell className="table-cell-expand" headingCell>
+						{getColumnHeader(
+							COLUMN_TITLE,
+							Liferay.Language.get('title')
+						)}
+					</ClayTable.Cell>
+
+					<ClayTable.Cell
+						className="table-cell-expand-smallest"
+						headingCell
+					>
+						{getColumnHeader(
+							COLUMN_CHANGE_TYPE,
+							Liferay.Language.get('change-type')
+						)}
+					</ClayTable.Cell>
+
+					<ClayTable.Cell
+						className="table-cell-expand-smallest"
+						headingCell
+					>
+						{getColumnHeader(
+							COLUMN_MODIFIED_DATE,
+							Liferay.Language.get('last-modified')
+						)}
+					</ClayTable.Cell>
+				</ClayTable.Row>
+			</ClayTable.Head>
+		);
+	};
+
 	const renderTable = () => {
 		if (renderState.id > 0) {
 			return '';
-		}
-		else if (!renderState.changes || renderState.changes.length === 0) {
-			return (
-				<div className="sheet taglib-empty-result-message">
-					<div className="taglib-empty-search-result-message-header" />
-
-					<div className="sheet-text text-center">
-						{Liferay.Language.get(
-							'there-are-no-changes-to-display-in-this-view'
-						)}
-					</div>
-				</div>
-			);
 		}
 
 		return (
@@ -2205,135 +2624,22 @@ export default function ChangeTrackingChangesView({
 					hover
 					noWrap
 				>
-					<ClayTable.Head>
-						<ClayTable.Row>
-							<ClayTable.Cell headingCell>
-								{getColumnHeader(
-									COLUMN_USER,
-									Liferay.Language.get('user')
-								)}
-							</ClayTable.Cell>
+					{renderNavigationBar()}
 
-							<ClayTable.Cell headingCell>
-								{getColumnHeader(
-									COLUMN_SITE,
-									Liferay.Language.get('site')
-								)}
-							</ClayTable.Cell>
+					{renderManagementToolbar()}
 
-							<ClayTable.Cell
-								className="table-cell-expand"
-								headingCell
-							>
-								{getColumnHeader(
-									COLUMN_TITLE,
-									Liferay.Language.get('title')
-								)}
-							</ClayTable.Cell>
+					{renderTableHead()}
 
-							<ClayTable.Cell
-								className="table-cell-expand-smallest"
-								headingCell
-							>
-								{getColumnHeader(
-									COLUMN_CHANGE_TYPE,
-									Liferay.Language.get('change-type')
-								)}
-							</ClayTable.Cell>
-
-							<ClayTable.Cell
-								className="table-cell-expand-smallest"
-								headingCell
-							>
-								{getColumnHeader(
-									COLUMN_MODIFIED_DATE,
-									Liferay.Language.get('last-modified')
-								)}
-							</ClayTable.Cell>
-						</ClayTable.Row>
-					</ClayTable.Head>
-
-					<ClayTable.Body>
-						{getTableRows(filterDisplayNodes(renderState.changes))}
-					</ClayTable.Body>
+					{renderTableBody()}
 				</ClayTable>
-				{renderState.changes.length > 5 && (
-					<ClayPaginationBarWithBasicItems
-						activeDelta={renderState.delta}
-						activePage={renderState.page}
-						deltas={[4, 8, 20, 40, 60].map((size) => ({
-							label: size,
-						}))}
-						ellipsisBuffer={3}
-						onDeltaChange={(delta) => {
-							if (delta === renderState.delta) {
-								return;
-							}
 
-							const page = calculatePage(
-								delta,
-								renderState.page,
-								renderState.changes.length
-							);
-
-							pushState(
-								getPath(
-									ascendingState,
-									columnState,
-									delta,
-									getEntryParam(renderState.node),
-									filtersState,
-									resultsKeywords,
-									page,
-									renderState.showHideable
-								)
-							);
-
-							setRenderState({
-								changes: renderState.changes,
-								children: renderState.children,
-								delta,
-								id: renderState.id,
-								node: renderState.node,
-								page,
-								parents: renderState.parents,
-								showHideable: renderState.showHideable,
-							});
-						}}
-						onPageChange={(page) => {
-							pushState(
-								getPath(
-									ascendingState,
-									columnState,
-									renderState.delta,
-									getEntryParam(renderState.node),
-									filtersState,
-									resultsKeywords,
-									page,
-									renderState.showHideable
-								)
-							);
-
-							setRenderState({
-								changes: renderState.changes,
-								children: renderState.children,
-								delta: renderState.delta,
-								id: renderState.id,
-								node: renderState.node,
-								page,
-								parents: renderState.parents,
-								showHideable: renderState.showHideable,
-							});
-						}}
-						totalItems={renderState.changes.length}
-					/>
-				)}
+				{renderPaginationBar()}
 			</>
 		);
 	};
 
 	const renderMainContent = () => {
-		if (changes.length === 0) {
+		if (changes.length === 0 && ctMappingInfos.length === 0) {
 			return (
 				<div className="container-fluid container-fluid-max-xl">
 					{renderExpiredBanner()}
@@ -2352,7 +2658,7 @@ export default function ChangeTrackingChangesView({
 		const items = [
 			{
 				label: Liferay.Language.get('all-items'),
-				onClick: () => handleNavigationUpdate(0),
+				onClick: () => navigate(0),
 			},
 			{
 				active: true,
@@ -2390,8 +2696,9 @@ export default function ChangeTrackingChangesView({
 									]
 								}
 								handleNavigation={(nodeId) =>
-									handleNavigationUpdate(nodeId, true)
+									navigate(nodeId, true)
 								}
+								handleShowHideable={handleShowHideableToggle}
 								parentEntries={renderState.parents}
 								showDropdown={
 									activeCTCollection &&
@@ -2428,7 +2735,10 @@ export default function ChangeTrackingChangesView({
 					className={classNames(
 						'btn btn-' + displayType + ' btn-sm',
 						{
-							disabled: changes.length === 0 || expired,
+							disabled:
+								(changes.length === 0 &&
+									ctMappingInfos.length === 0) ||
+								expired,
 						}
 					)}
 					href={setParameter(
@@ -2556,7 +2866,6 @@ export default function ChangeTrackingChangesView({
 	return (
 		<>
 			{renderPublicationsToolbar()}
-			{renderManagementToolbar()}
 			{renderResultsBar()}
 			<div
 				className={classNames('sidenav-container sidenav-right', {

@@ -60,7 +60,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 
 import org.osgi.service.component.annotations.Component;
@@ -191,13 +190,13 @@ public class DefaultLDAPToPortalConverter implements LDAPToPortalConverter {
 			contactMappings.put(ContactConverterKeys.SUFFIX, suffix);
 		}
 
-		long prefixId = getListTypeId(
+		long prefixId = _getListTypeId(
 			attributes, contactMappings, ContactConverterKeys.PREFIX,
 			ListTypeConstants.CONTACT_PREFIX);
 
 		contact.setPrefixId(prefixId);
 
-		long suffixId = getListTypeId(
+		long suffixId = _getListTypeId(
 			attributes, contactMappings, ContactConverterKeys.SUFFIX,
 			ListTypeConstants.CONTACT_SUFFIX);
 
@@ -257,7 +256,7 @@ public class DefaultLDAPToPortalConverter implements LDAPToPortalConverter {
 
 		ldapUser.setContact(contact);
 
-		Map<String, String[]> contactExpandoAttributes = getExpandoAttributes(
+		Map<String, String[]> contactExpandoAttributes = _getExpandoAttributes(
 			attributes, contactExpandoMappings);
 
 		ldapUser.setContactExpandoAttributes(contactExpandoAttributes);
@@ -329,7 +328,7 @@ public class DefaultLDAPToPortalConverter implements LDAPToPortalConverter {
 
 		ldapUser.setUser(user);
 
-		Map<String, String[]> userExpandoAttributes = getExpandoAttributes(
+		Map<String, String[]> userExpandoAttributes = _getExpandoAttributes(
 			attributes, userExpandoMappings);
 
 		ldapUser.setUserExpandoAttributes(userExpandoAttributes);
@@ -338,46 +337,6 @@ public class DefaultLDAPToPortalConverter implements LDAPToPortalConverter {
 		ldapUser.setUserGroupRoles(null);
 
 		return ldapUser;
-	}
-
-	protected Map<String, String[]> getExpandoAttributes(
-			Attributes attributes, Properties expandoMappings)
-		throws NamingException {
-
-		Map<String, String[]> expandoAttributes = new HashMap<>();
-
-		for (Object key : expandoMappings.keySet()) {
-			String name = (String)key;
-
-			String[] value = LDAPUtil.getAttributeStringArray(
-				attributes, expandoMappings, name);
-
-			if (value != null) {
-				expandoAttributes.put(name, value);
-			}
-		}
-
-		return expandoAttributes;
-	}
-
-	protected long getListTypeId(
-			Attributes attributes, Properties contactMappings,
-			String contactMappingsKey, String listTypeType)
-		throws Exception {
-
-		List<ListType> contactPrefixListTypes = _listTypeService.getListTypes(
-			listTypeType);
-
-		String name = LDAPUtil.getAttributeString(
-			attributes, contactMappings, contactMappingsKey);
-
-		for (ListType listType : contactPrefixListTypes) {
-			if (name.equals(listType.getName())) {
-				return listType.getListTypeId();
-			}
-		}
-
-		return 0;
 	}
 
 	@Reference(unbind = "-")
@@ -395,6 +354,46 @@ public class DefaultLDAPToPortalConverter implements LDAPToPortalConverter {
 	@Reference(unbind = "-")
 	protected void setUserPersistence(UserPersistence userPersistence) {
 		_userPersistence = userPersistence;
+	}
+
+	private Map<String, String[]> _getExpandoAttributes(
+			Attributes attributes, Properties expandoMappings)
+		throws Exception {
+
+		Map<String, String[]> expandoAttributes = new HashMap<>();
+
+		for (Object key : expandoMappings.keySet()) {
+			String name = (String)key;
+
+			String[] value = LDAPUtil.getAttributeStringArray(
+				attributes, expandoMappings, name);
+
+			if (value != null) {
+				expandoAttributes.put(name, value);
+			}
+		}
+
+		return expandoAttributes;
+	}
+
+	private long _getListTypeId(
+			Attributes attributes, Properties contactMappings,
+			String contactMappingsKey, String listTypeType)
+		throws Exception {
+
+		List<ListType> contactPrefixListTypes = _listTypeService.getListTypes(
+			listTypeType);
+
+		String name = LDAPUtil.getAttributeString(
+			attributes, contactMappings, contactMappingsKey);
+
+		for (ListType listType : contactPrefixListTypes) {
+			if (name.equals(listType.getName())) {
+				return listType.getListTypeId();
+			}
+		}
+
+		return 0;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

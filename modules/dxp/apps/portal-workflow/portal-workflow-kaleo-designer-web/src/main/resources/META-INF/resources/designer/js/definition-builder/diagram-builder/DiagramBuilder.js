@@ -20,15 +20,16 @@ import React, {
 import ReactFlow, {
 	Background,
 	Controls,
-	ReactFlowProvider,
 	addEdge,
 	isEdge,
-	isNode,
 } from 'react-flow-renderer';
 
 import {DefinitionBuilderContext} from '../DefinitionBuilderContext';
-import DefinitionDiagramController from '../source-builder/definitionDiagramController';
+import {defaultLanguageId} from '../constants';
+import DeserializeUtil from '../source-builder/deserializeUtil';
 import {singleEventObserver} from '../util/EventObserver';
+import {retrieveDefinitionRequest} from '../util/fetchUtil';
+import {getCollidingElements} from '../util/utils';
 import {DiagramBuilderContextProvider} from './DiagramBuilderContext';
 import {nodeTypes} from './components/nodes/utils';
 import Sidebar from './components/sidebar/Sidebar';
@@ -39,44 +40,20 @@ import FloatingConnectionLine from './components/transitions/FloatingConnectionL
 let id = 2;
 const getId = () => `item_${id++}`;
 
-const isOverlapping = (elementPosition, newElementPosition) => {
-	const isInHorizontalBounds =
-		newElementPosition.x < elementPosition.x + 280 &&
-		newElementPosition.x + 280 > elementPosition.x;
-
-	const isInVerticalBounds =
-		newElementPosition.y < elementPosition.y + 100 &&
-		newElementPosition.y + 100 > elementPosition.y;
-
-	const isOverlapping = isInHorizontalBounds && isInVerticalBounds;
-
-	return isOverlapping;
-};
-
-const getCollidingElements = (elements, newElementPosition) => {
-	const collidingElements = [];
-
-	elements.forEach((element) => {
-		if (
-			isNode(element) &&
-			isOverlapping(element.position, newElementPosition)
-		) {
-			collidingElements.push(element.id);
-		}
-	});
-
-	return collidingElements;
-};
-
-const definitionDiagramController = new DefinitionDiagramController();
+const deserializeUtil = new DeserializeUtil();
 
 export default function DiagramBuilder({version}) {
 	const {
 		currentEditor,
-		defaultLanguageId,
+		definitionId,
+		definitionTitle,
 		deserialize,
 		elements,
 		selectedLanguageId,
+		setActive,
+		setDefinitionDescription,
+		setDefinitionId,
+		setDefinitionTitle,
 		setDeserialize,
 		setElements,
 	} = useContext(DefinitionBuilderContext);
@@ -117,7 +94,7 @@ export default function DiagramBuilder({version}) {
 		singleEventObserver.notify('handle-connect-end', true);
 	};
 
-	const onConnectStart = (event, {nodeId}) => {
+	const onConnectStart = (_, {nodeId}) => {
 		singleEventObserver.notify('handle-connect-start', nodeId);
 	};
 
@@ -169,10 +146,6 @@ export default function DiagramBuilder({version}) {
 	);
 
 	const onLoad = (reactFlowInstance) => {
-		if (version !== '0') {
-			reactFlowInstance.fitView();
-		}
-
 		setReactFlowInstance(reactFlowInstance);
 	};
 
@@ -234,23 +207,55 @@ export default function DiagramBuilder({version}) {
 		if (deserialize && currentEditor) {
 			const xmlDefinition = currentEditor.getData();
 
-			definitionDiagramController.updateXMLDefinition(xmlDefinition);
+			deserializeUtil.updateXMLDefinition(xmlDefinition);
 
-			const nodes = definitionDiagramController.getNodes();
+			const elements = deserializeUtil.getElements();
 
-			setElements(nodes);
+			const metadata = deserializeUtil.getMetadata();
+
+			setDefinitionDescription(metadata.description);
+			setDefinitionTitle(metadata.name);
+
+			setElements(elements);
 
 			setDeserialize(false);
 		}
-	}, [currentEditor, deserialize, setDeserialize, setElements]);
+	}, [
+		currentEditor,
+		definitionTitle,
+		deserialize,
+		setDefinitionDescription,
+		setDefinitionTitle,
+		setDeserialize,
+		setElements,
+		version,
+	]);
+
+	useEffect(() => {
+		if (version !== '0' && !deserialize) {
+			retrieveDefinitionRequest(definitionId)
+				.then((response) => response.json())
+				.then(({active, content, description, name}) => {
+					setActive(active);
+					setDefinitionDescription(description);
+					setDefinitionId(name);
+
+					deserializeUtil.updateXMLDefinition(content);
+
+					const elements = deserializeUtil.getElements();
+
+					setElements(elements);
+				});
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [version]);
 
 	const contextProps = {
 		collidingElements,
-		elements,
 		selectedItem,
 		selectedItemNewId,
 		setCollidingElements,
-		setElements,
 		setSelectedItem,
 		setSelectedItemNewId,
 	};
@@ -259,25 +264,23 @@ export default function DiagramBuilder({version}) {
 		<DiagramBuilderContextProvider {...contextProps}>
 			<div className="diagram-builder">
 				<div className="diagram-area" ref={reactFlowWrapperRef}>
-					<ReactFlowProvider>
-						<ReactFlow
-							connectionLineComponent={FloatingConnectionLine}
-							edgeTypes={edgeTypes}
-							elements={elements}
-							minZoom="0.1"
-							nodeTypes={nodeTypes}
-							onConnect={onConnect}
-							onConnectEnd={onConnectEnd}
-							onConnectStart={onConnectStart}
-							onDragOver={onDragOver}
-							onDrop={onDrop}
-							onLoad={onLoad}
-						/>
+					<ReactFlow
+						connectionLineComponent={FloatingConnectionLine}
+						edgeTypes={edgeTypes}
+						elements={elements}
+						minZoom="0.1"
+						nodeTypes={nodeTypes}
+						onConnect={onConnect}
+						onConnectEnd={onConnectEnd}
+						onConnectStart={onConnectStart}
+						onDragOver={onDragOver}
+						onDrop={onDrop}
+						onLoad={onLoad}
+					/>
 
-						<Controls showInteractive={false} />
+					<Controls showInteractive={false} />
 
-						<Background size={1} />
-					</ReactFlowProvider>
+					<Background size={1} />
 				</div>
 
 				<Sidebar />

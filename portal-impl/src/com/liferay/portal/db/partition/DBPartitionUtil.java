@@ -429,7 +429,15 @@ public class DBPartitionUtil {
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (resultSet.next()) {
-				return resultSet.getString("variable_value");
+				String encoding = resultSet.getString("variable_value");
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						"Obtained character set encoding from session" +
+							" with value: " + encoding);
+				}
+
+				return encoding;
 			}
 
 			return "utf8";
@@ -596,18 +604,20 @@ public class DBPartitionUtil {
 
 			@Override
 			public int executeUpdate(String sql) throws SQLException {
+				Connection connection = statement.getConnection();
+
 				String lowerCaseSQL = StringUtil.toLowerCase(sql);
 
 				String[] query = sql.split(StringPool.SPACE);
 
 				if ((StringUtil.startsWith(lowerCaseSQL, "alter table") &&
-					 _isSkip(statement.getConnection(), query[2])) ||
+					 _isSkip(connection, query[2])) ||
 					((StringUtil.startsWith(lowerCaseSQL, "create index") ||
 					  StringUtil.startsWith(lowerCaseSQL, "drop index")) &&
-					 _isSkip(statement.getConnection(), query[4])) ||
+					 _isSkip(connection, query[4])) ||
 					(StringUtil.startsWith(
 						lowerCaseSQL, "create unique index") &&
-					 _isSkip(statement.getConnection(), query[5]))) {
+					 _isSkip(connection, query[5]))) {
 
 					return 0;
 				}
@@ -618,7 +628,7 @@ public class DBPartitionUtil {
 					return returnValue;
 				}
 
-				try (Connection connection = statement.getConnection()) {
+				try {
 					DBInspector dbInspector = new DBInspector(connection);
 					String tableName = query[2];
 

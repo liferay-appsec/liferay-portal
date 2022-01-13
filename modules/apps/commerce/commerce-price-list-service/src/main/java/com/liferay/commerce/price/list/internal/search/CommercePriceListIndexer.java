@@ -336,12 +336,24 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 	protected void doReindex(String[] ids) throws Exception {
 		long companyId = GetterUtil.getLong(ids[0]);
 
-		reindexCommercePriceLists(companyId);
+		_reindexCommercePriceLists(companyId);
 	}
 
-	protected void reindexCommercePriceLists(long companyId)
-		throws PortalException {
+	private long _getCatalogId(CommercePriceList commercePriceList)
+		throws Exception {
 
+		CommerceCatalog commerceCatalog =
+			_commerceCatalogLocalService.fetchCommerceCatalogByGroupId(
+				commercePriceList.getGroupId());
+
+		if (commerceCatalog == null) {
+			return 0L;
+		}
+
+		return commerceCatalog.getCommerceCatalogId();
+	}
+
+	private void _reindexCommercePriceLists(long companyId) throws Exception {
 		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
 			_commercePriceListLocalService.getIndexableActionableDynamicQuery();
 
@@ -364,20 +376,6 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		indexableActionableDynamicQuery.setSearchEngineId(getSearchEngineId());
 
 		indexableActionableDynamicQuery.performActions();
-	}
-
-	private long _getCatalogId(CommercePriceList commercePriceList)
-		throws Exception {
-
-		CommerceCatalog commerceCatalog =
-			_commerceCatalogLocalService.fetchCommerceCatalogByGroupId(
-				commercePriceList.getGroupId());
-
-		if (commerceCatalog == null) {
-			return 0L;
-		}
-
-		return commerceCatalog.getCommerceCatalogId();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

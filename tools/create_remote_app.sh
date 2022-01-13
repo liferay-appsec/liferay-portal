@@ -63,7 +63,21 @@ function check_usage {
 	fi
 }
 
+function check_utils {
+
+	#
+	# https://stackoverflow.com/a/677212
+	#
+
+	for util in "${@}"
+	do
+		command -v ${util} >/dev/null 2>&1 || { echo >&2 "The utility ${util} is not installed."; exit 1; }
+	done
+}
+
 function create_react_app {
+	check_utils yarn
+
 	yarn create react-app ${REMOTE_APP_DIR}
 
 	cd ${REMOTE_APP_DIR}
@@ -93,6 +107,8 @@ function create_react_app {
 }
 
 function create_vue_2_app {
+	check_utils npm
+
 	npm i -g @vue/cli
 
 	vue create ${REMOTE_APP_DIR} --default
@@ -147,45 +163,41 @@ EOF
 }
 
 function write_react_app_files {
-
 	#
 	# common/services/liferay/api.js
 	#
 
 	cat <<EOF > common/services/liferay/api.js
-const {REACT_APP_LIFERAY_API = window.location.origin} = process.env;
+import { Liferay } from "./liferay";
 
-export const getLiferayAuthenticationToken = () => {
-	try {
-		// eslint-disable-next-line no-undef
-		const token = Liferay.authToken;
+const { REACT_APP_LIFERAY_HOST = window.location.origin } = process.env;
 
-		return token;
-	} catch (error) {
-		console.warn('Not able to find Liferay auth token\n', error);
-
-		return '';
-	}
-};
-
-const baseFetch = async (url, {body, method = 'GET'} = {}) => {
-	const response = await fetch(REACT_APP_LIFERAY_API + '/' + url, {
-		...(body && {body: JSON.stringify(body)}),
+const baseFetch = async (url, options = {}) => {
+	return fetch(REACT_APP_LIFERAY_HOST + "/" + url, {
 		headers: {
-			'Content-Type': 'application/json',
-			'x-csrf-token': getLiferayAuthenticationToken(),
+			"Content-Type": "application/json",
+			"x-csrf-token": Liferay.authToken,
 		},
-		method,
+		...options,
 	});
-
-	const data = await response.json();
-
-	return {data};
 };
-
-export {REACT_APP_LIFERAY_API};
 
 export default baseFetch;
+EOF
+
+	#
+	# common/services/liferay/liferay.js
+	#
+
+	cat <<EOF > common/services/liferay/liferay.js
+export const Liferay = window.Liferay || {
+	ThemeDisplay: {
+		getCompanyGroupId: () => 0,
+		getScopeGroupId: () => 0,
+		getSiteGroupId: () => 0,
+	},
+	authToken: "",
+};
 EOF
 
 	#

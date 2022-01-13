@@ -21,7 +21,6 @@ import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lifecycle.EventAwareExportImportLifecycleListener;
 import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleListener;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.util.MapUtil;
 
@@ -78,7 +77,7 @@ public class CascadeFileEntryTypesExportImportLifecycleListener
 
 		_processedFolderIds = new HashSet<>();
 
-		processFolderIds(_importedFolderIds.values());
+		_processFolderIds(_importedFolderIds.values());
 	}
 
 	@Override
@@ -155,7 +154,7 @@ public class CascadeFileEntryTypesExportImportLifecycleListener
 
 		_processedFolderIds = new HashSet<>();
 
-		processFolderIds(_importedFolderIds.values());
+		_processFolderIds(_importedFolderIds.values());
 	}
 
 	@Override
@@ -215,8 +214,8 @@ public class CascadeFileEntryTypesExportImportLifecycleListener
 		PortletDataContext portletDataContext, StagedModel stagedModel) {
 	}
 
-	protected DLFolder getProcessableRootFolder(DLFolder dlFolder)
-		throws PortalException {
+	private DLFolder _getProcessableRootFolder(DLFolder dlFolder)
+		throws Exception {
 
 		long dlFolderId = dlFolder.getFolderId();
 
@@ -234,16 +233,16 @@ public class CascadeFileEntryTypesExportImportLifecycleListener
 			return dlFolder;
 		}
 
-		return getProcessableRootFolder(parentFolder);
+		return _getProcessableRootFolder(parentFolder);
 	}
 
-	protected void processFolderIds(Collection<Long> folderIds)
-		throws PortalException {
+	private void _processFolderIds(Collection<Long> folderIds)
+		throws Exception {
 
 		for (Long folderId : folderIds) {
 			DLFolder dlFolder = _dlFolderLocalService.fetchDLFolder(folderId);
 
-			DLFolder rootFolder = getProcessableRootFolder(dlFolder);
+			DLFolder rootFolder = _getProcessableRootFolder(dlFolder);
 
 			if (rootFolder != null) {
 				_dlFileEntryTypeLocalService.cascadeFileEntryTypes(

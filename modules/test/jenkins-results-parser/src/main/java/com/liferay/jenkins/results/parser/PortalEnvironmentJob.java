@@ -14,10 +14,12 @@
 
 package com.liferay.jenkins.results.parser;
 
+import com.liferay.jenkins.results.parser.job.property.JobProperty;
+
 import java.io.File;
 
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,6 +31,15 @@ public class PortalEnvironmentJob
 	@Override
 	public Set<String> getDistTypes() {
 		return new HashSet<>();
+	}
+
+	@Override
+	public List<String> getJobPropertyOptions() {
+		List<String> jobPropertyOptions = super.getJobPropertyOptions();
+
+		jobPropertyOptions.add(getPortalBranchName());
+
+		return jobPropertyOptions;
 	}
 
 	@Override
@@ -69,10 +80,9 @@ public class PortalEnvironmentJob
 
 	@Override
 	protected Set<String> getRawBatchNames() {
-		String environmentJobNames = JenkinsResultsParserUtil.getProperty(
-			getJobProperties(), "environment.job.names", getPortalBranchName());
+		JobProperty jobProperty = getJobProperty("environment.job.names");
 
-		return new HashSet<>(Arrays.asList(environmentJobNames.split(",")));
+		return getSetFromString(jobProperty.getValue());
 	}
 
 	private final String _portalBranchName;

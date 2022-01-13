@@ -9,108 +9,79 @@
  * distribution rights of the Software.
  */
 
-import ClayButton from '@clayui/button';
-import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
-import ClayPanel from '@clayui/panel';
-import {ClayTooltipProvider} from '@clayui/tooltip';
+import {ClayVerticalNav} from '@clayui/nav';
 import {PropTypes} from 'prop-types';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useState} from 'react';
 
-import JSONSXPElement from '../../shared/JSONSXPElement';
-import ThemeContext from '../../shared/ThemeContext';
-import SXPElement from '../../shared/sxp_element/index';
-import {SXP_ELEMENT_PREFIX} from '../../utils/constants';
-import {fetchData} from '../../utils/fetch';
-import SelectTypes from './SelectTypes';
+import {SIDEBARS} from '../../utils/constants';
+import QuerySXPElements from './QuerySXPElements';
+import QuerySettings from './QuerySettings';
+
+const VERTICAL_NAV_KEYS = {
+	QUERY_SETTINGS: 'querySettings',
+	QUERY_SXP_ELEMENTS: 'querySXPElements',
+};
 
 function QueryBuilderTab({
+	applyIndexerClauses,
+	clauseContributorsList = [],
 	elementInstances,
 	entityJSON,
 	errors = [],
 	frameworkConfig = {},
 	isSubmitting,
+	indexFields,
+	onApplyIndexerClausesChange,
 	onBlur,
 	onChange,
 	onDeleteSXPElement,
 	onFrameworkConfigChange,
-	onToggleSidebar,
+	searchableTypes = [],
 	setFieldTouched,
 	setFieldValue,
+	openSidebar,
+	setOpenSidebar,
 	touched = [],
 }) {
-	const {locale} = useContext(ThemeContext);
-
-	const [collapseAll, setCollapseAll] = useState(false);
-	const [searchableTypes, setSearchableTypes] = useState(null);
-	const [indexFields, setIndexFields] = useState(null);
-
-	useEffect(() => {
-		fetchData(
-			`/o/search-experiences-rest/v1.0/searchable-asset-names/${locale}`,
-			{method: 'GET'},
-			(responseContent) => setSearchableTypes(responseContent.items),
-			() => setSearchableTypes([])
-		);
-
-		fetchData(
-			`/o/search-experiences-rest/v1.0/field-mapping-infos`,
-			{method: 'GET'},
-			(responseContent) => setIndexFields(responseContent.items),
-			() => setIndexFields([])
-		);
-	}, []); //eslint-disable-line
-
-	if (!searchableTypes || !indexFields) {
-		return null;
-	}
-
-	const _renderSelectedElements = () => (
-		<>
-			{elementInstances.map(
-				({id, sxpElement, uiConfigurationValues}, index) => {
-					return sxpElement.elementDefinition?.uiConfiguration ? (
-						<SXPElement
-							collapseAll={collapseAll}
-							entityJSON={entityJSON}
-							error={errors[index]}
-							id={id}
-							index={index}
-							indexFields={indexFields}
-							isSubmitting={isSubmitting}
-							key={id}
-							onBlur={onBlur}
-							onChange={onChange}
-							onDeleteSXPElement={onDeleteSXPElement}
-							prefixedId={`${SXP_ELEMENT_PREFIX.QUERY}-${index}`}
-							searchableTypes={searchableTypes}
-							setFieldTouched={setFieldTouched}
-							setFieldValue={setFieldValue}
-							sxpElement={sxpElement}
-							touched={touched[index]}
-							uiConfigurationValues={uiConfigurationValues}
-						/>
-					) : (
-						<JSONSXPElement
-							collapseAll={collapseAll}
-							error={errors[index]}
-							id={id}
-							index={index}
-							isSubmitting={isSubmitting}
-							key={id}
-							onDeleteSXPElement={onDeleteSXPElement}
-							prefixedId={`${SXP_ELEMENT_PREFIX.QUERY}-${index}`}
-							setFieldTouched={setFieldTouched}
-							setFieldValue={setFieldValue}
-							sxpElement={sxpElement}
-							touched={touched[index]}
-							uiConfigurationValues={uiConfigurationValues}
-						/>
-					);
-				}
-			)}
-		</>
+	const [activeVerticalNavKey, setActiveVerticalNavKey] = useState(
+		VERTICAL_NAV_KEYS.QUERY_SXP_ELEMENTS
 	);
+
+	/**
+	 * Handles sidebar visibility. If 'visible' is not provided, sidebar
+	 * will toggle between open or closed.
+	 * @param {string} type A `SIDEBARS` value.
+	 * @param {visible} boolean Defaults to false if sidebar is open.
+	 */
+	const _handleChangeSidebarVisibility = (type) => (
+		visible = openSidebar !== type
+	) => {
+		if (visible) {
+			setOpenSidebar(type);
+		}
+		else if (openSidebar === type) {
+			setOpenSidebar('');
+		}
+	};
+
+	/**
+	 * Handles navigating to a different vertical nav tab. Certain sidebars
+	 * will close depending on which tab it navigates to.
+	 * @param {string} verticalNavKey A `VERTICAL_NAV_KEYS` value.
+	 */
+	const _handleClickVerticalNav = (verticalNavKey) => () => {
+		setActiveVerticalNavKey(verticalNavKey);
+
+		if (
+			(verticalNavKey === VERTICAL_NAV_KEYS.QUERY_SXP_ELEMENTS &&
+				openSidebar === SIDEBARS.CLAUSE_CONTRIBUTORS) ||
+			(verticalNavKey === VERTICAL_NAV_KEYS.QUERY_SETTINGS &&
+				openSidebar === SIDEBARS.ADD_SXP_ELEMENT)
+		) {
+			setOpenSidebar('');
+		}
+	};
 
 	return (
 		<ClayLayout.ContainerFluid
@@ -118,119 +89,106 @@ function QueryBuilderTab({
 			size="xl"
 		>
 			<div className="builder-content-shift">
-				<ClayLayout.Row
-					className="configuration-header"
-					justify="between"
-				>
-					<ClayLayout.Col size={6}>
-						{Liferay.Language.get('query-builder')}
+				<ClayLayout.Row>
+					<ClayLayout.Col md={3} sm={12}>
+						<ClayVerticalNav
+							items={[
+								{
+									active:
+										activeVerticalNavKey ===
+										VERTICAL_NAV_KEYS.QUERY_SXP_ELEMENTS,
+									label: Liferay.Language.get(
+										'query-elements'
+									),
+									onClick: _handleClickVerticalNav(
+										VERTICAL_NAV_KEYS.QUERY_SXP_ELEMENTS
+									),
+								},
+								{
+									active:
+										activeVerticalNavKey ===
+										VERTICAL_NAV_KEYS.QUERY_SETTINGS,
+									label: Liferay.Language.get(
+										'query-settings'
+									),
+									onClick: _handleClickVerticalNav(
+										VERTICAL_NAV_KEYS.QUERY_SETTINGS
+									),
+								},
+							]}
+						/>
 					</ClayLayout.Col>
 
-					<ClayLayout.Col size={6}>
-						<div className="builder-actions">
-							<ClayButton
-								aria-label={Liferay.Language.get(
-									'collapse-all'
-								)}
-								className="collapse-button"
-								displayType="unstyled"
-								onClick={() => setCollapseAll(!collapseAll)}
-							>
-								{collapseAll
-									? Liferay.Language.get('expand-all')
-									: Liferay.Language.get('collapse-all')}
-							</ClayButton>
-
-							<ClayTooltipProvider>
-								<ClayButton
-									aria-label={Liferay.Language.get(
-										'add-query-element'
+					<ClayLayout.Col md={9} sm={12}>
+						<div className="vertical-nav-content-wrapper">
+							{activeVerticalNavKey ===
+								VERTICAL_NAV_KEYS.QUERY_SXP_ELEMENTS && (
+								<QuerySXPElements
+									elementInstances={elementInstances}
+									entityJSON={entityJSON}
+									errors={errors}
+									indexFields={indexFields}
+									isSubmitting={isSubmitting}
+									onBlur={onBlur}
+									onChange={onChange}
+									onChangeAddSXPElementVisibility={_handleChangeSidebarVisibility(
+										SIDEBARS.ADD_SXP_ELEMENT
 									)}
-									displayType="primary"
-									monospaced
-									onClick={onToggleSidebar}
-									small
-									title={Liferay.Language.get(
-										'add-query-element'
-									)}
-								>
-									<ClayIcon symbol="plus" />
-								</ClayButton>
-							</ClayTooltipProvider>
-						</div>
-					</ClayLayout.Col>
-				</ClayLayout.Row>
-
-				{elementInstances.length === 0 ? (
-					<div className="sheet">
-						<div className="selected-sxp-elements-empty-text">
-							{Liferay.Language.get(
-								'add-elements-to-optimize-search-results-for-your-use-cases'
+									onDeleteSXPElement={onDeleteSXPElement}
+									searchableTypes={searchableTypes}
+									setFieldTouched={setFieldTouched}
+									setFieldValue={setFieldValue}
+									touched={touched}
+								/>
 							)}
-						</div>
-					</div>
-				) : (
-					_renderSelectedElements()
-				)}
 
-				<ClayLayout.Row
-					className="configuration-header configuration-header-settings"
-					justify="between"
-				>
-					<ClayLayout.Col size={12}>
-						{Liferay.Language.get('query-settings')}
-					</ClayLayout.Col>
-				</ClayLayout.Row>
-
-				<div className="settings-content-container sheet">
-					<ClayPanel.Group flush>
-						<ClayPanel
-							className="searchable-types"
-							collapsable
-							displayTitle={Liferay.Language.get(
-								'searchable-types'
-							)}
-							displayType="unstyled"
-							showCollapseIcon
-						>
-							<ClayPanel.Body>
-								<div className="sheet-text">
-									{Liferay.Language.get(
-										'select-the-searchable-types-description'
+							{activeVerticalNavKey ===
+								VERTICAL_NAV_KEYS.QUERY_SETTINGS && (
+								<QuerySettings
+									applyIndexerClauses={applyIndexerClauses}
+									clauseContributorsList={
+										clauseContributorsList
+									}
+									frameworkConfig={frameworkConfig}
+									onApplyIndexerClausesChange={
+										onApplyIndexerClausesChange
+									}
+									onChangeClauseContributorsVisibility={_handleChangeSidebarVisibility(
+										SIDEBARS.CLAUSE_CONTRIBUTORS
 									)}
-								</div>
-
-								<SelectTypes
 									onFrameworkConfigChange={
 										onFrameworkConfigChange
 									}
 									searchableTypes={searchableTypes}
-									selectedTypes={
-										frameworkConfig.searchableAssetTypes
-									}
 								/>
-							</ClayPanel.Body>
-						</ClayPanel>
-					</ClayPanel.Group>
-				</div>
+							)}
+						</div>
+					</ClayLayout.Col>
+				</ClayLayout.Row>
 			</div>
 		</ClayLayout.ContainerFluid>
 	);
 }
 
 QueryBuilderTab.propTypes = {
+	applyIndexerClauses: PropTypes.bool,
+	clauseContributorsList: PropTypes.arrayOf(PropTypes.string),
 	elementInstances: PropTypes.arrayOf(PropTypes.object),
 	entityJSON: PropTypes.object,
 	errors: PropTypes.arrayOf(PropTypes.object),
 	frameworkConfig: PropTypes.object,
+	indexFields: PropTypes.arrayOf(PropTypes.object),
 	isSubmitting: PropTypes.bool,
+	onApplyIndexerClausesChange: PropTypes.func,
 	onBlur: PropTypes.func,
 	onChange: PropTypes.func,
 	onDeleteSXPElement: PropTypes.func,
 	onFrameworkConfigChange: PropTypes.func,
-	onToggleSidebar: PropTypes.func,
+	openSidebar: PropTypes.string,
+	searchableTypes: PropTypes.arrayOf(PropTypes.object),
 	setFieldTouched: PropTypes.func,
 	setFieldValue: PropTypes.func,
+	setOpenSidebar: PropTypes.func,
 	touched: PropTypes.arrayOf(PropTypes.object),
 };
 

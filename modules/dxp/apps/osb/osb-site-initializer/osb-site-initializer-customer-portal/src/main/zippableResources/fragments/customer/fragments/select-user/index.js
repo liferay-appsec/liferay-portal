@@ -23,7 +23,7 @@ const userName = fragmentElement.querySelector(
 
 (async () => {
 	try {
-		window.addEventListener(eventName, ({detail: userAccount}) => {
+		Liferay.once(eventName, ({detail: userAccount}) => {
 			userIconWrapper.classList.toggle('skeleton');
 			userName.classList.toggle('skeleton');
 

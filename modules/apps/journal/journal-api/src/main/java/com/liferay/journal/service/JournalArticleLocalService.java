@@ -1429,6 +1429,10 @@ public interface JournalArticleLocalService
 		int start, int end,
 		OrderByComparator<JournalArticle> orderByComparator);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<Long> getArticlesClassPKsWithDefaultDisplayPage(
+		long groupId, long classTypeId);
+
 	/**
 	 * Returns the number of web content articles belonging to the group.
 	 *

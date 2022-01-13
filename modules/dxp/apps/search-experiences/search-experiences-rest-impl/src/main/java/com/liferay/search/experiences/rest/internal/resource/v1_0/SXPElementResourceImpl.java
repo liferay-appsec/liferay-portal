@@ -14,13 +14,16 @@
 
 package com.liferay.search.experiences.rest.internal.resource.v1_0;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
@@ -45,6 +48,8 @@ import java.util.HashMap;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+
+import org.apache.commons.lang.StringUtils;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -100,6 +105,8 @@ public class SXPElementResourceImpl
 				_jsonFactory.createJSONObject(
 					sxpElement.getElementDefinitionJSON())
 			).put(
+				"schemaVersion", sxpElement.getSchemaVersion()
+			).put(
 				"title_i18n",
 				_jsonFactory.createJSONObject(
 					_jsonFactory.looseSerialize(sxpElement.getTitleMap()))
@@ -144,16 +151,45 @@ public class SXPElementResourceImpl
 				}
 			},
 			sorts,
-			document -> _sxpElementDTOConverter.toDTO(
-				new DefaultDTOConverterContext(
-					contextAcceptLanguage.isAcceptAllLanguages(),
-					new HashMap<>(), _dtoConverterRegistry,
-					contextHttpServletRequest,
-					document.get(Field.ENTRY_CLASS_PK),
-					contextAcceptLanguage.getPreferredLocale(), contextUriInfo,
-					contextUser),
-				_sxpElementService.getSXPElement(
-					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)))));
+			document -> {
+				long sxpElementId = GetterUtil.getLong(
+					document.get(Field.ENTRY_CLASS_PK));
+
+				SXPElement sxpElement = _sxpElementDTOConverter.toDTO(
+					new DefaultDTOConverterContext(
+						contextAcceptLanguage.isAcceptAllLanguages(),
+						new HashMap<>(), _dtoConverterRegistry,
+						contextHttpServletRequest,
+						document.get(Field.ENTRY_CLASS_PK),
+						contextAcceptLanguage.getPreferredLocale(),
+						contextUriInfo, contextUser),
+					_sxpElementService.getSXPElement(sxpElementId));
+
+				String permissionName =
+					com.liferay.search.experiences.model.SXPElement.class.
+						getName();
+
+				sxpElement.setActions(
+					HashMapBuilder.put(
+						"delete",
+						() -> {
+							if (sxpElement.getReadOnly()) {
+								return null;
+							}
+
+							return addAction(
+								ActionKeys.DELETE, "deleteSXPElement",
+								permissionName, sxpElementId);
+						}
+					).put(
+						"view",
+						() -> addAction(
+							ActionKeys.VIEW, "getSXPElement", permissionName,
+							sxpElementId)
+					).build());
+
+				return sxpElement;
+			});
 	}
 
 	@Override
@@ -172,7 +208,7 @@ public class SXPElementResourceImpl
 					contextAcceptLanguage.getPreferredLocale(),
 					sxpElement.getDescription(),
 					sxpElement.getDescription_i18n()),
-				_getElementDefinitionJSON(sxpElement),
+				_getElementDefinitionJSON(sxpElement), _getSchemaVersion(),
 				GetterUtil.getBoolean(sxpElement.getHidden()),
 				LocalizedMapUtil.getLocalizedMap(
 					contextAcceptLanguage.getPreferredLocale(),
@@ -194,6 +230,7 @@ public class SXPElementResourceImpl
 					sxpElement.getDescription(),
 					sxpElement.getDescription_i18n()),
 				_getElementDefinitionJSON(sxpElement), false,
+				_getSchemaVersion(),
 				LocalizedMapUtil.getLocalizedMap(
 					contextAcceptLanguage.getPreferredLocale(),
 					sxpElement.getTitle(), sxpElement.getTitle_i18n()),
@@ -216,6 +253,7 @@ public class SXPElementResourceImpl
 			_sxpElementService.addSXPElement(
 				sxpElement.getDescriptionMap(),
 				sxpElement.getElementDefinitionJSON(), false,
+				sxpElement.getSchemaVersion(),
 				TitleMapUtil.copy(sxpElement.getTitleMap()),
 				sxpElement.getType(),
 				ServiceContextFactory.getInstance(contextHttpServletRequest)));
@@ -233,6 +271,11 @@ public class SXPElementResourceImpl
 
 		return String.valueOf(
 			ElementDefinitionUtil.unpack(sxpElement.getElementDefinition()));
+	}
+
+	private String _getSchemaVersion() {
+		return StringUtils.substringBetween(
+			contextUriInfo.getPath(), "v", StringPool.SLASH);
 	}
 
 	@Reference

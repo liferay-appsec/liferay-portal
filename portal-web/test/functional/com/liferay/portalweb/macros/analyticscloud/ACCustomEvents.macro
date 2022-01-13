@@ -1,5 +1,21 @@
 definition {
 
+	macro addWCWithCustomEventToPage {
+		if (!(isSet(webContentTitle))) {
+			var webContentTitle = "Custom Event AC Title";
+		}
+
+		ACUtils.addWidgetToPage(
+			layoutName = "${layoutName}",
+			widgetName = "Web Content Display");
+
+		WebContentDisplayPortlet.selectWebContent(webContentTitle = "${webContentTitle}");
+
+		Navigator.gotoSitePage(
+			pageName = "${layoutName}",
+			siteName = "Site Name");
+	}
+
 	macro blockAllCustomEvents {
 		var key_actionButton = "Block";
 

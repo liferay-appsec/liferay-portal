@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.portlet.PortletPreferences;
-import javax.portlet.ReadOnlyException;
 
 /**
  * @author Eduardo García
@@ -42,35 +41,6 @@ public class UpgradePortletPreferences
 		};
 	}
 
-	protected void upgradeDisplayStyle(PortletPreferences portletPreferences)
-		throws ReadOnlyException {
-
-		String displayStyle = GetterUtil.getString(
-			portletPreferences.getValue("displayStyle", null));
-
-		List<String> displayStyleOutOfTheBox = Arrays.asList(
-			"[custom]", "relative-with-breadcrumb", "from-level-2-with-title",
-			"from-level-1-with-title,from-level-1",
-			"from-level-1-to-all-sublevels", "from-level-0");
-
-		if (Validator.isNull(displayStyle) ||
-			displayStyle.startsWith(
-				PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX) ||
-			!displayStyleOutOfTheBox.contains(displayStyle)) {
-
-			return;
-		}
-
-		portletPreferences.setValue(
-			"displayStyle",
-			PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX +
-				"list-menu-ftl");
-
-		_persistSupportedProperties(portletPreferences, displayStyle);
-
-		_removeUnsupportedPreferences(portletPreferences);
-	}
-
 	@Override
 	protected String upgradePreferences(
 			long companyId, long ownerId, int ownerType, long plid,
@@ -81,14 +51,14 @@ public class UpgradePortletPreferences
 			PortletPreferencesFactoryUtil.fromXML(
 				companyId, ownerId, ownerType, plid, portletId, xml);
 
-		upgradeDisplayStyle(portletPreferences);
+		_upgradeDisplayStyle(portletPreferences);
 
 		return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 	}
 
 	private void _persistSupportedProperties(
 			PortletPreferences portletPreferences, String displayStyle)
-		throws ReadOnlyException {
+		throws Exception {
 
 		String includedLayouts = "auto";
 		String rootLayoutLevel = "1";
@@ -137,11 +107,40 @@ public class UpgradePortletPreferences
 
 	private void _removeUnsupportedPreferences(
 			PortletPreferences portletPreferences)
-		throws ReadOnlyException {
+		throws Exception {
 
 		portletPreferences.reset("bulletStyle");
 		portletPreferences.reset("headerType");
 		portletPreferences.reset("nestedChildren");
+	}
+
+	private void _upgradeDisplayStyle(PortletPreferences portletPreferences)
+		throws Exception {
+
+		String displayStyle = GetterUtil.getString(
+			portletPreferences.getValue("displayStyle", null));
+
+		List<String> displayStyleOutOfTheBox = Arrays.asList(
+			"[custom]", "relative-with-breadcrumb", "from-level-2-with-title",
+			"from-level-1-with-title", "from-level-1",
+			"from-level-1-to-all-sublevels", "from-level-0");
+
+		if (Validator.isNull(displayStyle) ||
+			displayStyle.startsWith(
+				PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX) ||
+			!displayStyleOutOfTheBox.contains(displayStyle)) {
+
+			return;
+		}
+
+		portletPreferences.setValue(
+			"displayStyle",
+			PortletDisplayTemplateManager.DISPLAY_STYLE_PREFIX +
+				"list-menu-ftl");
+
+		_persistSupportedProperties(portletPreferences, displayStyle);
+
+		_removeUnsupportedPreferences(portletPreferences);
 	}
 
 }

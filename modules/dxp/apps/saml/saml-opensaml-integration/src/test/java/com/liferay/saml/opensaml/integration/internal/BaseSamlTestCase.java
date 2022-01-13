@@ -19,7 +19,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactory;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.portlet.PortletClassLoaderUtil;
@@ -114,21 +113,21 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 
 	@Before
 	public void setUp() throws Exception {
-		setupProps();
+		_setupProps();
 
 		OpenSamlBootstrap.bootstrap();
 
-		setupConfiguration();
-		setupIdentifiers();
-		setupParserPool();
+		_setupConfiguration();
+		_setupIdentifiers();
+		_setupParserPool();
 
-		setupPortal();
+		_setupPortal();
 
-		setupMetadata();
+		_setupMetadata();
 
-		setupSamlBindings();
+		_setupSamlBindings();
 
-		setupSamlPeerBindingsLocalService();
+		_setupSamlPeerBindingsLocalService();
 	}
 
 	@After
@@ -155,51 +154,9 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 		}
 
 		KeyStoreCredentialResolver keyStoreCredentialResolver =
-			getKeyStoreCredentialResolver(entityId);
+			_getKeyStoreCredentialResolver(entityId);
 
 		return keyStoreCredentialResolver.resolveSingle(criteriaSet);
-	}
-
-	protected KeyStoreCredentialResolver getKeyStoreCredentialResolver(
-		String entityId) {
-
-		KeyStoreCredentialResolver keyStoreCredentialResolver =
-			new KeyStoreCredentialResolver();
-
-		keyStoreCredentialResolver.setKeyStoreManager(
-			fileSystemKeyStoreManagerImpl);
-
-		SamlProviderConfigurationHelper peerSamlProviderConfigurationHelper =
-			Mockito.mock(SamlProviderConfigurationHelper.class);
-
-		SamlProviderConfiguration peerSamlProviderConfiguration = Mockito.mock(
-			SamlProviderConfiguration.class);
-
-		when(
-			peerSamlProviderConfiguration.entityId()
-		).thenReturn(
-			entityId
-		);
-
-		String keyStoreCredentialPassword =
-			samlProviderConfiguration.keyStoreCredentialPassword();
-
-		when(
-			peerSamlProviderConfiguration.keyStoreCredentialPassword()
-		).thenReturn(
-			keyStoreCredentialPassword
-		);
-
-		when(
-			peerSamlProviderConfigurationHelper.getSamlProviderConfiguration()
-		).thenReturn(
-			peerSamlProviderConfiguration
-		);
-
-		keyStoreCredentialResolver.setSamlProviderConfigurationHelper(
-			peerSamlProviderConfigurationHelper);
-
-		return keyStoreCredentialResolver;
 	}
 
 	protected MockHttpServletRequest getMockHttpServletRequest(String url) {
@@ -269,26 +226,13 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 	protected <T> T getMockPortalService(
 		Class<?> serviceUtilClass, Class<T> serviceClass) {
 
-		return getMockService(serviceUtilClass, serviceClass);
+		return _getMockService(serviceUtilClass, serviceClass);
 	}
 
 	protected <T> T getMockPortletService(
 		Class<?> serviceUtilClass, Class<T> serviceClass) {
 
-		return getMockService(serviceUtilClass, serviceClass);
-	}
-
-	protected <T> T getMockService(
-		Class<?> serviceUtilClass, Class<T> serviceClass) {
-
-		serviceUtilClasses.add(serviceUtilClass);
-
-		T serviceMock = mock(serviceClass);
-
-		ReflectionTestUtil.setFieldValue(
-			serviceUtilClass, "_service", serviceMock);
-
-		return serviceMock;
+		return _getMockService(serviceUtilClass, serviceClass);
 	}
 
 	protected void prepareIdentityProvider(String entityId) {
@@ -348,301 +292,6 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 			samlProviderConfigurationHelper.isRoleSp()
 		).thenReturn(
 			true
-		);
-	}
-
-	protected void setupConfiguration() {
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoaderPool.register(
-			"saml-portlet", currentThread.getContextClassLoader());
-
-		PortletClassLoaderUtil.setServletContextName("saml-portlet");
-
-		Configuration configuration = mock(Configuration.class);
-
-		ConfigurationFactory configurationFactory = mock(
-			ConfigurationFactory.class);
-
-		ConfigurationFactoryUtil.setConfigurationFactory(configurationFactory);
-
-		when(
-			configurationFactory.getConfiguration(
-				Mockito.any(ClassLoader.class), Mockito.eq("portlet"))
-		).thenReturn(
-			configuration
-		);
-
-		when(
-			configurationFactory.getConfiguration(
-				Mockito.any(ClassLoader.class), Mockito.eq("service"))
-		).thenReturn(
-			configuration
-		);
-
-		when(
-			configuration.get(PortletPropsKeys.SAML_KEYSTORE_MANAGER_IMPL)
-		).thenReturn(
-			FileSystemKeyStoreManagerImpl.class.getName()
-		);
-
-		samlProviderConfigurationHelper = mock(
-			SamlProviderConfigurationHelper.class);
-
-		when(
-			samlProviderConfigurationHelper.isEnabled()
-		).thenReturn(
-			true
-		);
-
-		samlProviderConfiguration = mock(SamlProviderConfiguration.class);
-
-		when(
-			samlProviderConfiguration.defaultAssertionLifetime()
-		).thenReturn(
-			1800
-		);
-
-		when(
-			samlProviderConfigurationHelper.getSamlProviderConfiguration()
-		).thenReturn(
-			samlProviderConfiguration
-		);
-
-		when(
-			samlProviderConfiguration.enabled()
-		).thenReturn(
-			true
-		);
-
-		when(
-			samlProviderConfiguration.keyStoreCredentialPassword()
-		).thenReturn(
-			"liferay"
-		);
-	}
-
-	protected void setupIdentifiers() {
-		SamlIdentifierGeneratorStrategyFactory
-			samlIdentifierGeneratorStrategyFactory =
-				new SamlIdentifierGeneratorStrategyFactory();
-
-		samlIdentifierGenerator = samlIdentifierGeneratorStrategyFactory.create(
-			16);
-
-		IdentifierGenerationStrategy identifierGenerationStrategy = mock(
-			IdentifierGenerationStrategy.class);
-
-		identifierGenerationStrategyFactory = mock(
-			IdentifierGenerationStrategyFactory.class);
-
-		when(
-			identifierGenerationStrategyFactory.create(Mockito.anyInt())
-		).thenReturn(
-			identifierGenerationStrategy
-		);
-
-		when(
-			identifierGenerationStrategy.generateIdentifier()
-		).thenAnswer(
-			new Answer<String>() {
-
-				@Override
-				public String answer(InvocationOnMock invocationOnMock)
-					throws Throwable {
-
-					String identifier =
-						samlIdentifierGenerator.generateIdentifier();
-
-					identifiers.add(identifier);
-
-					return identifier;
-				}
-
-			}
-		);
-
-		when(
-			identifierGenerationStrategy.generateIdentifier(
-				Mockito.anyBoolean())
-		).thenAnswer(
-			new Answer<String>() {
-
-				@Override
-				public String answer(InvocationOnMock invocationOnMock)
-					throws Throwable {
-
-					boolean xmlSafe = GetterUtil.getBoolean(
-						invocationOnMock.getArguments()[0]);
-
-					String identifier =
-						samlIdentifierGenerator.generateIdentifier(xmlSafe);
-
-					identifiers.add(identifier);
-
-					return identifier;
-				}
-
-			}
-		);
-	}
-
-	protected void setupMetadata() throws Exception {
-		metadataManagerImpl = new MetadataManagerImpl();
-
-		fileSystemKeyStoreManagerImpl = new FileSystemKeyStoreManagerImpl();
-
-		ReflectionTestUtil.invoke(
-			fileSystemKeyStoreManagerImpl, "activate",
-			new Class<?>[] {Map.class},
-			HashMapBuilder.<String, Object>put(
-				"saml.keystore.path",
-				"classpath:/com/liferay/saml/opensaml/integration/internal" +
-					"/credential/dependencies/keystore.jks"
-			).build());
-
-		credentialResolver = new KeyStoreCredentialResolver();
-
-		credentialResolver.setKeyStoreManager(fileSystemKeyStoreManagerImpl);
-
-		credentialResolver.setSamlProviderConfigurationHelper(
-			samlProviderConfigurationHelper);
-
-		metadataManagerImpl.setCredentialResolver(credentialResolver);
-
-		metadataManagerImpl.setParserPool(parserPool);
-
-		metadataManagerImpl.setMetadataResolver(new MockMetadataResolver());
-
-		metadataManagerImpl.setSamlProviderConfigurationHelper(
-			samlProviderConfigurationHelper);
-
-		metadataManagerImpl.setHttp(HttpUtil.getHttp());
-
-		metadataManagerImpl.setPortal(portal);
-
-		metadataManagerImpl.setLocalEntityManager(credentialResolver);
-
-		ReflectionTestUtil.invoke(
-			metadataManagerImpl, "activate", new Class<?>[0]);
-	}
-
-	protected void setupParserPool() {
-		XMLObjectProviderRegistry xmlObjectProviderRegistry =
-			ConfigurationService.get(XMLObjectProviderRegistry.class);
-
-		parserPool = xmlObjectProviderRegistry.getParserPool();
-	}
-
-	protected void setupPortal() throws Exception {
-		httpClient = mock(HttpClient.class);
-
-		PortalUtil portalUtil = new PortalUtil();
-
-		portal = mock(Portal.class);
-
-		portalUtil.setPortal(portal);
-
-		when(
-			portal.getCompanyId(Mockito.any(HttpServletRequest.class))
-		).thenReturn(
-			COMPANY_ID
-		);
-
-		when(
-			portal.getPathContext()
-		).thenReturn(
-			""
-		);
-
-		when(
-			portal.getPathMain()
-		).thenReturn(
-			Portal.PATH_MAIN
-		);
-
-		when(
-			portal.getPortalURL(Mockito.any(MockHttpServletRequest.class))
-		).thenReturn(
-			PORTAL_URL
-		);
-
-		when(
-			portal.getPortalURL(
-				Mockito.any(MockHttpServletRequest.class), Mockito.eq(false))
-		).thenReturn(
-			PORTAL_URL
-		);
-
-		when(
-			portal.getPortalURL(
-				Mockito.any(MockHttpServletRequest.class), Mockito.eq(true))
-		).thenReturn(
-			StringUtil.replace(
-				PORTAL_URL, new String[] {"http://", "https://"},
-				new String[] {"8080", "8443"})
-		);
-
-		groupLocalService = getMockPortalService(
-			GroupLocalServiceUtil.class, GroupLocalService.class);
-
-		Group guestGroup = mock(Group.class);
-
-		when(
-			groupLocalService.getGroup(
-				Mockito.anyLong(), Mockito.eq(GroupConstants.GUEST))
-		).thenReturn(
-			guestGroup
-		);
-
-		LayoutLocalService layoutLocalService = getMockPortalService(
-			LayoutLocalServiceUtil.class, LayoutLocalService.class);
-
-		when(
-			layoutLocalService.getDefaultPlid(
-				Mockito.anyLong(), Mockito.anyBoolean())
-		).thenReturn(
-			1L
-		);
-
-		userLocalService = getMockPortalService(
-			UserLocalServiceUtil.class, UserLocalService.class);
-	}
-
-	protected void setupProps() {
-		PropsTestUtil.setProps(
-			HashMapBuilder.<String, Object>put(
-				PropsKeys.LIFERAY_HOME, System.getProperty("java.io.tmpdir")
-			).put(
-				"configuration.override.", new Properties()
-			).build());
-	}
-
-	protected void setupSamlBindings() {
-		VelocityEngineFactory velocityEngineFactory =
-			new VelocityEngineFactory();
-
-		Thread currentThread = Thread.currentThread();
-
-		VelocityEngine velocityEngine = velocityEngineFactory.getVelocityEngine(
-			currentThread.getContextClassLoader());
-
-		samlBindings = new ArrayList<>();
-
-		samlBindings.add(new HttpPostBinding(parserPool, velocityEngine));
-		samlBindings.add(new HttpRedirectBinding(parserPool));
-		samlBindings.add(new HttpSoap11Binding(parserPool, httpClient));
-	}
-
-	protected void setupSamlPeerBindingsLocalService() throws PortalException {
-		samlPeerBindingLocalService = getMockPortletService(
-			SamlPeerBindingLocalServiceUtil.class,
-			SamlPeerBindingLocalService.class);
-
-		when(
-			samlPeerBindingLocalService.getSamlPeerBinding(Mockito.anyLong())
-		).thenAnswer(
-			answer -> _samlPeerBindings.get((long)answer.getArguments()[0])
 		);
 	}
 
@@ -732,7 +381,7 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 			String entityId = entityIdCriterion.getEntityId();
 
 			KeyStoreCredentialResolver keyStoreCredentialResolver =
-				getKeyStoreCredentialResolver(entityId);
+				_getKeyStoreCredentialResolver(entityId);
 
 			Credential credential = keyStoreCredentialResolver.resolveSingle(
 				criteriaSet);
@@ -789,6 +438,356 @@ public abstract class BaseSamlTestCase extends PowerMockito {
 
 		private boolean _idpNeedsSignature = true;
 
+	}
+
+	private KeyStoreCredentialResolver _getKeyStoreCredentialResolver(
+		String entityId) {
+
+		KeyStoreCredentialResolver keyStoreCredentialResolver =
+			new KeyStoreCredentialResolver();
+
+		keyStoreCredentialResolver.setKeyStoreManager(
+			fileSystemKeyStoreManagerImpl);
+
+		SamlProviderConfigurationHelper peerSamlProviderConfigurationHelper =
+			Mockito.mock(SamlProviderConfigurationHelper.class);
+
+		SamlProviderConfiguration peerSamlProviderConfiguration = Mockito.mock(
+			SamlProviderConfiguration.class);
+
+		when(
+			peerSamlProviderConfiguration.entityId()
+		).thenReturn(
+			entityId
+		);
+
+		String keyStoreCredentialPassword =
+			samlProviderConfiguration.keyStoreCredentialPassword();
+
+		when(
+			peerSamlProviderConfiguration.keyStoreCredentialPassword()
+		).thenReturn(
+			keyStoreCredentialPassword
+		);
+
+		when(
+			peerSamlProviderConfigurationHelper.getSamlProviderConfiguration()
+		).thenReturn(
+			peerSamlProviderConfiguration
+		);
+
+		keyStoreCredentialResolver.setSamlProviderConfigurationHelper(
+			peerSamlProviderConfigurationHelper);
+
+		return keyStoreCredentialResolver;
+	}
+
+	private <T> T _getMockService(
+		Class<?> serviceUtilClass, Class<T> serviceClass) {
+
+		serviceUtilClasses.add(serviceUtilClass);
+
+		T serviceMock = mock(serviceClass);
+
+		ReflectionTestUtil.setFieldValue(
+			serviceUtilClass, "_service", serviceMock);
+
+		return serviceMock;
+	}
+
+	private void _setupConfiguration() {
+		Thread currentThread = Thread.currentThread();
+
+		ClassLoaderPool.register(
+			"saml-portlet", currentThread.getContextClassLoader());
+
+		PortletClassLoaderUtil.setServletContextName("saml-portlet");
+
+		Configuration configuration = mock(Configuration.class);
+
+		ConfigurationFactory configurationFactory = mock(
+			ConfigurationFactory.class);
+
+		ConfigurationFactoryUtil.setConfigurationFactory(configurationFactory);
+
+		when(
+			configurationFactory.getConfiguration(
+				Mockito.any(ClassLoader.class), Mockito.eq("portlet"))
+		).thenReturn(
+			configuration
+		);
+
+		when(
+			configurationFactory.getConfiguration(
+				Mockito.any(ClassLoader.class), Mockito.eq("service"))
+		).thenReturn(
+			configuration
+		);
+
+		when(
+			configuration.get(PortletPropsKeys.SAML_KEYSTORE_MANAGER_IMPL)
+		).thenReturn(
+			FileSystemKeyStoreManagerImpl.class.getName()
+		);
+
+		samlProviderConfigurationHelper = mock(
+			SamlProviderConfigurationHelper.class);
+
+		when(
+			samlProviderConfigurationHelper.isEnabled()
+		).thenReturn(
+			true
+		);
+
+		samlProviderConfiguration = mock(SamlProviderConfiguration.class);
+
+		when(
+			samlProviderConfiguration.defaultAssertionLifetime()
+		).thenReturn(
+			1800
+		);
+
+		when(
+			samlProviderConfigurationHelper.getSamlProviderConfiguration()
+		).thenReturn(
+			samlProviderConfiguration
+		);
+
+		when(
+			samlProviderConfiguration.enabled()
+		).thenReturn(
+			true
+		);
+
+		when(
+			samlProviderConfiguration.keyStoreCredentialPassword()
+		).thenReturn(
+			"liferay"
+		);
+	}
+
+	private void _setupIdentifiers() {
+		SamlIdentifierGeneratorStrategyFactory
+			samlIdentifierGeneratorStrategyFactory =
+				new SamlIdentifierGeneratorStrategyFactory();
+
+		samlIdentifierGenerator = samlIdentifierGeneratorStrategyFactory.create(
+			16);
+
+		IdentifierGenerationStrategy identifierGenerationStrategy = mock(
+			IdentifierGenerationStrategy.class);
+
+		identifierGenerationStrategyFactory = mock(
+			IdentifierGenerationStrategyFactory.class);
+
+		when(
+			identifierGenerationStrategyFactory.create(Mockito.anyInt())
+		).thenReturn(
+			identifierGenerationStrategy
+		);
+
+		when(
+			identifierGenerationStrategy.generateIdentifier()
+		).thenAnswer(
+			new Answer<String>() {
+
+				@Override
+				public String answer(InvocationOnMock invocationOnMock)
+					throws Throwable {
+
+					String identifier =
+						samlIdentifierGenerator.generateIdentifier();
+
+					identifiers.add(identifier);
+
+					return identifier;
+				}
+
+			}
+		);
+
+		when(
+			identifierGenerationStrategy.generateIdentifier(
+				Mockito.anyBoolean())
+		).thenAnswer(
+			new Answer<String>() {
+
+				@Override
+				public String answer(InvocationOnMock invocationOnMock)
+					throws Throwable {
+
+					boolean xmlSafe = GetterUtil.getBoolean(
+						invocationOnMock.getArguments()[0]);
+
+					String identifier =
+						samlIdentifierGenerator.generateIdentifier(xmlSafe);
+
+					identifiers.add(identifier);
+
+					return identifier;
+				}
+
+			}
+		);
+	}
+
+	private void _setupMetadata() throws Exception {
+		metadataManagerImpl = new MetadataManagerImpl();
+
+		fileSystemKeyStoreManagerImpl = new FileSystemKeyStoreManagerImpl();
+
+		ReflectionTestUtil.invoke(
+			fileSystemKeyStoreManagerImpl, "activate",
+			new Class<?>[] {Map.class},
+			HashMapBuilder.<String, Object>put(
+				"saml.keystore.path",
+				"classpath:/com/liferay/saml/opensaml/integration/internal" +
+					"/credential/dependencies/keystore.jks"
+			).build());
+
+		credentialResolver = new KeyStoreCredentialResolver();
+
+		credentialResolver.setKeyStoreManager(fileSystemKeyStoreManagerImpl);
+
+		credentialResolver.setSamlProviderConfigurationHelper(
+			samlProviderConfigurationHelper);
+
+		metadataManagerImpl.setCredentialResolver(credentialResolver);
+
+		metadataManagerImpl.setParserPool(parserPool);
+
+		metadataManagerImpl.setMetadataResolver(new MockMetadataResolver());
+
+		metadataManagerImpl.setSamlProviderConfigurationHelper(
+			samlProviderConfigurationHelper);
+
+		metadataManagerImpl.setHttp(HttpUtil.getHttp());
+
+		metadataManagerImpl.setPortal(portal);
+
+		metadataManagerImpl.setLocalEntityManager(credentialResolver);
+
+		ReflectionTestUtil.invoke(
+			metadataManagerImpl, "activate", new Class<?>[0]);
+	}
+
+	private void _setupParserPool() {
+		XMLObjectProviderRegistry xmlObjectProviderRegistry =
+			ConfigurationService.get(XMLObjectProviderRegistry.class);
+
+		parserPool = xmlObjectProviderRegistry.getParserPool();
+	}
+
+	private void _setupPortal() throws Exception {
+		httpClient = mock(HttpClient.class);
+
+		PortalUtil portalUtil = new PortalUtil();
+
+		portal = mock(Portal.class);
+
+		portalUtil.setPortal(portal);
+
+		when(
+			portal.getCompanyId(Mockito.any(HttpServletRequest.class))
+		).thenReturn(
+			COMPANY_ID
+		);
+
+		when(
+			portal.getPathContext()
+		).thenReturn(
+			""
+		);
+
+		when(
+			portal.getPathMain()
+		).thenReturn(
+			Portal.PATH_MAIN
+		);
+
+		when(
+			portal.getPortalURL(Mockito.any(MockHttpServletRequest.class))
+		).thenReturn(
+			PORTAL_URL
+		);
+
+		when(
+			portal.getPortalURL(
+				Mockito.any(MockHttpServletRequest.class), Mockito.eq(false))
+		).thenReturn(
+			PORTAL_URL
+		);
+
+		when(
+			portal.getPortalURL(
+				Mockito.any(MockHttpServletRequest.class), Mockito.eq(true))
+		).thenReturn(
+			StringUtil.replace(
+				PORTAL_URL, new String[] {"http://", "https://"},
+				new String[] {"8080", "8443"})
+		);
+
+		groupLocalService = getMockPortalService(
+			GroupLocalServiceUtil.class, GroupLocalService.class);
+
+		Group guestGroup = mock(Group.class);
+
+		when(
+			groupLocalService.getGroup(
+				Mockito.anyLong(), Mockito.eq(GroupConstants.GUEST))
+		).thenReturn(
+			guestGroup
+		);
+
+		LayoutLocalService layoutLocalService = getMockPortalService(
+			LayoutLocalServiceUtil.class, LayoutLocalService.class);
+
+		when(
+			layoutLocalService.getDefaultPlid(
+				Mockito.anyLong(), Mockito.anyBoolean())
+		).thenReturn(
+			1L
+		);
+
+		userLocalService = getMockPortalService(
+			UserLocalServiceUtil.class, UserLocalService.class);
+	}
+
+	private void _setupProps() {
+		PropsTestUtil.setProps(
+			HashMapBuilder.<String, Object>put(
+				PropsKeys.LIFERAY_HOME, System.getProperty("java.io.tmpdir")
+			).put(
+				"configuration.override.", new Properties()
+			).build());
+	}
+
+	private void _setupSamlBindings() {
+		VelocityEngineFactory velocityEngineFactory =
+			new VelocityEngineFactory();
+
+		Thread currentThread = Thread.currentThread();
+
+		VelocityEngine velocityEngine = velocityEngineFactory.getVelocityEngine(
+			currentThread.getContextClassLoader());
+
+		samlBindings = new ArrayList<>();
+
+		samlBindings.add(new HttpPostBinding(parserPool, velocityEngine));
+		samlBindings.add(new HttpRedirectBinding(parserPool));
+		samlBindings.add(new HttpSoap11Binding(parserPool, httpClient));
+	}
+
+	private void _setupSamlPeerBindingsLocalService() throws Exception {
+		samlPeerBindingLocalService = getMockPortletService(
+			SamlPeerBindingLocalServiceUtil.class,
+			SamlPeerBindingLocalService.class);
+
+		when(
+			samlPeerBindingLocalService.getSamlPeerBinding(Mockito.anyLong())
+		).thenAnswer(
+			answer -> _samlPeerBindings.get((long)answer.getArguments()[0])
+		);
 	}
 
 	private final Map<Long, SamlPeerBinding> _samlPeerBindings =

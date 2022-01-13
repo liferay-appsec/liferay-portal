@@ -66,11 +66,6 @@
 	<td></td>
 </tr>
 <tr>
-	<td>AUDIT_GRAPH_FIRST_BAR</td>
-	<td>//*[contains(@class, 'recharts-rectangle') and @fill='#4B9FFF']</td>
-	<td></td>
-</tr>
-<tr>
 	<td>AUDIT_GRAPH_TITLE</td>
 	<td>//*[contains(@class, 'autofit-col autofit-col-expand') and contains(text(),'${auditGraphTitle}')]</td>
 	<td></td>
@@ -192,6 +187,11 @@
 <tr>
 	<td>FILTER_EXTENSION_ELEMENT</td>
 	<td>//*[contains(@class, 'card-body')]//*[contains(@class, 'text-truncate') and contains (text(), '${extensionName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FILTER_LABEL</td>
+	<td>//li[contains(@class,'tbar')]//span[contains(@class,'label-item-expand')][starts-with(.,'${filterLabel}')]</td>
 	<td></td>
 </tr>
 <tr>

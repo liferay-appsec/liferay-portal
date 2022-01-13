@@ -124,7 +124,7 @@
 </tr>
 <tr>
 	<td>DOCUMENT_INFO_RELATED_ASSETS_TITLE</td>
-	<td>//div[contains(@class,'sidebar-body')]//li[contains(@class,'list-group-item')]//a</td>
+	<td>//div[contains(@class,'sidebar-body')]//*[contains(@class,'list-group-item')]//a</td>
 	<td></td>
 </tr>
 <tr>
@@ -379,7 +379,7 @@
 </tr>
 <tr>
 	<td>VIDEO_SHORTCUT_THUMBNAIL_LIST</td>
-	<td>//li[@data-qa-id='row'][contains(.,'${key_list}')]//div[contains(@class,'bg-cover')]</td>
+	<td>//*[@data-qa-id='row'][contains(.,'${key_list}')]//div[contains(@class,'bg-cover')]</td>
 	<td></td>
 </tr>
 <tr>

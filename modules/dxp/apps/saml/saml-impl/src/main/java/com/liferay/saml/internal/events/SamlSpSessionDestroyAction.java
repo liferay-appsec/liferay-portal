@@ -70,14 +70,14 @@ public class SamlSpSessionDestroyAction extends SessionAction {
 		CompanyThreadLocal.setCompanyId(userCompanyId);
 
 		try {
-			doRun(httpSession);
+			_run(httpSession);
 		}
 		finally {
 			CompanyThreadLocal.setCompanyId(companyId);
 		}
 	}
 
-	protected void doRun(HttpSession httpSession) throws ActionException {
+	private void _run(HttpSession httpSession) throws ActionException {
 		if (!_samlProviderConfigurationHelper.isEnabled() ||
 			!_samlProviderConfigurationHelper.isRoleSp()) {
 

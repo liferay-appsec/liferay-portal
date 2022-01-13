@@ -1,3 +1,14 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of the Liferay Enterprise
+ * Subscription License ("License"). You may not use this file except in
+ * compliance with the License. You can obtain a copy of the License by
+ * contacting Liferay, Inc. See the License for the specific language governing
+ * permissions and limitations under the License, including but not limited to
+ * distribution rights of the Software.
+ */
+
 import {useMutation, useQuery} from '@apollo/client';
 import ClayForm from '@clayui/form';
 import {useFormikContext} from 'formik';
@@ -19,8 +30,8 @@ import Layout from '../../components/Layout';
 import {actionTypes} from '../../context/reducer';
 import {getInitialDxpAdmin, steps} from '../../utils/constants';
 
-const SetupDXPCloud = () => {
-	const [{project}, dispatch] = useOnboarding();
+const SetupDXPCloud = ({project}) => {
+	const [, dispatch] = useOnboarding();
 	const {errors, setFieldValue, touched, values} = useFormikContext();
 	const [baseButtonDisabled, setBaseButtonDisabled] = useState(true);
 
@@ -42,10 +53,6 @@ const SetupDXPCloud = () => {
 	);
 
 	const hasDisasterRecovery = !!data?.c?.accountSubscriptions?.items?.length;
-	const projectBrief = {
-		code: project.code,
-		dxpVersion: project.dxpVersion,
-	};
 
 	useEffect(() => {
 		if (dXPCDataCenterRegions.length) {
@@ -62,7 +69,7 @@ const SetupDXPCloud = () => {
 	}, [dXPCDataCenterRegions, hasDisasterRecovery]);
 
 	const handleSkip = () => {
-		window.location.href = `${API_BASE_URL}${LiferayTheme.getLiferaySiteName()}/overview?${
+		window.location.href = `${API_BASE_URL}/${LiferayTheme.getLiferaySiteName()}/overview?${
 			PARAMS_KEYS.PROJECT_APPLICATION_EXTERNAL_REFERENCE_CODE
 		}=${project.accountKey}`;
 	};
@@ -105,7 +112,7 @@ const SetupDXPCloud = () => {
 
 	return (
 		<Layout
-			className="pl-3 pt-1"
+			className="pt-1 px-3"
 			footerProps={{
 				leftButton: (
 					<BaseButton borderless onClick={handleSkip}>
@@ -129,11 +136,15 @@ const SetupDXPCloud = () => {
 			}}
 		>
 			<div className="d-flex justify-content-between mb-2 pb-1 pl-3">
-				<div className="flex-fill">
+				<div className="mr-4 pr-2">
 					<label>Project Name</label>
 
-					<p className="text-neutral-6 text-paragraph-lg">
-						<strong>{projectBrief ? projectBrief.code : ''}</strong>
+					<p className="dxp-cloud-project-name text-neutral-6 text-paragraph-lg">
+						<strong>
+							{project.name.length > 71
+								? project.name.substring(0, 71) + '...'
+								: project.name}
+						</strong>
 					</p>
 				</div>
 
@@ -141,9 +152,7 @@ const SetupDXPCloud = () => {
 					<label>Liferay DXP Version</label>
 
 					<p className="text-neutral-6 text-paragraph-lg">
-						<strong>
-							{projectBrief ? projectBrief.dxpVersion : ''}
-						</strong>
+						<strong>{project.dxpVersion}</strong>
 					</p>
 				</div>
 			</div>
@@ -152,7 +161,7 @@ const SetupDXPCloud = () => {
 				<ClayForm.Group className="mb-0 pb-1">
 					<Input
 						groupStyle="pb-1"
-						helper="Lowercase letters and numbers only. Project IDs cannot be change."
+						helper="Lowercase letters and numbers only. The Project ID cannot be changed."
 						label="Project ID"
 						name="dxp.projectId"
 						required

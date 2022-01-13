@@ -53,6 +53,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -196,6 +197,7 @@ public class EditConfigurationMVCRenderCommand implements MVCRenderCommand {
 				"configuration.pid");
 	}
 
+	@Deactivate
 	protected void deactivate() {
 		_configurationMenuItemsServiceTrackerMap.close();
 	}

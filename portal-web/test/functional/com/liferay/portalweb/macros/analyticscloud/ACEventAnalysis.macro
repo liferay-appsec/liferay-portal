@@ -1,19 +1,27 @@
 definition {
 
 	macro addBreakdown {
-		var key_buttonName = "${attributeName}";
+		for (var attributeName : list "${attributeNameList}") {
+			ACEventAnalysis.clickToAddBreakdownButton();
 
-		ACEventAnalysis.clickToAddBreakdownButton();
+			ACEventAnalysis.searchEventAnalysis(searchItem = "${attributeName}");
 
-		ACEventAnalysis.searchEventAnalysis(searchItem = "${attributeName}");
-
-		Click(locator1 = "ACUtils#GENERIC_BUTTON");
+			Click(
+				key_buttonName = "${attributeName}",
+				locator1 = "ACUtils#GENERIC_BUTTON");
+		}
 	}
 
 	macro addEvent {
 		var key_buttonName = "${customEventName}";
 
+		if (!(isSet(tabName))) {
+			var tabName = "All";
+		}
+
 		ACEventAnalysis.clickToAddEventButton();
+
+		ACNavigation.switchTabInCard(tabName = "${tabName}");
 
 		ACEventAnalysis.searchEventAnalysis(searchItem = "${customEventName}");
 
@@ -41,9 +49,42 @@ definition {
 			locator1 = "Select#SELECT",
 			value1 = "${optionValue}");
 
-		Type(
-			locator1 = "ACEventAnalysis#INPUT_CONDITION",
-			value1 = "${inputValue}");
+		if ((IsElementNotPresent(key_text = "calendar", locator1 = "Icon#ANY")) && ("${optionValue}" != "True") && ("${optionValue}" != "False")) {
+			Type(
+				locator1 = "ACEventAnalysis#INPUT_CONDITION",
+				value1 = "${inputValue}");
+
+			if ("${optionValue}" == "between") {
+				Type(
+					locator1 = "ACEventAnalysis#INPUT_CONDITION_END_VALUE",
+					value1 = "${inputEndValue}");
+			}
+		}
+
+		if (IsElementPresent(key_text = "calendar", locator1 = "Icon#ANY")) {
+			Click(
+				key_text = "calendar",
+				locator1 = "Icon#ANY");
+
+			Select(
+				key_indexCalendar = "1",
+				locator1 = "ACSegments#MONTH_AND_YEAR_CALENDAR",
+				value1 = "${month}");
+
+			Click(
+				key_day = "${inputValue}",
+				locator1 = "ACSegments#DAY_CALENDAR_OPTION");
+
+			if ("${optionValue}" == "is between") {
+				Click(
+					key_day = "${inputEndValue}",
+					locator1 = "ACSegments#DAY_CALENDAR_OPTION");
+			}
+
+			Click(
+				key_text = "calendar",
+				locator1 = "Icon#ANY");
+		}
 
 		Click(
 			key_buttonName = "Done",
@@ -70,6 +111,34 @@ definition {
 		}
 	}
 
+	macro changeBreakdownPosition {
+		DragAndDrop.javaScriptDragAndDropToObject(
+			indexEnd = "${indexEnd}",
+			indexStart = "${indexStart}",
+			locator1 = "ACEventAnalysis#BREAKDOWN_ORIGINAL_POSITION",
+			locator2 = "ACEventAnalysis#BREAKDOWN_NEW_POSITION");
+	}
+
+	macro changeCustomEventDisplayName {
+		var key_buttonName = "${elementName}";
+
+		MouseOver(locator1 = "ACUtils#GENERIC_BUTTON");
+
+		if ("${editOption}" == "Description") {
+			Click(locator1 = "ACEventAnalysis#EDIT_PENCIL");
+
+			ACCustomEvents.changeCustomEventDisplayNameOrDescription(newDisplayName = "${newDisplayName}");
+		}
+
+		if ("${editOption}" == "Filter") {
+			Click(locator1 = "ACEventAnalysis#FILTER_BUTTON");
+
+			Click(locator1 = "ACEventAnalysis#EDIT_PENCIL");
+
+			ACCustomEvents.changeCustomEventDisplayNameOrDescription(newDisplayName = "${newDisplayName}");
+		}
+	}
+
 	macro clickToAddBreakdownButton {
 		var key_sectionType = "breakdown";
 
@@ -77,7 +146,7 @@ definition {
 	}
 
 	macro clickToAddEventButton {
-		var key_DefinitionsOptions = "event-analysis/create";
+		var key_definitionsOptions = "event-analysis/create";
 
 		if (IsElementPresent(locator1 = "ACSettings#DEFINITIONS_OPTIONS")) {
 			Click(locator1 = "ACSettings#DEFINITIONS_OPTIONS");
@@ -102,6 +171,20 @@ definition {
 		Type(
 			locator1 = "ACEventAnalysis#SEARCH_BAR_EVENT_ANALYSE",
 			value1 = "${searchItem}");
+	}
+
+	macro sortAnalysis {
+		var key_attributeName = "${attributeName}";
+
+		Click(locator1 = "ACEventAnalysis#SORT_ANALYSIS");
+	}
+
+	macro viewAnalysisColumnInOrder {
+		var index = "${index}";
+
+		AssertTextEquals(
+			locator1 = "ACEventAnalysis#VIEW_ORDER_ANALYSIS_COLUMN",
+			value1 = "${columnName}");
 	}
 
 	macro viewAnalysisDashboard {
@@ -129,6 +212,23 @@ definition {
 			var key_informationValue = "${informationValue}";
 
 			AssertElementPresent(locator1 = "ACEventAnalysis#VIEW_ANALYSIS_INFORMATION");
+		}
+	}
+
+	macro viewAnalysisInformationInOrder {
+		var key_commonInformation = "${commonInformation}";
+		var index = "${index}";
+
+		AssertVisible(
+			locator1 = "ACEventAnalysis#VIEW_ANALYSIS_INFORMATION_SPECIFC_ORDER",
+			value1 = "${informationValue}");
+	}
+
+	macro viewAnalysisInformationNotPresent {
+		for (var informationValue : list "${informationValueList}") {
+			var key_informationValue = "${informationValue}";
+
+			AssertElementNotPresent(locator1 = "ACEventAnalysis#VIEW_ANALYSIS_INFORMATION");
 		}
 	}
 
@@ -172,6 +272,13 @@ definition {
 
 			AssertElementNotPresent(locator1 = "ACUtils#GENERIC_BUTTON");
 		}
+	}
+
+	macro viewTotalNumberRelatedToColumnInformation {
+		var key_columnInformationValue = "${columnInformationValue}";
+		var key_totalEventsValue = "${totalEventsValue}";
+
+		AssertElementPresent(locator1 = "ACEventAnalysis#VIEW_TOTAL_NUMBER_RELATED_COLUMN_INFORMATION");
 	}
 
 }

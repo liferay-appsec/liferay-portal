@@ -474,7 +474,8 @@ public class WorkflowMetricsRESTTestHelper {
 			_assertCount(
 				_slaInstanceResultWorkflowMetricsIndexNameBuilder.getIndexName(
 					companyId),
-				"companyId", companyId, "deleted", false, "instanceCompleted",
+				"blocked", false, "companyId", companyId, "deleted", false,
+				"instanceCompleted",
 				Objects.nonNull(instance.getDateCompletion()), "instanceId",
 				instance.getId(), "onTime", slaResult.getOnTime(), "processId",
 				instance.getProcessId(), "remainingTime",
@@ -851,6 +852,37 @@ public class WorkflowMetricsRESTTestHelper {
 		return task;
 	}
 
+	public void blockSLAInstanceResults(
+			long companyId, long processId, long slaDefinitionId)
+		throws Exception {
+
+		Object indexer = _getIndexer(_CLASS_NAME_SLA_INSTANCE_RESULT_INDEXER);
+
+		Class<?> indexerClass = indexer.getClass();
+
+		Method method = null;
+
+		while ((indexerClass != Object.class) && (method == null)) {
+			try {
+				method = ReflectionUtil.getDeclaredMethod(
+					indexerClass, "blockDocuments", long.class, long.class,
+					long.class);
+			}
+			catch (NoSuchMethodException noSuchMethodException) {
+			}
+
+			indexerClass = indexerClass.getSuperclass();
+		}
+
+		method.invoke(indexer, companyId, processId, slaDefinitionId);
+
+		_assertCount(
+			_slaInstanceResultWorkflowMetricsIndexNameBuilder.getIndexName(
+				companyId),
+			"blocked", true, "companyId", companyId, "deleted", false,
+			"processId", processId, "slaDefinitionId", slaDefinitionId);
+	}
+
 	public void completeInstance(long companyId, Instance instance)
 		throws Exception {
 
@@ -1075,6 +1107,8 @@ public class WorkflowMetricsRESTTestHelper {
 
 		documentBuilder.setValue(
 			"active", true
+		).setValue(
+			"blocked", false
 		).setValue(
 			"companyId", companyId
 		).setValue(

@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.module.framework.ModuleFramework;
 import com.liferay.portal.util.PropsValues;
 
@@ -396,24 +395,6 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 		properties.put(Constants.BUNDLE_VENDOR, ReleaseInfo.getVendor());
 		properties.put(Constants.BUNDLE_VERSION, ReleaseInfo.getVersion());
 
-		// Fileinstall. See LPS-56385.
-
-		properties.put(
-			FrameworkPropsKeys.FILE_INSTALL_DIR, _getFileInstallDir());
-		properties.put(
-			FrameworkPropsKeys.FILE_INSTALL_POLL,
-			String.valueOf(PropsValues.MODULE_FRAMEWORK_AUTO_DEPLOY_INTERVAL));
-		properties.put(
-			FrameworkPropsKeys.FILE_INSTALL_START_LEVEL,
-			String.valueOf(
-				PropsValues.MODULE_FRAMEWORK_DYNAMIC_INSTALL_START_LEVEL));
-		properties.put(
-			FrameworkPropsKeys.FILE_INSTALL_TMPDIR,
-			SystemProperties.get(SystemProperties.TMP_DIR));
-		properties.put(
-			FrameworkPropsKeys.FILE_INSTALL_WEB_START_LEVEL,
-			String.valueOf(PropsValues.MODULE_FRAMEWORK_WEB_START_LEVEL));
-
 		// Framework
 
 		properties.put(
@@ -714,11 +695,6 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 		}
 	}
 
-	private String _getFileInstallDir() {
-		return PropsValues.MODULE_FRAMEWORK_PORTAL_DIR + StringPool.COMMA +
-			StringUtil.merge(PropsValues.MODULE_FRAMEWORK_AUTO_DEPLOY_DIRS);
-	}
-
 	private String _getFragmentHost(Bundle bundle) {
 		Dictionary<String, String> dictionary = bundle.getHeaders(
 			StringPool.BLANK);
@@ -851,9 +827,7 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 			_log.debug("Initializing required startup directories");
 		}
 
-		String[] dirNames = StringUtil.split(_getFileInstallDir());
-
-		for (String dirName : dirNames) {
+		for (String dirName : PropsValues.MODULE_FRAMEWORK_AUTO_DEPLOY_DIRS) {
 			FileUtil.mkdirs(dirName);
 		}
 

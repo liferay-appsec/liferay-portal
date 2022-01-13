@@ -11,11 +11,6 @@
 
 <tbody>
 <tr>
-	<td>ADD_ACTION</td>
-	<td>//span[contains(.,'Add Action')]</td>
-	<td></td>
-</tr>
-<tr>
 	<td>ADD_ADDRESS</td>
 	<td>//a[contains(@class,'add-address')]</td>
 	<td></td>
@@ -237,7 +232,7 @@
 </tr>
 <tr>
 	<td>COLOR_PICKER</td>
-	<td>//label[normalize-space(text())='${key_fieldLabel}']/following-sibling::div//div[contains(@class,'color-picker')]//button[contains(@class,'clay-color-btn')] | //div[contains(@class,'color-picker')][./label[normalize-space(text())='${key_fieldLabel}']]//button[contains(@class,'clay-color-btn')]</td>
+	<td>//label[normalize-space(text())='${key_fieldLabel}']/following-sibling::div//div[contains(@class,'color-picker')]//button[contains(@class,'clay-color-btn')] | //div[contains(@class,'color-picker')][./label[normalize-space(text())='${key_fieldLabel}']]//button[contains(@class,'clay-color-btn')] | //label[normalize-space(text())='${key_fieldLabel}']/following-sibling::div//div[contains(@class,'color-picker')]//button[contains(@class,'color-picker__selector')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -773,11 +768,6 @@
 <tr>
 	<td>SELECT_FILES</td>
 	<td>//button[contains(.,'Select Files')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>SELECT_MOBILE_DEVICE_RULES</td>
-	<td>//div[@class='btn-toolbar']/button[contains(.,'Select')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -153,6 +153,20 @@ public class GeneralConfigurationSerDes {
 			sb.append(generalConfiguration.getIncludeResponseString());
 		}
 
+		if (generalConfiguration.getLanguageId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"languageId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(generalConfiguration.getLanguageId()));
+
+			sb.append("\"");
+		}
+
 		if (generalConfiguration.getQueryString() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -279,6 +293,15 @@ public class GeneralConfigurationSerDes {
 					generalConfiguration.getIncludeResponseString()));
 		}
 
+		if (generalConfiguration.getLanguageId() == null) {
+			map.put("languageId", null);
+		}
+		else {
+			map.put(
+				"languageId",
+				String.valueOf(generalConfiguration.getLanguageId()));
+		}
+
 		if (generalConfiguration.getQueryString() == null) {
 			map.put("queryString", null);
 		}
@@ -363,6 +386,12 @@ public class GeneralConfigurationSerDes {
 				if (jsonParserFieldValue != null) {
 					generalConfiguration.setIncludeResponseString(
 						(Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "languageId")) {
+				if (jsonParserFieldValue != null) {
+					generalConfiguration.setLanguageId(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "queryString")) {

@@ -50,14 +50,14 @@ public class KBServicePreAction extends Action {
 		HttpServletResponse httpServletResponse) {
 
 		try {
-			doRun(httpServletRequest, httpServletResponse);
+			_run(httpServletRequest, httpServletResponse);
 		}
 		catch (Exception exception) {
 			_log.error(exception, exception);
 		}
 	}
 
-	protected void doRun(
+	private void _run(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
 		throws Exception {

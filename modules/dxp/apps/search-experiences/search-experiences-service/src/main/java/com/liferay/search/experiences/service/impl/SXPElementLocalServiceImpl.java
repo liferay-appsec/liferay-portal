@@ -55,7 +55,7 @@ public class SXPElementLocalServiceImpl extends SXPElementLocalServiceBaseImpl {
 	public SXPElement addSXPElement(
 			long userId, Map<Locale, String> descriptionMap,
 			String elementDefinitionJSON, boolean readOnly,
-			Map<Locale, String> titleMap, int type,
+			String schemaVersion, Map<Locale, String> titleMap, int type,
 			ServiceContext serviceContext)
 		throws PortalException {
 
@@ -74,6 +74,7 @@ public class SXPElementLocalServiceImpl extends SXPElementLocalServiceBaseImpl {
 		sxpElement.setElementDefinitionJSON(elementDefinitionJSON);
 		sxpElement.setHidden(false);
 		sxpElement.setReadOnly(readOnly);
+		sxpElement.setSchemaVersion(schemaVersion);
 		sxpElement.setTitleMap(titleMap);
 		sxpElement.setType(type);
 		sxpElement.setStatus(WorkflowConstants.STATUS_APPROVED);
@@ -147,7 +148,7 @@ public class SXPElementLocalServiceImpl extends SXPElementLocalServiceBaseImpl {
 	@Override
 	public SXPElement updateSXPElement(
 			long userId, long sxpElementId, Map<Locale, String> descriptionMap,
-			String elementDefinitionJSON, boolean hidden,
+			String elementDefinitionJSON, boolean hidden, String schemaVersion,
 			Map<Locale, String> titleMap, ServiceContext serviceContext)
 		throws PortalException {
 
@@ -160,6 +161,7 @@ public class SXPElementLocalServiceImpl extends SXPElementLocalServiceBaseImpl {
 		sxpElement.setDescriptionMap(descriptionMap);
 		sxpElement.setElementDefinitionJSON(elementDefinitionJSON);
 		sxpElement.setHidden(hidden);
+		sxpElement.setSchemaVersion(schemaVersion);
 		sxpElement.setTitleMap(titleMap);
 
 		return updateSXPElement(sxpElement);

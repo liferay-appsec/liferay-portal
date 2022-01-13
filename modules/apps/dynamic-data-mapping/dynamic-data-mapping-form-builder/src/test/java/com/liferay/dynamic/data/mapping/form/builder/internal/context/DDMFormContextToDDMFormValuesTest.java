@@ -33,7 +33,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.ArrayList;
@@ -86,7 +85,7 @@ public class DDMFormContextToDDMFormValuesTest extends PowerMockito {
 
 		DDMFormContextDeserializerRequest ddmFormContextDeserializerRequest =
 			DDMFormContextDeserializerRequest.with(
-				ddmForm, read("ddm-form-values.json"));
+				ddmForm, _read("ddm-form-values.json"));
 
 		ddmFormContextDeserializerRequest.addProperty(
 			"currentLocale", LocaleUtil.BRAZIL);
@@ -144,7 +143,7 @@ public class DDMFormContextToDDMFormValuesTest extends PowerMockito {
 
 		List<DDMFormFieldValue> actualDDMFormFieldValues =
 			_ddmFormContextToDDMFormValues.getDDMFormFieldValues(
-				new JSONArrayImpl(read("ddm-form-values-pages-only.json")),
+				new JSONArrayImpl(_read("ddm-form-values-pages-only.json")),
 				ddmForm);
 
 		Assert.assertTrue(
@@ -174,21 +173,21 @@ public class DDMFormContextToDDMFormValuesTest extends PowerMockito {
 		Assert.assertTrue(Objects.equals(value1, value2));
 	}
 
-	protected String read(String fileName) throws IOException {
-		Class<?> clazz = getClass();
-
-		InputStream inputStream = clazz.getResourceAsStream(
-			"dependencies/" + fileName);
-
-		return StringUtil.read(inputStream);
-	}
-
 	private LocalizedValue _createLocalizedValue(Locale locale, String value) {
 		LocalizedValue localizedValue = new LocalizedValue();
 
 		localizedValue.addString(locale, value);
 
 		return localizedValue;
+	}
+
+	private String _read(String fileName) throws Exception {
+		Class<?> clazz = getClass();
+
+		InputStream inputStream = clazz.getResourceAsStream(
+			"dependencies/" + fileName);
+
+		return StringUtil.read(inputStream);
 	}
 
 	private void _setUpDDMFormContextToDDMFormValues() throws Exception {

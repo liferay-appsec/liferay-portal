@@ -188,6 +188,7 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 		SXPBlueprint sxpBlueprint = randomSXPBlueprint();
 
 		sxpBlueprint.setDescription(regex);
+		sxpBlueprint.setSchemaVersion(regex);
 		sxpBlueprint.setTitle(regex);
 		sxpBlueprint.setUserName(regex);
 
@@ -198,6 +199,7 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 		sxpBlueprint = SXPBlueprintSerDes.toDTO(json);
 
 		Assert.assertEquals(regex, sxpBlueprint.getDescription());
+		Assert.assertEquals(regex, sxpBlueprint.getSchemaVersion());
 		Assert.assertEquals(regex, sxpBlueprint.getTitle());
 		Assert.assertEquals(regex, sxpBlueprint.getUserName());
 	}
@@ -750,6 +752,14 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (sxpBlueprint.getActions() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("configuration", additionalAssertFieldName)) {
 				if (sxpBlueprint.getConfiguration() == null) {
 					valid = false;
@@ -792,6 +802,14 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 
 			if (Objects.equals("modifiedDate", additionalAssertFieldName)) {
 				if (sxpBlueprint.getModifiedDate() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (sxpBlueprint.getSchemaVersion() == null) {
 					valid = false;
 				}
 
@@ -915,6 +933,17 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)sxpBlueprint1.getActions(),
+						(Map)sxpBlueprint2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("configuration", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						sxpBlueprint1.getConfiguration(),
@@ -984,6 +1013,17 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 				if (!Objects.deepEquals(
 						sxpBlueprint1.getModifiedDate(),
 						sxpBlueprint2.getModifiedDate())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("schemaVersion", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						sxpBlueprint1.getSchemaVersion(),
+						sxpBlueprint2.getSchemaVersion())) {
 
 					return false;
 				}
@@ -1120,6 +1160,11 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
+		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("configuration")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1213,6 +1258,14 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("schemaVersion")) {
+			sb.append("'");
+			sb.append(String.valueOf(sxpBlueprint.getSchemaVersion()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("title")) {
 			sb.append("'");
 			sb.append(String.valueOf(sxpBlueprint.getTitle()));
@@ -1283,6 +1336,8 @@ public abstract class BaseSXPBlueprintResourceTestCase {
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				modifiedDate = RandomTestUtil.nextDate();
+				schemaVersion = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				title = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				userName = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());

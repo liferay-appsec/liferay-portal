@@ -438,31 +438,39 @@ function appendXMLTaskTimers(buffer, taskTimers) {
 	}
 }
 
-function appendXMLTransitions(buffer, transitions) {
-	if (transitions && transitions.length > 0) {
-		const xmlTransition = XMLUtil.createObj('transition');
+function appendXMLTransitions(buffer, transitions, publishing) {
+	if (transitions.length) {
 		const xmlTransitions = XMLUtil.createObj('transitions');
 
 		buffer.push(xmlTransitions.open);
 
-		let pickDefault = transitions.some((item) => {
-			return item.connector.default === true;
-		});
+		const xmlTransition = XMLUtil.createObj('transition');
 
-		pickDefault = !pickDefault;
+		transitions.forEach((item) => {
+			buffer.push(xmlTransition.open);
 
-		transitions.forEach((item, index) => {
-			let defaultValue = item.connector.default;
+			const xmlLabels = XMLUtil.createObj('labels');
 
-			if (pickDefault && index === 0) {
-				defaultValue = true;
-			}
+			buffer.push(xmlLabels.open);
+
+			Object.entries(item.data.label).map(([key, value]) => {
+				const xmlLabel = XMLUtil.createObj('label', {
+					'language-id': `${key}`,
+				});
+				buffer.push(xmlLabel.open, value);
+
+				buffer.push(xmlLabel.close);
+			});
+
+			buffer.push(xmlLabels.close);
+
+			const tagTransitionNameId = publishing ? 'name' : 'id';
+
+			buffer.push(XMLUtil.create(`${tagTransitionNameId}`, item.id));
 
 			buffer.push(
-				xmlTransition.open,
-				XMLUtil.create('name', item.connector.name),
 				XMLUtil.create('target', item.target),
-				XMLUtil.create('default', defaultValue),
+				XMLUtil.create('default', `${item.data.defaultEdge}`),
 				xmlTransition.close
 			);
 		});
@@ -471,7 +479,13 @@ function appendXMLTransitions(buffer, transitions) {
 	}
 }
 
-function serializeDefinition(xmlNamespace, metadata, nodes) {
+function serializeDefinition(
+	xmlNamespace,
+	metadata,
+	nodes,
+	transitions,
+	publishing
+) {
 	const description = metadata.description;
 	const name = metadata.name;
 	const version = parseInt(metadata.version, 10);
@@ -506,7 +520,6 @@ function serializeDefinition(xmlNamespace, metadata, nodes) {
 		const id = item.id;
 		const initial = item.type === 'start';
 		const script = item.data?.script;
-		const scriptLanguage = item.data?.scriptLanguage;
 		let xmlType = item.type;
 
 		if (xmlType === 'start' || xmlType === 'end') {
@@ -515,7 +528,9 @@ function serializeDefinition(xmlNamespace, metadata, nodes) {
 
 		const xmlNode = XMLUtil.createObj(xmlType);
 
-		buffer.push(xmlNode.open, XMLUtil.create('id', id));
+		const tagNodeNameId = publishing ? 'name' : 'id';
+
+		buffer.push(xmlNode.open, XMLUtil.create(`${tagNodeNameId}`, id));
 
 		if (description) {
 			buffer.push(XMLUtil.create('description', description));
@@ -529,10 +544,21 @@ function serializeDefinition(xmlNamespace, metadata, nodes) {
 
 		buffer.push(XMLUtil.create('metadata', cdata(jsonStringify(metadata))));
 
-		appendXMLActions(buffer, item.data.actions, item.data.notifications);
-
 		if (initial) {
 			buffer.push(XMLUtil.create('initial', initial));
+		}
+
+		appendXMLActions(buffer, item.data.actions, item.data.notifications);
+
+		if (item.data.assignments) {
+			appendXMLAssignments(buffer, item.data.assignments);
+		}
+		else {
+			if (item.type === 'task') {
+				buffer.push(
+					XMLUtil.create('assignments', XMLUtil.create('user', null))
+				);
+			}
 		}
 
 		const xmlLabels = XMLUtil.createObj('labels');
@@ -554,13 +580,13 @@ function serializeDefinition(xmlNamespace, metadata, nodes) {
 			buffer.push(XMLUtil.create('script', cdata(script)));
 		}
 
-		if (scriptLanguage) {
-			buffer.push(XMLUtil.create('scriptLanguage', scriptLanguage));
-		}
-
-		appendXMLAssignments(buffer, item.data.assignments);
 		appendXMLTaskTimers(buffer, item.data.taskTimers);
-		appendXMLTransitions(buffer, item.data.transitions);
+
+		const nodeTransitions = transitions.filter(
+			(transition) => transition.source === id
+		);
+
+		appendXMLTransitions(buffer, nodeTransitions, publishing);
 
 		buffer.push(xmlNode.close);
 	});

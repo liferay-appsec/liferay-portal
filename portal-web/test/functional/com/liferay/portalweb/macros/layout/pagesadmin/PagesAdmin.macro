@@ -27,11 +27,11 @@ definition {
 		Alert.viewSuccessMessage();
 
 		if ("${sitePageType}" == "Embedded") {
-			Page._addPageTypeEmbedded(pageTypeURL = "${pageTypeURL}");
+			PagesAdmin._addPageTypeEmbedded(pageTypeURL = "${pageTypeURL}");
 		}
 		else if ("${sitePageType}" == "Full Page Application") {
 			if (isSet(portlet)) {
-				Page._addPageTypeFullPageApplication(portlet = "${portlet}");
+				PagesAdmin._addPageTypeFullPageApplication(portlet = "${portlet}");
 			}
 		}
 		else if ("${sitePageType}" == "Link to a Page of This Site") {
@@ -59,7 +59,7 @@ definition {
 		}
 		else if ("${sitePageType}" == "Panel") {
 			if (isSet(componentName)) {
-				Page._addPageTypePanel(componentName = "${componentName}");
+				PagesAdmin._addPageTypePanel(componentName = "${componentName}");
 			}
 		}
 
@@ -102,6 +102,33 @@ definition {
 		}
 	}
 
+	macro _addPageTypeEmbedded {
+		Type(
+			locator1 = "TextInput#URL",
+			value1 = "${pageTypeURL}");
+
+		AssertTextEquals.assertPartialText(
+			locator1 = "PagesAdmin#PAGE_TYPE_DESCRIPTION",
+			value1 = "Show content from another website.");
+	}
+
+	macro _addPageTypeFullPageApplication {
+		Select(
+			key_fieldLabel = "Full Page Application",
+			locator1 = "Select#GENERIC_SELECT_FIELD",
+			value1 = "${portlet}");
+	}
+
+	macro _addPageTypePanel {
+		var key_componentOrPortletName = "${componentName}";
+
+		Click(locator1 = "PagesAdmin#PAGE_TYPE_PANEL_CHECKBOX");
+
+		var key_componentOrPortletName = StringUtil.lowerCase("${componentName}");
+
+		AssertElementPresent(locator1 = "PagesAdmin#PAGE_TYPE_PANEL_CHECKBOX_INPUT");
+	}
+
 	@summary = "Configures openGraph for a site page. This should be moved outside of _addPage for stability."
 	macro _configureOpenGraph {
 		Navigator.gotoNavTab(navTab = "Open Graph");
@@ -128,8 +155,25 @@ definition {
 			value1 = "${customDescription}");
 	}
 
+	macro _configurePage {
+		if ("${sitePageType}" == "Embedded") {
+			PagesAdmin._addPageTypeEmbedded(pageTypeURL = "${pageTypeURL}");
+		}
+		else if ("${sitePageType}" == "Panel") {
+			PagesAdmin._addPageTypePanel(componentName = "${componentName}");
+		}
+		else if ("${sitePageType}" == "Widget Page") {
+			Click(
+				key_card = "${columnName}",
+				locator1 = "Card#CARD");
+		}
+		else if ("${sitePageType}" == "Full Page Application") {
+			PagesAdmin._addPageTypeFullPageApplication(portlet = "${portlet}");
+		}
+	}
+
 	macro _selectPageType {
-		if (!(contains("${pageTemplateName}", "{pageTemplateName}"))) {
+		if (isSet(pageTemplateName)) {
 			var sitePageType = "${pageTemplateName}";
 
 			if (isSet(collectionName)) {
@@ -421,6 +465,30 @@ definition {
 		WaitForSPARefresh();
 	}
 
+	macro cannotDeletePagesAssociatedWithSiteTemplate {
+		if (isSet(pageName)) {
+			Click(
+				key_itemName = "${pageName}",
+				locator1 = "PagesAdmin#LIST_GROUP_ITEM");
+		}
+
+		Click.waitForMenuToggleJSClick(
+			key_pageName = "${page}",
+			locator1 = "PagesAdmin#LIST_GROUP_ITEM_ELLIPSIS_ICON");
+
+		MenuItem.viewNotPresent(menuItem = "Delete");
+
+		Click.waitForMenuToggleJSClick(
+			key_pageName = "${page}",
+			locator1 = "PagesAdmin#LIST_GROUP_ITEM_ELLIPSIS_ICON");
+
+		PortletEntry.selectAll();
+
+		AssertElementPresent(
+			key_text = "times-circle",
+			locator1 = "Icon#ANY_DISABLED");
+	}
+
 	macro changeLogo {
 		if (IsTextNotEqual(locator1 = "ControlMenu#HEADING", value1 = "Pages")) {
 			ProductMenu.gotoPortlet(
@@ -477,7 +545,7 @@ definition {
 			pageName = "${pageName}",
 			parentPagesHierarchy = "${parentPagesHierarchy}");
 
-		Page._configurePage(
+		PagesAdmin._configurePage(
 			columnName = "${columnName}",
 			componentName = "${componentName}",
 			layoutPageTemplateName = "${layoutPageTemplateName}",
@@ -501,7 +569,7 @@ definition {
 			menuItem = "Configure",
 			pageName = "${pageName}");
 
-		Page._configurePage(
+		PagesAdmin._configurePage(
 			columnName = "${columnName}",
 			componentName = "${componentName}",
 			layoutPageTemplateName = "${layoutPageTemplateName}",
@@ -599,6 +667,35 @@ definition {
 		PortletEntry.save();
 	}
 
+	macro editName {
+		Navigator.gotoNavTab(navTab = "General");
+
+		PortletEntry.inputName(name = "${pageNameEdit}");
+
+		PortletEntry.save();
+	}
+
+	macro editSeoMetadata {
+		Navigator.gotoNavTab(navTab = "SEO");
+
+		Type.typeClickAt(
+			key_text = "Title",
+			locator1 = "TextInput#ANY",
+			value1 = "${htmlTitle}");
+
+		Type.typeClickAt(
+			key_text = "Description",
+			locator1 = "TextInput#ANY",
+			value1 = "${metaTagsDescription}");
+
+		Type.typeClickAt(
+			key_text = "keywords",
+			locator1 = "TextArea#ANY",
+			value1 = "${metaTagsKeywords}");
+
+		PortletEntry.save();
+	}
+
 	macro expandPageTree {
 		if (!(isSet(depth))) {
 			var depth = "1";
@@ -620,7 +717,7 @@ definition {
 	macro getFriendlyURL {
 		var baseURL = "${baseURL}";
 
-		if (contains("${baseURL}", "{baseURL}")) {
+		if (!(isSet(baseURL))) {
 			var baseURL = PropsUtil.get("portal.url");
 		}
 
@@ -653,6 +750,56 @@ definition {
 			parentPagesHierarchy = "${parentPagesHierarchy}");
 
 		MenuItem.click(menuItem = "${menuItem}");
+	}
+
+	macro manageDeviceFamilyActions {
+		LexiconEntry.gotoEntryMenuItem(
+			menuItem = "Manage Actions",
+			rowEntry = "${deviceFamilyName}");
+
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
+
+		Click(
+			key_text = "Add Action",
+			locator1 = "Button#ANY");
+
+		PortletEntry.inputName(name = "${actionName}");
+
+		Select(
+			key_selectFieldLabel = "Type",
+			locator1 = "Select#ANY",
+			value1 = "${actionType}");
+
+		if ("${actionType}" == "Redirect to Site") {
+			Select(
+				key_selectFieldLabel = "Site",
+				locator1 = "Select#ANY",
+				value1 = "${siteName}");
+
+			Select(
+				key_selectFieldLabel = "Page",
+				locator1 = "Select#ANY",
+				value1 = "${pageName}");
+		}
+		else if ("${actionType}" == "Layout Template Modification") {
+			Click(
+				key_card = "${columnName}",
+				locator1 = "Card#CARD");
+		}
+		else if ("${actionType}" == "Redirect to URL") {
+			Type(
+				locator1 = "TextInput#URL",
+				value1 = "${actionURL}");
+		}
+		else {
+			Check(
+				key_text = "${themeName}",
+				locator1 = "TextInput#ANY");
+		}
+
+		PortletEntry.save();
+
+		IFrame.closeFrame();
 	}
 
 	macro movePageItemUp {
@@ -730,6 +877,33 @@ definition {
 			inputFieldId = "friendlyURL",
 			locator1 = "TextInput#INPUT_ID",
 			value1 = "${friendlyURLEdit}");
+
+		PortletEntry.save();
+	}
+
+	macro selectMobileDeviceFamily {
+		Navigator.gotoNavTab(navTab = "Advanced");
+
+		Panel.expandPanel(panel = "Mobile Device Rules");
+
+		Uncheck.uncheckToggleSwitch(
+			key_toggleSwitchLabel = "Use the same mobile device rules of the Public Pages",
+			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+		WaitForLiferayEvent.initializeLiferayEventLog();
+
+		AssertClick(
+			buttonId = "saveInstance",
+			locator1 = "Button#BUTTON_ID",
+			value1 = "Select");
+
+		SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_BODY");
+
+		AssertClick(
+			key_columnName = "name",
+			key_tableEntry = "${deviceFamilyName}",
+			locator1 = "LexiconTable#TABLE_ENTRY_COLUMN_LINK",
+			value1 = "${deviceFamilyName}");
 
 		PortletEntry.save();
 	}
@@ -885,7 +1059,7 @@ definition {
 		if (isSet(localizedFriendlyURL)) {
 			PortletEntry.changeLocale(
 				fieldName = "Friendly URL",
-				locale = "${friendlyUrlLocalized}");
+				locale = "${localizedFriendlyURL}");
 		}
 
 		AssertTextEquals(
@@ -996,6 +1170,14 @@ definition {
 			locator1 = "Checkbox#ANY_CHECKBOX");
 	}
 
+	macro viewPageTemplateTypeNotPresent {
+		LexiconCard.viewCardNotPresent(card = "${pageTemplateName}");
+	}
+
+	macro viewPageTemplateTypePresent {
+		LexiconCard.viewCardPresent(card = "${pageTemplateName}");
+	}
+
 	macro viewPageType {
 		AssertElementPresent(
 			key_pageName = "${pageName}",
@@ -1042,6 +1224,33 @@ definition {
 		AssertChecked.assertCheckedNotVisible(
 			key_pageName = "${pageName}",
 			locator1 = "PagesAdmin#LIST_GROUP_ITEM_CHECKBOX");
+	}
+
+	macro viewSeoMetadata {
+		Navigator.gotoNavTab(navTab = "SEO");
+
+		AssertTextEquals(
+			key_text = "Title",
+			locator1 = "TextInput#ANY",
+			value1 = "${htmlTitle}");
+
+		AssertTextEquals(
+			key_text = "Description",
+			locator1 = "TextInput#ANY",
+			value1 = "${metaTagsDescription}");
+
+		AssertTextEquals(
+			key_text = "keywords",
+			locator1 = "TextArea#ANY",
+			value1 = "${metaTagsKeywords}");
+	}
+
+	macro viewVocabularyNotPresent {
+		Navigator.gotoNavTab(navTab = "SEO");
+
+		AssertElementNotPresent(
+			key_vocabularyName = "${vocabularyName}",
+			locator1 = "AssetCategorization#CATEGORY_SELECT");
 	}
 
 	macro viewWidgetPageCurrentTheme {

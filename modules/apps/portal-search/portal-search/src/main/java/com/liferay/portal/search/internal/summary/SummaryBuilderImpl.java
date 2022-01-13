@@ -35,7 +35,7 @@ public class SummaryBuilderImpl implements SummaryBuilder {
 
 	@Override
 	public Summary build() {
-		return new SummaryImpl(buildTitle(), buildContent(), _locale);
+		return new SummaryImpl(_buildTitle(), _buildContent(), _locale);
 	}
 
 	@Override
@@ -68,23 +68,23 @@ public class SummaryBuilderImpl implements SummaryBuilder {
 		_title = title;
 	}
 
-	protected String buildContent() {
+	private String _buildContent() {
 		if (Validator.isNull(_content)) {
 			return StringPool.BLANK;
 		}
 
 		if (_highlight) {
-			return buildContentHighlighted();
+			return _buildContentHighlighted();
 		}
 
-		return buildContentPlain();
+		return _buildContentPlain();
 	}
 
-	protected String buildContentHighlighted() {
+	private String _buildContentHighlighted() {
 		return _escapeAndHighlight(_content);
 	}
 
-	protected String buildContentPlain() {
+	private String _buildContentPlain() {
 		if ((_maxContentLength <= 0) ||
 			(_content.length() <= _maxContentLength)) {
 
@@ -94,24 +94,20 @@ public class SummaryBuilderImpl implements SummaryBuilder {
 		return StringUtil.shorten(_content, _maxContentLength);
 	}
 
-	protected String buildTitle() {
+	private String _buildTitle() {
 		if (Validator.isNull(_title)) {
 			return StringPool.BLANK;
 		}
 
 		if (_highlight) {
-			return buildTitleHighlighted();
+			return _buildTitleHighlighted();
 		}
 
-		return buildTitlePlain();
-	}
-
-	protected String buildTitleHighlighted() {
-		return _escapeAndHighlight(_title);
-	}
-
-	protected String buildTitlePlain() {
 		return _title;
+	}
+
+	private String _buildTitleHighlighted() {
+		return _escapeAndHighlight(_title);
 	}
 
 	private String _escapeAndHighlight(String text) {

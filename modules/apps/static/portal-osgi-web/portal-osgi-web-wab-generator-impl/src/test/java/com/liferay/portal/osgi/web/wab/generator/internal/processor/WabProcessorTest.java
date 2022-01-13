@@ -192,9 +192,6 @@ public class WabProcessorTest {
 				importedPackages.containsKey("com.liferay.portlet"));
 			Assert.assertTrue(importedPackages.containsKey("com.sun.el"));
 			Assert.assertTrue(
-				importedPackages.containsKey(
-					"org.apache.commons.chain.generic"));
-			Assert.assertTrue(
 				importedPackages.containsKey("org.apache.naming.java"));
 
 			// Check if packages only referenced in web.xml are imported
@@ -357,7 +354,7 @@ public class WabProcessorTest {
 
 			Parameters requirements = domain.getRequireCapability();
 
-			Map.Entry<String, Attrs> entry = findRequirement(
+			Map.Entry<String, Attrs> entry = _findRequirement(
 				requirements, "osgi.extender",
 				HashMapBuilder.<String, Object>put(
 					"osgi.extender", "osgi.cdi"
@@ -380,7 +377,7 @@ public class WabProcessorTest {
 			// The bean portlet extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension",
@@ -389,7 +386,7 @@ public class WabProcessorTest {
 			// The http extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension", "aries.cdi.http")));
@@ -397,7 +394,7 @@ public class WabProcessorTest {
 			// The EL extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension", "aries.cdi.el.jsp")));
@@ -450,7 +447,7 @@ public class WabProcessorTest {
 
 			Parameters requirements = domain.getRequireCapability();
 
-			Map.Entry<String, Attrs> entry = findRequirement(
+			Map.Entry<String, Attrs> entry = _findRequirement(
 				requirements, "osgi.extender",
 				HashMapBuilder.<String, Object>put(
 					"osgi.extender", "osgi.cdi"
@@ -482,7 +479,7 @@ public class WabProcessorTest {
 			// The bean portlet extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension",
@@ -491,7 +488,7 @@ public class WabProcessorTest {
 			// The http extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension", "aries.cdi.http")));
@@ -499,14 +496,25 @@ public class WabProcessorTest {
 			// The EL extension
 
 			Assert.assertNotNull(
-				findRequirement(
+				_findRequirement(
 					requirements, "osgi.cdi.extension",
 					Collections.singletonMap(
 						"osgi.cdi.extension", "aries.cdi.el.jsp")));
 		}
 	}
 
-	protected Map.Entry<String, Attrs> findRequirement(
+	protected File getFile(String fileName) throws URISyntaxException {
+		URL url = WabProcessor.class.getResource(fileName);
+
+		Assert.assertEquals(
+			url + "is not file protocol", "file", url.getProtocol());
+
+		Path path = Paths.get(url.toURI());
+
+		return path.toFile();
+	}
+
+	private Map.Entry<String, Attrs> _findRequirement(
 			Parameters requirements, String namespace,
 			Map<String, Object> arguments)
 		throws Exception {
@@ -534,17 +542,6 @@ public class WabProcessorTest {
 		}
 
 		return null;
-	}
-
-	protected File getFile(String fileName) throws URISyntaxException {
-		URL url = WabProcessor.class.getResource(fileName);
-
-		Assert.assertEquals(
-			url + "is not file protocol", "file", url.getProtocol());
-
-		Path path = Paths.get(url.toURI());
-
-		return path.toFile();
 	}
 
 	private static class TestWabProcessor extends WabProcessor {

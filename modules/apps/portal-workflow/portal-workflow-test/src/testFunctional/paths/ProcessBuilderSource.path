@@ -17,7 +17,7 @@
 </tr>
 <tr>
 	<td>REVISION_HISTORY_ITEM</td>
-	<td>//li[contains(@class,'list-group-item')][${key_ruleNumber}]</td>
+	<td>//*[contains(@class,'list-group-item')][${key_ruleNumber}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -37,7 +37,7 @@
 </tr>
 <tr>
 	<td>PROCESS_DETAILS_REVISION_BY_ROW</td>
-	<td>//li[contains(@class, 'list-group-item list-group-item-flex')][${key_rowNumber}]//div[contains(text(),'AM') or contains(text(),'PM')]</td>
+	<td>//*[contains(@class, 'list-group-item list-group-item-flex')][${key_rowNumber}]//div[contains(text(),'AM') or contains(text(),'PM')]</td>
 	<td></td>
 </tr>
 <tr>

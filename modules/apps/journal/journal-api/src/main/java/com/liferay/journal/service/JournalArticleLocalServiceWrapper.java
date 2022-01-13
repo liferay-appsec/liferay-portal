@@ -1817,6 +1817,14 @@ public class JournalArticleLocalServiceWrapper
 			orderByComparator);
 	}
 
+	@Override
+	public java.util.List<Long> getArticlesClassPKsWithDefaultDisplayPage(
+		long groupId, long classTypeId) {
+
+		return _journalArticleLocalService.
+			getArticlesClassPKsWithDefaultDisplayPage(groupId, classTypeId);
+	}
+
 	/**
 	 * Returns the number of web content articles belonging to the group.
 	 *

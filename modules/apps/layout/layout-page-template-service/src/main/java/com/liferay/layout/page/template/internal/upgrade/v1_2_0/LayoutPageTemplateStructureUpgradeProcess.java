@@ -22,7 +22,6 @@ import com.liferay.layout.page.template.util.LayoutPageTemplateStructureHelperUt
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -56,73 +55,10 @@ public class LayoutPageTemplateStructureUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		upgradeSchema();
+		_upgradeSchema();
 
-		upgradeLayoutPageTemplates();
-		upgradeLayouts();
-	}
-
-	protected void upgradeLayoutPageTemplates() throws Exception {
-		long classNameId = PortalUtil.getClassNameId(
-			LayoutPageTemplateEntry.class.getName());
-
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select layoutPageTemplateEntryId, groupId, companyId, ",
-					"userId, userName, createDate from ",
-					"LayoutPageTemplateEntry where type_ in (",
-					LayoutPageTemplateEntryTypeConstants.TYPE_BASIC, ", ",
-					LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE,
-					")"))) {
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				while (resultSet.next()) {
-					long layoutPageTemplateEntryId = resultSet.getLong(
-						"layoutPageTemplateEntryId");
-					long groupId = resultSet.getLong("groupId");
-					long companyId = resultSet.getLong("companyId");
-					long userId = resultSet.getLong("userId");
-					String userName = resultSet.getString("userName");
-					Timestamp createDate = resultSet.getTimestamp("createDate");
-
-					_updateLayoutPageTemplateStructure(
-						groupId, companyId, userId, userName, createDate,
-						classNameId, layoutPageTemplateEntryId);
-				}
-			}
-		}
-	}
-
-	protected void upgradeLayouts() throws PortalException {
-		long classNameId = PortalUtil.getClassNameId(Layout.class.getName());
-
-		ActionableDynamicQuery actionableDynamicQuery =
-			_layoutLocalService.getActionableDynamicQuery();
-
-		actionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> dynamicQuery.add(
-				RestrictionsFactoryUtil.eq(
-					"type", LayoutConstants.TYPE_CONTENT)));
-		actionableDynamicQuery.setPerformActionMethod(
-			(Layout layout) -> {
-				Date createDate = layout.getCreateDate();
-
-				_updateLayoutPageTemplateStructure(
-					layout.getGroupId(), layout.getCompanyId(),
-					layout.getUserId(), layout.getUserName(),
-					new Timestamp(createDate.getTime()), classNameId,
-					layout.getPlid());
-			});
-
-		actionableDynamicQuery.performActions();
-	}
-
-	protected void upgradeSchema() throws Exception {
-		String template = StringUtil.read(
-			LayoutPageTemplateStructureUpgradeProcess.class.getResourceAsStream(
-				"dependencies/update.sql"));
-
-		runSQLTemplateString(template, false);
+		_upgradeLayoutPageTemplates();
+		_upgradeLayouts();
 	}
 
 	private JSONObject _generateLayoutPageTemplateStructureData(
@@ -171,6 +107,69 @@ public class LayoutPageTemplateStructureUpgradeProcess extends UpgradeProcess {
 				_log.debug(exception, exception);
 			}
 		}
+	}
+
+	private void _upgradeLayoutPageTemplates() throws Exception {
+		long classNameId = PortalUtil.getClassNameId(
+			LayoutPageTemplateEntry.class.getName());
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select layoutPageTemplateEntryId, groupId, companyId, ",
+					"userId, userName, createDate from ",
+					"LayoutPageTemplateEntry where type_ in (",
+					LayoutPageTemplateEntryTypeConstants.TYPE_BASIC, ", ",
+					LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE,
+					")"))) {
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long layoutPageTemplateEntryId = resultSet.getLong(
+						"layoutPageTemplateEntryId");
+					long groupId = resultSet.getLong("groupId");
+					long companyId = resultSet.getLong("companyId");
+					long userId = resultSet.getLong("userId");
+					String userName = resultSet.getString("userName");
+					Timestamp createDate = resultSet.getTimestamp("createDate");
+
+					_updateLayoutPageTemplateStructure(
+						groupId, companyId, userId, userName, createDate,
+						classNameId, layoutPageTemplateEntryId);
+				}
+			}
+		}
+	}
+
+	private void _upgradeLayouts() throws Exception {
+		long classNameId = PortalUtil.getClassNameId(Layout.class.getName());
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			_layoutLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> dynamicQuery.add(
+				RestrictionsFactoryUtil.eq(
+					"type", LayoutConstants.TYPE_CONTENT)));
+		actionableDynamicQuery.setPerformActionMethod(
+			(Layout layout) -> {
+				Date createDate = layout.getCreateDate();
+
+				_updateLayoutPageTemplateStructure(
+					layout.getGroupId(), layout.getCompanyId(),
+					layout.getUserId(), layout.getUserName(),
+					new Timestamp(createDate.getTime()), classNameId,
+					layout.getPlid());
+			});
+
+		actionableDynamicQuery.performActions();
+	}
+
+	private void _upgradeSchema() throws Exception {
+		String template = StringUtil.read(
+			LayoutPageTemplateStructureUpgradeProcess.class.getResourceAsStream(
+				"dependencies/update.sql"));
+
+		runSQLTemplateString(template, false);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

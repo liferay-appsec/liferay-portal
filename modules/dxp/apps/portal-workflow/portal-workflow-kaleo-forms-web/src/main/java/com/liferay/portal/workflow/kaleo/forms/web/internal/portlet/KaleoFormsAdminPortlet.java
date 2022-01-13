@@ -17,23 +17,15 @@ package com.liferay.portal.workflow.kaleo.forms.web.internal.portlet;
 import com.liferay.dynamic.data.lists.exporter.DDLExporter;
 import com.liferay.dynamic.data.lists.exporter.DDLExporterFactory;
 import com.liferay.dynamic.data.lists.service.DDLRecordLocalService;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeResponse;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerTracker;
-import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.storage.StorageEngine;
 import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistry;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.portlet.PortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -54,10 +46,6 @@ import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
-import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.DocumentException;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.workflow.kaleo.forms.constants.KaleoFormsPortletKeys;
 import com.liferay.portal.workflow.kaleo.forms.constants.KaleoFormsWebKeys;
 import com.liferay.portal.workflow.kaleo.forms.exception.NoSuchKaleoProcessException;
@@ -172,9 +160,9 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 		throws IOException, PortletException {
 
 		try {
-			setDisplayContext(renderRequest, renderResponse);
+			_setDisplayContext(renderRequest, renderResponse);
 
-			renderKaleoProcess(renderRequest, renderResponse);
+			_renderKaleoProcess(renderRequest);
 		}
 		catch (Exception exception) {
 			if (exception instanceof NoSuchKaleoProcessException ||
@@ -200,13 +188,13 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 			String resourceID = resourceRequest.getResourceID();
 
 			if (Objects.equals(resourceID, "kaleoDraftDefinitions")) {
-				serveKaleoDraftDefinitions(resourceRequest, resourceResponse);
+				_serveKaleoDraftDefinitions(resourceRequest, resourceResponse);
 			}
 			else if (Objects.equals(resourceID, "kaleoProcess")) {
-				serveKaleoProcess(resourceRequest, resourceResponse);
+				_serveKaleoProcess(resourceRequest, resourceResponse);
 			}
 			else if (Objects.equals(resourceID, "saveInPortletSession")) {
-				saveInPortletSession(resourceRequest, resourceResponse);
+				_saveInPortletSession(resourceRequest);
 			}
 		}
 		catch (IOException ioException) {
@@ -246,82 +234,8 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 		}
 	}
 
-	/**
-	 * Returns the workflow instance link ID associated with the company ID,
-	 * group ID, and DDL record ID.
-	 *
-	 * @param  companyId the company ID
-	 * @param  groupId the group ID
-	 * @param  ddlRecordId the DDL record ID
-	 * @return the primary key of the workflow instance link
-	 * @throws Exception if an exception occurred
-	 */
-	protected long getDDLRecordWorkflowInstanceLinkId(
-			long companyId, long groupId, long ddlRecordId)
-		throws Exception {
-
-		WorkflowInstanceLink workflowInstanceLink =
-			_workflowInstanceLinkLocalService.getWorkflowInstanceLink(
-				companyId, groupId, KaleoProcess.class.getName(), ddlRecordId);
-
-		return workflowInstanceLink.getWorkflowInstanceLinkId();
-	}
-
-	/**
-	 * Returns the DDM form using the definition in JSON format obtained from
-	 * the action request.
-	 *
-	 * @param  actionRequest the request from which to get the request
-	 *         parameters
-	 * @return the DDM form
-	 * @throws Exception if an exception occurred
-	 */
-	protected DDMForm getDDMForm(ActionRequest actionRequest) throws Exception {
-		String definition = ParamUtil.getString(actionRequest, "definition");
-
-		DDMFormDeserializer ddmFormDeserializer =
-			_ddmFormDeserializerTracker.getDDMFormDeserializer("json");
-
-		DDMFormDeserializerDeserializeRequest.Builder builder =
-			DDMFormDeserializerDeserializeRequest.Builder.newBuilder(
-				definition);
-
-		DDMFormDeserializerDeserializeResponse
-			ddmFormDeserializerDeserializeResponse =
-				ddmFormDeserializer.deserialize(builder.build());
-
-		return ddmFormDeserializerDeserializeResponse.getDDMForm();
-	}
-
-	/**
-	 * Returns the value of the first element identified by <code>name</code> in
-	 * the XML content. If no name is read, returns the default name.
-	 *
-	 * @param  content the content in XML format
-	 * @param  defaultName the default name
-	 * @return the name value in the XML content, or the default name if the XML
-	 *         content does not contain a name
-	 */
-	protected String getName(String content, String defaultName) {
-		if (Validator.isNull(content)) {
-			return defaultName;
-		}
-
-		try {
-			Document document = SAXReaderUtil.read(content);
-
-			Element rootElement = document.getRootElement();
-
-			return rootElement.elementTextTrim("name");
-		}
-		catch (DocumentException documentException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(documentException, documentException);
-			}
-
-			return defaultName;
-		}
-	}
+	@Reference
+	protected StorageEngine storageEngine;
 
 	/**
 	 * Stores the Kaleo process, workflow instance, and workflow task as
@@ -332,8 +246,7 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	 * @param  renderResponse the render response
 	 * @throws Exception if an exception occurred
 	 */
-	protected void renderKaleoProcess(
-			RenderRequest renderRequest, RenderResponse renderResponse)
+	private void _renderKaleoProcess(RenderRequest renderRequest)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
@@ -373,34 +286,13 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	}
 
 	/**
-	 * Binds the workflow definition to the portlet session, following the
-	 * format <code>KaleoDraftDefinition.getName() + "@" +
-	 * KaleoDraftDefinition.getVersion()</code>.
-	 *
-	 * @param actionRequest the request from which to get the request parameters
-	 */
-	protected void saveInPortletSession(
-		ActionRequest actionRequest,
-		KaleoDefinitionVersion kaleoDefinitionVersion) {
-
-		PortletSession portletSession = actionRequest.getPortletSession();
-
-		portletSession.setAttribute(
-			"workflowDefinition",
-			kaleoDefinitionVersion.getName() + StringPool.AT +
-				kaleoDefinitionVersion.getVersion());
-	}
-
-	/**
 	 * Binds all parameters in the request except <code>doAsUserId</code> to the
 	 * portlet session.
 	 *
 	 * @param  resourceRequest the resource request
 	 * @param  resourceResponse the resource response
 	 */
-	protected void saveInPortletSession(
-		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
-
+	private void _saveInPortletSession(ResourceRequest resourceRequest) {
 		Map<String, String[]> parameterMap = resourceRequest.getParameterMap();
 
 		PortletSession portletSession = resourceRequest.getPortletSession();
@@ -437,7 +329,7 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	 * @param  resourceResponse the resource response
 	 * @throws Exception if an exception occurred
 	 */
-	protected void serveKaleoDraftDefinitions(
+	private void _serveKaleoDraftDefinitions(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
@@ -483,7 +375,7 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	 * @param  resourceResponse the resource response
 	 * @throws Exception if an exception occurred
 	 */
-	protected void serveKaleoProcess(
+	private void _serveKaleoProcess(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
 
@@ -532,7 +424,7 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 	 * @param renderRequest the render request
 	 * @param renderResponse the render response
 	 */
-	protected void setDisplayContext(
+	private void _setDisplayContext(
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
 		KaleoFormsAdminDisplayContext kaleoFormsAdminDisplayContext =
@@ -544,12 +436,6 @@ public class KaleoFormsAdminPortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			WebKeys.PORTLET_DISPLAY_CONTEXT, kaleoFormsAdminDisplayContext);
 	}
-
-	@Reference
-	protected StorageEngine storageEngine;
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		KaleoFormsAdminPortlet.class);
 
 	@Reference
 	private DDLExporterFactory _ddlExporterFactory;

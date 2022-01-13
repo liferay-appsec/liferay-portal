@@ -108,13 +108,14 @@ public class ViewChangesMVCRenderCommand implements MVCRenderCommand {
 			ViewChangesDisplayContext viewChangesDisplayContext =
 				new ViewChangesDisplayContext(
 					activeCtCollectionId, _basePersistenceRegistry,
-					_ctClosureFactory, ctCollection, _ctConfiguration,
-					_ctDisplayRendererRegistry, _ctEntryLocalService,
-					_ctSchemaVersionLocalService, _groupLocalService, _language,
-					_portal,
+					_ctClosureFactory, ctCollection, _ctCollectionLocalService,
+					_ctConfiguration, _ctDisplayRendererRegistry,
+					_ctEntryLocalService, _ctSchemaVersionLocalService,
+					_groupLocalService, _language, _portal,
 					new PublicationsDisplayContext(
-						_ctCollectionService, _ctDisplayRendererRegistry,
-						_ctEntryLocalService, _ctPreferencesLocalService,
+						_ctCollectionLocalService, _ctCollectionService,
+						_ctDisplayRendererRegistry, _ctEntryLocalService,
+						_ctPreferencesLocalService,
 						_portal.getHttpServletRequest(renderRequest), _language,
 						renderRequest, renderResponse),
 					_publishScheduler, renderRequest, renderResponse,

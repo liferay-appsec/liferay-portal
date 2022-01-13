@@ -9,12 +9,11 @@
  * distribution rights of the Software.
  */
 
+import {defaultLanguageId} from '../../../constants';
 import EndNode from './state/EndNode';
 import StartNode from './state/StartNode';
 import StateNode from './state/StateNode';
 import TaskNode from './state/TaskNode';
-
-const defaultLanguageId = themeDisplay.getLanguageId();
 
 const defaultNodes = [
 	{
@@ -22,7 +21,7 @@ const defaultNodes = [
 			description: Liferay.Language.get('begin-a-workflow'),
 			label: {[defaultLanguageId]: Liferay.Language.get('start')},
 		},
-		id: 'node_0',
+		id: 'item_0',
 		position: {x: 300, y: 100},
 		type: 'start',
 	},
@@ -31,7 +30,7 @@ const defaultNodes = [
 			description: Liferay.Language.get('conclude-the-workflow'),
 			label: {[defaultLanguageId]: Liferay.Language.get('end')},
 		},
-		id: 'node_1',
+		id: 'item_1',
 		position: {x: 300, y: 400},
 		type: 'end',
 	},

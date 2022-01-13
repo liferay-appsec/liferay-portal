@@ -1114,6 +1114,10 @@ public class WebServerServlet extends HttpServlet {
 			}
 		}
 
+		if (converted && (contentLength == 0)) {
+			throw new NoSuchFileException("The converted file is empty");
+		}
+
 		// Determine proper content type
 
 		String contentType = null;

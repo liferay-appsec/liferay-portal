@@ -1,7 +1,22 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import React, {useContext, useState} from 'react';
 import {useFormContext} from 'react-hook-form';
 import {CardFormActions} from '../../../../../../../common/components/fragments/Card/FormActions';
 import FormCard from '../../../../../../../common/components/fragments/Card/FormCard';
+import {DEVICES} from '../../../../../../../common/utils/constants';
 import {smoothScroll} from '../../../../../../../common/utils/scroll';
 import {
 	ActionTypes,
@@ -16,6 +31,8 @@ export function FormBasicBusinessType({form}) {
 	const [newSelectedProduct, setNewSelectedProduct] = useState('');
 	const {dispatch, state} = useContext(AppContext);
 	const {setValue} = useFormContext();
+
+	const isMobileDevice = state.dimensions.deviceSize === DEVICES.PHONE;
 
 	const goToNextForm = () => {
 		setSection(AVAILABLE_STEPS.BASICS_BUSINESS_INFORMATION);
@@ -42,12 +59,14 @@ export function FormBasicBusinessType({form}) {
 			<div className="d-flex flex-column mb-5">
 				<BusinessTypeSearch
 					form={form}
+					isMobileDevice={isMobileDevice}
 					setNewSelectedProduct={setNewSelectedProduct}
 					taxonomyVocabularyId={state.taxonomyVocabulary.id}
 				/>
 			</div>
 
 			<CardFormActions
+				isMobileDevice={isMobileDevice}
 				isValid={!!form?.basics?.businessCategoryId}
 				onNext={goToNextForm}
 				onPrevious={goToPreviousPage}

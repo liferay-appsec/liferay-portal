@@ -1,6 +1,6 @@
 Bundle-Name: Liferay Wiki Service
 Bundle-SymbolicName: com.liferay.wiki.service
-Bundle-Version: 5.0.19
+Bundle-Version: 5.0.22
 Import-Package:\
 	!com.liferay.portal.tools.sql,\
 	\
@@ -23,7 +23,6 @@ Import-Package:\
 	\
 	!org.apache.commons.dbcp.*,\
 	!org.apache.commons.fileupload.*,\
-	!org.apache.commons.jrcs.*,\
 	!org.apache.commons.pool.impl.*,\
 	!org.apache.lucene.*,\
 	!org.apache.xerces.framework,\

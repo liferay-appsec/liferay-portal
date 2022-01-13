@@ -27,7 +27,6 @@ import com.liferay.commerce.model.CommerceAddress;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.service.CommerceAddressService;
 import com.liferay.commerce.service.CommerceOrderService;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -59,56 +58,6 @@ public class AddressCommerceCheckoutStepUtil {
 			commerceOrderModelResourcePermission;
 	}
 
-	protected CommerceAddress addCommerceAddress(
-			CommerceOrder commerceOrder, ActionRequest actionRequest)
-		throws PortalException {
-
-		String name = ParamUtil.getString(actionRequest, "name");
-		String description = ParamUtil.getString(actionRequest, "description");
-		String street1 = ParamUtil.getString(actionRequest, "street1");
-		String street2 = ParamUtil.getString(actionRequest, "street2");
-		String street3 = ParamUtil.getString(actionRequest, "street3");
-		String city = ParamUtil.getString(actionRequest, "city");
-		String zip = ParamUtil.getString(actionRequest, "zip");
-		long regionId = ParamUtil.getLong(actionRequest, "regionId");
-		long countryId = ParamUtil.getLong(actionRequest, "countryId");
-		String phoneNumber = ParamUtil.getString(actionRequest, "phoneNumber");
-
-		ServiceContext serviceContext = ServiceContextFactory.getInstance(
-			CommerceAddress.class.getName(), actionRequest);
-
-		serviceContext.setScopeGroupId(commerceOrder.getGroupId());
-
-		boolean useAsBilling = ParamUtil.getBoolean(
-			actionRequest, "use-as-billing");
-
-		if (useAsBilling) {
-			_commerceAddressType =
-				CommerceAddressConstants.ADDRESS_TYPE_BILLING_AND_SHIPPING;
-		}
-
-		if (commerceOrder.isGuestOrder()) {
-			String email = ParamUtil.getString(actionRequest, "email");
-
-			CommerceAccount commerceAccount =
-				_commerceAccountLocalService.addCommerceAccount(
-					name, CommerceAccountConstants.DEFAULT_PARENT_ACCOUNT_ID,
-					email, null, CommerceAccountConstants.ACCOUNT_TYPE_GUEST,
-					true, null, serviceContext);
-
-			commerceOrder.setCommerceAccountId(
-				commerceAccount.getCommerceAccountId());
-
-			commerceOrder = _commerceOrderService.updateCommerceOrder(
-				commerceOrder);
-		}
-
-		return _commerceAddressService.addCommerceAddress(
-			AccountEntry.class.getName(), commerceOrder.getCommerceAccountId(),
-			name, description, street1, street2, street3, city, zip, regionId,
-			countryId, phoneNumber, _commerceAddressType, serviceContext);
-	}
-
 	protected CommerceOrder updateCommerceOrderAddress(
 			ActionRequest actionRequest, String paramName)
 		throws Exception {
@@ -132,7 +81,7 @@ public class AddressCommerceCheckoutStepUtil {
 		long commerceAddressId = ParamUtil.getLong(actionRequest, paramName);
 
 		if (newAddress) {
-			CommerceAddress commerceAddress = addCommerceAddress(
+			CommerceAddress commerceAddress = _addCommerceAddress(
 				commerceOrder, actionRequest);
 
 			commerceAddressId = commerceAddress.getCommerceAddressId();
@@ -226,6 +175,56 @@ public class AddressCommerceCheckoutStepUtil {
 			commerceOrder.getPurchaseOrderNumber(), commerceOrder.getSubtotal(),
 			commerceOrder.getShippingAmount(), commerceOrder.getTotal(),
 			commerceOrder.getAdvanceStatus(), commerceContext);
+	}
+
+	private CommerceAddress _addCommerceAddress(
+			CommerceOrder commerceOrder, ActionRequest actionRequest)
+		throws Exception {
+
+		String name = ParamUtil.getString(actionRequest, "name");
+		String description = ParamUtil.getString(actionRequest, "description");
+		String street1 = ParamUtil.getString(actionRequest, "street1");
+		String street2 = ParamUtil.getString(actionRequest, "street2");
+		String street3 = ParamUtil.getString(actionRequest, "street3");
+		String city = ParamUtil.getString(actionRequest, "city");
+		String zip = ParamUtil.getString(actionRequest, "zip");
+		long regionId = ParamUtil.getLong(actionRequest, "regionId");
+		long countryId = ParamUtil.getLong(actionRequest, "countryId");
+		String phoneNumber = ParamUtil.getString(actionRequest, "phoneNumber");
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			CommerceAddress.class.getName(), actionRequest);
+
+		serviceContext.setScopeGroupId(commerceOrder.getGroupId());
+
+		boolean useAsBilling = ParamUtil.getBoolean(
+			actionRequest, "use-as-billing");
+
+		if (useAsBilling) {
+			_commerceAddressType =
+				CommerceAddressConstants.ADDRESS_TYPE_BILLING_AND_SHIPPING;
+		}
+
+		if (commerceOrder.isGuestOrder()) {
+			String email = ParamUtil.getString(actionRequest, "email");
+
+			CommerceAccount commerceAccount =
+				_commerceAccountLocalService.addCommerceAccount(
+					name, CommerceAccountConstants.DEFAULT_PARENT_ACCOUNT_ID,
+					email, null, CommerceAccountConstants.ACCOUNT_TYPE_GUEST,
+					true, null, serviceContext);
+
+			commerceOrder.setCommerceAccountId(
+				commerceAccount.getCommerceAccountId());
+
+			commerceOrder = _commerceOrderService.updateCommerceOrder(
+				commerceOrder);
+		}
+
+		return _commerceAddressService.addCommerceAddress(
+			AccountEntry.class.getName(), commerceOrder.getCommerceAccountId(),
+			name, description, street1, street2, street3, city, zip, regionId,
+			countryId, phoneNumber, _commerceAddressType, serviceContext);
 	}
 
 	private final CommerceAccountLocalService _commerceAccountLocalService;

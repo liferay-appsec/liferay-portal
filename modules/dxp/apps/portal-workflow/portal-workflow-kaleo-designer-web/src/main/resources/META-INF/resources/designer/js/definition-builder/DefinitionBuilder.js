@@ -10,6 +10,7 @@
  */
 
 import React, {useState} from 'react';
+import {ReactFlowProvider} from 'react-flow-renderer';
 
 import '../../css/definition-builder/main.scss';
 import {DefinitionBuilderContextProvider} from './DefinitionBuilderContext';
@@ -19,45 +20,54 @@ import UpperToolbar from './shared/components/toolbar/UpperToolbar';
 import SourceBuilder from './source-builder/SourceBuilder';
 
 export default function (props) {
+	const [active, setActive] = useState(true);
 	const [currentEditor, setCurrentEditor] = useState(null);
+	const [definitionDescription, setDefinitionDescription] = useState('');
+	const [definitionId, setDefinitionId] = useState(props.definitionName);
+	const [definitionTitle, setDefinitionTitle] = useState(props.title);
 	const [deserialize, setDeserialize] = useState(false);
 	const [elements, setElements] = useState(defaultNodes);
 	const [selectedLanguageId, setSelectedLanguageId] = useState('');
-	const [showInvalidContentError, setShowInvalidContentError] = useState(
+	const [showInvalidContentMessage, setShowInvalidContentMessage] = useState(
 		false
 	);
 	const [sourceView, setSourceView] = useState(false);
-	const [definitionTitle, setDefinitionTitle] = useState(props.title);
-	const defaultLanguageId = themeDisplay.getLanguageId();
 
 	const contextProps = {
+		active,
 		currentEditor,
-		defaultLanguageId,
+		definitionDescription,
+		definitionId,
 		definitionTitle,
 		deserialize,
 		elements,
 		selectedLanguageId,
+		setActive,
 		setCurrentEditor,
+		setDefinitionDescription,
+		setDefinitionId,
 		setDefinitionTitle,
 		setDeserialize,
 		setElements,
 		setSelectedLanguageId,
-		setShowInvalidContentError,
+		setShowInvalidContentMessage,
 		setSourceView,
-		showInvalidContentError,
+		showInvalidContentMessage,
 		sourceView,
 	};
 
 	return (
 		<DefinitionBuilderContextProvider {...contextProps}>
 			<div className="definition-builder-app">
-				<UpperToolbar {...props} />
+				<ReactFlowProvider>
+					<UpperToolbar {...props} />
 
-				{sourceView ? (
-					<SourceBuilder version={props.version} />
-				) : (
-					<DiagramBuilder version={props.version} />
-				)}
+					{sourceView ? (
+						<SourceBuilder version={props.version} />
+					) : (
+						<DiagramBuilder version={props.version} />
+					)}
+				</ReactFlowProvider>
 			</div>
 		</DefinitionBuilderContextProvider>
 	);

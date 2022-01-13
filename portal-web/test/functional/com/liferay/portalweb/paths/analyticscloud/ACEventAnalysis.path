@@ -18,13 +18,23 @@
 </tr>
 <tr>
 	<td>ADD_ATTRIBUTE_BUTTON</td>
-	<td>//div[contains(@class,'attribute-${key_sectionType}-section-root')]//button</td>
+	<td>//div[contains(@class,'attribute-${key_sectionType}-section-root')]//button[contains(@class,'add-attribute')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BREAKDOWN_ORIGINAL_POSITION</td>
+	<td>xpath=(//div[contains(@class,'attribute-list')]//div[@class='drag-handle'])[${indexStart}]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BREAKDOWN_NEW_POSITION</td>
+	<td>xpath=(//div[contains(@class,'attribute-list')]//div[@class='drag-handle'])[${indexEnd}]</td>
 	<td></td>
 </tr>
 <!-- SEARCH_EVENT_ANALYSE -->
 <tr>
 	<td>SEARCH_BAR_EVENT_ANALYSE</td>
-	<td>//div[contains(@class,'show')]/..//input[@type='text'and @placeholder='Search' and not(@disabled)]</td>
+	<td>//div[contains(@class,'show')]/..//input[@type='text' and @placeholder='Search' and not(@disabled)]</td>
 	<td></td>
 </tr>
 <!-- EDIT_ATTRIBUTE -->
@@ -43,26 +53,56 @@
 	<td>//input[contains(@class,'input-root')]</td>
 	<td></td>
 </tr>
+<tr>
+	<td>INPUT_CONDITION_END_VALUE</td>
+	<td>//input[contains(@class,'input-root') and @id='endValue']</td>
+	<td></td>
+</tr>
 <!-- REMOVE_BUTTON -->
 <tr>
 	<td>REMOVE_BUTTON</td>
-	<td>//div[contains(@class,'chip-root')]//*[text()='${key_removeValue}']/ancestor::div/button[contains(@class,'remove-button')]</td>
+	<td>//div[contains(@class,'chip-root')]//*[contains(text(),'${key_removeValue}')]/ancestor::div/button[contains(@class,'remove-button')]</td>
 	<td></td>
 </tr>
 <!-- VIEW_ANALYSIS -->
+<tr>
+	<td>VIEW_TOTAL_NUMBER_RELATED_COLUMN_INFORMATION</td>
+	<td>//span[text()='${key_columnInformationValue}']/ancestor::tr//span[text()='${key_totalEventsValue}']</td>
+	<td></td>
+</tr>
 <tr>
 	<td>VIEW_ANALYSIS_INFORMATION</td>
 	<td>//span[text()='${key_informationValue}']</td>
 	<td></td>
 </tr>
 <tr>
+	<td>VIEW_ANALYSIS_INFORMATION_SPECIFC_ORDER</td>
+	<td>xpath=(//span[@class='text-truncate' and contains(text(),'${key_commonInformation}')])[${index}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>VIEW_DASHBOARD_INFORMATION</td>
-	<td>//div[@class='attribute-value'and text()='${key_attributeName}']</td>
+	<td>//div[contains(@class,'attribute') and contains(text(),'${key_attributeName}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIEW_REPEATED_FILTER_DASHBOARD</td>
+	<td>xpath=(//div[contains(@class,'attribute') and contains(text(),'${key_attributeName}')])[${index}]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIEW_ORDER_ANALYSIS_COLUMN</td>
+	<td>xpath=(//button[contains(@class,'text-truncate-inline')])[${index}]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CHOOSE_FILTER</td>
-	<td>//div[contains(@class,'show')]//button[contains(@class,'button-root')and text()='${key_filterName}']</td>
+	<td>//div[contains(@class,'show')]//button[contains(@class,'button-root') and text()='${key_filterName}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SORT_ANALYSIS</td>
+	<td>//div[text()='${key_attributeName}']//ancestor::button//*[contains(@class,'lexicon-icon-order-arrow')]</td>
 	<td></td>
 </tr>
 </tbody>

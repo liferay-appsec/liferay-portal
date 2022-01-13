@@ -20,11 +20,14 @@ import React, {useState} from 'react';
 
 import ActionControls from './ActionControls';
 import CreationMenu from './CreationMenu';
+import FeatureFlagContext from './FeatureFlagContext';
 import FilterOrderControls from './FilterOrderControls';
 import InfoPanelControl from './InfoPanelControl';
 import ResultsBar from './ResultsBar';
 import SearchControls from './SearchControls';
 import SelectionControls from './SelectionControls';
+
+import './ManagementToolbar.scss';
 
 function ManagementToolbar({
 	clearResultsURL,
@@ -59,6 +62,7 @@ function ManagementToolbar({
 	selectAllURL,
 	selectable,
 	showCreationMenu,
+	showDesignImprovementsFF,
 	showInfoButton,
 	showResultsBar,
 	showSearch,
@@ -74,7 +78,9 @@ function ManagementToolbar({
 	const [searchMobile, setSearchMobile] = useState(false);
 
 	return (
-		<>
+		<FeatureFlagContext.Provider
+			value={{showDesignImprovements: showDesignImprovementsFF}}
+		>
 			<ClayManagementToolbar active={active}>
 				<ClayManagementToolbar.ItemList>
 					{selectable && (
@@ -142,7 +148,7 @@ function ManagementToolbar({
 						/>
 					)}
 
-					{showInfoButton && (
+					{!showDesignImprovementsFF && showInfoButton && (
 						<InfoPanelControl
 							infoPanelId={infoPanelId}
 							onInfoButtonClick={onInfoButtonClick}
@@ -205,6 +211,14 @@ function ManagementToolbar({
 							)}
 						</>
 					)}
+
+					{showDesignImprovementsFF && showInfoButton && (
+						<InfoPanelControl
+							infoPanelId={infoPanelId}
+							onInfoButtonClick={onInfoButtonClick}
+							separator={active}
+						/>
+					)}
 				</ClayManagementToolbar.ItemList>
 			</ClayManagementToolbar>
 
@@ -216,7 +230,7 @@ function ManagementToolbar({
 					searchValue={searchValue}
 				/>
 			)}
-		</>
+		</FeatureFlagContext.Provider>
 	);
 }
 
@@ -254,6 +268,7 @@ ManagementToolbar.propTypes = {
 	selectAllURL: PropTypes.string,
 	selectable: PropTypes.bool,
 	showCreationMenu: PropTypes.bool,
+	showDesignImprovementsFF: PropTypes.bool,
 	showInfoButton: PropTypes.bool,
 	showResultsBar: PropTypes.bool,
 	showSearch: PropTypes.bool,

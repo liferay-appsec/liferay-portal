@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -33,6 +34,7 @@ import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.search.experiences.blueprint.search.request.enhancer.SXPBlueprintSearchRequestEnhancer;
+import com.liferay.search.experiences.exception.SXPExceptionUtil;
 import com.liferay.search.experiences.rest.dto.v1_0.Document;
 import com.liferay.search.experiences.rest.dto.v1_0.DocumentField;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPBlueprint;
@@ -47,6 +49,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -126,7 +129,7 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 			runtimeException.addSuppressed(exception);
 		}
 
-		if (_hasErrors(runtimeException)) {
+		if (SXPExceptionUtil.hasErrors(runtimeException)) {
 			throw runtimeException;
 		}
 
@@ -160,7 +163,9 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 
 		SearchResponse searchResponse2 = new SearchResponse() {
 			{
-				documents = _toDocuments(searchResponse1.getDocumentsStream());
+				documents = _toDocuments(
+					searchResponse1.getDocumentsStream(),
+					_getLocale(searchResponse1));
 				page = portalSearchRequest.getFrom();
 				pageSize = portalSearchRequest.getSize();
 				request = _createJSONObject(searchResponse1.getRequestString());
@@ -208,40 +213,21 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 		return null;
 	}
 
-	private boolean _hasErrors(Throwable throwable1) {
-		if (_isWarning(throwable1)) {
-			return false;
+	private Locale _getLocale(
+		com.liferay.portal.search.searcher.SearchResponse searchResponse) {
+
+		Locale locale = searchResponse.withSearchContextGet(
+			SearchContext::getLocale);
+
+		if (locale != null) {
+			return locale;
 		}
 
-		if ((throwable1.getClass() == RuntimeException.class) &&
-			Validator.isBlank(throwable1.getMessage())) {
-
-			for (Throwable throwable2 : throwable1.getSuppressed()) {
-				if (_hasErrors(throwable2)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		return true;
-	}
-
-	private boolean _isWarning(Throwable throwable) {
-		Class<? extends Throwable> clazz = throwable.getClass();
-
-		String simpleName = clazz.getSimpleName();
-
-		if (simpleName.equals("InvalidElementInstanceException")) {
-			return true;
-		}
-
-		return false;
+		return contextAcceptLanguage.getPreferredLocale();
 	}
 
 	private Map<String, DocumentField> _toDocumentFields(
-		Map<String, Field> fields) {
+		Map<String, Field> fields, Locale locale) {
 
 		Map<String, DocumentField> documentFields = new LinkedHashMap<>();
 
@@ -274,8 +260,7 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 			new DocumentField() {
 				{
 					values = new String[] {
-						assetRenderer.getSearchSummary(
-							contextAcceptLanguage.getPreferredLocale())
+						assetRenderer.getSearchSummary(locale)
 					};
 				}
 			});
@@ -283,10 +268,7 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 			"assetTitle",
 			new DocumentField() {
 				{
-					values = new String[] {
-						assetRenderer.getTitle(
-							contextAcceptLanguage.getPreferredLocale())
-					};
+					values = new String[] {assetRenderer.getTitle(locale)};
 				}
 			});
 
@@ -294,7 +276,8 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 	}
 
 	private Document[] _toDocuments(
-		Stream<com.liferay.portal.search.document.Document> stream) {
+		Stream<com.liferay.portal.search.document.Document> stream,
+		Locale locale) {
 
 		List<Document> documents = new ArrayList<>();
 
@@ -303,7 +286,7 @@ public class SearchResponseResourceImpl extends BaseSearchResponseResourceImpl {
 				new Document() {
 					{
 						documentFields = _toDocumentFields(
-							document.getFields());
+							document.getFields(), locale);
 					}
 				}));
 

@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.portlet.SearchDisplayStyleUtil;
 import com.liferay.portal.kernel.portlet.SearchOrderByUtil;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -63,10 +64,12 @@ public abstract class BaseCPOptionsDisplayContext<T> {
 	}
 
 	public String getDisplayStyle() {
-		if (_displayStyle == null) {
-			_displayStyle = getDisplayStyle(
-				httpServletRequest, portalPreferences);
+		if (Validator.isNotNull(_displayStyle)) {
+			return _displayStyle;
 		}
+
+		_displayStyle = SearchDisplayStyleUtil.getDisplayStyle(
+			httpServletRequest, _portalPreferenceNamespace, "list", true);
 
 		return _displayStyle;
 	}
@@ -160,28 +163,6 @@ public abstract class BaseCPOptionsDisplayContext<T> {
 		return true;
 	}
 
-	protected String getDisplayStyle(
-		HttpServletRequest httpServletRequest,
-		PortalPreferences portalPreferences) {
-
-		String displayStyle = ParamUtil.getString(
-			httpServletRequest, "displayStyle");
-
-		if (Validator.isNull(displayStyle)) {
-			displayStyle = portalPreferences.getValue(
-				_portalPreferenceNamespace, "display-style", "list");
-		}
-		else {
-			portalPreferences.setValue(
-				_portalPreferenceNamespace, "display-style", displayStyle);
-
-			httpServletRequest.setAttribute(
-				WebKeys.SINGLE_PAGE_APPLICATION_CLEAR_CACHE, Boolean.TRUE);
-		}
-
-		return displayStyle;
-	}
-
 	protected String getKeywords() {
 		if (_keywords != null) {
 			return _keywords;
@@ -200,20 +181,8 @@ public abstract class BaseCPOptionsDisplayContext<T> {
 		return _rowChecker;
 	}
 
-	protected long getScopeGroupId() {
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getScopeGroupId();
-	}
-
 	protected void setDefaultOrderByCol(String defaultOrderByCol) {
 		_defaultOrderByCol = defaultOrderByCol;
-	}
-
-	protected void setDefaultOrderByType(String defaultOrderByType) {
-		_defaultOrderByType = defaultOrderByType;
 	}
 
 	protected final ActionHelper actionHelper;
@@ -225,7 +194,7 @@ public abstract class BaseCPOptionsDisplayContext<T> {
 	protected SearchContainer<T> searchContainer;
 
 	private String _defaultOrderByCol;
-	private String _defaultOrderByType;
+	private final String _defaultOrderByType;
 	private String _displayStyle;
 	private String _keywords;
 	private String _orderByCol;

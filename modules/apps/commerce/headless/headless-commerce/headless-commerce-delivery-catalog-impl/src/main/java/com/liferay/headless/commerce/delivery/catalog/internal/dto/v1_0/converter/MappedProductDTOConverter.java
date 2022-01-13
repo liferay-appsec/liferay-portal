@@ -29,9 +29,11 @@ import com.liferay.commerce.product.model.CPDefinitionOptionRel;
 import com.liferay.commerce.product.model.CPDefinitionOptionValueRel;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CProduct;
+import com.liferay.commerce.product.permission.CommerceProductViewPermission;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.product.service.CPDefinitionOptionRelLocalService;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
+import com.liferay.commerce.product.service.CProductLocalService;
 import com.liferay.commerce.product.util.CPInstanceHelper;
 import com.liferay.commerce.product.util.JsonHelper;
 import com.liferay.commerce.shop.by.diagram.model.CSDiagramEntry;
@@ -45,6 +47,7 @@ import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.ProductOption;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -94,25 +97,51 @@ public class MappedProductDTOConverter
 			_csDiagramEntryLocalService.getCSDiagramEntry(
 				(Long)mappedProductDTOConverterContext.getId());
 
-		CPDefinition cpDefinition =
-			_cpDefinitionLocalService.fetchCPDefinitionByCProductId(
-				csDiagramEntry.getCProductId());
+		long cpInstanceId = GetterUtil.getLong(
+			mappedProductDTOConverterContext.getReplacementCPInstanceId(),
+			csDiagramEntry.getCPInstanceId());
+
 		CPInstance cpInstance = _cpInstanceLocalService.fetchCPInstance(
-			GetterUtil.getLong(csDiagramEntry.getCPInstanceId()));
+			cpInstanceId);
+
+		long cProductId = GetterUtil.getLong(
+			mappedProductDTOConverterContext.getReplacementCProductId(),
+			csDiagramEntry.getCProductId());
+
+		if (cpInstance != null) {
+			CProduct cProduct =
+				_cProductLocalService.getCProductByCPInstanceUuid(
+					cpInstance.getCPInstanceUuid());
+
+			cProductId = cProduct.getCProductId();
+		}
+
+		CPDefinition cpDefinition =
+			_cpDefinitionLocalService.fetchCPDefinitionByCProductId(cProductId);
+
+		if ((cpDefinition != null) &&
+			!_commerceProductViewPermission.contains(
+				PermissionThreadLocal.getPermissionChecker(),
+				CommerceUtil.getCommerceAccountId(commerceContext),
+				cpDefinition.getCPDefinitionId())) {
+
+			return null;
+		}
+
+		CPInstance firstAvailableReplacementCPInstance =
+			_cpInstanceHelper.fetchFirstAvailableReplacementCPInstance(
+				commerceContext.getCommerceChannelGroupId(), cpInstanceId);
 
 		return new MappedProduct() {
 			{
-				actions = dtoConverterContext.getActions();
+				actions = mappedProductDTOConverterContext.getActions();
 				id = csDiagramEntry.getCSDiagramEntryId();
 				options = _getOptions(cpInstance);
 				price = _getPrice(
 					commerceContext, cpInstance,
 					mappedProductDTOConverterContext.getLocale(), 1);
-				productId = csDiagramEntry.getCProductId();
 				quantity = csDiagramEntry.getQuantity();
 				sequence = csDiagramEntry.getSequence();
-				sku = csDiagramEntry.getSku();
-				skuId = GetterUtil.getLong(csDiagramEntry.getCPInstanceId());
 
 				setAvailability(
 					() -> {
@@ -127,6 +156,41 @@ public class MappedProductDTOConverter
 							mappedProductDTOConverterContext.getLocale(),
 							cpInstance.getSku());
 					});
+				setFirstAvailableReplacementMappedProduct(
+					() -> {
+						MappedProduct firstAvailableReplacementMappedProduct =
+							null;
+
+						if ((cpInstance != null) &&
+							cpInstance.isDiscontinued() &&
+							(firstAvailableReplacementCPInstance != null)) {
+
+							mappedProductDTOConverterContext.
+								setReplacementCPInstanceId(
+									firstAvailableReplacementCPInstance.
+										getCPInstanceId());
+
+							CPDefinition firstAvailableReplacementCPDefinition =
+								firstAvailableReplacementCPInstance.
+									getCPDefinition();
+
+							mappedProductDTOConverterContext.
+								setReplacementCProductId(
+									firstAvailableReplacementCPDefinition.
+										getCProductId());
+
+							firstAvailableReplacementMappedProduct =
+								MappedProductDTOConverter.this.toDTO(
+									mappedProductDTOConverterContext);
+						}
+
+						mappedProductDTOConverterContext.
+							setReplacementCPInstanceId(null);
+						mappedProductDTOConverterContext.
+							setReplacementCProductId(null);
+
+						return firstAvailableReplacementMappedProduct;
+					});
 				setProductConfiguration(
 					() -> {
 						if (cpDefinition == null) {
@@ -137,7 +201,8 @@ public class MappedProductDTOConverter
 							new DefaultDTOConverterContext(
 								_dtoConverterRegistry,
 								cpDefinition.getCPDefinitionId(),
-								dtoConverterContext.getLocale(), null, null));
+								mappedProductDTOConverterContext.getLocale(),
+								null, null));
 					});
 				setProductExternalReferenceCode(
 					() -> {
@@ -148,6 +213,14 @@ public class MappedProductDTOConverter
 						CProduct cProduct = cpDefinition.getCProduct();
 
 						return cProduct.getExternalReferenceCode();
+					});
+				setProductId(
+					() -> {
+						if (cpDefinition == null) {
+							return null;
+						}
+
+						return cpDefinition.getCProductId();
 					});
 				setProductName(
 					() -> {
@@ -176,7 +249,8 @@ public class MappedProductDTOConverter
 									new DefaultDTOConverterContext(
 										cpDefinitionOptionRel.
 											getCPDefinitionOptionRelId(),
-										dtoConverterContext.getLocale())));
+										mappedProductDTOConverterContext.
+											getLocale())));
 						}
 
 						return productOptions.toArray(new ProductOption[0]);
@@ -189,6 +263,69 @@ public class MappedProductDTOConverter
 
 						return cpInstance.isPurchasable();
 					});
+				setReplacementMappedProduct(
+					() -> {
+						MappedProduct replacementMappedProduct = null;
+
+						if ((cpInstance != null) &&
+							cpInstance.isDiscontinued()) {
+
+							CPInstance replacementCPInstance =
+								_cpInstanceHelper.fetchReplacementCPInstance(
+									cpInstance.getReplacementCProductId(),
+									cpInstance.getReplacementCPInstanceUuid());
+
+							if (replacementCPInstance == null) {
+								return null;
+							}
+
+							mappedProductDTOConverterContext.
+								setReplacementCPInstanceId(
+									replacementCPInstance.getCPInstanceId());
+
+							mappedProductDTOConverterContext.
+								setReplacementCProductId(
+									cpInstance.getReplacementCProductId());
+
+							replacementMappedProduct =
+								MappedProductDTOConverter.this.toDTO(
+									mappedProductDTOConverterContext);
+						}
+
+						mappedProductDTOConverterContext.
+							setReplacementCPInstanceId(null);
+						mappedProductDTOConverterContext.
+							setReplacementCProductId(null);
+
+						return replacementMappedProduct;
+					});
+				setReplacementMessage(
+					() -> {
+						if ((cpInstance != null) &&
+							cpInstance.isDiscontinued() &&
+							(firstAvailableReplacementCPInstance != null) &&
+							(cpInstance.getCPInstanceId() ==
+								csDiagramEntry.getCPInstanceId())) {
+
+							return LanguageUtil.format(
+								mappedProductDTOConverterContext.getLocale(),
+								"x-has-been-replaced-by-x",
+								new String[] {
+									csDiagramEntry.getSku(),
+									firstAvailableReplacementCPInstance.getSku()
+								});
+						}
+
+						return null;
+					});
+				setSku(
+					() -> {
+						if (cpInstance == null) {
+							return null;
+						}
+
+						return cpInstance.getSku();
+					});
 				setSkuExternalReferenceCode(
 					() -> {
 						if (cpInstance == null) {
@@ -196,6 +333,14 @@ public class MappedProductDTOConverter
 						}
 
 						return cpInstance.getExternalReferenceCode();
+					});
+				setSkuId(
+					() -> {
+						if (cpInstance == null) {
+							return null;
+						}
+
+						return cpInstance.getCPInstanceId();
 					});
 				setThumbnail(
 					() -> {
@@ -422,6 +567,9 @@ public class MappedProductDTOConverter
 	private CommerceProductPriceCalculation _commerceProductPriceCalculation;
 
 	@Reference
+	private CommerceProductViewPermission _commerceProductViewPermission;
+
+	@Reference
 	private CompanyLocalService _companyLocalService;
 
 	@Reference
@@ -439,6 +587,9 @@ public class MappedProductDTOConverter
 
 	@Reference
 	private CPInstanceLocalService _cpInstanceLocalService;
+
+	@Reference
+	private CProductLocalService _cProductLocalService;
 
 	@Reference
 	private CSDiagramEntryLocalService _csDiagramEntryLocalService;

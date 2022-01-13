@@ -54,7 +54,7 @@ public class PortletRequestDataSample extends BaseDataSample {
 
 		setCompanyId(portlet.getCompanyId());
 
-		setGroupId(portletRequest, portal);
+		_setGroupId(portletRequest, portal);
 		setName(portlet.getPortletName());
 		setNamespace(MonitorNames.PORTLET);
 		setUser(portletRequest.getRemoteUser());
@@ -82,7 +82,7 @@ public class PortletRequestDataSample extends BaseDataSample {
 			", requestType=", _requestType, ", ", super.toString(), "}");
 	}
 
-	protected void setGroupId(PortletRequest portletRequest, Portal portal) {
+	private void _setGroupId(PortletRequest portletRequest, Portal portal) {
 		long groupId = GroupThreadLocal.getGroupId();
 
 		if (groupId != 0) {

@@ -38,10 +38,10 @@
 			<tbody>
 				<tr>
 					<td class="border-0">
-						<img src="${cpDefinition.getDefaultImageThumbnailSrc()}" title="${commerceOrderItem.getName(locale)}" width="80" />
+						<img src="${cpDefinition.getDefaultImageThumbnailSrc(commerceOrderContentDisplayContext.getCommerceAccountId())}" title="${commerceOrderItem.getName(locale)}" width="80" />
 					</td>
 					<td class="border-0">
-						${getJsonKeyValue(commerceOrderItem.getJson(), "domain")}
+						${getJsonKeyValue(commerceOrderItem.getJson(), "site-domain")}
 					</td>
 
 					<#if commerceSubscriptionEntry??>

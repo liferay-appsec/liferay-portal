@@ -64,13 +64,14 @@ import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.searcher.Searcher;
+import com.liferay.portal.search.spi.searcher.SearchRequestContributor;
 import com.liferay.portal.search.test.util.DocumentsAssert;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portlet.expando.util.test.ExpandoTestUtil;
 import com.liferay.search.experiences.model.SXPBlueprint;
-import com.liferay.search.experiences.service.SXPBlueprintLocalServiceUtil;
+import com.liferay.search.experiences.service.SXPBlueprintLocalService;
 import com.liferay.segments.criteria.Criteria;
 import com.liferay.segments.criteria.CriteriaSerializer;
 import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributor;
@@ -123,9 +124,9 @@ public class SXPBlueprintSearchResultTest {
 
 		_user = TestPropsValues.getUser();
 
-		_sxpBlueprint = SXPBlueprintLocalServiceUtil.addSXPBlueprint(
+		_sxpBlueprint = _sxpBlueprintLocalService.addSXPBlueprint(
 			_user.getUserId(), "{}",
-			Collections.singletonMap(LocaleUtil.US, ""), null,
+			Collections.singletonMap(LocaleUtil.US, ""), null, "",
 			Collections.singletonMap(
 				LocaleUtil.US, RandomTestUtil.randomString()),
 			_serviceContext);
@@ -318,7 +319,7 @@ public class SXPBlueprintSearchResultTest {
 			new String[] {
 				String.valueOf(_assetCategory.getCategoryId()),
 				DateUtil.getDate(
-					new Date(System.currentTimeMillis()), "yyyyMMdd",
+					new Date(System.currentTimeMillis() - Time.DAY), "yyyyMMdd",
 					LocaleUtil.US),
 				DateUtil.getDate(
 					new Date(System.currentTimeMillis() + Time.DAY), "yyyyMMdd",
@@ -744,22 +745,23 @@ public class SXPBlueprintSearchResultTest {
 		throws Exception {
 
 		return _searcher.search(
-			_searchRequestBuilderFactory.builder(
-			).companyId(
-				TestPropsValues.getCompanyId()
-			).queryString(
-				keywords
-			).withSearchContext(
-				_searchContext -> {
-					_searchContext.setAttribute(
-						"scope_group_id", _group.getGroupId());
-					_searchContext.setAttribute(
-						"search.experiences.blueprint.id",
-						_sxpBlueprint.getSXPBlueprintId());
-					_searchContext.setTimeZone(_user.getTimeZone());
-					_searchContext.setUserId(_serviceContext.getUserId());
-				}
-			).build());
+			_searchRequestContributor.contribute(
+				_searchRequestBuilderFactory.builder(
+				).companyId(
+					TestPropsValues.getCompanyId()
+				).queryString(
+					keywords
+				).withSearchContext(
+					_searchContext -> {
+						_searchContext.setAttribute(
+							"scope_group_id", _group.getGroupId());
+						_searchContext.setAttribute(
+							"search.experiences.blueprint.id",
+							String.valueOf(_sxpBlueprint.getSXPBlueprintId()));
+						_searchContext.setTimeZone(_user.getTimeZone());
+						_searchContext.setUserId(_serviceContext.getUserId());
+					}
+				).build()));
 	}
 
 	private void _setUp(
@@ -909,11 +911,12 @@ public class SXPBlueprintSearchResultTest {
 			}
 		}
 
-		SXPBlueprintLocalServiceUtil.updateSXPBlueprint(
+		_sxpBlueprintLocalService.updateSXPBlueprint(
 			_sxpBlueprint.getUserId(), _sxpBlueprint.getSXPBlueprintId(), json,
 			_sxpBlueprint.getDescriptionMap(),
 			_sxpBlueprint.getElementInstancesJSON(),
-			_sxpBlueprint.getTitleMap(), _serviceContext);
+			_sxpBlueprint.getSchemaVersion(), _sxpBlueprint.getTitleMap(),
+			_serviceContext);
 
 		unsafeRunnable.run();
 	}
@@ -947,10 +950,16 @@ public class SXPBlueprintSearchResultTest {
 	@Inject
 	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
 
+	@Inject
+	private SearchRequestContributor _searchRequestContributor;
+
 	private ServiceContext _serviceContext;
 
 	@DeleteAfterTestRun
 	private SXPBlueprint _sxpBlueprint;
+
+	@Inject
+	private SXPBlueprintLocalService _sxpBlueprintLocalService;
 
 	private User _user;
 

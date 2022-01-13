@@ -23,6 +23,7 @@ import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderer;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormTemplateContextFactory;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
 import com.liferay.dynamic.data.mapping.form.web.internal.configuration.DDMFormWebConfiguration;
+import com.liferay.dynamic.data.mapping.form.web.internal.configuration.FFDateTimeDDMFormFieldTypeConfiguration;
 import com.liferay.dynamic.data.mapping.form.web.internal.configuration.activator.FFSubmissionsSettingsConfigurationActivator;
 import com.liferay.dynamic.data.mapping.form.web.internal.display.context.helper.FieldSetPermissionCheckerHelper;
 import com.liferay.dynamic.data.mapping.form.web.internal.instance.lifecycle.AddDefaultSharedFormLayoutPortalInstanceLifecycleListener;
@@ -114,6 +115,8 @@ public class DDMFormAdminFieldSetDisplayContext
 		DDMStorageAdapterTracker ddmStorageAdapterTracker,
 		DDMStructureLocalService ddmStructureLocalService,
 		DDMStructureService ddmStructureService,
+		FFDateTimeDDMFormFieldTypeConfiguration
+			ffDateTimeDDMFormFieldTypeConfiguration,
 		FFSubmissionsSettingsConfigurationActivator
 			ffSubmissionsSettingsConfigurationActivator,
 		JSONFactory jsonFactory, NPMResolver npmResolver,
@@ -132,8 +135,9 @@ public class DDMFormAdminFieldSetDisplayContext
 			ddmFormTemplateContextFactory, ddmFormValuesFactory,
 			ddmFormValuesMerger, ddmFormWebConfiguration,
 			ddmStorageAdapterTracker, ddmStructureLocalService,
-			ddmStructureService, ffSubmissionsSettingsConfigurationActivator,
-			jsonFactory, npmResolver, objectDefinitionLocalService, portal);
+			ddmStructureService, ffDateTimeDDMFormFieldTypeConfiguration,
+			ffSubmissionsSettingsConfigurationActivator, jsonFactory,
+			npmResolver, objectDefinitionLocalService, portal);
 
 		_fieldSetPermissionCheckerHelper = new FieldSetPermissionCheckerHelper(
 			ddmFormAdminRequestHelper);
@@ -160,7 +164,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		}
 
 		return CreationMenuBuilder.addPrimaryDropdownItem(
-			getAddElementSetDropdownItem()
+			_getAddElementSetDropdownItem()
 		).build();
 	}
 
@@ -213,7 +217,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		}
 
 		return DropdownItemListBuilder.add(
-			getAddElementSetDropdownItem()
+			_getAddElementSetDropdownItem()
 		).build();
 	}
 
@@ -362,7 +366,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		String orderByType = getOrderByType();
 
 		OrderByComparator<DDMStructure> orderByComparator =
-			getDDMStructureOrderByComparator(orderByCol, orderByType);
+			_getDDMStructureOrderByComparator(orderByCol, orderByType);
 
 		fieldSetSearch.setOrderByCol(orderByCol);
 		fieldSetSearch.setOrderByComparator(orderByComparator);
@@ -377,8 +381,8 @@ public class DDMFormAdminFieldSetDisplayContext
 
 		fieldSetSearch.setRowChecker(new FieldSetRowChecker(renderResponse));
 
-		setFieldSetsSearchResults(fieldSetSearch);
-		setFieldSetsSearchTotal(fieldSetSearch);
+		_setFieldSetsSearchResults(fieldSetSearch);
+		_setFieldSetsSearchTotal(fieldSetSearch);
 
 		return fieldSetSearch;
 	}
@@ -401,8 +405,8 @@ public class DDMFormAdminFieldSetDisplayContext
 		return "structure";
 	}
 
-	protected UnsafeConsumer<DropdownItem, Exception>
-		getAddElementSetDropdownItem() {
+	private UnsafeConsumer<DropdownItem, Exception>
+		_getAddElementSetDropdownItem() {
 
 		return dropdownItem -> {
 			HttpServletRequest httpServletRequest =
@@ -423,7 +427,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		};
 	}
 
-	protected OrderByComparator<DDMStructure> getDDMStructureOrderByComparator(
+	private OrderByComparator<DDMStructure> _getDDMStructureOrderByComparator(
 		String orderByCol, String orderByType) {
 
 		boolean orderByAsc = false;
@@ -447,7 +451,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		return orderByComparator;
 	}
 
-	protected void setFieldSetsSearchResults(FieldSetSearch fieldSetSearch) {
+	private void _setFieldSetsSearchResults(FieldSetSearch fieldSetSearch) {
 		FieldSetSearchTerms fieldSetSearchTerms =
 			(FieldSetSearchTerms)fieldSetSearch.getSearchTerms();
 
@@ -464,7 +468,7 @@ public class DDMFormAdminFieldSetDisplayContext
 		fieldSetSearch.setResults(results);
 	}
 
-	protected void setFieldSetsSearchTotal(FieldSetSearch fieldSetSearch) {
+	private void _setFieldSetsSearchTotal(FieldSetSearch fieldSetSearch) {
 		FieldSetSearchTerms fieldSetSearchTerms =
 			(FieldSetSearchTerms)fieldSetSearch.getSearchTerms();
 

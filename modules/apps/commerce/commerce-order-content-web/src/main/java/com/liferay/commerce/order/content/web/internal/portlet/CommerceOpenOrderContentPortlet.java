@@ -85,7 +85,8 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.init-param.view-template=/pending_commerce_orders/view.jsp",
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_OPEN_ORDER_CONTENT,
 		"javax.portlet.resource-bundle=content.Language",
-		"javax.portlet.security-role-ref=power-user,user"
+		"javax.portlet.security-role-ref=power-user,user",
+		"javax.portlet.version=3.0"
 	},
 	service = {CommerceOpenOrderContentPortlet.class, Portlet.class}
 )
@@ -125,7 +126,7 @@ public class CommerceOpenOrderContentPortlet extends MVCPortlet {
 						_itemSelector, _modelResourcePermission,
 						_percentageFormatter, _portletResourcePermission);
 
-			CommerceOrder commerceOrder = getCommerceOrder(renderRequest);
+			CommerceOrder commerceOrder = _getCommerceOrder(renderRequest);
 
 			if (commerceOrder != null) {
 				List<String> errorMessages = new ArrayList<>();
@@ -158,7 +159,7 @@ public class CommerceOpenOrderContentPortlet extends MVCPortlet {
 		super.render(renderRequest, renderResponse);
 	}
 
-	protected CommerceOrder getCommerceOrder(PortletRequest portletRequest)
+	private CommerceOrder _getCommerceOrder(PortletRequest portletRequest)
 		throws PortalException {
 
 		String commerceOrderUuid = ParamUtil.getString(

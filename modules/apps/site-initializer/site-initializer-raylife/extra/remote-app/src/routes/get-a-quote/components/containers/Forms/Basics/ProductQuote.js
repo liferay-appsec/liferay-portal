@@ -1,16 +1,30 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import React, {useEffect} from 'react';
 import {Controller, useFormContext} from 'react-hook-form';
 import {MoreInfoButton} from '../../../../../../common/components/fragments/Buttons/MoreInfo';
 import {CardFormActions} from '../../../../../../common/components/fragments/Card/FormActions';
 import FormCard from '../../../../../../common/components/fragments/Card/FormCard';
 import {Radio} from '../../../../../../common/components/fragments/Forms/Radio';
-import {LiferayService} from '../../../../../../common/services/liferay';
 import {
 	STORAGE_KEYS,
 	Storage,
 } from '../../../../../../common/services/liferay/storage';
 import {TIP_EVENT} from '../../../../../../common/utils/events';
 import {clearExitAlert} from '../../../../../../common/utils/exitAlert';
+import {getLiferaySiteName} from '../../../../../../common/utils/liferay';
 import {smoothScroll} from '../../../../../../common/utils/scroll';
 import {useProductQuotes} from '../../../../hooks/useProductQuotes';
 import {useStepWizard} from '../../../../hooks/useStepWizard';
@@ -37,7 +51,7 @@ export function FormBasicProductQuote({form}) {
 	const goToPreviousPage = () => {
 		clearExitAlert();
 
-		window.location.href = LiferayService.getLiferaySiteName();
+		window.location.href = getLiferaySiteName();
 
 		if (Storage.itemExist(STORAGE_KEYS.BACK_TO_EDIT)) {
 			Storage.removeItem(STORAGE_KEYS.BACK_TO_EDIT);

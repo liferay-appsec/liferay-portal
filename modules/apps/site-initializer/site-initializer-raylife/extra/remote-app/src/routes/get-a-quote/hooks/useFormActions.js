@@ -1,13 +1,28 @@
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+
 import {useEffect, useState} from 'react';
 import {useFormContext} from 'react-hook-form';
-import {LiferayService} from '../../../common/services/liferay';
 import {STORAGE_KEYS, Storage} from '../../../common/services/liferay/storage';
 import {clearExitAlert} from '../../../common/utils/exitAlert';
+import {getLiferaySiteName} from '../../../common/utils/liferay';
 import {smoothScroll} from '../../../common/utils/scroll';
 import {useStepWizard} from '../hooks/useStepWizard';
+import {createOrUpdateRaylifeApplication} from '../services/RaylifeApplication';
 import {verifyInputAgentPage} from '../utils/contact-agent';
 
-const liferaySiteName = LiferayService.getLiferaySiteName();
+const liferaySiteName = getLiferaySiteName();
 
 /**
  *
@@ -50,7 +65,8 @@ const useFormActions = (form, previousSection, nextSection, errorMessage) => {
 			Storage.setItem(STORAGE_KEYS.CONTEXTUAL_MESSAGE, phraseAgentPage);
 			window.location.href = `${liferaySiteName}/get-in-touch`;
 			validated = false;
-		} else {
+		}
+		else {
 			Storage.removeItem(STORAGE_KEYS.CONTEXTUAL_MESSAGE);
 		}
 
@@ -61,14 +77,13 @@ const useFormActions = (form, previousSection, nextSection, errorMessage) => {
 		setError('continueButton', {});
 
 		try {
-			const response = await LiferayService.createOrUpdateRaylifeApplication(
-				form
-			);
+			const response = await createOrUpdateRaylifeApplication(form);
 
 			setApplicationId(response.data.id);
 
 			return response;
-		} catch (error) {
+		}
+		catch (error) {
 			setError('continueButton', {
 				message:
 					errorMessage ||
