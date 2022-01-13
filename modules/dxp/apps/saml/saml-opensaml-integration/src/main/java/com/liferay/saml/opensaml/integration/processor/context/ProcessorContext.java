@@ -14,6 +14,8 @@
 
 package com.liferay.saml.opensaml.integration.processor.context;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -25,6 +27,7 @@ import java.util.function.Function;
 /**
  * @author Stian Sigvartsen
  */
+@ProviderType
 public interface ProcessorContext<M extends BaseModel<M>> {
 
 	public <T extends BaseModel<T>> Bind<T> bind(
