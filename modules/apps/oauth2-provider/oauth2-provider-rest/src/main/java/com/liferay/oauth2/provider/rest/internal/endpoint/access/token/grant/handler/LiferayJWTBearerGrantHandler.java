@@ -161,57 +161,12 @@ public class LiferayJWTBearerGrantHandler
 	}
 
 	private void _rebuild() {
-		_rebuildHelper(CompanyConstants.SYSTEM);
-
 		for (Long key : _jwsSignatureVerifiers.keySet()) {
-			if (key == CompanyConstants.SYSTEM) {
-				continue;
-			}
-
 			_rebuild(key);
 		}
 	}
 
 	private void _rebuild(long companyId) {
-		_rebuildHelper(companyId);
-
-		// Merge signature verifiers from system settings
-
-		Map<String, Map<String, JwsSignatureVerifier>> jwsSignatureVerifiers =
-			_jwsSignatureVerifiers.get(companyId);
-
-		Map<String, Map<String, JwsSignatureVerifier>>
-			systemJWSSignatureVerifiers = _jwsSignatureVerifiers.get(
-				CompanyConstants.SYSTEM);
-
-		for (Map.Entry<String, Map<String, JwsSignatureVerifier>> entry :
-				systemJWSSignatureVerifiers.entrySet()) {
-
-			if (jwsSignatureVerifiers.containsKey(entry.getKey())) {
-				continue;
-			}
-
-			jwsSignatureVerifiers.put(entry.getKey(), entry.getValue());
-		}
-
-		// Merge user auth types from system settings
-
-		Map<String, String> userAuthTypes = _userAuthTypes.get(companyId);
-
-		Map<String, String> systemUserAuthTypes = _userAuthTypes.get(
-			CompanyConstants.SYSTEM);
-
-		for (Map.Entry<String, String> entry : systemUserAuthTypes.entrySet()) {
-			if (userAuthTypes.containsKey(entry.getKey())) {
-				continue;
-			}
-
-			userAuthTypes.put(entry.getKey(), entry.getValue());
-		}
-	}
-
-	private void _rebuildHelper(long companyId) {
-
 		Map<String, Map<String, JwsSignatureVerifier>> jwsSignatureVerifiers =
 			new HashMap<>();
 		Map<String, String> userAuthTypes = new HashMap<>();
