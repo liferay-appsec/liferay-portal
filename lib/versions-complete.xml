@@ -475,11 +475,7 @@
 				<project-url>http://commons.apache.org/proper/commons-collections/</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License, Version 2.0</license-name>
-						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
-					</license>
-				</licenses>
-			</library>
+		459e7c179a7904594af9f6e524955eec9b706b5e</library>
 			<library>
 				<file-name>com.liferay.commerce.report.impl.jar!commons-dbcp2.jar</file-name>
 				<version>2.0</version>
@@ -521,13 +517,7 @@
 				<version>2.4.2</version>
 				<project-name>Apache Commons Pool</project-name>
 				<project-url>http://commons.apache.org/proper/commons-pool/</project-url>
-				<licenses>
-					<license>
-						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
-					</license>
-				</licenses>
-			</library>
+		459e7c179a7904594af9f6e524955eec9b706b5e	</library>
 			<library>
 				<file-name>com.liferay.commerce.report.impl.jar!core.jar</file-name>
 				<version>3.2.1</version>
@@ -6737,6 +6727,19 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>lib/portal/closure-compiler.jar</file-name>
+				<version>v20131014</version>
+				<project-name>Closure Compiler</project-name>
+				<project-url>https://code.google.com/p/closure-compiler</project-url>
+				<licenses>
+					<license>
+						<license-name>Apache License 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
+					</license>
+				</licenses>
+				<comments>Removed META-INF/beans.xml to prevent CDI autowiring.</comments>
+			</library>
+			<library>
 				<file-name>lib/portal/commons-beanutils.jar</file-name>
 				<version>1.9.4</version>
 				<project-name>Commons Beanutils</project-name>
@@ -7213,6 +7216,20 @@
 						<license-url>https://oss.oracle.com/licenses/CDDL-1.1</license-url>
 					</license>
 				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/liferay-icu4j.jar</file-name>
+				<version>54.1.1.LIFERAY-PATCHED-2</version>
+				<project-name>ICU4J</project-name>
+				<project-url>http://www.icu-project.org</project-url>
+				<licenses>
+					<license>
+						<license-name>ICU License</license-name>
+						<license-url>http://www.icu-project.org/repos/icu/icu/trunk/license.html</license-url>
+						<copyright-notice>Copyright (c) 1995-2006 International Business Machines Corporation and others</copyright-notice>
+					</license>
+				</licenses>
+				<comments>See LPS-1907, LPS-36663, LPS-54422, and modules/third-party/com-ibm-icu/build.xml.</comments>
 			</library>
 			<library>
 				<file-name>lib/portal/log4j-1.2-api.jar</file-name>
@@ -7775,6 +7792,18 @@
 						<license-name>Apache License 2.0</license-name>
 						<license-url>http://www.apache.org/licenses/LICENSE-2.0</license-url>
 						<copyright-notice>(c) 2001, Institute for Data Communications Systems, http://www.nue.et-inf.uni-siegen.de</copyright-notice>
+					</license>
+				</licenses>
+			</library>
+			<library>
+				<file-name>lib/portal/xmpcore.jar</file-name>
+				<version>6.0.6</version>
+				<project-name>Extensible Metadata Platform</project-name>
+				<project-url>http://www.adobe.com/devnet/xmp.html</project-url>
+				<licenses>
+					<license>
+						<license-name>BSD Style License</license-name>
+						<license-url>http://en.wikipedia.org/wiki/BSD_licenses</license-url>
 					</license>
 				</licenses>
 			</library>
