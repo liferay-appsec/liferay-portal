@@ -96,6 +96,7 @@
 /portal/asm-util.jar
 /portal/asm.jar
 /portal/c3p0.jar
+/portal/closure-compiler.jar
 /portal/commons-beanutils.jar
 /portal/commons-codec.jar
 /portal/commons-collections.jar
@@ -140,6 +141,7 @@
 /portal/jodd-util.jar
 /portal/json-java.jar
 /portal/jws-api.jar
+/portal/liferay-icu4j.jar
 /portal/log4j-1.2-api.jar
 /portal/log4j-api.jar
 /portal/log4j-core.jar
@@ -183,4 +185,5 @@
 /portal/xercesImpl.jar
 /portal/xml-apis.jar
 /portal/xmlsec.jar
+/portal/xmpcore.jar
 /portal/xz.jar
