@@ -210,8 +210,7 @@ public class LiferayJWTBearerGrantHandler
 		}
 	}
 
-	private Map<String, Map<String, JwsSignatureVerifier>> _rebuildHelper(
-		long companyId) {
+	private void _rebuildHelper(long companyId) {
 
 		_jwsSignatureVerifiers.put(companyId, new HashMap<>());
 
@@ -295,8 +294,6 @@ public class LiferayJWTBearerGrantHandler
 					JwsUtils.getSignatureVerifier(jsonWebKey));
 			}
 		}
-
-		return jwsSignatureVerifiers;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
