@@ -195,8 +195,9 @@ public class HttpAuthManagerImpl implements HttpAuthManager {
 				return parseBasic(
 					httpServletRequest, authorization, authorizationParts);
 			}
-			catch (Base64DecodingException e) {
-				throw new IllegalArgumentException("Base64 decoding error on " + authorizationParts[1]);
+			catch (Base64DecodingException base64DecodingException) {
+				throw new IllegalArgumentException(
+					base64DecodingException.getMessage());
 			}
 		}
 		else if (StringUtil.equalsIgnoreCase(
@@ -335,8 +336,9 @@ public class HttpAuthManagerImpl implements HttpAuthManager {
 	}
 
 	protected HttpAuthorizationHeader parseBasic(
-		HttpServletRequest httpServletRequest, String authorization,
-		String[] authorizationParts) throws Base64DecodingException {
+			HttpServletRequest httpServletRequest, String authorization,
+			String[] authorizationParts)
+		throws Base64DecodingException {
 
 		String credentials = new String(Base64.decode(authorizationParts[1]));
 
