@@ -161,6 +161,14 @@ public class LiferayJWTBearerGrantHandler
 		return _oAuth2ProviderConfiguration.allowJWTBearerGrant();
 	}
 
+	private <U, V> void _addDefaults(Map<U, V> map, Map<U, V> defaultsMap) {
+		if (defaultsMap != null) {
+			defaultsMap.forEach(map::putIfAbsent);
+		}
+
+		_rebuild(CompanyConstants.SYSTEM);
+	}
+
 	private void _rebuild() {
 		for (Long key : _jwsSignatureVerifiers.keySet()) {
 			_rebuild(key);
@@ -244,6 +252,14 @@ public class LiferayJWTBearerGrantHandler
 					jsonWebKey.getKeyId(),
 					JwsUtils.getSignatureVerifier(jsonWebKey));
 			}
+		}
+
+		if (companyId != CompanyConstants.SYSTEM) {
+			_addDefaults(
+				jwsSignatureVerifiers,
+				_jwsSignatureVerifiers.get(CompanyConstants.SYSTEM));
+			_addDefaults(
+				userAuthTypes, _userAuthTypes.get(CompanyConstants.SYSTEM));
 		}
 
 		_jwsSignatureVerifiers.put(companyId, jwsSignatureVerifiers);
