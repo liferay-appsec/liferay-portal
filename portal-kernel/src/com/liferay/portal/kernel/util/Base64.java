@@ -261,7 +261,7 @@ public class Base64 {
 				return 63;
 			}
 
-			if (c != CharPool.STAR) {
+			if ((c != CharPool.STAR) && (c != CharPool.EQUAL)) {
 				return -1;
 			}
 		}
@@ -322,7 +322,7 @@ public class Base64 {
 		"^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}(==))?$");
 
 	private static final Pattern BASE_64_URL_PATTERN = Pattern.compile(
-		"^([A-Za-z0-9-_]{4})*([A-Za-z0-9-_]{3}[*]|[A-Za-z0-9-_]{2}([*]{2}))?$");
+		"^([A-Za-z0-9-_]{4})*([A-Za-z0-9-_]{3}[*=]|[A-Za-z0-9-_]{2}([*]{2}|==))?$");
 
 	private static final Log _log = LogFactoryUtil.getLog(Base64.class);
 
