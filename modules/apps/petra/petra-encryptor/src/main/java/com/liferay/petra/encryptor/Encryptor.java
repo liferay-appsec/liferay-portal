@@ -18,6 +18,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.Base64DecodingException;
 import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -64,7 +65,7 @@ public class Encryptor {
 		"com.sun.crypto.provider.SunJCE";
 
 	public static String decrypt(Key key, String encryptedString)
-		throws EncryptorException {
+		throws Base64DecodingException, EncryptorException {
 
 		byte[] encryptedBytes = Base64.decode(encryptedString);
 
@@ -117,7 +118,9 @@ public class Encryptor {
 		}
 	}
 
-	public static Key deserializeKey(String base64String) {
+	public static Key deserializeKey(String base64String)
+		throws Base64DecodingException {
+
 		byte[] bytes = Base64.decode(base64String);
 
 		return new SecretKeySpec(bytes, Encryptor.KEY_ALGORITHM);

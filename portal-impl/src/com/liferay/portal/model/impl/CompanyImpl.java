@@ -176,7 +176,7 @@ public class CompanyImpl extends CompanyBaseImpl {
 	}
 
 	@Override
-	public Key getKeyObj() {
+	public Key getKeyObj() throws PortalException {
 		if (_keyObj == null) {
 			String key = getKey();
 

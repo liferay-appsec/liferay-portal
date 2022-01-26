@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.Base64DecodingException;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -70,7 +71,7 @@ public class CompanyInfoLocalServiceTest {
 	}
 
 	@Test
-	public void testGetCompanyInfoKeyObj() {
+	public void testGetCompanyInfoKeyObj() throws Base64DecodingException {
 		CompanyInfo companyInfo = _companyInfoLocalService.fetchCompany(
 			_company.getCompanyId());
 
@@ -92,7 +93,7 @@ public class CompanyInfoLocalServiceTest {
 	}
 
 	@Test
-	public void testUpdateCompanyInfoKeyObj() {
+	public void testUpdateCompanyInfoKeyObj() throws Base64DecodingException {
 		_company.setKey(RandomTestUtil.randomString());
 
 		_company = _companyLocalService.updateCompany(_company);

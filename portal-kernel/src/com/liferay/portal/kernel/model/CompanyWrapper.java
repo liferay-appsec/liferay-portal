@@ -314,7 +314,9 @@ public class CompanyWrapper
 	}
 
 	@Override
-	public java.security.Key getKeyObj() {
+	public java.security.Key getKeyObj()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
 		return model.getKeyObj();
 	}
 

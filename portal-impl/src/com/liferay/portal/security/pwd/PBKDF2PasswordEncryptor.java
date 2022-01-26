@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.Base64DecodingException;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -124,19 +125,21 @@ public class PBKDF2PasswordEncryptor
 					_saltBytes, 0, SecureRandomUtil.nextLong());
 			}
 			else {
-				ByteBuffer byteBuffer = ByteBuffer.wrap(
-					Base64.decode(encryptedPassword));
-
 				try {
+					ByteBuffer byteBuffer = ByteBuffer.wrap(
+						Base64.decode(encryptedPassword));
+
 					_keySize = byteBuffer.getInt();
 					_rounds = byteBuffer.getInt();
 
 					byteBuffer.get(_saltBytes);
 				}
-				catch (BufferUnderflowException bufferUnderflowException) {
+				catch (Base64DecodingException | BufferUnderflowException
+							exception) {
+
 					throw new PwdEncryptorException(
 						"Unable to extract salt from encrypted password",
-						bufferUnderflowException);
+						exception);
 				}
 			}
 		}

@@ -17,6 +17,7 @@ package com.liferay.portal.kernel.cluster;
 import com.liferay.portal.kernel.io.Deserializer;
 import com.liferay.portal.kernel.io.Serializer;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.Base64DecodingException;
 
 import java.nio.ByteBuffer;
 
@@ -26,17 +27,18 @@ import java.nio.ByteBuffer;
 public class AddressSerializerUtil {
 
 	public static Address deserialize(String serializedAddress) {
-		byte[] bytes = Base64.decode(serializedAddress);
-
-		Deserializer deserializer = new Deserializer(ByteBuffer.wrap(bytes));
-
 		try {
+			byte[] bytes = Base64.decode(serializedAddress);
+
+			Deserializer deserializer = new Deserializer(
+				ByteBuffer.wrap(bytes));
+
 			return deserializer.readObject();
 		}
-		catch (ClassNotFoundException classNotFoundException) {
+		catch (Base64DecodingException | ClassNotFoundException exception) {
 			throw new RuntimeException(
 				"Unable to deserialize address " + serializedAddress,
-				classNotFoundException);
+				exception);
 		}
 	}
 

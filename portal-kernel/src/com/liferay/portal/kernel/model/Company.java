@@ -78,7 +78,8 @@ public interface Company extends CompanyModel, PersistedModel {
 
 	public String getKey();
 
-	public java.security.Key getKeyObj();
+	public java.security.Key getKeyObj()
+		throws com.liferay.portal.kernel.exception.PortalException;
 
 	public java.util.Locale getLocale()
 		throws com.liferay.portal.kernel.exception.PortalException;

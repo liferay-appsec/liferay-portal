@@ -25,16 +25,21 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Brian Wing Shun Chan
  */
 public class Base64 {
 
-	public static byte[] decode(String base64) {
+	public static byte[] decode(String base64) throws Base64DecodingException {
 		return _decode(base64, false);
 	}
 
-	public static byte[] decodeFromURL(String base64) {
+	public static byte[] decodeFromURL(String base64)
+		throws Base64DecodingException {
+
 		return _decode(base64, true);
 	}
 
@@ -68,27 +73,51 @@ public class Base64 {
 			unsyncByteArrayOutputStream.size(), false);
 	}
 
-	public static Object stringToObject(String s) {
+	public static Object stringToObject(String s)
+		throws Base64DecodingException {
+
 		return _stringToObject(s, null, false);
 	}
 
-	public static Object stringToObject(String s, ClassLoader classLoader) {
+	public static Object stringToObject(String s, ClassLoader classLoader)
+		throws Base64DecodingException {
+
 		return _stringToObject(s, classLoader, false);
 	}
 
-	public static Object stringToObjectSilent(String s) {
+	public static Object stringToObjectSilent(String s)
+		throws Base64DecodingException {
+
 		return _stringToObject(s, null, true);
 	}
 
-	private static byte[] _decode(String base64, boolean url) {
+	private static byte[] _decode(String base64, boolean url)
+		throws Base64DecodingException {
+
 		if (Validator.isNull(base64)) {
 			return new byte[0];
 		}
 
+		base64 = base64.trim();
+		Matcher base64Matcher;
+
+		if (url) {
+			base64Matcher = BASE_64_URL_PATTERN.matcher(base64);
+		}
+		else {
+			base64Matcher = BASE_64_PATTERN.matcher(base64);
+		}
+
+		if (((base64.length() % 4) != 0) || !base64Matcher.matches())
+
+			throw new Base64DecodingException(
+				"Input is not a valid Base64 String");
+
 		int pad = 0;
 
-		for (int i = base64.length() - 1; base64.charAt(i) == CharPool.EQUAL;
-			 i--) {
+		for (int i = base64.length() - 1;
+			 (base64.charAt(i) == CharPool.EQUAL) ||
+			 (base64.charAt(i) == CharPool.STAR); i--) {
 
 			pad++;
 		}
@@ -254,7 +283,8 @@ public class Base64 {
 	}
 
 	private static Object _stringToObject(
-		String s, ClassLoader classLoader, boolean silent) {
+			String s, ClassLoader classLoader, boolean silent)
+		throws Base64DecodingException {
 
 		if (s == null) {
 			return null;
@@ -287,6 +317,12 @@ public class Base64 {
 
 		return null;
 	}
+
+	private static final Pattern BASE_64_PATTERN = Pattern.compile(
+		"^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}(==))?$");
+
+	private static final Pattern BASE_64_URL_PATTERN = Pattern.compile(
+		"^([A-Za-z0-9-_]{4})*([A-Za-z0-9-_]{3}[*]|[A-Za-z0-9-_]{2}([*]{2}))?$");
 
 	private static final Log _log = LogFactoryUtil.getLog(Base64.class);
 

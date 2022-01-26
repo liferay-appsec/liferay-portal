@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManag
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.Base64DecodingException;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -190,8 +191,13 @@ public class HttpAuthManagerImpl implements HttpAuthManager {
 		if (StringUtil.equalsIgnoreCase(
 				scheme, HttpAuthorizationHeader.SCHEME_BASIC)) {
 
-			return parseBasic(
-				httpServletRequest, authorization, authorizationParts);
+			try {
+				return parseBasic(
+					httpServletRequest, authorization, authorizationParts);
+			}
+			catch (Base64DecodingException e) {
+				throw new IllegalArgumentException("Base64 decoding error on " + authorizationParts[1]);
+			}
 		}
 		else if (StringUtil.equalsIgnoreCase(
 					scheme, HttpAuthorizationHeader.SCHEME_BEARER)) {
@@ -330,7 +336,7 @@ public class HttpAuthManagerImpl implements HttpAuthManager {
 
 	protected HttpAuthorizationHeader parseBasic(
 		HttpServletRequest httpServletRequest, String authorization,
-		String[] authorizationParts) {
+		String[] authorizationParts) throws Base64DecodingException {
 
 		String credentials = new String(Base64.decode(authorizationParts[1]));
 
