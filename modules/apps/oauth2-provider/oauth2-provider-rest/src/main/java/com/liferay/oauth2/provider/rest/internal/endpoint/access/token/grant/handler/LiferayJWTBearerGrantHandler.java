@@ -182,7 +182,13 @@ public class LiferayJWTBearerGrantHandler
 	}
 
 	private void _rebuild() {
+		_rebuild(CompanyConstants.SYSTEM);
+
 		for (Long key : _jwsSignatureVerifiers.keySet()) {
+			if (key == CompanyConstants.SYSTEM) {
+				continue;
+			}
+
 			_rebuild(key);
 		}
 	}
