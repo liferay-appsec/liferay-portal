@@ -145,6 +145,18 @@ public class LiferayJWTBearerGrantHandler
 		return jwtBearerGrantHandler;
 	}
 
+	protected Map<String, Map<String, JwsSignatureVerifier>>
+		getJwsSignatureVerifiers(long companyId) {
+
+		return _jwsSignatureVerifiers.getOrDefault(
+			companyId, _jwsSignatureVerifiers.get(CompanyConstants.SYSTEM));
+	}
+
+	protected Map<String, String> getUserAuthTypes(long companyId) {
+		return _userAuthTypes.getOrDefault(
+			companyId, _userAuthTypes.get(CompanyConstants.SYSTEM));
+	}
+
 	@Override
 	protected boolean hasPermission(
 		Client client, MultivaluedMap<String, String> params) {
@@ -335,8 +347,7 @@ public class LiferayJWTBearerGrantHandler
 		private UserSubject _createUserSubject(
 			long companyId, String issuer, String subject) {
 
-			Map<String, String> userAuthTypes = _userAuthTypes.getOrDefault(
-				companyId, _userAuthTypes.get(CompanyConstants.SYSTEM));
+			Map<String, String> userAuthTypes = getUserAuthTypes(companyId);
 
 			String userAuthType = userAuthTypes.get(issuer);
 
@@ -366,9 +377,7 @@ public class LiferayJWTBearerGrantHandler
 			long companyId, JwsHeaders jwsHeaders, JwtClaims jwtClaims) {
 
 			Map<String, Map<String, JwsSignatureVerifier>>
-				jwsSignatureVerifiers = _jwsSignatureVerifiers.getOrDefault(
-					companyId,
-					_jwsSignatureVerifiers.get(CompanyConstants.SYSTEM));
+				jwsSignatureVerifiers = getJwsSignatureVerifiers(companyId);
 
 			Map<String, JwsSignatureVerifier> kidsJWSSignatureVerifiers =
 				jwsSignatureVerifiers.get(jwtClaims.getIssuer());
