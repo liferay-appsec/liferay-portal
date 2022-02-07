@@ -19,8 +19,11 @@ import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -104,7 +107,10 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 			return;
 		}
 
-		_user = UserTestUtil.addOmniAdminUser();
+		Company company = CompanyLocalServiceUtil.getCompanyByWebId(
+			TestPropsValues.COMPANY_WEB_ID);
+
+		_user = UserTestUtil.addCompanyAdminUser(company);
 
 		_initJWKS();
 
