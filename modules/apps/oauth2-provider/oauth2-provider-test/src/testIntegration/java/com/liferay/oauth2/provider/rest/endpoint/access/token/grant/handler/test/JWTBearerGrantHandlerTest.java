@@ -64,31 +64,25 @@ public class JWTBearerGrantHandlerTest extends BaseClientTestCase {
 		new LiferayIntegrationTestRule();
 
 	@Test
-	public void test() throws Exception {
-		JwsHeaders jwsHeaders = new JwsHeaders(
-			JoseType.JWT, SignatureAlgorithm.RS256);
-
-		jwsHeaders.setKeyId(_KID_01);
-
-		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
-
-		JwtToken jwtToken = new JwtToken(
-			jwsHeaders,
-			_getJWTClaims(user.getUuid(), getTokenWebTarget().getUri()));
-
-		JwsJwtCompactProducer jwsJwtCompactProducer = new JwsJwtCompactProducer(
-			jwtToken);
-
-		JsonWebKeys jsonWebKeys = JwkUtils.readJwkSet(_jwks_string);
-
-		String jwtAssertion = jwsJwtCompactProducer.signWith(
-			jsonWebKeys.getKey(jwsHeaders.getKeyId()));
-
+	public void testValidJWTGrant() throws Exception {
 		String tokenString = getToken(
 			"oauthTestApplication", null,
-			getJWTBearerGrantBiFunction(jwtAssertion), this::parseTokenString);
+			getJWTBearerGrantBiFunction(
+				_getJwtAssertion(getTokenWebTarget().getUri())),
+			this::parseTokenString);
 
 		Assert.assertTrue(Validator.isNotNull(tokenString));
+	}
+
+	@Test
+	public void testWrongAudience() throws Exception {
+		String errorString = getToken(
+			"oauthTestApplication", null,
+			getJWTBearerGrantBiFunction(
+				_getJwtAssertion(new URI("http://invalid_audience"))),
+			this::parseError);
+
+		Assert.assertEquals("invalid_grant", errorString);
 	}
 
 	@Override
@@ -202,6 +196,26 @@ public class JWTBearerGrantHandlerTest extends BaseClientTestCase {
 				"zPtZNqsqkT4scEsAy3fsE9twiG3S9u4tmKOEQqX7wLtL1kwBig_Hh5_RXPQfI",
 				"4MoV3iMzw-k-urHJQ5cRJxzYOxNqoj1oDJxWCDXmrm9idFH0Lrs6rb0rQ6jCk",
 				"BjEM9Q_rM0ZzoiB0NXbaQTrgxlHGUrpTDlEukKGQObWyYNvktv-OYw"));
+	}
+
+	private String _getJwtAssertion(URI audience) throws Exception {
+		JwsHeaders jwsHeaders = new JwsHeaders(
+			JoseType.JWT, SignatureAlgorithm.RS256);
+
+		jwsHeaders.setKeyId(_KID_01);
+
+		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+
+		JwtToken jwtToken = new JwtToken(
+			jwsHeaders, _getJWTClaims(user.getUuid(), audience));
+
+		JwsJwtCompactProducer jwsJwtCompactProducer = new JwsJwtCompactProducer(
+			jwtToken);
+
+		JsonWebKeys jsonWebKeys = JwkUtils.readJwkSet(_jwks_string);
+
+		return jwsJwtCompactProducer.signWith(
+			jsonWebKeys.getKey(jwsHeaders.getKeyId()));
 	}
 
 	private JwtClaims _getJWTClaims(String uuid, URI accessTokenEndpoint) {
