@@ -19,13 +19,11 @@ import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -76,9 +74,13 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 		JwsHeaders jwsHeaders = new JwsHeaders(
 			JoseType.JWT, SignatureAlgorithm.RS256);
 
-		jwsHeaders.setKeyId(_kid_01);
+		jwsHeaders.setKeyId(_KID_01);
 
-		JwtToken jwtToken = new JwtToken(jwsHeaders, _jwtClaims);
+		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+
+		JwtToken jwtToken = new JwtToken(
+			jwsHeaders,
+			_getJWTClaims(user.getUuid(), getTokenWebTarget().getUri()));
 
 		JwsJwtCompactProducer jwsJwtCompactProducer = new JwsJwtCompactProducer(
 			jwtToken);
@@ -103,28 +105,15 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 	}
 
 	protected void doSetup() throws Exception {
-		if (_user != null) {
-			return;
-		}
-
-		Company company = CompanyLocalServiceUtil.getCompanyByWebId(
-			TestPropsValues.COMPANY_WEB_ID);
-
-		_user = UserTestUtil.addCompanyAdminUser(company);
-
-		_initJWKS();
-
 		_tokenWebTarget = getTokenWebTarget();
-
-		_initJWTClaims(_user.getUuid(), _tokenWebTarget.getUri());
 	}
 
 	@Override
 	protected BundleActivator getBundleActivator() {
-		return new TokenExpeditionTestPreparatorBundleActivator();
+		return new JWTBearerGrantTestPreparatorBundleActivator();
 	}
 
-	private JSONObject _createAsymmetricPrivateKeyJSONObject(
+	private static JSONObject _createAsymmetricPrivateKeyJSONObject(
 		String kty, String use, String alg, String kid, String d) {
 
 		JSONObject keyJSONObject = _createKeyJSONObject(kty, use, alg, kid);
@@ -134,7 +123,7 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 		return keyJSONObject;
 	}
 
-	private JSONObject _createKeyJSONObject(
+	private static JSONObject _createKeyJSONObject(
 		String kty, String use, String alg, String kid) {
 
 		JSONObject keyJSONObject = JSONUtil.put(
@@ -152,7 +141,7 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 		return keyJSONObject;
 	}
 
-	private JSONObject _createRSAKeyPairJSONObject(
+	private static JSONObject _createRSAKeyPairJSONObject(
 		String kty, String e, String use, String kid, String alg, String p,
 		String q, String d, String qi, String dp, String dq, String n) {
 
@@ -190,11 +179,9 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 		return rsaKeyJSONObject;
 	}
 
-	private JSONObject _createTestRSAKeyPairJSONWebKey01() {
-		_kid_01 = "_createTestRSAKeyPairJSONWebKey01";
-
+	private static JSONObject _createTestRSAKeyPairJSONWebKey01() {
 		return _createRSAKeyPairJSONObject(
-			"RSA", "AQAB", "sig", _kid_01, "RS256",
+			"RSA", "AQAB", "sig", _KID_01, "RS256",
 			StringBundler.concat(
 				"37P2B_RQiNP4M-khV2Z0qTlkfcrFy02v2xko6xqqYqxJTnD2eM0_WGqKQVTBb",
 				"q2thTPkw44Kw18jhqYcVm7jyQcN4zcYKEAElQ3jztJOWKLkTOiuu5D-DXuF3P",
@@ -234,44 +221,38 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 				"BjEM9Q_rM0ZzoiB0NXbaQTrgxlHGUrpTDlEukKGQObWyYNvktv-OYw"));
 	}
 
-	private void _initJWKS() {
-		if (_jwks_string != null) {
-			return;
-		}
+	private JwtClaims _getJWTClaims(String uuid, URI accessTokenEndpoint) {
+		JwtClaims jwtClaims = new JwtClaims();
 
+		jwtClaims.setIssuer(_ASSERTION_ISSUER);
+
+		jwtClaims.setIssuedAt(OAuthUtils.getIssuedAt());
+
+		jwtClaims.setExpiryTime(jwtClaims.getIssuedAt() + 3600L);
+
+		jwtClaims.setAudience(accessTokenEndpoint.toString());
+
+		jwtClaims.setSubject(uuid);
+
+		return jwtClaims;
+	}
+
+	private static final String _ASSERTION_ISSUER = "self-assertion-issuer";
+
+	private static final String _KID_01 = "_createTestRSAKeyPairJSONWebKey01";
+
+	private static String _jwks_string;
+
+	{
 		JSONObject jwksJSONObject = JSONUtil.put(
 			"keys", JSONUtil.put(_createTestRSAKeyPairJSONWebKey01()));
 
 		_jwks_string = jwksJSONObject.toString();
 	}
 
-	private void _initJWTClaims(String uuid, URI accessTokenEndpoint) {
-		if (_jwtClaims != null) {
-			return;
-		}
-
-		_jwtClaims = new JwtClaims();
-
-		_jwtClaims.setIssuer(_ASSERTION_ISSUER);
-
-		_jwtClaims.setIssuedAt(OAuthUtils.getIssuedAt());
-
-		_jwtClaims.setExpiryTime(_jwtClaims.getIssuedAt() + 3600L);
-
-		_jwtClaims.setAudience(accessTokenEndpoint.toString());
-
-		_jwtClaims.setSubject(uuid);
-	}
-
-	private static final String _ASSERTION_ISSUER = "self-assertion-issuer";
-
-	private static String _jwks_string;
-	private static JwtClaims _jwtClaims;
-	private static String _kid_01;
 	private static WebTarget _tokenWebTarget;
-	private static User _user;
 
-	private static class TokenExpeditionTestPreparatorBundleActivator
+	private static class JWTBearerGrantTestPreparatorBundleActivator
 		extends BaseTestPreparatorBundleActivator {
 
 		@Override
@@ -288,8 +269,11 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 					"oauth2.in.assertion.user.auth.type", "UUID"
 				).build());
 
+			User user = UserTestUtil.getAdminUser(
+				PortalUtil.getDefaultCompanyId());
+
 			createOAuth2Application(
-				_user.getCompanyId(), _user, "oauthTestApplication",
+				user.getCompanyId(), user, "oauthTestApplication",
 				Arrays.asList(GrantType.JWT_BEARER),
 				Collections.singletonList("everything"));
 		}
