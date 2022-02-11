@@ -12,11 +12,9 @@
  * details.
  */
 
-package com.liferay.oauth2.provider.rest.endpoint.access.token.grant.handler.test;
+package com.liferay.oauth2.provider.client.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.oauth2.provider.client.test.BaseClientTestCase;
-import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -56,7 +54,7 @@ import org.osgi.framework.BundleActivator;
  * @author Arthur Chan
  */
 @RunWith(Arquillian.class)
-public class JWTBearerGrantHandlerTest extends BaseClientTestCase {
+public class JWTBearerGrantTest extends BaseClientTestCase {
 
 	@ClassRule
 	@Rule
