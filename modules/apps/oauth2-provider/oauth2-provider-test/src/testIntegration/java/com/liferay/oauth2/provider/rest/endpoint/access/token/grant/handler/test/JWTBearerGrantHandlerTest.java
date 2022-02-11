@@ -15,6 +15,7 @@
 package com.liferay.oauth2.provider.rest.endpoint.access.token.grant.handler.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.oauth2.provider.client.test.BaseClientTestCase;
 import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -33,12 +34,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-
 import org.apache.cxf.rs.security.jose.common.JoseType;
 import org.apache.cxf.rs.security.jose.jwa.SignatureAlgorithm;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKeys;
@@ -47,7 +42,6 @@ import org.apache.cxf.rs.security.jose.jws.JwsHeaders;
 import org.apache.cxf.rs.security.jose.jws.JwsJwtCompactProducer;
 import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
 import org.apache.cxf.rs.security.jose.jwt.JwtToken;
-import org.apache.cxf.rs.security.oauth2.grants.jwt.Constants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
 import org.junit.Assert;
@@ -62,7 +56,7 @@ import org.osgi.framework.BundleActivator;
  * @author Arthur Chan
  */
 @RunWith(Arquillian.class)
-public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
+public class JWTBearerGrantHandlerTest extends BaseClientTestCase {
 
 	@ClassRule
 	@Rule
@@ -90,22 +84,11 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 		String jwtAssertion = jwsJwtCompactProducer.signWith(
 			jsonWebKeys.getKey(jwsHeaders.getKeyId()));
 
-		Invocation.Builder tokenBuilder = _tokenWebTarget.request();
+		String tokenString = getToken(
+			"oauthTestApplication", null,
+			getJWTBearerGrantBiFunction(jwtAssertion), this::parseTokenString);
 
-		MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
-
-		formData.add("client_id", "oauthTestApplication");
-		formData.add("client_secret", "oauthTestApplicationSecret");
-		formData.add("grant_type", Constants.JWT_BEARER_GRANT);
-		formData.add("assertion", jwtAssertion);
-
-		Assert.assertFalse(
-			Validator.isNull(
-				parseTokenString(tokenBuilder.post(Entity.form(formData)))));
-	}
-
-	protected void doSetup() throws Exception {
-		_tokenWebTarget = getTokenWebTarget();
+		Assert.assertTrue(Validator.isNotNull(tokenString));
 	}
 
 	@Override
@@ -249,8 +232,6 @@ public class JWTBearerGrantHandlerTest extends BaseGrantHandlerTestCase {
 
 		_jwks_string = jwksJSONObject.toString();
 	}
-
-	private static WebTarget _tokenWebTarget;
 
 	private static class JWTBearerGrantTestPreparatorBundleActivator
 		extends BaseTestPreparatorBundleActivator {

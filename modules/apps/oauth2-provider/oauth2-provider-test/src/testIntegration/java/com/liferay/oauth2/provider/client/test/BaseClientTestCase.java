@@ -52,6 +52,7 @@ import javax.ws.rs.ext.RuntimeDelegate;
 
 import org.apache.cxf.jaxrs.client.spec.ClientBuilderImpl;
 import org.apache.cxf.jaxrs.impl.RuntimeDelegateImpl;
+import org.apache.cxf.rs.security.oauth2.grants.jwt.Constants;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -456,6 +457,22 @@ public abstract class BaseClientTestCase {
 		}
 
 		return webTarget;
+	}
+
+	protected BiFunction<String, Invocation.Builder, Response>
+		getJWTBearerGrantBiFunction(String jwtAssertion) {
+
+		return (clientId, invocationBuilder) -> {
+			MultivaluedMap<String, String> formData =
+				new MultivaluedHashMap<>();
+
+			formData.add("client_id", clientId);
+			formData.add("client_secret", "oauthTestApplicationSecret");
+			formData.add("grant_type", Constants.JWT_BEARER_GRANT);
+			formData.add("assertion", jwtAssertion);
+
+			return invocationBuilder.post(Entity.form(formData));
+		};
 	}
 
 	protected WebTarget getLoginWebTarget() {
