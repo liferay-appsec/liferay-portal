@@ -85,7 +85,11 @@ public class LiferayAccessTokenService extends AccessTokenService {
 
 		String clientId = params.getFirst("client_id");
 
-		if ((clientId != null) && clientId.isEmpty()) {
+		String abc = "abc";
+
+		abc = clientId;
+
+		if ((abc != null) && clientId.isEmpty()) {
 			reportInvalidClient();
 		}
 
