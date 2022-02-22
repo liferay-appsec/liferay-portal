@@ -83,6 +83,7 @@ public class SamlSpIdpConnectionModelImpl
 		{"samlIdpEntityId", Types.VARCHAR}, {"signAuthnRequest", Types.BOOLEAN},
 		{"unknownUsersAreStrangers", Types.BOOLEAN},
 		{"userAttributeMappings", Types.VARCHAR},
+		{"userAttributePassThrough", Types.BOOLEAN},
 		{"userIdentifierExpression", Types.VARCHAR}
 	};
 
@@ -110,11 +111,12 @@ public class SamlSpIdpConnectionModelImpl
 		TABLE_COLUMNS_MAP.put("signAuthnRequest", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("unknownUsersAreStrangers", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("userAttributeMappings", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("userAttributePassThrough", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("userIdentifierExpression", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table SamlSpIdpConnection (samlSpIdpConnectionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,assertionSignatureRequired BOOLEAN,clockSkew LONG,enabled BOOLEAN,forceAuthn BOOLEAN,ldapImportEnabled BOOLEAN,metadataUpdatedDate DATE null,metadataUrl VARCHAR(1024) null,metadataXml TEXT null,name VARCHAR(75) null,nameIdFormat VARCHAR(1024) null,samlIdpEntityId VARCHAR(1024) null,signAuthnRequest BOOLEAN,unknownUsersAreStrangers BOOLEAN,userAttributeMappings STRING null,userIdentifierExpression VARCHAR(200) null)";
+		"create table SamlSpIdpConnection (samlSpIdpConnectionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,assertionSignatureRequired BOOLEAN,clockSkew LONG,enabled BOOLEAN,forceAuthn BOOLEAN,ldapImportEnabled BOOLEAN,metadataUpdatedDate DATE null,metadataUrl VARCHAR(1024) null,metadataXml TEXT null,name VARCHAR(75) null,nameIdFormat VARCHAR(1024) null,samlIdpEntityId VARCHAR(1024) null,signAuthnRequest BOOLEAN,unknownUsersAreStrangers BOOLEAN,userAttributeMappings STRING null,userAttributePassThrough BOOLEAN,userIdentifierExpression VARCHAR(200) null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table SamlSpIdpConnection";
@@ -413,6 +415,13 @@ public class SamlSpIdpConnectionModelImpl
 			"userAttributeMappings",
 			(BiConsumer<SamlSpIdpConnection, String>)
 				SamlSpIdpConnection::setUserAttributeMappings);
+		attributeGetterFunctions.put(
+			"userAttributePassThrough",
+			SamlSpIdpConnection::getUserAttributePassThrough);
+		attributeSetterBiConsumers.put(
+			"userAttributePassThrough",
+			(BiConsumer<SamlSpIdpConnection, Boolean>)
+				SamlSpIdpConnection::setUserAttributePassThrough);
 		attributeGetterFunctions.put(
 			"userIdentifierExpression",
 			SamlSpIdpConnection::getUserIdentifierExpression);
@@ -816,6 +825,25 @@ public class SamlSpIdpConnectionModelImpl
 	}
 
 	@Override
+	public boolean getUserAttributePassThrough() {
+		return _userAttributePassThrough;
+	}
+
+	@Override
+	public boolean isUserAttributePassThrough() {
+		return _userAttributePassThrough;
+	}
+
+	@Override
+	public void setUserAttributePassThrough(boolean userAttributePassThrough) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_userAttributePassThrough = userAttributePassThrough;
+	}
+
+	@Override
 	public String getUserIdentifierExpression() {
 		if (_userIdentifierExpression == null) {
 			return "";
@@ -917,6 +945,8 @@ public class SamlSpIdpConnectionModelImpl
 			isUnknownUsersAreStrangers());
 		samlSpIdpConnectionImpl.setUserAttributeMappings(
 			getUserAttributeMappings());
+		samlSpIdpConnectionImpl.setUserAttributePassThrough(
+			isUserAttributePassThrough());
 		samlSpIdpConnectionImpl.setUserIdentifierExpression(
 			getUserIdentifierExpression());
 
@@ -970,6 +1000,8 @@ public class SamlSpIdpConnectionModelImpl
 			this.<Boolean>getColumnOriginalValue("unknownUsersAreStrangers"));
 		samlSpIdpConnectionImpl.setUserAttributeMappings(
 			this.<String>getColumnOriginalValue("userAttributeMappings"));
+		samlSpIdpConnectionImpl.setUserAttributePassThrough(
+			this.<Boolean>getColumnOriginalValue("userAttributePassThrough"));
 		samlSpIdpConnectionImpl.setUserIdentifierExpression(
 			this.<String>getColumnOriginalValue("userIdentifierExpression"));
 
@@ -1161,6 +1193,9 @@ public class SamlSpIdpConnectionModelImpl
 			samlSpIdpConnectionCacheModel.userAttributeMappings = null;
 		}
 
+		samlSpIdpConnectionCacheModel.userAttributePassThrough =
+			isUserAttributePassThrough();
+
 		samlSpIdpConnectionCacheModel.userIdentifierExpression =
 			getUserIdentifierExpression();
 
@@ -1285,6 +1320,7 @@ public class SamlSpIdpConnectionModelImpl
 	private boolean _signAuthnRequest;
 	private boolean _unknownUsersAreStrangers;
 	private String _userAttributeMappings;
+	private boolean _userAttributePassThrough;
 	private String _userIdentifierExpression;
 
 	public <T> T getColumnValue(String columnName) {
@@ -1338,6 +1374,8 @@ public class SamlSpIdpConnectionModelImpl
 			"unknownUsersAreStrangers", _unknownUsersAreStrangers);
 		_columnOriginalValues.put(
 			"userAttributeMappings", _userAttributeMappings);
+		_columnOriginalValues.put(
+			"userAttributePassThrough", _userAttributePassThrough);
 		_columnOriginalValues.put(
 			"userIdentifierExpression", _userIdentifierExpression);
 	}
@@ -1393,7 +1431,9 @@ public class SamlSpIdpConnectionModelImpl
 
 		columnBitmasks.put("userAttributeMappings", 524288L);
 
-		columnBitmasks.put("userIdentifierExpression", 1048576L);
+		columnBitmasks.put("userAttributePassThrough", 1048576L);
+
+		columnBitmasks.put("userIdentifierExpression", 2097152L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

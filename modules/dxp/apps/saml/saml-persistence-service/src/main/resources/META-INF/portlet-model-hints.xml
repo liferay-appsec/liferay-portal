@@ -110,6 +110,7 @@
 		<field name="userAttributeMappings" type="String">
 			<hint-collection name="TEXTAREA" />
 		</field>
+		<field name="userAttributePassThrough" type="boolean" />
 		<field name="userIdentifierExpression" type="String">
 			<hint name="max-length">200</hint>
 		</field>
