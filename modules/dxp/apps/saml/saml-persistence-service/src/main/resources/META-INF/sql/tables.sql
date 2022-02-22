@@ -85,6 +85,7 @@ create table SamlSpIdpConnection (
 	signAuthnRequest BOOLEAN,
 	unknownUsersAreStrangers BOOLEAN,
 	userAttributeMappings STRING null,
+	userAttributePassThrough BOOLEAN,
 	userIdentifierExpression VARCHAR(200) null
 );
 

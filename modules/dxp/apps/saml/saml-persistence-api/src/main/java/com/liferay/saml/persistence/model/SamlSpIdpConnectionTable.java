@@ -101,6 +101,10 @@ public class SamlSpIdpConnectionTable
 		userAttributeMappings = createColumn(
 			"userAttributeMappings", String.class, Types.VARCHAR,
 			Column.FLAG_DEFAULT);
+	public final Column<SamlSpIdpConnectionTable, Boolean>
+		userAttributePassThrough = createColumn(
+			"userAttributePassThrough", Boolean.class, Types.BOOLEAN,
+			Column.FLAG_DEFAULT);
 	public final Column<SamlSpIdpConnectionTable, String>
 		userIdentifierExpression = createColumn(
 			"userIdentifierExpression", String.class, Types.VARCHAR,

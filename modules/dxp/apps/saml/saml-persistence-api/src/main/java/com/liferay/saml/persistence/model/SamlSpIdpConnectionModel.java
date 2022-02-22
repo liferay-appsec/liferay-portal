@@ -415,6 +415,27 @@ public interface SamlSpIdpConnectionModel
 	public void setUserAttributeMappings(String userAttributeMappings);
 
 	/**
+	 * Returns the user attribute pass through of this saml sp idp connection.
+	 *
+	 * @return the user attribute pass through of this saml sp idp connection
+	 */
+	public boolean getUserAttributePassThrough();
+
+	/**
+	 * Returns <code>true</code> if this saml sp idp connection is user attribute pass through.
+	 *
+	 * @return <code>true</code> if this saml sp idp connection is user attribute pass through; <code>false</code> otherwise
+	 */
+	public boolean isUserAttributePassThrough();
+
+	/**
+	 * Sets whether this saml sp idp connection is user attribute pass through.
+	 *
+	 * @param userAttributePassThrough the user attribute pass through of this saml sp idp connection
+	 */
+	public void setUserAttributePassThrough(boolean userAttributePassThrough);
+
+	/**
 	 * Returns the user identifier expression of this saml sp idp connection.
 	 *
 	 * @return the user identifier expression of this saml sp idp connection
