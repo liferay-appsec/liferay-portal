@@ -22,8 +22,11 @@ AttributeMappingDisplayContext attributeMappingDisplayContext = (AttributeMappin
 String userIdentifierExpression = attributeMappingDisplayContext.getUserIdentifierExpression();
 %>
 
+<aui:model-context bean="<%= (SamlSpIdpConnection)request.getAttribute(SamlWebKeys.SAML_SP_IDP_CONNECTION) %>" model="<%= SamlSpIdpConnection.class %>" />
+
 <aui:fieldset helpMessage="attribute-mapping-help" id='<%= liferayPortletResponse.getNamespace() + "userAttributeMappings" %>' label="attribute-mapping">
 	<aui:input name="attribute:userIdentifierExpressionPrefix" type="hidden" value="" />
+	<aui:input helpMessage="user-attribute-pass-through-help" name="userAttributePassThrough" />
 
 	<%
 	for (Map.Entry<String, UserFieldExpressionHandler> entry : attributeMappingDisplayContext.getOrderedUserFieldExpressionHandlers()) {
