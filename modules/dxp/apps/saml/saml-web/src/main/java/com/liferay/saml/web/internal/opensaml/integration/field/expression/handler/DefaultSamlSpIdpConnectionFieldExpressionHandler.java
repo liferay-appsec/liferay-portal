@@ -98,6 +98,9 @@ public class DefaultSamlSpIdpConnectionFieldExpressionHandler
 			"samlIdpEntityId", SamlSpIdpConnection::setSamlIdpEntityId);
 		samlSpIdpConnectionBind.mapBoolean(
 			"signAuthnRequest", SamlSpIdpConnection::setSignAuthnRequest);
+		samlSpIdpConnectionBind.mapBoolean(
+			"userAttributePassThrough",
+			SamlSpIdpConnection::setUserAttributePassThrough);
 		samlSpIdpConnectionBind.mapString(
 			"userIdentifierExpression",
 			SamlSpIdpConnection::setUserIdentifierExpression);
@@ -140,6 +143,7 @@ public class DefaultSamlSpIdpConnectionFieldExpressionHandler
 				newSamlSpIdpConnection.isSignAuthnRequest(),
 				newSamlSpIdpConnection.isUnknownUsersAreStrangers(),
 				newSamlSpIdpConnection.getUserAttributeMappings(),
+				newSamlSpIdpConnection.isUserAttributePassThrough(),
 				newSamlSpIdpConnection.getUserIdentifierExpression(),
 				serviceContext);
 		}
@@ -158,6 +162,7 @@ public class DefaultSamlSpIdpConnectionFieldExpressionHandler
 				newSamlSpIdpConnection.isSignAuthnRequest(),
 				newSamlSpIdpConnection.isUnknownUsersAreStrangers(),
 				newSamlSpIdpConnection.getUserAttributeMappings(),
+				newSamlSpIdpConnection.isUserAttributePassThrough(),
 				newSamlSpIdpConnection.getUserIdentifierExpression(),
 				serviceContext);
 		}
