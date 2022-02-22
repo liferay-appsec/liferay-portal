@@ -51,6 +51,32 @@ public class SamlSpIdpConnectionLocalServiceUtil {
 			InputStream metadataXmlInputStream, String name,
 			String nameIdFormat, String samlIdpEntityId,
 			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, boolean userAttributePassThrough,
+			String userIdentifierExpression,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().addSamlSpIdpConnection(
+			assertionSignatureRequired, clockSkew, enabled, forceAuthn,
+			ldapImportEnabled, metadataUrl, metadataXmlInputStream, name,
+			nameIdFormat, samlIdpEntityId, signAuthnRequest,
+			unknownUsersAreStrangers, userAttributeMappings,
+			userAttributePassThrough, userIdentifierExpression, serviceContext);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #addSamlSpIdpConnection(boolean, long, boolean, boolean, boolean, String,
+	 InputStream, String, String, String, boolean, boolean, String, boolean,
+	 String, ServiceContext)}
+	 */
+	@Deprecated
+	public static SamlSpIdpConnection addSamlSpIdpConnection(
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
 			String userAttributeMappings, String userIdentifierExpression,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
@@ -344,6 +370,33 @@ public class SamlSpIdpConnectionLocalServiceUtil {
 		getService().updateMetadata(samlSpIdpConnectionId);
 	}
 
+	public static SamlSpIdpConnection updateSamlSpIdpConnection(
+			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean forceAuthn,
+			boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, boolean userAttributePassThrough,
+			String userIdentifierExpression,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().updateSamlSpIdpConnection(
+			samlSpIdpConnectionId, assertionSignatureRequired, clockSkew,
+			enabled, forceAuthn, ldapImportEnabled, metadataUrl,
+			metadataXmlInputStream, name, nameIdFormat, samlIdpEntityId,
+			signAuthnRequest, unknownUsersAreStrangers, userAttributeMappings,
+			userAttributePassThrough, userIdentifierExpression, serviceContext);
+	}
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #updateSamlSpIdpConnection(long, boolean, long, boolean, boolean,
+	 boolean, String, InputStream, String, String, String, boolean, boolean,
+	 String, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
 	public static SamlSpIdpConnection updateSamlSpIdpConnection(
 			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
 			long clockSkew, boolean enabled, boolean forceAuthn,

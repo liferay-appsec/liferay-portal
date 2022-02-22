@@ -171,6 +171,9 @@ public class SamlSpIdpConnectionPersistenceTest {
 		newSamlSpIdpConnection.setUserAttributeMappings(
 			RandomTestUtil.randomString());
 
+		newSamlSpIdpConnection.setUserAttributePassThrough(
+			RandomTestUtil.randomBoolean());
+
 		newSamlSpIdpConnection.setUserIdentifierExpression(
 			RandomTestUtil.randomString());
 
@@ -244,6 +247,9 @@ public class SamlSpIdpConnectionPersistenceTest {
 			existingSamlSpIdpConnection.getUserAttributeMappings(),
 			newSamlSpIdpConnection.getUserAttributeMappings());
 		Assert.assertEquals(
+			existingSamlSpIdpConnection.isUserAttributePassThrough(),
+			newSamlSpIdpConnection.isUserAttributePassThrough());
+		Assert.assertEquals(
 			existingSamlSpIdpConnection.getUserIdentifierExpression(),
 			newSamlSpIdpConnection.getUserIdentifierExpression());
 	}
@@ -299,7 +305,7 @@ public class SamlSpIdpConnectionPersistenceTest {
 			"metadataUrl", true, "name", true, "nameIdFormat", true,
 			"samlIdpEntityId", true, "signAuthnRequest", true,
 			"unknownUsersAreStrangers", true, "userAttributeMappings", true,
-			"userIdentifierExpression", true);
+			"userAttributePassThrough", true, "userIdentifierExpression", true);
 	}
 
 	@Test
@@ -640,6 +646,9 @@ public class SamlSpIdpConnectionPersistenceTest {
 
 		samlSpIdpConnection.setUserAttributeMappings(
 			RandomTestUtil.randomString());
+
+		samlSpIdpConnection.setUserAttributePassThrough(
+			RandomTestUtil.randomBoolean());
 
 		samlSpIdpConnection.setUserIdentifierExpression(
 			RandomTestUtil.randomString());

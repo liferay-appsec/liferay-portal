@@ -69,6 +69,23 @@ public interface SamlSpIdpConnectionLocalService
 			InputStream metadataXmlInputStream, String name,
 			String nameIdFormat, String samlIdpEntityId,
 			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, boolean userAttributePassThrough,
+			String userIdentifierExpression, ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #addSamlSpIdpConnection(boolean, long, boolean, boolean, boolean, String,
+	 InputStream, String, String, String, boolean, boolean, String, boolean,
+	 String, ServiceContext)}
+	 */
+	@Deprecated
+	public SamlSpIdpConnection addSamlSpIdpConnection(
+			boolean assertionSignatureRequired, long clockSkew, boolean enabled,
+			boolean forceAuthn, boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
 			String userAttributeMappings, String userIdentifierExpression,
 			ServiceContext serviceContext)
 		throws PortalException;
@@ -295,6 +312,24 @@ public interface SamlSpIdpConnectionLocalService
 	public void updateMetadata(long samlSpIdpConnectionId)
 		throws PortalException;
 
+	public SamlSpIdpConnection updateSamlSpIdpConnection(
+			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
+			long clockSkew, boolean enabled, boolean forceAuthn,
+			boolean ldapImportEnabled, String metadataUrl,
+			InputStream metadataXmlInputStream, String name,
+			String nameIdFormat, String samlIdpEntityId,
+			boolean signAuthnRequest, boolean unknownUsersAreStrangers,
+			String userAttributeMappings, boolean userAttributePassThrough,
+			String userIdentifierExpression, ServiceContext serviceContext)
+		throws PortalException;
+
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 #updateSamlSpIdpConnection(long, boolean, long, boolean, boolean,
+	 boolean, String, InputStream, String, String, String, boolean, boolean,
+	 String, boolean, String, ServiceContext)}
+	 */
+	@Deprecated
 	public SamlSpIdpConnection updateSamlSpIdpConnection(
 			long samlSpIdpConnectionId, boolean assertionSignatureRequired,
 			long clockSkew, boolean enabled, boolean forceAuthn,

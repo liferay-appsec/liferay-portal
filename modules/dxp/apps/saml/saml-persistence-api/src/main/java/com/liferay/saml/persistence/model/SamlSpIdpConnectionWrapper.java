@@ -65,6 +65,8 @@ public class SamlSpIdpConnectionWrapper
 			"unknownUsersAreStrangers", isUnknownUsersAreStrangers());
 		attributes.put("userAttributeMappings", getUserAttributeMappings());
 		attributes.put(
+			"userAttributePassThrough", isUserAttributePassThrough());
+		attributes.put(
 			"userIdentifierExpression", getUserIdentifierExpression());
 
 		return attributes;
@@ -195,6 +197,13 @@ public class SamlSpIdpConnectionWrapper
 
 		if (userAttributeMappings != null) {
 			setUserAttributeMappings(userAttributeMappings);
+		}
+
+		Boolean userAttributePassThrough = (Boolean)attributes.get(
+			"userAttributePassThrough");
+
+		if (userAttributePassThrough != null) {
+			setUserAttributePassThrough(userAttributePassThrough);
 		}
 
 		String userIdentifierExpression = (String)attributes.get(
@@ -408,6 +417,16 @@ public class SamlSpIdpConnectionWrapper
 	}
 
 	/**
+	 * Returns the user attribute pass through of this saml sp idp connection.
+	 *
+	 * @return the user attribute pass through of this saml sp idp connection
+	 */
+	@Override
+	public boolean getUserAttributePassThrough() {
+		return model.getUserAttributePassThrough();
+	}
+
+	/**
 	 * Returns the user ID of this saml sp idp connection.
 	 *
 	 * @return the user ID of this saml sp idp connection
@@ -505,6 +524,16 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public boolean isUnknownUsersAreStrangers() {
 		return model.isUnknownUsersAreStrangers();
+	}
+
+	/**
+	 * Returns <code>true</code> if this saml sp idp connection is user attribute pass through.
+	 *
+	 * @return <code>true</code> if this saml sp idp connection is user attribute pass through; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isUserAttributePassThrough() {
+		return model.isUserAttributePassThrough();
 	}
 
 	@Override
@@ -702,6 +731,16 @@ public class SamlSpIdpConnectionWrapper
 	@Override
 	public void setUserAttributeMappings(String userAttributeMappings) {
 		model.setUserAttributeMappings(userAttributeMappings);
+	}
+
+	/**
+	 * Sets whether this saml sp idp connection is user attribute pass through.
+	 *
+	 * @param userAttributePassThrough the user attribute pass through of this saml sp idp connection
+	 */
+	@Override
+	public void setUserAttributePassThrough(boolean userAttributePassThrough) {
+		model.setUserAttributePassThrough(userAttributePassThrough);
 	}
 
 	/**

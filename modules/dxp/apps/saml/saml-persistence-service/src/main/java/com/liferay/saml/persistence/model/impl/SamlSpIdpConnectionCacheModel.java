@@ -64,7 +64,7 @@ public class SamlSpIdpConnectionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(43);
+		StringBundler sb = new StringBundler(45);
 
 		sb.append("{samlSpIdpConnectionId=");
 		sb.append(samlSpIdpConnectionId);
@@ -106,6 +106,8 @@ public class SamlSpIdpConnectionCacheModel
 		sb.append(unknownUsersAreStrangers);
 		sb.append(", userAttributeMappings=");
 		sb.append(userAttributeMappings);
+		sb.append(", userAttributePassThrough=");
+		sb.append(userAttributePassThrough);
 		sb.append(", userIdentifierExpression=");
 		sb.append(userIdentifierExpression);
 		sb.append("}");
@@ -205,6 +207,9 @@ public class SamlSpIdpConnectionCacheModel
 				userAttributeMappings);
 		}
 
+		samlSpIdpConnectionImpl.setUserAttributePassThrough(
+			userAttributePassThrough);
+
 		if (userIdentifierExpression == null) {
 			samlSpIdpConnectionImpl.setUserIdentifierExpression("");
 		}
@@ -251,6 +256,8 @@ public class SamlSpIdpConnectionCacheModel
 
 		unknownUsersAreStrangers = objectInput.readBoolean();
 		userAttributeMappings = objectInput.readUTF();
+
+		userAttributePassThrough = objectInput.readBoolean();
 		userIdentifierExpression = objectInput.readUTF();
 	}
 
@@ -329,6 +336,8 @@ public class SamlSpIdpConnectionCacheModel
 			objectOutput.writeUTF(userAttributeMappings);
 		}
 
+		objectOutput.writeBoolean(userAttributePassThrough);
+
 		if (userIdentifierExpression == null) {
 			objectOutput.writeUTF("");
 		}
@@ -357,6 +366,7 @@ public class SamlSpIdpConnectionCacheModel
 	public boolean signAuthnRequest;
 	public boolean unknownUsersAreStrangers;
 	public String userAttributeMappings;
+	public boolean userAttributePassThrough;
 	public String userIdentifierExpression;
 
 }
