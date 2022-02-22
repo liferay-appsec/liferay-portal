@@ -114,7 +114,8 @@ public class UpdateIdentityProviderConnectionMVCActionCommand
 
 	private static final String[] _BOOLEAN_FIELD_EXPRESSIONS = {
 		"assertionSignatureRequired", "enabled", "forceAuthn",
-		"ldapImportEnabled", "unknownUsersAreStrangers", "signAuthnRequest"
+		"ldapImportEnabled", "unknownUsersAreStrangers",
+		"userAttributePassThrough", "signAuthnRequest"
 	};
 
 	@Reference
