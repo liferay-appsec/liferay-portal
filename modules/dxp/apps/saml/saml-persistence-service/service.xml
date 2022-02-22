@@ -197,6 +197,7 @@
 		<column name="signAuthnRequest" type="boolean" />
 		<column name="unknownUsersAreStrangers" type="boolean" />
 		<column name="userAttributeMappings" type="String" />
+		<column name="userAttributePassThrough" type="boolean" />
 		<column name="userIdentifierExpression" type="String" />
 
 		<!-- Finder methods -->
