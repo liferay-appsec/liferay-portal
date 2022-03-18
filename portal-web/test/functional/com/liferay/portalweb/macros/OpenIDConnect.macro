@@ -20,6 +20,14 @@ definition {
 		}
 	}
 
+	macro enableOpenIDConnectDebugLogs {
+		ServerAdministration.openServerAdmin();
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "DEBUG",
+			categoryName = "com.liferay.login.authentication.openid.connect.web");
+	}
+
 	macro accountSignIn {
 		if (!(isSet(specificURL))) {
 			Navigator.openURL();
@@ -88,6 +96,18 @@ definition {
 			FormFields.editTextMultiline(
 				fieldName = "discoveryEndPoint",
 				fieldValue = "https://accounts.google.com/.well-known/openid-configuration");
+		}
+
+		if (isSet(customAuthorizationRequestParameters)) {
+			FormFields.editTextMultiline(
+				fieldName = "customAuthorizationRequestParameters",
+				fieldValue = "${customAuthorizationRequestParameters}");
+		}
+
+		if (isSet(customTokenRequestParameters)) {
+			FormFields.editTextMultiline(
+				fieldName = "customTokenRequestParameters",
+				fieldValue = "${customTokenRequestParameters}");
 		}
 
 		FormFields.editTextMultiline(
