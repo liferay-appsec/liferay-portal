@@ -455,6 +455,53 @@ definition {
 		}
 	}
 
+	test OpenIDConnectWithGoogleCustomParameters {
+		property dummy.socket.proxy.disabled = "true";
+		property test.name.skip.portal.instance = "OpenIDConnect#EnabledOpenIDConnectOnSystemLevel";
+
+		var openIdConnectClientId = PropsUtil.get("google.client.id.2");
+		var openIdConnectClientSecret = PropsUtil.get("google.client.secret.2");
+		var userEmailAddress = PropsUtil.get("email.address.2");
+		var userPassword = PropsUtil.get("email.password.2");
+
+		OpenIDConnect.enableOpenIDConnectDebugLogs();
+
+		SystemSettings.openSystemSettingsAdmin();
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "SSO",
+			configurationName = "OpenID Connect",
+			configurationScope = "System Scope");
+
+		PortalSettings.enableOpenIDConnectCP(systemLevel = "true");
+
+		SystemSettings.openSystemSettingsAdmin();
+
+		SystemSettings.gotoConfiguration(
+			configurationCategory = "SSO",
+			configurationName = "OpenID Connect Provider Connection",
+			configurationScope = "Virtual Instance Scope");
+
+		OpenIDConnect.addProvider(
+			customAuthorizationRequestParameters = "access_type=offline",
+			customTokenRequestParameters = "resource=https://contacts.google.com",
+			openIdConnectClientId = "${openIdConnectClientId}",
+			openIdConnectClientSecret = "${openIdConnectClientSecret}",
+			providerName = "Google");
+
+		UserBar.signOut();
+
+		User.loginUserWithOpenIDConnectEnabledPG(
+			userEmailAddress = "${userEmailAddress}",
+			userPassword = "${userPassword}");
+
+		Pause(locator1 = "65000");
+
+		Refresh();
+
+		User.viewLoggedInPG();
+	}
+
 	@description = "This is a use case for LPS-124898 TC-1: Verify Instance admin can set the token refresh offset via System settings."
 	@priority = "4"
 	test TokenRefreshOffsetCanBeSetAtSystemLevel {
