@@ -309,10 +309,10 @@ public class OAuthClientASMetadataLocalServiceWrapper
 	@Override
 	public java.util.List
 		<com.liferay.oauth.client.persistence.model.OAuthClientASMetadata>
-			getOAuthClientASMetadatas(long companyId) {
+			getOAuthClientASMetadatas(long companyId, int start, int end) {
 
 		return _oAuthClientASMetadataLocalService.getOAuthClientASMetadatas(
-			companyId);
+			companyId, start, end);
 	}
 
 	@Override

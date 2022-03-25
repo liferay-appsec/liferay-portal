@@ -244,7 +244,7 @@ public interface OAuthClientASMetadataLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<OAuthClientASMetadata> getOAuthClientASMetadatas(
-		long companyId);
+		long companyId, int start, int end);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<OAuthClientASMetadata> getOAuthClientASMetadatas(

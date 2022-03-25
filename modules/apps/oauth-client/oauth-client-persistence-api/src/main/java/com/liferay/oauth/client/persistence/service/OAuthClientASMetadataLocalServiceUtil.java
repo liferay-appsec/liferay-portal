@@ -271,9 +271,9 @@ public class OAuthClientASMetadataLocalServiceUtil {
 	}
 
 	public static List<OAuthClientASMetadata> getOAuthClientASMetadatas(
-		long companyId) {
+		long companyId, int start, int end) {
 
-		return getService().getOAuthClientASMetadatas(companyId);
+		return getService().getOAuthClientASMetadatas(companyId, start, end);
 	}
 
 	public static List<OAuthClientASMetadata> getOAuthClientASMetadatas(
