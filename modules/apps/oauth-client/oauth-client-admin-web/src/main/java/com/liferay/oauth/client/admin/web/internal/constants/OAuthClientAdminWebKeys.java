@@ -18,6 +18,8 @@ package com.liferay.oauth.client.admin.web.internal.constants;
  * @author Arthur Chan
  */
 public class OAuthClientAdminWebKeys {
-	public static final String ALL_AUTHORIZATION_SERVERS =  "ALL_AUTHORIZATION_SERVERS";
+
+	public static final String ALL_AUTHORIZATION_SERVERS =
+		"ALL_AUTHORIZATION_SERVERS";
 
 }

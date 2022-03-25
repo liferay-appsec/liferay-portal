@@ -18,8 +18,9 @@ package com.liferay.oauth.client.admin.web.internal.constants;
  * @author Arthur Chan
  */
 public class OAuthClientAdminPortletKeys {
+
 	public static final String OAUTH_CLIENT_ADMIN =
 		"com_liferay_oauth_client_admin_web_internal_portlet_OAuthClientAdmin" +
-		"Portlet";
+			"Portlet";
 
 }

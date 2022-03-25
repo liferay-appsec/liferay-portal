@@ -17,7 +17,6 @@ package com.liferay.oauth.client.admin.web.internal.portlet.action;
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 
-import javax.portlet.PortletException;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -29,19 +28,18 @@ import org.osgi.service.component.annotations.Component;
 @Component(
 	property = {
 		"javax.portlet.name=" + OAuthClientAdminPortletKeys.OAUTH_CLIENT_ADMIN,
-		"mvc.command.name=/",
-		"mvc.command.name=/oauth_client_admin/view_oauth_clients"
+		"mvc.command.name=/oauth_client_admin/view_oauth_client_as_metadatas"
 	},
 	service = MVCRenderCommand.class
 )
-public class ViewOAuthClientsMVCRenderCommand implements MVCRenderCommand {
+public class ViewOAuthClientASMetadatasMVCRenderCommand
+	implements MVCRenderCommand {
 
 	@Override
 	public String render(
-			RenderRequest renderRequest, RenderResponse renderResponse)
-		throws PortletException {
+		RenderRequest renderRequest, RenderResponse renderResponse) {
 
-		return null;
+		return "/admin/view_oauth_client_as_metadatas.jsp";
 	}
 
 }

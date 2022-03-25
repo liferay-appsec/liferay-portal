@@ -16,9 +16,10 @@ package com.liferay.oauth.client.admin.web.internal.portlet;
 
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
-import org.osgi.service.component.annotations.Component;
 
 import javax.portlet.Portlet;
+
+import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Arthur Chan
@@ -38,5 +39,5 @@ import javax.portlet.Portlet;
 	},
 	service = Portlet.class
 )
-public class OAuthClientAdminPortlet extends MVCPortlet  {
+public class OAuthClientAdminPortlet extends MVCPortlet {
 }
