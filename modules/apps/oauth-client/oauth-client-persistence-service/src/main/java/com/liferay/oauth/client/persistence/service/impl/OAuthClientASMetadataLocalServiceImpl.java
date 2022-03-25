@@ -41,9 +41,9 @@ public class OAuthClientASMetadataLocalServiceImpl
 
 	@Override
 	public List<OAuthClientASMetadata> getOAuthClientASMetadatas(
-		long companyId) {
+		long companyId, int start, int end) {
 
-		return oAuthClientASMetadataPersistence.findByCompanyId(companyId);
+		return oAuthClientASMetadataPersistence.findByCompanyId(companyId, start, end);
 	}
 
 	@Override
