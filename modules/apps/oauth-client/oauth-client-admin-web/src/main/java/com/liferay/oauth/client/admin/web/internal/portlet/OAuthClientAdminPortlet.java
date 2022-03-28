@@ -33,7 +33,7 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.display-name=OAuth Client Administration",
 		"javax.portlet.init-param.portlet-title-based-navigation=true",
 		"javax.portlet.init-param.template-path=/admin/",
-		"javax.portlet.init-param.view-template=/admin/view.jsp",
+		"javax.portlet.init-param.view-template=/admin/view_oauth_client_as_metadatas.jsp",
 		"javax.portlet.name=" + OAuthClientAdminPortletKeys.OAUTH_CLIENT_ADMIN,
 		"javax.portlet.resource-bundle=content.Language"
 	},

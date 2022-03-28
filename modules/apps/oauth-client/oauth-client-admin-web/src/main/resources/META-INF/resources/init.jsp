@@ -19,10 +19,19 @@
 <%@ taglib uri="http://liferay.com/tld/clay" prefix="clay" %><%@
 taglib uri="http://liferay.com/tld/frontend" prefix="liferay-frontend" %><%@
 taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %><%@
-taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
+taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
+taglib uri="http://liferay.com/tld/security" prefix="liferay-security" %>
+
+<%@ page import="com.liferay.oauth.client.persistence.model.OAuthClientASMetadata" %>
+<%@ page import="com.liferay.oauth.client.persistence.service.OAuthClientASMetadataLocalServiceUtil" %>
+<%@ page import="com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker" %>
+<%@ page import="com.liferay.oauth.client.admin.web.internal.display.context.OAuthClientASMetadataDisplayContext" %>
+<%@ page import="com.liferay.portal.kernel.util.WebKeys" %>
+<%@ page import="com.liferay.petra.string.StringPool" %>
+<%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
+<%@ page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %>
 
 <%@ page import="java.util.List" %>
-
 <liferay-frontend:defineObjects />
 
 <liferay-theme:defineObjects />

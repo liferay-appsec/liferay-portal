@@ -17,7 +17,7 @@
 <%@ include file="/init.jsp" %>
 
 <%
-List<OAuthClientASMetadata> oAuthClientASMetadatas = OAuthClientASMetadataLocalServiceUtil.getOAuthClientASMetadatas(themeDisplay.getCompanyId(), searchContainer.getStart(), searchContainer.getEnd());
+int oAuthClientASMetadataCount = OAuthClientASMetadataLocalServiceUtil.getOAuthClientASMetadatasCount();
 %>
 
 <clay:container-fluid
@@ -25,13 +25,13 @@ List<OAuthClientASMetadata> oAuthClientASMetadatas = OAuthClientASMetadataLocalS
 >
 	<liferay-ui:search-container
 		emptyResultsMessage="no-oauth-client-as-metadata-found"
-		id="oAuthClientASMetadatasSearchContainer"
+		id="oAuthClientASMetadataSearchContainer"
 		iteratorURL="<%= currentURLObj %>"
 		rowChecker="<%= new EmptyOnClickRowChecker(renderResponse) %>"
-		total="<%= oAuthClientASMetadatas.size() %>"
+		total="<%= oAuthClientASMetadataCount %>"
 	>
 		<liferay-ui:search-container-results
-			results="<%= oAuthClientASMetadatas %>"
+			results="<%= OAuthClientASMetadataLocalServiceUtil.getOAuthClientASMetadatas(themeDisplay.getCompanyId(), searchContainer.getStart(), searchContainer.getEnd()) %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -48,21 +48,23 @@ List<OAuthClientASMetadata> oAuthClientASMetadatas = OAuthClientASMetadataLocalS
 
 			<liferay-ui:search-container-column-text
 				href="<%= editURL %>"
+				name="oauth-client-as-metadata-issuer"
 				property="issuer"
 			/>
 
 			<liferay-ui:search-container-column-text
+				name="oauth-client-as-metadata-discovery-endpoint"
 				property="discoveryEndpoint"
 			/>
 
 			<liferay-ui:search-container-column-jsp
 				align="right"
-				path="/admin/application_actions.jsp"
+				path="/admin/oauth_client_as_metadata_actions.jsp"
 			/>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator
-			displayStyle="descriptive"
+			displayStyle="list"
 			markupView="lexicon"
 		/>
 	</liferay-ui:search-container>
