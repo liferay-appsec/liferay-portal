@@ -257,6 +257,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		String password2 = password1;
 
+		if (Validator.isBlank(password1)) {
+			autoPassword = true;
+		}
+
 		boolean autoScreenName = false;
 
 		screenName = getLogin(screenName);
@@ -318,8 +322,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		updateLastLogin(
 			defaultAdminUser.getUserId(), defaultAdminUser.getLoginIP());
 
-		updatePasswordReset(
-			defaultAdminUser.getUserId(), _isPasswordReset(companyId));
+		if (autoPassword) {
+			updatePasswordManually(
+				defaultAdminUser.getUserId(), StringPool.BLANK, true, true,
+				new Date());
+		}
+		else {
+			updatePasswordReset(
+				defaultAdminUser.getUserId(), _isPasswordReset(companyId));
+		}
 
 		return defaultAdminUser;
 	}
