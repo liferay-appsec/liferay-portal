@@ -52,8 +52,6 @@ public class LiferayJWTBearerAuthenticationHandlerRegistrator {
 				"osgi.jaxrs.application.select",
 				"(osgi.jaxrs.name=Liferay.OAuth2.Application)"
 			).put(
-				"osgi.jaxrs.extension", true
-			).put(
 				"osgi.jaxrs.name", "Liferay.JWT.Bearer.Authentication.Handler"
 			).put(
 				"osgi.jaxrs.resource", true
