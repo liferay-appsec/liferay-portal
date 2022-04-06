@@ -200,6 +200,22 @@ public interface OAuth2ApplicationModel
 	public void setAllowedGrantTypes(String allowedGrantTypes);
 
 	/**
+	 * Returns the client authentication method of this o auth2 application.
+	 *
+	 * @return the client authentication method of this o auth2 application
+	 */
+	@AutoEscape
+	public String getClientAuthenticationMethod();
+
+	/**
+	 * Sets the client authentication method of this o auth2 application.
+	 *
+	 * @param clientAuthenticationMethod the client authentication method of this o auth2 application
+	 */
+	public void setClientAuthenticationMethod(
+		String clientAuthenticationMethod);
+
+	/**
 	 * Returns the client credential user ID of this o auth2 application.
 	 *
 	 * @return the client credential user ID of this o auth2 application
@@ -344,6 +360,21 @@ public interface OAuth2ApplicationModel
 	 * @param iconFileEntryId the icon file entry ID of this o auth2 application
 	 */
 	public void setIconFileEntryId(long iconFileEntryId);
+
+	/**
+	 * Returns the j wks of this o auth2 application.
+	 *
+	 * @return the j wks of this o auth2 application
+	 */
+	@AutoEscape
+	public String getJWKS();
+
+	/**
+	 * Sets the j wks of this o auth2 application.
+	 *
+	 * @param jWKS the j wks of this o auth2 application
+	 */
+	public void setJWKS(String jWKS);
 
 	/**
 	 * Returns the name of this o auth2 application.

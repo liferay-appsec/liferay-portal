@@ -52,6 +52,8 @@ public class OAuth2ApplicationWrapper
 			"oAuth2ApplicationScopeAliasesId",
 			getOAuth2ApplicationScopeAliasesId());
 		attributes.put("allowedGrantTypes", getAllowedGrantTypes());
+		attributes.put(
+			"clientAuthenticationMethod", getClientAuthenticationMethod());
 		attributes.put("clientCredentialUserId", getClientCredentialUserId());
 		attributes.put(
 			"clientCredentialUserName", getClientCredentialUserName());
@@ -62,6 +64,7 @@ public class OAuth2ApplicationWrapper
 		attributes.put("features", getFeatures());
 		attributes.put("homePageURL", getHomePageURL());
 		attributes.put("iconFileEntryId", getIconFileEntryId());
+		attributes.put("jWKS", getJWKS());
 		attributes.put("name", getName());
 		attributes.put("privacyPolicyURL", getPrivacyPolicyURL());
 		attributes.put("redirectURIs", getRedirectURIs());
@@ -122,6 +125,13 @@ public class OAuth2ApplicationWrapper
 			setAllowedGrantTypes(allowedGrantTypes);
 		}
 
+		String clientAuthenticationMethod = (String)attributes.get(
+			"clientAuthenticationMethod");
+
+		if (clientAuthenticationMethod != null) {
+			setClientAuthenticationMethod(clientAuthenticationMethod);
+		}
+
 		Long clientCredentialUserId = (Long)attributes.get(
 			"clientCredentialUserId");
 
@@ -178,6 +188,12 @@ public class OAuth2ApplicationWrapper
 			setIconFileEntryId(iconFileEntryId);
 		}
 
+		String jWKS = (String)attributes.get("jWKS");
+
+		if (jWKS != null) {
+			setJWKS(jWKS);
+		}
+
 		String name = (String)attributes.get("name");
 
 		if (name != null) {
@@ -230,6 +246,16 @@ public class OAuth2ApplicationWrapper
 		getAllowedGrantTypesList() {
 
 		return model.getAllowedGrantTypesList();
+	}
+
+	/**
+	 * Returns the client authentication method of this o auth2 application.
+	 *
+	 * @return the client authentication method of this o auth2 application
+	 */
+	@Override
+	public String getClientAuthenticationMethod() {
+		return model.getClientAuthenticationMethod();
 	}
 
 	/**
@@ -355,6 +381,16 @@ public class OAuth2ApplicationWrapper
 	@Override
 	public long getIconFileEntryId() {
 		return model.getIconFileEntryId();
+	}
+
+	/**
+	 * Returns the j wks of this o auth2 application.
+	 *
+	 * @return the j wks of this o auth2 application
+	 */
+	@Override
+	public String getJWKS() {
+		return model.getJWKS();
 	}
 
 	/**
@@ -526,6 +562,18 @@ public class OAuth2ApplicationWrapper
 	}
 
 	/**
+	 * Sets the client authentication method of this o auth2 application.
+	 *
+	 * @param clientAuthenticationMethod the client authentication method of this o auth2 application
+	 */
+	@Override
+	public void setClientAuthenticationMethod(
+		String clientAuthenticationMethod) {
+
+		model.setClientAuthenticationMethod(clientAuthenticationMethod);
+	}
+
+	/**
 	 * Sets the client credential user ID of this o auth2 application.
 	 *
 	 * @param clientCredentialUserId the client credential user ID of this o auth2 application
@@ -648,6 +696,16 @@ public class OAuth2ApplicationWrapper
 	@Override
 	public void setIconFileEntryId(long iconFileEntryId) {
 		model.setIconFileEntryId(iconFileEntryId);
+	}
+
+	/**
+	 * Sets the j wks of this o auth2 application.
+	 *
+	 * @param jWKS the j wks of this o auth2 application
+	 */
+	@Override
+	public void setJWKS(String jWKS) {
+		model.setJWKS(jWKS);
 	}
 
 	/**
