@@ -57,25 +57,13 @@ public class SamlUtilTest extends BaseSamlTestCase {
 
 		attributes.add(
 			OpenSamlUtil.buildAttribute("emailAddress", "test@liferay.com"));
-		attributes.add(
-			OpenSamlUtil.buildAttribute("firstName", "TestFirstName"));
-		attributes.add(OpenSamlUtil.buildAttribute("lastName", "TestLastName"));
-		attributes.add(OpenSamlUtil.buildAttribute("screenName", "test"));
 
 		Map<String, List<Serializable>> attributesMap =
 			SamlUtil.getAttributesMap(attributes, new Properties());
 
-		Assert.assertEquals(
-			"test@liferay.com",
+		Assert.assertNull(
+			"emailAddress attribute is not mapped so should be ignored",
 			SamlUtil.getValueAsString("emailAddress", attributesMap));
-		Assert.assertEquals(
-			"TestFirstName",
-			SamlUtil.getValueAsString("firstName", attributesMap));
-		Assert.assertEquals(
-			"TestLastName",
-			SamlUtil.getValueAsString("lastName", attributesMap));
-		Assert.assertEquals(
-			"test", SamlUtil.getValueAsString("screenName", attributesMap));
 	}
 
 	@Test
@@ -111,8 +99,9 @@ public class SamlUtilTest extends BaseSamlTestCase {
 			SamlUtil.getValueAsString("lastName", attributesMap));
 		Assert.assertEquals(
 			"test", SamlUtil.getValueAsString("screenName", attributesMap));
-		Assert.assertEquals(
-			"TestJobTitle", SamlUtil.getValueAsString("title", attributesMap));
+		Assert.assertNull(
+			"Title attribute is not mapped so should be ignored",
+			SamlUtil.getValueAsString("title", attributesMap));
 	}
 
 	@Test
@@ -172,8 +161,9 @@ public class SamlUtilTest extends BaseSamlTestCase {
 				SamlUtil.getValueAsDateTime("modifiedDate", attributesMap)));
 		Assert.assertEquals(
 			"test", SamlUtil.getValueAsString("screenName", attributesMap));
-		Assert.assertEquals(
-			"TestJobTitle", SamlUtil.getValueAsString("title", attributesMap));
+		Assert.assertNull(
+			"Title attribute is not mapped so should be ignored",
+			SamlUtil.getValueAsString("title", attributesMap));
 	}
 
 }
