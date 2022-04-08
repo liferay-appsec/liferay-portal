@@ -14,6 +14,7 @@
 
 package com.liferay.saml.opensaml.integration.internal.util;
 
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.saml.opensaml.integration.internal.BaseSamlTestCase;
 
@@ -53,13 +54,12 @@ public class SamlUtilTest extends BaseSamlTestCase {
 
 	@Test
 	public void testGetAttributesMap() {
-		List<Attribute> attributes = new ArrayList<>();
-
-		attributes.add(
-			OpenSamlUtil.buildAttribute("emailAddress", "test@liferay.com"));
-
 		Map<String, List<Serializable>> attributesMap =
-			SamlUtil.getAttributesMap(attributes, new Properties());
+			SamlUtil.getAttributesMap(
+				ListUtil.fromArray(
+					OpenSamlUtil.buildAttribute(
+						"emailAddress", "test@liferay.com")),
+				new Properties());
 
 		Assert.assertNull(
 			"emailAddress attribute is not mapped so should be ignored",
@@ -106,23 +106,17 @@ public class SamlUtilTest extends BaseSamlTestCase {
 
 	@Test
 	public void testGetAttributesMapWithMappingAndFriendlyName() {
-		List<Attribute> attributes = new ArrayList<>();
-
-		attributes.add(
+		List<Attribute> attributes = ListUtil.fromArray(
 			OpenSamlUtil.buildAttribute(
 				"givenName", "firstName", Attribute.UNSPECIFIED,
-				"TestFirstName"));
-		attributes.add(
+				"TestFirstName"),
 			OpenSamlUtil.buildAttribute(
 				"mail", "emailAddress", Attribute.UNSPECIFIED,
-				"test@liferay.com"));
-		attributes.add(
+				"test@liferay.com"),
 			OpenSamlUtil.buildAttribute(
-				"sn", "lastName", Attribute.UNSPECIFIED, "TestLastName"));
-		attributes.add(
+				"sn", "lastName", Attribute.UNSPECIFIED, "TestLastName"),
 			OpenSamlUtil.buildAttribute(
-				"title", "jobTitle", Attribute.UNSPECIFIED, "TestJobTitle"));
-		attributes.add(
+				"title", "jobTitle", Attribute.UNSPECIFIED, "TestJobTitle"),
 			OpenSamlUtil.buildAttribute(
 				"userPrincipalName", "screenName", Attribute.UNSPECIFIED,
 				"test"));
