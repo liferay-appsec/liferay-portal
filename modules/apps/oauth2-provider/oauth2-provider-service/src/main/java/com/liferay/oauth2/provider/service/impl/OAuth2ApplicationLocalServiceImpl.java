@@ -122,7 +122,7 @@ public class OAuth2ApplicationLocalServiceImpl
 			companyId, userId, userName, allowedGrantTypesList,
 			OAuthConstants.TOKEN_ENDPOINT_AUTH_BASIC, clientCredentialUserId,
 			clientId, clientProfile, clientSecret, description, featuresList,
-			homePageURL, iconFileEntryId, name, privacyPolicyURL,
+			homePageURL, iconFileEntryId, null, name, privacyPolicyURL,
 			redirectURIsList, rememberDevice, trustedApplication,
 			builderConsumer, serviceContext);
 	}
@@ -147,7 +147,7 @@ public class OAuth2ApplicationLocalServiceImpl
 			companyId, userId, userName, allowedGrantTypesList,
 			OAuthConstants.TOKEN_ENDPOINT_AUTH_BASIC, clientCredentialUserId,
 			clientId, clientProfile, clientSecret, description, featuresList,
-			homePageURL, iconFileEntryId, name, privacyPolicyURL,
+			homePageURL, iconFileEntryId, null, name, privacyPolicyURL,
 			redirectURIsList, rememberDevice, scopeAliasesList,
 			trustedApplication, serviceContext);
 	}
@@ -232,9 +232,9 @@ public class OAuth2ApplicationLocalServiceImpl
 			String clientAuthenticationMethod, long clientCredentialUserId,
 			String clientId, int clientProfile, String clientSecret,
 			String description, List<String> featuresList, String homePageURL,
-			long iconFileEntryId, String name, String privacyPolicyURL,
-			List<String> redirectURIsList, boolean rememberDevice,
-			boolean trustedApplication,
+			long iconFileEntryId, String jwks, String name,
+			String privacyPolicyURL, List<String> redirectURIsList,
+			boolean rememberDevice, boolean trustedApplication,
 			Consumer<OAuth2ScopeBuilder> builderConsumer,
 			ServiceContext serviceContext)
 		throws PortalException {
@@ -288,6 +288,7 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
 		oAuth2Application.setIconFileEntryId(iconFileEntryId);
+		oAuth2Application.setJWKS(jwks);
 		oAuth2Application.setName(name);
 		oAuth2Application.setPrivacyPolicyURL(privacyPolicyURL);
 		oAuth2Application.setRedirectURIsList(redirectURIsList);
@@ -321,10 +322,10 @@ public class OAuth2ApplicationLocalServiceImpl
 			String clientAuthenticationMethod, long clientCredentialUserId,
 			String clientId, int clientProfile, String clientSecret,
 			String description, List<String> featuresList, String homePageURL,
-			long iconFileEntryId, String name, String privacyPolicyURL,
-			List<String> redirectURIsList, boolean rememberDevice,
-			List<String> scopeAliasesList, boolean trustedApplication,
-			ServiceContext serviceContext)
+			long iconFileEntryId, String jwks, String name,
+			String privacyPolicyURL, List<String> redirectURIsList,
+			boolean rememberDevice, List<String> scopeAliasesList,
+			boolean trustedApplication, ServiceContext serviceContext)
 		throws PortalException {
 
 		if (allowedGrantTypesList == null) {
@@ -380,6 +381,7 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
 		oAuth2Application.setIconFileEntryId(iconFileEntryId);
+		oAuth2Application.setJWKS(jwks);
 		oAuth2Application.setName(name);
 		oAuth2Application.setPrivacyPolicyURL(privacyPolicyURL);
 		oAuth2Application.setRedirectURIsList(redirectURIsList);
@@ -637,7 +639,7 @@ public class OAuth2ApplicationLocalServiceImpl
 			oAuth2ApplicationId, oAuth2ApplicationScopeAliasesId,
 			allowedGrantTypesList, OAuthConstants.TOKEN_ENDPOINT_AUTH_BASIC,
 			clientCredentialUserId, clientId, clientProfile, clientSecret,
-			description, featuresList, homePageURL, iconFileEntryId, name,
+			description, featuresList, homePageURL, iconFileEntryId, null, name,
 			privacyPolicyURL, redirectURIsList, rememberDevice,
 			trustedApplication);
 	}
@@ -649,9 +651,9 @@ public class OAuth2ApplicationLocalServiceImpl
 			String clientAuthenticationMethod, long clientCredentialUserId,
 			String clientId, int clientProfile, String clientSecret,
 			String description, List<String> featuresList, String homePageURL,
-			long iconFileEntryId, String name, String privacyPolicyURL,
-			List<String> redirectURIsList, boolean rememberDevice,
-			boolean trustedApplication)
+			long iconFileEntryId, String jwks, String name,
+			String privacyPolicyURL, List<String> redirectURIsList,
+			boolean rememberDevice, boolean trustedApplication)
 		throws PortalException {
 
 		OAuth2Application oAuth2Application =
@@ -688,6 +690,7 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
 		oAuth2Application.setIconFileEntryId(iconFileEntryId);
+		oAuth2Application.setJWKS(jwks);
 		oAuth2Application.setName(name);
 		oAuth2Application.setPrivacyPolicyURL(privacyPolicyURL);
 		oAuth2Application.setRedirectURIsList(redirectURIsList);
