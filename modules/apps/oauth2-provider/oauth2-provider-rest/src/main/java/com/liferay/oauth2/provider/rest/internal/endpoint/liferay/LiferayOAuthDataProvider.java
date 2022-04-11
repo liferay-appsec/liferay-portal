@@ -1008,10 +1008,14 @@ public class LiferayOAuthDataProvider
 			clientSecret = null;
 		}
 
+		String clientAuthenticationMethod =
+			oAuth2Application.getClientAuthenticationMethod();
+
 		Client client = new Client(
 			oAuth2Application.getClientId(), clientSecret,
-			!Validator.isBlank(clientSecret), oAuth2Application.getName(),
-			oAuth2Application.getHomePageURL());
+			!clientAuthenticationMethod.equals(
+				OAuthConstants.TOKEN_ENDPOINT_AUTH_NONE),
+			oAuth2Application.getName(), oAuth2Application.getHomePageURL());
 
 		List<String> clientGrantTypes = client.getAllowedGrantTypes();
 
@@ -1087,6 +1091,8 @@ public class LiferayOAuthDataProvider
 				oAuth2Application.getClientCredentialUserId(),
 				oAuth2Application.getClientCredentialUserName()));
 
+		client.setTokenEndpointAuthMethod(clientAuthenticationMethod);
+
 		Map<String, String> properties = client.getProperties();
 
 		properties.put(
@@ -1095,6 +1101,9 @@ public class LiferayOAuthDataProvider
 		properties.put(
 			OAuth2ProviderRESTEndpointConstants.PROPERTY_KEY_CLIENT_FEATURES,
 			oAuth2Application.getFeatures());
+		properties.put(
+			OAuth2ProviderRESTEndpointConstants.PROPERTY_KEY_CLIENT_JWKS,
+			oAuth2Application.getJWKS());
 		properties.put(
 			OAuth2ProviderRESTEndpointConstants.
 				PROPERTY_KEY_CLIENT_REMEMBER_DEVICE,
