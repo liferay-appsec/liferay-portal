@@ -19,6 +19,7 @@ import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDa
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.InetAddressUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.remote.cors.annotation.CORS;
 
 import java.net.InetAddress;
@@ -132,6 +133,34 @@ public class LiferayAccessTokenService extends AccessTokenService {
 
 	@Override
 	protected void injectContextIntoOAuthProviders() {
+	}
+
+	/**
+	 * In theory, there should be no customer affected by the change of adding
+	 * client authentication method in client, but in case of custom code,
+	 * ignore client authentication method check, which is same as existing
+	 * behavior. We will enable the check in next release, to give customer some
+	 * time to adjust.
+	 */
+	@Override
+	protected void validateClientAuthenticationMethod(
+		Client client, String clientAuthenticationMethod) {
+
+		String tokenEndpointAuthenticationMethod =
+			client.getTokenEndpointAuthMethod();
+
+		if (!tokenEndpointAuthenticationMethod.equals(
+				clientAuthenticationMethod)) {
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Client configuration has been updated to include ",
+						"client authentication method. Please make sure token",
+						" request is using correct client authentication ",
+						"method for client: ", client.getClientId()));
+			}
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
