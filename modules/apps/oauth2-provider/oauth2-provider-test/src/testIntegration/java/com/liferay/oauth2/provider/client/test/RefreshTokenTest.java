@@ -64,7 +64,7 @@ public class RefreshTokenTest extends BaseClientTestCase {
 			this::parseJSONObject);
 
 		WebTarget webTarget = getWebTarget("/annotated");
-
+		/**/
 		String accessTokenString = jsonObject.getString("access_token");
 
 		Invocation.Builder invocationBuilder = authorize(
