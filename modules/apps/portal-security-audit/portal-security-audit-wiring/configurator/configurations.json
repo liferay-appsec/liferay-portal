@@ -1,0 +1,7 @@
+{
+	"com.liferay.portal.security.audit.wiring.internal.configuration.AuditLogContextConfiguration": {
+		"enabled": "false",
+		"useIncomingXForwardedFor": "false",
+		"useIncomingXRequestId": "false"
+	}
+}
