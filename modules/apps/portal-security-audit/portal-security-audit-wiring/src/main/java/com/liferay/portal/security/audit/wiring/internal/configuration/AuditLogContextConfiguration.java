@@ -38,4 +38,11 @@ public interface AuditLogContextConfiguration {
 	)
 	public boolean useIncomingXRequestId();
 
+	@Meta.AD(
+		deflt = "true",
+		description = "use-incoming-x-forwarded-for-description",
+		name = "use-incoming-x-forwarded-for", required = false
+	)
+	public boolean useIncomingXForwardedFor();
+
 }

@@ -155,11 +155,13 @@ public class AuditFilter extends BaseFilter implements TryFilter {
 	}
 
 	private String _getRemoteAddr(HttpServletRequest httpServletRequest) {
-		String remoteAddr = httpServletRequest.getHeader(
-			HttpHeaders.X_FORWARDED_FOR);
+		if (_auditLogContextConfiguration.useIncomingXForwardedFor()) {
+			String remoteAddr = httpServletRequest.getHeader(
+				HttpHeaders.X_FORWARDED_FOR);
 
-		if (remoteAddr != null) {
-			return remoteAddr;
+			if (remoteAddr != null) {
+				return remoteAddr;
+			}
 		}
 
 		return httpServletRequest.getRemoteAddr();
