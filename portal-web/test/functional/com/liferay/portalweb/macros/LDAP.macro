@@ -24,6 +24,23 @@ definition {
 			locator1 = "Button#CLOSE_MODAL");
 	}
 
+	@description = "Enable LDAP debug logs at localhost"
+	macro enableLDAPDebugLogs {
+		ServerAdministration.openServerAdmin();
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "DEBUG",
+			categoryName = "com.liferay.portal.security.ldap.internal.DefaultPortalLDAP");
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "DEBUG",
+			categoryName = "com.liferay.portal.security.ldap.internal.authenticator.LDAPAuth");
+
+		ServerAdministration.addCategoryLogLevels(
+			categoryLevel = "DEBUG",
+			categoryName = "com.liferay.portal.security.ldap.internal.exportimport");
+	}
+
 	@description = "Enable various LDAP related settings"
 	macro enableLDAPSettings {
 		PortalSettings.configureLDAPSetting(enableSettingList = "${enableSettingList}");
