@@ -653,6 +653,21 @@ definition {
 		PortalSettings.configureCurrentLanguagesCP(defaultPortalLanguage = "${newLanguage}");
 	}
 
+	macro setImportIntervalTime {
+		Variables.assertDefined(parameterList = "${importIntervalTime}");
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "LDAP",
+			configurationName = "Import",
+			configurationScope = "Virtual Instance Scope");
+
+		Type(
+			locator1 = "PortalSettingsAuthentication#LDAP_IMPORT_INTERVAL",
+			value1 = "${importIntervalTime}");
+
+		PortletEntry.save();
+	}
+
 	macro tearDownAuthenticationCP {
 		PortalSettings.gotoConfiguration(
 			configurationCategory = "User Authentication",
