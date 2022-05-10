@@ -97,6 +97,66 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-121705. User status remain unchanged after LDAP imports. Blocked by LPS-153030."
+	@priority = "3"
+	test DeactivatedUserStayDeactivatedAfterLDAPImport {
+		property apacheds.enabled = "true";
+		property test.name.skip.portal.instance = "LDAP#DeactivatedUserStayDeactivatedAfterLDAPImport";
+
+		task ("Given: User enable DEBUG log level for LDAP related loggers") {
+			LDAP.enableLDAPDebugLogs();
+		}
+
+		task ("And: Adds LDAP server and test connection") {
+			PortalSettings.addLDAPServer(ldapServerName = "ApacheDS Server");
+
+			PortalSettings.editLDAPServer(ldapServerName = "ApacheDS Server");
+
+			PortalSettings.testLDAPConnection();
+		}
+
+		task ("And: Configure LDAP settings") {
+			var enableSettingList = "enabled,ldapImportEnabled";
+
+			LDAP.enableLDAPSettings(enableSettingList = "${enableSettingList}");
+
+			PortalSettings.setImportIntervalTime(importIntervalTime = "1");
+		}
+
+		task ("When: User adds a new user on localhost") {
+			JSONUser.addUser(
+				userEmailAddress = "usera@liferay.com",
+				userFirstName = "firstName",
+				userLastName = "lastName",
+				userScreenName = "usera");
+
+			JSONUser.setFirstPassword(
+				agreeToTermsAndAnswerReminderQuery = "true",
+				requireReset = "false",
+				userEmailAddress = "usera@liferay.com");
+		}
+
+		task ("And: Deactivates the new user") {
+			User.openUsersAdmin();
+
+			User.deactivateCP(userFirstName = "firstName");
+
+			User.openUsersAdmin();
+
+			User.searchCP(searchTerm = "firstName");
+
+			User.viewNoUsersFoundCP();
+		}
+
+		task ("Then: The status of the new user remain unchanged after a new LDAP import") {
+			Pause(value1 = "70000");
+
+			User.searchCP(searchTerm = "firstName");
+
+			User.viewNoUsersFoundCP();
+		}
+	}
+
 	@description = "This is a use case for LPS-30529. User fields are not reset to default when signing in with imported LDAP user."
 	@priority = "4"
 	test FieldValuesNotResetForImportedLDAPUser {
