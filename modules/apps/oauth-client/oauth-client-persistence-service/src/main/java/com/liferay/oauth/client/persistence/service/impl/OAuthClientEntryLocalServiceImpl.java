@@ -69,7 +69,7 @@ public class OAuthClientEntryLocalServiceImpl
 
 		String clientId = infoJSONObject.getAsString("client_id");
 
-		_validateClientId(user.getCompanyId(), authServerIssuer, clientId);
+		_validateClientId(user.getCompanyId(), authServerIssuer, clientId, 0);
 
 		_validateParametersJSON(parametersJSON);
 
@@ -211,7 +211,8 @@ public class OAuthClientEntryLocalServiceImpl
 		String clientId = infoJSONObject.getAsString("client_id");
 
 		_validateClientId(
-			oAuthClientEntry.getCompanyId(), authServerIssuer, clientId);
+			oAuthClientEntry.getCompanyId(), authServerIssuer, clientId,
+			oAuthClientEntryId);
 
 		_validateParametersJSON(parametersJSON);
 
@@ -235,12 +236,26 @@ public class OAuthClientEntryLocalServiceImpl
 	}
 
 	private void _validateClientId(
-			long companyId, String authServerIssuer, String clientId)
+			long companyId, String authServerIssuer, String clientId,
+			long oAuthClientEntryId)
 		throws PortalException {
 
-		OAuthClientEntry oAuthClientEntry =
-			oAuthClientEntryPersistence.fetchByC_A_C(
-				companyId, authServerIssuer, clientId);
+		OAuthClientEntry oAuthClientEntry = null;
+
+		if (oAuthClientEntryId > 0) {
+			oAuthClientEntry = oAuthClientEntryPersistence.findByPrimaryKey(
+				oAuthClientEntryId);
+
+			if (authServerIssuer.equals(
+					oAuthClientEntry.getAuthServerIssuer()) &&
+				clientId.equals(oAuthClientEntry.getClientId())) {
+
+				return;
+			}
+		}
+
+		oAuthClientEntry = oAuthClientEntryPersistence.fetchByC_A_C(
+			companyId, authServerIssuer, clientId);
 
 		if (oAuthClientEntry != null) {
 			throw new DuplicateOAuthClientEntryException(

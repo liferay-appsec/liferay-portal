@@ -65,7 +65,7 @@ public class OAuthClientAuthServerLocalServiceImpl
 
 		String issuer = metadataJSONObject.getAsString("issuer");
 
-		_validateIssuer(user.getCompanyId(), issuer);
+		_validateIssuer(user.getCompanyId(), issuer, 0);
 
 		OAuthClientAuthServer oAuthClientAuthServer =
 			oAuthClientAuthServerPersistence.create(
@@ -201,7 +201,9 @@ public class OAuthClientAuthServerLocalServiceImpl
 
 		String issuer = metadataJSONObject.getAsString("issuer");
 
-		_validateIssuer(oAuthClientAuthServer.getCompanyId(), issuer);
+		_validateIssuer(
+			oAuthClientAuthServer.getCompanyId(), issuer,
+			oAuthClientAuthServerId);
 
 		oAuthClientAuthServer.setDiscoveryEndpoint(discoveryEndpoint);
 		oAuthClientAuthServer.setIssuer(issuer);
@@ -223,12 +225,26 @@ public class OAuthClientAuthServerLocalServiceImpl
 		}
 	}
 
-	private void _validateIssuer(long companyId, String issuer)
+	private void _validateIssuer(
+			long companyId, String issuer, long oAuthClientAuthServerId)
 		throws PortalException {
 
-		if (oAuthClientAuthServerPersistence.fetchByC_I(companyId, issuer) !=
-				null) {
+		OAuthClientAuthServer oAuthClientAuthServer = null;
 
+		if (oAuthClientAuthServerId > 0) {
+			oAuthClientAuthServer =
+				oAuthClientAuthServerPersistence.findByPrimaryKey(
+					oAuthClientAuthServerId);
+
+			if (issuer.equals(oAuthClientAuthServer.getIssuer())) {
+				return;
+			}
+		}
+
+		oAuthClientAuthServer = oAuthClientAuthServerPersistence.fetchByC_I(
+			companyId, issuer);
+
+		if (oAuthClientAuthServer != null) {
 			throw new DuplicateOAuthClientAuthServerException(
 				StringBundler.concat(
 					"Company ID ", companyId, " and issuer ", issuer));
