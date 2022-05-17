@@ -95,17 +95,36 @@ portletDisplay.setURLBack(ParamUtil.getString(request, "redirect"));
 	<portlet:namespace />init();
 
 	function <portlet:namespace />doSubmit() {
-		document.getElementById('<portlet:namespace />infoJSON').value = JSON.stringify(JSON.parse(document.getElementById('<portlet:namespace />infoJSON').value), null, 0);
+		document.getElementById(
+			'<portlet:namespace />infoJSON'
+		).value = JSON.stringify(
+			JSON.parse(
+				document.getElementById('<portlet:namespace />infoJSON').value
+			),
+			null,
+			0
+		);
 
-		document.getElementById('<portlet:namespace />parametersJSON').value = JSON.stringify(JSON.parse(document.getElementById('<portlet:namespace />parametersJSON').value), null, 0);
+		document.getElementById(
+			'<portlet:namespace />parametersJSON'
+		).value = JSON.stringify(
+			JSON.parse(
+				document.getElementById('<portlet:namespace />parametersJSON').value
+			),
+			null,
+			0
+		);
 
 		submitForm(document.getElementById('<portlet:namespace />oauth-client-fm'));
 	}
 
 	function <portlet:namespace />init() {
-		document.getElementById('<portlet:namespace />infoJSON').value = JSON.stringify(JSON.parse('<%= infoJSON %>'), null, 4);
+		document.getElementById(
+			'<portlet:namespace />infoJSON'
+		).value = JSON.stringify(JSON.parse('<%= infoJSON %>'), null, 4);
 
-		document.getElementById('<portlet:namespace />parametersJSON').value = JSON.stringify(JSON.parse('<%= parametersJSON %>'), null, 4);
+		document.getElementById(
+			'<portlet:namespace />parametersJSON'
+		).value = JSON.stringify(JSON.parse('<%= parametersJSON %>'), null, 4);
 	}
-
 </aui:script>

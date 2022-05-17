@@ -86,37 +86,54 @@ portletDisplay.setURLBack(ParamUtil.getString(request, "redirect"));
 	<portlet:namespace />init();
 
 	function <portlet:namespace />doSubmit() {
-		var form = document.getElementById('<portlet:namespace />oauth-client-auth-server-fm');
+		var form = document.getElementById(
+			'<portlet:namespace />oauth-client-auth-server-fm'
+		);
 
-		if (document.getElementById('<portlet:namespace />useDiscovery').value === "false") {
-			document.getElementById('<portlet:namespace />metadataJSON').value = JSON.stringify(JSON.parse(document.getElementById('<portlet:namespace />metadataJSON').value), null, 0);
+		if (
+			document.getElementById('<portlet:namespace />useDiscovery').value ===
+			'false'
+		) {
+			document.getElementById(
+				'<portlet:namespace />metadataJSON'
+			).value = JSON.stringify(
+				JSON.parse(
+					document.getElementById('<portlet:namespace />metadataJSON')
+						.value
+				),
+				null,
+				0
+			);
 			submitForm(form);
 			return;
 		}
 
 		fetch(
 			document.getElementById('<portlet:namespace />discoveryEndpoint').value
-		).then(
-			response => response.json()
-		).then(
-			jsonData => {
-				document.getElementById('<portlet:namespace />metadataJSON').value = JSON.stringify(jsonData, null, 0);
+		)
+			.then((response) => response.json())
+			.then((jsonData) => {
+				document.getElementById(
+					'<portlet:namespace />metadataJSON'
+				).value = JSON.stringify(jsonData, null, 0);
 				submitForm(form);
-			}
-		).catch(
-			console.error
-		);
+			})
+			.catch(console.error);
 	}
 
 	function <portlet:namespace />init() {
-		document.getElementById('<portlet:namespace />metadataJSON').value = JSON.stringify(JSON.parse('<%= metadataJSON %>'), null, 4);
+		document.getElementById(
+			'<portlet:namespace />metadataJSON'
+		).value = JSON.stringify(JSON.parse('<%= metadataJSON %>'), null, 4);
 
 		if (<%= issuer.length() < 1 %>) {
 			return;
 		}
 
 		if (<%= discoveryEndpoint.length() > 0 %>) {
-			document.getElementById('<portlet:namespace />discoveryEndpoint').value = '<%= discoveryEndpoint %>';
+			document.getElementById(
+				'<portlet:namespace />discoveryEndpoint'
+			).value = '<%= discoveryEndpoint %>';
 
 			<portlet:namespace />displayDiscovery(true);
 		}
@@ -127,15 +144,20 @@ portletDisplay.setURLBack(ParamUtil.getString(request, "redirect"));
 
 	function <portlet:namespace />displayDiscovery(checked) {
 		if (checked) {
-			document.getElementById('<portlet:namespace />useDiscovery').value = true;
-			document.getElementById('discoveryEndpointDiv').style = "";
-			document.getElementById('metadataJSONDiv').style = "display: none";
+			document.getElementById(
+				'<portlet:namespace />useDiscovery'
+			).value = true;
+			document.getElementById('discoveryEndpointDiv').style = '';
+			document.getElementById('metadataJSONDiv').style = 'display: none';
 		}
 		else {
-			document.getElementById('<portlet:namespace />useDiscovery').value = false;
-			document.getElementById('discoveryEndpointDiv').style = "display: none";
-			document.getElementById('metadataJSONDiv').style = "";
-			document.getElementById('<portlet:namespace />metadataJSON').style = "min-height: 600px";
+			document.getElementById(
+				'<portlet:namespace />useDiscovery'
+			).value = false;
+			document.getElementById('discoveryEndpointDiv').style = 'display: none';
+			document.getElementById('metadataJSONDiv').style = '';
+			document.getElementById('<portlet:namespace />metadataJSON').style =
+				'min-height: 600px';
 		}
 	}
 </aui:script>
