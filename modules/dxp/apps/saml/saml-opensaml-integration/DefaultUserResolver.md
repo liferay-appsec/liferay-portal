@@ -20,7 +20,6 @@ DefaultUserResolver->>+UserFieldExpressionResolver: resolveUserFieldExpression(A
 UserFieldExpressionResolver-->>-DefaultUserResolver: UserFieldExpression
 
 alt UserFieldExpression is null
-  rect rgb(32,32,64)
   DefaultUserResolver->>+Database: NameID
   Database->>Database: Search for User by NameID (SamlPeerBinding)
   alt User is null
@@ -29,7 +28,6 @@ alt UserFieldExpression is null
     Database-->>-DefaultUserResolver: User
     DefaultUserResolver->>+Database: updateUser(User, AttributesMap)
     Database-->>-WebSsoProfileImpl: User
-  end
   end
 end
 
@@ -44,9 +42,7 @@ alt SamlProviderConfigurationHelper.isLDAPImportEnabled()
   DefaultUserResolver->>+UserFieldExpressionHandler: getLdapUser(SearchFieldValue, removePrefix(UserFieldExpression))
   UserFieldExpressionHandler-->>-DefaultUserResolver: User
   alt User is not null
-    rect rgb(32,32,64)
     DefaultUserResolver-->>WebSsoProfileImpl: User
-    end
   end
 end
 
