@@ -6,18 +6,16 @@ sequenceDiagram
     participant WebSsoProfileImpl
     participant DefaultUserResolver
     participant Database
-    participant UserFieldExpressionResolverRegistry
-    participant UserFieldExpressionResolver
-    participant UserFieldExpressionHandlerRegistry
-    participant UserFieldExpressionHandler
+    participant UserFieldExpressionResolver[Registry]
+    participant UserFieldExpressionHandler[Registry]
 WebSsoProfileImpl->>DefaultUserResolver: resolveUser(UserResolverSAMLContext)
 DefaultUserResolver->>DefaultUserResolver: Build AttributesMap (Map<UserFieldExpression, List<Serializable>>)
 DefaultUserResolver->>DefaultUserResolver: Resolve NameID & SamlSpIdpConnection from UserResolverSAMLContext
-DefaultUserResolver->>+UserFieldExpressionResolverRegistry: getUserFieldExpressionResolver(prefix(SamlSpIdPConnection.UserIdentifierExpression))
-UserFieldExpressionResolverRegistry-->>-DefaultUserResolver: UserFieldExpressionResolver
+DefaultUserResolver->>+UserFieldExpressionResolver[Registry]: UserFieldExpressionResolverRegistry.getUserFieldExpressionResolver(prefix(SamlSpIdPConnection.UserIdentifierExpression))
+UserFieldExpressionResolver[Registry]-->>-DefaultUserResolver: UserFieldExpressionResolver
 
-DefaultUserResolver->>+UserFieldExpressionResolver: resolveUserFieldExpression(AttributeMap, UserResolverSAMLContext)
-UserFieldExpressionResolver-->>-DefaultUserResolver: UserFieldExpression
+DefaultUserResolver->>+UserFieldExpressionResolver[Registry]: resolveUserFieldExpression(AttributeMap, UserResolverSAMLContext)
+UserFieldExpressionResolver[Registry]-->>-DefaultUserResolver: UserFieldExpression
 
 alt UserFieldExpression is null
   DefaultUserResolver->>+Database: NameID
@@ -36,11 +34,11 @@ alt AttributeMap keyset contains UserFieldExpression
 else
   DefaultUserResolver->>DefaultUserResolver: Set SearchFieldValue to NameID value)
 end
-DefaultUserResolver->>+UserFieldExpressionHandlerRegistry: getFieldExpressionHandler(prefix(UserFieldExpression))
-UserFieldExpressionHandlerRegistry-->>-DefaultUserResolver: UserFieldExpressionHandler
+DefaultUserResolver->>+UserFieldExpressionHandler[Registry]: UserFieldExpressionHandlerRegistry.getFieldExpressionHandler(prefix(UserFieldExpression))
+UserFieldExpressionHandler[Registry]-->>-DefaultUserResolver: UserFieldExpressionHandler
 alt SamlProviderConfigurationHelper.isLDAPImportEnabled()
-  DefaultUserResolver->>+UserFieldExpressionHandler: getLdapUser(SearchFieldValue, removePrefix(UserFieldExpression))
-  UserFieldExpressionHandler-->>-DefaultUserResolver: User
+  DefaultUserResolver->>+UserFieldExpressionHandler[Registry]: getLdapUser(SearchFieldValue, removePrefix(UserFieldExpression))
+  UserFieldExpressionHandler[Registry]-->>-DefaultUserResolver: User
   alt User is not null
     DefaultUserResolver-->>WebSsoProfileImpl: User
   end
@@ -51,8 +49,8 @@ Database->>Database: Search for User by NameID (SamlPeerBinding)
 Database-->>-DefaultUserResolver: User
 
 alt User is null
-  DefaultUserResolver->>+UserFieldExpressionHandler: getUser(SearchFieldValue, removePrefix(UserFieldExpression))
-  UserFieldExpressionHandler-->>-DefaultUserResolver: User
+  DefaultUserResolver->>+UserFieldExpressionHandler[Registry]: getUser(SearchFieldValue, removePrefix(UserFieldExpression))
+  UserFieldExpressionHandler[Registry]-->>-DefaultUserResolver: User
 end
 
 alt User is null
