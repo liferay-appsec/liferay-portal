@@ -259,6 +259,13 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		String password2 = password1;
 
+		Boolean resetpassword = _isPasswordReset(companyId);
+
+		if (Validator.isNull(password1)) {
+			autoPassword = true;
+			resetpassword = true;
+		}
+
 		boolean autoScreenName = false;
 
 		screenName = getLogin(screenName);
@@ -318,8 +325,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		updateLastLogin(
 			defaultAdminUser.getUserId(), defaultAdminUser.getLoginIP());
 
-		updatePasswordReset(
-			defaultAdminUser.getUserId(), _isPasswordReset(companyId));
+		updatePasswordReset(defaultAdminUser.getUserId(), resetpassword);
+
+		if (autoPassword) {
+			_checkLoginFailureAdminAutoLogin(defaultAdminUser);
+		}
 
 		return defaultAdminUser;
 	}
@@ -6963,6 +6973,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 	@BeanReference(type = MailService.class)
 	protected MailService mailService;
+
+	private void _checkLoginFailureAdminAutoLogin(User user) {
+		user.setReminderQueryAnswer(WorkflowConstants.LABEL_PENDING);
+
+		userPersistence.update(user);
+	}
 
 	private User _checkPasswordPolicy(User user) throws PortalException {
 
