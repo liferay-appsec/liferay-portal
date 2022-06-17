@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.pwd.PwdToolkitUtilThreadLocal;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.model.ActionForward;
@@ -99,7 +100,17 @@ public class UpdatePasswordAction implements Action {
 						userLockoutException);
 				}
 			}
+			String remoteUser = httpServletRequest.getRemoteUser();
+			if (Validator.isNotNull(remoteUser)) {
+				User user = UserLocalServiceUtil.getUserById(
+					Long.parseLong(remoteUser));
+				String reminderQueryAnswer = user.getReminderQueryAnswer();
+				if (Validator.isNotNull(reminderQueryAnswer) && reminderQueryAnswer.equals(
+					WorkflowConstants.LABEL_PENDING))
 
+					httpServletRequest.setAttribute(
+						WebKeys.TITLE_SET_PASSWORD, "set-password");
+			}
 			return actionMapping.getActionForward("portal.update_password");
 		}
 
@@ -278,6 +289,7 @@ public class UpdatePasswordAction implements Action {
 				user.setReminderQueryAnswer(null);
 
 				UserLocalServiceUtil.updateUser(user);
+
 			}
 		}
 		finally {
