@@ -27,6 +27,8 @@ definition {
 	@description = "This is a use case for LPS-107017. Create user via JSONWSAPUI."
 	@priority = "4"
 	test CreateUserViaJSONWSAPIUI {
+		property portal.upstream = "marcell";
+
 		var portalURL = PropsUtil.get("portal.url");
 		var userfn = "testfUI";
 		var userln = "testlUI";
