@@ -14,9 +14,12 @@
 
 package com.liferay.portal.security.sso.openid.connect.persistence.internal.upgrade.registry;
 
+import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Arthur Chan
@@ -31,6 +34,18 @@ public class OpenIdConnectSessionServiceUpgradeStepRegistrator
 			"1.0.0", "1.1.0",
 			new com.liferay.portal.security.sso.openid.connect.persistence.
 				internal.upgrade.v1_1_0.OpenIdConnectSessionUpgradeProcess());
+
+		registry.register(
+			"1.1.0", "1.2.0",
+			new com.liferay.portal.security.sso.openid.connect.persistence.
+				internal.upgrade.v1_2_0.OpenIdConnectSessionUpgradeProcess(
+					_configurationAdmin));
 	}
+
+	@Reference
+	private ConfigurationAdmin _configurationAdmin;
+
+	@Reference
+	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
 
 }
