@@ -53,7 +53,13 @@ definition {
 				userEmailAddress = "user1",
 				userPassword = "test");
 
-			Pause(locator1 = "70000");
+			Pause(locator1 = "60000");
+
+			while (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
+				Pause(localtor1 = "1000");
+
+				Refresh();
+			}
 
 			MyAccount.openMyAccountAdmin();
 
@@ -506,9 +512,13 @@ definition {
 		}
 
 		task (" And the user is still logged in after the first access token's lifetime is over and they receive a new access token in the background") {
-			Pause(locator1 = "65000");
+			Pause(locator1 = "60000");
 
-			Refresh();
+			while (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
+				Pause(localtor1 = "1000");
+
+				Refresh();
+			}
 
 			User.viewLoggedInPG();
 		}
@@ -572,9 +582,13 @@ definition {
 				userEmailAddress = "user1",
 				userPassword = "test");
 
-			Pause(locator1 = "65000");
+			Pause(locator1 = "60000");
 
-			Refresh();
+			while (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
+				Pause(locator1 = "1000");
+
+				Refresh();
+			}
 
 			User.viewLoggedInPG();
 		}
