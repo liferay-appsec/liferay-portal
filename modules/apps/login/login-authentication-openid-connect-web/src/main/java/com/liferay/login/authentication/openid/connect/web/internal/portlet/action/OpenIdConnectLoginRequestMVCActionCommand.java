@@ -117,6 +117,9 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 		throws Exception {
 
 		try {
+			long oAuthClientEntryId = ParamUtil.getLong(
+				actionRequest, "oAuthClientEntryId");
+
 			String openIdConnectProviderName = ParamUtil.getString(
 				actionRequest,
 				OpenIdConnectWebKeys.OPEN_ID_CONNECT_PROVIDER_NAME);
@@ -153,9 +156,14 @@ public class OpenIdConnectLoginRequestMVCActionCommand
 					"saveLastPath", false
 				).buildString());
 
+			if (Validator.isNotNull(openIdConnectProviderName)) {
+				_openIdConnectAuthenticationHandler.requestAuthentication(
+					openIdConnectProviderName, httpServletRequest,
+					httpServletResponse);
+			}
+
 			_openIdConnectAuthenticationHandler.requestAuthentication(
-				openIdConnectProviderName, httpServletRequest,
-				httpServletResponse);
+				oAuthClientEntryId, httpServletRequest, httpServletResponse);
 		}
 		catch (Exception exception) {
 			actionResponse.setRenderParameter(
