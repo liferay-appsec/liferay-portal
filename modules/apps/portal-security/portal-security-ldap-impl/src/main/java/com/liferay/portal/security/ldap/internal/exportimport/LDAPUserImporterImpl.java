@@ -1167,7 +1167,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	private UserGroup _importGroup(
 			LDAPImportContext ldapImportContext,
-			SafeLdapName userGroupDNSafeLdapName)
+			SafeLdapName userGroupDNSafeLdapName, User user)
 		throws Exception {
 
 		String userGroupIdKey = null;
@@ -1226,9 +1226,17 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				return null;
 			}
 
+			userGroupId = userGroup.getUserGroupId();
+
 			if (ldapImportConfiguration.importGroupCacheEnabled()) {
-				_portalCache.put(userGroupIdKey, userGroup.getUserGroupId());
+				_portalCache.put(userGroupIdKey, userGroupId);
 			}
+		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				StringBundler.concat(
+					"Adding user ", user, " to user group ", userGroupId));
 		}
 
 		return userGroup;
@@ -1299,7 +1307,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						SafeLdapNameFactory.from(searchResult);
 
 					UserGroup userGroup = _importGroup(
-						ldapImportContext, userGroupSafeLdapName);
+						ldapImportContext, userGroupSafeLdapName, user);
 
 					if (userGroup == null) {
 						continue;
@@ -1318,13 +1326,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 					if ((userAttribute != null) &&
 						userAttribute.contains(fullUserDN)) {
-
-						if (_log.isDebugEnabled()) {
-							_log.debug(
-								StringBundler.concat(
-									"Adding user ", user, " to user group ",
-									userGroup.getUserGroupId()));
-						}
 
 						newUserGroupIds.add(userGroup.getUserGroupId());
 					}
@@ -1372,7 +1373,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						SafeLdapNameFactory.from(searchResult);
 
 					UserGroup userGroup = _importGroup(
-						ldapImportContext, userGroupSafeLdapName);
+						ldapImportContext, userGroupSafeLdapName, user);
 
 					if (userGroup == null) {
 						continue;
@@ -1383,13 +1384,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					if ((userGroupAttribute != null) &&
 						userGroupAttribute.contains(
 							searchResult.getNameInNamespace())) {
-
-						if (_log.isDebugEnabled()) {
-							_log.debug(
-								StringBundler.concat(
-									"Adding user ", user, " to user group ",
-									userGroup.getUserGroupId()));
-						}
 
 						newUserGroupIds.add(userGroup.getUserGroupId());
 					}
