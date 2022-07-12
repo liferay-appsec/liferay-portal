@@ -23,6 +23,10 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -73,6 +77,8 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 
 	@Override
 	public Object getRole(String roleId) throws Exception {
+		_checkPermission();
+
 		SamlProviderConfiguration samlProviderConfiguration =
 			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
@@ -88,6 +94,8 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 
 	@Override
 	public SamlProvider getSamlProvider() throws Exception {
+		_checkPermission();
+
 		SamlProviderConfiguration samlProviderConfiguration =
 			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
@@ -114,6 +122,8 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 
 	@Override
 	public Response patchRole(String roleId, Object object) throws Exception {
+		_checkPermission();
+
 		if (Objects.equals(SamlProvider.Role.IDP.getValue(), roleId) &&
 			(object instanceof Idp)) {
 
@@ -140,6 +150,8 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 	public SamlProvider patchSamlProvider(SamlProvider samlProvider)
 		throws Exception {
 
+		_checkPermission();
+
 		return _updateSamlProvider(samlProvider, false);
 	}
 
@@ -147,11 +159,15 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 	public SamlProvider postSamlProvider(SamlProvider samlProvider)
 		throws Exception {
 
+		_checkPermission();
+
 		return _updateSamlProvider(samlProvider, true);
 	}
 
 	@Override
 	public Response putRole(String roleId, Object object) throws Exception {
+		_checkPermission();
+
 		if (Objects.equals(SamlProvider.Role.IDP.getValue(), roleId) &&
 			(object instanceof Idp)) {
 
@@ -179,6 +195,8 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 			Filter filter, Pagination pagination, Sort[] sorts,
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
+
+		_checkPermission();
 
 		return Page.of(Collections.singleton(getSamlProvider()));
 	}
@@ -232,6 +250,18 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 					"that the SAML KeyStore contains a certificate for the ",
 					"Entity ID and that it is protected by the provided key ",
 					"credential password"));
+		}
+	}
+
+	private void _checkPermission() throws Exception {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		if (!permissionChecker.isCompanyAdmin(
+				CompanyThreadLocal.getCompanyId())) {
+
+			throw new PrincipalException.MustBeCompanyAdmin(
+				permissionChecker.getUserId());
 		}
 	}
 
