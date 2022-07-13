@@ -1132,7 +1132,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 					UserGroup userGroup = _importUserGroup(
 						ldapImportContext.getCompanyId(), groupAttributes,
-						groupMappings);
+						groupMappings, ldapImportContext.getLdapServerId());
 
 					Attribute usersAttribute = _getUsers(
 						ldapImportContext, groupAttributes, userGroup);
@@ -1290,7 +1290,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 			UserGroup userGroup = _importUserGroup(
 				ldapImportContext.getCompanyId(), groupAttributes,
-				ldapImportContext.getGroupMappings());
+				ldapImportContext.getGroupMappings(),
+				ldapImportContext.getLdapServerId());
 
 			if (userGroup == null) {
 				return newUserGroupIds;
@@ -1557,7 +1558,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	private UserGroup _importUserGroup(
 			long companyId, Attributes groupAttributes,
-			Properties groupMappings)
+			Properties groupMappings, long ldapServerId)
 		throws Exception {
 
 		groupAttributes = _attributesTransformer.transformGroup(
@@ -1598,7 +1599,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 			long defaultUserId = _userLocalService.getDefaultUserId(companyId);
 
-			UserGroupImportTransactionThreadLocal.setOriginatesFromImport(true);
+			UserGroupImportTransactionThreadLocal.setLDAPServerId(ldapServerId);
 
 			try {
 				userGroup = _userGroupLocalService.addUserGroup(
@@ -1625,8 +1626,9 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				}
 			}
 			finally {
-				UserGroupImportTransactionThreadLocal.setOriginatesFromImport(
-					false);
+				UserGroupImportTransactionThreadLocal.setLDAPServerId(
+					UserGroupImportTransactionThreadLocal.
+						DEFAULT_LDAP_SERVER_ID);
 			}
 		}
 
