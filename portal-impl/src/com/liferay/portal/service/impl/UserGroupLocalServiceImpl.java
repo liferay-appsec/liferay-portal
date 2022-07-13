@@ -238,6 +238,9 @@ public class UserGroupLocalServiceImpl extends UserGroupLocalServiceBaseImpl {
 			userGroup.setUuid(serviceContext.getUuid());
 		}
 
+		long ldapServerId =
+			UserGroupImportTransactionThreadLocal.getLDAPServerId();
+
 		userGroup.setCompanyId(companyId);
 		userGroup.setUserId(user.getUserId());
 		userGroup.setUserName(user.getFullName());
@@ -246,7 +249,8 @@ public class UserGroupLocalServiceImpl extends UserGroupLocalServiceBaseImpl {
 		userGroup.setName(name);
 		userGroup.setDescription(description);
 		userGroup.setAddedByLDAPImport(
-			UserGroupImportTransactionThreadLocal.isOriginatesFromImport());
+			ldapServerId !=
+				UserGroupImportTransactionThreadLocal.DEFAULT_LDAP_SERVER_ID);
 		userGroup.setExpandoBridgeAttributes(serviceContext);
 
 		userGroup = userGroupPersistence.update(userGroup);
