@@ -27,26 +27,13 @@ public class UserGroupImportTransactionThreadLocal {
 		return _ldapServerId.get();
 	}
 
-	public static boolean isOriginatesFromImport() {
-		return _originatesFromImport.get();
-	}
-
 	public static void setLDAPServerId(long ldapServerId) {
 		_ldapServerId.set(ldapServerId);
-	}
-
-	public static void setOriginatesFromImport(boolean originatesFromImport) {
-		_originatesFromImport.set(originatesFromImport);
 	}
 
 	private static final ThreadLocal<Long> _ldapServerId =
 		new CentralizedThreadLocal<>(
 			UserGroupImportTransactionThreadLocal.class + "._ldapServerId",
 			() -> -1L, false);
-	private static final ThreadLocal<Boolean> _originatesFromImport =
-		new CentralizedThreadLocal<>(
-			UserGroupImportTransactionThreadLocal.class +
-				"._originatesFromImport",
-			() -> Boolean.FALSE, false);
 
 }
