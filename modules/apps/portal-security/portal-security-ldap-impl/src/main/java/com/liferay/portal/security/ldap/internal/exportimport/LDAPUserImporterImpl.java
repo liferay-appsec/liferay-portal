@@ -80,6 +80,7 @@ import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
 import com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration;
 import com.liferay.portal.security.ldap.internal.UserImportTransactionThreadLocal;
 import com.liferay.portal.security.ldap.internal.validator.SafeLdapContextImpl;
+import com.liferay.portal.security.ldap.persistence.service.LDAPServerAttributeRelLocalService;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterException;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -930,6 +931,14 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		_ldapImportConfigurationProvider = ldapImportConfigurationProvider;
 	}
 
+	@Reference(unbind = "-")
+	protected void setLdapServerAttributeRelLocalService(
+		LDAPServerAttributeRelLocalService ldapServerAttributeRelLocalService) {
+
+		_ldapServerAttributeRelLocalService =
+			ldapServerAttributeRelLocalService;
+	}
+
 	@Reference(
 		target = "(factoryPid=com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration)",
 		unbind = "-"
@@ -1573,6 +1582,15 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			userGroup = _userGroupLocalService.getUserGroup(
 				companyId, ldapGroup.getGroupName());
 
+			if (!_ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
+					ldapServerId, UserGroup.class.getName(),
+					userGroup.getUserGroupId())) {
+
+				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+					ldapServerId, UserGroup.class.getName(),
+					userGroup.getUserGroupId());
+			}
+
 			if (!Objects.equals(
 					userGroup.getDescription(), ldapGroup.getDescription())) {
 
@@ -2016,6 +2034,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	private ConfigurationProvider<LDAPImportConfiguration>
 		_ldapImportConfigurationProvider;
+	private LDAPServerAttributeRelLocalService
+		_ldapServerAttributeRelLocalService;
 	private ConfigurationProvider<LDAPServerConfiguration>
 		_ldapServerConfigurationProvider;
 	private LDAPSettings _ldapSettings;
