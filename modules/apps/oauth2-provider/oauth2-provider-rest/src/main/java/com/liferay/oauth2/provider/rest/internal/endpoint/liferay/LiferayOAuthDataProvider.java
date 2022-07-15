@@ -847,6 +847,17 @@ public class LiferayOAuthDataProvider
 	}
 
 	@Override
+	protected boolean isRefreshTokenSupported(List<String> theScopes) {
+		if (isUseJwtFormatForAccessTokens() &
+			super.isRefreshTokenSupported(theScopes)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	protected String processJwtAccessToken(JwtClaims jwtClaims) {
 		OAuthJoseJwtProducer processor = getJwtAccessTokenProducer();
 
