@@ -74,7 +74,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
+import org.apache.cxf.rs.security.jose.jws.JwsHeaders;
 import org.apache.cxf.rs.security.jose.jws.JwsUtils;
+import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
+import org.apache.cxf.rs.security.jose.jwt.JwtToken;
 import org.apache.cxf.rs.security.oauth2.common.AccessTokenRegistration;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthPermission;
@@ -660,19 +663,6 @@ public class LiferayOAuthDataProvider
 		_init();
 	}
 
-	protected ServerAccessToken createNewAccessToken(
-		Client client, UserSubject userSubject) {
-
-		ServerAccessToken serverAccessToken = super.createNewAccessToken(
-			client, userSubject);
-
-		if (getIssuer() != null) {
-			serverAccessToken.setIssuer(getIssuer());
-		}
-
-		return serverAccessToken;
-	}
-
 	@Override
 	protected JwtClaims createJwtAccessToken(
 		ServerAccessToken serverAccessToken) {
@@ -691,6 +681,19 @@ public class LiferayOAuthDataProvider
 		}
 
 		return jwtClaims;
+	}
+
+	protected ServerAccessToken createNewAccessToken(
+		Client client, UserSubject userSubject) {
+
+		ServerAccessToken serverAccessToken = super.createNewAccessToken(
+			client, userSubject);
+
+		if (getIssuer() != null) {
+			serverAccessToken.setIssuer(getIssuer());
+		}
+
+		return serverAccessToken;
 	}
 
 	@Override
@@ -1030,6 +1033,36 @@ public class LiferayOAuthDataProvider
 			GetterUtil.getLong(userSubject.getId()));
 	}
 
+	private UserSubject _getUserSubject(long userId, String userName) {
+		try {
+			User user = _userLocalService.getUser(userId);
+
+			OAuth2AuthorizationServerConfiguration
+				oAuth2AuthorizationServerConfiguration =
+					_getOAuth2AuthorizationServerConfiguration();
+
+			String userSubjectMappedTo =
+				oAuth2AuthorizationServerConfiguration.userSubjectMappedTo();
+
+			if (userSubjectMappedTo.equals("emailAddress")) {
+				return new UserSubject(userName, user.getEmailAddress());
+			}
+			else if (userSubjectMappedTo.equals("screenName")) {
+				return new UserSubject(userName, user.getScreenName());
+			}
+			else if (userSubjectMappedTo.equals("UUID")) {
+				return new UserSubject(userName, user.getUuid());
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+		}
+
+		return new UserSubject(userName, String.valueOf(userId));
+	}
+
 	private void _init() {
 		setAccessTokenLifetime(
 			_oAuth2AuthorizationServerConfiguration.accessTokenDuration());
@@ -1231,8 +1264,7 @@ public class LiferayOAuthDataProvider
 	private UserSubject _populateUserSubject(
 		long companyId, long userId, String userName) {
 
-		UserSubject userSubject = new UserSubject(
-			userName, String.valueOf(userId));
+		UserSubject userSubject = _getUserSubject(userId, userName);
 
 		Map<String, String> properties = userSubject.getProperties();
 
