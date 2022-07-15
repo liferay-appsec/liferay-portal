@@ -847,6 +847,20 @@ public class LiferayOAuthDataProvider
 	}
 
 	@Override
+	protected String processJwtAccessToken(JwtClaims jwtClaims) {
+		OAuthJoseJwtProducer processor = getJwtAccessTokenProducer();
+
+		// Override this method to fix another bug in cxf.
+		// https://datatracker.ietf.org/doc/html/rfc9068#section-2.1
+
+		JwsHeaders jwsHeaders = new JwsHeaders();
+
+		jwsHeaders.setHeader("typ", "at+jwt");
+
+		return processor.processJwt(new JwtToken(jwsHeaders, jwtClaims));
+	}
+
+	@Override
 	protected void saveAccessToken(ServerAccessToken serverAccessToken) {
 		if (isUseJwtFormatForAccessTokens()) {
 			return;
