@@ -50,6 +50,15 @@ public interface OAuth2AuthorizationServerConfiguration {
 	public int refreshTokenDuration();
 
 	@Meta.AD(
+		deflt = "userId",
+		description = "oauth2-authorization-server-user-subject-mapped-to-description",
+		id = "oauth2.authorization.server.user.subject.mapped.to",
+		name = "oauth2-authorization-server-user-subject-mapped-to",
+		optionValues = {"emailAddress", "screenName", "userId", "UUID"}
+	)
+	public String userSubjectMappedTo();
+
+	@Meta.AD(
 		deflt = "false",
 		description = "oauth2-authorization-server-issue-jwt-access-token-description",
 		id = "oauth2.authorization.server.issue.jwt.access.token",
