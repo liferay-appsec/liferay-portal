@@ -657,6 +657,26 @@ public class LiferayOAuthDataProvider
 	}
 
 	@Override
+	protected JwtClaims createJwtAccessToken(
+		ServerAccessToken serverAccessToken) {
+
+		// Override this method to fix a bug in cxf.
+		// Scopes in JWT claim should be a string.
+
+		JwtClaims jwtClaims = super.createJwtAccessToken(serverAccessToken);
+
+		List<OAuthPermission> scopes = serverAccessToken.getScopes();
+
+		if (!scopes.isEmpty()) {
+			jwtClaims.setClaim(
+				OAuthConstants.SCOPE,
+				OAuthUtils.convertPermissionsToScope(scopes));
+		}
+
+		return jwtClaims;
+	}
+
+	@Override
 	protected ServerAccessToken doCreateAccessToken(
 		AccessTokenRegistration accessTokenRegistration) {
 
