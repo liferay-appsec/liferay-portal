@@ -155,11 +155,8 @@ public class AuthVerifierPipelineTest {
 
 			_setUpPortalUtil();
 
-			String portalUtilPathContext = PortalUtil.getPathContext(
-				contextPath);
-
 			_assertAuthVerifierResult(
-				portalUtilPathContext, includeURLs, requestURI, expectedState);
+				contextPath, includeURLs, requestURI, expectedState);
 		}
 	}
 
