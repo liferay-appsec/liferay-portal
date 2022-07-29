@@ -97,10 +97,11 @@ public class AuthVerifierPipeline {
 		HttpServletRequest httpServletRequest =
 			accessControlContext.getRequest();
 
+		String pathProxy = PortalUtil.getPathProxy();
 		String requestURI = httpServletRequest.getRequestURI();
 
-		if (Validator.isNotNull(PortalUtil.getPathProxy())) {
-			requestURI = PortalUtil.getPathProxy() + requestURI;
+		if (Validator.isNotNull(pathProxy)) {
+			requestURI = pathProxy + requestURI;
 		}
 
 		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
