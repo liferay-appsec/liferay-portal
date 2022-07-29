@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -43,6 +44,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.framework.BundleContext;
@@ -376,9 +378,12 @@ public class AuthVerifierPipeline {
 			_PORTAL_AUTH_VERIFIER_PIPELINE;
 
 		static {
+			ServletContext servletContext = ServletContextPool.get(
+				StringPool.BLANK);
+
 			AuthVerifierPipeline portalAuthVerifierPipeline =
 				new AuthVerifierPipeline(
-					Collections.emptyList(), PortalUtil.getPathContext());
+					Collections.emptyList(), servletContext.getContextPath());
 
 			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
