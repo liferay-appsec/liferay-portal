@@ -31,7 +31,6 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.registry.AuthVerifierRegistry;
 
 import java.util.ArrayList;
@@ -97,12 +96,7 @@ public class AuthVerifierPipeline {
 		HttpServletRequest httpServletRequest =
 			accessControlContext.getRequest();
 
-		String pathProxy = PortalUtil.getPathProxy();
 		String requestURI = httpServletRequest.getRequestURI();
-
-		if (Validator.isNotNull(pathProxy)) {
-			requestURI = pathProxy + requestURI;
-		}
 
 		AuthVerifierConfigurationConsumer authVerifierConfigurationConsumer =
 			new AuthVerifierConfigurationConsumer(
