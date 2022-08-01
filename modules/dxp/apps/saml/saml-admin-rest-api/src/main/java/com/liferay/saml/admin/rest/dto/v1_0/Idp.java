@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @Generated("")
 @GraphQLName(
-	description = "Configuration of the SAML provider's IDP capability",
+	description = "Configuration of the SAML provider's IDP capability.",
 	value = "Idp"
 )
 @JsonFilter("Liferay.Vulcan")

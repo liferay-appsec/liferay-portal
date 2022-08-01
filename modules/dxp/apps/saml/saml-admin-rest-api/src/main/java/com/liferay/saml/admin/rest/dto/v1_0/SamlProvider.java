@@ -48,7 +48,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @Generated("")
 @GraphQLName(
-	description = "The complete configuration of this SAML Provider",
+	description = "The complete configuration of this SAML Provider.",
 	value = "SamlProvider"
 )
 @JsonFilter("Liferay.Vulcan")
