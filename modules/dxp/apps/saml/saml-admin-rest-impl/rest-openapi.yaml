@@ -108,7 +108,7 @@ paths:
                                 $ref: "#/components/schemas/SamlProvider"
                     # @review
                     description:
-                        "SAML provider configuration was successfully created"
+                        SAML provider configuration was successfully created
                 400:
                     contents:
                         application/json:
@@ -119,7 +119,7 @@ paths:
                                 $ref: "#/components/schemas/Error"
                     # @review
                     description:
-                        "Invalid input"
+                        Invalid input
             tags: ["SamlProvider"]
         post:
             description:
@@ -144,7 +144,7 @@ paths:
                                 $ref: "#/components/schemas/SamlProvider"
                     # @review
                     description:
-                        "SAML provider configuration was successfully created"
+                        SAML provider configuration was successfully created
             tags: ["SamlProvider"]
     "/provider/{roleId}":
         delete:
@@ -224,7 +224,7 @@ paths:
                                     - $ref: "#/components/schemas/Sp"
                     # @review
                     description:
-                        "SAML provider configuration was successfully created"
+                        SAML provider configuration was successfully created
             tags: ["SamlProvider"]
         put:
             description:
@@ -263,5 +263,5 @@ paths:
                                     - $ref: "#/components/schemas/Sp"
                     # @review
                     description:
-                        "SAML provider configuration was successfully created"
+                        SAML provider configuration was successfully created
             tags: ["SamlProvider"]
