@@ -224,7 +224,7 @@ paths:
                                     - $ref: "#/components/schemas/Sp"
                     # @review
                     description:
-                        SAML provider configuration was successfully created
+                        SAML provider configuration was successfully updated
             tags: ["SamlProvider"]
         put:
             description:
