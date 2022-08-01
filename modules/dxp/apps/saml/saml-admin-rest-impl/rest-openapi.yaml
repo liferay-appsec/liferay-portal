@@ -3,7 +3,7 @@ components:
         Idp:
             # @review
             description:
-                Configuration of the SAML provider's IDP capability
+                Configuration of the SAML provider's IDP capability.
             properties:
                 authnRequestSignatureRequired:
                     type: boolean
@@ -18,7 +18,7 @@ components:
             type: object
         SamlProvider:
             description:
-                The complete configuration of this SAML Provider
+                The complete configuration of this SAML Provider.
             properties:
                 enabled:
                     type: boolean
@@ -42,7 +42,7 @@ components:
         Sp:
             # @review
             description:
-                Configuration of the SAML provider's SP capability
+                Configuration of the SAML provider's SP capability.
             properties:
                 allowShowingTheLoginPortlet:
                     type: boolean
