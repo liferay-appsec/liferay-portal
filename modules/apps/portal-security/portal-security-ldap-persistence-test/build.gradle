@@ -1,0 +1,8 @@
+dependencies {
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.util.java", version: "default"
+	testIntegrationCompile project(":apps:petra:petra-xml")
+	testIntegrationCompile project(":apps:portal-security:portal-security-ldap-persistence-api")
+	testIntegrationCompile project(":apps:portal-security:portal-security-ldap-persistence-service")
+	testIntegrationCompile project(":test:arquillian-extension-junit-bridge")
+}
