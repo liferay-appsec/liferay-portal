@@ -1,0 +1,15 @@
+buildService {
+	apiDir = "../portal-security-ldap-persistence-api/src/main/java"
+	testDir = "../portal-security-ldap-persistence-test/src/testIntegration/java"
+}
+
+dependencies {
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
+	compileOnly group: "org.osgi", name: "osgi.core", version: "6.0.0"
+	compileOnly project(":apps:portal-security:portal-security-ldap-persistence-api")
+	compileOnly project(":apps:portal:portal-aop-api")
+	compileOnly project(":core:petra:petra-lang")
+	compileOnly project(":core:petra:petra-sql-dsl-api")
+	compileOnly project(":core:petra:petra-string")
+}
