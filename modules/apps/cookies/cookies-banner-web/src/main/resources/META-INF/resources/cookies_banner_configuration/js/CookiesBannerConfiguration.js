@@ -20,6 +20,7 @@ import {
 	getCookie,
 	setCookie,
 	setUserConfigCookie,
+	userConfigCookieName,
 } from '../../js/CookiesUtil';
 
 export default function ({
@@ -44,13 +45,13 @@ export default function ({
 			});
 		});
 
-		const cookie = getCookie(cookieKey);
+		if (getCookie(userConfigCookieName)) {
+			const cookie = getCookie(cookieKey);
 
-		if (cookie === null) {
-			toggleSwitch.checked = toggleSwitch.dataset.prechecked === 'true';
+			toggleSwitch.checked = cookie === 'true';
 		}
 		else {
-			toggleSwitch.checked = cookie === 'true';
+			toggleSwitch.checked = toggleSwitch.dataset.prechecked === 'true';
 		}
 
 		toggleSwitch.removeAttribute('disabled');
