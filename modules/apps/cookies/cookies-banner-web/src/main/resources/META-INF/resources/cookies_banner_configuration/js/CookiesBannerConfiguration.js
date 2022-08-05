@@ -46,9 +46,7 @@ export default function ({
 		});
 
 		if (getCookie(userConfigCookieName)) {
-			const cookie = getCookie(cookieKey);
-
-			toggleSwitch.checked = cookie === 'true';
+			toggleSwitch.checked = getCookie(cookieKey) === 'true';
 		}
 		else {
 			toggleSwitch.checked = toggleSwitch.dataset.prechecked === 'true';
