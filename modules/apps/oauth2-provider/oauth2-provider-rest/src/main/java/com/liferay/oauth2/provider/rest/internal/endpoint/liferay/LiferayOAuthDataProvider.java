@@ -48,6 +48,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -55,6 +56,9 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.nio.charset.StandardCharsets;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,6 +76,7 @@ import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.jaxrs.json.basic.JsonMapObject;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
 import org.apache.cxf.rs.security.jose.jws.JwsHeaders;
@@ -94,6 +99,7 @@ import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
+import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -681,6 +687,54 @@ public class LiferayOAuthDataProvider
 				OAuthConstants.SCOPE,
 				OAuthUtils.convertPermissionsToScope(scopes));
 		}
+
+		MessageDigest messageDigest;
+
+		try {
+			messageDigest = MessageDigest.getInstance("MD5");
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			throw new SystemException(noSuchAlgorithmException);
+		}
+
+		Stream<OAuthPermission> stream = scopes.stream();
+
+		Client client = serverAccessToken.getClient();
+
+		long companyId = MapUtil.getLong(
+			client.getProperties(),
+			OAuth2ProviderRESTEndpointConstants.PROPERTY_KEY_COMPANY_ID);
+
+		jwtClaims.setClaim(
+			"liferay_scope",
+			stream.map(
+				oAuthPermission -> _scopeLocator.getLiferayOAuth2Scopes(
+					companyId, oAuthPermission.getPermission())
+			).flatMap(
+				Collection::stream
+			).map(
+				liferayOAuth2Scope -> {
+					JsonMapObject jsonMapObject = new JsonMapObject();
+
+					jsonMapObject.setProperty(
+						"app", liferayOAuth2Scope.getApplicationName());
+					jsonMapObject.setProperty(
+						"scope", liferayOAuth2Scope.getScope());
+
+					Bundle bundle = liferayOAuth2Scope.getBundle();
+
+					String symbolicName = bundle.getSymbolicName();
+
+					jsonMapObject.setProperty(
+						"d",
+						Base64.encode(
+							messageDigest.digest(symbolicName.getBytes())));
+
+					return jsonMapObject;
+				}
+			).toArray(
+				JsonMapObject[]::new
+			));
 
 		return jwtClaims;
 	}
