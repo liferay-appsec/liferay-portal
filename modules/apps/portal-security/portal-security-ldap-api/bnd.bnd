@@ -7,7 +7,11 @@ Export-Package:\
 	com.liferay.portal.security.ldap.configuration,\
 	com.liferay.portal.security.ldap.constants,\
 	com.liferay.portal.security.ldap.dummy,\
+	com.liferay.portal.security.ldap.exception,\
 	com.liferay.portal.security.ldap.exportimport,\
 	com.liferay.portal.security.ldap.exportimport.configuration,\
+	com.liferay.portal.security.ldap.model,\
+	com.liferay.portal.security.ldap.service,\
+	com.liferay.portal.security.ldap.service.persistence,\
 	com.liferay.portal.security.ldap.util,\
 	com.liferay.portal.security.ldap.validator
