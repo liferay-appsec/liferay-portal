@@ -882,10 +882,6 @@ public class LiferayOAuthDataProvider
 
 	@Override
 	protected void saveAccessToken(ServerAccessToken serverAccessToken) {
-		if (isUseJwtFormatForAccessTokens()) {
-			return;
-		}
-
 		try {
 			_invokeTransactionally(
 				() -> _transactionalSaveServerAccessToken(serverAccessToken));
