@@ -56,6 +56,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -995,6 +996,48 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		}
 	}
 
+	private void _cleanUpLDAPServerAttributeRels(
+		LDAPImportContext ldapImportContext) {
+
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), User.class.getName(),
+			ldapImportContext.getImportedUserIds());
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
+			ldapImportContext.getImportedUserGroupIds());
+	}
+
+	private void _cleanUpLDAPServerAttributeRels(
+		long ldapServerId, String className,
+		Collection<Long> importedClassPKs) {
+
+		long classNameId = _portal.getClassNameId(className);
+
+		Set<Long> deletedClassPKs = _getLDAPServerClassPKs(
+			ldapServerId, classNameId);
+
+		deletedClassPKs.removeAll(importedClassPKs);
+
+		for (long deletedClassPK : deletedClassPKs) {
+			try {
+				_ldapServerAttributeRelLocalService.
+					deleteLDAPServerAttributeRel(
+						ldapServerId, className, deletedClassPK);
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"Error while deleting LDAP server attribute ",
+							"relationship with ldapServerId ", ldapServerId,
+							", classNameId ", classNameId, ", and classPK ",
+							deletedClassPK),
+						exception);
+				}
+			}
+		}
+	}
+
 	private LDAPImportContext _getLDAPImportContext(
 		long companyId, Properties contactExpandoMappings,
 		Properties contactMappings, Properties groupMappings,
@@ -1125,6 +1168,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				}
 			}
 		}
+
+		_cleanUpLDAPServerAttributeRels(ldapImportContext);
 	}
 
 	private void _importFromLDAPByUser(LDAPImportContext ldapImportContext)
@@ -1199,6 +1244,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					}
 				}
 			}
+
+			_cleanUpLDAPServerAttributeRels(ldapImportContext);
 		}
 		finally {
 			if (safeLdapContext != null) {
@@ -2038,6 +2085,9 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	@Reference
 	private LockManager _lockManager;
+
+	@Reference
+	private Portal _portal;
 
 	private PortalCache<String, Long> _portalCache;
 
