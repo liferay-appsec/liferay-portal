@@ -18,6 +18,8 @@ import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.model.ExpandoTableConstants;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.expando.kernel.util.ExpandoConverterUtil;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanProperties;
@@ -80,6 +82,7 @@ import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
 import com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration;
 import com.liferay.portal.security.ldap.internal.UserImportTransactionThreadLocal;
 import com.liferay.portal.security.ldap.internal.validator.SafeLdapContextImpl;
+import com.liferay.portal.security.ldap.persistence.model.LDAPServerAttributeRelTable;
 import com.liferay.portal.security.ldap.persistence.service.LDAPServerAttributeRelLocalService;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterException;
@@ -1003,6 +1006,25 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			companyId, contactExpandoMappings, contactMappings, groupMappings,
 			safeLdapContext, ldapServerId, ldapUserIgnoreAttributes,
 			userExpandoMappings, userMappings);
+	}
+
+	private Set<Long> _getLDAPServerClassPKs(
+		long ldapServerId, long classNameId) {
+
+		DSLQuery dslQuery = DSLQueryFactoryUtil.select(
+			LDAPServerAttributeRelTable.INSTANCE.classPK
+		).from(
+			LDAPServerAttributeRelTable.INSTANCE
+		).where(
+			LDAPServerAttributeRelTable.INSTANCE.ldapServerId.eq(
+				ldapServerId
+			).and(
+				LDAPServerAttributeRelTable.INSTANCE.classNameId.eq(classNameId)
+			)
+		);
+
+		return new HashSet<>(
+			_ldapServerAttributeRelLocalService.dslQuery(dslQuery));
 	}
 
 	private Attribute _getUsers(
