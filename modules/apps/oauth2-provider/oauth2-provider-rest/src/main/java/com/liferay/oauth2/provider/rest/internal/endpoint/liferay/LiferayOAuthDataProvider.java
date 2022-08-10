@@ -107,6 +107,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(
 	configurationPid = {
 		"com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration",
+		"com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration",
 		"com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration"
 	},
 	service = LiferayOAuthDataProvider.class
@@ -147,8 +148,6 @@ public class LiferayOAuthDataProvider
 	public ServerAccessToken createAccessToken(
 			AccessTokenRegistration accessTokenRegistration)
 		throws OAuthServiceException {
-
-		_initDataProviderPerCompanyProperties();
 
 		List<String> approvedScope = new ArrayList<>(
 			accessTokenRegistration.getRequestedScope());
@@ -359,6 +358,12 @@ public class LiferayOAuthDataProvider
 
 		return _serverAuthorizationCodeGrantProvider.
 			getServerAuthorizationCodeGrants(client, subject);
+	}
+
+	public String getIssuer() {
+		MessageContext messageContext = getMessageContext();
+
+		return _portal.getHost(messageContext.getHttpServletRequest());
 	}
 
 	public OAuth2Authorization getOAuth2Authorization(
@@ -646,14 +651,16 @@ public class LiferayOAuthDataProvider
 	@Activate
 	@SuppressWarnings("unchecked")
 	protected void activate(Map<String, Object> properties) {
+		_oAuth2AuthorizationServerConfiguration =
+			ConfigurableUtil.createConfigurable(
+				OAuth2AuthorizationServerConfiguration.class, properties);
 		_oAuth2AuthorizationFlowConfiguration =
 			ConfigurableUtil.createConfigurable(
 				OAuth2AuthorizationFlowConfiguration.class, properties);
 		_oAuth2ProviderConfiguration = ConfigurableUtil.createConfigurable(
 			OAuth2ProviderConfiguration.class, properties);
 
-		setGrantLifetime(
-			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
+		_init();
 	}
 
 	@Override
@@ -674,6 +681,19 @@ public class LiferayOAuthDataProvider
 		}
 
 		return jwtClaims;
+	}
+
+	protected ServerAccessToken createNewAccessToken(
+		Client client, UserSubject userSubject) {
+
+		ServerAccessToken serverAccessToken = super.createNewAccessToken(
+			client, userSubject);
+
+		if (getIssuer() != null) {
+			serverAccessToken.setIssuer(getIssuer());
+		}
+
+		return serverAccessToken;
 	}
 
 	@Override
@@ -907,16 +927,13 @@ public class LiferayOAuthDataProvider
 			oAuth2Authorization);
 	}
 
-	protected void setJwtAccessTokenProducer(
-		OAuth2AuthorizationServerConfiguration
-			oAuth2AuthorizationServerConfiguration) {
-
+	protected void setJwtAccessTokenProducer() {
 		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
 
 		oAuthJoseJwtProducer.setSignatureProvider(
 			JwsUtils.getSignatureProvider(
 				JwkUtils.readJwkKey(
-					oAuth2AuthorizationServerConfiguration.
+					_oAuth2AuthorizationServerConfiguration.
 						jwtAccessTokenSigningJSONWebKey())));
 
 		super.setJwtAccessTokenProducer(oAuthJoseJwtProducer);
@@ -1046,32 +1063,20 @@ public class LiferayOAuthDataProvider
 		return new UserSubject(userName, String.valueOf(userId));
 	}
 
-	private void _initDataProviderPerCompanyProperties()
-		throws OAuthServiceException {
+	private void _init() {
+		setAccessTokenLifetime(
+			_oAuth2AuthorizationServerConfiguration.accessTokenDuration());
 
-		MessageContext messageContext = getMessageContext();
+		setGrantLifetime(
+			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
 
-		setIssuer(_portal.getHost(messageContext.getHttpServletRequest()));
+		setJwtAccessTokenProducer();
 
-		try {
-			OAuth2AuthorizationServerConfiguration
-				oAuth2AuthorizationServerConfiguration =
-					_getOAuth2AuthorizationServerConfiguration();
+		setRefreshTokenLifetime(
+			_oAuth2AuthorizationServerConfiguration.refreshTokenDuration());
 
-			setAccessTokenLifetime(
-				oAuth2AuthorizationServerConfiguration.accessTokenDuration());
-
-			setJwtAccessTokenProducer(oAuth2AuthorizationServerConfiguration);
-
-			setRefreshTokenLifetime(
-				oAuth2AuthorizationServerConfiguration.refreshTokenDuration());
-
-			setUseJwtFormatForAccessTokens(
-				oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
-		}
-		catch (Exception exception) {
-			throw new OAuthServiceException(exception);
-		}
+		setUseJwtFormatForAccessTokens(
+			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
 	}
 
 	private void _invokeTransactionally(Runnable runnable) throws Throwable {
@@ -1388,6 +1393,8 @@ public class LiferayOAuthDataProvider
 	@Reference
 	private OAuth2AuthorizationLocalService _oAuth2AuthorizationLocalService;
 
+	private OAuth2AuthorizationServerConfiguration
+		_oAuth2AuthorizationServerConfiguration;
 	private OAuth2ProviderConfiguration _oAuth2ProviderConfiguration;
 
 	@Reference
