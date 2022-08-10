@@ -1151,8 +1151,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							SafeLdapNameFactory.from(searchResult), true);
 
 					UserGroup userGroup = _importUserGroup(
-						ldapImportContext.getCompanyId(), groupAttributes,
-						groupMappings, ldapImportContext.getLdapServerId());
+						ldapImportContext, groupAttributes, groupMappings,
+						ldapImportContext.getLdapServerId());
 
 					Attribute usersAttribute = _getUsers(
 						ldapImportContext, groupAttributes, userGroup);
@@ -1309,7 +1309,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			}
 
 			UserGroup userGroup = _importUserGroup(
-				ldapImportContext.getCompanyId(), groupAttributes,
+				ldapImportContext, groupAttributes,
 				ldapImportContext.getGroupMappings(),
 				ldapImportContext.getLdapServerId());
 
@@ -1329,6 +1329,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				StringBundler.concat(
 					"Adding user ", user, " to user group ", userGroupId));
 		}
+
+		ldapImportContext.addImportedUserGroupId(userGroupId);
 
 		newUserGroupIds.add(userGroupId);
 
@@ -1579,9 +1581,11 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 	}
 
 	private UserGroup _importUserGroup(
-			long companyId, Attributes groupAttributes,
+			LDAPImportContext ldapImportContext, Attributes groupAttributes,
 			Properties groupMappings, long ldapServerId)
 		throws Exception {
+
+		long companyId = ldapImportContext.getCompanyId();
 
 		groupAttributes = _attributesTransformer.transformGroup(
 			groupAttributes);
@@ -1661,6 +1665,11 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					UserGroupImportTransactionThreadLocal.
 						DEFAULT_LDAP_SERVER_ID);
 			}
+		}
+
+		if (userGroup != null) {
+			ldapImportContext.addImportedUserGroupId(
+				userGroup.getUserGroupId());
 		}
 
 		_addRole(companyId, ldapGroup, userGroup);
