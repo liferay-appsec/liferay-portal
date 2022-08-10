@@ -22,7 +22,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * @author Arthur Chan
  */
 @ExtendedObjectClassDefinition(
-	category = "oauth2", scope = ExtendedObjectClassDefinition.Scope.COMPANY
+	category = "oauth2", scope = ExtendedObjectClassDefinition.Scope.SYSTEM
 )
 @Meta.OCD(
 	id = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration",
