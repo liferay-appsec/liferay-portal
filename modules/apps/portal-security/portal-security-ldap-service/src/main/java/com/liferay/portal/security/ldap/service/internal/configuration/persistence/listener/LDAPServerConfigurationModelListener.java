@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.portal.security.ldap.internal.configuration.persistence.listener;
+package com.liferay.portal.security.ldap.service.internal.configuration.persistence.listener;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
