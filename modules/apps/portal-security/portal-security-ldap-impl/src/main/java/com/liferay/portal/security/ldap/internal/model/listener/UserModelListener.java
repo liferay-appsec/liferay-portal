@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.exportimport.UserExporter;
 import com.liferay.portal.security.ldap.internal.UserImportTransactionThreadLocal;
+import com.liferay.portal.security.ldap.persistence.service.LDAPServerAttributeRelLocalService;
 
 import java.util.List;
 
@@ -77,6 +78,17 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 					" to LDAP on after create",
 				exception);
 		}
+
+		if (user.getLdapServerId() > 0) {
+			try {
+				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+					user.getLdapServerId(), User.class.getName(),
+					user.getUserId());
+			}
+			catch (Exception exception) {
+				throw new ModelListenerException(exception);
+			}
+		}
 	}
 
 	@Override
@@ -91,6 +103,21 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 				"Unable to export user " + user.getUserId() +
 					" to LDAP on after update",
 				exception);
+		}
+
+		if ((user.getLdapServerId() > 0) &&
+			!_ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
+				user.getLdapServerId(), User.class.getName(),
+				user.getUserId())) {
+
+			try {
+				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+					user.getLdapServerId(), User.class.getName(),
+					user.getUserId());
+			}
+			catch (Exception exception) {
+				throw new ModelListenerException(exception);
+			}
 		}
 	}
 
@@ -128,6 +155,10 @@ public class UserModelListener extends BaseLDAPExportModelListener<User> {
 
 	@Reference
 	private Language _language;
+
+	@Reference
+	private LDAPServerAttributeRelLocalService
+		_ldapServerAttributeRelLocalService;
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,
