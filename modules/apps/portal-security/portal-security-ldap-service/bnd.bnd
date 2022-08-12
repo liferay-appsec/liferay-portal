@@ -1,9 +1,12 @@
-Bundle-Name: Liferay Portal Security LDAP Implementation
-Bundle-SymbolicName: com.liferay.portal.security.ldap.impl
-Bundle-Version: 4.0.28
+Bundle-Name: Liferay Portal Security LDAP Service
+Bundle-SymbolicName: com.liferay.portal.security.ldap.service
+Bundle-Version: 1.0.0
 Import-Package:\
 	!junit.*,\
 	\
 	!org.junit.*,\
 	\
 	*
+Liferay-Require-SchemaVersion: 1.0.0
+Liferay-Service: true
+-dsannotations-options: inherit

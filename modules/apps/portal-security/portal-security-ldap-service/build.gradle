@@ -4,6 +4,11 @@ import org.apache.tools.ant.filters.FixCrLfFilter
 
 apply plugin: "antlr"
 
+buildService {
+	apiDir = "../portal-security-ldap-api/src/main/java"
+	testDir = "../portal-security-ldap-test/src/testIntegration/java"
+}
+
 String parserDirName = "com/liferay/portal/security/ldap/internal/validator/parser"
 List<String> startParameterTaskNames = gradle.startParameter.taskNames
 
