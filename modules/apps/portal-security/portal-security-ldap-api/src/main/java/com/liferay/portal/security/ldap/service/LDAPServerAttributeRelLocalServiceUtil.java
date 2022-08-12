@@ -61,6 +61,14 @@ public class LDAPServerAttributeRelLocalServiceUtil {
 		return getService().addLDAPServerAttributeRel(ldapServerAttributeRel);
 	}
 
+	public static LDAPServerAttributeRel addLDAPServerAttributeRel(
+			long ldapServerId, String className, long classPK)
+		throws PortalException {
+
+		return getService().addLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
+	}
+
 	/**
 	 * Creates a new ldap server attribute rel with the primary key. Does not add the ldap server attribute rel to the database.
 	 *
@@ -118,6 +126,14 @@ public class LDAPServerAttributeRelLocalServiceUtil {
 
 		return getService().deleteLDAPServerAttributeRel(
 			ldapServerAttributeRelId);
+	}
+
+	public static void deleteLDAPServerAttributeRel(
+			long ldapServerId, String className, long classPK)
+		throws PortalException {
+
+		getService().deleteLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
 	}
 
 	/**
@@ -266,6 +282,12 @@ public class LDAPServerAttributeRelLocalServiceUtil {
 		return getService().getLDAPServerAttributeRels(start, end);
 	}
 
+	public static List<LDAPServerAttributeRel> getLDAPServerAttributeRels(
+		long ldapServerId, String className) {
+
+		return getService().getLDAPServerAttributeRels(ldapServerId, className);
+	}
+
 	/**
 	 * Returns the number of ldap server attribute rels.
 	 *
@@ -291,6 +313,13 @@ public class LDAPServerAttributeRelLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
+	}
+
+	public static boolean hasLDAPServerAttributeRel(
+		long ldapServerId, String className, long classPK) {
+
+		return getService().hasLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
 	}
 
 	/**
