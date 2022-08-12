@@ -753,6 +753,15 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 				isNew = true;
 			}
+			else if (!_ldapServerAttributeRelLocalService.
+						hasLDAPServerAttributeRel(
+							ldapImportContext.getLdapServerId(),
+							User.class.getName(), user.getUserId())) {
+
+				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+					ldapImportContext.getLdapServerId(), User.class.getName(),
+					user.getUserId());
+			}
 
 			String modifyTimestamp = LDAPUtil.getAttributeString(
 				userLdapAttributes, "modifyTimestamp");
