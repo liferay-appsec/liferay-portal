@@ -4,4 +4,7 @@
 	<checkstyle>
 		<suppress checks="StaticVariableNameCheck" files="portal-security-service-access-policy-api/src/main/java/com/liferay/portal/security/service/access/policy/constants/SAPActionKeys\.java" />
 	</checkstyle>
+	<source-check>
+		<suppress checks="BNDSchemaVersionCheck" files="portal-security-ldap-service/bnd.bnd" />
+	</source-check>
 </suppressions>
