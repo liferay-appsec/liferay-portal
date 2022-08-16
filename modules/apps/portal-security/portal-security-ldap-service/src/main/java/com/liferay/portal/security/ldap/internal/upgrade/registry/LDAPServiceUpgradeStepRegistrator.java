@@ -33,11 +33,9 @@ public class LDAPServiceUpgradeStepRegistrator
 	@Override
 	public void register(Registry registry) {
 		registry.register(
-			"0.0.0", "1.0.0",
+			"0.0.1", "1.0.0",
 			new LDAPSystemConfigurationsUpgradeProcess(
 				_configurationAdmin, _configurationProvider));
-
-		registry.register("0.0.1", "1.0.0", new DummyUpgradeStep());
 	}
 
 	@Reference
