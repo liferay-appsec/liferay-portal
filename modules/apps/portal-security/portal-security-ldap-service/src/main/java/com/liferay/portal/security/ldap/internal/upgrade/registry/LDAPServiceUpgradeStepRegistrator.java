@@ -15,8 +15,7 @@
 package com.liferay.portal.security.ldap.internal.upgrade.registry;
 
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
-import com.liferay.portal.security.ldap.internal.upgrade.v1_0_0.LDAPSystemConfigurationsUpgradeProcess;
+import com.liferay.portal.security.ldap.internal.upgrade.v0_0_2.LDAPSystemConfigurationsUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -33,7 +32,7 @@ public class LDAPServiceUpgradeStepRegistrator
 	@Override
 	public void register(Registry registry) {
 		registry.register(
-			"0.0.1", "1.0.0",
+			"0.0.1", "0.0.2",
 			new LDAPSystemConfigurationsUpgradeProcess(
 				_configurationAdmin, _configurationProvider));
 	}

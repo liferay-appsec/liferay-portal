@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.portal.security.ldap.internal.upgrade.v1_0_0;
+package com.liferay.portal.security.ldap.internal.upgrade.v0_0_2;
 
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
