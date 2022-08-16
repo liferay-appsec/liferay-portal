@@ -45,7 +45,9 @@ public class PortalUpgradeProcessRegistryImpl
 					"com.liferay.document.library.asset.auto.tagger.tensorflow",
 					"com.liferay.portal.bundle.blacklist.impl",
 					"com.liferay.portal.component.blacklist.impl",
-					"com.liferay.portal.search", "com.liferay.template.web"
+					"com.liferay.portal.search",
+					"com.liferay.portal.security.ldap.service",
+					"com.liferay.template.web"
 				},
 				new String[][] {
 					{"opensocial-portlet", "opensocial-portlet", "OpenSocial"}
