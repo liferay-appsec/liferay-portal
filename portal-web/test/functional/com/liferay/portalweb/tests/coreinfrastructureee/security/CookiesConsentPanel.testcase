@@ -169,7 +169,7 @@ definition {
 	@priority = "5"
 	test CookiesConsentPanelCouldSaveCookieSettingsWhenItsOnASitePage {
 		property portal.acceptance = "true";
-		property test.name.skip.portal.instance = "CookiesConsentPanel#CookieConsentPanelCouldSaveCookieSettingsWhenItsOnASitePage";
+		property test.name.skip.portal.instance = "CookiesConsentPanel#CookiesConsentPanelCouldSaveCookieSettingsWhenItsOnASitePage";
 
 		task ("Given: User creates a site page and adds Cookie Consent Configuration widget to it.") {
 			CookiePreferenceHandlingAdmin.enablePreferenceHandling();
