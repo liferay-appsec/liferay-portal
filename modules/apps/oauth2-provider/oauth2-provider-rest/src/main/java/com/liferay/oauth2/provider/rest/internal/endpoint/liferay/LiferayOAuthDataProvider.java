@@ -171,6 +171,9 @@ public class LiferayOAuthDataProvider
 			accessTokenRegistration);
 
 		if (isUseJwtFormatForAccessTokens()) {
+			System.out.println(
+				"During execution, isJWT: " + isUseJwtFormatForAccessTokens());
+
 			_convertToJWTAccessToken(serverAccessToken);
 		}
 
@@ -1142,6 +1145,10 @@ public class LiferayOAuthDataProvider
 			_oAuth2AuthorizationServerConfiguration.refreshTokenDuration());
 
 		setUseJwtFormatForAccessTokens(
+			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
+
+		System.out.println(
+			"AS configures to use JWT AT: " +
 			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
 	}
 
