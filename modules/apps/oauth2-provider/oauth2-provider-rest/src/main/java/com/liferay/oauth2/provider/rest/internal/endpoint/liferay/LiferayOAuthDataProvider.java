@@ -922,6 +922,11 @@ public class LiferayOAuthDataProvider
 
 		String jose = processJwtAccessToken(claims);
 
+		Map<String, String> extraProperties =
+			serverAccessToken.getExtraProperties();
+
+		extraProperties.put("jwt_id", claims.getTokenId());
+
 		if (isPersistJwtEncoding()) {
 			serverAccessToken.setTokenKey(jose);
 		}
@@ -1349,14 +1354,22 @@ public class LiferayOAuthDataProvider
 		Date expirationDate = _fromCXFTime(
 			serverAccessToken.getIssuedAt() + serverAccessToken.getExpiresIn());
 
+		String tokenKey = serverAccessToken.getTokenKey();
+
+		Map<String, String> extraProperties =
+			serverAccessToken.getExtraProperties();
+
+		if (extraProperties.containsKey("jwt_id")) {
+			tokenKey = extraProperties.remove("jwt_id");
+		}
+
 		if (serverAccessToken.getRefreshToken() != null) {
 			OAuth2Authorization oAuth2Authorization =
 				_oAuth2AuthorizationLocalService.
 					fetchOAuth2AuthorizationByRefreshTokenContent(
 						serverAccessToken.getRefreshToken());
 
-			oAuth2Authorization.setAccessTokenContent(
-				serverAccessToken.getTokenKey());
+			oAuth2Authorization.setAccessTokenContent(tokenKey);
 			oAuth2Authorization.setAccessTokenCreateDate(createDate);
 			oAuth2Authorization.setAccessTokenExpirationDate(expirationDate);
 
@@ -1400,8 +1413,8 @@ public class LiferayOAuthDataProvider
 				oAuth2Application.getCompanyId(), userId, userName,
 				oAuth2Application.getOAuth2ApplicationId(),
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
-				serverAccessToken.getTokenKey(), createDate, expirationDate,
-				remoteHost, remoteAddr, null, null, null);
+				tokenKey, createDate, expirationDate, remoteHost, remoteAddr,
+				null, null, null);
 
 		List<String> scopeAliasesList =
 			OAuthUtils.convertPermissionsToScopeList(
