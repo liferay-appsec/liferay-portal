@@ -46,6 +46,7 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -92,6 +93,12 @@ public class OAuth2RESTAuthVerifier implements AuthVerifier {
 			if ((bearerTokenProvider == null) ||
 				!bearerTokenProvider.isValid(accessToken)) {
 
+				if (bearerTokenProvider == null) {
+					System.out.println();
+				}
+				else {
+					System.out.println("token " + accessToken.getTokenKey() + " is not valid");
+				}
 				return authVerifierResult;
 			}
 
@@ -108,6 +115,7 @@ public class OAuth2RESTAuthVerifier implements AuthVerifier {
 			return authVerifierResult;
 		}
 		catch (Exception exception) {
+			System.out.println(exception);
 			if (_log.isDebugEnabled()) {
 				_log.debug("Unable to verify OAuth2 access token", exception);
 			}
@@ -141,20 +149,25 @@ public class OAuth2RESTAuthVerifier implements AuthVerifier {
 		String token = authorizationParts[1];
 
 		if (Validator.isBlank(token)) {
+			System.out.println("In RS, received token is empty");
 			return null;
 		}
+
+		System.out.println("In RS: received token: " + token);
 
 		OAuth2Authorization oAuth2Authorization =
 			_oAuth2AuthorizationLocalService.
 				fetchOAuth2AuthorizationByAccessTokenContent(token);
 
 		if (oAuth2Authorization == null) {
+			System.out.println("In RS, unable to find authorization");
 			return null;
 		}
 
 		String accessTokenContent = oAuth2Authorization.getAccessTokenContent();
 
 		if (OAuth2ProviderConstants.EXPIRED_TOKEN.equals(accessTokenContent)) {
+			System.out.println("In RS, token " + accessTokenContent + " is expired");
 			return null;
 		}
 

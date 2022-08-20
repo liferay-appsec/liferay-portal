@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -150,6 +151,8 @@ public class LiferayOAuthDataProvider
 			AccessTokenRegistration accessTokenRegistration)
 		throws OAuthServiceException {
 
+		System.out.println("Start creating token");
+
 		List<String> approvedScope = new ArrayList<>(
 			accessTokenRegistration.getRequestedScope());
 
@@ -167,8 +170,15 @@ public class LiferayOAuthDataProvider
 			approvedScope.add(OAuthConstants.REFRESH_TOKEN_SCOPE);
 		}
 
+		System.out.println("approved scopes:");
+
+		approvedScope.forEach(
+			s -> System.out.println(s));
+
 		ServerAccessToken serverAccessToken = super.createAccessToken(
 			accessTokenRegistration);
+
+		System.out.println("Generated token: " + serverAccessToken.getTokenKey());
 
 		if (isUseJwtFormatForAccessTokens()) {
 			System.out.println(
@@ -1133,6 +1143,8 @@ public class LiferayOAuthDataProvider
 	}
 
 	private void _init() {
+		System.out.println("Initializing");
+
 		setAccessTokenLifetime(
 			_oAuth2AuthorizationServerConfiguration.accessTokenDuration());
 

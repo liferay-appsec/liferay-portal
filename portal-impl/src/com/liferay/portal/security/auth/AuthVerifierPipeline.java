@@ -109,7 +109,7 @@ public class AuthVerifierPipeline {
 		if (authVerifierConfigurationConsumer.getAuthVerifierResult() != null) {
 			return authVerifierConfigurationConsumer.getAuthVerifierResult();
 		}
-
+		System.out.println("Unable to verify for request: " + requestURI);
 		return _createGuestVerificationResult(accessControlContext);
 	}
 
@@ -227,7 +227,7 @@ public class AuthVerifierPipeline {
 		@Override
 		public void accept(
 			List<AuthVerifierConfiguration> authVerifierConfigurations) {
-
+			System.out.println("accepting request: " + _requestURI);
 			if (_authVerifierResult != null) {
 				return;
 			}
@@ -244,7 +244,7 @@ public class AuthVerifierPipeline {
 
 				if (_excludedAuthVerifierConfigurations.contains(
 						authVerifierConfiguration)) {
-
+					System.out.println(authVerifierConfiguration.getAuthVerifierClassName() + " is excluded");
 					continue;
 				}
 
@@ -252,8 +252,10 @@ public class AuthVerifierPipeline {
 					_accessControlContext, authVerifierConfiguration);
 
 				if (_authVerifierResult != null) {
+					System.out.println(authVerifierConfiguration.getAuthVerifierClassName() + " gives a result: " + _authVerifierResult.getState());
 					return;
 				}
+				System.out.println(authVerifierConfiguration.getAuthVerifierClassName() + " is unable to give a result");
 			}
 		}
 
