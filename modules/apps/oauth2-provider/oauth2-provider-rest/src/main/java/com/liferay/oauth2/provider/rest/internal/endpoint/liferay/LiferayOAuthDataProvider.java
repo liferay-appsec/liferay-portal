@@ -1048,17 +1048,6 @@ public class LiferayOAuthDataProvider
 		);
 	}
 
-	private OAuth2AuthorizationServerConfiguration
-			_getOAuth2AuthorizationServerConfiguration()
-		throws Exception {
-
-		MessageContext messageContext = getMessageContext();
-
-		return _configurationProvider.getCompanyConfiguration(
-			OAuth2AuthorizationServerConfiguration.class,
-			_portal.getCompanyId(messageContext.getHttpServletRequest()));
-	}
-
 	private String _getRemoteIP() {
 		MessageContext messageContext = getMessageContext();
 
@@ -1097,36 +1086,6 @@ public class LiferayOAuthDataProvider
 
 		return _userLocalService.getUser(
 			GetterUtil.getLong(userSubject.getId()));
-	}
-
-	private UserSubject _getUserSubject(long userId, String userName) {
-		try {
-			User user = _userLocalService.getUser(userId);
-
-			OAuth2AuthorizationServerConfiguration
-				oAuth2AuthorizationServerConfiguration =
-					_getOAuth2AuthorizationServerConfiguration();
-
-			String userSubjectMappedTo =
-				oAuth2AuthorizationServerConfiguration.userSubjectMappedTo();
-
-			if (userSubjectMappedTo.equals("emailAddress")) {
-				return new UserSubject(userName, user.getEmailAddress());
-			}
-			else if (userSubjectMappedTo.equals("screenName")) {
-				return new UserSubject(userName, user.getScreenName());
-			}
-			else if (userSubjectMappedTo.equals("UUID")) {
-				return new UserSubject(userName, user.getUuid());
-			}
-		}
-		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(exception);
-			}
-		}
-
-		return new UserSubject(userName, String.valueOf(userId));
 	}
 
 	private void _init() {
@@ -1324,7 +1283,8 @@ public class LiferayOAuthDataProvider
 	private UserSubject _populateUserSubject(
 		long companyId, long userId, String userName) {
 
-		UserSubject userSubject = _getUserSubject(userId, userName);
+		UserSubject userSubject = new UserSubject(
+			userName, String.valueOf(userId));
 
 		Map<String, String> properties = userSubject.getProperties();
 
