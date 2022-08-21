@@ -32,24 +32,6 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface OAuth2AuthorizationServerConfiguration {
 
 	@Meta.AD(
-		deflt = "600",
-		description = "oauth2-authorization-server-access-token-duration-description",
-		id = "oauth2.authorization.server.access.token.duration",
-		name = "oauth2-authorization-server-access-token-duration",
-		required = false
-	)
-	public int accessTokenDuration();
-
-	@Meta.AD(
-		deflt = "604800",
-		description = "oauth2-authorization-server-refresh-token-duration-description",
-		id = "oauth2.authorization.server.refresh.token.duration",
-		name = "oauth2-authorization-server-refresh-token-duration",
-		required = false
-	)
-	public int refreshTokenDuration();
-
-	@Meta.AD(
 		deflt = "userId",
 		description = "oauth2-authorization-server-user-subject-mapped-to-description",
 		id = "oauth2.authorization.server.user.subject.mapped.to",

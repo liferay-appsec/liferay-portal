@@ -1130,16 +1130,10 @@ public class LiferayOAuthDataProvider
 	}
 
 	private void _init() {
-		setAccessTokenLifetime(
-			_oAuth2AuthorizationServerConfiguration.accessTokenDuration());
-
 		setGrantLifetime(
 			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
 
 		setJwtAccessTokenProducer();
-
-		setRefreshTokenLifetime(
-			_oAuth2AuthorizationServerConfiguration.refreshTokenDuration());
 
 		setUseJwtFormatForAccessTokens(
 			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
