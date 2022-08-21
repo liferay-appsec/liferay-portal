@@ -150,6 +150,8 @@ public class LiferayOAuthDataProvider
 
 		accessTokenRegistration.setApprovedScope(approvedScope);
 
+		// test
+
 		if (!_refreshTokenIncompatibleGrants.contains(
 				accessTokenRegistration.getGrantType())) {
 
