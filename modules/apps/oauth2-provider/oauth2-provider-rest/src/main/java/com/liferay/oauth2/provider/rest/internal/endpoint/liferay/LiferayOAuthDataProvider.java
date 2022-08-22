@@ -167,14 +167,7 @@ public class LiferayOAuthDataProvider
 			approvedScope.add(OAuthConstants.REFRESH_TOKEN_SCOPE);
 		}
 
-		ServerAccessToken serverAccessToken = super.createAccessToken(
-			accessTokenRegistration);
-
-		if (isUseJwtFormatForAccessTokens()) {
-			_convertToJWTAccessToken(serverAccessToken);
-		}
-
-		return serverAccessToken;
+		return super.createAccessToken(accessTokenRegistration);
 	}
 
 	@Override
@@ -603,10 +596,6 @@ public class LiferayOAuthDataProvider
 
 		accessToken.setRefreshToken(newRefreshToken.getTokenKey());
 
-		if (isUseJwtFormatForAccessTokens()) {
-			_convertToJWTAccessToken(accessToken);
-		}
-
 		return accessToken;
 	}
 
@@ -744,6 +733,10 @@ public class LiferayOAuthDataProvider
 		_customizeServerAccessToken(
 			accessTokenRegistration.getExtraProperties(), serverAccessToken);
 
+		if (isUseJwtFormatForAccessTokens()) {
+			_convertToJWTAccessToken(serverAccessToken);
+		}
+
 		return serverAccessToken;
 	}
 
@@ -842,6 +835,10 @@ public class LiferayOAuthDataProvider
 			oldRefreshToken.getSubject());
 
 		_customizeServerAccessToken(Collections.emptyMap(), serverAccessToken);
+
+		if (isUseJwtFormatForAccessTokens()) {
+			_convertToJWTAccessToken(serverAccessToken);
+		}
 
 		return serverAccessToken;
 	}
