@@ -21,12 +21,13 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
-import com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProviderAccessor;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.constants.BearerTokenProviderConstants;
+import com.liferay.oauth2.provider.rest.spi.web.key.provider.WebKeyProvider;
+import com.liferay.oauth2.provider.rest.spi.web.key.provider.WebKeyProviderAccessor;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
@@ -109,7 +110,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(
 	configurationPid = {
 		"com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration",
-		"com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration",
 		"com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration"
 	},
 	service = LiferayOAuthDataProvider.class
@@ -368,6 +368,10 @@ public class LiferayOAuthDataProvider
 		return _portal.getHost(messageContext.getHttpServletRequest());
 	}
 
+	public OAuthJoseJwtProducer getJwtAccessTokenProducer() {
+		throw new UnsupportedOperationException();
+	}
+
 	public OAuth2Authorization getOAuth2Authorization(
 		Client client, String rememberDeviceContent, long userId) {
 
@@ -499,6 +503,11 @@ public class LiferayOAuthDataProvider
 
 		return _serverAuthorizationCodeGrantProvider.
 			getServerAuthorizationCodeGrant(code);
+	}
+
+	@Override
+	public boolean isUseJwtFormatForAccessTokens() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -643,6 +652,19 @@ public class LiferayOAuthDataProvider
 		throw new UnsupportedOperationException();
 	}
 
+	public void setJwtAccessTokenProducer(
+		OAuthJoseJwtProducer jwtAccessTokenProducer) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setUseJwtFormatForAccessTokens(
+		boolean useJwtFormatForAccessTokens) {
+
+		throw new UnsupportedOperationException();
+	}
+
 	public void updateRememberDeviceContent(
 		String refreshTokenContent, String rememberDeviceContent) {
 
@@ -653,9 +675,6 @@ public class LiferayOAuthDataProvider
 	@Activate
 	@SuppressWarnings("unchecked")
 	protected void activate(Map<String, Object> properties) {
-		_defaultWebKeyProviderConfiguration =
-			ConfigurableUtil.createConfigurable(
-				DefaultWebKeyProviderConfiguration.class, properties);
 		_oAuth2AuthorizationFlowConfiguration =
 			ConfigurableUtil.createConfigurable(
 				OAuth2AuthorizationFlowConfiguration.class, properties);
@@ -857,7 +876,15 @@ public class LiferayOAuthDataProvider
 
 	@Override
 	protected String processJwtAccessToken(JwtClaims jwtClaims) {
-		OAuthJoseJwtProducer processor = getJwtAccessTokenProducer();
+		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
+
+		WebKeyProvider webKeyProvider =
+			_webKeyProviderAccessor.getWebKeyProvider(
+				CompanyThreadLocal.getCompanyId(), jwtClaims.getIssuer());
+
+		oAuthJoseJwtProducer.setSignatureProvider(
+			JwsUtils.getSignatureProvider(
+				JwkUtils.readJwkKey(webKeyProvider.getWebKey())));
 
 		// Override this method to fix another bug in cxf.
 		// https://datatracker.ietf.org/doc/html/rfc9068#section-2.1
@@ -866,7 +893,8 @@ public class LiferayOAuthDataProvider
 
 		jwsHeaders.setHeader("typ", "at+jwt");
 
-		return processor.processJwt(new JwtToken(jwsHeaders, jwtClaims));
+		return oAuthJoseJwtProducer.processJwt(
+			new JwtToken(jwsHeaders, jwtClaims));
 	}
 
 	@Override
@@ -910,18 +938,6 @@ public class LiferayOAuthDataProvider
 
 		_oAuth2AuthorizationLocalService.updateOAuth2Authorization(
 			oAuth2Authorization);
-	}
-
-	protected void setJwtAccessTokenProducer() {
-		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
-
-		oAuthJoseJwtProducer.setSignatureProvider(
-			JwsUtils.getSignatureProvider(
-				JwkUtils.readJwkKey(
-					_defaultWebKeyProviderConfiguration.
-						jwtAccessTokenSigningJSONWebKey())));
-
-		super.setJwtAccessTokenProducer(oAuthJoseJwtProducer);
 	}
 
 	private void _convertToJWTAccessToken(ServerAccessToken serverAccessToken) {
@@ -1095,8 +1111,6 @@ public class LiferayOAuthDataProvider
 	private void _init() {
 		setGrantLifetime(
 			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
-
-		setJwtAccessTokenProducer();
 	}
 
 	private void _invokeTransactionally(Runnable runnable) throws Throwable {
@@ -1401,9 +1415,6 @@ public class LiferayOAuthDataProvider
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
-	private DefaultWebKeyProviderConfiguration
-		_defaultWebKeyProviderConfiguration;
-
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
@@ -1434,5 +1445,8 @@ public class LiferayOAuthDataProvider
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private WebKeyProviderAccessor _webKeyProviderAccessor;
 
 }
