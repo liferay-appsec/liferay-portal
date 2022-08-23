@@ -25,11 +25,11 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 	category = "oauth2", scope = ExtendedObjectClassDefinition.Scope.SYSTEM
 )
 @Meta.OCD(
-	id = "com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration",
+	id = "com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration",
 	localization = "content/Language",
-	name = "oauth2-authorization-server-configuration-name"
+	name = "default-web-key-provider-configuration-name"
 )
-public interface OAuth2AuthorizationServerConfiguration {
+public interface DefaultWebKeyProviderConfiguration {
 
 	@Meta.AD(
 		deflt = "{}",

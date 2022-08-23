@@ -21,7 +21,7 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
-import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration;
+import com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
@@ -109,7 +109,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 @Component(
 	configurationPid = {
 		"com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration",
-		"com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration",
+		"com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration",
 		"com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration"
 	},
 	service = LiferayOAuthDataProvider.class
@@ -653,9 +653,9 @@ public class LiferayOAuthDataProvider
 	@Activate
 	@SuppressWarnings("unchecked")
 	protected void activate(Map<String, Object> properties) {
-		_oAuth2AuthorizationServerConfiguration =
+		_defaultWebKeyProviderConfiguration =
 			ConfigurableUtil.createConfigurable(
-				OAuth2AuthorizationServerConfiguration.class, properties);
+				DefaultWebKeyProviderConfiguration.class, properties);
 		_oAuth2AuthorizationFlowConfiguration =
 			ConfigurableUtil.createConfigurable(
 				OAuth2AuthorizationFlowConfiguration.class, properties);
@@ -918,7 +918,7 @@ public class LiferayOAuthDataProvider
 		oAuthJoseJwtProducer.setSignatureProvider(
 			JwsUtils.getSignatureProvider(
 				JwkUtils.readJwkKey(
-					_oAuth2AuthorizationServerConfiguration.
+					_defaultWebKeyProviderConfiguration.
 						jwtAccessTokenSigningJSONWebKey())));
 
 		super.setJwtAccessTokenProducer(oAuthJoseJwtProducer);
@@ -1401,6 +1401,9 @@ public class LiferayOAuthDataProvider
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
+	private DefaultWebKeyProviderConfiguration
+		_defaultWebKeyProviderConfiguration;
+
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
@@ -1414,8 +1417,6 @@ public class LiferayOAuthDataProvider
 	@Reference
 	private OAuth2AuthorizationLocalService _oAuth2AuthorizationLocalService;
 
-	private OAuth2AuthorizationServerConfiguration
-		_oAuth2AuthorizationServerConfiguration;
 	private OAuth2ProviderConfiguration _oAuth2ProviderConfiguration;
 
 	@Reference

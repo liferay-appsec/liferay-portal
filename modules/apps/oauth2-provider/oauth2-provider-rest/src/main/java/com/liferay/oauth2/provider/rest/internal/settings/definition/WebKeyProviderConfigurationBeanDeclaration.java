@@ -14,7 +14,7 @@
 
 package com.liferay.oauth2.provider.rest.internal.settings.definition;
 
-import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration;
+import com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration;
 import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
 
 import org.osgi.service.component.annotations.Component;
@@ -23,12 +23,12 @@ import org.osgi.service.component.annotations.Component;
  * @author Arthur Chan
  */
 @Component(service = ConfigurationBeanDeclaration.class)
-public class OAuth2AuthorizationServerConfigurationBeanDeclaration
+public class WebKeyProviderConfigurationBeanDeclaration
 	implements ConfigurationBeanDeclaration {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return OAuth2AuthorizationServerConfiguration.class;
+		return DefaultWebKeyProviderConfiguration.class;
 	}
 
 }

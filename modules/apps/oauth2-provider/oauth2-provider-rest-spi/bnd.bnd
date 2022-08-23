@@ -4,4 +4,5 @@ Bundle-Version: 4.0.5
 Export-Package:\
 	com.liferay.oauth2.provider.rest.spi.bearer.token.provider,\
 	com.liferay.oauth2.provider.rest.spi.bearer.token.provider.constants,\
-	com.liferay.oauth2.provider.rest.spi.scope.checker.container.request.filter
+	com.liferay.oauth2.provider.rest.spi.scope.checker.container.request.filter,\
+	com.liferay.oauth2.provider.rest.spi.web.key.provider
