@@ -1,3 +1,8 @@
 Bundle-Name: Liferay Portal Security LDAP Persistence API
 Bundle-SymbolicName: com.liferay.portal.security.ldap.persistence.api
 Bundle-Version: 1.0.0
+Export-Package:\
+	com.liferay.portal.security.ldap.persistence.exception,\
+	com.liferay.portal.security.ldap.persistence.model,\
+	com.liferay.portal.security.ldap.persistence.service,\
+	com.liferay.portal.security.ldap.persistence.service.persistence
