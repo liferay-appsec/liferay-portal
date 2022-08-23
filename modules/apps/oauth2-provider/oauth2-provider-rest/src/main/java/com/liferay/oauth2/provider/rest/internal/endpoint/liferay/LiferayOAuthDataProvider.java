@@ -26,6 +26,7 @@ import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuratio
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProviderAccessor;
+import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.constants.BearerTokenProviderConstants;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
@@ -733,7 +734,10 @@ public class LiferayOAuthDataProvider
 		_customizeServerAccessToken(
 			accessTokenRegistration.getExtraProperties(), serverAccessToken);
 
-		if (isUseJwtFormatForAccessTokens()) {
+		if (Objects.equals(
+				BearerTokenProviderConstants.TOKEN_TYPE_JWT_AT,
+				serverAccessToken.getTokenType())) {
+
 			_convertToJWTAccessToken(serverAccessToken);
 		}
 
@@ -836,7 +840,10 @@ public class LiferayOAuthDataProvider
 
 		_customizeServerAccessToken(Collections.emptyMap(), serverAccessToken);
 
-		if (isUseJwtFormatForAccessTokens()) {
+		if (Objects.equals(
+				BearerTokenProviderConstants.TOKEN_TYPE_JWT_AT,
+				serverAccessToken.getTokenType())) {
+
 			_convertToJWTAccessToken(serverAccessToken);
 		}
 
@@ -1090,9 +1097,6 @@ public class LiferayOAuthDataProvider
 			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
 
 		setJwtAccessTokenProducer();
-
-		setUseJwtFormatForAccessTokens(
-			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
 	}
 
 	private void _invokeTransactionally(Runnable runnable) throws Throwable {

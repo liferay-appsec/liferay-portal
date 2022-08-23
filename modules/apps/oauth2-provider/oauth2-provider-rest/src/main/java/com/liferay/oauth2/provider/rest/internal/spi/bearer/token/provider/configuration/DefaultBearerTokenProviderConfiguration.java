@@ -30,6 +30,15 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface DefaultBearerTokenProviderConfiguration {
 
 	@Meta.AD(
+		deflt = "false",
+		description = "oauth2-authorization-server-issue-jwt-access-token-description",
+		id = "oauth2.authorization.server.issue.jwt.access.token",
+		name = "oauth2-authorization-server-issue-jwt-access-token",
+		required = false
+	)
+	public boolean issueJWTAccessToken();
+
+	@Meta.AD(
 		deflt = "600", description = "access-token-expires-in-description",
 		id = "access.token.expires.in", name = "access-token-expires-in",
 		required = false

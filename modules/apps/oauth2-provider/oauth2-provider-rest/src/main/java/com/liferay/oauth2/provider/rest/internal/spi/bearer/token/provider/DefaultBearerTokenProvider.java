@@ -16,6 +16,7 @@ package com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider;
 
 import com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
+import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.constants.BearerTokenProviderConstants;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.io.BigEndianCodec;
@@ -33,8 +34,7 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 @Component(
 	configurationPid = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
-	property = {"name=default"},
-	service = BearerTokenProvider.class
+	property = "name=default", service = BearerTokenProvider.class
 )
 public class DefaultBearerTokenProvider implements BearerTokenProvider {
 
@@ -56,6 +56,11 @@ public class DefaultBearerTokenProvider implements BearerTokenProvider {
 			generateTokenKey(
 				_defaultBearerTokenProviderConfiguration.
 					accessTokenKeyByteSize()));
+
+		if (_defaultBearerTokenProviderConfiguration.issueJWTAccessToken()) {
+			accessToken.setTokenType(
+				BearerTokenProviderConstants.TOKEN_TYPE_JWT_AT);
+		}
 	}
 
 	@Override
