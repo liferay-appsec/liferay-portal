@@ -16,20 +16,12 @@ package com.liferay.oauth2.provider.scope.liferay;
 
 import java.util.function.Supplier;
 
-import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.BundleContext;
 
 /**
  * @author Carlos Sierra Andrés
- * @author Stian Sigvartsen
  */
-@ProviderType
 public interface ScopedServiceTrackerMapFactory {
-
-	public <T> ScopedServiceTrackerMap<T> create(
-		BundleContext bundleContext, Class<T> clazz, String property,
-		String filter, Supplier<T> defaultServiceSupplier,
-		Runnable onChangeRunnable);
 
 	public default <T> ScopedServiceTrackerMap<T> create(
 		BundleContext bundleContext, Class<T> clazz, String property,
@@ -41,13 +33,8 @@ public interface ScopedServiceTrackerMapFactory {
 			});
 	}
 
-	public default <T> ScopedServiceTrackerMap<T> create(
+	public <T> ScopedServiceTrackerMap<T> create(
 		BundleContext bundleContext, Class<T> clazz, String property,
-		Supplier<T> defaultServiceSupplier, Runnable onChangeRunnable) {
-
-		return create(
-			bundleContext, clazz, property, null, defaultServiceSupplier,
-			onChangeRunnable);
-	}
+		Supplier<T> defaultServiceSupplier, Runnable onChangeRunnable);
 
 }
