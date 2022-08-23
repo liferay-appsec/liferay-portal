@@ -733,7 +733,10 @@ public class LiferayOAuthDataProvider
 		_customizeServerAccessToken(
 			accessTokenRegistration.getExtraProperties(), serverAccessToken);
 
-		if (isUseJwtFormatForAccessTokens()) {
+		if (Objects.equals(
+				BearerTokenProvider.TokenType.JWT_AT.getTokenType(),
+				serverAccessToken.getTokenType())) {
+
 			_convertToJWTAccessToken(serverAccessToken);
 		}
 
@@ -836,7 +839,10 @@ public class LiferayOAuthDataProvider
 
 		_customizeServerAccessToken(Collections.emptyMap(), serverAccessToken);
 
-		if (isUseJwtFormatForAccessTokens()) {
+		if (Objects.equals(
+				BearerTokenProvider.TokenType.JWT_AT.getTokenType(),
+				serverAccessToken.getTokenType())) {
+
 			_convertToJWTAccessToken(serverAccessToken);
 		}
 
@@ -1090,9 +1096,6 @@ public class LiferayOAuthDataProvider
 			_oAuth2AuthorizationFlowConfiguration.authorizationCodeGrantTTL());
 
 		setJwtAccessTokenProducer();
-
-		setUseJwtFormatForAccessTokens(
-			_oAuth2AuthorizationServerConfiguration.issueJWTAccessToken());
 	}
 
 	private void _invokeTransactionally(Runnable runnable) throws Throwable {

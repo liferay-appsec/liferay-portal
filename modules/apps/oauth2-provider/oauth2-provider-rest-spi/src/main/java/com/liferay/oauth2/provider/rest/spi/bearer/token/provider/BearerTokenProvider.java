@@ -373,4 +373,20 @@ public interface BearerTokenProvider {
 
 	}
 
+	public enum TokenType {
+
+		BEARER("Bearer"), JWT_AT("jwt+at");
+
+		public String getTokenType() {
+			return _tokenType;
+		}
+
+		private TokenType(String tokenType) {
+			_tokenType = tokenType;
+		}
+
+		private String _tokenType;
+
+	}
+
 }

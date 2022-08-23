@@ -33,8 +33,7 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 @Component(
 	configurationPid = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration",
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
-	property = {"name=default"},
-	service = BearerTokenProvider.class
+	property = "name=default", service = BearerTokenProvider.class
 )
 public class DefaultBearerTokenProvider implements BearerTokenProvider {
 
@@ -56,6 +55,10 @@ public class DefaultBearerTokenProvider implements BearerTokenProvider {
 			generateTokenKey(
 				_defaultBearerTokenProviderConfiguration.
 					accessTokenKeyByteSize()));
+
+		if (_defaultBearerTokenProviderConfiguration.issueJWTAccessToken()) {
+			accessToken.setTokenType(TokenType.JWT_AT.getTokenType());
+		}
 	}
 
 	@Override

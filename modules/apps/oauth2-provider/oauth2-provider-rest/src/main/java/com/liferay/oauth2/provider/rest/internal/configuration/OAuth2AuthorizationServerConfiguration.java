@@ -32,15 +32,6 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 public interface OAuth2AuthorizationServerConfiguration {
 
 	@Meta.AD(
-		deflt = "false",
-		description = "oauth2-authorization-server-issue-jwt-access-token-description",
-		id = "oauth2.authorization.server.issue.jwt.access.token",
-		name = "oauth2-authorization-server-issue-jwt-access-token",
-		required = false
-	)
-	public boolean issueJWTAccessToken();
-
-	@Meta.AD(
 		deflt = "{}",
 		description = "oauth2-authorization-server-jwt-access-token-signing-json-web-key-description",
 		id = "oauth2.authorization.server.jwt.access.token.signing.json.web.key",
