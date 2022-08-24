@@ -76,6 +76,10 @@ public interface LDAPServerAttributeRelLocalService
 	public LDAPServerAttributeRel addLDAPServerAttributeRel(
 		LDAPServerAttributeRel ldapServerAttributeRel);
 
+	public LDAPServerAttributeRel addLDAPServerAttributeRel(
+			long ldapServerId, String className, long classPK)
+		throws PortalException;
+
 	/**
 	 * Creates a new ldap server attribute rel with the primary key. Does not add the ldap server attribute rel to the database.
 	 *
@@ -120,6 +124,10 @@ public interface LDAPServerAttributeRelLocalService
 	@Indexable(type = IndexableType.DELETE)
 	public LDAPServerAttributeRel deleteLDAPServerAttributeRel(
 			long ldapServerAttributeRelId)
+		throws PortalException;
+
+	public void deleteLDAPServerAttributeRel(
+			long ldapServerId, String className, long classPK)
 		throws PortalException;
 
 	/**
@@ -238,6 +246,10 @@ public interface LDAPServerAttributeRelLocalService
 	public List<LDAPServerAttributeRel> getLDAPServerAttributeRels(
 		int start, int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<LDAPServerAttributeRel> getLDAPServerAttributeRels(
+		long ldapServerId, String className);
+
 	/**
 	 * Returns the number of ldap server attribute rels.
 	 *
@@ -260,6 +272,10 @@ public interface LDAPServerAttributeRelLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
 		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public boolean hasLDAPServerAttributeRel(
+		long ldapServerId, String className, long classPK);
 
 	/**
 	 * Updates the ldap server attribute rel in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
