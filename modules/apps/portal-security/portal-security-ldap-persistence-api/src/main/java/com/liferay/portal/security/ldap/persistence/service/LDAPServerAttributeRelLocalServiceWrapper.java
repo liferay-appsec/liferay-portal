@@ -59,6 +59,17 @@ public class LDAPServerAttributeRelLocalServiceWrapper
 			ldapServerAttributeRel);
 	}
 
+	@Override
+	public
+		com.liferay.portal.security.ldap.persistence.model.
+			LDAPServerAttributeRel addLDAPServerAttributeRel(
+					long ldapServerId, String className, long classPK)
+				throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
+	}
+
 	/**
 	 * Creates a new ldap server attribute rel with the primary key. Does not add the ldap server attribute rel to the database.
 	 *
@@ -128,6 +139,15 @@ public class LDAPServerAttributeRelLocalServiceWrapper
 
 		return _ldapServerAttributeRelLocalService.deleteLDAPServerAttributeRel(
 			ldapServerAttributeRelId);
+	}
+
+	@Override
+	public void deleteLDAPServerAttributeRel(
+			long ldapServerId, String className, long classPK)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_ldapServerAttributeRelLocalService.deleteLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
 	}
 
 	/**
@@ -310,6 +330,16 @@ public class LDAPServerAttributeRelLocalServiceWrapper
 			start, end);
 	}
 
+	@Override
+	public java.util.List
+		<com.liferay.portal.security.ldap.persistence.model.
+			LDAPServerAttributeRel> getLDAPServerAttributeRels(
+				long ldapServerId, String className) {
+
+		return _ldapServerAttributeRelLocalService.getLDAPServerAttributeRels(
+			ldapServerId, className);
+	}
+
 	/**
 	 * Returns the number of ldap server attribute rels.
 	 *
@@ -341,6 +371,14 @@ public class LDAPServerAttributeRelLocalServiceWrapper
 
 		return _ldapServerAttributeRelLocalService.getPersistedModel(
 			primaryKeyObj);
+	}
+
+	@Override
+	public boolean hasLDAPServerAttributeRel(
+		long ldapServerId, String className, long classPK) {
+
+		return _ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
+			ldapServerId, className, classPK);
 	}
 
 	/**
