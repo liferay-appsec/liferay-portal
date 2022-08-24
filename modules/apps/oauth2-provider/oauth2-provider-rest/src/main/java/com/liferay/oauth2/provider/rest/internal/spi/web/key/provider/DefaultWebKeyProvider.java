@@ -27,7 +27,10 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
  * @author Stian Sigvartsen
  */
 @Component(
-	configurationPid = "com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration",
+	configurationPid = {
+		"com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration",
+		"com.liferay.oauth2.provider.rest.internal.configuration.DefaultWebKeyProviderConfiguration.scoped"
+	},
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = "name=default", service = WebKeyProvider.class
 )

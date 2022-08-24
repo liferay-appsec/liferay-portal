@@ -21,7 +21,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 /**
  * @author Tomas Polesovsky
  */
-@ExtendedObjectClassDefinition(category = "oauth2")
+@ExtendedObjectClassDefinition(category = "oauth2", scope = ExtendedObjectClassDefinition.Scope.COMPANY)
 @Meta.OCD(
 	id = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration",
 	localization = "content/Language",

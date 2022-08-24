@@ -32,7 +32,10 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
  * @author Tomas Polesovsky
  */
 @Component(
-	configurationPid = "com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration",
+	configurationPid = {
+		"com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration",
+		"com.liferay.oauth2.provider.rest.internal.spi.bearer.token.provider.configuration.DefaultBearerTokenProviderConfiguration.scoped"
+	},
 	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = "name=default", service = BearerTokenProvider.class
 )
