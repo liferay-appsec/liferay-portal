@@ -101,8 +101,21 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 		int maxUsers = ParamUtil.getInteger(actionRequest, "maxUsers");
 		boolean active = ParamUtil.getBoolean(actionRequest, "active");
 
+		String screenNameAdminUser = ParamUtil.getString(
+			actionRequest, "screenname");
+		String emailAdminUser = ParamUtil.getString(
+			actionRequest, "administrator-email");
+		String passwordAdminUser = ParamUtil.getString(
+			actionRequest, "password");
+		String firstNameAdminUser = ParamUtil.getString(
+			actionRequest, "firstname");
+		String lastNameAdminUser = ParamUtil.getString(
+			actionRequest, "lastnmvcame");
+
 		Company company = _companyService.addCompany(
-			webId, virtualHostname, mx, maxUsers, active);
+			webId, virtualHostname, mx, maxUsers, active,
+			screenNameAdminUser, emailAdminUser, passwordAdminUser,
+			firstNameAdminUser, lastNameAdminUser);
 
 		String siteInitializerKey = ParamUtil.getString(
 			actionRequest, "siteInitializerKey");
