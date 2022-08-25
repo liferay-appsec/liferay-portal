@@ -48,6 +48,32 @@
 
 				<aui:input inlineLabel="right" labelCssClass="simple-toggle-switch" name="active" type="toggle-switch" value="<%= true %>" />
 
+				<c:if test='<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>'>
+					<liferay-ui:panel
+						collapsible="<%= false %>"
+						extended="<%= true %>"
+						id="userDisplayDataVirtualInstancePanel"
+						markupView="lexicon"
+						title="user-display-data"
+					>
+						<aui:input label="field.screen-name" name="screenname" type="text">
+							<aui:validator name="required" />
+						</aui:input>
+
+						<aui:input name="administrator-email" type="text">
+							<aui:validator name="required" />
+						</aui:input>
+
+						<aui:input label="password" name="passwordAdmin" type="password">
+							<aui:validator name="required" />
+						</aui:input>
+
+						<aui:input label="field.first-name" name="firstname" type="text" />
+
+						<aui:input label="field.last-name" name="lastname" type="text" />
+					</liferay-ui:panel>
+				</c:if>
+
 				<%
 				SiteInitializerRegistry siteInitializerRegistry = (SiteInitializerRegistry)request.getAttribute(PortalInstancesWebKeys.SITE_INITIALIZER_REGISTRY);
 
