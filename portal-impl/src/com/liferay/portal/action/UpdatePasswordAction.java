@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -100,17 +101,24 @@ public class UpdatePasswordAction implements Action {
 						userLockoutException);
 				}
 			}
+
 			String remoteUser = httpServletRequest.getRemoteUser();
+
 			if (Validator.isNotNull(remoteUser)) {
 				User user = UserLocalServiceUtil.getUserById(
-					Long.parseLong(remoteUser));
+					GetterUtil.getLong(remoteUser));
+
 				String reminderQueryAnswer = user.getReminderQueryAnswer();
-				if (Validator.isNotNull(reminderQueryAnswer) && reminderQueryAnswer.equals(
-					WorkflowConstants.LABEL_PENDING))
+
+				if (Validator.isNotNull(reminderQueryAnswer) &&
+					reminderQueryAnswer.equals(
+						WorkflowConstants.LABEL_PENDING)) {
 
 					httpServletRequest.setAttribute(
 						WebKeys.TITLE_SET_PASSWORD, "set-password");
+				}
 			}
+
 			return actionMapping.getActionForward("portal.update_password");
 		}
 
@@ -289,7 +297,6 @@ public class UpdatePasswordAction implements Action {
 				user.setReminderQueryAnswer(null);
 
 				UserLocalServiceUtil.updateUser(user);
-
 			}
 		}
 		finally {
@@ -333,4 +340,6 @@ public class UpdatePasswordAction implements Action {
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpdatePasswordAction.class);
 
+	//@BeanReference(type = UserPersistence.class)
+	//protected UserPersistence userPersistence;
 }
