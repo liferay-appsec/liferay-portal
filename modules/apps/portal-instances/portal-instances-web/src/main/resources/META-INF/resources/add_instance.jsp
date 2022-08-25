@@ -48,7 +48,7 @@
 
 				<aui:input inlineLabel="right" labelCssClass="simple-toggle-switch" name="active" type="toggle-switch" value="<%= true %>" />
 
-				<c:if test='<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>'>
+				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>">
 					<liferay-ui:panel
 						collapsible="<%= false %>"
 						extended="<%= true %>"
@@ -56,21 +56,21 @@
 						markupView="lexicon"
 						title="user-display-data"
 					>
-						<aui:input label="field.screen-name" name="screenname" type="text">
+						<aui:input label="field.screen-name" name="administratorScreenName" type="text">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input name="administrator-email" type="text">
+						<aui:input label="administrator-email" name="administratorEmail" type="text">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input label="password" name="passwordAdmin" type="password">
+						<aui:input label="password" name="administratorPassword" type="password">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input label="field.first-name" name="firstname" type="text" />
+						<aui:input label="field.first-name" name="administratorFirstName" type="text" />
 
-						<aui:input label="field.last-name" name="lastname" type="text" />
+						<aui:input label="field.last-name" name="administratorLastName" type="text" />
 					</liferay-ui:panel>
 				</c:if>
 
