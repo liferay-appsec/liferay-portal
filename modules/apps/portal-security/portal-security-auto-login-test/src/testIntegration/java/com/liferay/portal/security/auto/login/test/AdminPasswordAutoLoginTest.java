@@ -138,10 +138,10 @@ public class AdminPasswordAutoLoginTest {
 
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
-		themeDisplay.setUser(_user);
 		themeDisplay.setCompany(_company);
 		themeDisplay.setLayout(layout);
 		themeDisplay.setLayoutSet(layout.getLayoutSet());
+		themeDisplay.setUser(_user);
 
 		Group group = layout.getGroup();
 
