@@ -98,6 +98,28 @@ public interface CompanyService extends BaseService {
 			boolean active)
 		throws PortalException;
 
+	/**
+	 * Adds a company.
+	 *
+	 * @param webId the company's web domain
+	 * @param virtualHost the company's virtual host name
+	 * @param mx the company's mail domain
+	 * @param system whether the company is the very first company (i.e., the
+	 * @param maxUsers the max number of company users (optionally
+	 <code>0</code>)
+	 * @param active whether the company is active
+	 * @param emailAdminUser Email set to the admin user of the company
+	 * @param passwordAdminUser Password set to the admin user of the company
+	 * @return the company
+	 */
+	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
+	public Company addCompany(
+			String webId, String virtualHost, String mx, boolean system,
+			int maxUsers, boolean active, String screenNameAdminUser,
+			String emailAdminUser, String passwordAdminUser,
+			String firstNameAdminUser, String lastNameAdminUSer)
+		throws PortalException;
+
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company deleteCompany(long companyId) throws PortalException;
 
