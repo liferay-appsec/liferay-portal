@@ -98,6 +98,31 @@ public interface CompanyLocalService
 		throws PortalException;
 
 	/**
+	 * Adds a company with the primary key.
+	 *
+	 * @param companyId the primary key of the company (optionally <code>null</code> or
+	 <code>0</code> to generate a key automatically)
+	 * @param webId the the company's web domain
+	 * @param virtualHostname the company's virtual host name
+	 * @param mx the company's mail domain
+	 * @param system whether the company is the very first company (i.e., the
+	 super company)
+	 * @param maxUsers the max number of company users (optionally
+	 <code>0</code>)
+	 * @param active whether the company is active
+	 * @param emailAdminUser Email set to the admin user of the company
+	 * @param passwordAdminUser Password set to the admin user of the company
+	 * @return the company
+	 */
+	public Company addCompany(
+			Long companyId, String webId, String virtualHostname, String mx,
+			boolean system, int maxUsers, boolean active,
+			String screenNameAdminUser, String emailAdminUser,
+			String passwordAdminUser, String firstNameAdminUser,
+			String lastNameAdminUSer)
+		throws PortalException;
+
+	/**
 	 * Adds a company.
 	 *
 	 * @param webId the the company's web domain
