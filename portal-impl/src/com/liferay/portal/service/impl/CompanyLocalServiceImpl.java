@@ -1952,7 +1952,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	}
 
 	private Company _checkCompany(
-			Company company, String mx, String screennameAdminUser,
+			Company company, String mx, String screenNameAdminUser,
 			String emailUserAdmin, String passwordUserAdmin,
 			String firstNameAdminUser, String lastNameAdminUSer)
 		throws PortalException {
@@ -2028,8 +2028,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 							mx;
 				}
 
-				if (Validator.isNull(screennameAdminUser)) {
-					screennameAdminUser = PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
+				if (Validator.isNull(screenNameAdminUser)) {
+					screenNameAdminUser = PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
 				}
 
 				if (Validator.isNull(firstNameAdminUser)) {
@@ -2041,7 +2041,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				}
 
 				_userLocalService.addDefaultAdminUser(
-					company.getCompanyId(), screennameAdminUser, emailUserAdmin,
+					company.getCompanyId(), screenNameAdminUser, emailUserAdmin,
 					defaultUser.getLocale(), firstNameAdminUser,
 					PropsValues.DEFAULT_ADMIN_MIDDLE_NAME, lastNameAdminUSer,
 					passwordUserAdmin);
