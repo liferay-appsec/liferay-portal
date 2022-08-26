@@ -82,7 +82,6 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			companyId, webId, virtualHost, mx, maxUsers, active);
 	}
 
-
 	/**
 	 * Adds a company.
 	 *
@@ -128,9 +127,10 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	 */
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company addCompany(
-		String webId, String virtualHost, String mx, boolean system,
-		int maxUsers, boolean active, String screenNameAdminUser, String emailAdminUser, String passwordAdminUser,
-		String firstNameAdminUser, String lastNameAdminUSer)
+			String webId, String virtualHost, String mx, boolean system,
+			int maxUsers, boolean active, String screenNameAdminUser,
+			String emailAdminUser, String passwordAdminUser,
+			String firstNameAdminUser, String lastNameAdminUSer)
 		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
@@ -140,7 +140,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		}
 
 		return companyLocalService.addCompany(
-			null, webId, virtualHost, mx, system, maxUsers, active, screenNameAdminUser, emailAdminUser, passwordAdminUser, firstNameAdminUser, lastNameAdminUSer);
+			null, webId, virtualHost, mx, system, maxUsers, active,
+			screenNameAdminUser, emailAdminUser, passwordAdminUser,
+			firstNameAdminUser, lastNameAdminUSer);
 	}
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)

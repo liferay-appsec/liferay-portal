@@ -196,7 +196,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			int maxUsers, boolean active)
 		throws PortalException {
 
-		return addCompany(companyId, webId, virtualHostname, mx, system, maxUsers, active, null, null, null, null, null);
+		return addCompany(
+			companyId, webId, virtualHostname, mx, system, maxUsers, active,
+			null, null, null, null, null);
 	}
 
 	/**
@@ -217,9 +219,11 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	 * @return the company
 	 */
 	public Company addCompany(
-		Long companyId, String webId, String virtualHostname, String mx,
-		boolean system, int maxUsers, boolean active, String screenNameAdminUser,  String emailAdminUser, String passwordAdminUser,
-		String firstNameAdminUser, String lastNameAdminUSer)
+			Long companyId, String webId, String virtualHostname, String mx,
+			boolean system, int maxUsers, boolean active,
+			String screenNameAdminUser, String emailAdminUser,
+			String passwordAdminUser, String firstNameAdminUser,
+			String lastNameAdminUSer)
 		throws PortalException {
 
 		// Company
@@ -298,7 +302,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			_addDefaultUser(company);
 
-			company = _checkCompany(company, mx, screenNameAdminUser, emailAdminUser, passwordAdminUser, firstNameAdminUser, lastNameAdminUSer);
+			company = _checkCompany(
+				company, mx, screenNameAdminUser, emailAdminUser,
+				passwordAdminUser, firstNameAdminUser, lastNameAdminUSer);
 
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
@@ -1941,7 +1947,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 	}
 
-	private Company _checkCompany(Company company, String mx, String screennameAdminUser, String emailUserAdmin, String passwordUserAdmin, String firstNameAdminUser, String lastNameAdminUSer )
+	private Company _checkCompany(
+			Company company, String mx, String screennameAdminUser,
+			String emailUserAdmin, String passwordUserAdmin,
+			String firstNameAdminUser, String lastNameAdminUSer)
 		throws PortalException {
 
 		Locale localeThreadLocalDefaultLocale =
@@ -2010,13 +2019,13 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					0) {
 
 				if (Validator.isNull(emailUserAdmin)) {
-					 emailUserAdmin =
+					emailUserAdmin =
 						PropsValues.DEFAULT_ADMIN_EMAIL_ADDRESS_PREFIX + "@" +
-						mx;
+							mx;
 				}
 
 				if (Validator.isNull(screennameAdminUser)) {
-					screennameAdminUser=PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
+					screennameAdminUser = PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
 				}
 
 				if (Validator.isNull(firstNameAdminUser)) {
@@ -2028,12 +2037,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				}
 
 				_userLocalService.addDefaultAdminUser(
-					company.getCompanyId(),
-					screennameAdminUser, emailUserAdmin,
-					defaultUser.getLocale(),
-					firstNameAdminUser,
-					PropsValues.DEFAULT_ADMIN_MIDDLE_NAME,
-					lastNameAdminUSer,
+					company.getCompanyId(), screennameAdminUser, emailUserAdmin,
+					defaultUser.getLocale(), firstNameAdminUser,
+					PropsValues.DEFAULT_ADMIN_MIDDLE_NAME, lastNameAdminUSer,
 					passwordUserAdmin);
 			}
 
