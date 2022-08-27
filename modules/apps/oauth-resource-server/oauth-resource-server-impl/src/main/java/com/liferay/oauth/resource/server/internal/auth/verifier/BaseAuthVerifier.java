@@ -14,6 +14,8 @@
 
 package com.liferay.oauth.resource.server.internal.auth.verifier;
 
+import com.liferay.oauth.resource.server.internal.configuration.OAuthResourceServerConfiguration;
+import com.liferay.oauth.resource.server.internal.token.consumer.AccessTokenJOSEJWTConsumer;
 import com.liferay.oauth2.provider.constants.OAuth2ProviderConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
@@ -23,10 +25,12 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
@@ -38,11 +42,16 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
+import org.apache.cxf.rs.security.jose.jwt.JwtToken;
+
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -107,6 +116,13 @@ public abstract class BaseAuthVerifier implements AuthVerifier {
 		return authVerifierResult;
 	}
 
+	@Activate
+	@SuppressWarnings("unchecked")
+	protected void activate(Map<String, Object> properties) {
+		_oAuthResourceServerConfiguration = ConfigurableUtil.createConfigurable(
+			OAuthResourceServerConfiguration.class, properties);
+	}
+
 	protected abstract void postProcess(
 		BearerTokenProvider.AccessToken accessToken,
 		AuthVerifierResult authVerifierResult);
@@ -158,6 +174,52 @@ public abstract class BaseAuthVerifier implements AuthVerifier {
 		if (Validator.isBlank(bearerAccessToken)) {
 			return null;
 		}
+
+		if ((_oAuthResourceServerConfiguration != null) &&
+			_oAuthResourceServerConfiguration.acceptJWTAccessToken()) {
+
+			return _getLiferayAccessTokenFromJWTAccessToken(bearerAccessToken);
+		}
+
+		return _getLiferayAccessTokenFromOpaqueAccessToken(bearerAccessToken);
+	}
+
+	private BearerTokenProvider.AccessToken
+		_getLiferayAccessTokenFromJWTAccessToken(String bearerAccessToken) {
+
+		JwtToken jwtToken = _accessTokenJOSEJWTConsumer.getJwtToken(
+			bearerAccessToken);
+
+		JwtClaims jwtClaims = jwtToken.getClaims();
+
+		OAuth2Application oAuth2Application;
+
+		try {
+			oAuth2Application =
+				oAuth2ApplicationLocalService.getOAuth2Application(
+					CompanyThreadLocal.getCompanyId(),
+					(String)jwtClaims.getClaim("client_id"));
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			return null;
+		}
+
+		return new BearerTokenProvider.AccessToken(
+			oAuth2Application, jwtClaims.getAudiences(), StringPool.BLANK,
+			(jwtClaims.getExpiryTime() - jwtClaims.getIssuedAt()) / 1000,
+			new HashMap<>(), StringPool.BLANK, StringPool.BLANK,
+			jwtClaims.getIssuedAt() / 1000, jwtClaims.getIssuer(),
+			StringPool.BLANK, new HashMap<>(), StringPool.BLANK,
+			StringPool.BLANK, scopeAliasesList, bearerAccessToken, _TOKEN_TYPE,
+			oAuth2Authorization.getUserId(), oAuth2Authorization.getUserName());
+	}
+
+	private BearerTokenProvider.AccessToken
+		_getLiferayAccessTokenFromOpaqueAccessToken(String bearerAccessToken) {
 
 		OAuth2Authorization oAuth2Authorization =
 			oAuth2AuthorizationLocalService.
@@ -221,5 +283,10 @@ public abstract class BaseAuthVerifier implements AuthVerifier {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseAuthVerifier.class);
+
+	@Reference
+	private AccessTokenJOSEJWTConsumer _accessTokenJOSEJWTConsumer;
+
+	private OAuthResourceServerConfiguration _oAuthResourceServerConfiguration;
 
 }
