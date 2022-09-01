@@ -14,6 +14,7 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal;
 
+import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.portal.kernel.exception.PortalException;
 
 import com.nimbusds.openid.connect.sdk.claims.UserInfo;
@@ -25,7 +26,7 @@ public interface OpenIdConnectUserInfoProcessor {
 
 	public long processUserInfo(
 			UserInfo userInfo, long companyId, String issuer, String mainPath,
-			String portalURL)
+			OAuthClientEntry oAuthClientEntry, String portalURL)
 		throws PortalException;
 
 }
