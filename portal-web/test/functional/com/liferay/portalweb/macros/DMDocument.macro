@@ -2034,9 +2034,7 @@ definition {
 		Click(locator1 = "Icon#SIDEBAR_HEADER_ACTION_VERTICAL_ELLIPSIS_BUTTON");
 
 		if (isSet(menuItem)) {
-			Click(
-				key_menuItem = "${menuItem}",
-				locator1 = "DocumentsAndMedia#SIDEBAR_MENU_ITEM");
+			MenuItem.clickNoError(menuItem = "${menuItem}");
 		}
 	}
 
@@ -3264,10 +3262,17 @@ definition {
 		}
 
 		if (isSet(locale)) {
-			Navigator.ensureLocaleURL(locale = "es");
-		}
+			Navigator.ensureLocaleURL(locale = "${locale}");
 
-		DMDocument.expandInfo();
+			WaitForPageLoad();
+
+			Click.clickNoMouseOver(
+				key_text = "${localizedButton}",
+				locator1 = "Button#ANY");
+		}
+		else {
+			DMDocument.expandInfo();
+		}
 
 		if (isSet(booleanValue)) {
 			if ("${booleanValue}" == "checked") {

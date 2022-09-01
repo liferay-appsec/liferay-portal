@@ -64,10 +64,8 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
-import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.util.PropsUtil;
 
 import java.io.Serializable;
 
@@ -116,10 +114,6 @@ public class ObjectFieldLocalServiceTest {
 
 	@Test
 	public void testAddCustomObjectField() throws Exception {
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152677", "true"
-			).build());
 
 		// Reserved name
 
@@ -198,11 +192,6 @@ public class ObjectFieldLocalServiceTest {
 			objectFieldBuilder.state(
 				true
 			).build());
-
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152677", "false"
-			).build());
 	}
 
 	@Test
@@ -245,7 +234,7 @@ public class ObjectFieldLocalServiceTest {
 		for (String businessType : businessTypes) {
 			_testAddSystemObjectField(
 				ObjectFieldUtil.createObjectField(
-					businessType, "", "Able", "able",
+					businessType, StringPool.BLANK, "Able", "able",
 					_getObjectFieldSettings(businessType)));
 		}
 
@@ -254,7 +243,7 @@ public class ObjectFieldLocalServiceTest {
 		try {
 			_testAddSystemObjectField(
 				ObjectFieldUtil.createObjectField(
-					businessType, "", "Able", "able"));
+					businessType, StringPool.BLANK, "Able", "able"));
 
 			Assert.fail();
 		}
@@ -282,13 +271,14 @@ public class ObjectFieldLocalServiceTest {
 
 		for (String dbType : dbTypes) {
 			_testAddSystemObjectField(
-				ObjectFieldUtil.createObjectField("", dbType, "Able", "able"));
+				ObjectFieldUtil.createObjectField(
+					StringPool.BLANK, dbType, "Able", "able"));
 		}
 
 		try {
 			_testAddSystemObjectField(
 				ObjectFieldUtil.createObjectField(
-					"", "STRING", "Able", "able"));
+					StringPool.BLANK, "STRING", "Able", "able"));
 
 			Assert.fail();
 		}
@@ -967,11 +957,6 @@ public class ObjectFieldLocalServiceTest {
 
 	@Test
 	public void testUpdateCustomObjectField() throws Exception {
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152677", "true"
-			).build());
-
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionTestUtil.addObjectDefinition(
 				_objectDefinitionLocalService);
@@ -1107,11 +1092,6 @@ public class ObjectFieldLocalServiceTest {
 
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			objectDefinition.getObjectDefinitionId());
-
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152677", "false"
-			).build());
 	}
 
 	private void _assertObjectFieldSetting(

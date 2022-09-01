@@ -51,9 +51,7 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		throws ModelListenerException {
 
 		try {
-			_validateAccountEntry(
-				objectEntry.getUserId(), objectEntry.getObjectDefinitionId(),
-				objectEntry.getValues());
+			_validateAccountEntry(objectEntry);
 		}
 		catch (PortalException portalException) {
 			throw new ModelListenerException(portalException);
@@ -66,27 +64,25 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		throws ModelListenerException {
 
 		try {
-			_validateAccountEntry(
-				objectEntry.getUserId(), objectEntry.getObjectDefinitionId(),
-				objectEntry.getValues());
+			_validateAccountEntry(objectEntry);
 		}
 		catch (PortalException portalException) {
 			throw new ModelListenerException(portalException);
 		}
 	}
 
-	private void _validateAccountEntry(
-			long userId, long objectDefinitionId,
-			Map<String, Serializable> values)
+	private void _validateAccountEntry(ObjectEntry objectEntry)
 		throws PortalException {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.getObjectDefinition(
-				objectDefinitionId);
+				objectEntry.getObjectDefinitionId());
 
 		if (!objectDefinition.isAccountEntryRestricted()) {
 			return;
 		}
+
+		Map<String, Serializable> values = objectEntry.getValues();
 
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
 			objectDefinition.getAccountEntryRestrictedObjectFieldId());
@@ -97,7 +93,8 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 		List<AccountEntry> accountEntries =
 			_accountEntryLocalService.getUserAccountEntries(
-				userId, AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT, null,
+				objectEntry.getUserId(),
+				AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT, null,
 				new String[] {
 					AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS,
 					AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON
@@ -117,7 +114,7 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		throw new ObjectDefinitionAccountEntryRestrictedException(
 			StringBundler.concat(
 				"The account entry ", accountEntryId,
-				" does not exist or the user ", userId,
+				" does not exist or the user ", objectEntry.getUserId(),
 				" does not belong to it"));
 	}
 

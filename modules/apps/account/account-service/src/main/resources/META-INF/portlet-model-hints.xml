@@ -13,8 +13,6 @@
 		<field name="modifiedDate" type="Date" />
 		<field name="defaultBillingAddressId" type="long" />
 		<field name="defaultCPaymentMethodKey" type="String" />
-		<field name="defaultDeliveryCTermEntryId" type="long" />
-		<field name="defaultPaymentCTermEntryId" type="long" />
 		<field name="defaultShippingAddressId" type="long" />
 		<field name="parentAccountEntryId" type="long" />
 		<field name="description" type="String">
@@ -63,7 +61,9 @@
 		<field name="modifiedDate" type="Date" />
 		<field name="defaultAccountGroup" type="boolean" />
 		<field name="description" type="String" />
-		<field name="name" type="String" />
+		<field name="name" type="String">
+			<validator name="required" />
+		</field>
 		<field name="type" type="String" />
 	</model>
 	<model name="com.liferay.account.model.AccountGroupRel">

@@ -11,7 +11,9 @@
 
 function getAssignmentType(assignments) {
 	return assignments?.assignmentType[0] === 'user' &&
-		!Object.keys(assignments).includes('emailAddress')
+		!Object.keys(assignments).includes('emailAddress') &&
+        !Object.keys(assignments).includes('screenName') &&
+		!Object.keys(assignments).includes('userId')
 		? 'assetCreator'
 		: assignments?.assignmentType[0];
 }

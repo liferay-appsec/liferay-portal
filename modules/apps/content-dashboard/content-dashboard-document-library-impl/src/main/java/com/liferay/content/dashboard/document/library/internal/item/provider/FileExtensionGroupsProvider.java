@@ -23,7 +23,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.MimeTypesUtil;
+import com.liferay.portal.kernel.util.MimeTypes;
 import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alejandro Tardín
@@ -54,6 +55,20 @@ public class FileExtensionGroupsProvider {
 
 	public List<FileExtensionGroup> getFileExtensionGroups() {
 		return _fileExtensionGroups;
+	}
+
+	public String getFileGroupKey(String extension) {
+		Stream<FileExtensionGroup> stream = _fileExtensionGroups.stream();
+
+		return stream.filter(
+			fileExtensionGroup -> fileExtensionGroup.containsExtension(
+				extension)
+		).findFirst(
+		).map(
+			FileExtensionGroup::getKey
+		).orElse(
+			_OTHER
+		);
 	}
 
 	public boolean isOther(String extension) {
@@ -81,6 +96,14 @@ public class FileExtensionGroupsProvider {
 			}
 
 			return _key.compareTo(fileExtensionGroup.getKey());
+		}
+
+		public boolean containsExtension(String extension) {
+			if (!ArrayUtil.isEmpty(_extensions)) {
+				return ArrayUtil.contains(_extensions, extension);
+			}
+
+			return false;
 		}
 
 		public String getKey() {
@@ -191,7 +214,7 @@ public class FileExtensionGroupsProvider {
 
 		String[] extensions = stream.flatMap(
 			mimeType -> {
-				Set<String> extensionsMimeTypes = MimeTypesUtil.getExtensions(
+				Set<String> extensionsMimeTypes = _mimeTypes.getExtensions(
 					mimeType);
 
 				for (String extensionsMimeType : extensionsMimeTypes) {
@@ -252,5 +275,8 @@ public class FileExtensionGroupsProvider {
 	private volatile Map<String, String> _extensionMimeTypes;
 	private volatile List<FileExtensionGroup> _fileExtensionGroups =
 		new ArrayList<>();
+
+	@Reference
+	private MimeTypes _mimeTypes;
 
 }

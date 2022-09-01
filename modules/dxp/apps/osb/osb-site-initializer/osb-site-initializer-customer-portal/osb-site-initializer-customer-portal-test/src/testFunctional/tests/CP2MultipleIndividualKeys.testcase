@@ -1,0 +1,339 @@
+@component-name = "portal-solutions"
+definition {
+
+	property osgi.modules.includes = "osb-site-initializer-customer-portal";
+	property portal.release = "false";
+	property portal.upstream = "true";
+	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
+	property testray.main.component.name = "OSB Site Initializer Customer Portal";
+
+	var testSiteName = "Customer Portal Site";
+	var testSiteURL = "customer-portal-site";
+	var testSiteTamplate = "Liferay OSB Site Initializer Customer Portal";
+	var testAccount = "Test Account QA 7.4";
+	var testUser = "Test Test";
+	var testUserFirstName = "Test";
+	var testProduct = "DXP";
+
+	setUp {
+		task ("Set up instance and sign in") {
+			TestCase.setUpPortalInstance();
+
+			User.firstLoginPG();
+		}
+
+		task ("Create a new Customer Portal Site") {
+			CustomerPortal.addCustomerPortalSite(siteName = "${testSiteName}");
+		}
+
+		task ("Login on OKTA") {
+			CustomerPortal.loginOktaToUpdateCP();
+		}
+
+		task ("Go to Customer Portal Site") {
+			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+
+			CustomerPortal.waitCP20PageToLoad(userFirstName = "${testUserFirstName}");
+		}
+	}
+
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		CustomerPortal.customerPortalApisTearDown();
+
+		JSONGroup.deleteGroupByName(groupName = "${testSiteName}");
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+	}
+
+	@description = "Automation ID: LPS-161108 | Test Summary: Verify that projects that does not have Keys shows alert message with the text 'Unable to download key, please try again.' when the user click at 'Export All Key Details (csv)' at Action dropdown button."
+	@priority = "5"
+	test ErrorMessageFromIndividualKeysDownload {
+		task ("Given I go to the test account") {
+			CustomerPortal.search(searchItem = "${testAccount}");
+
+			CustomerPortal.enterOnProject(title = "${testAccount}");
+		}
+
+		task ("And I click on DXP product") {
+			CP2NavigationMenu.goToProductActivation();
+
+			CP2NavigationMenu.clickOnProductButton(product = "${testProduct}");
+		}
+
+		task ("When I click at the Actions dropdown button") {
+			CustomerPortal.clickAtButton(text = "Actions");
+		}
+
+		task ("When I click at the download button") {
+			CP2ActivationKeys.clickAtDropdownItem(dropdownItem = "Export All Key Details (csv)");
+		}
+
+		task ("Then I assert that the alert with the message 'Unable to download key, please try again.' is visible") {
+			CustomerPortal.viewAlert(alertText = "Unable to download key, please try again.");
+		}
+
+		task ("And I get the expected downloaded file name") {
+			var downloadedFileName = CP2ActivationKeys.formatLicenseFileName(
+				fileType = "xml",
+				licenseName = "${testAccount}",
+				licenseType = "activation-key",
+				product = "${testProduct}",
+				version = "7.4");
+		}
+
+		task ("And I assert that the Activation Key was downloaded") {
+			CP2FileUtil.assertDownloadedFileIsNotPresent(downloadedFileName = "${downloadedFileName}");
+		}
+	}
+
+	@description = "Automation ID: LPS-152782 | Test Summary: Verify if when clicked, the Download button will display a drop-down menu with the option Individual Keys (multiple files)"
+	@priority = "5"
+	test IndividualKeysIsPresentOnDownloadButton {
+		task ("Given I go to the test account") {
+			CustomerPortal.search(searchItem = "${testAccount}");
+
+			CustomerPortal.enterOnProject(title = "${testAccount}");
+		}
+
+		task ("And I click on DXP product") {
+			CP2NavigationMenu.goToProductActivation();
+
+			CP2NavigationMenu.clickOnProductButton(product = "${testProduct}");
+		}
+
+		task ("When I click at the Actions dropdown button") {
+			CustomerPortal.clickAtButton(text = "Actions");
+		}
+
+		task ("Then I assert that the correct options at the dropdown are visible") {
+			var dropdownItemsList = "Generate New,Deactivate,Export All Key Details (csv)";
+
+			for (var dropdownItem : list "${dropdownItemsList}") {
+				CP2ActivationKeys.assertDropdownItemIsVisible(dropdownItem = "${dropdownItem}");
+			}
+		}
+	}
+
+	@description = "Verify that user can see the correct option of download when they select two keys with the same expiration date."
+	@ignore = "true"
+	@priority = "5"
+	test MultipleIndividualKeysAgregatedDowloadOptions {
+		property portal.upstream = "quarantine";
+
+		task ("Given I go to the test account") {
+			CustomerPortal.search(searchItem = "${testAccount}");
+
+			CustomerPortal.enterOnProject(title = "${testAccount}");
+		}
+
+		task ("And I click on DXP product") {
+			CP2NavigationMenu.goToProductActivation();
+
+			CP2NavigationMenu.clickOnProductButton(product = "${testProduct}");
+		}
+
+		task ("And I view the Actions button") {
+			CustomerPortal.viewButton(text = "Actions");
+		}
+
+		task ("And I filter the table by On-Premise key type") {
+			CP2ActivationKeys.filterKeyTable(
+				filterOption = "On-Premise",
+				filterType = "Key Type");
+		}
+
+		task ("When I select two keys from the table with same Expiration Date") {
+			CP2ActivationKeys.selectKeyCheckboxByExpirationDate(
+				date = "Mar 30, 2023",
+				position = "1");
+
+			CP2ActivationKeys.selectKeyCheckboxByExpirationDate(
+				date = "Mar 30, 2023",
+				position = "2");
+		}
+
+		task ("Then I should see the download button") {
+			CustomerPortal.viewButton(text = "download");
+		}
+
+		task ("When I click at the download button") {
+			CustomerPortal.clickAtButton(text = "download");
+		}
+
+		task ("Then I should see the 'Aggregate key single file' option enabled") {
+			CP2ActivationKeys.assertDropdownItemIsEnabled(dropdownItem = "Aggregate Key single file");
+		}
+
+		task ("And I should see the 'Individual keys multiple files' option enabled") {
+			CP2ActivationKeys.assertDropdownItemIsEnabled(dropdownItem = "Individual Keys multiple files");
+		}
+
+		task ("When I click at the 'Aggregate key single file' option") {
+			CP2ActivationKeys.clickAtDropdownItem(dropdownItem = "Aggregate Key single file");
+		}
+
+		task ("Then I assert that the alert with the message 'Activation Key Was Downloaded Successfully' is visible") {
+			CustomerPortal.viewAlert(alertText = "Activation Key was downloaded successfully");
+		}
+
+		task ("And I get the expected downloaded file name") {
+			var downloadedFileName = CP2ActivationKeys.formatLicenseFileName(
+				fileType = "xml",
+				licenseName = "${testAccount}",
+				licenseType = "activation-key-multiple-products",
+				version = "7.4");
+		}
+
+		task ("And I should see the download button") {
+			CustomerPortal.viewButton(text = "download");
+		}
+
+		task ("And I click at the download button") {
+			CustomerPortal.clickAtButton(text = "download");
+		}
+
+		task ("When I click at the 'Individual keys multiple files' option") {
+			CP2ActivationKeys.clickAtDropdownItem(dropdownItem = "Individual Keys multiple files");
+		}
+
+		task ("Then I assert that the alert with the message 'Activation Key Was Downloaded Successfully' is visible") {
+			CustomerPortal.viewAlert(alertText = "Activation Key was downloaded successfully");
+		}
+
+		task ("And I get the expected downloaded file name") {
+			var downloadedFileName = CP2ActivationKeys.formatLicenseFileName(
+				fileType = "xml",
+				licenseName = "${testAccount}",
+				licenseType = "activation-key");
+		}
+
+		task ("And I assert that the Activation Key was downloaded") {
+			CP2FileUtil.assertDownloadedFileIsPresent(downloadedFileName = "${downloadedFileName}");
+		}
+	}
+
+	@description = "Verify that user can see the correct option of download when they select two keys with different expiration dates"
+	@ignore = "true"
+	@priority = "5"
+	test MultipleIndividualKeysNotAgregatedDowloadOptions {
+		property portal.upstream = "quarantine";
+
+		task ("Given I go to the test account") {
+			CustomerPortal.search(searchItem = "${testAccount}");
+
+			CustomerPortal.enterOnProject(title = "${testAccount}");
+		}
+
+		task ("And I click on DXP product") {
+			CP2NavigationMenu.goToProductActivation();
+
+			CP2NavigationMenu.clickOnProductButton(product = "${testProduct}");
+		}
+
+		task ("And I view the Actions button") {
+			CustomerPortal.viewButton(text = "Actions");
+		}
+
+		task ("When I select two keys from the table with diferent Expiration Date") {
+			CP2ActivationKeys.selectKeyCheckboxByExpirationDate(
+				date = "Mar 30, 2023",
+				position = "1");
+
+			CP2ActivationKeys.selectKeyCheckboxByExpirationDate(
+				date = "DNE",
+				position = "1");
+		}
+
+		task ("Then I should see the download button") {
+			CustomerPortal.viewButton(text = "download");
+		}
+
+		task ("When I click at the download button") {
+			CustomerPortal.clickAtButton(text = "download");
+		}
+
+		task ("Then I should see the 'Aggregate key single file' option enabled") {
+			CP2ActivationKeys.assertDropdownItemIsDisabled(dropdownItem = "Aggregate Key single file");
+		}
+
+		task ("And I should see the 'Individual keys multiple files' option enabled") {
+			CP2ActivationKeys.assertDropdownItemIsEnabled(dropdownItem = "Individual Keys multiple files");
+		}
+
+		task ("When I click at the 'Individual keys multiple files' option") {
+			CP2ActivationKeys.clickAtDropdownItem(dropdownItem = "Individual Keys multiple files");
+		}
+
+		task ("Then I assert that the alert with the message 'Activation Key(s) was downloaded successfully as zip file.' is visible") {
+			CustomerPortal.viewAlert(alertText = "Activation Key(s) was downloaded successfully as zip file.");
+		}
+
+		task ("And I get the expected downloaded file name") {
+			var downloadedFileName = CP2ActivationKeys.formatLicenseFileName(
+				fileType = "zip",
+				licenseName = "${testAccount}",
+				licenseType = "activation-key");
+		}
+
+		task ("And I assert that the Activation Key was downloaded") {
+			CP2FileUtil.assertDownloadedFileIsPresent(downloadedFileName = "${downloadedFileName}");
+		}
+	}
+
+	@description = "Automation ID: LPS-152781 | Test Summary: Verify success message when the Individual Key is downloaded."
+	@ignore = "true"
+	@priority = "5"
+	test SuccessMessageFromIndividualKey {
+		property portal.upstream = "quarantine";
+
+		task ("Given I go to the test account") {
+			CustomerPortal.search(searchItem = "${testAccount}");
+
+			CustomerPortal.enterOnProject(title = "${testAccount}");
+		}
+
+		task ("And I click on DXP product") {
+			CP2NavigationMenu.goToProductActivation();
+
+			CP2NavigationMenu.clickOnProductButton(product = "${testProduct}");
+		}
+
+		task ("And I view the Actions button") {
+			CustomerPortal.viewButton(text = "Actions");
+		}
+
+		task ("When I select a key from the table") {
+			CP2ActivationKeys.selectKeyCheckboxByEnvironmentName(environmentName = "Test Environment Name");
+		}
+
+		task ("Then I should see the download button") {
+			CustomerPortal.viewButton(text = "download");
+		}
+
+		task ("When I click at the download button") {
+			CustomerPortal.clickAtButton(text = "download");
+		}
+
+		task ("Then I assert that the alert with the message 'Activation Key Was Downloaded Successfully' is visible") {
+			CustomerPortal.viewAlert(alertText = "Activation key was downloaded successfully");
+		}
+
+		task ("And I get the expected downloaded file name") {
+			var downloadedFileName = CP2ActivationKeys.formatLicenseFileName(
+				fileType = "xml",
+				licenseName = "${testAccount}",
+				licenseType = "activation-key",
+				product = "${testProduct}",
+				version = "7.4");
+		}
+
+		task ("And I assert that the Activation Key was downloaded") {
+			CP2FileUtil.assertDownloadedFileIsPresent(downloadedFileName = "${downloadedFileName}");
+		}
+	}
+
+}

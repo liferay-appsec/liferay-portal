@@ -11,7 +11,7 @@ task copyGradleTestDependencies(type: Copy)
 task downloadBundle(type: Download)
 
 String bundleUrl = "https://releases-cdn.liferay.com/portal/7.1.2-ga3/liferay-ce-portal-tomcat-7.1.2-ga3-20190107144105508.tar.gz"
-String gradleVersion = "6.6.1"
+String gradleVersion = "6.9.2"
 
 if (System.properties["http.proxyHost"] == "squid.lax.liferay.com") {
 	bundleUrl = "http://mirrors.liferay.com/releases.liferay.com/portal/7.1.2-ga3/liferay-ce-portal-tomcat-7.1.2-ga3-20190107144105508.tar.gz"
@@ -52,7 +52,7 @@ dependencies {
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.python", version: "1.0.1"
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.rest.builder", version: "1.1.129"
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.service.builder", version: "4.0.100"
-	compile group: "com.liferay", name: "com.liferay.gradle.plugins.source.formatter", version: "5.1.148"
+	compile group: "com.liferay", name: "com.liferay.gradle.plugins.source.formatter", version: "5.1.149"
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.test.integration", version: "4.0.0"
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.tld.formatter", version: "1.0.11"
 	compile group: "com.liferay", name: "com.liferay.gradle.plugins.tlddoc.builder", version: "2.0.0"

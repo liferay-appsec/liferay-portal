@@ -12,4 +12,25 @@
  * details.
  */
 
+export type Parameters = {
+	[key: string]: string | string[];
+};
+
+export function parametersFormater(
+	parametersList: string[],
+	parameters: Parameters
+) {
+	const parametersContainer: String[] = [];
+
+	parametersList.forEach((item) => {
+		parametersContainer.push(`${item}=${parameters[item]}`);
+	});
+
+	const parametersString = '?' + parametersContainer.join('&');
+
+	return parametersString;
+}
+
 export * from './Application';
+export * from './Policy';
+export * from './SalesGoal';

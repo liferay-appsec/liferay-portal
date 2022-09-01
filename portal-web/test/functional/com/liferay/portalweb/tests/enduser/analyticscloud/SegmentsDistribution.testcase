@@ -147,7 +147,23 @@ definition {
 
 		// AC Refactor: Chart fails to appear when filtering with a number property.
 		// AC Refactor ticket: LRAC-9328
-		// AC Bug ticekt: LRAC-9329
+		// AC Bug ticket: LRAC-9329
+
+		task ("Add a user custom field and sync the data") {
+			ApplicationsMenu.gotoPortlet(
+				category = "Configuration",
+				panel = "Control Panel",
+				portlet = "Custom Fields");
+
+			CustomFields.addCP(
+				customFieldName = "Age",
+				customFieldType = "Input Field",
+				customInputDataType = "Integer",
+				resourceName = "User",
+				startingValue = "21");
+
+			ACDXPSettings.syncNewUserData(fieldNameList = "Age");
+		}
 
 		task ("View AC Page as new user") {
 			User.logoutAndLoginPG(
@@ -165,18 +181,6 @@ definition {
 			ACUtils.launchAC();
 
 			ACProperties.switchProperty(propertyName = "${assignedPropertyName}");
-		}
-
-		task ("Add CSV Data Source") {
-			ACSettings.addCSVDataSource(
-				dataSourceName = "CSV Age",
-				fieldName = "age",
-				fieldType = "Number",
-				newField = "true",
-				selectAnalyticsCloudField = "true",
-				sourceFileName = "contacts_age.csv");
-
-			ACNavigation.exitSettings();
 		}
 
 		task ("Add a new static segment") {
@@ -338,7 +342,7 @@ definition {
 		}
 
 		task ("Click on the category in the dashboard") {
-			Click(locator1 = "ACSegments#BREAKDOWN_CHART");
+			ACUtils.clickOnDistributionBar();
 		}
 
 		task ("Assert that a right word will be found") {
@@ -426,7 +430,7 @@ definition {
 		}
 
 		task ("Click in Chart Entry") {
-			Click(locator1 = "ACSegments#BREAKDOWN_CHART");
+			ACUtils.clickOnDistributionBar();
 		}
 
 		task ("Sort the Names in ascending order") {

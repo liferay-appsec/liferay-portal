@@ -43,9 +43,7 @@ renderResponse.setTitle((accountGroupDisplay.getAccountGroupId() == 0) ? Languag
 			<%= LanguageUtil.get(request, "information") %>
 		</h2>
 
-		<aui:input label="account-group-name" name="name" required="<%= true %>" type="text" value="<%= accountGroupDisplay.getName() %>">
-			<aui:validator name="maxLength"><%= ModelHintsUtil.getMaxLength(AccountGroup.class.getName(), "name") %></aui:validator>
-		</aui:input>
+		<aui:input bean="<%= accountGroupDisplay.getAccountGroup() %>" label="account-group-name" model="<%= AccountGroup.class %>" name="name" />
 
 		<liferay-ui:error embed="<%= false %>" key="<%= DuplicateAccountGroupExternalReferenceCodeException.class.getName() %>" message="the-given-external-reference-code-belongs-to-another-account-group" />
 

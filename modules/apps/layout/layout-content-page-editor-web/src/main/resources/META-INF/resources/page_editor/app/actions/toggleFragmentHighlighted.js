@@ -17,10 +17,14 @@ import {TOGGLE_FRAGMENT_HIGHLIGHTED} from './types';
 export default function toggleFragmentHighlighted({
 	fragmentEntryKey,
 	highlighted,
+	highlightedFragments,
+	initiallyHighlighted,
 }) {
 	return {
 		fragmentEntryKey,
 		highlighted,
+		highlightedFragments,
+		initiallyHighlighted,
 		type: TOGGLE_FRAGMENT_HIGHLIGHTED,
 	};
 }

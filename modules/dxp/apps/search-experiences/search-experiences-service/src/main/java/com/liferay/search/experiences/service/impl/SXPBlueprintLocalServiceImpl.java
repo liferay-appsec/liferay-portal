@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
+import com.liferay.search.experiences.exception.DuplicateSXPBlueprintExternalReferenceCodeException;
 import com.liferay.search.experiences.exception.SXPBlueprintConfigurationJSONException;
 import com.liferay.search.experiences.exception.SXPBlueprintTitleException;
 import com.liferay.search.experiences.model.SXPBlueprint;
@@ -57,19 +58,23 @@ public class SXPBlueprintLocalServiceImpl
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public SXPBlueprint addSXPBlueprint(
-			long userId, String configurationJSON,
+			String externalReferenceCode, long userId, String configurationJSON,
 			Map<Locale, String> descriptionMap, String elementInstancesJSON,
 			String schemaVersion, Map<Locale, String> titleMap,
 			ServiceContext serviceContext)
 		throws PortalException {
+
+		User user = _userLocalService.getUser(userId);
+
+		_validateExternalReferenceCode(
+			user.getCompanyId(), externalReferenceCode);
 
 		_validate(configurationJSON, titleMap, serviceContext);
 
 		SXPBlueprint sxpBlueprint = sxpBlueprintPersistence.create(
 			counterLocalService.increment());
 
-		User user = _userLocalService.getUser(userId);
-
+		sxpBlueprint.setExternalReferenceCode(externalReferenceCode);
 		sxpBlueprint.setCompanyId(user.getCompanyId());
 		sxpBlueprint.setUserId(user.getUserId());
 		sxpBlueprint.setUserName(user.getFullName());
@@ -222,6 +227,18 @@ public class SXPBlueprintLocalServiceImpl
 		}
 
 		_sxpBlueprintValidator.validate(configurationJSON, titleMap);
+	}
+
+	private void _validateExternalReferenceCode(
+			long companyId, String externalReferenceCode)
+		throws PortalException {
+
+		SXPBlueprint sxpBlueprint = fetchSXPBlueprintByExternalReferenceCode(
+			companyId, externalReferenceCode);
+
+		if (sxpBlueprint != null) {
+			throw new DuplicateSXPBlueprintExternalReferenceCodeException();
+		}
 	}
 
 	@Reference

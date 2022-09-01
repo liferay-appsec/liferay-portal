@@ -1327,6 +1327,15 @@ definition {
 			PageEditor.waitForAutoSave();
 		}
 
+		if (isSet(fontSize)) {
+			Select(
+				key_text = "font-size",
+				locator1 = "Select#GENERIC_SELECT_FIELD_WITH_ICON",
+				value1 = "${fontSize}");
+
+			PageEditor.waitForAutoSave();
+		}
+
 		if (isSet(headingLevel)) {
 			Select(
 				key_fieldLabel = "Heading Level",
@@ -2631,8 +2640,6 @@ definition {
 		else {
 			SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
-			AssertElementPresent.assertVisible(locator1 = "Button#SELECT_FILE");
-
 			WaitForEditable(locator1 = "TextInput#FILE");
 
 			UploadCommonFile.uploadCommonFileHiddenNoMouseOver(
@@ -3819,6 +3826,8 @@ return	Array.from(getWebElement("(//div[@aria-label='${fragmentName}'])[${index}
 			Click(
 				key_tabName = "${tabName}",
 				locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON");
+
+			WaitForVisible(locator1 = "Sidebar#PANEL_OPEN");
 		}
 		else {
 			WaitForVisible(locator1 = "Sidebar#PANEL_OPEN");

@@ -15,11 +15,11 @@
 import {ClayButtonWithIcon} from '@clayui/button';
 import React, {useMemo, useState} from 'react';
 
+import {ReorderSetsModal} from '../../../app/components/ReorderSetsModal';
 import {FRAGMENTS_DISPLAY_STYLES} from '../../../app/config/constants/fragmentsDisplayStyles';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../../app/config/constants/layoutDataItemTypes';
 import {config} from '../../../app/config/index';
 import {useSelector} from '../../../app/contexts/StoreContext';
-import {useWidgets} from '../../../app/contexts/WidgetsContext';
 import SearchForm from '../../../common/components/SearchForm';
 import SidebarPanelHeader from '../../../common/components/SidebarPanelHeader';
 import {useSessionState} from '../../../core/hooks/useSessionState';
@@ -93,7 +93,7 @@ const normalizeWidget = (widget) => {
 	};
 };
 
-const normalizeCollections = (collection) => {
+const normalizeCollection = (collection) => {
 	const normalizedElement = {
 		children: collection.portlets.map(normalizeWidget),
 		collectionId: collection.path,
@@ -102,7 +102,7 @@ const normalizeCollections = (collection) => {
 
 	if (collection.categories?.length) {
 		normalizedElement.collections = collection.categories.map(
-			normalizeCollections
+			normalizeCollection
 		);
 	}
 
@@ -125,7 +125,7 @@ const normalizeFragmentEntry = (fragmentEntry) => ({
 
 export default function FragmentsSidebar() {
 	const fragments = useSelector((state) => state.fragments);
-	const widgets = useWidgets();
+	const widgets = useSelector((state) => state.widgets);
 
 	const [
 		activeTabId,
@@ -143,6 +143,8 @@ export default function FragmentsSidebar() {
 
 	const [searchValue, setSearchValue] = useState('');
 
+	const [showReorderModal, setShowReorderModal] = useState(false);
+
 	const tabs = useMemo(
 		() => [
 			{
@@ -157,9 +159,11 @@ export default function FragmentsSidebar() {
 				label: Liferay.Language.get('fragments'),
 			},
 			{
-				collections: widgets.map((collection) =>
-					normalizeCollections(collection)
-				),
+				collections: widgets
+					? widgets.map((collection) =>
+							normalizeCollection(collection)
+					  )
+					: [],
 				id: COLLECTION_IDS.widgets,
 				label: Liferay.Language.get('widgets'),
 			},
@@ -198,6 +202,19 @@ export default function FragmentsSidebar() {
 						className="flex-grow-1 mb-0"
 						onChange={setSearchValue}
 					/>
+
+					{Liferay.FeatureFlags['LPS-158737'] && (
+						<ClayButtonWithIcon
+							borderless
+							className="lfr-portal-tooltip ml-2 mt-0"
+							data-tooltip-align="bottom-right"
+							displayType="secondary"
+							onClick={() => setShowReorderModal(true)}
+							small
+							symbol="order-arrow"
+							title={Liferay.Language.get('reorder-sets')}
+						/>
+					)}
 
 					<ClayButtonWithIcon
 						borderless
@@ -239,6 +256,12 @@ export default function FragmentsSidebar() {
 					/>
 				)}
 			</div>
+
+			{showReorderModal && (
+				<ReorderSetsModal
+					onCloseModal={() => setShowReorderModal(false)}
+				/>
+			)}
 		</>
 	);
 }

@@ -28,17 +28,18 @@ import {
 import {MOVE_ITEM_DIRECTIONS} from '../config/constants/moveItemDirections';
 import {useActiveItemId, useSelectItem} from '../contexts/ControlsContext';
 import {useDispatch, useSelector} from '../contexts/StoreContext';
-import {useWidgets} from '../contexts/WidgetsContext';
 import selectCanUpdatePageStructure from '../selectors/selectCanUpdatePageStructure';
 import deleteItem from '../thunks/deleteItem';
 import duplicateItem from '../thunks/duplicateItem';
 import moveItem from '../thunks/moveItem';
 import redoThunk from '../thunks/redo';
+import switchSidebarPanel from '../thunks/switchSidebarPanel';
 import undoThunk from '../thunks/undo';
 import canBeDuplicated from '../utils/canBeDuplicated';
 import canBeRemoved from '../utils/canBeRemoved';
 import canBeSaved from '../utils/canBeSaved';
 import SaveFragmentCompositionModal from './SaveFragmentCompositionModal';
+import ShortcutModal from './ShortcutModal';
 
 const ctrlOrMeta = (event) =>
 	(event.ctrlKey && !event.metaKey) || (!event.ctrlKey && event.metaKey);
@@ -69,9 +70,11 @@ export default function ShortcutManager() {
 	const dispatch = useDispatch();
 	const canUpdatePageStructure = useSelector(selectCanUpdatePageStructure);
 	const [openSaveModal, setOpenSaveModal] = useState(false);
+	const [openShortcutModal, setOpenShorcutModal] = useState(false);
 	const selectItem = useSelectItem();
 	const state = useSelector((state) => state);
-	const widgets = useWidgets();
+	const sidebarHidden = state.sidebar.hidden;
+	const {widgets} = state;
 
 	const {fragmentEntryLinks, layoutData, segmentsExperienceId} = state;
 
@@ -87,26 +90,8 @@ export default function ShortcutManager() {
 		);
 	};
 
-	const remove = () => {
-		dispatch(
-			deleteItem({
-				itemId: activeItemId,
-				selectItem,
-			})
-		);
-	};
-
-	const save = () => {
-		setOpenSaveModal(true);
-	};
-
-	const undo = (event) => {
-		if (event.shiftKey) {
-			dispatch(redoThunk({store: state}));
-		}
-		else {
-			dispatch(undoThunk({store: state}));
-		}
+	const hideSidebar = () => {
+		dispatch(switchSidebarPanel({hidden: !sidebarHidden}));
 	};
 
 	const move = (event) => {
@@ -151,6 +136,32 @@ export default function ShortcutManager() {
 		);
 	};
 
+	const openShortcutModalAction = () => {
+		setOpenShorcutModal(true);
+	};
+
+	const remove = () => {
+		dispatch(
+			deleteItem({
+				itemId: activeItemId,
+				selectItem,
+			})
+		);
+	};
+
+	const save = () => {
+		setOpenSaveModal(true);
+	};
+
+	const undo = (event) => {
+		if (event.shiftKey) {
+			dispatch(redoThunk({store: state}));
+		}
+		else {
+			dispatch(undoThunk({store: state}));
+		}
+	};
+
 	const keymapRef = useRef(null);
 
 	keymapRef.current = {
@@ -167,6 +178,17 @@ export default function ShortcutManager() {
 				),
 			isKeyCombination: (event) =>
 				ctrlOrMeta(event) && event.keyCode === D_KEYCODE,
+		},
+		hideSidebar: {
+			action: hideSidebar,
+			canBeExecuted: (event) =>
+				Liferay.FeatureFlags['LPS-153452'] &&
+				!isInteractiveElement(event.target) &&
+				!isWithinIframe() &&
+				!isEditingEditableField(),
+
+			isKeyCombination: (event) =>
+				ctrlOrMeta(event) && event.shiftKey && event.key === '.',
 		},
 		move: {
 			action: move,
@@ -199,6 +221,15 @@ export default function ShortcutManager() {
 					event.keyCode === ARROW_DOWN_KEYCODE
 				);
 			},
+		},
+		openShortcutModal: {
+			action: openShortcutModalAction,
+			canBeExecuted: (event) =>
+				Liferay.FeatureFlags['LPS-153452'] &&
+				!isInteractiveElement(event.target) &&
+				!isWithinIframe() &&
+				!isEditingEditableField(),
+			isKeyCombination: (event) => event.shiftKey && event.key === '?',
 		},
 		remove: {
 			action: remove,
@@ -260,6 +291,12 @@ export default function ShortcutManager() {
 			{openSaveModal && (
 				<SaveFragmentCompositionModal
 					onCloseModal={() => setOpenSaveModal(false)}
+				/>
+			)}
+
+			{openShortcutModal && (
+				<ShortcutModal
+					onCloseModal={() => setOpenShorcutModal(false)}
 				/>
 			)}
 		</>

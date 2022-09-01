@@ -11,6 +11,11 @@
 
 <tbody>
 <tr>
+	<td>BUTTON</td>
+	<td>//*[contains(@class, btn) and text()='${key_text}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>PAGE_TITLE</td>
 	<td>//h1[text()='${key_title}']</td>
 	<td></td>
@@ -92,7 +97,7 @@
 </tr>
 <tr>
 	<td>CARD_INSTANCE</td>
-	<td>//div[contains(@class, 'card-subscription')]//..//p[contains(text(), '${title}')]</td>
+	<td>xpath=(//div[contains(@class, 'card-subscription')]//..//p[contains(text(), '${title}')])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -211,8 +216,8 @@
 	<td></td>
 </tr>
 <tr>
-	<td>CANCEL_BUTTON</td>
-	<td>//button[contains(@type, 'button') and contains(.,'Cancel')]</td>
+	<td>ANY_BUTTON</td>
+	<td>//*[contains(@type, 'button') and text()='${key_text}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -237,7 +242,7 @@
 </tr>
 <tr>
 	<td>SETUP_VALUE</td>
-	<td>//input[contains(@name,'${label}') and contains(@value,'${value}')]</td>
+	<td>xpath=(//*[contains(@name,'${label}') and contains(@value,'${value}')])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -293,6 +298,26 @@
 <tr>
 	<td>WELCOME_PAGE_USER_NAME</td>
 	<td>//*[contains(@id,'customer-portal-user-name') and text()='${key_userFirstName}!']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LIFERAY_SITE</td>
+	<td>//*[contains(@content, 'https://www.liferay.com')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SEARCH_BAR</td>
+	<td>//*[contains(@class, 'cp-search-project')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ALERT_NOTIFICATIONS</td>
+	<td>//*[contains(@class, 'alert-notifications')]//*[text()='${key_alertText}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SUPPORT_SEAT</td>
+	<td>//p[contains(text(), 'Support Seat')]//..//*[*[name()='svg'][contains(@class,'lexicon-icon-info-circle')]]</td>
 	<td></td>
 </tr>
 </tbody>

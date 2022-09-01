@@ -773,11 +773,22 @@ information.
 					<available file="${project.dir}/tools/${build.binaries.gradle.file}" />
 				</not>
 				<then>
-					<mirrors-get
-						dest="${project.dir}/tools/${build.binaries.gradle.file}"
-						skipChecksum="true"
-						src="${build.binaries.gradle.url}"
-					/>
+					<if>
+						<isset property="env.JENKINS_HOME" />
+						<then>
+							<mirrors-get
+								dest="${project.dir}/tools/${build.binaries.gradle.file}"
+								skipChecksum="true"
+								src="${build.binaries.gradle.url}"
+							/>
+						</then>
+						<else>
+							<get
+								dest="${project.dir}/tools/${build.binaries.gradle.file}"
+								src="${build.binaries.gradle.url}"
+							/>
+						</else>
+					</if>
 				</then>
 			</if>
 
@@ -1648,18 +1659,6 @@ artifact.url=${remote.repository.cdn.url}/com/liferay/portal/com.liferay.${proce
 						symbolic="${sync.dir.symbolic}"
 						toDir="${project.dir}/.gradle/caches/modules-2/files-2.1"
 					/>
-
-					<if>
-						<not>
-							<available file="${project.dir}/tools/${build.binaries.gradle.file}" type="file" />
-						</not>
-						<then>
-							<copy
-								file="${project.dir}/${build.binaries.cache.dir}/${build.binaries.gradle.file}"
-								todir="${project.dir}/tools"
-							/>
-						</then>
-					</if>
 				</then>
 			</if>
 

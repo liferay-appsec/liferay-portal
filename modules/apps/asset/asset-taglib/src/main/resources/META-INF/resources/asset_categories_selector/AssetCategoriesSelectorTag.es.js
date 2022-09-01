@@ -12,7 +12,7 @@
  * details.
  */
 
-import {sub} from 'frontend-js-web';
+import ClayLink from '@clayui/link';
 import PropTypes from 'prop-types';
 import React, {useState} from 'react';
 
@@ -48,7 +48,7 @@ AssetCategoriesSelectorTag.propTypes = {
 	id: PropTypes.string,
 	initialVocabularies: PropTypes.array,
 	inputName: PropTypes.string,
-	learnHowURL: PropTypes.string,
+	learnHowLink: PropTypes.object,
 	portletURL: PropTypes.string,
 };
 
@@ -66,19 +66,10 @@ export default function (props) {
 
 	return (
 		<>
-			{props.learnHowURL && (
-				<p
-					className="small text-secondary"
-					dangerouslySetInnerHTML={{
-						__html: sub(
-							Liferay.Language.get(
-								'x-learn-how-x-to-tailor-categories-to-your-needs'
-							),
-							`<a href=${props.learnHowURL} target="_blank">`,
-							'</a>'
-						),
-					}}
-				/>
+			{props.learnHowLink && (
+				<ClayLink href={props.learnHowLink.url} target="_blank">
+					{props.learnHowLink.message}
+				</ClayLink>
 			)}
 
 			{initialPublicVocabularies && !!initialPublicVocabularies.length && (

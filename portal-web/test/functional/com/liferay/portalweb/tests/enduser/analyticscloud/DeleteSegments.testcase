@@ -518,11 +518,9 @@ definition {
 		}
 
 		task ("View that there's no user in the preview") {
-			ACSegments.previewSegmentMembership();
-
-			AssertTextEquals(
-				locator1 = "ACSegments#NO_MEMBER_TITLE",
-				value1 = "There are no Individuals found.");
+			AssertVisible(
+				key_text = "",
+				locator1 = "Button#ANY_DISABLED");
 		}
 	}
 
@@ -534,7 +532,9 @@ definition {
 		// AC Quarantine Reason: Segment membership takes long time to load LRAC-10769
 
 		task ("Get site assigned property name") {
-			var propertyName = ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
+			ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
+
+			var dataSource = StringUtil.replace("${assignedPropertyName}", " Combined Property", "");
 		}
 
 		task ("Add a new user in DXP") {
@@ -564,17 +564,7 @@ definition {
 
 			ACUtils.launchAC();
 
-			ACProperties.switchProperty(propertyName = "${propertyName}");
-		}
-
-		task ("Add a CSV Data Source") {
-			ACSettings.addCSVDataSource(
-				dataSourceName = "CSV Job Title",
-				sourceFileName = "jobTitle.csv");
-		}
-
-		task ("Exit Settings") {
-			ACNavigation.exitSettings();
+			ACProperties.switchProperty(propertyName = "${assignedPropertyName}");
 		}
 
 		task ("Add a new dynamic segment") {
@@ -585,12 +575,12 @@ definition {
 			ACUtils.setItemName(itemName = "New Segment Test");
 		}
 
-		task ("Add a jobTitle field") {
+		task ("Add an email field") {
 			ACSegments.goToSidebarAttributes(criterion = "Individual Attributes");
 
-			ACSegments.addSegmentField(segmentField = "jobTitle");
+			ACSegments.addSegmentField(segmentField = "email");
 
-			ACSegments.editTextCriterion(textInput = "farmer");
+			ACSegments.editTextCriterion(textInput = "ac@liferay.com");
 		}
 
 		task ("Save the segment") {
@@ -611,28 +601,20 @@ definition {
 			ACIndividualsDashboard.assertIndividualAttribute(individualAttribute = "New Segment Test");
 		}
 
-		task ("Delete the CSV Data Source") {
-			ACSettings.deleteDataSource(
-				dataSourceName = "CSV Job Title",
-				dataSourceType = "CSV");
+		task ("Delete the Data Source") {
+			ACSettings.deleteDataSource(dataSourceName = "${dataSource}");
 		}
 
 		task ("Exit Settings") {
 			ACNavigation.exitSettings();
 		}
 
-		task ("Assert the segment doesn't display under the contact user") {
-			ACNavigation.goToIndividuals();
+		task ("Open the created segment and assert the user is not present") {
+			ACNavigation.goToSegments();
 
-			ACNavigation.switchTab(tabName = "Known Individuals");
+			ACSegments.accessSegment(segmentName = "New Segment Test");
 
-			ACIndividualsDashboard.goToKnownIndividualDetails(individualName = "ac ac");
-
-			ACNavigation.switchTab(tabName = "Segments");
-
-			AssertElementNotPresent(
-				key_individualAttribute = "New Segment Test",
-				locator1 = "ACIndividualsDashboard#KNOWN_INDIVIDUAL_ATTRIBUTE");
+			ACUtils.viewGenericText(textValueList = "There are no members found on the selected time period.");
 		}
 	}
 

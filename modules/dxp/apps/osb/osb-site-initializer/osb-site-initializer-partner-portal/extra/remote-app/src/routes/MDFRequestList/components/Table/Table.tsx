@@ -25,7 +25,7 @@ type TableProps<T> = {
 };
 
 const Table = <T extends unknown>({columns, rows, ...props}: TableProps<T>) => (
-	<ClayTable {...props} tableVerticalAlignment="middle">
+	<ClayTable {...props} noWrap={true} tableVerticalAlignment="middle">
 		<ClayTable.Head>
 			<ClayTable.Row>
 				{columns.map((column: Columns<T>, index: number) => (
@@ -37,7 +37,7 @@ const Table = <T extends unknown>({columns, rows, ...props}: TableProps<T>) => (
 		</ClayTable.Head>
 
 		<ClayTable.Body>
-			{rows?.map((row, index) => (
+			{rows.map((row, index) => (
 				<ClayTable.Row key={index}>
 					{columns.map((column, index) => {
 						const data = row[column.columnKey as keyof T];

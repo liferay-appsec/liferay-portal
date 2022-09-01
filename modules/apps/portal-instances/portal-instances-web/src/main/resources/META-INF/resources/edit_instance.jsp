@@ -71,14 +71,15 @@ renderResponse.setTitle(HtmlUtil.escape(selCompany.getWebId()));
 		<liferay-frontend:edit-form-footer>
 			<clay:button
 				cssClass="d-flex"
-				label="add"
+				label="save"
 				type="submit"
 			/>
 
-			<clay:button
-				cssClass="btn-cancel"
+			<clay:link
 				displayType="secondary"
+				href="<%= HtmlUtil.escape(redirect) %>"
 				label="cancel"
+				type="button"
 			/>
 		</liferay-frontend:edit-form-footer>
 	</liferay-frontend:edit-form>

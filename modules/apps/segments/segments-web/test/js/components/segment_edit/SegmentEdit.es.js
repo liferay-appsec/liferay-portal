@@ -14,6 +14,7 @@
 
 import '@testing-library/jest-dom/extend-expect';
 import {fireEvent, render, waitFor} from '@testing-library/react';
+import {navigate} from 'frontend-js-web';
 import React from 'react';
 
 import SegmentEdit from '../../../../src/main/resources/META-INF/resources/js/components/segment_edit/SegmentEdit.es';
@@ -57,6 +58,11 @@ const CONTRIBUTORS = [
 	},
 ];
 
+jest.mock('frontend-js-web', () => ({
+	...jest.requireActual('frontend-js-web'),
+	navigate: jest.fn(),
+}));
+
 function _renderSegmentEditComponent({
 	source = undefined,
 	redirect = DEFAULT_REDIRECT,
@@ -91,6 +97,10 @@ describe('SegmentEdit', () => {
 			...Liferay,
 			FeatureFlags: {},
 		};
+	});
+
+	afterEach(() => {
+		jest.clearAllMocks();
 	});
 
 	it('renders', () => {
@@ -149,8 +159,7 @@ describe('SegmentEdit', () => {
 
 	it('redirects when cancelling without any edition', () => {
 		const mockConfirm = jest.fn();
-		const mockNavigate = jest.fn();
-		window.Liferay.Util.navigate = mockNavigate;
+
 		window.confirm = mockConfirm;
 
 		const hasUpdatePermission = true;
@@ -167,15 +176,14 @@ describe('SegmentEdit', () => {
 
 		fireEvent.click(cancelButton);
 
-		expect(mockNavigate).toHaveBeenCalledTimes(1);
-		expect(mockNavigate).toHaveBeenCalledWith(DEFAULT_REDIRECT);
+		expect(navigate).toHaveBeenCalledTimes(1);
+		expect(navigate).toHaveBeenCalledWith(DEFAULT_REDIRECT);
 		expect(mockConfirm).toHaveBeenCalledTimes(0);
 	});
 
 	it('redirects when cancelling after title edition', (done) => {
 		const mockConfirm = jest.fn();
-		const mockNavigate = jest.fn();
-		window.Liferay.Util.navigate = mockNavigate;
+
 		window.confirm = mockConfirm;
 
 		const hasUpdatePermission = true;
@@ -196,8 +204,7 @@ describe('SegmentEdit', () => {
 
 			fireEvent.click(cancelButton);
 
-			expect(mockNavigate).toHaveBeenCalledTimes(0);
-
+			expect(navigate).toHaveBeenCalledTimes(0);
 			expect(mockConfirm).toHaveBeenCalledTimes(1);
 			expect(mockConfirm).toHaveBeenCalledWith(
 				'criteria-cancel-confirmation-message'

@@ -14,14 +14,18 @@
 
 package com.liferay.content.dashboard.document.library.internal.item.type;
 
+import com.liferay.content.dashboard.document.library.internal.item.provider.FileExtensionGroupsProvider;
 import com.liferay.content.dashboard.info.item.ClassNameClassPKInfoItemIdentifier;
 import com.liferay.content.dashboard.item.type.ContentDashboardItemSubtype;
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.petra.lang.HashUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -37,10 +41,17 @@ public class DLFileEntryTypeContentDashboardItemSubtype
 	implements ContentDashboardItemSubtype<DLFileEntryType> {
 
 	public DLFileEntryTypeContentDashboardItemSubtype(
-		DLFileEntryType dlFileEntryType, Group group) {
+		DLFileEntryType basicDocumentDLFileEntryType, DLFileEntry dlFileEntry,
+		DLFileEntryType dlFileEntryType,
+		FileExtensionGroupsProvider fileExtensionGroupsProvider, Group group,
+		Language language) {
 
+		_basicDocumentDLFileEntryType = basicDocumentDLFileEntryType;
+		_dlFileEntry = dlFileEntry;
 		_dlFileEntryType = dlFileEntryType;
+		_fileExtensionGroupsProvider = fileExtensionGroupsProvider;
 		_group = group;
+		_language = language;
 
 		_infoItemReference = new InfoItemReference(
 			FileEntry.class.getName(),
@@ -98,21 +109,20 @@ public class DLFileEntryTypeContentDashboardItemSubtype
 
 	@Override
 	public String getFullLabel(Locale locale) {
-		String groupName = StringPool.BLANK;
-
 		if (_group != null) {
 			try {
-				groupName =
-					StringPool.OPEN_PARENTHESIS +
-						_group.getDescriptiveName(locale) +
-							StringPool.CLOSE_PARENTHESIS;
+				return StringBundler.concat(
+					getLabel(locale), StringPool.SPACE,
+					StringPool.OPEN_PARENTHESIS,
+					_group.getDescriptiveName(locale),
+					StringPool.CLOSE_PARENTHESIS);
 			}
 			catch (PortalException portalException) {
 				_log.error(portalException);
 			}
 		}
 
-		return getLabel(locale) + StringPool.SPACE + groupName;
+		return getLabel(locale);
 	}
 
 	@Override
@@ -122,6 +132,19 @@ public class DLFileEntryTypeContentDashboardItemSubtype
 
 	@Override
 	public String getLabel(Locale locale) {
+		if ((_dlFileEntry != null) &&
+			Objects.equals(_basicDocumentDLFileEntryType, _dlFileEntryType)) {
+
+			return StringBundler.concat(
+				_dlFileEntryType.getName(locale), StringPool.SPACE,
+				StringPool.OPEN_PARENTHESIS,
+				_language.get(
+					locale,
+					_fileExtensionGroupsProvider.getFileGroupKey(
+						_dlFileEntry.getExtension())),
+				StringPool.CLOSE_PARENTHESIS);
+		}
+
 		return _dlFileEntryType.getName(locale);
 	}
 
@@ -152,8 +175,12 @@ public class DLFileEntryTypeContentDashboardItemSubtype
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLFileEntryTypeContentDashboardItemSubtype.class);
 
+	private final DLFileEntryType _basicDocumentDLFileEntryType;
+	private final DLFileEntry _dlFileEntry;
 	private final DLFileEntryType _dlFileEntryType;
+	private final FileExtensionGroupsProvider _fileExtensionGroupsProvider;
 	private final Group _group;
 	private final InfoItemReference _infoItemReference;
+	private final Language _language;
 
 }

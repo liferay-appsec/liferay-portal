@@ -146,7 +146,7 @@ export default function ModalWithProvider({
 		status: {code: number};
 	} | null>(null);
 
-	const {observer, onClose} = useModal({
+	const {observer, onClose, open} = useModal({
 		onClose: () => setObjectDefinition(null),
 	});
 
@@ -159,8 +159,9 @@ export default function ModalWithProvider({
 				),
 			});
 
-			onClose();
-			setTimeout(window.location.reload, 1500);
+			open ? onClose() : setObjectDefinition(null);
+
+			setTimeout(() => window.location.reload(), 1500);
 		});
 	};
 

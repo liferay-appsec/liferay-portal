@@ -21,6 +21,7 @@ type AvatarProps = {
 	displayName?: boolean;
 	expanded?: boolean;
 	name?: string;
+	size?: 'lg' | 'sm' | 'xl';
 	url?: string;
 };
 
@@ -60,6 +61,7 @@ const Avatar: React.FC<AvatarProps> & {Group: React.FC<AvatarGroupProps>} = ({
 	displayName = false,
 	expanded,
 	name = '',
+	size = 'lg',
 	url,
 }) => (
 	<div className="align-items-center d-flex">
@@ -70,7 +72,7 @@ const Avatar: React.FC<AvatarProps> & {Group: React.FC<AvatarGroupProps>} = ({
 				getRandomColor(getInitials(name))
 			)}
 			shape="circle"
-			size="lg"
+			size={size}
 		>
 			{url ? (
 				<ClaySticker.Image alt={name} src={url} title={name} />
@@ -81,9 +83,13 @@ const Avatar: React.FC<AvatarProps> & {Group: React.FC<AvatarGroupProps>} = ({
 
 		{displayName && (
 			<span
-				className={classNames('ml-3 testray-avatar-dropdown-text', {
-					'testray-avatar-dropdown-text-expanded': expanded,
-				})}
+				className={classNames(
+					className,
+					'ml-3 testray-avatar-dropdown-text',
+					{
+						'testray-avatar-dropdown-text-expanded': expanded,
+					}
+				)}
 			>
 				{name}
 			</span>

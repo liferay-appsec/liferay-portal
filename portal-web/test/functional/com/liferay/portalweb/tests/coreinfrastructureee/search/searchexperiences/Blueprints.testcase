@@ -1849,6 +1849,10 @@ definition {
 		Click(locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELDS_MENU");
 
 		for (var field : list "Description,ID,Author,Created,Modified") {
+			AssertElementPresent(
+				fieldName = "${field}",
+				locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELD");
+
 			Click(
 				fieldName = "${field}",
 				locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELDS_MENU_ITEM");
@@ -1864,11 +1868,9 @@ definition {
 			fieldName = "Title",
 			locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELDS_MENU_ITEM");
 
-		for (var field : list "Title,Description,ID,Author,Created,Modified") {
-			AssertElementPresent(
-				fieldName = "${field}",
-				locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELD");
-		}
+		AssertElementPresent(
+			fieldName = "Title",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELD");
 
 		Click(
 			fieldName = "Description",
@@ -1877,6 +1879,10 @@ definition {
 		AssertElementPresent(
 			fieldName = "Description",
 			locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELD");
+
+		Click(
+			fieldName = "Title",
+			locator1 = "Blueprints#BLUEPRINTS_ADMIN_FIELDS_MENU_ITEM");
 
 		for (var field : list "Title,ID,Author,Created,Modified") {
 			AssertElementNotPresent(

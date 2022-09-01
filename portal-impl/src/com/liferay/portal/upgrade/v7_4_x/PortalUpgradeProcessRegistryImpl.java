@@ -196,6 +196,10 @@ public class PortalUpgradeProcessRegistryImpl
 					"com.liferay.segments.content.targeting.upgrade"
 				},
 				null));
+
+		upgradeVersionTreeMap.put(
+			new Version(17, 0, 0),
+			UpgradeProcessFactory.dropColumns("Company", "system"));
 	}
 
 }

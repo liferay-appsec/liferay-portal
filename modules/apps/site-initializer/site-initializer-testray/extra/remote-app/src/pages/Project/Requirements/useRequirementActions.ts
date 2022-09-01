@@ -22,7 +22,7 @@ import {TestrayRequirement, deleteResource} from '../../../services/rest';
 import {Action, ActionsHookParameter} from '../../../types';
 
 const useRequirementActions = ({
-	isHeaderActions,
+	isHeaderActions = false,
 }: ActionsHookParameter = {}) => {
 	const {form} = useFormActions();
 	const {removeItemFromList} = useMutate();
@@ -35,6 +35,17 @@ const useRequirementActions = ({
 			icon: 'pencil',
 			name: i18n.translate(isHeaderActions ? 'edit-requirement' : 'edit'),
 			permission: 'UPDATE',
+		},
+		{
+			action: ({id}) => alert(id),
+			icon: 'reload',
+			name: i18n.translate('resync-with-jira'),
+		},
+		{
+			action: ({id}) => alert(id),
+			icon: 'list-ul',
+			name: i18n.translate('link-cases'),
+			permission: !isHeaderActions,
 		},
 		{
 			action: ({id}, mutate) =>

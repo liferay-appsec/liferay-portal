@@ -28,6 +28,8 @@ import com.liferay.object.exception.NoSuchObjectFieldException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedException;
 import com.liferay.object.exception.ObjectDefinitionAccountEntryRestrictedObjectFieldIdException;
 import com.liferay.object.exception.ObjectDefinitionActiveException;
+import com.liferay.object.exception.ObjectDefinitionEnableCategorizationException;
+import com.liferay.object.exception.ObjectDefinitionEnableCommentsException;
 import com.liferay.object.exception.ObjectDefinitionLabelException;
 import com.liferay.object.exception.ObjectDefinitionNameException;
 import com.liferay.object.exception.ObjectDefinitionPluralLabelException;
@@ -60,6 +62,7 @@ import com.liferay.object.service.persistence.ObjectFieldPersistence;
 import com.liferay.object.service.persistence.ObjectRelationshipPersistence;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.object.util.LocalizedMapUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.string.StringBundler;
@@ -345,28 +348,32 @@ public class ObjectDefinitionLocalServiceImpl
 			_dropTable(objectDefinition.getExtensionDBTableName());
 		}
 		else if (objectDefinition.isApproved()) {
-			for (ResourceAction resourceAction :
-					_resourceActionLocalService.getResourceActions(
-						objectDefinition.getClassName())) {
+			try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
+					objectDefinition.getCompanyId())) {
 
-				_resourceActionLocalService.deleteResourceAction(
-					resourceAction);
-			}
+				for (ResourceAction resourceAction :
+						_resourceActionLocalService.getResourceActions(
+							objectDefinition.getClassName())) {
 
-			for (ResourceAction resourceAction :
-					_resourceActionLocalService.getResourceActions(
-						objectDefinition.getPortletId())) {
+					_resourceActionLocalService.deleteResourceAction(
+						resourceAction);
+				}
 
-				_resourceActionLocalService.deleteResourceAction(
-					resourceAction);
-			}
+				for (ResourceAction resourceAction :
+						_resourceActionLocalService.getResourceActions(
+							objectDefinition.getPortletId())) {
 
-			for (ResourceAction resourceAction :
-					_resourceActionLocalService.getResourceActions(
-						objectDefinition.getResourceName())) {
+					_resourceActionLocalService.deleteResourceAction(
+						resourceAction);
+				}
 
-				_resourceActionLocalService.deleteResourceAction(
-					resourceAction);
+				for (ResourceAction resourceAction :
+						_resourceActionLocalService.getResourceActions(
+							objectDefinition.getResourceName())) {
+
+					_resourceActionLocalService.deleteResourceAction(
+						resourceAction);
+				}
 			}
 
 			_dropTable(objectDefinition.getDBTableName());
@@ -621,6 +628,7 @@ public class ObjectDefinitionLocalServiceImpl
 			long objectDefinitionId, long accountEntryRestrictedObjectFieldId,
 			long descriptionObjectFieldId, long titleObjectFieldId,
 			boolean accountEntryRestricted, boolean active,
+			boolean enableCategorization, boolean enableComments,
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
 			Map<Locale, String> pluralLabelMap, String scope)
@@ -637,8 +645,9 @@ public class ObjectDefinitionLocalServiceImpl
 		return _updateObjectDefinition(
 			objectDefinition, accountEntryRestrictedObjectFieldId,
 			descriptionObjectFieldId, titleObjectFieldId,
-			accountEntryRestricted, active, null, labelMap, name, panelAppOrder,
-			panelCategoryKey, portlet, null, null, pluralLabelMap, scope);
+			accountEntryRestricted, active, null, enableCategorization,
+			enableComments, labelMap, name, panelAppOrder, panelCategoryKey,
+			portlet, null, null, pluralLabelMap, scope);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -722,6 +731,9 @@ public class ObjectDefinitionLocalServiceImpl
 		pkObjectFieldDBColumnName = _getPKObjectFieldDBColumnName(
 			pkObjectFieldDBColumnName, pkObjectFieldName, system);
 
+		storageType = Validator.isNotNull(storageType) ? storageType :
+			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT;
+
 		_validateLabel(labelMap);
 		_validateName(0, user.getCompanyId(), name, system);
 		_validatePluralLabel(pluralLabelMap);
@@ -739,6 +751,10 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setClassName(
 			_getClassName(
 				objectDefinition.getObjectDefinitionId(), className, system));
+		objectDefinition.setEnableCategorization(
+			!system &&
+			StringUtil.equals(
+				storageType, ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT));
 		objectDefinition.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 		objectDefinition.setName(name);
 		objectDefinition.setPanelAppOrder(panelAppOrder);
@@ -790,9 +806,7 @@ public class ObjectDefinitionLocalServiceImpl
 			dbColumnName = pkObjectFieldName;
 		}
 
-		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-158821")) &&
-			!objectDefinition.isSystem()) {
-
+		if (!objectDefinition.isSystem()) {
 			_objectFieldLocalService.addSystemObjectField(
 				userId, objectDefinition.getObjectDefinitionId(),
 				ObjectFieldConstants.BUSINESS_TYPE_TEXT,
@@ -1028,6 +1042,7 @@ public class ObjectDefinitionLocalServiceImpl
 			long accountEntryRestrictedObjectFieldId,
 			long descriptionObjectFieldId, long titleObjectFieldId,
 			boolean accountEntryRestricted, boolean active, String dbTableName,
+			boolean enableCategorization, boolean enableComments,
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
 			String pkObjectFieldDBColumnName, String pkObjectFieldName,
@@ -1042,6 +1057,16 @@ public class ObjectDefinitionLocalServiceImpl
 		_validateObjectFieldId(objectDefinition, descriptionObjectFieldId);
 		_validateObjectFieldId(objectDefinition, titleObjectFieldId);
 		_validateActive(objectDefinition, active);
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-158672"))) {
+			_validateEnableCategorization(
+				enableCategorization, objectDefinition.getStorageType(),
+				objectDefinition.isSystem());
+			_validateEnableComments(
+				enableComments, objectDefinition.getStorageType(),
+				objectDefinition.isSystem());
+		}
+
 		_validateLabel(labelMap);
 		_validatePluralLabel(pluralLabelMap);
 
@@ -1064,6 +1089,20 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setTitleObjectFieldId(titleObjectFieldId);
 		objectDefinition.setAccountEntryRestricted(accountEntryRestricted);
 		objectDefinition.setActive(active);
+
+		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-158672"))) {
+			objectDefinition.setEnableCategorization(enableCategorization);
+			objectDefinition.setEnableComments(enableComments);
+		}
+		else {
+			objectDefinition.setEnableCategorization(
+				!objectDefinition.isSystem() &&
+				StringUtil.equals(
+					objectDefinition.getStorageType(),
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT));
+			objectDefinition.setEnableComments(false);
+		}
+
 		objectDefinition.setLabelMap(labelMap, LocaleUtil.getSiteDefault());
 		objectDefinition.setPanelAppOrder(panelAppOrder);
 		objectDefinition.setPanelCategoryKey(panelCategoryKey);
@@ -1192,6 +1231,45 @@ public class ObjectDefinitionLocalServiceImpl
 		if (active && !objectDefinition.isApproved()) {
 			throw new ObjectDefinitionActiveException(
 				"Object definitions must be published before being activated");
+		}
+	}
+
+	private void _validateEnableCategorization(
+			boolean enableCategorization, String storageType, boolean system)
+		throws PortalException {
+
+		if (enableCategorization && system) {
+			throw new ObjectDefinitionEnableCategorizationException(
+				"Enable categorization is not allowed for system object " +
+					"definitions");
+		}
+
+		if (enableCategorization &&
+			!StringUtil.equals(
+				storageType, ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT)) {
+
+			throw new ObjectDefinitionEnableCategorizationException(
+				"Enable categorization is allowed only for object " +
+					"definitions with the default storage type");
+		}
+	}
+
+	private void _validateEnableComments(
+			boolean enableComments, String storageType, boolean system)
+		throws PortalException {
+
+		if (enableComments && system) {
+			throw new ObjectDefinitionEnableCommentsException(
+				"Enable comments is not allowed for system object definitions");
+		}
+
+		if (enableComments &&
+			!StringUtil.equals(
+				storageType, ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT)) {
+
+			throw new ObjectDefinitionEnableCategorizationException(
+				"Enable comments is allowed only for object definitions with " +
+					"the default storage type");
 		}
 	}
 

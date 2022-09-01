@@ -251,7 +251,6 @@ export default {
 	 * @param {string} options.segmentsExperienceId Experience id
 	 */
 	renderFragmentEntryLinkContent({
-		collectionItemIndex,
 		fragmentEntryLinkId,
 		itemClassName,
 		itemClassPK,
@@ -263,7 +262,6 @@ export default {
 			config.renderFragmentEntryURL,
 			{
 				body: {
-					collectionItemIndex,
 					fragmentEntryLinkId,
 					itemClassName,
 					itemClassPK,
@@ -272,6 +270,33 @@ export default {
 				},
 			},
 			onNetworkStatus
+		);
+	},
+
+	/**
+	 * Mark a fragment as highlighted if it wasn't, and unmark it if it was
+	 * @param {object} options
+	 * @param {string} options.fragmentEntryKey
+	 * @param {boolean} options.highlighted
+	 * @param {function} options.onNetworkStatus
+	 */
+	toggleFragmentHighlighted({
+		fragmentEntryKey,
+		groupId = '0',
+		highlighted,
+		onNetworkStatus,
+	}) {
+		return serviceFetch(
+			config.updateFragmentsHighlightedConfigurationURL,
+			{
+				body: {
+					fragmentEntryKey,
+					groupId,
+					highlighted,
+				},
+			},
+			onNetworkStatus,
+			{requestGenerateDraft: true}
 		);
 	},
 

@@ -5725,10 +5725,14 @@ public class JenkinsResultsParserUtil {
 		}
 
 		for (int i = 0; i < indices.size(); i++) {
-			String opt = propertyName.substring(
-				indices.get(i) + 1, indices.get(i + 1));
+			int nextIndex = propertyName.length();
 
-			opt = Pattern.quote(opt);
+			if (indices.size() > (i + 1)) {
+				nextIndex = indices.get(i + 1);
+			}
+
+			String opt = Pattern.quote(
+				propertyName.substring(indices.get(i) + 1, nextIndex));
 
 			propertyOptSet.add(opt.replaceAll("\\*", "\\\\E.+\\\\Q"));
 

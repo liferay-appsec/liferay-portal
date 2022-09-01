@@ -68,8 +68,6 @@ public class CompanyLocalServiceUtil {
 	 * @param webId the the company's web domain
 	 * @param virtualHostname the company's virtual host name
 	 * @param mx the company's mail domain
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
 	 * @param maxUsers the max number of company users (optionally
 	 <code>0</code>)
 	 * @param active whether the company is active
@@ -77,11 +75,11 @@ public class CompanyLocalServiceUtil {
 	 */
 	public static Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
-			boolean system, int maxUsers, boolean active)
+			int maxUsers, boolean active)
 		throws PortalException {
 
 		return getService().addCompany(
-			companyId, webId, virtualHostname, mx, system, maxUsers, active);
+			companyId, webId, virtualHostname, mx, maxUsers, active);
 	}
 
 	/**
@@ -102,12 +100,12 @@ public class CompanyLocalServiceUtil {
 	 */
 	@Deprecated
 	public static Company addCompany(
-			String webId, String virtualHostname, String mx, boolean system,
-			int maxUsers, boolean active)
+			String webId, String virtualHostname, String mx, int maxUsers,
+			boolean active)
 		throws PortalException {
 
 		return getService().addCompany(
-			webId, virtualHostname, mx, system, maxUsers, active);
+			webId, virtualHostname, mx, maxUsers, active);
 	}
 
 	/**
@@ -380,23 +378,6 @@ public class CompanyLocalServiceUtil {
 	}
 
 	/**
-	 * Returns all the companies used by WSRP.
-	 *
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
-	 * @return the companies used by WSRP
-	 */
-	public static List<Company> getCompanies(boolean system) {
-		return getService().getCompanies(system);
-	}
-
-	public static List<Company> getCompanies(
-		boolean system, int start, int end) {
-
-		return getService().getCompanies(system, start, end);
-	}
-
-	/**
 	 * Returns a range of all the companies.
 	 *
 	 * <p>
@@ -418,17 +399,6 @@ public class CompanyLocalServiceUtil {
 	 */
 	public static int getCompaniesCount() {
 		return getService().getCompaniesCount();
-	}
-
-	/**
-	 * Returns the number of companies used by WSRP.
-	 *
-	 * @param system whether the company is the very first company (i.e., the
-	 super company)
-	 * @return the number of companies used by WSRP
-	 */
-	public static int getCompaniesCount(boolean system) {
-		return getService().getCompaniesCount(system);
 	}
 
 	/**

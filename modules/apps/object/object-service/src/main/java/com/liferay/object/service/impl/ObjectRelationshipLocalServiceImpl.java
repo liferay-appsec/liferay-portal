@@ -34,6 +34,7 @@ import com.liferay.object.service.persistence.ObjectFieldPersistence;
 import com.liferay.object.service.persistence.ObjectLayoutTabPersistence;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.object.system.SystemObjectDefinitionMetadataTracker;
+import com.liferay.object.util.ObjectRelationshipUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -284,8 +285,9 @@ public class ObjectRelationshipLocalServiceImpl
 			long objectDefinitionId1, String name)
 		throws PortalException {
 
-		return objectRelationshipPersistence.findByODI1_N(
-			objectDefinitionId1, name);
+		return ObjectRelationshipUtil.getObjectRelationship(
+			objectRelationshipPersistence.findByODI1_N(
+				objectDefinitionId1, name));
 	}
 
 	@Override
@@ -310,6 +312,14 @@ public class ObjectRelationshipLocalServiceImpl
 
 		return objectRelationshipPersistence.findByODI1_ODI2_T(
 			objectDefinitionId1, objectDefinition2, type);
+	}
+
+	@Override
+	public List<ObjectRelationship> getObjectRelationships(
+		long objectDefinitionId1, String deletionType, boolean reverse) {
+
+		return objectRelationshipPersistence.findByODI1_DT_R(
+			objectDefinitionId1, deletionType, reverse);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -464,15 +474,22 @@ public class ObjectRelationshipLocalServiceImpl
 					"R_", user.getCompanyId(), objectDefinition1.getShortName(),
 					"_", objectDefinition2.getShortName(), "_", name));
 
+			Map<String, String> pkObjectFieldDBColumnNames =
+				ObjectRelationshipUtil.getPKObjectFieldDBColumnNames(
+					objectDefinition1, objectDefinition2, false);
+
+			String pkObjectFieldDBColumnName1 = pkObjectFieldDBColumnNames.get(
+				"pkObjectFieldDBColumnName1");
+			String pkObjectFieldDBColumnName2 = pkObjectFieldDBColumnNames.get(
+				"pkObjectFieldDBColumnName2");
+
 			runSQL(
 				StringBundler.concat(
 					"create table ", objectRelationship.getDBTableName(), " (",
-					objectDefinition1.getPKObjectFieldDBColumnName(),
-					" LONG not null,",
-					objectDefinition2.getPKObjectFieldDBColumnName(),
-					" LONG not null, primary key (",
-					objectDefinition1.getPKObjectFieldDBColumnName(), ", ",
-					objectDefinition2.getPKObjectFieldDBColumnName(), "))"));
+					pkObjectFieldDBColumnName1, " LONG not null,",
+					pkObjectFieldDBColumnName2, " LONG not null, primary key (",
+					pkObjectFieldDBColumnName1, ", ",
+					pkObjectFieldDBColumnName2, "))"));
 
 			ObjectRelationship reverseObjectRelationship =
 				_addObjectRelationship(
@@ -520,7 +537,7 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 
 		ObjectRelationship objectRelationship =
-			objectRelationshipPersistence.fetchByODI1_N(
+			objectRelationshipLocalService.getObjectRelationship(
 				objectDefinitionId1, name);
 
 		if (objectRelationship != null) {
@@ -536,14 +553,6 @@ public class ObjectRelationshipLocalServiceImpl
 				type, ObjectRelationshipConstants.TYPE_ONE_TO_ONE)) {
 
 			throw new ObjectRelationshipTypeException("Invalid type " + type);
-		}
-
-		if (Objects.equals(
-				type, ObjectRelationshipConstants.TYPE_MANY_TO_MANY) &&
-			(objectDefinitionId1 == objectDefinitionId2)) {
-
-			throw new ObjectRelationshipTypeException(
-				"Many to many self relationships are not allowed");
 		}
 
 		ObjectDefinition objectDefinition1 =

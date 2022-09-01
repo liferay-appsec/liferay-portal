@@ -25,8 +25,9 @@ definition {
 	}
 
 	@priority = "5"
-	test AddPortalInstance {
-		property test.name.skip.portal.instance = "VirtualInstances#AddPortalInstance";
+	test CanAddAndDeletePortalInstance {
+		property portal.acceptance = "true";
+		property test.name.skip.portal.instance = "VirtualInstances#CanAddAndDeletePortalInstance";
 
 		ApplicationsMenu.gotoPortlet(
 			category = "System",
@@ -39,6 +40,8 @@ definition {
 			webId = "www.able.com");
 
 		PortalInstances.viewCP(virtualHost = "www.able.com");
+
+		PortalInstances.deleteCP(virtualHost = "www.able.com");
 	}
 
 	@description = "This automates LPS-157752. It asserts that email settings can be configured in a Virtual Instance."
@@ -82,23 +85,6 @@ definition {
 				fieldName = "pop3Port",
 				fieldValue = "995");
 		}
-	}
-
-	@priority = "5"
-	test DeletePortalInstance {
-		property test.name.skip.portal.instance = "VirtualInstances#DeletePortalInstance";
-
-		ApplicationsMenu.gotoPortlet(
-			category = "System",
-			panel = "Control Panel",
-			portlet = "Virtual Instances");
-
-		PortalInstances.addCP(
-			mailDomain = "www.able.com",
-			virtualHost = "www.able.com",
-			webId = "www.able.com");
-
-		PortalInstances.deleteCP(virtualHost = "www.able.com");
 	}
 
 	@priority = "4"

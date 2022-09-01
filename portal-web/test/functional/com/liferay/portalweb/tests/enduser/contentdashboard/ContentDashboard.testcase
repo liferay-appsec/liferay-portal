@@ -2007,7 +2007,7 @@ definition {
 
 			AssertTextPresent(
 				locator1 = "ContentDashboard#DISPLAY_PAGE_TITLE",
-				value1 = "Display Page Name");
+				value1 = "WC Title");
 		}
 
 		task ("Delete Role and User created") {
@@ -2185,7 +2185,7 @@ definition {
 
 			AssertTextPresent(
 				locator1 = "ContentDashboard#DISPLAY_PAGE_TITLE",
-				value1 = "Display Page Name");
+				value1 = "Blogs Entry Title");
 		}
 	}
 
@@ -2435,7 +2435,7 @@ definition {
 
 			AssertTextPresent(
 				locator1 = "ContentDashboard#DISPLAY_PAGE_TITLE",
-				value1 = "Display Page Name");
+				value1 = "DM Document Title");
 		}
 	}
 
@@ -4266,6 +4266,28 @@ definition {
 				groupName = "Test Site Name",
 				layoutPageTemplateEntryName = "Display Page Name",
 				type = "Display Page Template");
+		}
+
+		task ("Add mapped heading to Display Page") {
+			DisplayPageTemplatesAdmin.openDisplayPagesAdmin(siteURLKey = "test-site-name");
+
+			DisplayPageTemplatesAdmin.gotoDisplayPage(displayPageName = "Display Page Name");
+
+			PageEditor.addFragment(
+				collectionName = "Basic Components",
+				fragmentName = "Heading");
+
+			PageEditorMapping.gotoEditableFieldMapping(
+				fragmentName = "Heading",
+				id = "element-text");
+
+			Select(
+				locator1 = "PageEditorEditableLink#FIELD",
+				value1 = "Title");
+
+			PageEditor.waitForAutoSave();
+
+			Button.clickPublish();
 		}
 
 		task ("Add Web Content and change the language") {

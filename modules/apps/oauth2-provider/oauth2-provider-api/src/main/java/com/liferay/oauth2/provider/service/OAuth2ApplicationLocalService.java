@@ -172,10 +172,12 @@ public interface OAuth2ApplicationLocalService
 	 *
 	 * @param oAuth2Application the o auth2 application
 	 * @return the o auth2 application that was removed
+	 * @throws PortalException
 	 */
 	@Indexable(type = IndexableType.DELETE)
 	public OAuth2Application deleteOAuth2Application(
-		OAuth2Application oAuth2Application);
+			OAuth2Application oAuth2Application)
+		throws PortalException;
 
 	public void deleteOAuth2Applications(long companyId) throws PortalException;
 
@@ -363,6 +365,10 @@ public interface OAuth2ApplicationLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<OAuth2Application> getOAuth2Applications(long companyId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<OAuth2Application> getOAuth2Applications(
+		long companyId, int clientProfile);
 
 	/**
 	 * Returns the number of o auth2 applications.

@@ -28,7 +28,7 @@ String paramName = baseAddressCheckoutStepDisplayContext.getParamName();
 long commerceAddressId = BeanParamUtil.getLong(baseAddressCheckoutStepDisplayContext.getCommerceOrder(), request, paramName);
 
 if (commerceAddressId == 0) {
-	commerceAddressId = baseAddressCheckoutStepDisplayContext.getDefaultCommerceAddressId();
+	commerceAddressId = baseAddressCheckoutStepDisplayContext.getDefaultCommerceAddressId(commerceContext.getCommerceChannelId());
 }
 
 String selectLabel = "choose-" + baseAddressCheckoutStepDisplayContext.getTitle();

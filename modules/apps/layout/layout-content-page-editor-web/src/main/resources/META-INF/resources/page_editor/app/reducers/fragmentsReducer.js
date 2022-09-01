@@ -14,19 +14,15 @@
 
 import {
 	ADD_FRAGMENT_COMPOSITION,
-	INIT,
 	TOGGLE_FRAGMENT_HIGHLIGHTED,
 } from '../actions/types';
-import {LAYOUT_DATA_ITEM_TYPE_LABELS} from '../config/constants/layoutDataItemTypeLabels';
-import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
-import {config} from '../config/index';
 
-const CONTENT_DISPLAY_COLLECTION_ID = 'content-display';
+const HIGHLIGHTED_COLLECTION_ID = 'highlighted';
 
-const DEFAULT_CONTENT_DISPLAY_COLLECTION = {
-	fragmentCollectionId: 'collection-display',
+const DEFAULT_HIGHLIGHTED_COLLECTION = {
+	fragmentCollectionId: HIGHLIGHTED_COLLECTION_ID,
 	fragmentEntries: [],
-	name: Liferay.Language.get('collection-display'),
+	name: Liferay.Language.get('favorites'),
 };
 
 export default function fragmentsReducer(fragments = [], action) {
@@ -64,109 +60,42 @@ export default function fragmentsReducer(fragments = [], action) {
 			];
 		}
 
-		case INIT: {
-			const contentDisplayCollection = fragments.find(
-				(fragment) =>
-					fragment.fragmentCollectionId ===
-					CONTENT_DISPLAY_COLLECTION_ID
+		case TOGGLE_FRAGMENT_HIGHLIGHTED: {
+			const {
+				fragmentEntryKey,
+				highlighted,
+				highlightedFragments,
+			} = action;
+
+			const nextFragments = fragments.reduce(
+				(collections, collection) => {
+					if (
+						collection.fragmentCollectionId !==
+						HIGHLIGHTED_COLLECTION_ID
+					) {
+						collections.push({
+							...collection,
+							fragmentEntries: collection.fragmentEntries.map(
+								(fragment) =>
+									fragment.fragmentEntryKey ===
+									fragmentEntryKey
+										? {...fragment, highlighted}
+										: fragment
+							),
+						});
+					}
+
+					return collections;
+				},
+				[]
 			);
 
-			const newFragments = fragments.filter(
-				(fragment) =>
-					fragment.fragmentCollectionId !==
-					CONTENT_DISPLAY_COLLECTION_ID
-			);
-
-			newFragments.unshift({
-				fragmentCollectionId: 'layout-elements',
-				fragmentEntries: [
-					{
-						fragmentEntryKey: 'container',
-						icon: 'container',
-						itemType: LAYOUT_DATA_ITEM_TYPES.container,
-						name:
-							LAYOUT_DATA_ITEM_TYPE_LABELS[
-								LAYOUT_DATA_ITEM_TYPES.container
-							],
-					},
-					{
-						fragmentEntryKey: 'row',
-						icon: 'table',
-						itemType: LAYOUT_DATA_ITEM_TYPES.row,
-						name:
-							LAYOUT_DATA_ITEM_TYPE_LABELS[
-								LAYOUT_DATA_ITEM_TYPES.row
-							],
-					},
-				],
-				name: Liferay.Language.get('layout-elements'),
-			});
-
-			let formComponentsCollection = {fragmentEntries: []};
-
-			const formComponentsCollectionIndex = newFragments.findIndex(
-				(collection) => collection.fragmentCollectionId === 'INPUTS'
-			);
-
-			if (formComponentsCollectionIndex !== -1) {
-				[formComponentsCollection] = newFragments.splice(
-					formComponentsCollectionIndex,
-					1
-				);
-			}
-
-			if (config.featureFlagLps150277) {
-				newFragments.splice(2, 0, {
-					fragmentCollectionId: 'form-components',
-					fragmentEntries: [
-						{
-							fragmentEntryKey: 'form',
-							icon: 'container',
-							itemType: LAYOUT_DATA_ITEM_TYPES.form,
-							name:
-								LAYOUT_DATA_ITEM_TYPE_LABELS[
-									LAYOUT_DATA_ITEM_TYPES.form
-								],
-						},
-						...formComponentsCollection.fragmentEntries,
-					],
-					name: Liferay.Language.get('form-components'),
+			if (highlightedFragments.length) {
+				nextFragments.unshift({
+					...DEFAULT_HIGHLIGHTED_COLLECTION,
+					fragmentEntries: highlightedFragments,
 				});
 			}
-
-			newFragments.splice(3, 0, {
-				...(contentDisplayCollection ||
-					DEFAULT_CONTENT_DISPLAY_COLLECTION),
-
-				fragmentEntries: [
-					...(
-						contentDisplayCollection ||
-						DEFAULT_CONTENT_DISPLAY_COLLECTION
-					).fragmentEntries,
-
-					{
-						fragmentEntryKey: 'collection-display',
-						icon: 'list',
-						itemType: LAYOUT_DATA_ITEM_TYPES.collection,
-						name: Liferay.Language.get('collection-display'),
-					},
-				],
-			});
-
-			return newFragments;
-		}
-
-		case TOGGLE_FRAGMENT_HIGHLIGHTED: {
-			const {fragmentEntryKey, highlighted} = action;
-
-			const nextFragments = fragments.map((collection) => ({
-				...collection,
-				fragmentEntries: collection.fragmentEntries.map((fragment) =>
-					fragment.fragmentEntryKey === fragmentEntryKey
-						? {...fragment, highlighted}
-						: fragment
-				),
-			}));
 
 			return nextFragments;
 		}

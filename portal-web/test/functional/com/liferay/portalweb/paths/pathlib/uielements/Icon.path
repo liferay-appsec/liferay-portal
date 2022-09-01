@@ -42,7 +42,7 @@
 </tr>
 <tr>
 	<td>ANY_ITEM_SELECTOR</td>
-	<td>//label[normalize-space(text())='${key_fieldLabel}']/following-sibling::div//button[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]</td>
+	<td>//label[normalize-space(text())='${key_fieldLabel}']/following-sibling::div//button[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]] | //div[label[normalize-space()='${key_fieldLabel}']]/following-sibling::button[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]] | //div[label[normalize-space()='${key_fieldLabel}']]/following-sibling::div//button[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]</td>
 	<td></td>
 </tr>
 <tr>
@@ -257,12 +257,7 @@
 </tr>
 <tr>
 	<td>INFO</td>
-	<td>//*[@data-qa-id='infoButton'] | //div[contains(@class,'management-bar-default')]//a[contains(@class,'infoPanelToggler')] | //button[*[name()='svg'][contains(@class,'lexicon-icon-info')]]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>INFO_ACTIVE</td>
-	<td>//*[contains(@class,'active') and contains(@class,'open') and @data-qa-id='infoButton']</td>
+	<td>//a[contains(@class,'btn')][normalize-space()='Info'] | //div[contains(@class,'management-bar-default')]//a[contains(@class,'infoPanelToggler')] | //button//*[name()='svg'][contains(@class,'lexicon-icon-info')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -440,7 +435,7 @@
 </tr>
 <tr>
 	<td>ROW_VERTICAL_ELLIPSIS_2</td>
-	<td>xPath=(//*[@data-qa-id='row' and contains(.,'${key_rowEntry}')]//a[span/*[name()='svg'][contains(@class,'icon-ellipsis')]])[2]</td>
+	<td>//*[@data-qa-id='row' and contains(.,'${key_rowEntry}')][2]//*[span/*[name()='svg'][contains(@class,'icon-ellipsis')]]</td>
 	<td></td>
 </tr>
 <tr>

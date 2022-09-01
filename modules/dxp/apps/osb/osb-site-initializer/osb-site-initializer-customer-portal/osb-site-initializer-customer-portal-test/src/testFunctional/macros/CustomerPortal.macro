@@ -25,7 +25,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Account Subscription Groups");
 
-		CustomerPortal.viewCPObjectInfo();
+		CustomerPortal.viewObjectInfo(index = "${index}");
 
 		CP2DXPCloudSetup.typeSetupDXPCloudInfoFields(
 			label = "activationStatus",
@@ -101,6 +101,12 @@ definition {
 		else if (isSet(idpAttributeMapping)) {
 			SAMLPortlet.addIdentityProviderConnectionAttributeMapping(idpAttributeMapping = "${idpAttributeMapping}");
 		}
+	}
+
+	macro assertButtonIsVisible {
+		var key_text = "${text}";
+
+		AssertVisible(locator1 = "CustomerPortalSite#BUTTON");
 	}
 
 	macro assertPageTitle {
@@ -193,8 +199,16 @@ definition {
 		}
 	}
 
+	macro clickAtButton {
+		var key_text = "${text}";
+
+		Click(locator1 = "CustomerPortalSite#ANY_BUTTON");
+	}
+
 	macro clickOnCancelButton {
-		Click(locator1 = "CustomerPortalSite#CANCEL_BUTTON");
+		var key_text = "Cancel";
+
+		Click(locator1 = "CustomerPortalSite#ANY_BUTTON");
 	}
 
 	macro clickOnFinishActivationButton {
@@ -231,10 +245,6 @@ definition {
 
 	macro customerPortalTearDown {
 		CustomerPortal.deleteEntryAccountFlag(entry = "ERC-001");
-
-		CustomerPortal.deleteCPObject(title = "Account Flag");
-
-		CustomerPortal.deleteCPObject(title = "Koroneiki Account");
 
 		CustomerPortal.customerPortalApisTearDown();
 	}
@@ -305,7 +315,7 @@ definition {
 	}
 
 	macro loginOktaToUpdateCP {
-		var userEmailAddress = "garrettz@mbopartners.com.broken";
+		var userEmailAddress = "dbace26d5dadb9eed597@uat.com.broken";
 		var userPassword = "q4F63ZEH3njnnA34S761";
 
 		Open.openInTheNewTab(locator1 = "https://login-dev.liferay.com/");
@@ -319,6 +329,10 @@ definition {
 			value1 = "${userPassword}");
 
 		Click(locator1 = "CustomerPortalSite#OKTA_SUBMIT");
+
+		CustomerPortal.waitToLiferayPage();
+
+		Navigator.closeWindow();
 	}
 
 	macro notViewProduct {
@@ -348,7 +362,7 @@ definition {
 	macro openAccountsAdminForCP {
 		Accounts.openAccountsAdmin();
 
-		CustomerPortal.accountTableProject(title = "Test Account 01");
+		CustomerPortal.accountTableProject(title = "Test Account LXC-SM");
 
 		Navigator.gotoNavTab(navTab = "Users");
 
@@ -408,6 +422,12 @@ definition {
 		AssertElementPresent(
 			key_certificateUsage = "${certificateUsage}",
 			locator1 = "CPSAMLAdmin#REPLACE_CERTIFICATE");
+	}
+
+	macro search {
+		Type(
+			locator1 = "CustomerPortalSite#SEARCH_BAR",
+			value1 = "${searchItem}");
 	}
 
 	macro selectNavigatorWindow {
@@ -583,8 +603,20 @@ definition {
 			locator1 = "CustomerPortalSite#STATUS_CARD");
 	}
 
+	macro viewAlert {
+		var key_alertText = "${alertText}";
+
+		AssertVisible(locator1 = "CustomerPortalSite#ALERT_NOTIFICATIONS");
+	}
+
 	macro viewAllProjectsTitlePage {
 		AssertElementPresent(locator1 = "CustomerPortalSite#PROJECT_TITLE_MAIN_PAGE");
+	}
+
+	macro viewButton {
+		var key_text = "${text}";
+
+		AssertVisible(locator1 = "CustomerPortalSite#ANY_BUTTON");
 	}
 
 	macro viewCardValue {
@@ -597,8 +629,9 @@ definition {
 			locator1 = "CustomerPortalSite#CARD_NAME");
 
 		AssertElementPresent(
+			key_index = "2",
 			locator1 = "CustomerPortalSite#CARD_INSTANCE",
-			title = "Instance Size: ");
+			title = "1");
 
 		AssertElementPresent(
 			date = "03/31/2021 - 03/30/2022",
@@ -694,7 +727,7 @@ definition {
 			panel = "Control Panel",
 			portlet = "Koroneiki Accounts");
 
-		CustomerPortal.viewCPObjectInfo();
+		CustomerPortal.viewObjectInfo(index = "${index}");
 
 		AssertElementPresent(locator1 = "CustomerPortalSite#FIELDS_KORONEIKI");
 	}
@@ -703,6 +736,10 @@ definition {
 		WaitForVisible(
 			key_userFirstName = "${userFirstName}",
 			locator1 = "CustomerPortalSite#WELCOME_PAGE_USER_NAME");
+	}
+
+	macro waitToLiferayPage {
+		WaitForElementPresent(locator1 = "CustomerPortalSite#LIFERAY_SITE");
 	}
 
 }

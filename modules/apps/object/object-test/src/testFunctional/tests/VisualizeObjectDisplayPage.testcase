@@ -12,13 +12,12 @@ definition {
 	}
 
 	tearDown {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
 		if ("${testPortalInstance}" == "true") {
 			PortalInstances.tearDownCP();
-		}
-		else {
-			ObjectAdmin.deleteAllCustomObjectsViaAPI();
 		}
 	}
 
@@ -367,6 +366,8 @@ definition {
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Boolean type for a specific Object"
 	@priority = "4"
 	test DisplaySpecificEntryBoolean {
+		property portal.upstream = "quarantine";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 319",
 			objectName = "CustomObject319",
@@ -415,6 +416,8 @@ definition {
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Date type for a specific Object"
 	@priority = "4"
 	test DisplaySpecificEntryDate {
+		property portal.upstream = "quarantine";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 320",
 			objectName = "CustomObject320",
@@ -463,6 +466,8 @@ definition {
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Double type for a specific Object"
 	@priority = "4"
 	test DisplaySpecificEntryDouble {
+		property portal.upstream = "quarantine";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 321",
 			objectName = "CustomObject321",
@@ -511,6 +516,8 @@ definition {
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Integer type for a specific Object"
 	@priority = "4"
 	test DisplaySpecificEntryInteger {
+		property portal.upstream = "quarantine";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 322",
 			objectName = "CustomObject322",
@@ -559,6 +566,8 @@ definition {
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Long type for a specific Object"
 	@priority = "4"
 	test DisplaySpecificEntryLong {
+		property portal.upstream = "quarantine";
+
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 323",
 			objectName = "CustomObject323",
@@ -815,7 +824,10 @@ definition {
 			locator1 = "Select#GENERIC_SELECT_FIELD",
 			value1 = "Mapped URL");
 
-		VisualizeObjectCollectionDisplay.mapFragment(fieldLabel = "Display Page URL");
+		Select(
+			key_fieldLabel = "Field",
+			locator1 = "Select#GENERIC_SELECT_FIELD",
+			value1 = "Display Page URL");
 
 		PageEditor.publish();
 

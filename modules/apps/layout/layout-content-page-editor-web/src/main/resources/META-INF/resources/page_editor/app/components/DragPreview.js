@@ -20,7 +20,6 @@ import {useDragLayer} from 'react-dnd';
 import {ITEM_ACTIVATION_ORIGINS} from '../config/constants/itemActivationOrigins';
 import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
 import {useSelector} from '../contexts/StoreContext';
-import {useWidgets} from '../contexts/WidgetsContext';
 import selectLanguageId from '../selectors/selectLanguageId';
 import getWidget from '../utils/getWidget';
 
@@ -77,7 +76,7 @@ export default function DragPreview() {
 	const fragments = useSelector((state) => state.fragments);
 	const languageId = useSelector(selectLanguageId);
 	const layoutData = useSelector((state) => state.layoutData);
-	const widgets = useWidgets();
+	const widgets = useSelector((state) => state.widgets);
 
 	const {currentOffset, isDragging, item} = useDragLayer((monitor) => ({
 		currentOffset: monitor.getClientOffset(),
@@ -103,9 +102,6 @@ export default function DragPreview() {
 			fragments,
 			widgets
 		);
-	}
-	else if (process.env.NODE_ENV === 'development') {
-		console.error('There is no icon for item ', item);
 	}
 
 	return (
@@ -138,7 +134,9 @@ export default function DragPreview() {
 						</div>
 					)}
 
-					<span className="ml-3 text-truncate">
+					<span
+						className={classNames('text-truncate', {'ml-3': icon})}
+					>
 						{item?.name
 							? item.name
 							: Liferay.Language.get('element')}

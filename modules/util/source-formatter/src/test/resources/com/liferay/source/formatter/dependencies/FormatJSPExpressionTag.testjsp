@@ -1,0 +1,24 @@
+<%--
+/**
+ * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ */
+--%>
+
+<%@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
+
+<a class="<%= variable1 + "a" %>">
+<a class="<%= "b" + variable2 %>">
+<a class="<%= variable3 + "c" + variable4 + "d" %>">
+<a class="<%= "e" + variable5 + "c" + variable6 %>">
+<a class="f<%= variable7++ %>g<%= variable8++ %>">
+<a class=data-layoutSetBranchId="<%= curLayoutRevision.getLayoutSetBranchId() %>" href="javascript:void(0);" onclick="<%= liferayPortletResponse.getNamespace() + "selectRevision(" + curLayoutRevision.getLayoutRevisionId() + ", " + curLayoutRevision.getLayoutSetBranchId() + ");" %>" title="<liferay-ui:message key="go-to-this-version" />">

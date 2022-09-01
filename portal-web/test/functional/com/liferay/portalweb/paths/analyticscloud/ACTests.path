@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>ACTests</title>
+</head>
+
+<body>
+<table border="1" cellpadding="1" cellspacing="1">
+<thead>
+<tr><td rowspan="1" colspan="3">ACTests</td></tr>
+</thead>
+
+<tbody>
+
+<tr>
+	<td>AB_ELLIPSIS</td>
+	<td>//*[contains(@class,'ellipsis-v')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DELETE_TEST</td>
+	<td>//*[contains(@class,'dropdown-item')and text()='Delete Test']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LABEL_STATUS</td>
+	<td>//*[contains(@class,'label-item')]</td>
+	<td></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

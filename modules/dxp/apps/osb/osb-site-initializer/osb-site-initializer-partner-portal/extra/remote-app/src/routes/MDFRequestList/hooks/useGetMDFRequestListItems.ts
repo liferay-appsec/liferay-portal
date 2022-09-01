@@ -9,58 +9,31 @@
  * distribution rights of the Software.
  */
 
-import useGetMDFRequest from '../../../common/services/liferay/object/mdf-requests/useGetMDFRequest';
-import {customFormatDateOptions} from '../../../common/utils/constants/customFormatDateOptions';
-import getDateCustomFormat from '../../../common/utils/getDateCustomFormat';
-import getIntlNumberFormat from '../../../common/utils/getIntlNumberFormat';
-
-const getActivityPeriod = (
-	minDateActivity: Date | undefined,
-	maxDateActivity: Date | undefined
-) => {
-	if (minDateActivity && maxDateActivity) {
-		const startDate = getDateCustomFormat(
-			minDateActivity,
-			customFormatDateOptions.SHORT_MONTH
-		);
-		const endDate = getDateCustomFormat(
-			maxDateActivity,
-			customFormatDateOptions.SHORT_MONTH_YEAR
-		);
-
-		return {
-			activityPeriod: `${startDate} - ${endDate}`,
-		};
-	}
-};
-
-const getBudgetInfos = (
-	totalCostOfExpense: number | undefined,
-	totalRequested: number | undefined
-) => {
-	if (totalCostOfExpense && totalRequested) {
-		return {
-			totalCostOfExpense: getIntlNumberFormat().format(
-				totalCostOfExpense
-			),
-			totalRequested: getIntlNumberFormat().format(totalRequested),
-		};
-	}
-};
+import {MDFColumnKey} from '../../../common/enums/mdfColumnKey';
+import useGetMDFRequests from '../../../common/services/liferay/object/mdf-requests/useGetMDFRequests';
+import getMDFActivityPeriod from '../utils/getMDFActivityPeriod';
+import getMDFBudgetInfos from '../utils/getMDFBudgetInfos';
+import getMDFDates from '../utils/getMDFDates';
 
 export default function useGetMDFRequestListItems() {
-	const swr = useGetMDFRequest();
+	const swr = useGetMDFRequests();
 
 	return {
 		...swr,
 		data: swr.data?.items.map((item) => {
 			return {
-				...getActivityPeriod(
+				[MDFColumnKey.ID]: `Request-${item.id}`,
+				...getMDFActivityPeriod(
 					item.minDateActivity,
 					item.maxDateActivity
 				),
-				...getBudgetInfos(item.totalCostOfExpense, item.totalRequested),
-				id: `Request-${item.id}`,
+				[MDFColumnKey.PARTNER]:
+					item.r_accountToMDFRequests_accountEntry?.name,
+				...getMDFDates(item.dateCreated, item.dateModified),
+				...getMDFBudgetInfos(
+					item.totalCostOfExpense,
+					item.totalMDFRequestAmount
+				),
 			};
 		}),
 	};

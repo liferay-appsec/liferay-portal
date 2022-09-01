@@ -190,6 +190,11 @@ public class DownstreamBuild extends BaseBuild {
 			}
 		}
 
+		if (result.equals("MISSING")) {
+			messageElement.add(
+				Dom4JUtil.toCodeSnippetElement("Build is missing"));
+		}
+
 		if (result.equals("UNSTABLE")) {
 			List<Element> failureElements = getTestResultGitHubElements(
 				getUniqueFailureTestResults());
@@ -455,7 +460,7 @@ public class DownstreamBuild extends BaseBuild {
 		durationValuesElement.addAttribute("style", "display: none;");
 
 		Element durationValuesDataElement = Dom4JUtil.getNewElement(
-			"th", durationValuesElement, "Full Build");
+			"td", durationValuesElement, "Full Build");
 
 		durationValuesDataElement.addAttribute("style", style);
 

@@ -373,6 +373,43 @@ definition {
 		}
 	}
 
+	macro viewActionsInfo {
+		if (isSet(name)) {
+			AssertElementPresent(
+				key_inputOption = "Name",
+				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_INPUT",
+				value1 = "${name}");
+		}
+
+		if (isSet(description)) {
+			AssertElementPresent(
+				key_inputOption = "Description",
+				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_INPUT",
+				value1 = "${description}");
+		}
+
+		if (isSet(actionsTemplateValue)) {
+			AssertElementPresent(
+				key_inputOption = "Script (Groovy)",
+				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_TEMPLATE_TEXTAREA",
+				value1 = "${actionsTemplateValue}");
+		}
+
+		if (isSet(executionTypeOption)) {
+			AssertElementPresent(
+				key_selectorField = "Execution Type",
+				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_SELECTORS",
+				value1 = "${executionTypeOption}");
+		}
+
+		if (isSet(priorityValue)) {
+			AssertElementPresent(
+				key_inputOption = "Priority",
+				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_INPUT",
+				value1 = "${priorityValue}");
+		}
+	}
+
 	macro viewActiveNodeHighlighted {
 		AssertElementPresent(
 			key_nodeType = "${nodeType}",
@@ -391,7 +428,7 @@ definition {
 	}
 
 	macro viewAndFillActions {
-		if (isSet(newAction)) {
+		if (IsElementPresent(key_propertyName = "Actions", locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_NEW_BUTTON")) {
 			Click(
 				key_propertyName = "Actions",
 				locator1 = "ProcessBuilderKaleoDesignerReact#PROPERTIES_NEW_BUTTON");
@@ -1566,6 +1603,10 @@ definition {
 		AssertVisible(
 			key_number = "${number}",
 			locator1 = "ProcessBuilderKaleoDesignerReact#REVISION_HISTORY_VERSION");
+	}
+
+	macro viewRoleIDDisabled {
+		AssertElementPresent(locator1 = "ProcessBuilderKaleoDesignerReact#ROLE_ID_FIELD_DISABLED");
 	}
 
 	macro viewRoleNamePresentInSidebar {

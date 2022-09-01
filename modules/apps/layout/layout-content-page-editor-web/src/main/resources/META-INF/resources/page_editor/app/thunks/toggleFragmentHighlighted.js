@@ -13,17 +13,29 @@
  */
 
 import toggleFragmentHighlightedAction from '../actions/toggleFragmentHighlighted';
+import FragmentService from '../services/FragmentService';
 
 export default function toggleFragmentHighlighted({
 	fragmentEntryKey,
+	groupId = '0',
 	highlighted,
+	initiallyHighlighted,
 }) {
 	return (dispatch) => {
-		dispatch(
-			toggleFragmentHighlightedAction({
-				fragmentEntryKey,
-				highlighted,
-			})
-		);
+		return FragmentService.toggleFragmentHighlighted({
+			fragmentEntryKey,
+			highlighted,
+			onNetworkStatus: dispatch,
+		}).then(({highlightedFragments}) => {
+			dispatch(
+				toggleFragmentHighlightedAction({
+					fragmentEntryKey,
+					groupId,
+					highlighted,
+					highlightedFragments,
+					initiallyHighlighted,
+				})
+			);
+		});
 	};
 }

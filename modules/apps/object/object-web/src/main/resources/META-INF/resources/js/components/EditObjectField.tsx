@@ -23,6 +23,7 @@ import {
 	Select,
 	SidePanelForm,
 	Toggle,
+	invalidateRequired,
 	openToast,
 	saveAndReload,
 } from '@liferay/object-js-components-web';
@@ -35,7 +36,7 @@ import {
 	normalizeFieldSettings,
 	updateFieldSettings,
 } from '../utils/fieldSettings';
-import {ModalAddFilter} from './ModalAddFilter';
+import {FilterErrors, FilterValidation, ModalAddFilter} from './ModalAddFilter';
 import ObjectFieldFormBase, {
 	ObjectFieldErrors,
 	useObjectFieldForm,
@@ -43,6 +44,7 @@ import ObjectFieldFormBase, {
 
 import './EditObjectField.scss';
 
+const REQUIRED_MSG = Liferay.Language.get('required');
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 const languages = Liferay.Language.available;
 const languageLabels = Object.values(languages);
@@ -115,12 +117,10 @@ export default function EditObjectField({
 		onSubmit,
 	});
 
-	const disableLabel = !!(readOnly || values.relationshipType);
-
 	const disableFieldFormBase = !!(
-		disableLabel ||
 		isApproved ||
-		values.system
+		values.system ||
+		values.relationshipType
 	);
 
 	const handleSettingsChange = ({name, value}: ObjectFieldSetting) =>
@@ -308,6 +308,62 @@ export default function EditObjectField({
 		return picklistFilterValues;
 	};
 
+	const validateFilters = ({
+		checkedItems,
+		items,
+		selectedFilterBy,
+		selectedFilterType,
+		setErrors,
+		value,
+	}: FilterValidation) => {
+		setErrors({});
+		const currentErrors: FilterErrors = {};
+
+		if (!selectedFilterBy) {
+			currentErrors.selectedFilterBy = REQUIRED_MSG;
+		}
+
+		if (!selectedFilterType) {
+			currentErrors.selectedFilterType = REQUIRED_MSG;
+		}
+
+		if (
+			(selectedFilterBy?.name === 'status' ||
+				selectedFilterBy?.businessType === 'Picklist') &&
+			!checkedItems.length
+		) {
+			currentErrors.items = REQUIRED_MSG;
+		}
+
+		if (
+			selectedFilterBy?.businessType === 'Date' &&
+			selectedFilterType?.value === 'range'
+		) {
+			const startDate = items.find((date) => date.value === 'ge');
+			const endDate = items.find((date) => date.value === 'le');
+
+			if (!startDate) {
+				currentErrors.startDate = REQUIRED_MSG;
+			}
+
+			if (!endDate) {
+				currentErrors.endDate = REQUIRED_MSG;
+			}
+		}
+
+		if (
+			(selectedFilterBy?.businessType === 'Integer' ||
+				selectedFilterBy?.businessType === 'LongInteger') &&
+			invalidateRequired(value)
+		) {
+			currentErrors.value = REQUIRED_MSG;
+		}
+
+		setErrors(currentErrors);
+
+		return currentErrors;
+	};
+
 	useEffect(() => {
 		if (values.businessType === 'Aggregation' && objectDefinitionId2) {
 			API.getObjectFields(objectDefinitionId2).then(setObjectFields);
@@ -457,13 +513,13 @@ export default function EditObjectField({
 		<SidePanelForm
 			className="lfr-objects__edit-object-field"
 			onSubmit={handleSubmit}
-			readOnly={disableLabel}
+			readOnly={readOnly}
 			title={Liferay.Language.get('field')}
 		>
 			<Card title={Liferay.Language.get('basic-info')}>
 				<InputLocalized
-					disableFlag={disableLabel}
-					disabled={disableLabel}
+					disableFlag={readOnly}
+					disabled={readOnly}
 					error={errors.label}
 					label={Liferay.Language.get('label')}
 					onChange={(label) => setValues({label})}
@@ -497,7 +553,7 @@ export default function EditObjectField({
 					{(values.businessType === 'Text' ||
 						values.businessType === 'LongText') && (
 						<MaxLengthProperties
-							disabled={disableFieldFormBase}
+							disabled={values.system}
 							errors={errors}
 							objectField={values}
 							objectFieldSettings={
@@ -541,6 +597,7 @@ export default function EditObjectField({
 					editingFilter={editingFilter}
 					editingObjectFieldName={editingObjectFieldName}
 					filterOperators={filterOperators}
+					filterTypeRequired
 					header={Liferay.Language.get('filter')}
 					objectFields={
 						objectFields?.filter((objectField) => {
@@ -558,6 +615,7 @@ export default function EditObjectField({
 					observer={observer}
 					onClose={onClose}
 					onSave={handleSaveFilterColumn}
+					validate={validateFilters}
 					workflowStatusJSONArray={workflowStatusJSONArray}
 				/>
 			)}
@@ -864,7 +922,7 @@ interface IAttachmentPropertiesProps {
 }
 
 interface IMaxLengthPropertiesProps {
-	disabled: boolean;
+	disabled?: boolean;
 	errors: ObjectFieldErrors;
 	objectField: Partial<ObjectField>;
 	objectFieldSettings: ObjectFieldSetting[];

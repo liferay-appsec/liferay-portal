@@ -625,6 +625,20 @@ public class NavigationMenuResourceImpl extends BaseNavigationMenuResourceImpl {
 							"getSiteSitePage", contextUriInfo,
 							arguments.toArray(new Object[0]));
 					});
+				setType(
+					() -> {
+						DTOConverter<?, ?> dtoConverter =
+							_dtoConverterRegistry.getDTOConverter(type);
+
+						if (dtoConverter == null) {
+							return type;
+						}
+
+						String contentType = dtoConverter.getContentType();
+
+						return Character.toLowerCase(contentType.charAt(0)) +
+							contentType.substring(1);
+					});
 			}
 		};
 	}

@@ -206,9 +206,11 @@ public class OAuth2ApplicationLocalServiceUtil {
 	 *
 	 * @param oAuth2Application the o auth2 application
 	 * @return the o auth2 application that was removed
+	 * @throws PortalException
 	 */
 	public static OAuth2Application deleteOAuth2Application(
-		OAuth2Application oAuth2Application) {
+			OAuth2Application oAuth2Application)
+		throws PortalException {
 
 		return getService().deleteOAuth2Application(oAuth2Application);
 	}
@@ -462,6 +464,12 @@ public class OAuth2ApplicationLocalServiceUtil {
 		long companyId) {
 
 		return getService().getOAuth2Applications(companyId);
+	}
+
+	public static List<OAuth2Application> getOAuth2Applications(
+		long companyId, int clientProfile) {
+
+		return getService().getOAuth2Applications(companyId, clientProfile);
 	}
 
 	/**

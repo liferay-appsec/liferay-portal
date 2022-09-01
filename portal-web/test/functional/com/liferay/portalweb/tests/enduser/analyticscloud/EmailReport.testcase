@@ -1,0 +1,174 @@
+@component-name = "portal-analytics-cloud"
+definition {
+
+	property analytics.cloud.release = "false";
+	property analytics.cloud.upstream = "true";
+	property portal.release = "false";
+	property portal.upstream = "true";
+	property property.group = "analytics.cloud.profile";
+	property testray.main.component.name = "Analytics Cloud";
+
+	setUp {
+		task ("Copy the token from AC") {
+			ACUtils.launchAC();
+
+			ACSettings.takeTokenFromAnalyticsCloud();
+		}
+
+		task ("Set up instance and sign in DXP") {
+			TestCase.setUpPortalInstance();
+
+			ACUtils.launchDXP();
+		}
+
+		task ("Connect the DXP to AC") {
+			ACDXPSettings.connectDXPtoAnalyticsCloud();
+		}
+	}
+
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		ACUtils.tearDownAC();
+
+		ACUtils.tearDownDXP();
+
+		if ("${testPortalInstance}" == "true") {
+			PortalInstances.tearDownCP();
+		}
+		else {
+			JSONGroup.deleteGroupByName(groupName = "Site Name");
+		}
+	}
+
+	@description = "Story: LRAC-11664 | Automation ID: LRAC-11844 | Test Summary: Check that cancel button does not enable email report"
+	@priority = "3"
+	test CanCancelChangesToEmailReport {
+		task ("Sign in AC as Test Test user") {
+			ACUtils.launchAC();
+		}
+
+		task ("Go to property and Select the property you are using") {
+			ACNavigation.goToSettings();
+
+			ACSettings.goToProperties();
+
+			ACNavigation.openItem(itemName = "${assignedPropertyName}");
+		}
+
+		task ("Configure Email Report then cancel") {
+			ACEmailReport.accessEmailReportSettings();
+
+			ACEmailReport.enableEmailReportToggle();
+
+			ACUtils.selectGenericOption(optionValue = "Daily");
+
+			ACNavigation.clickCancelButton();
+		}
+
+		task ("Check that email report has been disabled") {
+			ACUtils.viewGenericText(textValueList = "Email Reports: Disabled");
+		}
+	}
+
+	@description = "Story: LRAC-11664 | Automation ID: LRAC-11845 | Test Summary: Check email report edit disabled"
+	@priority = "3"
+	test CheckEmailReportEditDisabled {
+		task ("Sign in AC as Test Test user") {
+			ACUtils.launchAC();
+		}
+
+		task ("Go to property and Select the property you are using") {
+			ACNavigation.goToSettings();
+
+			ACSettings.goToProperties();
+
+			ACNavigation.openItem(itemName = "${assignedPropertyName}");
+		}
+
+		task ("Access email report") {
+			ACEmailReport.accessEmailReportSettings();
+
+			task ("Check that the Email Reports does not allow edit when toggle is disabled") {
+				AssertElementPresent(
+					locator1 = "ACUtils#TOGGLE_ICON",
+					value = "false");
+
+				AssertVisible(
+					key_text = "Save",
+					locator1 = "Button#ANY_DISABLED");
+
+				AssertElementPresent(locator1 = "ACEmailReport#EMAIL_REPORT_FREQUENCY_DISABLED");
+			}
+		}
+	}
+
+	@description = "Story: LRAC-11663 | Automation ID: LRAC-11835 | Test Summary: Check that the Email Reports widget appears on the property settings page for all users"
+	@priority = "2"
+	test CheckEmailReportsAppearsForAllUsers {
+		var emailAddressList = "bryan.cheung@faro.io,michelle.hoshi@faro.io,corbin.murakami@faro.io";
+
+		task ("Sign in AC as Test Test user") {
+			ACUtils.launchAC();
+		}
+
+		for (var emailAddress : list "${emailAddressList}") {
+			task ("Sign in AC") {
+				ACWorkspace.signOut();
+
+				ACLogin.loginAs(emailAddress = "${emailAddress}");
+
+				ACWorkspace.openWorkspace();
+			}
+
+			task ("Go to property and Select the property you are using") {
+				ACNavigation.goToSettings();
+
+				ACSettings.goToProperties();
+
+				ACNavigation.openItem(itemName = "${assignedPropertyName}");
+			}
+
+			task ("Check that email report is disabled") {
+				ACUtils.viewGenericText(textValueList = "Email Reports: Disabled");
+			}
+
+			task ("Enable and configure email report frequency") {
+				ACEmailReport.enableEmailReport(frequency = "Daily");
+			}
+
+			task ("Check that email report has been enabled") {
+				ACUtils.viewGenericText(textValueList = "Email Reports: Enabled");
+			}
+		}
+	}
+
+	@description = "Story: LRAC-11663 | Automation ID: LRAC-11836 | Test Summary: Check that the Email Reports widget does not appear on the property settings page when the property is not synced with any site"
+	@priority = "2"
+	test CheckEmailReportWidgetDisabledWhenPropertyNotSyncedWithSite {
+		var propertyName = "Email Report Test";
+
+		task ("Sign in AC") {
+			ACUtils.launchAC();
+		}
+
+		task ("Go to property and add new property") {
+			ACNavigation.goToSettings();
+
+			ACSettings.goToProperties();
+
+			ACProperties.addNewProperty(propertyName = "${propertyName}");
+		}
+
+		task ("Check that the Email Reports field appears and has the status disabled") {
+			ACUtils.viewGenericText(textValueList = "Email Reports: Disabled");
+		}
+
+		task ("Check that the Email Reports widget icon is disabled if the property is not synced") {
+			AssertVisible(
+				key_text = "",
+				locator1 = "Button#ANY_DISABLED");
+		}
+	}
+
+}

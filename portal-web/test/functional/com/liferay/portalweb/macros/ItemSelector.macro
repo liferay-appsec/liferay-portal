@@ -561,16 +561,13 @@ definition {
 				value1 = "${navTab}");
 		}
 
-		AssertElementPresent(locator1 = "ItemSelector#SELECT_FILE_UPLOAD_IMAGE");
-
 		UploadCommonFile.uploadCommonFileHiddenNoMouseOver(
 			locator1 = "TextInput#FILE",
 			value1 = "${uploadFileName}");
 
 		if (isSet(invalidFileValidation)) {
 			AssertTextEquals(
-				key_alertMessage = "${invalidFileValidation}",
-				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE",
+				locator1 = "Message#ERROR_FORM_FIELD_REQUIRED",
 				value1 = "${invalidFileValidation}");
 
 			AssertElementNotPresent(
@@ -603,8 +600,6 @@ definition {
 				locator1 = "ItemSelector#NAVIGATION_SPECIFIC_TAB",
 				value1 = "${navTab}");
 		}
-
-		AssertElementPresent(locator1 = "ItemSelector#SELECT_FILE_UPLOAD_IMAGE");
 
 		UploadCommonFile.uploadCommonFileHiddenNoMouseOver(
 			locator1 = "TextInput#FILE",
