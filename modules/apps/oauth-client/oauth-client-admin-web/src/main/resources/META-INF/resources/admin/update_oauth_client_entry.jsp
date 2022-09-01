@@ -119,6 +119,58 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 					%>'
 				/>
 
+				<aui:input
+					helpMessage="oauth-client-oidc-user-info-mapper-json-help"
+					label="oauth-client-oidc-user-info-mapper-json"
+					name="oidcUserInfoMapperJSON"
+					style="min-height: 400px;"
+					type="textarea"
+					value='<%=
+						JSONUtil.put(
+							"user",
+							JSONUtil.put(
+								"emailAddress", "email"
+							).put(
+								"firstName", "given_name"
+							).put(
+								"gender", "gender"
+							).put(
+								"languageId", "locale"
+							).put(
+								"lastName", "family_name"
+							).put(
+								"middleName", "middle_name"
+							).put(
+								"screenName", ""
+							)
+						).put(
+							"user_address",
+							JSONUtil.put(
+								"city", "locality"
+							).put(
+								"country", "country"
+							).put(
+								"region", "region"
+							).put(
+								"street", "street_address"
+							).put(
+								"zip", "portal_code"
+							)
+						).put(
+							"user_contact",
+							JSONUtil.put(
+								"birthdate", "birthdate"
+							).put(
+								"jobTitle", ""
+							)
+						).put(
+							"user_phone", JSONUtil.put("phone", "phone_number")
+						).put(
+							"user_roles", JSONUtil.put("roles", "")
+						)
+					%>'
+				/>
+
 				<aui:button-row>
 					<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "doSubmit();" %>' type="submit" />
 					<aui:button href="<%= HtmlUtil.escape(redirect) %>" type="cancel" />
@@ -187,6 +239,26 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 			'<portlet:namespace />tokenRequestParametersJSON'
 		).value = tokenRequestParametersJSON;
 
+		var oidcUserInfoMapperJSON = document.getElementById(
+			'<portlet:namespace />oidcUserInfoMapperJSON'
+		).value;
+
+		try {
+			oidcUserInfoMapperJSON = JSON.stringify(
+				JSON.parse(oidcUserInfoMapperJSON),
+				null,
+				0
+			);
+		}
+		catch (e) {
+			alert('Ill-formatted Default Token Request Parameters JSON');
+			return;
+		}
+
+		document.getElementById(
+			'<portlet:namespace />oidcUserInfoMapperJSON'
+		).value = oidcUserInfoMapperJSON;
+
 		submitForm(
 			document.getElementById('<portlet:namespace />oauth-client-entry-fm')
 		);
@@ -213,6 +285,16 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 
 		tokenRequestParametersJSON.value = JSON.stringify(
 			JSON.parse(tokenRequestParametersJSON.value),
+			null,
+			4
+		);
+
+		var oidcUserInfoMapperJSON = document.getElementById(
+			'<portlet:namespace />oidcUserInfoMapperJSON'
+		);
+
+		oidcUserInfoMapperJSON.value = JSON.stringify(
+			JSON.parse(oidcUserInfoMapperJSON.value),
 			null,
 			4
 		);
