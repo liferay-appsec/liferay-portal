@@ -49,7 +49,8 @@ public class DefaultOpenIdConnectUserMapperProcessor
 
 	@Override
 	public long processByEmailAddress(
-			long companyId, ServiceContext serviceContext, String userInfoJSON,
+			long companyId, long[] propertyRoleIds,
+			ServiceContext serviceContext, String userInfoJSON,
 			String userInfoMapperJSON)
 		throws Exception {
 
@@ -71,7 +72,7 @@ public class DefaultOpenIdConnectUserMapperProcessor
 		}
 
 		user = _generateUser(
-			companyId, serviceContext, userInfoJSONObject,
+			companyId, propertyRoleIds, serviceContext, userInfoJSONObject,
 			JSONObjectUtils.getJSONObject(userInfoMapperJSONObject, "contact"),
 			userMapperJSONObject);
 
@@ -96,9 +97,9 @@ public class DefaultOpenIdConnectUserMapperProcessor
 	}
 
 	private User _generateUser(
-			long companyId, ServiceContext serviceContext,
-			JSONObject userInfoJSONObject, JSONObject contactMapperJSONObject,
-			JSONObject userMapperJSONObject)
+			long companyId, long[] propertyRoleIds,
+			ServiceContext serviceContext, JSONObject userInfoJSONObject,
+			JSONObject contactMapperJSONObject, JSONObject userMapperJSONObject)
 		throws Exception {
 
 		String emailAddress = OpenIdConnectUserInfoClaimUtil.getStringClaim(
@@ -136,6 +137,13 @@ public class DefaultOpenIdConnectUserMapperProcessor
 		long[] userGroupIds = null;
 		boolean sendEmail = false;
 
+		long[] roleIds = propertyRoleIds;
+
+		if (propertyRoleIds == null) {
+			roleIds = _getRoleIds(
+				companyId, userInfoJSONObject, userMapperJSONObject);
+		}
+
 		User user = _userLocalService.addUser(
 			creatorUserId, companyId, autoPassword, password1, password2,
 			Validator.isNull(screenName), screenName, emailAddress,
@@ -148,9 +156,8 @@ public class DefaultOpenIdConnectUserMapperProcessor
 			birthday[2], birthday[0],
 			OpenIdConnectUserInfoClaimUtil.getStringClaim(
 				"jobTitle", contactMapperJSONObject, userInfoJSONObject),
-			groupIds, organizationIds,
-			_getRoleIds(companyId, userInfoJSONObject, userMapperJSONObject),
-			userGroupIds, sendEmail, serviceContext);
+			groupIds, organizationIds, roleIds, userGroupIds, sendEmail,
+			serviceContext);
 
 		return _userLocalService.updatePasswordReset(user.getUserId(), false);
 	}
