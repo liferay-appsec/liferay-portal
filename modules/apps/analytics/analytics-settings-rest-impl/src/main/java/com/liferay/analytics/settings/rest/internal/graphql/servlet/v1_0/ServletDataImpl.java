@@ -16,9 +16,15 @@ package com.liferay.analytics.settings.rest.internal.graphql.servlet.v1_0;
 
 import com.liferay.analytics.settings.rest.internal.graphql.mutation.v1_0.Mutation;
 import com.liferay.analytics.settings.rest.internal.graphql.query.v1_0.Query;
+import com.liferay.analytics.settings.rest.internal.resource.v1_0.ChannelResourceImpl;
+import com.liferay.analytics.settings.rest.internal.resource.v1_0.DataSourceResourceImpl;
 import com.liferay.analytics.settings.rest.resource.v1_0.ChannelResource;
 import com.liferay.analytics.settings.rest.resource.v1_0.DataSourceResource;
+import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.vulcan.graphql.servlet.ServletData;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.Generated;
 
@@ -48,6 +54,10 @@ public class ServletDataImpl implements ServletData {
 			_channelResourceComponentServiceObjects);
 	}
 
+	public String getApplicationName() {
+		return "Liferay.Analytyics.Settings.REST";
+	}
+
 	@Override
 	public Mutation getMutation() {
 		return new Mutation();
@@ -61,6 +71,37 @@ public class ServletDataImpl implements ServletData {
 	@Override
 	public Query getQuery() {
 		return new Query();
+	}
+
+	public ObjectValuePair<Class<?>, String> getResourceMethodPair(
+		String methodName, boolean mutation) {
+
+		if (mutation) {
+			return _resourceMethodPairs.get("mutation#" + methodName);
+		}
+
+		return _resourceMethodPairs.get("query#" + methodName);
+	}
+
+	private static final Map<String, ObjectValuePair<Class<?>, String>>
+		_resourceMethodPairs = new HashMap<>();
+
+	static {
+		_resourceMethodPairs.put(
+			"mutation#createChannel",
+			new ObjectValuePair<>(ChannelResourceImpl.class, "postChannel"));
+		_resourceMethodPairs.put(
+			"mutation#deleteDataSource",
+			new ObjectValuePair<>(
+				DataSourceResourceImpl.class, "deleteDataSource"));
+		_resourceMethodPairs.put(
+			"mutation#createDataSource",
+			new ObjectValuePair<>(
+				DataSourceResourceImpl.class, "postDataSource"));
+		_resourceMethodPairs.put(
+			"query#channels",
+			new ObjectValuePair<>(
+				ChannelResourceImpl.class, "getChannelsPage"));
 	}
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
