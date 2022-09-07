@@ -51,4 +51,13 @@ public class OpenIdConnectSessionLocalServiceImpl
 			userId, authServerWellKnownURI, clientId);
 	}
 
+	@Override
+	public OpenIdConnectSession fetchOpenIdConnectSession(
+		long userId, String authServerWellKnownURI, String clientId,
+		boolean useFinderCache) {
+
+		return openIdConnectSessionPersistence.fetchByU_A_C(
+			userId, authServerWellKnownURI, clientId, useFinderCache);
+	}
+
 }
