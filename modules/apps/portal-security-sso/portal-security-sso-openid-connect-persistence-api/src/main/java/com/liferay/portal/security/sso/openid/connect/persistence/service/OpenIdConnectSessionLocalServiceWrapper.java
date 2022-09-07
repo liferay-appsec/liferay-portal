@@ -273,6 +273,16 @@ public class OpenIdConnectSessionLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.portal.security.sso.openid.connect.persistence.model.
+		OpenIdConnectSession fetchOpenIdConnectSession(
+			long userId, String authServerWellKnownURI, String clientId,
+			boolean useFinderCache) {
+
+		return _openIdConnectSessionLocalService.fetchOpenIdConnectSession(
+			userId, authServerWellKnownURI, clientId, useFinderCache);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 

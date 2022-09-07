@@ -215,6 +215,11 @@ public interface OpenIdConnectSessionLocalService
 		long userId, String authServerWellKnownURI, String clientId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OpenIdConnectSession fetchOpenIdConnectSession(
+		long userId, String authServerWellKnownURI, String clientId,
+		boolean useFinderCache);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

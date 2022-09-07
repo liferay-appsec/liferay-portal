@@ -236,6 +236,14 @@ public class OpenIdConnectSessionLocalServiceUtil {
 			userId, authServerWellKnownURI, clientId);
 	}
 
+	public static OpenIdConnectSession fetchOpenIdConnectSession(
+		long userId, String authServerWellKnownURI, String clientId,
+		boolean useFinderCache) {
+
+		return getService().fetchOpenIdConnectSession(
+			userId, authServerWellKnownURI, clientId, useFinderCache);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
