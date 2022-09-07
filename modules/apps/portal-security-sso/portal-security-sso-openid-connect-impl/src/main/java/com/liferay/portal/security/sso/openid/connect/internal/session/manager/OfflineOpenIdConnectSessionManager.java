@@ -83,7 +83,9 @@ public class OfflineOpenIdConnectSessionManager {
 			synchronized (httpSession) {
 				openIdConnectSession =
 					_openIdConnectSessionLocalService.fetchOpenIdConnectSession(
-						openIdConnectSessionId);
+						openIdConnectSession.getUserId(),
+						openIdConnectSession.getAuthServerWellKnownURI(),
+						openIdConnectSession.getClientId(), false);
 
 				if (openIdConnectSession != null) {
 					if (_isAccessTokenExpired(openIdConnectSession)) {
