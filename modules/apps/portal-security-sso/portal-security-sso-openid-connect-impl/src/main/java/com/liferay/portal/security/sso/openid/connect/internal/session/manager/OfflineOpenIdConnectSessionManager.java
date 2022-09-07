@@ -77,17 +77,52 @@ public class OfflineOpenIdConnectSessionManager {
 			return true;
 		}
 
-		AccessToken accessToken = _getAccessToken(openIdConnectSession);
+		boolean expired = _isAccessTokenExpired(openIdConnectSession);
 
-		long currentTime = System.currentTimeMillis();
-		long lifetime = accessToken.getLifetime() * Time.SECOND;
-		Date modifiedDate = openIdConnectSession.getModifiedDate();
+		if (expired) {
+			synchronized (httpSession) {
+				openIdConnectSession =
+					_openIdConnectSessionLocalService.fetchOpenIdConnectSession(
+						openIdConnectSessionId);
 
-		if ((currentTime - modifiedDate.getTime()) < lifetime) {
-			return false;
+				if (openIdConnectSession != null) {
+					if (_isAccessTokenExpired(openIdConnectSession)) {
+
+						// 1st thread will always be in this condition.
+						// When openIdConnectSession exists, and access token is
+						// expired, there is 1 case:
+						//     1. 1st thread tries to refresh expired access
+						//     token
+
+						if (_extendOpenIdConnectSession(openIdConnectSession) !=
+								null) {
+
+							expired = false;
+						}
+					}
+					else {
+
+						// 1st thread will never be in this condition.
+						// When openIdConnectSession exists, and access token is
+						// not expired, there is 1 case:
+						//     1. follow-up threads fetch openIdConnectSession
+						//     after 1st thread succeeded refresh
+						//     openIdConnectSession
+
+						expired = false;
+					}
+				}
+
+				// 1st thread will never be in this condition.
+				// When openIdConnectSession does not exist, there is 1 case:
+				//     1. Follow-up threads fetch openIdConnectSession after 1st
+				//     thread failed refreshing openIdConnectSession, because
+				//     openIdConnectSession was removed in 1st thread execution.
+
+			}
 		}
 
-		return true;
+		return expired;
 	}
 
 	public long startOpenIdConnectSession(
@@ -113,33 +148,43 @@ public class OfflineOpenIdConnectSessionManager {
 		return openIdConnectSession.getOpenIdConnectSessionId();
 	}
 
-	private void _extendOpenIdConnectSession(
-			OpenIdConnectSession openIdConnectSession)
-		throws Exception {
+	private AccessToken _extendOpenIdConnectSession(
+		OpenIdConnectSession openIdConnectSession) {
 
-		if (openIdConnectSession.getRefreshToken() == null) {
-			return;
+		try {
+			RefreshToken refreshToken = new RefreshToken(
+				openIdConnectSession.getRefreshToken());
+
+			OAuthClientEntry oAuthClientEntry =
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					openIdConnectSession.getCompanyId(),
+					openIdConnectSession.getAuthServerWellKnownURI(),
+					openIdConnectSession.getClientId());
+
+			OIDCTokens oidcTokens = OpenIdConnectTokenRequestUtil.request(
+				OIDCClientInformation.parse(
+					JSONObjectUtils.parse(oAuthClientEntry.getInfoJSON())),
+				_authorizationServerMetadataResolver.
+					resolveOIDCProviderMetadata(
+						openIdConnectSession.getAuthServerWellKnownURI()),
+				refreshToken, oAuthClientEntry.getTokenRequestParametersJSON());
+
+			_updateOpenIdConnectSession(
+				oidcTokens.getAccessToken(), openIdConnectSession,
+				oidcTokens.getRefreshToken());
+
+			return oidcTokens.getAccessToken();
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+
+			_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
+				openIdConnectSession);
 		}
 
-		RefreshToken refreshToken = new RefreshToken(
-			openIdConnectSession.getRefreshToken());
-
-		OAuthClientEntry oAuthClientEntry =
-			_oAuthClientEntryLocalService.fetchOAuthClientEntry(
-				openIdConnectSession.getCompanyId(),
-				openIdConnectSession.getAuthServerWellKnownURI(),
-				openIdConnectSession.getClientId());
-
-		OIDCTokens oidcTokens = OpenIdConnectTokenRequestUtil.request(
-			OIDCClientInformation.parse(
-				JSONObjectUtils.parse(oAuthClientEntry.getInfoJSON())),
-			_authorizationServerMetadataResolver.resolveOIDCProviderMetadata(
-				openIdConnectSession.getAuthServerWellKnownURI()),
-			refreshToken, oAuthClientEntry.getTokenRequestParametersJSON());
-
-		_updateOpenIdConnectSession(
-			oidcTokens.getAccessToken(), openIdConnectSession,
-			oidcTokens.getRefreshToken());
+		return null;
 	}
 
 	private AccessToken _getAccessToken(
@@ -156,6 +201,26 @@ public class OfflineOpenIdConnectSessionManager {
 
 			return null;
 		}
+	}
+
+	private boolean _isAccessTokenExpired(
+		OpenIdConnectSession openIdConnectSession) {
+
+		AccessToken accessToken = _getAccessToken(openIdConnectSession);
+
+		if (accessToken == null) {
+			return true;
+		}
+
+		long currentTime = System.currentTimeMillis();
+		long lifetime = accessToken.getLifetime() * Time.SECOND;
+		Date modifiedDate = openIdConnectSession.getModifiedDate();
+
+		if ((currentTime - modifiedDate.getTime()) > lifetime) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _updateOpenIdConnectSession(
