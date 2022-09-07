@@ -46,6 +46,10 @@ public interface OpenIdConnectConfiguration {
 	)
 	public boolean enabled();
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), with no replacement
+	 */
+	@Deprecated
 	@Meta.AD(
 		deflt = "30", description = "token-refresh-offset-description",
 		name = "token-refresh-offset", required = false
