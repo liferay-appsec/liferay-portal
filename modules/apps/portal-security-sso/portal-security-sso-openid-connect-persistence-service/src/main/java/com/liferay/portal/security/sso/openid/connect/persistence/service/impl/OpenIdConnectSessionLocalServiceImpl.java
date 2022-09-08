@@ -15,8 +15,20 @@
 package com.liferay.portal.security.sso.openid.connect.persistence.service.impl;
 
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.search.Indexable;
+import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.base.OpenIdConnectSessionLocalServiceBaseImpl;
+
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
+
+import java.util.Date;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -29,6 +41,19 @@ import org.osgi.service.component.annotations.Component;
 )
 public class OpenIdConnectSessionLocalServiceImpl
 	extends OpenIdConnectSessionLocalServiceBaseImpl {
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public OpenIdConnectSession addOpenIdConnectSession(
+		OpenIdConnectSession openIdConnectSession) {
+
+		if (openIdConnectSession.getAccessTokenExpiredDate() == null) {
+			openIdConnectSession.setAccessTokenExpiredDate(
+				_getAccessTokenExpiredDate(openIdConnectSession));
+		}
+
+		return super.addOpenIdConnectSession(openIdConnectSession);
+	}
 
 	@Override
 	public void deleteOpenIdConnectSessions(long userId) {
@@ -50,5 +75,56 @@ public class OpenIdConnectSessionLocalServiceImpl
 		return openIdConnectSessionPersistence.fetchByU_A_C(
 			userId, authServerWellKnownURI, clientId);
 	}
+
+	@Override
+	public List<OpenIdConnectSession>
+		getAccessTokenExpiredOpenIdConnectSessions(int start, int end) {
+
+		return openIdConnectSessionFinder.findAccessTokenExpiredSessions(
+			start, end);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public OpenIdConnectSession updateOpenIdConnectSession(
+		OpenIdConnectSession openIdConnectSession) {
+
+		if (openIdConnectSession.getAccessTokenExpiredDate() == null) {
+			openIdConnectSession.setAccessTokenExpiredDate(
+				_getAccessTokenExpiredDate(openIdConnectSession));
+		}
+
+		return super.updateOpenIdConnectSession(openIdConnectSession);
+	}
+
+	private Date _getAccessTokenExpiredDate(
+		OpenIdConnectSession openIdConnectSession) {
+
+		try {
+			AccessToken accessToken = AccessToken.parse(
+				JSONObjectUtils.parse(openIdConnectSession.getAccessToken()));
+
+			long accessTokenLifetime = accessToken.getLifetime();
+
+			if (accessTokenLifetime == 0) {
+				accessTokenLifetime = 3600;
+			}
+
+			Date modifiedDate = openIdConnectSession.getModifiedDate();
+
+			return new Date(
+				modifiedDate.getTime() + (accessTokenLifetime * Time.SECOND));
+		}
+		catch (ParseException parseException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(parseException);
+			}
+
+			return new Date();
+		}
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		OpenIdConnectSessionLocalServiceImpl.class);
 
 }
