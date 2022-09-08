@@ -42,7 +42,6 @@ import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnec
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
@@ -104,15 +103,13 @@ public class OfflineOpenIdConnectSessionManager {
 			return true;
 		}
 
-		AccessToken accessToken = _getAccessToken(openIdConnectSession);
+		Date accessTokenExpiredDate =
+			openIdConnectSession.getAccessTokenExpiredDate();
+		long currentTime = System.currentTimeMillis();
 
-		long lifetime = accessToken.getLifetime() * Time.SECOND;
+		if (currentTime <=
+				(accessTokenExpiredDate.getTime() - _tokenRefreshOffset)) {
 
-		Date modifiedDate = openIdConnectSession.getModifiedDate();
-
-		long elapsedTime = System.currentTimeMillis() - modifiedDate.getTime();
-
-		if (elapsedTime <= (lifetime - _tokenRefreshOffset)) {
 			return false;
 		}
 
@@ -131,7 +128,9 @@ public class OfflineOpenIdConnectSessionManager {
 		Lock lock = _lockManager.lock(
 			OpenIdConnectSession.class.getSimpleName(), key, owner);
 
-		if (elapsedTime <= lifetime) {
+		AccessToken accessToken;
+
+		if (currentTime <= accessTokenExpiredDate.getTime()) {
 			if (!owner.equals(lock.getOwner())) {
 				return false;
 			}
@@ -275,22 +274,6 @@ public class OfflineOpenIdConnectSessionManager {
 		}
 
 		return null;
-	}
-
-	private AccessToken _getAccessToken(
-		OpenIdConnectSession openIdConnectSession) {
-
-		try {
-			return AccessToken.parse(
-				JSONObjectUtils.parse(openIdConnectSession.getAccessToken()));
-		}
-		catch (ParseException parseException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(parseException);
-			}
-
-			return null;
-		}
 	}
 
 	private void _updateOpenIdConnectSession(
