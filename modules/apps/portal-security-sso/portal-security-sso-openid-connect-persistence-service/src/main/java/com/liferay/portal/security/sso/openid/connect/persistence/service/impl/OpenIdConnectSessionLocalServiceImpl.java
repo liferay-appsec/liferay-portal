@@ -17,8 +17,10 @@ package com.liferay.portal.security.sso.openid.connect.persistence.service.impl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.base.OpenIdConnectSessionLocalServiceBaseImpl;
-
 import org.osgi.service.component.annotations.Component;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Arthur Chan
@@ -51,4 +53,12 @@ public class OpenIdConnectSessionLocalServiceImpl
 			userId, authServerWellKnownURI, clientId);
 	}
 
+	@Override
+	public List<OpenIdConnectSession>
+		getAccessTokenExpiredOpenIdConnectSessions(
+			Date beforeDate, int start, int end) {
+
+		return openIdConnectSessionFinder.findAccessTokenExpiredSessions(
+			beforeDate, start, end);
+	}
 }
