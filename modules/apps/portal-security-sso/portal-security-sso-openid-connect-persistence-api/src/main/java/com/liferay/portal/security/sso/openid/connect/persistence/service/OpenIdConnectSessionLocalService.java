@@ -215,6 +215,10 @@ public interface OpenIdConnectSessionLocalService
 		long userId, String authServerWellKnownURI, String clientId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<OpenIdConnectSession>
+		getAccessTokenExpiredOpenIdConnectSessions(int start, int end);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

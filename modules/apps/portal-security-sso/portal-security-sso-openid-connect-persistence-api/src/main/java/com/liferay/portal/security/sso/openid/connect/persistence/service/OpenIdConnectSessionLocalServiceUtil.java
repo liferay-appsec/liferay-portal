@@ -236,6 +236,13 @@ public class OpenIdConnectSessionLocalServiceUtil {
 			userId, authServerWellKnownURI, clientId);
 	}
 
+	public static List<OpenIdConnectSession>
+		getAccessTokenExpiredOpenIdConnectSessions(int start, int end) {
+
+		return getService().getAccessTokenExpiredOpenIdConnectSessions(
+			start, end);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
