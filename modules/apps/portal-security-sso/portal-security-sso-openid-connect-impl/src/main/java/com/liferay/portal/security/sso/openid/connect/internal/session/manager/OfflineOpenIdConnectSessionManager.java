@@ -17,6 +17,10 @@ package com.liferay.portal.security.sso.openid.connect.internal.session.manager;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
+import com.liferay.portal.kernel.cluster.ClusterExecutor;
+import com.liferay.portal.kernel.cluster.ClusterNode;
+import com.liferay.portal.kernel.lock.Lock;
+import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Time;
@@ -80,7 +84,61 @@ public class OfflineOpenIdConnectSessionManager {
 		boolean expired = _isAccessTokenExpired(openIdConnectSession);
 
 		if (expired) {
-			synchronized (httpSession) {
+			Thread currentThread = Thread.currentThread();
+
+			String owner = currentThread.getName();
+
+			ClusterNode clusterNode = _clusterExecutor.getLocalClusterNode();
+
+			if (clusterNode != null) {
+				owner = clusterNode.getClusterNodeId() + owner;
+			}
+
+			String key = String.valueOf(openIdConnectSessionId);
+
+			Lock lock = _lockManager.lock(
+				OpenIdConnectSession.class.getSimpleName(), key, owner);
+
+			if (owner.equals(lock.getOwner())) {
+
+				// Only 1st thread should handle access token refreshing
+
+				try {
+					AccessToken accessToken = _extendOpenIdConnectSession(
+						_openIdConnectSessionLocalService.
+							fetchOpenIdConnectSession(openIdConnectSessionId));
+
+					if (accessToken != null) {
+						expired = false;
+					}
+				}
+				finally {
+					_lockManager.unlock(
+						OpenIdConnectSession.class.getName(), key, owner);
+				}
+			}
+			else {
+
+				// All other threads across clusters will wait for 1st thread
+
+				try {
+
+					// sleep in loop isn't the best thing, but LockManager
+					// does not seem to be able to wait, and LockListener
+					// does not listen to LockManager.unLock().
+
+					do {
+						Thread.sleep(500);
+					}
+					while (_lockManager.isLocked(
+								OpenIdConnectSession.class.getName(), key));
+				}
+				catch (Exception exception) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(exception);
+					}
+				}
+
 				openIdConnectSession =
 					_openIdConnectSessionLocalService.fetchOpenIdConnectSession(
 						openIdConnectSession.getUserId(),
@@ -88,39 +146,8 @@ public class OfflineOpenIdConnectSessionManager {
 						openIdConnectSession.getClientId(), false);
 
 				if (openIdConnectSession != null) {
-					if (_isAccessTokenExpired(openIdConnectSession)) {
-
-						// 1st thread will always be in this condition.
-						// When openIdConnectSession exists, and access token is
-						// expired, there is 1 case:
-						//     1. 1st thread tries to refresh expired access
-						//     token
-
-						if (_extendOpenIdConnectSession(openIdConnectSession) !=
-								null) {
-
-							expired = false;
-						}
-					}
-					else {
-
-						// 1st thread will never be in this condition.
-						// When openIdConnectSession exists, and access token is
-						// not expired, there is 1 case:
-						//     1. follow-up threads fetch openIdConnectSession
-						//     after 1st thread succeeded refresh
-						//     openIdConnectSession
-
-						expired = false;
-					}
+					expired = false;
 				}
-
-				// 1st thread will never be in this condition.
-				// When openIdConnectSession does not exist, there is 1 case:
-				//     1. Follow-up threads fetch openIdConnectSession after 1st
-				//     thread failed refreshing openIdConnectSession, because
-				//     openIdConnectSession was removed in 1st thread execution.
-
 			}
 		}
 
@@ -263,7 +290,13 @@ public class OfflineOpenIdConnectSessionManager {
 		_authorizationServerMetadataResolver;
 
 	@Reference
+	private ClusterExecutor _clusterExecutor;
+
+	@Reference
 	private CounterLocalService _counterLocalService;
+
+	@Reference
+	private LockManager _lockManager;
 
 	@Reference
 	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
