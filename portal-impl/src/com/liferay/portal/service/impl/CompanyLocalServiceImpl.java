@@ -214,16 +214,16 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	 * @param  maxUsers the max number of company users (optionally
 	 *         <code>0</code>)
 	 * @param  active whether the company is active
-	 * @param  emailAdminUser Email set to the admin user of the company
-	 * @param  passwordAdminUser Password set to the admin user of the company
+	 * @param  emailAdmin Email set to the admin user of the company
+	 * @param  passwordAdmin Password set to the admin user of the company
 	 * @return the company
 	 */
 	public Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
 			boolean system, int maxUsers, boolean active,
-			String screenNameAdminUser, String emailAdminUser,
-			String passwordAdminUser, String firstNameAdminUser,
-			String lastNameAdminUSer)
+			String screenNameAdmin, String emailAdmin,
+			String passwordAdmin, String firstNameAdmin,
+			String lastNameAdmin)
 		throws PortalException {
 
 		// Company
@@ -303,8 +303,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			_addDefaultUser(company);
 
 			company = _checkCompany(
-				company, mx, screenNameAdminUser, emailAdminUser,
-				passwordAdminUser, firstNameAdminUser, lastNameAdminUSer);
+				company, mx, screenNameAdmin, emailAdmin,
+				passwordAdmin, firstNameAdmin, lastNameAdmin);
 
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
@@ -1948,9 +1948,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	}
 
 	private Company _checkCompany(
-			Company company, String mx, String screenNameAdminUser,
-			String emailUserAdmin, String passwordUserAdmin,
-			String firstNameAdminUser, String lastNameAdminUSer)
+			Company company, String mx, String screenNameAdmin,
+			String emailAdmin, String passwordAdmin,
+			String firstNameAdmin, String lastNameAdmin)
 		throws PortalException {
 
 		Locale localeThreadLocalDefaultLocale =
@@ -2018,29 +2018,29 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			if (_userPersistence.countByCompanyId(company.getCompanyId()) ==
 					0) {
 
-				if (Validator.isNull(emailUserAdmin)) {
-					emailUserAdmin =
+				if (Validator.isNull(emailAdmin)) {
+					emailAdmin =
 						PropsValues.DEFAULT_ADMIN_EMAIL_ADDRESS_PREFIX + "@" +
 							mx;
 				}
 
-				if (Validator.isNull(screenNameAdminUser)) {
-					screenNameAdminUser = PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
+				if (Validator.isNull(screenNameAdmin)) {
+					screenNameAdmin = PropsValues.DEFAULT_ADMIN_SCREEN_NAME;
 				}
 
-				if (Validator.isNull(firstNameAdminUser)) {
-					firstNameAdminUser = PropsValues.DEFAULT_ADMIN_FIRST_NAME;
+				if (Validator.isNull(firstNameAdmin)) {
+					firstNameAdmin = PropsValues.DEFAULT_ADMIN_FIRST_NAME;
 				}
 
-				if (Validator.isNull(lastNameAdminUSer)) {
-					lastNameAdminUSer = PropsValues.DEFAULT_ADMIN_LAST_NAME;
+				if (Validator.isNull(lastNameAdmin)) {
+					lastNameAdmin = PropsValues.DEFAULT_ADMIN_LAST_NAME;
 				}
 
 				_userLocalService.addDefaultAdminUser(
-					company.getCompanyId(), screenNameAdminUser, emailUserAdmin,
-					defaultUser.getLocale(), firstNameAdminUser,
-					PropsValues.DEFAULT_ADMIN_MIDDLE_NAME, lastNameAdminUSer,
-					passwordUserAdmin);
+					company.getCompanyId(), screenNameAdmin, emailAdmin,
+					defaultUser.getLocale(), firstNameAdmin,
+					PropsValues.DEFAULT_ADMIN_MIDDLE_NAME, lastNameAdmin,
+					passwordAdmin);
 			}
 
 			// Portlets
