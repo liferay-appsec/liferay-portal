@@ -48,6 +48,28 @@
 
 				<aui:input inlineLabel="right" labelCssClass="simple-toggle-switch" name="active" type="toggle-switch" value="<%= true %>" />
 
+				<%
+					SiteInitializerRegistry siteInitializerRegistry = (SiteInitializerRegistry)request.getAttribute(PortalInstancesWebKeys.SITE_INITIALIZER_REGISTRY);
+
+					List<SiteInitializer> siteInitializers = siteInitializerRegistry.getSiteInitializers(company.getCompanyId(), true);
+				%>
+
+				<c:if test="<%= !siteInitializers.isEmpty() %>">
+					<aui:select label="virtual-instance-initializer" name="siteInitializerKey" showEmptyOption="<%= true %>">
+
+						<%
+							for (SiteInitializer siteInitializer : siteInitializers) {
+						%>
+
+						<aui:option label="<%= siteInitializer.getName(locale) %>" value="<%= siteInitializer.getKey() %>" />
+
+						<%
+							}
+						%>
+
+					</aui:select>
+				</c:if>
+
 				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>">
 					<liferay-ui:panel
 						collapsible="<%= false %>"
@@ -56,45 +78,24 @@
 						markupView="lexicon"
 						title="user-display-data"
 					>
-						<aui:input label="field.screen-name" name="administratorScreenName" type="text">
+						<aui:input label="field.screen-name" name="screenNameAdmin" type="text">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input label="administrator-email" name="administratorEmail" type="text">
+						<aui:input label="administrator-email" name="emailAdmin" type="text">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input label="password" name="administratorPassword" type="password">
+						<aui:input label="password" name="passwordAdmin" type="password">
 							<aui:validator name="required" />
 						</aui:input>
 
-						<aui:input label="field.first-name" name="administratorFirstName" type="text" />
+						<aui:input label="field.first-name" name="firstNameAdmin" type="text" />
 
-						<aui:input label="field.last-name" name="administratorLastName" type="text" />
+						<aui:input label="field.last-name" name="lastNameAdmin" type="text" />
 					</liferay-ui:panel>
 				</c:if>
 
-				<%
-				SiteInitializerRegistry siteInitializerRegistry = (SiteInitializerRegistry)request.getAttribute(PortalInstancesWebKeys.SITE_INITIALIZER_REGISTRY);
-
-				List<SiteInitializer> siteInitializers = siteInitializerRegistry.getSiteInitializers(company.getCompanyId(), true);
-				%>
-
-				<c:if test="<%= !siteInitializers.isEmpty() %>">
-					<aui:select label="virtual-instance-initializer" name="siteInitializerKey" showEmptyOption="<%= true %>">
-
-						<%
-						for (SiteInitializer siteInitializer : siteInitializers) {
-						%>
-
-							<aui:option label="<%= siteInitializer.getName(locale) %>" value="<%= siteInitializer.getKey() %>" />
-
-						<%
-						}
-						%>
-
-					</aui:select>
-				</c:if>
 
 				<liferay-frontend:edit-form-footer>
 					<liferay-frontend:edit-form-buttons
