@@ -49,22 +49,22 @@
 				<aui:input inlineLabel="right" labelCssClass="simple-toggle-switch" name="active" type="toggle-switch" value="<%= true %>" />
 
 				<%
-					SiteInitializerRegistry siteInitializerRegistry = (SiteInitializerRegistry)request.getAttribute(PortalInstancesWebKeys.SITE_INITIALIZER_REGISTRY);
+				SiteInitializerRegistry siteInitializerRegistry = (SiteInitializerRegistry)request.getAttribute(PortalInstancesWebKeys.SITE_INITIALIZER_REGISTRY);
 
-					List<SiteInitializer> siteInitializers = siteInitializerRegistry.getSiteInitializers(company.getCompanyId(), true);
+				List<SiteInitializer> siteInitializers = siteInitializerRegistry.getSiteInitializers(company.getCompanyId(), true);
 				%>
 
 				<c:if test="<%= !siteInitializers.isEmpty() %>">
 					<aui:select label="virtual-instance-initializer" name="siteInitializerKey" showEmptyOption="<%= true %>">
 
 						<%
-							for (SiteInitializer siteInitializer : siteInitializers) {
+						for (SiteInitializer siteInitializer : siteInitializers) {
 						%>
 
-						<aui:option label="<%= siteInitializer.getName(locale) %>" value="<%= siteInitializer.getKey() %>" />
+							<aui:option label="<%= siteInitializer.getName(locale) %>" value="<%= siteInitializer.getKey() %>" />
 
 						<%
-							}
+						}
 						%>
 
 					</aui:select>
@@ -94,7 +94,10 @@
 
 						<aui:input label="field.last-name" name="lastNameAdmin" type="text" />
 					</liferay-ui:panel>
+
+					<br></br>
 				</c:if>
+
 
 
 				<liferay-frontend:edit-form-footer>

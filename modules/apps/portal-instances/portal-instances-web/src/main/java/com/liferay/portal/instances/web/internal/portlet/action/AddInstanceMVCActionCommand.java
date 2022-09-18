@@ -103,8 +103,7 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 		String screenNameAdmin = ParamUtil.getString(
 			actionRequest, "screenNameAdmin");
-		String emailAdmin = ParamUtil.getString(
-			actionRequest, "emailAdmin");
+		String emailAdmin = ParamUtil.getString(actionRequest, "emailAdmin");
 		String passwordAdmin = ParamUtil.getString(
 			actionRequest, "passwordAdmin");
 		String firstNameAdmin = ParamUtil.getString(
@@ -113,9 +112,8 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, "lastNameAdmin");
 
 		Company company = _companyService.addCompany(
-			webId, virtualHostname, mx, maxUsers, active,
-			screenNameAdmin, emailAdmin, passwordAdmin,
-			firstNameAdmin, lastNameAdmin);
+			webId, virtualHostname, mx, maxUsers, active, screenNameAdmin,
+			emailAdmin, passwordAdmin, firstNameAdmin, lastNameAdmin);
 
 		String siteInitializerKey = ParamUtil.getString(
 			actionRequest, "siteInitializerKey");

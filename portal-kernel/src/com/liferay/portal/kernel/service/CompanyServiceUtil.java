@@ -100,16 +100,14 @@ public class CompanyServiceUtil {
 	 * @return the company
 	 */
 	public static Company addCompany(
-			String webId, String virtualHost, String mx, boolean system,
-			int maxUsers, boolean active, String screenNameAdminUser,
-			String emailAdminUser, String passwordAdminUser,
-			String firstNameAdminUser, String lastNameAdminUSer)
+			String webId, String virtualHost, String mx, int maxUsers,
+			boolean active, String screenNameAdmin, String emailAdmin,
+			String passwordAdmin, String firstNameAdmin, String lastNameAdmin)
 		throws PortalException {
 
 		return getService().addCompany(
-			webId, virtualHost, mx, system, maxUsers, active,
-			screenNameAdminUser, emailAdminUser, passwordAdminUser,
-			firstNameAdminUser, lastNameAdminUSer);
+			webId, virtualHost, mx, maxUsers, active, screenNameAdmin,
+			emailAdmin, passwordAdmin, firstNameAdmin, lastNameAdmin);
 	}
 
 	public static Company deleteCompany(long companyId) throws PortalException {

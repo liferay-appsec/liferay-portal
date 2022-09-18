@@ -197,8 +197,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		throws PortalException {
 
 		return addCompany(
-			companyId, webId, virtualHostname, mx, system, maxUsers, active,
-			null, null, null, null, null);
+			companyId, webId, virtualHostname, mx, maxUsers, active, null, null,
+			null, null, null);
 	}
 
 	/**
@@ -220,9 +220,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	 */
 	public Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
-			boolean system, int maxUsers, boolean active,
-			String screenNameAdmin, String emailAdmin,
-			String passwordAdmin, String firstNameAdmin,
+			int maxUsers, boolean active, String screenNameAdmin,
+			String emailAdmin, String passwordAdmin, String firstNameAdmin,
 			String lastNameAdmin)
 		throws PortalException {
 
@@ -303,8 +302,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			_addDefaultUser(company);
 
 			company = _checkCompany(
-				company, mx, screenNameAdmin, emailAdmin,
-				passwordAdmin, firstNameAdmin, lastNameAdmin);
+				company, mx, screenNameAdmin, emailAdmin, passwordAdmin,
+				firstNameAdmin, lastNameAdmin);
 
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
@@ -1949,8 +1948,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 	private Company _checkCompany(
 			Company company, String mx, String screenNameAdmin,
-			String emailAdmin, String passwordAdmin,
-			String firstNameAdmin, String lastNameAdmin)
+			String emailAdmin, String passwordAdmin, String firstNameAdmin,
+			String lastNameAdmin)
 		throws PortalException {
 
 		Locale localeThreadLocalDefaultLocale =
