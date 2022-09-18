@@ -93,15 +93,14 @@ public class CompanyLocalServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.Company addCompany(
 			java.lang.Long companyId, java.lang.String webId,
-			java.lang.String virtualHostname, java.lang.String mx,
-			boolean system, int maxUsers, boolean active,
-			java.lang.String screenNameAdmin, java.lang.String emailAdmin,
-			java.lang.String passwordAdmin, java.lang.String firstNameAdmin,
-			java.lang.String lastNameAdmin)
+			java.lang.String virtualHostname, java.lang.String mx, int maxUsers,
+			boolean active, java.lang.String screenNameAdmin,
+			java.lang.String emailAdmin, java.lang.String passwordAdmin,
+			java.lang.String firstNameAdmin, java.lang.String lastNameAdmin)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyLocalService.addCompany(
-			companyId, webId, virtualHostname, mx, system, maxUsers, active,
+			companyId, webId, virtualHostname, mx, maxUsers, active,
 			screenNameAdmin, emailAdmin, passwordAdmin, firstNameAdmin,
 			lastNameAdmin);
 	}
