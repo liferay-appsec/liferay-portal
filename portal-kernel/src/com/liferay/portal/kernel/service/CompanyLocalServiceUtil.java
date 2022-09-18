@@ -101,13 +101,13 @@ public class CompanyLocalServiceUtil {
 	 */
 	public static Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
-			boolean system, int maxUsers, boolean active,
-			String screenNameAdmin, String emailAdmin, String passwordAdmin,
-			String firstNameAdmin, String lastNameAdmin)
+			int maxUsers, boolean active, String screenNameAdmin,
+			String emailAdmin, String passwordAdmin, String firstNameAdmin,
+			String lastNameAdmin)
 		throws PortalException {
 
 		return getService().addCompany(
-			companyId, webId, virtualHostname, mx, system, maxUsers, active,
+			companyId, webId, virtualHostname, mx, maxUsers, active,
 			screenNameAdmin, emailAdmin, passwordAdmin, firstNameAdmin,
 			lastNameAdmin);
 	}

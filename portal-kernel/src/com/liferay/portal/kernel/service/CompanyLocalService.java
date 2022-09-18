@@ -116,9 +116,9 @@ public interface CompanyLocalService
 	 */
 	public Company addCompany(
 			Long companyId, String webId, String virtualHostname, String mx,
-			boolean system, int maxUsers, boolean active,
-			String screenNameAdmin, String emailAdmin, String passwordAdmin,
-			String firstNameAdmin, String lastNameAdmin)
+			int maxUsers, boolean active, String screenNameAdmin,
+			String emailAdmin, String passwordAdmin, String firstNameAdmin,
+			String lastNameAdmin)
 		throws PortalException;
 
 	/**
