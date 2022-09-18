@@ -1,0 +1,7 @@
+Bundle-Name: Liferay OAuth Client API
+Bundle-SymbolicName: com.liferay.oauth.client.api
+Bundle-Version: 1.0.0
+Export-Package:\
+	com.liferay.oauth.client,\
+	com.liferay.oauth.client.generator,\
+	com.liferay.oauth.client.grant
