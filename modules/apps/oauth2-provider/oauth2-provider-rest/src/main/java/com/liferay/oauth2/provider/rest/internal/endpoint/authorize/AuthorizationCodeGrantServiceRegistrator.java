@@ -339,17 +339,19 @@ public class AuthorizationCodeGrantServiceRegistrator {
 			return;
 		}
 
-		AuthorizationCodeGrantService authorizationCodeGrantService =
-			new LiferayAuthorizationCodeGrantService();
+		LiferayAuthorizationCodeGrantService
+			liferayAuthorizationCodeGrantService =
+				new LiferayAuthorizationCodeGrantService();
 
-		authorizationCodeGrantService.setCanSupportPublicClients(
+		liferayAuthorizationCodeGrantService.setCanSupportPublicClients(
 			oAuth2ProviderConfiguration.allowAuthorizationCodePKCEGrant());
-		authorizationCodeGrantService.setDataProvider(
+		liferayAuthorizationCodeGrantService.setDataProvider(
 			_liferayOAuthDataProvider);
-		authorizationCodeGrantService.setSubjectCreator(_subjectCreator);
+		liferayAuthorizationCodeGrantService.setSubjectCreator(_subjectCreator);
 
 		_serviceRegistration = bundleContext.registerService(
-			Object.class, authorizationCodeGrantService,
+			LiferayAuthorizationCodeGrantService.class,
+			liferayAuthorizationCodeGrantService,
 			HashMapDictionaryBuilder.<String, Object>put(
 				"osgi.jaxrs.application.select",
 				"(osgi.jaxrs.name=Liferay.OAuth2.Application)"
@@ -378,7 +380,8 @@ public class AuthorizationCodeGrantServiceRegistrator {
 	@Reference
 	private LiferayOAuthDataProvider _liferayOAuthDataProvider;
 
-	private ServiceRegistration<Object> _serviceRegistration;
+	private ServiceRegistration<LiferayAuthorizationCodeGrantService>
+		_serviceRegistration;
 
 	@Reference
 	private SubjectCreator _subjectCreator;

@@ -67,7 +67,7 @@ public class LiferayAccessTokenServiceRegistrator {
 		liferayAccessTokenService.setGrantHandlers(_accessTokenGrantHandlers);
 
 		_serviceRegistration = bundleContext.registerService(
-			Object.class, liferayAccessTokenService,
+			LiferayAccessTokenService.class, liferayAccessTokenService,
 			HashMapDictionaryBuilder.<String, Object>put(
 				"osgi.jaxrs.application.select",
 				"(osgi.jaxrs.name=Liferay.OAuth2.Application)"
@@ -98,6 +98,7 @@ public class LiferayAccessTokenServiceRegistrator {
 	@Reference
 	private LiferayOAuthDataProvider _liferayOAuthDataProvider;
 
-	private volatile ServiceRegistration<Object> _serviceRegistration;
+	private volatile ServiceRegistration<LiferayAccessTokenService>
+		_serviceRegistration;
 
 }
