@@ -23,6 +23,7 @@ import com.liferay.oauth2.provider.rest.internal.endpoint.access.token.LiferayAc
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.AuthorizationCodeGrantServiceRegistrator;
 import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDataProvider;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
 import com.liferay.portal.kernel.util.Portal;
@@ -347,10 +348,7 @@ public class LocalOAuthClientGeneratorImpl
 				return null;
 			}
 
-			ClientAccessToken clientAccessToken = response.readEntity(
-				ClientAccessToken.class);
-
-			return clientAccessToken.toString();
+			return _toJSONString(response.readEntity(ClientAccessToken.class));
 		}
 
 		@Override
@@ -370,6 +368,20 @@ public class LocalOAuthClientGeneratorImpl
 				(ThreadLocalMessageContext)messageContext;
 
 			threadLocalMessageContext.set(generatedMessageContext);
+		}
+
+		private String _toJSONString(ClientAccessToken clientAccessToken) {
+			return JSONUtil.put(
+				"access_token", clientAccessToken.getTokenKey()
+			).put(
+				"expires_in", clientAccessToken.getExpiresIn()
+			).put(
+				"refresh_token", clientAccessToken.getRefreshToken()
+			).put(
+				"scope", clientAccessToken.getApprovedScope()
+			).put(
+				"token_type", clientAccessToken.getTokenType()
+			).toString();
 		}
 
 		private final Pattern _authorizationCodePattern = Pattern.compile(
