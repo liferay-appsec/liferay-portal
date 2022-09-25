@@ -95,10 +95,8 @@
 						<aui:input label="field.last-name" name="lastNameAdmin" type="text" />
 					</liferay-ui:panel>
 
-					<br></br>
+					<br /></br>
 				</c:if>
-
-
 
 				<liferay-frontend:edit-form-footer>
 					<liferay-frontend:edit-form-buttons
