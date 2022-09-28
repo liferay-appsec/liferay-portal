@@ -15,21 +15,18 @@
 package com.liferay.portal.security.ldap.internal.model.listener;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
-import com.liferay.portal.kernel.security.exportimport.UserGroupImportTransactionThreadLocal;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.security.exportimport.UserExporter;
 import com.liferay.portal.security.exportimport.UserOperation;
 import com.liferay.portal.security.ldap.internal.UserImportTransactionThreadLocal;
-import com.liferay.portal.security.ldap.persistence.service.LDAPServerAttributeRelLocalService;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -59,27 +56,6 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 				"Unable to export user group with user ID " +
 					associationClassPK + " to LDAP on after add association",
 				exception);
-		}
-	}
-
-	@Override
-	public void onAfterCreate(UserGroup userGroup)
-		throws ModelListenerException {
-
-		long ldapServerId =
-			UserGroupImportTransactionThreadLocal.getLDAPServerId();
-
-		if (ldapServerId !=
-				UserGroupImportTransactionThreadLocal.DEFAULT_LDAP_SERVER_ID) {
-
-			try {
-				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
-					ldapServerId, UserGroup.class.getName(),
-					userGroup.getUserGroupId());
-			}
-			catch (Exception exception) {
-				throw new ModelListenerException(exception);
-			}
 		}
 	}
 
@@ -143,10 +119,6 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UserGroupModelListener.class);
-
-	@Reference
-	private LDAPServerAttributeRelLocalService
-		_ldapServerAttributeRelLocalService;
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,

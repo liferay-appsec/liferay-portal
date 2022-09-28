@@ -1145,8 +1145,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							SafeLdapNameFactory.from(searchResult), true);
 
 					UserGroup userGroup = _importUserGroup(
-						ldapImportContext, groupAttributes, groupMappings,
-						ldapImportContext.getLdapServerId());
+						ldapImportContext, groupAttributes, groupMappings);
 
 					Attribute usersAttribute = _getUsers(
 						ldapImportContext, groupAttributes, userGroup);
@@ -1308,8 +1307,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 			UserGroup userGroup = _importUserGroup(
 				ldapImportContext, groupAttributes,
-				ldapImportContext.getGroupMappings(),
-				ldapImportContext.getLdapServerId());
+				ldapImportContext.getGroupMappings());
 
 			if (userGroup == null) {
 				return newUserGroupIds;
@@ -1580,7 +1578,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	private UserGroup _importUserGroup(
 			LDAPImportContext ldapImportContext, Attributes groupAttributes,
-			Properties groupMappings, long ldapServerId)
+			Properties groupMappings)
 		throws Exception {
 
 		long companyId = ldapImportContext.getCompanyId();
@@ -1596,15 +1594,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		try {
 			userGroup = _userGroupLocalService.getUserGroup(
 				companyId, ldapGroup.getGroupName());
-
-			if (!_ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
-					ldapServerId, UserGroup.class.getName(),
-					userGroup.getUserGroupId())) {
-
-				_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
-					ldapServerId, UserGroup.class.getName(),
-					userGroup.getUserGroupId());
-			}
 
 			if (!Objects.equals(
 					userGroup.getDescription(), ldapGroup.getDescription())) {
@@ -1632,7 +1621,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 			long defaultUserId = _userLocalService.getDefaultUserId(companyId);
 
-			UserGroupImportTransactionThreadLocal.setLDAPServerId(ldapServerId);
+			UserGroupImportTransactionThreadLocal.setOriginatesFromImport(true);
 
 			try {
 				userGroup = _userGroupLocalService.addUserGroup(
@@ -1659,16 +1648,21 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				}
 			}
 			finally {
-				UserGroupImportTransactionThreadLocal.setLDAPServerId(
-					UserGroupImportTransactionThreadLocal.
-						DEFAULT_LDAP_SERVER_ID);
+				UserGroupImportTransactionThreadLocal.setOriginatesFromImport(
+					false);
 			}
 		}
 
-		if (userGroup != null) {
-			ldapImportContext.addImportedUserGroupId(
+		if (!_ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
+				ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
+				userGroup.getUserGroupId())) {
+
+			_ldapServerAttributeRelLocalService.addLDAPServerAttributeRel(
+				ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
 				userGroup.getUserGroupId());
 		}
+
+		ldapImportContext.addImportedUserGroupId(userGroup.getUserGroupId());
 
 		_addRole(companyId, ldapGroup, userGroup);
 
