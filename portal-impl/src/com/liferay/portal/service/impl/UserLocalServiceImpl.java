@@ -213,6 +213,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -4840,6 +4841,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			else {
 				user.setPasswordModifiedDate(new Date());
 			}
+		}
+
+		String passwordAlgorithm =
+			PasswordEncryptorUtil.getPasswordAlgorithmType(user.getPassword());
+
+		if (Validator.isNotNull(passwordAlgorithm) &&
+			!Objects.equals(
+				PasswordEncryptorUtil.getDefaultPasswordAlgorithmType(),
+				passwordAlgorithm)) {
+
+			newEncPwd = PasswordEncryptorUtil.encrypt(password1);
 		}
 
 		user.setPassword(newEncPwd);
