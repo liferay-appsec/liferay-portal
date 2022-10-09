@@ -97,6 +97,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -806,7 +807,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		}
 	}
 
-	protected void importUsers(
+	protected Set<Long> importUsers(
 			LDAPImportContext ldapImportContext, long userGroupId,
 			Attribute usersLdapAttribute)
 		throws Exception {
@@ -916,6 +917,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 		_userLocalService.deleteUserGroupUsers(
 			userGroupId, ArrayUtil.toLongArray(deletedUserIds));
+
+		return newUserIds;
 	}
 
 	@Reference(unbind = "-")
@@ -991,17 +994,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				consumer.accept(userGroupId);
 			}
 		}
-	}
-
-	private void _cleanUpLDAPServerAttributeRels(
-		LDAPImportContext ldapImportContext) {
-
-		_cleanUpLDAPServerAttributeRels(
-			ldapImportContext.getLdapServerId(), User.class.getName(),
-			ldapImportContext.getImportedUserIds());
-		_cleanUpLDAPServerAttributeRels(
-			ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
-			ldapImportContext.getImportedUserGroupIds());
 	}
 
 	private void _cleanUpLDAPServerAttributeRels(
@@ -1114,6 +1106,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		throws Exception {
 
 		byte[] cookie = new byte[0];
+		Set<Long> newUserGroupIds = new LinkedHashSet<>();
+		Set<Long> newUserIds = new LinkedHashSet<>();
 
 		while (cookie != null) {
 			List<SearchResult> searchResults = new ArrayList<>();
@@ -1154,9 +1148,11 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						}
 					}
 
-					importUsers(
-						ldapImportContext, userGroup.getUserGroupId(),
-						usersAttribute);
+					newUserGroupIds.add(userGroup.getUserGroupId());
+					newUserIds.addAll(
+						importUsers(
+							ldapImportContext, userGroup.getUserGroupId(),
+							usersAttribute));
 				}
 				catch (Exception exception) {
 					_log.error(
@@ -1165,7 +1161,12 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			}
 		}
 
-		_cleanUpLDAPServerAttributeRels(ldapImportContext);
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), User.class.getName(),
+			newUserIds);
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
+			newUserGroupIds);
 	}
 
 	private void _importFromLDAPByUser(LDAPImportContext ldapImportContext)
@@ -1174,6 +1175,9 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		SafeLdapContext safeLdapContext = _safePortalLDAP.getSafeLdapContext(
 			ldapImportContext.getLdapServerId(),
 			ldapImportContext.getCompanyId());
+
+		Set<Long> newUserGroupIds = new LinkedHashSet<>();
+		Set<Long> newUserIds = new LinkedHashSet<>();
 
 		try {
 			byte[] cookie = new byte[0];
@@ -1213,7 +1217,10 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							ldapImportContext, fullUserDN, userAttributes,
 							null);
 
-						_importGroups(ldapImportContext, userAttributes, user);
+						newUserGroupIds.addAll(
+							_importGroups(
+								ldapImportContext, userAttributes, user));
+						newUserIds.add(user.getUserId());
 					}
 					catch (GroupFriendlyURLException
 								groupFriendlyURLException) {
@@ -1240,14 +1247,19 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					}
 				}
 			}
-
-			_cleanUpLDAPServerAttributeRels(ldapImportContext);
 		}
 		finally {
 			if (safeLdapContext != null) {
 				safeLdapContext.close();
 			}
 		}
+
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), User.class.getName(),
+			newUserIds);
+		_cleanUpLDAPServerAttributeRels(
+			ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
+			newUserGroupIds);
 	}
 
 	private UserGroup _importGroup(
@@ -1311,12 +1323,10 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			_portalCache.put(userGroupIdKey, userGroup.getUserGroupId());
 		}
 
-		ldapImportContext.addImportedUserGroupId(userGroupId);
-
 		return userGroup;
 	}
 
-	private void _importGroups(
+	private Set<Long> _importGroups(
 			LDAPImportContext ldapImportContext, Attributes userAttributes,
 			User user)
 		throws Exception {
@@ -1338,7 +1348,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						ldapServerConfiguration.ldapServerId()));
 			}
 
-			return;
+			return Collections.emptySet();
 		}
 
 		Properties groupMappings = ldapImportContext.getGroupMappings();
@@ -1410,14 +1420,14 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 								userMappings);
 				}
 
-				return;
+				return Collections.emptySet();
 			}
 
 			Attribute userGroupAttribute = userAttributes.get(
 				userMappingsGroup);
 
 			if (userGroupAttribute == null) {
-				return;
+				return Collections.emptySet();
 			}
 
 			for (int i = 0; i < userGroupAttribute.size(); i++) {
@@ -1445,7 +1455,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			newUserGroupIds::add);
 
 		if (oldUserGroupIds.equals(newUserGroupIds)) {
-			return;
+			return newUserGroupIds;
 		}
 
 		_userGroupLocalService.setUserUserGroups(
@@ -1466,6 +1476,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						"Added user ", user.getUserId(), " to user group(s) ",
 						set)));
 		}
+
+		return newUserGroupIds;
 	}
 
 	private User _importUserByLdapAttribute(
@@ -1667,8 +1679,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				ldapImportContext.getLdapServerId(), UserGroup.class.getName(),
 				userGroup.getUserGroupId());
 		}
-
-		ldapImportContext.addImportedUserGroupId(userGroup.getUserGroupId());
 
 		_addRole(companyId, ldapGroup, userGroup);
 
