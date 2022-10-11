@@ -18,7 +18,6 @@ import com.liferay.portal.security.ldap.SafeLdapContext;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -46,10 +45,6 @@ public class LDAPImportContext {
 		_userMappings = userMappings;
 	}
 
-	public void addImportedUserGroupId(long userGroupId) {
-		_importedLdapUserGroupIds.add(userGroupId);
-	}
-
 	public void addImportedUserId(String fullUserDN, long userId) {
 		_importedLdapUsers.put(fullUserDN, userId);
 	}
@@ -72,10 +67,6 @@ public class LDAPImportContext {
 
 	public Properties getGroupMappings() {
 		return _groupMappings;
-	}
-
-	public Collection<Long> getImportedUserGroupIds() {
-		return _importedLdapUserGroupIds;
 	}
 
 	public Long getImportedUserId(String fullUserDN) {
@@ -110,7 +101,6 @@ public class LDAPImportContext {
 	private final Properties _contactExpandoMappings;
 	private final Properties _contactMappings;
 	private final Properties _groupMappings;
-	private final Set<Long> _importedLdapUserGroupIds = new HashSet<>();
 	private final Map<String, Long> _importedLdapUsers = new HashMap<>();
 	private final long _ldapServerId;
 	private final Set<String> _ldapUserIgnoreAttributes;
