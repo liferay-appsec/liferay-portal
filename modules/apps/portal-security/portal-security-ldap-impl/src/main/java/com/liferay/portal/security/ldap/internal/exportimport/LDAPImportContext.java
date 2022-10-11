@@ -16,7 +16,6 @@ package com.liferay.portal.security.ldap.internal.exportimport;
 
 import com.liferay.portal.security.ldap.SafeLdapContext;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -71,10 +70,6 @@ public class LDAPImportContext {
 
 	public Long getImportedUserId(String fullUserDN) {
 		return _importedLdapUsers.get(fullUserDN);
-	}
-
-	public Collection<Long> getImportedUserIds() {
-		return _importedLdapUsers.values();
 	}
 
 	public long getLdapServerId() {
