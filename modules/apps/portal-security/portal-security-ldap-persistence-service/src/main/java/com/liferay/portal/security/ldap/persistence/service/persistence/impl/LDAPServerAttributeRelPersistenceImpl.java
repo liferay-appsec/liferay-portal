@@ -2668,8 +2668,4 @@ public class LDAPServerAttributeRelPersistenceImpl
 		return finderCache;
 	}
 
-	@Reference
-	private LDAPServerAttributeRelModelArgumentsResolver
-		_ldapServerAttributeRelModelArgumentsResolver;
-
 }
