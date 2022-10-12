@@ -1589,7 +1589,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		LDAPGroup ldapGroup = _ldapToPortalConverter.importLDAPGroup(
 			companyId, groupAttributes, groupMappings);
 
-		UserGroup userGroup = null;
+		UserGroup userGroup;
 
 		try {
 			userGroup = _userGroupLocalService.getUserGroup(
@@ -1637,15 +1637,20 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 				}
 			}
 			catch (Exception exception) {
-				if (_log.isWarnEnabled()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Unable to create user group ",
+							ldapGroup.getGroupName(), " from attributes: ",
+							groupAttributes));
+				}
+				else if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Unable to create user group " +
 							ldapGroup.getGroupName());
 				}
 
-				if (_log.isDebugEnabled()) {
-					_log.debug(exception);
-				}
+				throw exception;
 			}
 			finally {
 				UserGroupImportTransactionThreadLocal.setOriginatesFromImport(
