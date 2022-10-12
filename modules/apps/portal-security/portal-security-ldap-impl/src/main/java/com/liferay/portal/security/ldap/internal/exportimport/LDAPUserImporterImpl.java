@@ -106,6 +106,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.naming.Binding;
 import javax.naming.NameNotFoundException;
@@ -1255,7 +1256,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 	private UserGroup _importGroup(
 			LDAPImportContext ldapImportContext,
-			SafeLdapName userGroupDNSafeLdapName, User user)
+			SafeLdapName userGroupDNSafeLdapName)
 		throws Exception {
 
 		String userGroupIdKey = null;
@@ -1312,12 +1313,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 		if (ldapImportConfiguration.importGroupCacheEnabled()) {
 			_portalCache.put(userGroupIdKey, userGroup.getUserGroupId());
-		}
-
-		if (_log.isDebugEnabled()) {
-			_log.debug(
-				StringBundler.concat(
-					"Adding user ", user, " to user group ", userGroupId));
 		}
 
 		ldapImportContext.addImportedUserGroupId(userGroupId);
@@ -1400,7 +1395,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						SafeLdapNameFactory.from(searchResult);
 
 					UserGroup userGroup = _importGroup(
-						ldapImportContext, userGroupSafeLdapName, user);
+						ldapImportContext, userGroupSafeLdapName);
 
 					newUserGroupIds.add(userGroup.getUserGroupId());
 				}
@@ -1434,7 +1429,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					userGroupAttribute, i);
 
 				UserGroup userGroup = _importGroup(
-					ldapImportContext, groupSafeLdapName, user);
+					ldapImportContext, groupSafeLdapName);
 
 				newUserGroupIds.add(userGroup.getUserGroupId());
 			}
@@ -1453,11 +1448,31 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			oldUserGroupIds.add(oldUserGroup.getUserGroupId());
 		}
 
-		if (!oldUserGroupIds.equals(newUserGroupIds)) {
-			long[] userGroupIds = ArrayUtil.toLongArray(newUserGroupIds);
+		_addUserGroupsNotBelongingToLDAPServer(
+			ldapImportContext.getLdapServerId(), user.getUserId(),
+			newUserGroupIds);
 
-			_userGroupLocalService.setUserUserGroups(
-				user.getUserId(), userGroupIds);
+		if (oldUserGroupIds.equals(newUserGroupIds)) {
+			return;
+		}
+
+		_userGroupLocalService.setUserUserGroups(
+			user.getUserId(), ArrayUtil.toLongArray(newUserGroupIds));
+
+		if (_log.isDebugEnabled()) {
+			_processSet(
+				oldUserGroupIds, newUserGroupIds,
+				set -> _log.debug(
+					StringBundler.concat(
+						"Removed user ", user.getUserId(),
+						" from user group(s) ", set)));
+
+			_processSet(
+				newUserGroupIds, oldUserGroupIds,
+				set -> _log.debug(
+					StringBundler.concat(
+						"Added user ", user.getUserId(), " to user group(s) ",
+						set)));
 		}
 	}
 
@@ -1714,6 +1729,18 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
+		}
+	}
+
+	private <T> void _processSet(
+		Set<T> set, Set<T> elementsToIgnore, Consumer<Set<T>> consumer) {
+
+		Set<T> setCopy = new HashSet<>(set);
+
+		setCopy.removeAll(elementsToIgnore);
+
+		if (!setCopy.isEmpty()) {
+			consumer.accept(setCopy);
 		}
 	}
 
