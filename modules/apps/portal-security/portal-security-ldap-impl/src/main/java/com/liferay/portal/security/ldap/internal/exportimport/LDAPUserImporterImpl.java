@@ -982,17 +982,13 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 	}
 
 	private void _addUserGroupsNotBelongingToLDAPServer(
-		long ldapServerId, long userId, Set<Long> userGroupIds) {
+		long ldapServerId, Set<Long> userGroupIds, Consumer<Long> consumer) {
 
-		List<UserGroup> userGroups = _userGroupLocalService.getUserUserGroups(
-			userId);
-
-		for (UserGroup userGroup : userGroups) {
+		for (long userGroupId : userGroupIds) {
 			if (!_ldapServerAttributeRelLocalService.hasLDAPServerAttributeRel(
-					ldapServerId, UserGroup.class.getName(),
-					userGroup.getUserGroupId())) {
+					ldapServerId, UserGroup.class.getName(), userGroupId)) {
 
-				userGroupIds.add(userGroup.getUserGroupId());
+				consumer.accept(userGroupId);
 			}
 		}
 	}
@@ -1435,10 +1431,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			}
 		}
 
-		_addUserGroupsNotBelongingToLDAPServer(
-			ldapImportContext.getLdapServerId(), user.getUserId(),
-			newUserGroupIds);
-
 		Set<Long> oldUserGroupIds = new LinkedHashSet<>();
 
 		List<UserGroup> oldUserGroups =
@@ -1449,8 +1441,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 		}
 
 		_addUserGroupsNotBelongingToLDAPServer(
-			ldapImportContext.getLdapServerId(), user.getUserId(),
-			newUserGroupIds);
+			ldapImportContext.getLdapServerId(), oldUserGroupIds,
+			newUserGroupIds::add);
 
 		if (oldUserGroupIds.equals(newUserGroupIds)) {
 			return;
