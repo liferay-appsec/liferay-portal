@@ -106,7 +106,7 @@ public class OAuth2GraphQLRequestContextValidator
 
 		if (scopeSheckerType == null) {
 			scopeSheckerType = _getProperty(
-				"http.method", "oauth2.scope.checkertype",
+				"http.method", "oauth2.scope.checker.type",
 				applicationServiceReference);
 		}
 
