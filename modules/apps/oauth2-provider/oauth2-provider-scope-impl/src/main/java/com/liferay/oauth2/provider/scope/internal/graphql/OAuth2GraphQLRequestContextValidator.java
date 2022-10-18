@@ -14,7 +14,8 @@
 
 package com.liferay.oauth2.provider.scope.internal.graphql;
 
-import com.liferay.oauth2.provider.rest.spi.scope.checker.JaxRsResourceScopeChecker;
+import com.liferay.oauth2.provider.rest.spi.scope.logic.ScopeLogic;
+import com.liferay.oauth2.provider.scope.ScopeChecker;
 import com.liferay.oauth2.provider.scope.liferay.OAuth2ProviderScopeLiferayAccessControlContext;
 import com.liferay.oauth2.provider.scope.liferay.ScopeContext;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
@@ -110,19 +111,19 @@ public class OAuth2GraphQLRequestContextValidator
 				applicationServiceReference);
 		}
 
-		Collection<ServiceReference<JaxRsResourceScopeChecker>>
-			serviceReferences = _bundleContext.getServiceReferences(
-				JaxRsResourceScopeChecker.class,
+		Collection<ServiceReference<ScopeLogic>> serviceReferences =
+			_bundleContext.getServiceReferences(
+				ScopeLogic.class,
 				"(oauth2.scope.checker.type=" + scopeSheckerType + ")");
 
-		for (ServiceReference<JaxRsResourceScopeChecker> serviceReference :
+		for (ServiceReference<ScopeLogic> serviceReference :
 				serviceReferences) {
 
-			JaxRsResourceScopeChecker jaxRsResourceScopeChecker =
-				_bundleContext.getService(serviceReference);
+			ScopeLogic scopeLogic = _bundleContext.getService(
+				serviceReference);
 
-			if (!jaxRsResourceScopeChecker.check(
-					graphQLRequestContext.getResourceClass(),
+			if (!scopeLogic.check(
+					_scopeChecker, graphQLRequestContext.getResourceClass(),
 					graphQLRequestContext.getResourceMethod())) {
 
 				throw new ForbiddenException();
@@ -228,6 +229,9 @@ public class OAuth2GraphQLRequestContextValidator
 	private final AccessControlAdvisor _accessControlAdvisor =
 		new AccessControlAdvisorImpl();
 	private BundleContext _bundleContext;
+
+	@Reference
+	private ScopeChecker _scopeChecker;
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,
