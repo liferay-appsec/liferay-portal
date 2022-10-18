@@ -123,7 +123,8 @@ public class OAuth2GraphQLRequestContextValidator
 				serviceReference);
 
 			if (!scopeLogic.check(
-					_scopeChecker, graphQLRequestContext.getResourceClass(),
+					_scopeChecker, applicationServiceReference::getProperty,
+					graphQLRequestContext.getResourceClass(),
 					graphQLRequestContext.getResourceMethod())) {
 
 				throw new ForbiddenException();
