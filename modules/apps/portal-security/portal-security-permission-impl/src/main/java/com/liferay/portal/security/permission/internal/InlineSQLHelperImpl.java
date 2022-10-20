@@ -331,10 +331,11 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			InlinePermissionConfiguration.class, properties);
 	}
 
-	private void _appendPermissionSQL(
-		StringBundler sb, String className, String classPKField,
-		String userIdField, String groupIdField, long[] groupIds,
-		String permissionSQL) {
+	private String _appendPermissionSQL(
+		String className, String classPKField, String userIdField,
+		String groupIdField, long[] groupIds, String permissionSQL) {
+
+		StringBundler sb = new StringBundler(13);
 
 		List<PermissionSQLContributor> permissionSQLContributors =
 			_serviceTrackerMap.getService(className);
@@ -410,6 +411,8 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 
 			sb.append(") ");
 		}
+
+		return sb.toString();
 	}
 
 	private <T extends Table<T>> Predicate _getPermissionPredicate(
@@ -702,7 +705,7 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 		String sql, String className, String classPKField, String userIdField,
 		String groupIdField, long[] groupIds, String permissionSQL) {
 
-		StringBundler sb = new StringBundler(11);
+		StringBundler sb = new StringBundler(4);
 
 		int pos = sql.lastIndexOf(_WHERE_CLAUSE);
 
@@ -722,9 +725,10 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 
 			sb.append(_WHERE_CLAUSE);
 
-			_appendPermissionSQL(
-				sb, className, classPKField, userIdField, groupIdField,
-				groupIds, permissionSQL);
+			sb.append(
+				_appendPermissionSQL(
+					className, classPKField, userIdField, groupIdField,
+					groupIds, permissionSQL));
 
 			if (pos != -1) {
 				sb.append(sql.substring(pos));
@@ -735,9 +739,10 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 
 			sb.append(sql.substring(0, pos));
 
-			_appendPermissionSQL(
-				sb, className, classPKField, userIdField, groupIdField,
-				groupIds, permissionSQL);
+			sb.append(
+				_appendPermissionSQL(
+					className, classPKField, userIdField, groupIdField,
+					groupIds, permissionSQL));
 
 			sb.append("AND ");
 
