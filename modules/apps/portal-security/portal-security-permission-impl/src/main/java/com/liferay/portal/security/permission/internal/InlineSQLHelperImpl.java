@@ -302,12 +302,14 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			return sql;
 		}
 
-		String resourcePermissionSQL = _getResourcePermissionSQL(
-			permissionChecker, className, userIdField, groupIds, bridgeJoin);
+		String resourcePermissionSubquerySQL =
+			_getResourcePermissionSubquerySQL(
+				permissionChecker, className, userIdField, groupIds,
+				bridgeJoin);
 
 		return _insertResourcePermissionSQL(
 			sql, className, classPKField, userIdField, groupIdField, groupIds,
-			resourcePermissionSQL);
+			resourcePermissionSubquerySQL);
 	}
 
 	@Activate
@@ -545,7 +547,7 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 		);
 	}
 
-	private String _getResourcePermissionSQL(
+	private String _getResourcePermissionSubquerySQL(
 		PermissionChecker permissionChecker, String className,
 		String userIdField, long[] groupIds, String bridgeJoin) {
 
