@@ -333,6 +333,77 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			InlinePermissionConfiguration.class, properties);
 	}
 
+	private <T extends Table<T>> Predicate _getPermissionPredicate(
+		PermissionChecker permissionChecker, String modelClassName,
+		Column<T, Long> classPKColumn, long[] groupIds) {
+
+		T table = classPKColumn.getTable();
+
+		Column<T, Long> userIdColumn = table.getColumn("userId", Long.class);
+
+		DSLQuery resourcePermissionDSLQuery = _getResourcePermissionQuery(
+			permissionChecker, modelClassName, userIdColumn, groupIds);
+
+		Predicate permissionPredicate = classPKColumn.in(
+			resourcePermissionDSLQuery);
+
+		List<PermissionSQLContributor> permissionSQLContributors =
+			_serviceTrackerMap.getService(modelClassName);
+
+		if ((permissionSQLContributors != null) &&
+			!permissionSQLContributors.isEmpty()) {
+
+			for (PermissionSQLContributor permissionSQLContributor :
+					permissionSQLContributors) {
+
+				Predicate contributorPermissionPredicate =
+					permissionSQLContributor.getPermissionPredicate(
+						permissionChecker, modelClassName, classPKColumn,
+						groupIds);
+
+				permissionPredicate =
+					permissionPredicate = permissionPredicate.or(
+						() -> {
+							if (contributorPermissionPredicate != null) {
+								return contributorPermissionPredicate.
+									withParentheses();
+							}
+
+							return null;
+						});
+			}
+		}
+
+		Set<Long> groupIdSet = null;
+
+		for (long groupId : groupIds) {
+			if (!isEnabled(groupId)) {
+				if (groupIdSet == null) {
+					groupIdSet = new LinkedHashSet<>();
+				}
+
+				groupIdSet.add(groupId);
+			}
+		}
+
+		if (groupIdSet != null) {
+			Column<T, Long> groupIdColumn = table.getColumn(
+				"groupId", Long.class);
+
+			if (groupIdColumn == null) {
+				throw new IllegalArgumentException(
+					"No groupId column for table " + table.getTableName());
+			}
+
+			permissionPredicate = permissionPredicate.or(
+				groupIdColumn.in(groupIdSet.toArray(new Long[0])));
+
+			permissionPredicate = permissionPredicate.withParentheses();
+		}
+
+		return permissionPredicate;
+	}
+
 	private String _getResourcePermissionFilterConditionSQL(
 		String className, String classPKField, String userIdField,
 		String groupIdField, long[] groupIds, String permissionSQL) {
@@ -415,77 +486,6 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 		}
 
 		return sb.toString();
-	}
-
-	private <T extends Table<T>> Predicate _getPermissionPredicate(
-		PermissionChecker permissionChecker, String modelClassName,
-		Column<T, Long> classPKColumn, long[] groupIds) {
-
-		T table = classPKColumn.getTable();
-
-		Column<T, Long> userIdColumn = table.getColumn("userId", Long.class);
-
-		DSLQuery resourcePermissionDSLQuery = _getResourcePermissionQuery(
-			permissionChecker, modelClassName, userIdColumn, groupIds);
-
-		Predicate permissionPredicate = classPKColumn.in(
-			resourcePermissionDSLQuery);
-
-		List<PermissionSQLContributor> permissionSQLContributors =
-			_serviceTrackerMap.getService(modelClassName);
-
-		if ((permissionSQLContributors != null) &&
-			!permissionSQLContributors.isEmpty()) {
-
-			for (PermissionSQLContributor permissionSQLContributor :
-					permissionSQLContributors) {
-
-				Predicate contributorPermissionPredicate =
-					permissionSQLContributor.getPermissionPredicate(
-						permissionChecker, modelClassName, classPKColumn,
-						groupIds);
-
-				permissionPredicate =
-					permissionPredicate = permissionPredicate.or(
-						() -> {
-							if (contributorPermissionPredicate != null) {
-								return contributorPermissionPredicate.
-									withParentheses();
-							}
-
-							return null;
-						});
-			}
-		}
-
-		Set<Long> groupIdSet = null;
-
-		for (long groupId : groupIds) {
-			if (!isEnabled(groupId)) {
-				if (groupIdSet == null) {
-					groupIdSet = new LinkedHashSet<>();
-				}
-
-				groupIdSet.add(groupId);
-			}
-		}
-
-		if (groupIdSet != null) {
-			Column<T, Long> groupIdColumn = table.getColumn(
-				"groupId", Long.class);
-
-			if (groupIdColumn == null) {
-				throw new IllegalArgumentException(
-					"No groupId column for table " + table.getTableName());
-			}
-
-			permissionPredicate = permissionPredicate.or(
-				groupIdColumn.in(groupIdSet.toArray(new Long[0])));
-
-			permissionPredicate = permissionPredicate.withParentheses();
-		}
-
-		return permissionPredicate;
 	}
 
 	private DSLQuery _getResourcePermissionQuery(
