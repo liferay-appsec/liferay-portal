@@ -331,7 +331,7 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			InlinePermissionConfiguration.class, properties);
 	}
 
-	private String _appendPermissionSQL(
+	private String _getResourcePermissionFilterConditionSQL(
 		String className, String classPKField, String userIdField,
 		String groupIdField, long[] groupIds, String permissionSQL) {
 
@@ -726,7 +726,7 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			sb.append(_WHERE_CLAUSE);
 
 			sb.append(
-				_appendPermissionSQL(
+				_getResourcePermissionFilterConditionSQL(
 					className, classPKField, userIdField, groupIdField,
 					groupIds, permissionSQL));
 
@@ -740,7 +740,7 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			sb.append(sql.substring(0, pos));
 
 			sb.append(
-				_appendPermissionSQL(
+				_getResourcePermissionFilterConditionSQL(
 					className, classPKField, userIdField, groupIdField,
 					groupIds, permissionSQL));
 
