@@ -302,11 +302,15 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			return sql;
 		}
 
-		return _insertResourcePermissionSQL(
+		InlineSQLParser inlineSQLParser = new InlineSQLParser(
 			sql,
 			_getResourcePermissionFilterConditionSQL(
 				permissionChecker, className, classPKField, userIdField,
-				groupIdField, groupIds, bridgeJoin));
+				groupIdField, groupIds, bridgeJoin),
+			classPKField.substring(0, classPKField.indexOf(StringPool.PERIOD)));
+
+		return inlineSQLParser.
+			parseAndInsertResourcePermissionFilterConditionSQL();
 	}
 
 	@Activate
