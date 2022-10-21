@@ -710,50 +710,6 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 		return (DSLQuery)childASTNode;
 	}
 
-	private String _insertResourcePermissionSQL(
-		String sql, String resourcePermissionFilterConditionSQL) {
-
-		StringBundler sb = new StringBundler(4);
-
-		int pos = sql.lastIndexOf(_WHERE_CLAUSE);
-
-		if (pos == -1) {
-			pos = sql.indexOf(_GROUP_BY_CLAUSE);
-
-			if (pos == -1) {
-				pos = sql.indexOf(_ORDER_BY_CLAUSE);
-			}
-
-			if (pos == -1) {
-				sb.append(sql);
-			}
-			else {
-				sb.append(sql.substring(0, pos));
-			}
-
-			sb.append(_WHERE_CLAUSE);
-
-			sb.append(resourcePermissionFilterConditionSQL);
-
-			if (pos != -1) {
-				sb.append(sql.substring(pos));
-			}
-		}
-		else {
-			pos += _WHERE_CLAUSE.length();
-
-			sb.append(sql.substring(0, pos));
-
-			sb.append(resourcePermissionFilterConditionSQL);
-
-			sb.append("AND ");
-
-			sb.append(sql.substring(pos));
-		}
-
-		return sb.toString();
-	}
-
 	private boolean _skipReplace(
 		PermissionChecker permissionChecker, String className,
 		Object classPKField, long[] groupIds) {
@@ -845,12 +801,6 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 
 		return false;
 	}
-
-	private static final String _GROUP_BY_CLAUSE = " GROUP BY ";
-
-	private static final String _ORDER_BY_CLAUSE = " ORDER BY ";
-
-	private static final String _WHERE_CLAUSE = " WHERE ";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		InlineSQLHelperImpl.class);
