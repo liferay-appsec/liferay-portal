@@ -402,6 +402,23 @@ public class InlineSQLHelperImplTest {
 		_checkSQLComposition(sql);
 	}
 
+	@Test
+	public void testSQLCompositionOuterNested() throws Exception {
+		_addGroupRole(_groupOne, RoleConstants.SITE_MEMBER);
+		_addGroupRole(_groupTwo, RoleConstants.SITE_MEMBER);
+
+		_setPermissionChecker();
+
+		String sql = _replacePermissionCheckJoin(
+			StringBundler.concat(
+				"SELECT * FROM JournalArticle WHERE id_ IN (SELECT articlePK ",
+				"FROM JournalArticleLocalization WHERE ",
+				"JournalArticleLocalization.languageId = 'en_US')"),
+			_groupIds);
+
+		_checkSQLComposition(sql);
+	}
+
 	private void _addGroupRole(Group group, String roleName) throws Exception {
 		Role role = _roleLocalService.getRole(
 			TestPropsValues.getCompanyId(), roleName);
