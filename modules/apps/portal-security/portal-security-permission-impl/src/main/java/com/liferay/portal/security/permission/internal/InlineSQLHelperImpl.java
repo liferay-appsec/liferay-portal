@@ -302,12 +302,20 @@ public class InlineSQLHelperImpl implements InlineSQLHelper {
 			return sql;
 		}
 
+		int index = classPKField.indexOf(StringPool.PERIOD);
+
+		if (index == -1) {
+			throw new IllegalArgumentException(
+				"Unable to parse table name from class primary key field '" +
+					classPKField + "'");
+		}
+
 		InlineSQLParser inlineSQLParser = new InlineSQLParser(
 			sql,
 			_getResourcePermissionFilterConditionSQL(
 				permissionChecker, className, classPKField, userIdField,
 				groupIdField, groupIds, bridgeJoin),
-			classPKField.substring(0, classPKField.indexOf(StringPool.PERIOD)));
+			classPKField.substring(0, index));
 
 		return inlineSQLParser.
 			parseAndInsertResourcePermissionFilterConditionSQL();
