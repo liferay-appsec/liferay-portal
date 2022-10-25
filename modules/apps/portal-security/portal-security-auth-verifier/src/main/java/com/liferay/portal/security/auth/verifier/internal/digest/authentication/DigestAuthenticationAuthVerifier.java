@@ -16,20 +16,29 @@ package com.liferay.portal.security.auth.verifier.internal.digest.authentication
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthManagerUtil;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
+import com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.DigestAuthenticationAuthVerifierCompanyConfiguration;
 
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tomas Polesovsky
@@ -54,6 +63,10 @@ public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 
 			HttpServletRequest httpServletRequest =
 				accessControlContext.getRequest();
+
+			if (!isEnabled(_portal.getCompanyId(httpServletRequest))) {
+				return authVerifierResult;
+			}
 
 			long userId = HttpAuthManagerUtil.getDigestUserId(
 				httpServletRequest);
@@ -96,5 +109,49 @@ public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 			throw new AuthException(systemException);
 		}
 	}
+
+	protected boolean isEnabled(long companyId) {
+		DigestAuthenticationAuthVerifierCompanyConfiguration
+			digestAuthenticationAuthVerifierCompanyConfiguration =
+				_getDigestAuthenticationAuthVerifierCompanyConfiguration(
+					companyId);
+
+		if (digestAuthenticationAuthVerifierCompanyConfiguration == null) {
+			return false;
+		}
+
+		return digestAuthenticationAuthVerifierCompanyConfiguration.enabled();
+	}
+
+	private DigestAuthenticationAuthVerifierCompanyConfiguration
+		_getDigestAuthenticationAuthVerifierCompanyConfiguration(
+			long companyId) {
+
+		try {
+			return _configurationProvider.getConfiguration(
+				DigestAuthenticationAuthVerifierCompanyConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId,
+					AuthVerifierConstants.DIGEST_AUTHENTICATION_SERVICE_NAME,
+					DigestAuthenticationAuthVerifierCompanyConfiguration.class.
+						getName()));
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(
+				"Unable to get basic auth header configuration",
+				configurationException);
+		}
+
+		return null;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		DigestAuthenticationAuthVerifier.class);
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Portal _portal;
 
 }

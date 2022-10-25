@@ -14,14 +14,24 @@
 
 package com.liferay.portal.security.auth.verifier.internal.request.parameter;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.auto.login.AutoLogin;
 import com.liferay.portal.kernel.security.auto.login.AutoLoginException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
+import com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterAuthVerifierCompanyConfiguration;
 
 import java.util.Properties;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -47,9 +57,15 @@ public class RequestParameterAuthVerifier implements AuthVerifier {
 		try {
 			AuthVerifierResult authVerifierResult = new AuthVerifierResult();
 
+			HttpServletRequest httpServletRequest =
+				accessControlContext.getRequest();
+
+			if (!isEnabled(_portal.getCompanyId(httpServletRequest))) {
+				return authVerifierResult;
+			}
+
 			String[] credentials = _autoLogin.login(
-				accessControlContext.getRequest(),
-				accessControlContext.getResponse());
+				httpServletRequest, accessControlContext.getResponse());
 
 			if (credentials != null) {
 				authVerifierResult.setPassword(credentials[1]);
@@ -65,7 +81,49 @@ public class RequestParameterAuthVerifier implements AuthVerifier {
 		}
 	}
 
+	protected boolean isEnabled(long companyId) {
+		RequestParameterAuthVerifierCompanyConfiguration
+			requestParameterAuthVerifierCompanyConfiguration =
+				_getRequestParameterAuthVerifierCompanyConfiguration(companyId);
+
+		if (requestParameterAuthVerifierCompanyConfiguration == null) {
+			return false;
+		}
+
+		return requestParameterAuthVerifierCompanyConfiguration.enabled();
+	}
+
+	private RequestParameterAuthVerifierCompanyConfiguration
+		_getRequestParameterAuthVerifierCompanyConfiguration(long companyId) {
+
+		try {
+			return _configurationProvider.getConfiguration(
+				RequestParameterAuthVerifierCompanyConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId,
+					AuthVerifierConstants.REQUEST_PARAMETER_SERVICE_NAME,
+					RequestParameterAuthVerifierCompanyConfiguration.class.
+						getName()));
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(
+				"Unable to get basic auth header configuration",
+				configurationException);
+		}
+
+		return null;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		RequestParameterAuthVerifier.class);
+
 	@Reference(target = "(&(private.auto.login=true)(type=request.parameter))")
 	private AutoLogin _autoLogin;
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Portal _portal;
 
 }

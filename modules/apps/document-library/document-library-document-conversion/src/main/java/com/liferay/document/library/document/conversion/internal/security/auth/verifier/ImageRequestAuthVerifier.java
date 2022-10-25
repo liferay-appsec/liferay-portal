@@ -15,22 +15,34 @@
 package com.liferay.document.library.document.conversion.internal.security.auth.verifier;
 
 import com.liferay.document.library.document.conversion.internal.ImageRequestTokenUtil;
+import com.liferay.document.library.document.conversion.internal.constants.AuthVerifierConstants;
+import com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestAuthVerifierCompanyConfiguration;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Daniel Sanz
  * @author István András Dézsi
  * @author Tomas Polesovsky
  */
+@Component(service = AuthVerifier.class)
 public class ImageRequestAuthVerifier implements AuthVerifier {
 
 	@Override
@@ -49,6 +61,10 @@ public class ImageRequestAuthVerifier implements AuthVerifier {
 
 		HttpServletRequest httpServletRequest =
 			accessControlContext.getRequest();
+
+		if (!isEnabled(_portal.getCompanyId(httpServletRequest))) {
+			return authVerifierResult;
+		}
 
 		try {
 			String token = ParamUtil.getString(
@@ -75,5 +91,46 @@ public class ImageRequestAuthVerifier implements AuthVerifier {
 			throw new AuthException(exception);
 		}
 	}
+
+	protected boolean isEnabled(long companyId) {
+		ImageRequestAuthVerifierCompanyConfiguration
+			imageRequestAuthVerifierCompanyConfiguration =
+				_getImageRequestAuthVerifierCompanyConfiguration(companyId);
+
+		if (imageRequestAuthVerifierCompanyConfiguration == null) {
+			return false;
+		}
+
+		return imageRequestAuthVerifierCompanyConfiguration.enabled();
+	}
+
+	private ImageRequestAuthVerifierCompanyConfiguration
+		_getImageRequestAuthVerifierCompanyConfiguration(long companyId) {
+
+		try {
+			return _configurationProvider.getConfiguration(
+				ImageRequestAuthVerifierCompanyConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId, AuthVerifierConstants.IMAGE_REQUEST_SERVICE_NAME,
+					ImageRequestAuthVerifierCompanyConfiguration.class.
+						getName()));
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(
+				"Unable to get basic auth header configuration",
+				configurationException);
+		}
+
+		return null;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ImageRequestAuthVerifier.class);
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Portal _portal;
 
 }

@@ -17,6 +17,8 @@ package com.liferay.portal.security.auth.verifier.internal.tunnel;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.tunnel.TunnelAuthenticationManagerUtil;
@@ -24,6 +26,10 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
+import com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthVerifierCompanyConfiguration;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -37,6 +43,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Zsolt Berentey
@@ -56,8 +63,15 @@ public class TunnelAuthVerifier implements AuthVerifier {
 
 		AuthVerifierResult authVerifierResult = new AuthVerifierResult();
 
+		HttpServletRequest httpServletRequest =
+			accessControlContext.getRequest();
+
+		if (!isEnabled(_portal.getCompanyId(httpServletRequest))) {
+			return authVerifierResult;
+		}
+
 		try {
-			String[] credentials = verify(accessControlContext.getRequest());
+			String[] credentials = verify(httpServletRequest);
 
 			if (credentials != null) {
 				authVerifierResult.setPassword(credentials[1]);
@@ -103,6 +117,18 @@ public class TunnelAuthVerifier implements AuthVerifier {
 		return authVerifierResult;
 	}
 
+	protected boolean isEnabled(long companyId) {
+		TunnelAuthVerifierCompanyConfiguration
+			tunnelAuthVerifierCompanyConfiguration =
+				_getTunnelAuthVerifierCompanyConfiguration(companyId);
+
+		if (tunnelAuthVerifierCompanyConfiguration == null) {
+			return false;
+		}
+
+		return tunnelAuthVerifierCompanyConfiguration.enabled();
+	}
+
 	protected String[] verify(HttpServletRequest httpServletRequest)
 		throws AuthException {
 
@@ -123,7 +149,32 @@ public class TunnelAuthVerifier implements AuthVerifier {
 		return credentials;
 	}
 
+	private TunnelAuthVerifierCompanyConfiguration
+		_getTunnelAuthVerifierCompanyConfiguration(long companyId) {
+
+		try {
+			return _configurationProvider.getConfiguration(
+				TunnelAuthVerifierCompanyConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId, AuthVerifierConstants.TUNNEL_SERVICE_NAME,
+					TunnelAuthVerifierCompanyConfiguration.class.getName()));
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(
+				"Unable to get basic auth header configuration",
+				configurationException);
+		}
+
+		return null;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		TunnelAuthVerifier.class);
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Portal _portal;
 
 }

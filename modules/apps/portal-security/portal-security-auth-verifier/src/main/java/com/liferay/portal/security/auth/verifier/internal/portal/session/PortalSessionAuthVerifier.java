@@ -20,14 +20,19 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
+import com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierCompanyConfiguration;
 
 import java.util.Properties;
 
@@ -59,6 +64,10 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 
 			HttpServletRequest httpServletRequest =
 				accessControlContext.getRequest();
+
+			if (!isEnabled(_portal.getCompanyId(httpServletRequest))) {
+				return authVerifierResult;
+			}
 
 			User user = _portal.getUser(httpServletRequest);
 
@@ -105,8 +114,43 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 		}
 	}
 
+	protected boolean isEnabled(long companyId) {
+		PortalSessionAuthVerifierCompanyConfiguration
+			portalSessionAuthVerifierCompanyConfiguration =
+				_getPortalSessionAuthVerifierCompanyConfiguration(companyId);
+
+		if (portalSessionAuthVerifierCompanyConfiguration == null) {
+			return false;
+		}
+
+		return portalSessionAuthVerifierCompanyConfiguration.enabled();
+	}
+
+	private PortalSessionAuthVerifierCompanyConfiguration
+		_getPortalSessionAuthVerifierCompanyConfiguration(long companyId) {
+
+		try {
+			return _configurationProvider.getConfiguration(
+				PortalSessionAuthVerifierCompanyConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId, AuthVerifierConstants.PORTAL_SESION_SERVICE_NAME,
+					PortalSessionAuthVerifierCompanyConfiguration.class.
+						getName()));
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(
+				"Unable to get basic auth header configuration",
+				configurationException);
+		}
+
+		return null;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortalSessionAuthVerifier.class);
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private Portal _portal;
