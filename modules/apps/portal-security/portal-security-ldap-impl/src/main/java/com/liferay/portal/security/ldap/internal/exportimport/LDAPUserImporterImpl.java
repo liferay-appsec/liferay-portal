@@ -1093,6 +1093,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 			ldapImportContext.getLdapServerId(),
 			ldapImportContext.getCompanyId());
 
+		StopWatch stopWatch = new StopWatch();
+
 		try {
 			byte[] cookie = new byte[0];
 
@@ -1113,6 +1115,12 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					0, new String[] {userMappingsScreenName}, searchResults);
 
 				for (SearchResult searchResult : searchResults) {
+					if (_log.isDebugEnabled()) {
+						stopWatch.start();
+
+						_log.debug("Starting import LDAP user");
+					}
+
 					String fullUserDN = searchResult.getNameInNamespace();
 
 					if (ldapImportContext.containsImportedUser(fullUserDN)) {
@@ -1131,7 +1139,30 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							ldapImportContext, fullUserDN, userAttributes,
 							null);
 
+						if (_log.isDebugEnabled()) {
+							_log.debug(
+								StringBundler.concat(
+									"Finished import LDAP user in ",
+									stopWatch.getTime(), "ms"));
+
+							stopWatch.stop();
+							stopWatch.reset();
+							stopWatch.start();
+
+							_log.debug("Starting import groups");
+						}
+
 						_importGroups(ldapImportContext, userAttributes, user);
+
+						if (_log.isDebugEnabled()) {
+							_log.debug(
+								StringBundler.concat(
+									"Finished import groups in ",
+									stopWatch.getTime(), "ms"));
+
+							stopWatch.stop();
+							stopWatch.reset();
+						}
 					}
 					catch (GroupFriendlyURLException
 								groupFriendlyURLException) {
