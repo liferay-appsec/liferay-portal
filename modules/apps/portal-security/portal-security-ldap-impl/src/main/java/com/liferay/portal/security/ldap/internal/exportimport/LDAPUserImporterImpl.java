@@ -1115,12 +1115,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					0, new String[] {userMappingsScreenName}, searchResults);
 
 				for (SearchResult searchResult : searchResults) {
-					if (_log.isDebugEnabled()) {
-						stopWatch.start();
-
-						_log.debug("Starting import LDAP user");
-					}
-
 					String fullUserDN = searchResult.getNameInNamespace();
 
 					if (ldapImportContext.containsImportedUser(fullUserDN)) {
@@ -1128,6 +1122,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 					}
 
 					try {
+						stopWatch.start();
+
 						Attributes userAttributes =
 							_safePortalLDAP.getUserAttributes(
 								ldapImportContext.getLdapServerId(),
@@ -1139,29 +1135,28 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							ldapImportContext, fullUserDN, userAttributes,
 							null);
 
+						stopWatch.stop();
+
 						if (_log.isDebugEnabled()) {
 							_log.debug(
 								StringBundler.concat(
-									"Finished import LDAP user in ",
-									stopWatch.getTime(), "ms"));
-
-							stopWatch.stop();
-							stopWatch.reset();
-							stopWatch.start();
-
-							_log.debug("Starting import groups");
+									"Finished importing user ", fullUserDN,
+									" in ", stopWatch.getTime(), "ms"));
 						}
+
+						stopWatch.reset();
+						stopWatch.start();
 
 						_importGroups(ldapImportContext, userAttributes, user);
 
 						if (_log.isDebugEnabled()) {
 							_log.debug(
 								StringBundler.concat(
-									"Finished import groups in ",
-									stopWatch.getTime(), "ms"));
+									"Finished importing groups for user ",
+									fullUserDN, " in ", stopWatch.getTime(),
+									"ms"));
 
 							stopWatch.stop();
-							stopWatch.reset();
 						}
 					}
 					catch (GroupFriendlyURLException
@@ -1187,6 +1182,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 						_log.error(
 							"Unable to import user " + fullUserDN, exception);
 					}
+
+					stopWatch.reset();
 				}
 			}
 		}
