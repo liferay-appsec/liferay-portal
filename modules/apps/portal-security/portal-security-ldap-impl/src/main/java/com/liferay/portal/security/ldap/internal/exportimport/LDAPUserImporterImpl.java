@@ -1135,8 +1135,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 							ldapImportContext, fullUserDN, userAttributes,
 							null);
 
-						stopWatch.stop();
-
 						if (_log.isDebugEnabled()) {
 							_log.debug(
 								StringBundler.concat(
@@ -1155,8 +1153,6 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 									"Finished importing groups for user ",
 									fullUserDN, " in ", stopWatch.getTime(),
 									"ms"));
-
-							stopWatch.stop();
 						}
 					}
 					catch (GroupFriendlyURLException
