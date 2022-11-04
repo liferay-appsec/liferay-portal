@@ -56,4 +56,31 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-150388 TC-4: On-Demand Admin can change user information on created virtual instances"
+	@priority = "3"
+	test OnDemandAdminCanChangeInstanceAdminPassword {
+		property custom.properties = "company.security.send.password.reset.link=true${line.separator}passwords.default.policy.change.required=false${line.separator}default.admin.password=test${line.separator}jsonws.web.service.paths.excludes=";
+
+			SAML.addVirtualInstances(virtualHosts = "www.able.com");
+
+			PortalInstances.openOnDemandAdminPortlet();
+
+			PortalInstances.requestOnDemandAdminOnInstance(virtualHost = "www.able.com");
+
+			User.openUsersAdmin(baseURL = "http://www.able.com:8080");
+
+			User.editEmailAddressCP(
+				password = "tester",
+				userEmailAddress = "test@www.able.com",
+				userScreenName = "tester");
+
+			User.logoutPG(specificURL = "www.able.com:8080");
+
+			User.firstLoginUI(
+			password = "tester",
+			specificURL = "http://www.able.com:8080",
+			userEmailAddress = "test@www.able.com");
+
+			User.viewLoggedInPG();
+	}	
 }
