@@ -16,6 +16,8 @@ package com.liferay.oauth2.provider.internal.upgrade.v4_3_0;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -46,6 +48,22 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 			companyId -> _upgradeCompany(companyId));
 	}
 
+	private boolean _hasObjectDefinition(long companyId, String name)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select * from ObjectDefinition where companyId = ? and name " +
+					"= ?")) {
+
+			preparedStatement.setLong(1, companyId);
+			preparedStatement.setString(2, name);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				return resultSet.next();
+			}
+		}
+	}
+
 	private void _upgradeCompany(long companyId) throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
 			PreparedStatement preparedStatement = connection.prepareStatement(
@@ -66,6 +84,20 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 
 					if (Validator.isNull(applicationName) ||
 						applicationName.endsWith(companyIdString)) {
+
+						continue;
+					}
+
+					if (!_hasObjectDefinition(companyId, applicationName)) {
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								StringBundler.concat(
+									"Detected OAuth2 scope grant for ",
+									"object-related scope named '",
+									applicationName, "' in company ", companyId,
+									", but no object definition with that ",
+									"name exists in that company"));
+						}
 
 						continue;
 					}
@@ -121,6 +153,9 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 
 	private static final String _BUNDLE_SYMBOLIC_NAME =
 		"com.liferay.object.rest.impl";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		OAuth2ScopeGrantUpgradeProcess.class);
 
 	private final CompanyLocalService _companyLocalService;
 
