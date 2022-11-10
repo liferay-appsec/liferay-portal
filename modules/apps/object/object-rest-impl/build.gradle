@@ -19,6 +19,7 @@ dependencies {
 	compileOnly project(":apps:document-library:document-library-api")
 	compileOnly project(":apps:headless:headless-delivery:headless-delivery-api")
 	compileOnly project(":apps:list-type:list-type-api")
+	compileOnly project(":apps:oauth2-provider:oauth2-provider-scope-spi")
 	compileOnly project(":apps:object:object-api")
 	compileOnly project(":apps:object:object-rest-api")
 	compileOnly project(":apps:portal-odata:portal-odata-api")

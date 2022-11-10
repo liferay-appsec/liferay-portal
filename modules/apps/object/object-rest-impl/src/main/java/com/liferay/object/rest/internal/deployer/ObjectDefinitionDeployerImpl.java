@@ -14,6 +14,7 @@
 
 package com.liferay.object.rest.internal.deployer;
 
+import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandlerFactory;
 import com.liferay.object.deployer.ObjectDefinitionDeployer;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
@@ -279,6 +280,8 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 					).put(
 						"liferay.jackson", false
 					).put(
+						"name", objectDefinition.getName()
+					).put(
 						"osgi.jaxrs.application.base",
 						objectDefinition.getRESTContextPath()
 					).put(
@@ -416,6 +419,16 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 						"(osgi.jaxrs.name=" + osgiJaxRsName + ")"
 					).put(
 						"osgi.jaxrs.resource", "true"
+					).build()),
+				_bundleContext.registerService(
+					PrefixHandlerFactory.class,
+					propertyAccessorFunction -> input ->
+						propertyAccessorFunction.apply("name") + "." + input,
+					HashMapDictionaryBuilder.<String, Object>put(
+						"companyId",
+						String.valueOf(objectDefinition.getCompanyId())
+					).put(
+						"osgi.jaxrs.name", osgiJaxRsName
 					).build())));
 	}
 
