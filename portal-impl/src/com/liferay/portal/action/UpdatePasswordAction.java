@@ -35,16 +35,19 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.pwd.PwdToolkitUtilThreadLocal;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
+import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -96,6 +99,23 @@ public class UpdatePasswordAction implements Action {
 					SessionErrors.add(
 						httpServletRequest, userLockoutException.getClass(),
 						userLockoutException);
+				}
+			}
+
+			String remoteUser = httpServletRequest.getRemoteUser();
+
+			if (Validator.isNotNull(remoteUser)) {
+				User user = UserLocalServiceUtil.getUserById(
+					GetterUtil.getLong(remoteUser));
+
+				String reminderQueryAnswer = user.getReminderQueryAnswer();
+
+				if (Validator.isNotNull(reminderQueryAnswer) &&
+					reminderQueryAnswer.equals(
+						WorkflowConstants.LABEL_PENDING)) {
+
+					httpServletRequest.setAttribute(
+						WebKeys.TITLE_SET_PASSWORD, "set-password");
 				}
 			}
 
@@ -268,6 +288,16 @@ public class UpdatePasswordAction implements Action {
 
 			UserLocalServiceUtil.updatePassword(
 				userId, password1, password2, passwordReset);
+
+			String defaultAdminPassword = PropsValues.DEFAULT_ADMIN_PASSWORD;
+
+			if (Validator.isNull(defaultAdminPassword)) {
+				User user = UserLocalServiceUtil.getUser(userId);
+
+				user.setReminderQueryAnswer(null);
+
+				UserLocalServiceUtil.updateUser(user);
+			}
 		}
 		finally {
 			PwdToolkitUtilThreadLocal.setValidate(previousValidate);
@@ -310,4 +340,6 @@ public class UpdatePasswordAction implements Action {
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpdatePasswordAction.class);
 
+	//@BeanReference(type = UserPersistence.class)
+	//protected UserPersistence userPersistence;
 }

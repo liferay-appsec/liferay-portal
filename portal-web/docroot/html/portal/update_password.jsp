@@ -28,6 +28,14 @@ String ticketKey = ParamUtil.getString(request, "ticketKey");
 if (referer.startsWith(themeDisplay.getPathMain() + "/portal/update_password") && Validator.isNotNull(ticketKey)) {
 	referer = themeDisplay.getPathMain();
 }
+
+String titlePage = (String)request.getAttribute(WebKeys.TITLE_SET_PASSWORD);
+boolean showCancelButton = false;
+
+if (Validator.isNull(titlePage)) {
+	titlePage = "change-password";
+	showCancelButton = true;
+}
 %>
 
 <div class="sheet sheet-lg">
@@ -35,7 +43,7 @@ if (referer.startsWith(themeDisplay.getPathMain() + "/portal/update_password") &
 		<div class="autofit-padded-no-gutters-x autofit-row">
 			<div class="autofit-col autofit-col-expand">
 				<h2 class="sheet-title">
-					<liferay-ui:message key="change-password" />
+					<liferay-ui:message key="<%= titlePage %>" />
 				</h2>
 			</div>
 
@@ -193,7 +201,9 @@ if (referer.startsWith(themeDisplay.getPathMain() + "/portal/update_password") &
 					<aui:button-row>
 						<aui:button type="submit" />
 
-						<aui:button href='<%= themeDisplay.getPathMain() + "/portal/logout" %>' type="cancel" />
+						<c:if test="<%= showCancelButton %>">
+							<aui:button href='<%= themeDisplay.getPathMain() + "/portal/logout" %>' type="cancel" />
+						</c:if>
 					</aui:button-row>
 				</aui:form>
 			</c:otherwise>

@@ -190,6 +190,7 @@ import com.liferay.portal.security.pwd.PwdToolkitUtil;
 import com.liferay.portal.security.pwd.RegExpToolkit;
 import com.liferay.portal.service.base.UserLocalServiceBaseImpl;
 import com.liferay.portal.util.PrefsPropsUtil;
+import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 import com.liferay.social.kernel.model.SocialRelation;
@@ -252,12 +253,45 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			Locale locale, String firstName, String middleName, String lastName)
 		throws PortalException {
 
+		return addDefaultAdminUser(
+			companyId, screenName, emailAddress, locale, firstName, middleName,
+			lastName, null);
+	}
+
+	/**
+	 * Adds a default admin user for the company.
+	 *
+	 * @param  companyId the primary key of the user's company
+	 * @param  screenName the user's screen name
+	 * @param  emailAddress the user's email address
+	 * @param  locale the user's locale
+	 * @param  firstName the user's first name
+	 * @param  middleName the user's middle name
+	 * @param  lastName the user's last name
+	 * @param  password1 the password of the user
+	 * @return the new default admin user
+	 */
+	public User addDefaultAdminUser(
+			long companyId, String screenName, String emailAddress,
+			Locale locale, String firstName, String middleName, String lastName,
+			String password1)
+		throws PortalException {
+
 		long creatorUserId = 0;
 		boolean autoPassword = false;
 
-		String password1 = PropsValues.DEFAULT_ADMIN_PASSWORD;
+		if (Validator.isNull(password1)) {
+			password1 = PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD);
+		}
 
 		String password2 = password1;
+
+		Boolean resetpassword = _isPasswordReset(companyId);
+
+		if (Validator.isNull(password1)) {
+			autoPassword = true;
+			resetpassword = true;
+		}
 
 		boolean autoScreenName = false;
 
@@ -313,13 +347,16 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
 			organizationIds, roleIds, userGroupIds, sendEmail, serviceContext);
 
+		if (autoPassword) {
+			_checkLoginFailureAdminAutoLogin(defaultAdminUser);
+		}
+
 		updateEmailAddressVerified(defaultAdminUser.getUserId(), true);
 
 		updateLastLogin(
 			defaultAdminUser.getUserId(), defaultAdminUser.getLoginIP());
 
-		updatePasswordReset(
-			defaultAdminUser.getUserId(), _isPasswordReset(companyId));
+		updatePasswordReset(defaultAdminUser.getUserId(), resetpassword);
 
 		return defaultAdminUser;
 	}
@@ -6963,6 +7000,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 	@BeanReference(type = MailService.class)
 	protected MailService mailService;
+
+	private void _checkLoginFailureAdminAutoLogin(User user) {
+		user.setReminderQueryAnswer(WorkflowConstants.LABEL_PENDING);
+
+		userPersistence.update(user);
+	}
 
 	private User _checkPasswordPolicy(User user) throws PortalException {
 
