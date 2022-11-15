@@ -15,21 +15,15 @@
 package com.liferay.oauth2.provider.internal.upgrade.v4_3_0;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Michael Bowerman
@@ -68,8 +62,8 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 		try (LoggingTimer loggingTimer = new LoggingTimer();
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
-					"select oAuth2ScopeGrantId, applicationName, scopeAliases ",
-					"from OAuth2ScopeGrant where companyId = ? and ",
+					"select oAuth2ScopeGrantId, applicationName from ",
+					"OAuth2ScopeGrant where companyId = ? and ",
 					"bundleSymbolicName = ?"))) {
 
 			preparedStatement.setLong(1, companyId);
@@ -104,47 +98,23 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 
 					_upgradeOAuth2ScopeGrant(
 						resultSet.getLong("oAuth2ScopeGrantId"),
-						companyIdString, applicationName,
-						resultSet.getString("scopeAliases"));
+						companyIdString, applicationName);
 				}
 			}
 		}
 	}
 
 	private void _upgradeOAuth2ScopeGrant(
-			long oAuth2ScopeGrantId, String companyId, String applicationName,
-			String scopeAliases)
+			long oAuth2ScopeGrantId, String companyId, String applicationName)
 		throws Exception {
 
 		String upgradedApplicationName = applicationName + companyId;
 
-		List<String> scopeAliasesList = Arrays.asList(
-			StringUtil.split(scopeAliases, StringPool.SPACE));
-
-		for (int i = 0; i < scopeAliasesList.size(); i++) {
-			String scopeAlias = scopeAliasesList.get(i);
-
-			if (!scopeAlias.startsWith(applicationName) ||
-				scopeAlias.startsWith(upgradedApplicationName)) {
-
-				continue;
-			}
-
-			scopeAliasesList.set(
-				i,
-				StringUtil.replaceFirst(
-					scopeAlias, applicationName, upgradedApplicationName));
-		}
-
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"update OAuth2ScopeGrant set applicationName = ?, " +
-					"scopeAliases = ? where oAuth2ScopeGrantId = ?")) {
+				"update OAuth2ScopeGrant set applicationName = ? where " +
+					"oAuth2ScopeGrantId = ?")) {
 
 			preparedStatement.setString(1, upgradedApplicationName);
-			preparedStatement.setString(
-				2,
-				StringUtil.merge(
-					ListUtil.sort(scopeAliasesList), StringPool.SPACE));
 			preparedStatement.setLong(3, oAuth2ScopeGrantId);
 
 			preparedStatement.execute();
