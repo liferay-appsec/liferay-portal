@@ -12,11 +12,9 @@
  * details.
  */
 
-package com.liferay.oauth2.provider.internal.upgrade.v4_3_0;
+package com.liferay.object.admin.rest.internal.upgrade.v1_0_0;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.LoggingTimer;
@@ -27,6 +25,7 @@ import java.sql.ResultSet;
 
 /**
  * @author Michael Bowerman
+ * @author Stian Sigvartsen
  */
 public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 
@@ -46,8 +45,7 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 		throws Exception {
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"delete from OAuth2ScopeGrant where " +
-					"oAuth2ScopeGrantId = ?")) {
+				"delete from OAuth2ScopeGrant where oAuth2ScopeGrantId = ?")) {
 
 			preparedStatement.setLong(1, oAuth2ScopeGrantId);
 
@@ -129,9 +127,6 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 
 	private static final String _BUNDLE_SYMBOLIC_NAME =
 		"com.liferay.object.rest.impl";
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		OAuth2ScopeGrantUpgradeProcess.class);
 
 	private final CompanyLocalService _companyLocalService;
 
