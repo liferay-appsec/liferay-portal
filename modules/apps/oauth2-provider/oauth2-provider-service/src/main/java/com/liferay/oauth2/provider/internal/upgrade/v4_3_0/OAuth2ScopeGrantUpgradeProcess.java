@@ -42,6 +42,19 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 			companyId -> _upgradeCompany(companyId));
 	}
 
+	private void _deleteOAuth2ScopeGrant(long oAuth2ScopeGrantId)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"delete from OAuth2ScopeGrant where " +
+					"oAuth2ScopeGrantId = ?")) {
+
+			preparedStatement.setLong(1, oAuth2ScopeGrantId);
+
+			preparedStatement.execute();
+		}
+	}
+
 	private boolean _hasObjectDefinition(long companyId, String name)
 		throws Exception {
 
@@ -83,15 +96,8 @@ public class OAuth2ScopeGrantUpgradeProcess extends UpgradeProcess {
 					}
 
 					if (!_hasObjectDefinition(companyId, applicationName)) {
-						if (_log.isWarnEnabled()) {
-							_log.warn(
-								StringBundler.concat(
-									"Detected OAuth2 scope grant for ",
-									"object-related scope named '",
-									applicationName, "' in company ", companyId,
-									", but no object definition with that ",
-									"name exists in that company"));
-						}
+						_deleteOAuth2ScopeGrant(
+							resultSet.getLong("oAuth2ScopeGrantId"));
 
 						continue;
 					}
