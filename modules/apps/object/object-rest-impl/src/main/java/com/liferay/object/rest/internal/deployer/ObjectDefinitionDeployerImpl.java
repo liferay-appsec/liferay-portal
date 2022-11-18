@@ -97,10 +97,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		ObjectDefinition objectDefinition) {
 
 		if (objectDefinition.isSystem()) {
-			_initSystemObjectDefinition(
-				_systemObjectDefinitionMetadataRegistry.
-					getSystemObjectDefinitionMetadata(
-						objectDefinition.getName()));
+			_initSystemObjectDefinition(objectDefinition);
 
 			return Collections.emptyList();
 		}
@@ -440,31 +437,48 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	}
 
 	private void _initSystemObjectDefinition(
-		SystemObjectDefinitionMetadata systemObjectDefinitionMetadata) {
+		ObjectDefinition objectDefinition) {
+
+		SystemObjectDefinitionMetadata systemObjectDefinitionMetadata =
+			_systemObjectDefinitionMetadataRegistry.
+				getSystemObjectDefinitionMetadata(objectDefinition.getName());
 
 		if (systemObjectDefinitionMetadata == null) {
 			return;
 		}
+
+		HashMapDictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"api.version", "v1.0"
+			).put(
+				"osgi.jaxrs.application.select",
+				() -> {
+					String jaxRsApplicationName =
+						systemObjectDefinitionMetadata.
+							getJaxRsApplicationName();
+
+					return "(osgi.jaxrs.name=" + jaxRsApplicationName + ")";
+				}
+			).put(
+				"osgi.jaxrs.resource", "true"
+			).build();
+
+		List<String> companyIds = _basePathCompanyIds.computeIfAbsent(
+			systemObjectDefinitionMetadata.getRESTContextPath(),
+			key -> new ArrayList<>());
+
+		companyIds.add(String.valueOf(objectDefinition.getCompanyId()));
+
+		_applicationProperties.computeIfAbsent(
+			systemObjectDefinitionMetadata.getRESTContextPath(),
+			key -> properties);
 
 		_applicationServiceRegistrations.computeIfAbsent(
 			systemObjectDefinitionMetadata.getRESTContextPath(),
 			key -> _bundleContext.registerService(
 				Application.class,
 				new ObjectEntryApplication(_objectEntryOpenAPIResource),
-				HashMapDictionaryBuilder.<String, Object>put(
-					"api.version", "v1.0"
-				).put(
-					"osgi.jaxrs.application.select",
-					() -> {
-						String jaxRsApplicationName =
-							systemObjectDefinitionMetadata.
-								getJaxRsApplicationName();
-
-						return "(osgi.jaxrs.name=" + jaxRsApplicationName + ")";
-					}
-				).put(
-					"osgi.jaxrs.resource", "true"
-				).build()));
+				properties));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
