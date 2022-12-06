@@ -57,6 +57,7 @@ import java.util.Objects;
 import java.util.Properties;
 
 import javax.naming.AuthenticationException;
+import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
@@ -513,9 +514,19 @@ public class LDAPAuth implements Authenticator {
 		List<LDAPServerConfiguration> ldapServerConfigurations =
 			_ldapServerConfigurationProvider.getConfigurations(companyId);
 
+		boolean userImportedByLDAP = false;
+
 		for (LDAPServerConfiguration ldapServerConfiguration :
 				ldapServerConfigurations) {
 
+			Binding ldapUser = _portalLDAP.getUser(
+				ldapServerConfiguration.ldapServerId(), companyId, screenName,
+				emailAddress);
+
+			if (ldapUser != null) {
+				userImportedByLDAP = true;
+			}
+			
 			if (preferredLDAPServerId ==
 					ldapServerConfiguration.ldapServerId()) {
 
@@ -539,8 +550,12 @@ public class LDAPAuth implements Authenticator {
 			}
 		}
 
-		return _authenticateRequired(
-			companyId, userId, emailAddress, screenName, true, FAILURE);
+		if (!userImportedByLDAP) {
+			return authenticateRequired(
+				companyId, userId, emailAddress, screenName, true, FAILURE);
+		}
+
+		return FAILURE;
 	}
 
 	private int _authenticateAgainstPreferredLDAPServer(
