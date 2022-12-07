@@ -261,18 +261,6 @@ public class UpdatePasswordAction implements Action {
 
 		boolean previousValidate = PwdToolkitUtilThreadLocal.isValidate();
 
-		try {
-			boolean currentValidate = isValidatePassword(httpServletRequest);
-
-			PwdToolkitUtilThreadLocal.setValidate(currentValidate);
-
-			UserLocalServiceUtil.updatePassword(
-				userId, password1, password2, passwordReset);
-		}
-		finally {
-			PwdToolkitUtilThreadLocal.setValidate(previousValidate);
-		}
-
 		User user = UserLocalServiceUtil.getUser(userId);
 
 		Company company = CompanyLocalServiceUtil.getCompanyById(
@@ -305,6 +293,26 @@ public class UpdatePasswordAction implements Action {
 		AuthenticatedSessionManagerUtil.login(
 			httpServletRequest, httpServletResponse, login, password1, false,
 			null);
+
+		try {
+			boolean currentValidate = isValidatePassword(httpServletRequest);
+
+			PwdToolkitUtilThreadLocal.setValidate(currentValidate);
+
+			UserLocalServiceUtil.updatePassword(
+				userId, password1, password2, passwordReset);
+		}
+		finally {
+			PwdToolkitUtilThreadLocal.setValidate(previousValidate);
+		}
+
+		if (ticket != null) {
+			TicketLocalServiceUtil.deleteTicket(ticket);
+
+			UserLocalServiceUtil.updatePasswordReset(userId, false);
+		}
+
+		
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
