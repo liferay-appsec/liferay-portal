@@ -65,6 +65,14 @@ definition {
 				''');
 		}
 
+		if (isSet(userMapperJSON)) {
+			var userMapperInfo = FileUtil.read("${jsonFileBaseDir}/${userMapperJSON}");
+
+			FormFields.editTextMultiline(
+				fieldName = "OIDCUserInfo",
+				fieldValue = "${userMapperInfo}");
+		}
+
 		PortletEntry.save();
 	}
 
