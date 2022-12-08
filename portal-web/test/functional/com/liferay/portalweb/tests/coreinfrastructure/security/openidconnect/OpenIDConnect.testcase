@@ -700,6 +700,7 @@ definition {
 	@description = "This is a use case for LPS-162080 TC-2: TODO"
 	@priority = "5"
 	test UserAttributesCanBeMappedInOIDC {
+		property portal.upstream = "marcell";
 		property test.name.skip.portal.instance = "OpenIDConnect#UserAttributesCanBeMappedInOIDC";
 
 		task ("Given: User starts Keycloak for test and set debug level") {
@@ -777,6 +778,7 @@ definition {
 	@priority = "5"
 	test UserInformationsCanBeSyncedToKeycloak {
 		property custom.properties = " open.id.connect.user.info.processor.impl.issuer=[http://(your-local-keycloak-address)/auth/realms/master|http://%28your-local-keycloak-address%29/auth/realms/master]${line.separator}open.id.connect.user.info.processor.impl.regular.role=Power User";
+		property portal.upstream = "marcell";
 		property test.name.skip.portal.instance = "OpenIDConnect#UserInformationsCanBeSyncedToKeycloak";
 
 		task ("Given: User starts Keycloak for test and set debug level") {
@@ -834,6 +836,7 @@ definition {
 	@description = "This is a use case for LPS-162080 TC-1: OpenID configuration mandatory fields should work with unique error messages"
 	@priority = "5"
 	test VerifyOIDCMandatoryFields {
+		property portal.upstream = "marcell";
 		property test.name.skip.portal.instance = "OpenIDConnect#VerifyOIDCMandatoryFields";
 
 		var jsonFileName = "keycloak.json";
