@@ -1,0 +1,30 @@
+{
+	"address": {
+		"addressType": "",
+		"city": "address->locality",
+		"country": "address->country",
+		"region": "address->region",
+		"street": "address->street_address",
+		"zip": "address->postal_code"
+	},
+	"contact": {
+		"birthdate": "birthdate",
+		"gender": "gender"
+	},
+	"phone": {
+		"phone": "phone_number",
+		"phoneType": ""
+	},
+	"user": {
+		"emailAddress": "email",
+		"firstName": "given_name",
+		"jobTitle": "",
+		"languageId": "locale",
+		"lastName": "family_name",
+		"middleName": "middle_name",
+		"screenName": "preferred_username"
+	},
+	"users_roles": {
+		"roles": "roles"
+	}
+}
