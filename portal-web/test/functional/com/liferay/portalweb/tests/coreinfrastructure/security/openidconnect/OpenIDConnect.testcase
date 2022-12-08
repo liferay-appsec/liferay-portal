@@ -187,7 +187,7 @@ definition {
 				userEmailAddress = "user1",
 				userPassword = "test");
 
-			// This pause is required to allow the test to wait for the  access token to expire.
+			// This pause is required to allow the test to wait for the access token to expire.
 
 			Pause(locator1 = "60000");
 
@@ -694,6 +694,256 @@ definition {
 			OpenIDConnect.enableOpenIdConnect();
 
 			OpenIDConnect.setTokenRefreshOffset(expirationTime = "60");
+		}
+	}
+
+	@description = "This is a use case for LPS-162080 TC-2: TODO"
+	@priority = "5"
+	test UserAttributesCanBeMappedInOIDC {
+		property test.name.skip.portal.instance = "OpenIDConnect#UserAttributesCanBeMappedInOIDC";
+
+		task ("Given: User starts Keycloak for test and set debug level") {
+			AntCommand(
+				locator1 = "build-test-keycloak.xml",
+				value1 = "prepare-selenium-keycloak-server");
+
+			OpenIDConnect.enableOpenIDConnectCustomParametersDebugLogs();
+		}
+
+		task ("And: Add virtual instance") {
+			HeadlessPortalInstanceAPI.addPortalInstance(
+				domain = "www.able.com",
+				portalInstanceId = "www.able.com",
+				virtualHost = "www.able.com");
+		}
+
+		task ("Add Auth Server Local Metadata") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Auth Server Local Metadata");
+
+			OAuthClient.addAuthServer(jsonFileName = "keycloak-local-metadata.json");
+
+			var wellknownURI = OAuthClient.getWellKnownURI();
+		}
+
+		task ("When: User add OAuth Client with custom attributes") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Clients");
+
+			OAuthClient.addClient(
+				jsonFileName = "keycloak.json",
+				userMapperJSON = "OAuth2_User_mapping.json",
+				wellknownURI = "${wellknownURI}");
+		}
+
+		task ("And: Logs in through OIDC") {
+			User.logoutPG();
+
+			User.loginUserWithOpenIDConnectEnabledPG(
+				userEmailAddress = "tester1@liferay.com",
+				userPassword = "test");
+		}
+
+		task ("Then: User information is synced from user database") {
+			UserNavigator.gotoUser(userScreenName = "user1");
+
+			User.viewUserInfomation(
+				userBirthday = "12/12/1990",
+				userFirstName = "First1",
+				userLastName = "Last1",
+				userMiddleName = "Middle Name",
+				userScreenName = "user1");
+		}
+
+		task ("When: User login on able.com through ODIC") {
+			Navigator.openSpecificURL(specificURL = "www.able.com:8080");
+
+			User.loginUserWithOpenIDConnectEnabledPG(
+				userEmailAddress = "tester1@liferay.com",
+				userPassword = "test");
+		}
+
+		task ("Then: User information is synced from user database") {
+			UserNavigator.gotoUser(userScreenName = "user1");
+
+			User.viewUserInfomation(
+				userBirthday = "12/12/1990",
+				userFirstName = "First1",
+				userLastName = "Last1",
+				userMiddleName = "Middle Name",
+				userScreenName = "user1");
+		}
+	}
+
+	@description = "This is a use case for LPS-162080 TC-3: User information should be synced towards Keycloak too. Verify that User role can be imported to an existing User on Keycloak from Portal"
+	@priority = "5"
+	test UserInformationsCanBeSyncedToKeycloak {
+		property custom.properties = " open.id.connect.user.info.processor.impl.issuer=[http://(your-local-keycloak-address)/auth/realms/master|http://%28your-local-keycloak-address%29/auth/realms/master]${line.separator}open.id.connect.user.info.processor.impl.regular.role=Power User";
+		property test.name.skip.portal.instance = "OpenIDConnect#UserInformationsCanBeSyncedToKeycloak";
+
+		task ("Given: User starts Keycloak for test and set debug level") {
+			AntCommand(
+				locator1 = "build-test-keycloak.xml",
+				value1 = "prepare-selenium-keycloak-server");
+
+			OpenIDConnect.enableOpenIDConnectCustomParametersDebugLogs();
+		}
+
+		task ("And: Add Auth Server Local Metadata") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Auth Server Local Metadata");
+
+			OAuthClient.addAuthServer(jsonFileName = "keycloak-local-metadata.json");
+
+			var wellknownURI = OAuthClient.getWellKnownURI();
+		}
+
+		task ("And: Add OAuth Client") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Clients");
+
+			OAuthClient.addClient(
+				jsonFileName = "keycloak.json",
+				wellknownURI = "${wellknownURI}");
+		}
+
+		task ("When: User login as keycloak user") {
+			User.logoutPG();
+
+			User.loginUserWithOpenIDConnectEnabledPG(
+				userEmailAddress = "user1",
+				userPassword = "test");
+
+			User.viewLoggedInPG();
+		}
+
+		task ("Then: User information is synced on both sides, User has Power User role both on the portal and on Keycloak") {
+			UserNavigator.gotoUser(userScreenName = "usersn");
+
+			UserNavigator.gotoRoles();
+
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsEditUser#ROLES_SELECT_ROLE_NAME",
+				value1 = "Power User");
+
+		var userAccessToken = OAuthClient._getKeycloakUserAccessToken(userEmail = "tester1@liferay.com");
+
+		var userInformation = OAuthClient._getKeycloakUserInformations(accessToken = "${userAccessToken}");
+
+		if (!(contains("${userInformation}", "Power User"))) {
+			fail("Keycloak didn't import user role.");
+		}
+	}
+
+	@description = "This is a use case for LPS-162080 TC-1: OpenID configuration mandatory fields should work with unique error messages"
+	@priority = "5"
+	test VerifyOIDCMandatoryFields {
+		property test.name.skip.portal.instance = "OpenIDConnect#VerifyOIDCMandatoryFields";
+
+		var jsonFileName = "keycloak.json";
+		var jsonFileBaseDir = "test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/openidconnect/dependencies";
+
+		var clientInfo = FileUtil.read("${jsonFileBaseDir}/${jsonFileName}");
+		var userMapperInfo = FileUtil.read("${jsonFileBaseDir}/OAuth2_User_mapping.json");
+
+		task ("Given: User add Auth Server Local Metadata") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Auth Server Local Metadata");
+
+			OAuthClient.addAuthServer(jsonFileName = "keycloak-local-metadata.json");
+
+			var wellknownURI = OAuthClient.getWellKnownURI();
+		}
+
+		task ("And: Add OAuth Client") {
+			OAuthClient.openOAuthClientAdmin(navbar = "Clients");
+
+			OAuthClient.addClient(
+				jsonFileName = "${jsonFileName}",
+				wellknownURI = "${wellknownURI}");
+		}
+
+		task ("When: User try to save without Well-known URL") {
+			LexiconEntry.gotoEllipsisMenuItem(menuItem = "Edit");
+
+			FormFields.editText(
+				fieldName = "authServerWellKnownURI",
+				fieldValue = " ");
+
+			Click(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then: Corresponding error message will block the user from saving without Well-known URL") {
+			Alert.viewErrorMessage(errorMessage = "Invalid Authorization Server Well-known URI");
+		}
+
+		task ("When: User try to save without client ID") {
+			FormFields.editText(
+				fieldName = "authServerWellKnownURI",
+				fieldValue = "${wellknownURI}");
+
+			var editedClientInfo = StringUtil.replace("${clientInfo}", "liferay-system-level", " ");
+
+			FormFields.editTextMultiline(
+				fieldName = "infoJSON",
+				fieldValue = "${editedClientInfo}");
+
+			Click(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then: Corresponding error message will block the user from saving without defining the client ID") {
+			Alert.viewErrorMessage(errorMessage = "Invalid Client Information");
+		}
+
+		task ("When: User try to save without mapping User first name") {
+			FormFields.editTextMultiline(
+				fieldName = "infoJSON",
+				fieldValue = "${clientInfo}");
+
+			var editedUserMapperInfo = StringUtil.replace("${userMapperInfo}", "given_name", " ");
+
+			FormFields.editTextMultiline(
+				fieldName = "OIDCUserInfo",
+				fieldValue = "${editedUserMapperInfo}");
+
+			Click(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then: Corresponding error message will block the user from saving without mapping the user first name") {
+			Alert.viewErrorMessage(errorMessage = "firstName is required");
+		}
+
+		task ("When: User try to save without mapping User last name") {
+			var editedUserMapperInfo = StringUtil.replace("${userMapperInfo}", "family_name", " ");
+
+			FormFields.editTextMultiline(
+				fieldName = "OIDCUserInfo",
+				fieldValue = "${editedUserMapperInfo}");
+
+			Click(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then: User try to save without mapping User last name") {
+			Alert.viewErrorMessage(errorMessage = "lastName is required ");
+		}
+
+		task ("When: User try to save without mapping User email address") {
+			var editedUserMapperInfo = StringUtil.replace("${userMapperInfo}", "email", " ");
+
+			FormFields.editTextMultiline(
+				fieldName = "OIDCUserInfo",
+				fieldValue = "${editedUserMapperInfo}");
+
+			Click(
+				key_text = "Save",
+				locator1 = "Button#ANY");
+		}
+
+		task ("Then: Corresponding error message will block the user from saving without defining the client ID") {
+			Alert.viewErrorMessage(errorMessage = "emailAddress is required");
 		}
 	}
 
