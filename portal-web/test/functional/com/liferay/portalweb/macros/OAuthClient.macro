@@ -65,6 +65,14 @@ definition {
 				''');
 		}
 
+		if (isSet(userMapperJSON)) {
+			var userMapperInfo = FileUtil.read("${jsonFileBaseDir}/${userMapperJSON}");
+
+			FormFields.editTextMultiline(
+				fieldName = "OIDCUserInfo",
+				fieldValue = "${userMapperInfo}");
+		}
+
 		PortletEntry.save();
 	}
 
@@ -78,6 +86,38 @@ definition {
 		}
 
 		ClickNoError(locator1 = "Button#SAVE");
+	}
+
+	// Some attribute is hard coded, need to make modifications for other database URL's
+	// Restore client secret after testing and fixing keycloak
+
+	macro _getKeycloakUserAccessToken {
+		var curl = '''
+ 			http://localhost:18080/auth/realms/master/protocol/openid-connect/token \
+			 -H 'Content-Type: application/x-www-form-urlencoded'
+			  --data-urlencode 'client_id=liferay' 
+			  --data-urlencode 'grant_type=password' 
+			  --data-urlencode 'client_secret=c51830db-c3e7-4a4b-82d2-353778f66099'
+			  --data-urlencode 'username=${userEmail}'
+			   --data-urlencode 'password=test'
+			''';
+
+		var accessToken = JSONCurlUtil.post("${curl}", "$['access_token']");
+
+		return "${accessToken}";
+	}
+
+	macro _getKeycloakUserInformations {
+		var curl = '''
+			 http://localhost:18080/auth/realms/master/protocol/openid-connect/userinfo \
+			 -H 'Authorization: Bearer ${accessToken}'
+			''';
+
+		var userInformation = JSONCurlUtil.post("${curl}");
+
+		echo("########userInfo: ${userInformation}");
+
+		return "${userInformation}";
 	}
 
 	macro addInvalidClient {
