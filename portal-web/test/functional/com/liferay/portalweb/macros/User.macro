@@ -2963,6 +2963,12 @@ definition {
 				value1 = "${userBirthday}");
 		}
 
+		if (isSet(userMiddleName)) {
+			AssertTextEquals(
+				locator1 = "UsersAndOrganizationsEditUser#DETAILS_MIDDLE_NAME_FIELD",
+				value1 = "${userMiddleName}");
+		}
+
 		if (isSet(userJobTitle)) {
 			AssertTextEquals(
 				locator1 = "UsersAndOrganizationsEditUser#DETAILS_JOB_TITLE_FIELD",
