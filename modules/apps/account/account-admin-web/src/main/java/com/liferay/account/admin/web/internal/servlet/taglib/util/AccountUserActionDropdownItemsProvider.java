@@ -26,9 +26,12 @@ import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.service.permission.UserPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.taglib.security.DoAsURLTag;
 
 import java.util.List;
 
@@ -121,6 +124,24 @@ public class AccountUserActionDropdownItemsProvider {
 					).buildString());
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "assign-roles"));
+			}
+		).add(
+			() ->
+				PropsValues.PORTAL_IMPERSONATION_ENABLE &&
+				(_accountUserDisplay.getUserId() !=
+					_themeDisplay.getUserId()) &&
+				!_themeDisplay.isImpersonated() &&
+				UserPermissionUtil.contains(
+					_themeDisplay.getPermissionChecker(),
+					_accountUserDisplay.getUserId(), ActionKeys.IMPERSONATE),
+			dropdownItem -> {
+				dropdownItem.setHref(
+					DoAsURLTag.doTag(
+						_accountUserDisplay.getUserId(), _httpServletRequest));
+				dropdownItem.setIcon("shortcut");
+				dropdownItem.setLabel(
+					LanguageUtil.get(_httpServletRequest, "impersonate-user"));
+				dropdownItem.setTarget("_blank");
 			}
 		).add(
 			() -> AccountEntryPermission.contains(
