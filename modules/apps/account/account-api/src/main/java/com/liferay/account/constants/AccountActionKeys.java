@@ -29,6 +29,8 @@ public class AccountActionKeys {
 
 	public static final String ASSIGN_USERS = "ASSIGN_USERS";
 
+	public static final String IMPERSONATE_USERS = "IMPERSONATE_USERS";
+
 	public static final String MANAGE_ACCOUNTS = "MANAGE_ACCOUNTS";
 
 	public static final String MANAGE_ADDRESSES = "MANAGE_ADDRESSES";
