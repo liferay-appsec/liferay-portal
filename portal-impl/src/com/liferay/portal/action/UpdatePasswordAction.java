@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Ticket;
 import com.liferay.portal.kernel.model.TicketConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
@@ -126,7 +127,9 @@ public class UpdatePasswordAction implements Action {
 			return null;
 		}
 		catch (Exception exception) {
-			if (exception instanceof UserPasswordException) {
+			if (exception instanceof AuthException ||
+				exception instanceof UserPasswordException) {
+
 				SessionErrors.add(
 					httpServletRequest, exception.getClass(), exception);
 
