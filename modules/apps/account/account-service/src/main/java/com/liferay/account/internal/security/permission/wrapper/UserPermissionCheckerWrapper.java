@@ -22,9 +22,11 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.wrapper.PermissionCheckerWrapper;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -98,6 +100,23 @@ public class UserPermissionCheckerWrapper extends PermissionCheckerWrapper {
 			!StringUtil.equals(actionId, ActionKeys.IMPERSONATE)) {
 
 			return hasPermissionSupplier.get();
+		}
+
+		User user = _userLocalService.fetchUser(primKey);
+
+		if (user == null) {
+			return hasPermissionSupplier.get();
+		}
+
+		PermissionChecker userPermissionChecker =
+			PermissionCheckerFactoryUtil.create(user);
+
+		if (userPermissionChecker.hasPermission(
+				0, Role.class.getName(), 0, ActionKeys.DEFINE_PERMISSIONS) ||
+			userPermissionChecker.hasPermission(
+				0, User.class.getName(), 0, ActionKeys.UPDATE)) {
+
+			return false;
 		}
 
 		try {
