@@ -375,18 +375,13 @@ public class LDAPAuth implements Authenticator {
 			LDAPAuthResult ldapAuthResult = _authenticate(
 				safeLdapContext, companyId, attributes, fullUserDN, password);
 
-			// Get user or create fromUnsafe LDAP
-
+            
 			if (!ldapAuthResult.isAuthenticated()) {
 				password = null;
-			}
 
-			User user = _ldapUserImporter.importUser(
-				ldapServerId, companyId, safeLdapContext, attributes, password);
 
-			if (!ldapAuthResult.isAuthenticated()) {
 				PasswordModificationThreadLocal.setPasswordModified(false);
-			}
+			
 
 			// Process LDAP failure codes
 
@@ -416,7 +411,6 @@ public class LDAPAuth implements Authenticator {
 				}
 			}
 
-			if (!ldapAuthResult.isAuthenticated()) {
 				if (_log.isDebugEnabled()) {
 					_log.debug(
 						StringBundler.concat(
@@ -427,7 +421,14 @@ public class LDAPAuth implements Authenticator {
 				}
 
 				return FAILURE;
+
 			}
+
+             // Get user or create fromUnsafe LDAP
+			 
+            User user = _ldapUserImporter.importUser(
+			ldapServerId, companyId, safeLdapContext, attributes, password);
+
 
 			// Process LDAP success codes
 
