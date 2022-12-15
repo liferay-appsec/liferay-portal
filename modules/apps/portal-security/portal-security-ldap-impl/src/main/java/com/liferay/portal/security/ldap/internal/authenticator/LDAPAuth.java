@@ -376,41 +376,41 @@ public class LDAPAuth implements Authenticator {
 			LDAPAuthResult ldapAuthResult = _authenticate(
 				safeLdapContext, companyId, attributes, fullUserDN, password);
 
-            
 			if (!ldapAuthResult.isAuthenticated()) {
 				password = null;
 
-
 				PasswordModificationThreadLocal.setPasswordModified(false);
-			
 
-			// Process LDAP failure codes
+				// Process LDAP failure codes
 
-			String errorMessage = ldapAuthResult.getErrorMessage();
+				String errorMessage = ldapAuthResult.getErrorMessage();
 
-			if (errorMessage != null) {
-				SystemLDAPConfiguration systemLDAPConfiguration =
-					_systemLDAPConfigurationProvider.getConfiguration(
-						companyId);
+				if (errorMessage != null) {
+					SystemLDAPConfiguration systemLDAPConfiguration =
+						_systemLDAPConfigurationProvider.getConfiguration(
+							companyId);
 
-				for (String errorUserLockoutKeyword :
-						systemLDAPConfiguration.errorUserLockoutKeywords()) {
+					for (String errorUserLockoutKeyword :
+							systemLDAPConfiguration.
+								errorUserLockoutKeywords()) {
 
-					if (errorMessage.contains(errorUserLockoutKeyword)) {
-						throw new UserLockoutException.LDAPLockout(
-							fullUserDN, errorMessage);
+						if (errorMessage.contains(errorUserLockoutKeyword)) {
+							throw new UserLockoutException.LDAPLockout(
+								fullUserDN, errorMessage);
+						}
+					}
+
+					for (String errorPasswordExpiredKeyword :
+							systemLDAPConfiguration.
+								errorPasswordExpiredKeywords()) {
+
+						if (errorMessage.contains(
+								errorPasswordExpiredKeyword)) {
+
+							throw new PasswordExpiredException();
+						}
 					}
 				}
-
-				for (String errorPasswordExpiredKeyword :
-						systemLDAPConfiguration.
-							errorPasswordExpiredKeywords()) {
-
-					if (errorMessage.contains(errorPasswordExpiredKeyword)) {
-						throw new PasswordExpiredException();
-					}
-				}
-			}
 
 				if (_log.isDebugEnabled()) {
 					_log.debug(
@@ -422,14 +422,12 @@ public class LDAPAuth implements Authenticator {
 				}
 
 				return FAILURE;
-
 			}
 
-             // Get user or create fromUnsafe LDAP
-			 
-            User user = _ldapUserImporter.importUser(
-			ldapServerId, companyId, safeLdapContext, attributes, password);
+			// Get user or create fromUnsafe LDAP
 
+			User user = _ldapUserImporter.importUser(
+				ldapServerId, companyId, safeLdapContext, attributes, password);
 
 			// Process LDAP success codes
 
@@ -526,7 +524,7 @@ public class LDAPAuth implements Authenticator {
 			if (ldapUser != null) {
 				userImportedByLDAP = true;
 			}
-			
+
 			if (preferredLDAPServerId ==
 					ldapServerConfiguration.ldapServerId()) {
 
@@ -551,7 +549,7 @@ public class LDAPAuth implements Authenticator {
 		}
 
 		if (!userImportedByLDAP) {
-			return authenticateRequired(
+			return _authenticateRequired(
 				companyId, userId, emailAddress, screenName, true, FAILURE);
 		}
 
