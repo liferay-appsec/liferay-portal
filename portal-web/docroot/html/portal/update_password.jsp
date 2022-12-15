@@ -68,11 +68,11 @@ if (referer.startsWith(themeDisplay.getPathMain() + "/portal/update_password") &
 					<liferay-ui:message key="this-account-is-locked" />
 				</div>
 			</c:when>
-			<c:when test="<%= SessionErrors.contains(request, AuthException.class.getName()) %>">
-				<div class="alert alert-danger">
-					<liferay-ui:message key="an-error-occurred-while-authenticating-user-on-the-ldap-server" />
-				</div>
-			</c:when>
+			<c:when test="<%= SessionErrors.contains(request, LDAPAuthException.class.getName()) %>">
+								<div class="alert alert-danger">
+								<liferay-ui:message key="an-error-occurred-while-authenticating-user-on-the-ldap-server" />
+								</div>
+								</c:when>
 			<c:when test="<%= SessionErrors.contains(request, UserLockoutException.PasswordPolicyLockout.class.getName()) %>">
 				<div class="alert alert-danger">
 

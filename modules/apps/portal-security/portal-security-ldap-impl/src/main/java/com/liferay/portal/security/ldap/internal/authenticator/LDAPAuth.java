@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.Authenticator;
+import com.liferay.portal.kernel.security.auth.LDAPAuthException;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
@@ -229,6 +230,13 @@ public class LDAPAuth implements Authenticator {
 				ldapAuthResult.setErrorMessage(exception.getMessage());
 
 				_setFailedLDAPAuthResult(env, ldapAuthResult);
+
+				if (authenticationException) {
+					AuthException ldapAuthException = new LDAPAuthException();
+					ldapAuthException.setType(LDAPAuthException.INVALID_CREDENTIALS);
+
+					throw ldapAuthException;
+				}
 			}
 			finally {
 				if (initialLdapContext != null) {
@@ -439,7 +447,7 @@ public class LDAPAuth implements Authenticator {
 		}
 		catch (Exception exception) {
 			if (exception instanceof PasswordExpiredException ||
-				exception instanceof UserLockoutException) {
+				exception instanceof UserLockoutException || exception instanceof LDAPAuthException) {
 
 				throw exception;
 			}
