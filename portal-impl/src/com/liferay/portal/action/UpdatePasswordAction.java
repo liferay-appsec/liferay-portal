@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.model.TicketConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
+import com.liferay.portal.kernel.security.auth.LDAPAuthException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.session.AuthenticatedSessionManagerUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
@@ -127,15 +128,21 @@ public class UpdatePasswordAction implements Action {
 			return null;
 		}
 		catch (Exception exception) {
-			if (exception instanceof AuthException ||
-				exception instanceof UserPasswordException) {
+			if (exception instanceof UserPasswordException) {
 
 				SessionErrors.add(
 					httpServletRequest, exception.getClass(), exception);
 
 				return actionMapping.getActionForward("portal.update_password");
-			}
-			else if (exception instanceof NoSuchUserException ||
+			} else if (exception instanceof AuthException) {
+
+				if (exception.getCause() instanceof LDAPAuthException) {
+					SessionErrors.add(request, e.getCause().getClass(), e.getCause());
+
+					return actionMapping.findForward("portal.update_password");
+				}
+
+			} else if (exception instanceof NoSuchUserException ||
 					 exception instanceof PrincipalException) {
 
 				SessionErrors.add(httpServletRequest, exception.getClass());
