@@ -15,6 +15,7 @@
 package com.liferay.portal.action;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.exception.UserLockoutException;
 import com.liferay.portal.kernel.exception.UserPasswordException;
@@ -126,7 +127,7 @@ public class UpdatePasswordAction implements Action {
 			return null;
 		}
 		catch (Exception exception) {
-			if (exception instanceof UserPasswordException) {
+			if (exception instanceof UserPasswordException || exception instanceof AuthException) {
 				SessionErrors.add(
 					httpServletRequest, exception.getClass(), exception);
 
