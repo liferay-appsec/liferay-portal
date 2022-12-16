@@ -14,28 +14,26 @@
 
 package com.liferay.portal.kernel.security.auth;
 
-import com.liferay.portal.kernel.security.auth.AuthException;
-
 /**
  * @author Mirna Gama
  */
 public class LDAPAuthException extends AuthException {
 
-    public static final int INVALID_CREDENTIALS = 101;
+	public static final int INVALID_CREDENTIALS = 101;
 
-    public LDAPAuthException() {
+	public LDAPAuthException() {
 	}
 
-    public LDAPAuthException(String msg) {
+	public LDAPAuthException(String msg) {
 		super(msg);
 	}
 
-	public LDAPAuthException(String msg, Throwable cause) {
-		super(msg, cause);
+	public LDAPAuthException(String msg, Throwable throwable) {
+		super(msg, throwable);
 	}
 
-	public LDAPAuthException(Throwable cause) {
-		super(cause);
+	public LDAPAuthException(Throwable throwable) {
+		super(throwable);
 	}
 
 }

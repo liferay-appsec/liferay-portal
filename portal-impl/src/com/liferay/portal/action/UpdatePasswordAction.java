@@ -129,20 +129,25 @@ public class UpdatePasswordAction implements Action {
 		}
 		catch (Exception exception) {
 			if (exception instanceof UserPasswordException) {
-
 				SessionErrors.add(
 					httpServletRequest, exception.getClass(), exception);
 
 				return actionMapping.getActionForward("portal.update_password");
-			} else if (exception instanceof AuthException) {
-
+			}
+			else if (exception instanceof AuthException) {
 				if (exception.getCause() instanceof LDAPAuthException) {
-					SessionErrors.add(request, e.getCause().getClass(), e.getCause());
+					LDAPAuthException ldapAuthException =
+						(LDAPAuthException)exception.getCause();
 
-					return actionMapping.findForward("portal.update_password");
+					SessionErrors.add(
+						httpServletRequest, ldapAuthException.getClass(),
+						ldapAuthException);
+
+					return actionMapping.getActionForward(
+						"portal.update_password");
 				}
-
-			} else if (exception instanceof NoSuchUserException ||
+			}
+			else if (exception instanceof NoSuchUserException ||
 					 exception instanceof PrincipalException) {
 
 				SessionErrors.add(httpServletRequest, exception.getClass());

@@ -231,10 +231,12 @@ public class LDAPAuth implements Authenticator {
 				_setFailedLDAPAuthResult(env, ldapAuthResult);
 
 				if (authenticationException) {
-					AuthException ldapAuthException = new LDAPAuthException();
-					ldapAuthException.setType(LDAPAuthException.INVALID_CREDENTIALS);
+					AuthException authException = new LDAPAuthException();
 
-					throw ldapAuthException;
+					authException.setType(
+						LDAPAuthException.INVALID_CREDENTIALS);
+
+					throw authException;
 				}
 			}
 			finally {
@@ -446,8 +448,9 @@ public class LDAPAuth implements Authenticator {
 			}
 		}
 		catch (Exception exception) {
-			if (exception instanceof PasswordExpiredException ||
-				exception instanceof UserLockoutException || exception instanceof LDAPAuthException) {
+			if (exception instanceof LDAPAuthException ||
+				exception instanceof PasswordExpiredException ||
+				exception instanceof UserLockoutException) {
 
 				throw exception;
 			}
