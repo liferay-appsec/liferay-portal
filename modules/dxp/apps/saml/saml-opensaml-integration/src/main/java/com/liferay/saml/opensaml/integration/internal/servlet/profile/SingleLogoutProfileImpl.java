@@ -741,6 +741,14 @@ public class SingleLogoutProfileImpl
 				samlSloContext.setSamlSsoSessionId(samlSsoSessionId);
 				samlSloContext.setUserId(portal.getUserId(httpServletRequest));
 
+				if (messageContext != null) {
+					SAMLBindingContext samlBindingContext =
+						messageContext.getSubcontext(SAMLBindingContext.class);
+
+					samlSloContext.setRelayState(
+						samlBindingContext.getRelayState());
+				}
+
 				httpSession.setAttribute(
 					SamlWebKeys.SAML_SLO_CONTEXT, samlSloContext);
 			}
@@ -1262,6 +1270,11 @@ public class SingleLogoutProfileImpl
 		outboundMessageContext.setMessage(logoutResponse);
 
 		outboundMessageContext.addSubcontext(samlPeerEntityContext);
+
+		samlBindingContext = outboundMessageContext.getSubcontext(
+			SAMLBindingContext.class, true);
+
+		samlBindingContext.setRelayState(samlSloContext.getRelayState());
 
 		SecurityParametersContext securityParametersContext =
 			outboundMessageContext.getSubcontext(
