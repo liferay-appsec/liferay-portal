@@ -3789,7 +3789,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		sendPasswordNotification(
 			user, companyId, null, passwordResetURL, fromName, fromAddress,
-			subject, body, serviceContext);
+			subject, body);
 
 		return false;
 	}
@@ -4878,10 +4878,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		if (!silentUpdate) {
 			user.setPasswordModified(false);
-
-			sendPasswordNotification(
-				user, user.getCompanyId(), password1, null, null, null, null,
-				null, serviceContext);
 		}
 
 		_invalidateTicket(user);
@@ -6259,10 +6255,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			"Unable to fix the search index after 10 attempts");
 	}
 
-	protected void sendPasswordNotification(
+	public void sendPasswordNotification(
 		User user, long companyId, String newPassword, String passwordResetURL,
-		String fromName, String fromAddress, String subject, String body,
-		ServiceContext serviceContext) {
+		String fromName, String fromAddress, String subject, String body) {
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
 
 		if (Validator.isNull(fromName)) {
 			fromName = PrefsPropsUtil.getString(

@@ -303,17 +303,21 @@ public class UpdatePasswordAction implements Action {
 			login = String.valueOf(userId);
 		}
 
-		AuthenticatedSessionManagerUtil.login(
-			httpServletRequest, httpServletResponse, login, password1, false,
-			null);
-
 		try {
 			boolean currentValidate = isValidatePassword(httpServletRequest);
 
 			PwdToolkitUtilThreadLocal.setValidate(currentValidate);
 
-			UserLocalServiceUtil.updatePassword(
+			User userUpdated = UserLocalServiceUtil.updatePassword(
 				userId, password1, password2, passwordReset);
+
+			AuthenticatedSessionManagerUtil.login(
+				httpServletRequest, httpServletResponse, login, password1, false,
+				null);
+
+			UserLocalServiceUtil.sendPasswordNotification(
+				userUpdated, userUpdated.getCompanyId(), password1, null, null, null, null,
+				null);
 		}
 		finally {
 			PwdToolkitUtilThreadLocal.setValidate(previousValidate);
