@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlWebKeys;
@@ -610,6 +611,13 @@ public class SingleLogoutProfileImpl
 
 		MessageContext<LogoutRequest> outboundMessageContext =
 			inOutOperationContext.getOutboundMessageContext();
+
+		SAMLBindingContext samlBindingContext =
+			outboundMessageContext.getSubcontext(
+				SAMLBindingContext.class, true);
+
+		samlBindingContext.setRelayState(
+			_portal.getPortalURL(httpServletRequest));
 
 		outboundMessageContext.setMessage(logoutRequest);
 
@@ -1416,6 +1424,9 @@ public class SingleLogoutProfileImpl
 
 	@Reference
 	private HttpClient _httpClient;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private SamlHttpRequestUtil _samlHttpRequestUtil;
