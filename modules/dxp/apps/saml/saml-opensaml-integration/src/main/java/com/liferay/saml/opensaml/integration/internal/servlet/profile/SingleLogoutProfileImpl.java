@@ -1124,11 +1124,22 @@ public class SingleLogoutProfileImpl
 			terminateSpSession(httpServletRequest, httpServletResponse);
 		}
 
-		String redirect = StringBundler.concat(
-			portal.getPortalURL(httpServletRequest), portal.getPathMain(),
-			"/portal/logout");
+		String relayState = ParamUtil.getString(
+			httpServletRequest, "RelayState");
 
-		httpServletResponse.sendRedirect(redirect);
+		if (Validator.isNotNull(relayState)) {
+			httpServletResponse.sendRedirect(
+				_portal.escapeRedirect(
+					StringBundler.concat(
+						portal.escapeRedirect(relayState), portal.getPathMain(),
+						"/portal/logout")));
+		}
+		else {
+			httpServletResponse.sendRedirect(
+				StringBundler.concat(
+					portal.getPortalURL(httpServletRequest),
+					portal.getPathMain(), "/portal/logout"));
+		}
 	}
 
 	private void _sendAsyncLogoutRequest(
