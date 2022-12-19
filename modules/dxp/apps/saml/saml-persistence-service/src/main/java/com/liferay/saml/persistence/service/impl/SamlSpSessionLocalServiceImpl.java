@@ -115,6 +115,7 @@ public class SamlSpSessionLocalServiceImpl
 			samlSpSessionKey);
 	}
 
+	@Deprecated
 	@Override
 	public SamlSpSession fetchSamlSpSessionBySessionIndex(
 		long companyId, String sessionIndex) {
@@ -123,7 +124,19 @@ public class SamlSpSessionLocalServiceImpl
 			return null;
 		}
 
-		return samlSpSessionPersistence.fetchByC_SI(companyId, sessionIndex);
+		return samlSpSessionPersistence.fetchByC_SI_First(
+			companyId, sessionIndex, null);
+	}
+
+	@Override
+	public List<SamlSpSession> fetchSamlSpSessionsBySessionIndex(
+		long companyId, String sessionIndex) {
+
+		if (Validator.isNull(sessionIndex)) {
+			return null;
+		}
+
+		return samlSpSessionPersistence.findByC_SI(companyId, sessionIndex);
 	}
 
 	@Override
@@ -151,7 +164,8 @@ public class SamlSpSessionLocalServiceImpl
 			throw new NoSuchSpSessionException(sessionIndex);
 		}
 
-		return samlSpSessionPersistence.findByC_SI(companyId, sessionIndex);
+		return samlSpSessionPersistence.findByC_SI_First(
+			companyId, sessionIndex, null);
 	}
 
 	@Override
