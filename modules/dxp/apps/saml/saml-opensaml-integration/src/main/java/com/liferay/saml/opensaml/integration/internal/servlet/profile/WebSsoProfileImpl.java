@@ -615,9 +615,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected Subject getSuccessSubject(
-		SamlSsoRequestContext samlSsoRequestContext,
-		AssertionConsumerService assertionConsumerService, NameID nameID,
-		SubjectConfirmationData subjectConfirmationData) {
+		NameID nameID, SubjectConfirmationData subjectConfirmationData) {
 
 		SubjectConfirmation subjectConfirmation =
 			OpenSamlUtil.buildSubjectConfirmation();
@@ -1249,9 +1247,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		assertion.setSubject(
-			getSuccessSubject(
-				samlSsoRequestContext, assertionConsumerService, nameID,
-				subjectConfirmationData));
+			getSuccessSubject(nameID, subjectConfirmationData));
 		assertion.setVersion(SAMLVersion.VERSION_20);
 
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
