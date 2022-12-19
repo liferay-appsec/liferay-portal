@@ -215,8 +215,13 @@ public interface SamlSpSessionLocalService
 	public SamlSpSession fetchSamlSpSessionBySamlSpSessionKey(
 		String samlSpSessionKey);
 
+	@Deprecated
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public SamlSpSession fetchSamlSpSessionBySessionIndex(
+		long companyId, String sessionIndex);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<SamlSpSession> fetchSamlSpSessionsBySessionIndex(
 		long companyId, String sessionIndex);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

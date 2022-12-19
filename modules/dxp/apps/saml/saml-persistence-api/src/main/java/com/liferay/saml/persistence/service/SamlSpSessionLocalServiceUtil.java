@@ -238,10 +238,18 @@ public class SamlSpSessionLocalServiceUtil {
 			samlSpSessionKey);
 	}
 
+	@Deprecated
 	public static SamlSpSession fetchSamlSpSessionBySessionIndex(
 		long companyId, String sessionIndex) {
 
 		return getService().fetchSamlSpSessionBySessionIndex(
+			companyId, sessionIndex);
+	}
+
+	public static List<SamlSpSession> fetchSamlSpSessionsBySessionIndex(
+		long companyId, String sessionIndex) {
+
+		return getService().fetchSamlSpSessionsBySessionIndex(
 			companyId, sessionIndex);
 	}
 
