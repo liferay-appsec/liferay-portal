@@ -2691,6 +2691,16 @@ public class UserLocalServiceWrapper
 	}
 
 	@Override
+	public void sendPasswordNotification(
+		User user, long companyId, String newPassword, String passwordResetURL,
+		String fromName, String fromAddress, String subject, String body) {
+
+		_userLocalService.sendPasswordNotification(
+			user, companyId, newPassword, passwordResetURL, fromName,
+			fromAddress, subject, body);
+	}
+
+	@Override
 	public void setGroupUsers(long groupId, long[] userIds) {
 		_userLocalService.setGroupUsers(groupId, userIds);
 	}

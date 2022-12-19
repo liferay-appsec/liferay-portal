@@ -320,6 +320,9 @@ public class UpdatePasswordAction implements Action {
 		AuthenticatedSessionManagerUtil.login(
 			httpServletRequest, httpServletResponse, login, password1, false,
 			null);
+
+		UserLocalServiceUtil.sendPasswordNotification(
+			user, user.getCompanyId(), password1, null, null, null, null, null);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

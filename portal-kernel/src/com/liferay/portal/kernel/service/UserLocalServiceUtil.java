@@ -2450,6 +2450,15 @@ public class UserLocalServiceUtil {
 		return getService().sendPasswordByUserId(userId);
 	}
 
+	public static void sendPasswordNotification(
+		User user, long companyId, String newPassword, String passwordResetURL,
+		String fromName, String fromAddress, String subject, String body) {
+
+		getService().sendPasswordNotification(
+			user, companyId, newPassword, passwordResetURL, fromName,
+			fromAddress, subject, body);
+	}
+
 	public static void setGroupUsers(long groupId, long[] userIds) {
 		getService().setGroupUsers(groupId, userIds);
 	}

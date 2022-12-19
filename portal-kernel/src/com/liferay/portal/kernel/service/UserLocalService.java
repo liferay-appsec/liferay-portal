@@ -1981,6 +1981,10 @@ public interface UserLocalService
 	 */
 	public boolean sendPasswordByUserId(long userId) throws PortalException;
 
+	public void sendPasswordNotification(
+		User user, long companyId, String newPassword, String passwordResetURL,
+		String fromName, String fromAddress, String subject, String body);
+
 	public void setGroupUsers(long groupId, long[] userIds);
 
 	public void setOrganizationUsers(long organizationId, long[] userIds);
