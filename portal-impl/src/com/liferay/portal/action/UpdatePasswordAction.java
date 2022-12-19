@@ -129,23 +129,25 @@ public class UpdatePasswordAction implements Action {
 		}
 		catch (Exception exception) {
 			if (exception instanceof UserPasswordException) {
-
 				SessionErrors.add(
 					httpServletRequest, exception.getClass(), exception);
 
 				return actionMapping.getActionForward("portal.update_password");
-			} else if (exception instanceof AuthException) {
-
+			}
+			else if (exception instanceof AuthException) {
 				if (exception.getCause() instanceof LDAPAuthException) {
+					LDAPAuthException ldapAuthException =
+						(LDAPAuthException)exception.getCause();
 
-					LDAPAuthException lae = (LDAPAuthException) exception.getCause();
+					SessionErrors.add(
+						httpServletRequest, ldapAuthException.getClass(),
+						ldapAuthException);
 
-				    SessionErrors.add(httpServletRequest, lae.getClass(), lae);
-
-					return actionMapping.getActionForward("portal.update_password");
+					return actionMapping.getActionForward(
+						"portal.update_password");
 				}
-
-			} else if (exception instanceof NoSuchUserException ||
+			}
+			else if (exception instanceof NoSuchUserException ||
 					 exception instanceof PrincipalException) {
 
 				SessionErrors.add(httpServletRequest, exception.getClass());
@@ -312,12 +314,12 @@ public class UpdatePasswordAction implements Action {
 				userId, password1, password2, passwordReset);
 
 			AuthenticatedSessionManagerUtil.login(
-				httpServletRequest, httpServletResponse, login, password1, false,
-				null);
+				httpServletRequest, httpServletResponse, login, password1,
+				false, null);
 
 			UserLocalServiceUtil.sendPasswordNotification(
-				userUpdated, userUpdated.getCompanyId(), password1, null, null, null, null,
-				null);
+				userUpdated, userUpdated.getCompanyId(), password1, null, null,
+				null, null, null);
 		}
 		finally {
 			PwdToolkitUtilThreadLocal.setValidate(previousValidate);

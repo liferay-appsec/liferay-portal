@@ -3883,6 +3883,101 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			ServiceContextThreadLocal.getServiceContext());
 	}
 
+	public void sendPasswordNotification(
+		User user, long companyId, String newPassword, String passwordResetURL,
+		String fromName, String fromAddress, String subject, String body) {
+
+		if (Validator.isNull(fromName)) {
+			fromName = PrefsPropsUtil.getString(
+				companyId, PropsKeys.ADMIN_EMAIL_FROM_NAME);
+		}
+
+		if (Validator.isNull(fromAddress)) {
+			fromAddress = PrefsPropsUtil.getString(
+				companyId, PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
+		}
+
+		String toName = user.getFullName();
+		String toAddress = user.getEmailAddress();
+
+		PortletPreferences companyPortletPreferences =
+			PrefsPropsUtil.getPreferences(companyId, true);
+
+		String bodyProperty = null;
+		String prefix = null;
+		String subjectProperty = null;
+
+		if (Validator.isNotNull(passwordResetURL)) {
+			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_RESET_BODY;
+			prefix = "adminEmailPasswordReset";
+			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_RESET_SUBJECT;
+		}
+		else {
+			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_BODY;
+			prefix = "adminEmailPasswordChanged";
+			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_SUBJECT;
+		}
+
+		String localizedBody = body;
+
+		if (Validator.isNull(body)) {
+			Map<Locale, String> localizedBodyMap =
+				LocalizationUtil.getLocalizationMap(
+					companyPortletPreferences, prefix + "Body", bodyProperty);
+
+			localizedBody = _getLocalizedValue(
+				localizedBodyMap, user.getLocale(), LocaleUtil.getDefault());
+		}
+
+		String localizedSubject = subject;
+
+		if (Validator.isNull(subject)) {
+			Map<Locale, String> localizedSubjectMap =
+				LocalizationUtil.getLocalizationMap(
+					companyPortletPreferences, prefix + "Subject",
+					subjectProperty);
+
+			localizedSubject = _getLocalizedValue(
+				localizedSubjectMap, user.getLocale(), LocaleUtil.getDefault());
+		}
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		MailTemplateContextBuilder mailTemplateContextBuilder =
+			MailTemplateFactoryUtil.createMailTemplateContextBuilder();
+
+		mailTemplateContextBuilder.put("[$FROM_ADDRESS$]", fromAddress);
+		mailTemplateContextBuilder.put(
+			"[$FROM_NAME$]", HtmlUtil.escape(fromName));
+		mailTemplateContextBuilder.put(
+			"[$PASSWORD_RESET_URL$]", passwordResetURL);
+		mailTemplateContextBuilder.put(
+			"[$PORTAL_URL$]", serviceContext.getPortalURL());
+		mailTemplateContextBuilder.put(
+			"[$REMOTE_ADDRESS$]", serviceContext.getRemoteAddr());
+		mailTemplateContextBuilder.put(
+			"[$REMOTE_HOST$]", HtmlUtil.escape(serviceContext.getRemoteHost()));
+		mailTemplateContextBuilder.put("[$TO_ADDRESS$]", toAddress);
+		mailTemplateContextBuilder.put("[$TO_NAME$]", HtmlUtil.escape(toName));
+		mailTemplateContextBuilder.put(
+			"[$USER_ID$]", String.valueOf(user.getUserId()));
+		mailTemplateContextBuilder.put(
+			"[$USER_SCREENNAME$]", HtmlUtil.escape(user.getScreenName()));
+
+		MailTemplateContext mailTemplateContext =
+			mailTemplateContextBuilder.build();
+
+		try {
+			_sendNotificationEmail(
+				fromAddress, fromName, toAddress, user, localizedSubject,
+				localizedBody, mailTemplateContext);
+		}
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
+		}
+	}
+
 	/**
 	 * Sets the users in the role, removing and adding users to the role as
 	 * necessary.
@@ -4813,11 +4908,11 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			trackPassword(user);
 		}
 
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
 		if (!silentUpdate || (user.getPasswordModifiedDate() == null) ||
 			!_isPasswordUnchanged(user, password1, newEncPwd)) {
+
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
 
 			Date modifiedDate = null;
 
@@ -6253,101 +6348,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		throw new SearchException(
 			"Unable to fix the search index after 10 attempts");
-	}
-
-	public void sendPasswordNotification(
-		User user, long companyId, String newPassword, String passwordResetURL,
-		String fromName, String fromAddress, String subject, String body) {
-
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
-		if (Validator.isNull(fromName)) {
-			fromName = PrefsPropsUtil.getString(
-				companyId, PropsKeys.ADMIN_EMAIL_FROM_NAME);
-		}
-
-		if (Validator.isNull(fromAddress)) {
-			fromAddress = PrefsPropsUtil.getString(
-				companyId, PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
-		}
-
-		String toName = user.getFullName();
-		String toAddress = user.getEmailAddress();
-
-		PortletPreferences companyPortletPreferences =
-			PrefsPropsUtil.getPreferences(companyId, true);
-
-		String bodyProperty = null;
-		String prefix = null;
-		String subjectProperty = null;
-
-		if (Validator.isNotNull(passwordResetURL)) {
-			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_RESET_BODY;
-			prefix = "adminEmailPasswordReset";
-			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_RESET_SUBJECT;
-		}
-		else {
-			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_BODY;
-			prefix = "adminEmailPasswordChanged";
-			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_SUBJECT;
-		}
-
-		String localizedBody = body;
-
-		if (Validator.isNull(body)) {
-			Map<Locale, String> localizedBodyMap =
-				LocalizationUtil.getLocalizationMap(
-					companyPortletPreferences, prefix + "Body", bodyProperty);
-
-			localizedBody = _getLocalizedValue(
-				localizedBodyMap, user.getLocale(), LocaleUtil.getDefault());
-		}
-
-		String localizedSubject = subject;
-
-		if (Validator.isNull(subject)) {
-			Map<Locale, String> localizedSubjectMap =
-				LocalizationUtil.getLocalizationMap(
-					companyPortletPreferences, prefix + "Subject",
-					subjectProperty);
-
-			localizedSubject = _getLocalizedValue(
-				localizedSubjectMap, user.getLocale(), LocaleUtil.getDefault());
-		}
-
-		MailTemplateContextBuilder mailTemplateContextBuilder =
-			MailTemplateFactoryUtil.createMailTemplateContextBuilder();
-
-		mailTemplateContextBuilder.put("[$FROM_ADDRESS$]", fromAddress);
-		mailTemplateContextBuilder.put(
-			"[$FROM_NAME$]", HtmlUtil.escape(fromName));
-		mailTemplateContextBuilder.put(
-			"[$PASSWORD_RESET_URL$]", passwordResetURL);
-		mailTemplateContextBuilder.put(
-			"[$PORTAL_URL$]", serviceContext.getPortalURL());
-		mailTemplateContextBuilder.put(
-			"[$REMOTE_ADDRESS$]", serviceContext.getRemoteAddr());
-		mailTemplateContextBuilder.put(
-			"[$REMOTE_HOST$]", HtmlUtil.escape(serviceContext.getRemoteHost()));
-		mailTemplateContextBuilder.put("[$TO_ADDRESS$]", toAddress);
-		mailTemplateContextBuilder.put("[$TO_NAME$]", HtmlUtil.escape(toName));
-		mailTemplateContextBuilder.put(
-			"[$USER_ID$]", String.valueOf(user.getUserId()));
-		mailTemplateContextBuilder.put(
-			"[$USER_SCREENNAME$]", HtmlUtil.escape(user.getScreenName()));
-
-		MailTemplateContext mailTemplateContext =
-			mailTemplateContextBuilder.build();
-
-		try {
-			_sendNotificationEmail(
-				fromAddress, fromName, toAddress, user, localizedSubject,
-				localizedBody, mailTemplateContext);
-		}
-		catch (PortalException portalException) {
-			ReflectionUtil.throwException(portalException);
-		}
 	}
 
 	protected void setEmailAddress(

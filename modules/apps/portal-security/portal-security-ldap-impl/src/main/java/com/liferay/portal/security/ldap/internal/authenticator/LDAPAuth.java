@@ -232,12 +232,12 @@ public class LDAPAuth implements Authenticator {
 				_setFailedLDAPAuthResult(env, ldapAuthResult);
 
 				if (authenticationException) {
-					AuthException ldapAuthException = new LDAPAuthException();
+					AuthException authException = new LDAPAuthException();
 
-					ldapAuthException.setType(
+					authException.setType(
 						LDAPAuthException.INVALID_CREDENTIALS);
 
-					throw ldapAuthException;
+					throw authException;
 				}
 			}
 			finally {

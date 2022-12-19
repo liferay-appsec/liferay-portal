@@ -28,12 +28,12 @@ public class LDAPAuthException extends AuthException {
 		super(msg);
 	}
 
-	public LDAPAuthException(String msg, Throwable cause) {
-		super(msg, cause);
+	public LDAPAuthException(String msg, Throwable throwable) {
+		super(msg, throwable);
 	}
 
-	public LDAPAuthException(Throwable cause) {
-		super(cause);
+	public LDAPAuthException(Throwable throwable) {
+		super(throwable);
 	}
 
 }
