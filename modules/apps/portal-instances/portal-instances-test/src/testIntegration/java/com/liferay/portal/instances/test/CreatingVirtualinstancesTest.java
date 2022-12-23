@@ -77,7 +77,7 @@ public class CreatingVirtualinstancesTest {
 		String lastNameAdminUser = PropsValues.DEFAULT_ADMIN_LAST_NAME;
 
 		Company company = _companyService.addCompany(
-			webId, virtualHostname, mx, false, maxUsers, active, null, null,
+			webId, virtualHostname, mx, maxUsers, active, null, null,
 			null, null, null);
 
 		User user = _userService.getUserByScreenName(
@@ -121,7 +121,7 @@ public class CreatingVirtualinstancesTest {
 		String lastNameAdminUser = PropsValues.DEFAULT_ADMIN_LAST_NAME;
 
 		Company company = _companyService.addCompany(
-			webId, virtualHostname, mx, false, maxUsers, active, null, null,
+			webId, virtualHostname, mx, maxUsers, active, null, null,
 			null, null, null);
 
 		User user = _userService.getUserByScreenName(
@@ -163,7 +163,7 @@ public class CreatingVirtualinstancesTest {
 		String lastNameAdminUser = RandomTestUtil.randomString();
 
 		Company company = _companyService.addCompany(
-			webId, virtualHostname, mx, false, maxUsers, active,
+			webId, virtualHostname, mx, maxUsers, active,
 			screenNameAdminUser, emailAdminUser, passwordAdminUser,
 			firstNameAdminUser, lastNameAdminUser);
 
