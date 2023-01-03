@@ -17,7 +17,10 @@ package com.liferay.account.internal.security.permission.wrapper;
 import com.liferay.account.constants.AccountActionKeys;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryUserRel;
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
+import com.liferay.account.validator.AccountEntryEmailAddressValidator;
+import com.liferay.account.validator.AccountEntryEmailAddressValidatorFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -42,6 +45,9 @@ public class UserPermissionCheckerWrapper extends PermissionCheckerWrapper {
 
 	public UserPermissionCheckerWrapper(
 		PermissionChecker permissionChecker,
+		AccountEntryEmailAddressValidatorFactory
+			accountEntryEmailAddressValidatorFactory,
+		AccountEntryLocalService accountEntryLocalService,
 		ModelResourcePermission<AccountEntry>
 			accountEntryModelResourcePermission,
 		AccountEntryUserRelLocalService accountEntryUserRelLocalService,
@@ -50,6 +56,9 @@ public class UserPermissionCheckerWrapper extends PermissionCheckerWrapper {
 		super(permissionChecker);
 
 		_permissionChecker = permissionChecker;
+		_accountEntryEmailAddressValidatorFactory =
+			accountEntryEmailAddressValidatorFactory;
+		_accountEntryLocalService = accountEntryLocalService;
 		_accountEntryModelResourcePermission =
 			accountEntryModelResourcePermission;
 		_accountEntryUserRelLocalService = accountEntryUserRelLocalService;
@@ -124,7 +133,23 @@ public class UserPermissionCheckerWrapper extends PermissionCheckerWrapper {
 					_accountEntryUserRelLocalService.
 						getAccountEntryUserRelsByAccountUserId(primKey)) {
 
-				if (_accountEntryModelResourcePermission.contains(
+				AccountEntry accountEntry =
+					_accountEntryLocalService.fetchAccountEntry(
+						accountEntryUserRel.getAccountEntryId());
+
+				if (accountEntry == null) {
+					continue;
+				}
+
+				AccountEntryEmailAddressValidator
+					accountEntryEmailAddressValidator =
+						_accountEntryEmailAddressValidatorFactory.create(
+							accountEntryUserRel.getCompanyId(),
+							accountEntry.getDomainsArray());
+
+				if (accountEntryEmailAddressValidator.isValidDomainStrict(
+						user.getEmailAddress()) &&
+					_accountEntryModelResourcePermission.contains(
 						_permissionChecker,
 						accountEntryUserRel.getAccountEntryId(),
 						AccountActionKeys.IMPERSONATE_USERS)) {
@@ -145,6 +170,9 @@ public class UserPermissionCheckerWrapper extends PermissionCheckerWrapper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		UserPermissionCheckerWrapper.class);
 
+	private final AccountEntryEmailAddressValidatorFactory
+		_accountEntryEmailAddressValidatorFactory;
+	private final AccountEntryLocalService _accountEntryLocalService;
 	private volatile ModelResourcePermission<AccountEntry>
 		_accountEntryModelResourcePermission;
 	private final AccountEntryUserRelLocalService

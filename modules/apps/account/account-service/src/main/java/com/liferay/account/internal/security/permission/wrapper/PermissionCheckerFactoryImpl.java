@@ -15,7 +15,9 @@
 package com.liferay.account.internal.security.permission.wrapper;
 
 import com.liferay.account.model.AccountEntry;
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
+import com.liferay.account.validator.AccountEntryEmailAddressValidatorFactory;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.wrapper.PermissionCheckerWrapperFactory;
@@ -41,9 +43,17 @@ public class PermissionCheckerFactoryImpl
 		PermissionChecker permissionChecker) {
 
 		return new UserPermissionCheckerWrapper(
-			permissionChecker, _accountEntryModelResourcePermission,
+			permissionChecker, _accountEntryEmailAddressValidatorFactory,
+			_accountEntryLocalService, _accountEntryModelResourcePermission,
 			_accountEntryUserRelLocalService, _userLocalService);
 	}
+
+	@Reference
+	private AccountEntryEmailAddressValidatorFactory
+		_accountEntryEmailAddressValidatorFactory;
+
+	@Reference
+	private AccountEntryLocalService _accountEntryLocalService;
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,
