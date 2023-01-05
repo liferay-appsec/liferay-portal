@@ -125,10 +125,27 @@ public class UserPermissionCheckerWrapperTest {
 						SettingsFactoryUtil.getSettingsFactory())) {
 
 			_accountEntryLocalService.updateDomains(
+				accountEntry.getAccountEntryId(), new String[] {"test.com"});
+
+			_assertHasImpersonatePermission(
+				false, permissionChecker, user.getUserId());
+
+			_accountEntryLocalService.updateDomains(
 				accountEntry.getAccountEntryId(), new String[] {"liferay.com"});
 
 			_assertHasImpersonatePermission(
 				true, permissionChecker, user.getUserId());
+
+			User userWithDifferentAccount = UserTestUtil.addUser();
+
+			_assertHasImpersonatePermission(
+				false, permissionChecker, userWithDifferentAccount.getUserId());
+
+			AccountEntryTestUtil.addAccountEntry(
+				AccountEntryArgs.withUsers(userWithDifferentAccount));
+
+			_assertHasImpersonatePermission(
+				false, permissionChecker, userWithDifferentAccount.getUserId());
 		}
 	}
 
