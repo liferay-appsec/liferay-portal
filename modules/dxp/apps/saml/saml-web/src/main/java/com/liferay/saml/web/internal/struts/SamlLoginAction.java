@@ -102,14 +102,20 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 			Collectors.toList()
 		);
 
-		if (samlSpIdpConnections.isEmpty()) {
-			SamlProviderConfiguration samlProviderConfiguration =
-				_samlProviderConfigurationHelper.getSamlProviderConfiguration();
+		SamlProviderConfiguration samlProviderConfiguration =
+			_samlProviderConfigurationHelper.getSamlProviderConfiguration();
 
-			if (samlProviderConfiguration.allowShowingTheLoginPortlet()) {
-				return null;
-			}
+		if (samlSpIdpConnections.isEmpty() &&
+			samlProviderConfiguration.allowShowingTheLoginPortlet()) {
+
+			return null;
 		}
+
+		String idpRedirectMessage =
+			samlProviderConfiguration.idpRedirectMessage();
+
+		httpServletRequest.setAttribute(
+			SamlWebKeys.SAML_IDP_REDIRECT_MESSAGE, idpRedirectMessage);
 
 		httpServletRequest.setAttribute(
 			SamlWebKeys.SAML_SSO_LOGIN_CONTEXT,
@@ -118,7 +124,8 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		JspUtil.dispatch(
 			httpServletRequest, httpServletResponse,
 			"/portal/saml/select_idp.jsp",
-			"please-select-your-identity-provider", false);
+			"please-select-your-identity-provider",
+			Validator.isNull(idpRedirectMessage));
 
 		return null;
 	}
