@@ -26,6 +26,8 @@
 
 		<aui:input helpMessage="saml-sp-clock-skew-description" label="saml-sp-clock-skew" name='<%= "settings--" + PortletPropsKeys.SAML_SP_CLOCK_SKEW + "--" %>' value="<%= samlProviderConfiguration.clockSkew() %>" />
 
+		<aui:input helpMessage="saml-idp-redirect-message-description" label="saml-idp-redirect-message" name='<%= "settings--" + PortletPropsKeys.SAML_IDP_REDIRECT_MESSAGE + "--" %>' value="<%= samlProviderConfiguration.idpRedirectMessage() %>" />
+
 		<aui:input helpMessage="saml-sp-ldap-import-enabled-description" label="saml-sp-ldap-import-enabled" name='<%= "settings--" + PortletPropsKeys.SAML_SP_LDAP_IMPORT_ENABLED + "--" %>' type="checkbox" value="<%= samlProviderConfiguration.ldapImportEnabled() %>" />
 
 		<aui:input helpMessage="saml-sp-sign-authn-request-description" label="saml-sp-sign-authn-request" name='<%= "settings--" + PortletPropsKeys.SAML_SP_SIGN_AUTHN_REQUEST + "--" %>' type="checkbox" value="<%= samlProviderConfiguration.signAuthnRequest() %>" />

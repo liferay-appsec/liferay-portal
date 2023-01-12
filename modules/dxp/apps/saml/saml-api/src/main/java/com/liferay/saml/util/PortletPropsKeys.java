@@ -56,6 +56,9 @@ public interface PortletPropsKeys {
 	public static final String SAML_IDP_METADATA_SESSION_KEEP_ALIVE_URL =
 		"saml.idp.metadata.session.keepalive.url";
 
+	public static final String SAML_IDP_REDIRECT_MESSAGE =
+		"saml.idp.redirect.message";
+
 	public static final String SAML_IDP_SESSION_MAXIMUM_AGE =
 		"saml.idp.session.maximum.age";
 
