@@ -88,6 +88,14 @@ public interface SamlProviderConfiguration {
 	public String entityId();
 
 	@Meta.AD(
+		deflt = "redirecting-to-your-identity-provider",
+		description = "saml-idp-redirect-message-description",
+		id = "saml.idp.redirect.message", name = "saml-idp-redirect-message",
+		required = false
+	)
+	public String idpRedirectMessage();
+
+	@Meta.AD(
 		description = "saml-sp-ldap-import-enabled-description",
 		id = "saml.sp.ldap.import.enabled",
 		name = "saml-sp-ldap-import-enabled", required = false
