@@ -15,12 +15,16 @@
 package com.liferay.portal.security.audit.event.generators.user.management.internal.model.listener;
 
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -69,6 +73,8 @@ public class UserModelListener extends BaseModelListener<User> {
 
 	protected void auditOnCreateOrRemove(String eventType, User user)
 		throws ModelListenerException {
+
+		setAuditRequestThreadLocalProperties();
 
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
@@ -119,7 +125,27 @@ public class UserModelListener extends BaseModelListener<User> {
 		return attributes;
 	}
 
+	protected void setAuditRequestThreadLocalProperties() {
+		long userId = 0;
+
+		if (PrincipalThreadLocal.getName() != null) {
+			userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
+		}
+
+		User user = _userLocalService.fetchUser(userId);
+
+		if (user != null) {
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			auditRequestThreadLocal.setRealUserId(userId);
+		}
+	}
+
 	@Reference
 	private AuditRouter _auditRouter;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

@@ -15,6 +15,7 @@
 package com.liferay.portal.security.audit.event.generators.user.management.internal.model.listener;
 
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.change.tracking.CTTransactionException;
 import com.liferay.portal.kernel.exception.ModelListenerException;
@@ -24,8 +25,11 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -109,6 +113,8 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 			return;
 		}
 
+		setAuditRequestThreadLocalProperties();
+
 		try {
 			AuditMessage auditMessage = null;
 
@@ -148,6 +154,8 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 	protected void auditOnCreateOrRemove(String eventType, UserGroup userGroup)
 		throws ModelListenerException {
 
+		setAuditRequestThreadLocalProperties();
+
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				eventType, UserGroup.class.getName(),
@@ -175,6 +183,23 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 		return attributesBuilder.getAttributes();
 	}
 
+	protected void setAuditRequestThreadLocalProperties() {
+		long userId = 0;
+
+		if (PrincipalThreadLocal.getName() != null) {
+			userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
+		}
+
+		User user = _userLocalService.fetchUser(userId);
+
+		if (user != null) {
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			auditRequestThreadLocal.setRealUserId(userId);
+		}
+	}
+
 	@Reference
 	private AuditRouter _auditRouter;
 
@@ -183,5 +208,8 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 
 	@Reference
 	private UserGroupLocalService _userGroupLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }
