@@ -27,6 +27,11 @@ import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 
 import java.util.List;
 
@@ -104,6 +109,8 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 			return;
 		}
 
+		setAuditRequestThreadLocalProperties();
+
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				eventType, associationClassName, (Long)associationClassPK,
@@ -133,6 +140,8 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 			String eventType, Organization organization)
 		throws ModelListenerException {
 
+		setAuditRequestThreadLocalProperties();
+
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				eventType, Organization.class.getName(),
@@ -160,10 +169,28 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 		return attributesBuilder.getAttributes();
 	}
 
+	protected void setAuditRequestThreadLocalProperties() {
+		long userId = 0;
+
+		if (PrincipalThreadLocal.getName() != null) {
+			userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
+		}
+
+		User user = _userLocalService.fetchUser(userId);
+
+		if (user != null) {
+			AuditRequestThreadLocal auditRequestThreadLocal = AuditRequestThreadLocal.getAuditThreadLocal();
+			auditRequestThreadLocal.setRealUserId(userId);
+		}
+	}
+
 	@Reference
 	private AuditRouter _auditRouter;
 
 	@Reference
 	private OrganizationLocalService _organizationLocalService;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }
