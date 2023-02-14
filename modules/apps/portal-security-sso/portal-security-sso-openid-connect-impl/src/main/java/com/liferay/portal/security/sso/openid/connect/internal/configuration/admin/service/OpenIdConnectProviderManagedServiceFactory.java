@@ -148,8 +148,15 @@ public class OpenIdConnectProviderManagedServiceFactory
 		if (companyId == CompanyConstants.SYSTEM) {
 			try {
 				_companyLocalService.forEachCompanyId(
-					curCompanyId -> _updateOAuthClientEntry(
-						curCompanyId, oldProviderName, properties));
+					curCompanyId -> {
+						try (SafeCloseable safeCloseable =
+								CompanyThreadLocal.setWithSafeCloseable(
+									companyId)) {
+
+							_updateOAuthClientEntry(
+								curCompanyId, oldProviderName, properties);
+						}
+					});
 			}
 			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
@@ -193,8 +200,15 @@ public class OpenIdConnectProviderManagedServiceFactory
 
 		try {
 			_companyLocalService.forEachCompanyId(
-				companyId -> _deleteOAuthClientEntry(
-					companyId, oldProviderName, properties));
+				companyId -> {
+					try (SafeCloseable safeCloseable =
+							CompanyThreadLocal.setWithSafeCloseable(
+								companyId)) {
+
+						_deleteOAuthClientEntry(
+							companyId, oldProviderName, properties);
+					}
+				});
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
