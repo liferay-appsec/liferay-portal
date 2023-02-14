@@ -82,17 +82,36 @@ public class OpenIdConnectProviderManagedServiceFactory
 		long companyId = GetterUtil.getLong(properties.get("companyId"));
 
 		if (companyId == CompanyConstants.SYSTEM) {
-			_deleteOAuthClientEntries(
-				_getPropertyAsString("providerName", properties), properties);
-		}
-		else {
-			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.setWithSafeCloseable(companyId)) {
+			try {
+				_companyLocalService.forEachCompanyId(
+					curCompanyId -> {
+						try (SafeCloseable safeCloseable =
+								CompanyThreadLocal.setWithSafeCloseable(
+									curCompanyId)) {
 
-				_deleteOAuthClientEntry(
-					companyId, _getPropertyAsString("providerName", properties),
-					properties);
+							_deleteOAuthClientEntry(
+								curCompanyId,
+								_getPropertyAsString(
+									"providerName", properties),
+								properties);
+						}
+					});
 			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+			}
+
+			return;
+		}
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setWithSafeCloseable(companyId)) {
+
+			_deleteOAuthClientEntry(
+				companyId, _getPropertyAsString("providerName", properties),
+				properties);
 		}
 	}
 
@@ -193,28 +212,6 @@ public class OpenIdConnectProviderManagedServiceFactory
 			deleteOAuthClientASLocalMetadata(localWellKnownURI);
 
 		return localWellKnownURI;
-	}
-
-	private void _deleteOAuthClientEntries(
-		String oldProviderName, Dictionary<String, ?> properties) {
-
-		try {
-			_companyLocalService.forEachCompanyId(
-				companyId -> {
-					try (SafeCloseable safeCloseable =
-							CompanyThreadLocal.setWithSafeCloseable(
-								companyId)) {
-
-						_deleteOAuthClientEntry(
-							companyId, oldProviderName, properties);
-					}
-				});
-		}
-		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
-			}
-		}
 	}
 
 	private void _deleteOAuthClientEntry(
