@@ -200,17 +200,15 @@ public class AuthVerifierFilter extends BasePortalFilter {
 				HttpServletResponse.SC_FORBIDDEN, "Authorization required");
 		}
 		else if (_guestAllowed || (state == AuthVerifierResult.State.SUCCESS)) {
-			long userId = authVerifierResult.getUserId();
-
-			AccessControlUtil.initContextUser(userId);
-
-			String authType = MapUtil.getString(
-				accessControlContext.getSettings(),
-				AuthVerifierPipeline.AUTH_TYPE);
-
 			AuthVerifierServletRequest authVerifierServletRequest =
 				new AuthVerifierServletRequest(
-					httpServletRequest, userId, authType);
+					httpServletRequest, authVerifierResult.getUserId(),
+					MapUtil.getString(
+						accessControlContext.getSettings(),
+						AuthVerifierPipeline.AUTH_TYPE));
+
+			AccessControlUtil.initContextUser(
+				PortalUtil.getUserId(authVerifierServletRequest));
 
 			accessControlContext.setRequest(authVerifierServletRequest);
 
