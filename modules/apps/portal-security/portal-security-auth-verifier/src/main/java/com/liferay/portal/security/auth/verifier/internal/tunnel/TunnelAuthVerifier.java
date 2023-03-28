@@ -29,7 +29,7 @@ import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthSupportConfiguration;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -118,15 +118,14 @@ public class TunnelAuthVerifier implements AuthVerifier {
 	}
 
 	protected boolean isEnabled(long companyId) {
-		TunnelAuthVerifierCompanyConfiguration
-			tunnelAuthVerifierCompanyConfiguration =
-				_getTunnelAuthVerifierCompanyConfiguration(companyId);
+		TunnelAuthSupportConfiguration tunnelAuthSupportConfiguration =
+			_getTunnelAuthSupportConfiguration(companyId);
 
-		if (tunnelAuthVerifierCompanyConfiguration == null) {
+		if (tunnelAuthSupportConfiguration == null) {
 			return false;
 		}
 
-		return tunnelAuthVerifierCompanyConfiguration.enabled();
+		return tunnelAuthSupportConfiguration.enabled();
 	}
 
 	protected String[] verify(HttpServletRequest httpServletRequest)
@@ -149,15 +148,15 @@ public class TunnelAuthVerifier implements AuthVerifier {
 		return credentials;
 	}
 
-	private TunnelAuthVerifierCompanyConfiguration
-		_getTunnelAuthVerifierCompanyConfiguration(long companyId) {
+	private TunnelAuthSupportConfiguration _getTunnelAuthSupportConfiguration(
+		long companyId) {
 
 		try {
 			return _configurationProvider.getConfiguration(
-				TunnelAuthVerifierCompanyConfiguration.class,
+				TunnelAuthSupportConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId, AuthVerifierConstants.TUNNEL_SERVICE_NAME,
-					TunnelAuthVerifierCompanyConfiguration.class.getName()));
+					TunnelAuthSupportConfiguration.class.getName()));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(

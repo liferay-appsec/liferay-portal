@@ -27,7 +27,7 @@ import com.liferay.portal.kernel.security.auto.login.AutoLoginException;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterSupportConfiguration;
 
 import java.util.Properties;
 
@@ -82,28 +82,27 @@ public class RequestParameterAuthVerifier implements AuthVerifier {
 	}
 
 	protected boolean isEnabled(long companyId) {
-		RequestParameterAuthVerifierCompanyConfiguration
-			requestParameterAuthVerifierCompanyConfiguration =
-				_getRequestParameterAuthVerifierCompanyConfiguration(companyId);
+		RequestParameterSupportConfiguration
+			requestParameterSupportConfiguration =
+				_getRequestParameterSupportConfiguration(companyId);
 
-		if (requestParameterAuthVerifierCompanyConfiguration == null) {
+		if (requestParameterSupportConfiguration == null) {
 			return false;
 		}
 
-		return requestParameterAuthVerifierCompanyConfiguration.enabled();
+		return requestParameterSupportConfiguration.enabled();
 	}
 
-	private RequestParameterAuthVerifierCompanyConfiguration
-		_getRequestParameterAuthVerifierCompanyConfiguration(long companyId) {
+	private RequestParameterSupportConfiguration
+		_getRequestParameterSupportConfiguration(long companyId) {
 
 		try {
 			return _configurationProvider.getConfiguration(
-				RequestParameterAuthVerifierCompanyConfiguration.class,
+				RequestParameterSupportConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId,
 					AuthVerifierConstants.REQUEST_PARAMETER_SERVICE_NAME,
-					RequestParameterAuthVerifierCompanyConfiguration.class.
-						getName()));
+					RequestParameterSupportConfiguration.class.getName()));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(

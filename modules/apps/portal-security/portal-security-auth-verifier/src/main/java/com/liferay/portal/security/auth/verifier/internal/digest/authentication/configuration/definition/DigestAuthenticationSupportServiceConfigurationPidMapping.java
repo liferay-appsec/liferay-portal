@@ -12,29 +12,31 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.definition;
+package com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.DigestAuthenticationSupportConfiguration;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
- * @author Avaro Saugar
+ * @author Alvaro Saugar
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
 @Component(service = ConfigurationPidMapping.class)
-public class TunnelAuthVerifierCompanyServiceConfigurationPidMapping
+@Deprecated
+public class DigestAuthenticationSupportServiceConfigurationPidMapping
 	implements ConfigurationPidMapping {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return TunnelAuthVerifierCompanyConfiguration.class;
+		return DigestAuthenticationSupportConfiguration.class;
 	}
 
 	@Override
 	public String getConfigurationPid() {
-		return AuthVerifierConstants.TUNNEL_SERVICE_NAME;
+		return AuthVerifierConstants.DIGEST_AUTHENTICATION_SERVICE_NAME;
 	}
 
 }

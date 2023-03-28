@@ -26,11 +26,11 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
-	id = "com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierCompanyConfiguration",
+	id = "com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionSupportConfiguration",
 	localization = "content/Language",
-	name = "portal-session-auth-verifier-configuration-name"
+	name = "portal-session-support-configuration-name"
 )
-public interface PortalSessionAuthVerifierCompanyConfiguration {
+public interface PortalSessionSupportConfiguration {
 
 	@Meta.AD(deflt = "true", name = "enabled", required = false)
 	public boolean enabled();

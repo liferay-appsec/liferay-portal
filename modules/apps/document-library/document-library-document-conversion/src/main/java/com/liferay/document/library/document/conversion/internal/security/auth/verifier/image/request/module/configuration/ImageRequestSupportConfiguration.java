@@ -12,7 +12,7 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration;
+package com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
@@ -26,11 +26,11 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
-	id = "com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterAuthVerifierCompanyConfiguration",
+	id = "com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestSupportConfiguration",
 	localization = "content/Language",
-	name = "request-parameter-auth-verifier-configuration-name"
+	name = "image-request-support-configuration-name"
 )
-public interface RequestParameterAuthVerifierCompanyConfiguration {
+public interface ImageRequestSupportConfiguration {
 
 	@Meta.AD(deflt = "true", name = "enabled", required = false)
 	public boolean enabled();

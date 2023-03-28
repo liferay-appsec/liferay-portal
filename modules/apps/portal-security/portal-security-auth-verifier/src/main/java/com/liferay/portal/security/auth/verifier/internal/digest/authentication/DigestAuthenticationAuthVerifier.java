@@ -31,7 +31,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.DigestAuthenticationAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.DigestAuthenticationSupportConfiguration;
 
 import java.util.Properties;
 
@@ -111,30 +111,27 @@ public class DigestAuthenticationAuthVerifier implements AuthVerifier {
 	}
 
 	protected boolean isEnabled(long companyId) {
-		DigestAuthenticationAuthVerifierCompanyConfiguration
-			digestAuthenticationAuthVerifierCompanyConfiguration =
-				_getDigestAuthenticationAuthVerifierCompanyConfiguration(
-					companyId);
+		DigestAuthenticationSupportConfiguration
+			digestAuthenticationSupportConfiguration =
+				_getDigestAuthenticationSupportConfiguration(companyId);
 
-		if (digestAuthenticationAuthVerifierCompanyConfiguration == null) {
+		if (digestAuthenticationSupportConfiguration == null) {
 			return false;
 		}
 
-		return digestAuthenticationAuthVerifierCompanyConfiguration.enabled();
+		return digestAuthenticationSupportConfiguration.enabled();
 	}
 
-	private DigestAuthenticationAuthVerifierCompanyConfiguration
-		_getDigestAuthenticationAuthVerifierCompanyConfiguration(
-			long companyId) {
+	private DigestAuthenticationSupportConfiguration
+		_getDigestAuthenticationSupportConfiguration(long companyId) {
 
 		try {
 			return _configurationProvider.getConfiguration(
-				DigestAuthenticationAuthVerifierCompanyConfiguration.class,
+				DigestAuthenticationSupportConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId,
 					AuthVerifierConstants.DIGEST_AUTHENTICATION_SERVICE_NAME,
-					DigestAuthenticationAuthVerifierCompanyConfiguration.class.
-						getName()));
+					DigestAuthenticationSupportConfiguration.class.getName()));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(

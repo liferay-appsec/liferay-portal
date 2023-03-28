@@ -12,29 +12,29 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.definition;
+package com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.request.parameter.configuration.RequestParameterAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionSupportConfiguration;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
- * @author Avaro Saugar
+ * @author Alvaro Saugar
  */
 @Component(service = ConfigurationPidMapping.class)
-public class RequestParameterAuthVerifierCompanyServiceConfigurationPidMapping
+public class PortalSessionSupportServiceConfigurationPidMapping
 	implements ConfigurationPidMapping {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return RequestParameterAuthVerifierCompanyConfiguration.class;
+		return PortalSessionSupportConfiguration.class;
 	}
 
 	@Override
 	public String getConfigurationPid() {
-		return AuthVerifierConstants.REQUEST_PARAMETER_SERVICE_NAME;
+		return AuthVerifierConstants.PORTAL_SESION_SERVICE_NAME;
 	}
 
 }

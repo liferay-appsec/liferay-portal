@@ -12,25 +12,27 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.tunnel.configuration;
+package com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
 
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
 /**
- * @author Tomas Polesovsky
+ * @author Alvaro Saugar
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Deprecated
 @ExtendedObjectClassDefinition(
 	category = "api-authentication",
 	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
-	id = "com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthVerifierCompanyConfiguration",
+	id = "com.liferay.portal.security.auth.verifier.internal.digest.authentication.configuration.DigestAuthenticationSupportConfiguration",
 	localization = "content/Language",
-	name = "tunnel-auth-verifier-configuration-name"
+	name = "digest-authentication-support-configuration-name"
 )
-public interface TunnelAuthVerifierCompanyConfiguration {
+public interface DigestAuthenticationSupportConfiguration {
 
 	@Meta.AD(deflt = "true", name = "enabled", required = false)
 	public boolean enabled();

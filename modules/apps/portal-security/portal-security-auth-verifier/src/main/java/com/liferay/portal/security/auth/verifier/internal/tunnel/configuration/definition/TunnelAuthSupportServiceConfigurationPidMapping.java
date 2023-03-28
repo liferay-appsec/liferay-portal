@@ -12,29 +12,29 @@
  * details.
  */
 
-package com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.definition;
+package com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.definition;
 
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.tunnel.configuration.TunnelAuthSupportConfiguration;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
- * @author Alvaro Saugar
+ * @author Avaro Saugar
  */
 @Component(service = ConfigurationPidMapping.class)
-public class PortalSessionAuthVerifierCompanyServiceConfigurationPidMapping
+public class TunnelAuthSupportServiceConfigurationPidMapping
 	implements ConfigurationPidMapping {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return PortalSessionAuthVerifierCompanyConfiguration.class;
+		return TunnelAuthSupportConfiguration.class;
 	}
 
 	@Override
 	public String getConfigurationPid() {
-		return AuthVerifierConstants.PORTAL_SESION_SERVICE_NAME;
+		return AuthVerifierConstants.TUNNEL_SERVICE_NAME;
 	}
 
 }

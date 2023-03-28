@@ -32,7 +32,7 @@ import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.security.auth.verifier.internal.constants.AuthVerifierConstants;
-import com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionAuthVerifierCompanyConfiguration;
+import com.liferay.portal.security.auth.verifier.internal.portal.session.configuration.PortalSessionSupportConfiguration;
 
 import java.util.Properties;
 
@@ -115,27 +115,25 @@ public class PortalSessionAuthVerifier implements AuthVerifier {
 	}
 
 	protected boolean isEnabled(long companyId) {
-		PortalSessionAuthVerifierCompanyConfiguration
-			portalSessionAuthVerifierCompanyConfiguration =
-				_getPortalSessionAuthVerifierCompanyConfiguration(companyId);
+		PortalSessionSupportConfiguration portalSessionSupportConfiguration =
+			_getPortalSessionSupportConfiguration(companyId);
 
-		if (portalSessionAuthVerifierCompanyConfiguration == null) {
+		if (portalSessionSupportConfiguration == null) {
 			return false;
 		}
 
-		return portalSessionAuthVerifierCompanyConfiguration.enabled();
+		return portalSessionSupportConfiguration.enabled();
 	}
 
-	private PortalSessionAuthVerifierCompanyConfiguration
-		_getPortalSessionAuthVerifierCompanyConfiguration(long companyId) {
+	private PortalSessionSupportConfiguration
+		_getPortalSessionSupportConfiguration(long companyId) {
 
 		try {
 			return _configurationProvider.getConfiguration(
-				PortalSessionAuthVerifierCompanyConfiguration.class,
+				PortalSessionSupportConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId, AuthVerifierConstants.PORTAL_SESION_SERVICE_NAME,
-					PortalSessionAuthVerifierCompanyConfiguration.class.
-						getName()));
+					PortalSessionSupportConfiguration.class.getName()));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(

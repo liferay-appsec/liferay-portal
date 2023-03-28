@@ -16,7 +16,7 @@ package com.liferay.document.library.document.conversion.internal.security.auth.
 
 import com.liferay.document.library.document.conversion.internal.ImageRequestTokenUtil;
 import com.liferay.document.library.document.conversion.internal.constants.AuthVerifierConstants;
-import com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestAuthVerifierCompanyConfiguration;
+import com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestSupportConfiguration;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
@@ -93,27 +93,25 @@ public class ImageRequestAuthVerifier implements AuthVerifier {
 	}
 
 	protected boolean isEnabled(long companyId) {
-		ImageRequestAuthVerifierCompanyConfiguration
-			imageRequestAuthVerifierCompanyConfiguration =
-				_getImageRequestAuthVerifierCompanyConfiguration(companyId);
+		ImageRequestSupportConfiguration imageRequestSupportConfiguration =
+			_getImageRequestSupportConfiguration(companyId);
 
-		if (imageRequestAuthVerifierCompanyConfiguration == null) {
+		if (imageRequestSupportConfiguration == null) {
 			return false;
 		}
 
-		return imageRequestAuthVerifierCompanyConfiguration.enabled();
+		return imageRequestSupportConfiguration.enabled();
 	}
 
-	private ImageRequestAuthVerifierCompanyConfiguration
-		_getImageRequestAuthVerifierCompanyConfiguration(long companyId) {
+	private ImageRequestSupportConfiguration
+		_getImageRequestSupportConfiguration(long companyId) {
 
 		try {
 			return _configurationProvider.getConfiguration(
-				ImageRequestAuthVerifierCompanyConfiguration.class,
+				ImageRequestSupportConfiguration.class,
 				new CompanyServiceSettingsLocator(
 					companyId, AuthVerifierConstants.IMAGE_REQUEST_SERVICE_NAME,
-					ImageRequestAuthVerifierCompanyConfiguration.class.
-						getName()));
+					ImageRequestSupportConfiguration.class.getName()));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(

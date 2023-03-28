@@ -15,7 +15,7 @@
 package com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.definition;
 
 import com.liferay.document.library.document.conversion.internal.constants.AuthVerifierConstants;
-import com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestAuthVerifierCompanyConfiguration;
+import com.liferay.document.library.document.conversion.internal.security.auth.verifier.image.request.module.configuration.ImageRequestSupportConfiguration;
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 
 import org.osgi.service.component.annotations.Component;
@@ -24,12 +24,12 @@ import org.osgi.service.component.annotations.Component;
  * @author Avaro Saugar
  */
 @Component(service = ConfigurationPidMapping.class)
-public class ImageRequestAuthVerifierCompanyServiceConfigurationPidMapping
+public class ImageRequestSupportServiceConfigurationPidMapping
 	implements ConfigurationPidMapping {
 
 	@Override
 	public Class<?> getConfigurationBeanClass() {
-		return ImageRequestAuthVerifierCompanyConfiguration.class;
+		return ImageRequestSupportConfiguration.class;
 	}
 
 	@Override
