@@ -121,7 +121,8 @@ public class DefaultAuditRouter implements AuditRouter {
 		AuditMessageProcessor auditMessageProcessor,
 		Map<String, Object> properties) {
 
-		String[] eventTypes = _getEventTypes(properties);
+		String[] eventTypes = StringUtil.split(
+			(String)properties.get(AuditConstants.EVENT_TYPES));
 
 		if ((eventTypes.length == 1) && eventTypes[0].equals(StringPool.STAR)) {
 			_globalAuditMessageProcessors.add(auditMessageProcessor);
@@ -148,7 +149,8 @@ public class DefaultAuditRouter implements AuditRouter {
 		AuditMessageProcessor auditMessageProcessor,
 		Map<String, Object> properties) {
 
-		String[] eventTypes = _getEventTypes(properties);
+		String[] eventTypes = StringUtil.split(
+			(String)properties.get(AuditConstants.EVENT_TYPES));
 
 		if ((eventTypes.length == 1) && eventTypes[0].equals(StringPool.STAR)) {
 			_globalAuditMessageProcessors.remove(auditMessageProcessor);
@@ -166,11 +168,6 @@ public class DefaultAuditRouter implements AuditRouter {
 
 			auditMessageProcessorsSet.remove(auditMessageProcessor);
 		}
-	}
-
-	private String[] _getEventTypes(Map<String, Object> properties) {
-		return StringUtil.split(
-			(String)properties.get(AuditConstants.EVENT_TYPES));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
