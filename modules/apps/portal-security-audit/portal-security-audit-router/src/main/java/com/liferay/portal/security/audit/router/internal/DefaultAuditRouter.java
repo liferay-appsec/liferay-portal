@@ -21,17 +21,17 @@ import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.router.internal.constants.AuditConstants;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -56,15 +56,7 @@ public class DefaultAuditRouter implements AuditRouter {
 
 	@Override
 	public boolean isDeployed() {
-		int auditMessageProcessorsCount = _auditMessageProcessors.size();
-
-		if ((auditMessageProcessorsCount > 0) ||
-			!_globalAuditMessageProcessors.isEmpty()) {
-
-			return true;
-		}
-
-		return false;
+		return MapUtil.isNotEmpty(_auditMessageProcessors);
 	}
 
 	@Override
@@ -78,16 +70,21 @@ public class DefaultAuditRouter implements AuditRouter {
 			return;
 		}
 
-		for (AuditMessageProcessor globalAuditMessageProcessor :
-				_globalAuditMessageProcessors) {
+		Set<AuditMessageProcessor> globalAuditMessageProcessors =
+			_auditMessageProcessors.get(StringPool.STAR);
 
-			globalAuditMessageProcessor.process(auditMessage);
+		if (SetUtil.isNotEmpty(globalAuditMessageProcessors)) {
+			for (AuditMessageProcessor globalAuditMessageProcessor :
+					globalAuditMessageProcessors) {
+
+				globalAuditMessageProcessor.process(auditMessage);
+			}
 		}
 
 		Set<AuditMessageProcessor> auditMessageProcessors =
 			_auditMessageProcessors.get(auditMessage.getEventType());
 
-		if (auditMessageProcessors != null) {
+		if (SetUtil.isNotEmpty(auditMessageProcessors)) {
 			for (AuditMessageProcessor auditMessageProcessor :
 					auditMessageProcessors) {
 
@@ -121,16 +118,10 @@ public class DefaultAuditRouter implements AuditRouter {
 		AuditMessageProcessor auditMessageProcessor,
 		Map<String, Object> properties) {
 
-		String[] eventTypes = StringUtil.split(
-			(String)properties.get(AuditConstants.EVENT_TYPES));
+		for (String eventType :
+				StringUtil.split(
+					(String)properties.get(AuditConstants.EVENT_TYPES))) {
 
-		if ((eventTypes.length == 1) && eventTypes[0].equals(StringPool.STAR)) {
-			_globalAuditMessageProcessors.add(auditMessageProcessor);
-
-			return;
-		}
-
-		for (String eventType : eventTypes) {
 			Set<AuditMessageProcessor> auditMessageProcessorsSet =
 				_auditMessageProcessors.get(eventType);
 
@@ -149,16 +140,10 @@ public class DefaultAuditRouter implements AuditRouter {
 		AuditMessageProcessor auditMessageProcessor,
 		Map<String, Object> properties) {
 
-		String[] eventTypes = StringUtil.split(
-			(String)properties.get(AuditConstants.EVENT_TYPES));
+		for (String eventType :
+				StringUtil.split(
+					(String)properties.get(AuditConstants.EVENT_TYPES))) {
 
-		if ((eventTypes.length == 1) && eventTypes[0].equals(StringPool.STAR)) {
-			_globalAuditMessageProcessors.remove(auditMessageProcessor);
-
-			return;
-		}
-
-		for (String eventType : eventTypes) {
 			Set<AuditMessageProcessor> auditMessageProcessorsSet =
 				_auditMessageProcessors.get(eventType);
 
@@ -176,7 +161,5 @@ public class DefaultAuditRouter implements AuditRouter {
 	private volatile boolean _auditEnabled;
 	private final Map<String, Set<AuditMessageProcessor>>
 		_auditMessageProcessors = new ConcurrentHashMap<>();
-	private final List<AuditMessageProcessor> _globalAuditMessageProcessors =
-		new CopyOnWriteArrayList<>();
 
 }
