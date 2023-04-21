@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.router.internal.constants.AuditConstants;
@@ -116,7 +115,7 @@ public class DefaultAuditRouter implements AuditRouter {
 	@Reference(
 		cardinality = ReferenceCardinality.MULTIPLE,
 		policy = ReferencePolicy.DYNAMIC,
-		policyOption = ReferencePolicyOption.GREEDY
+		policyOption = ReferencePolicyOption.GREEDY, target = "(eventTypes=*)"
 	)
 	protected void setAuditMessageProcessor(
 		AuditMessageProcessor auditMessageProcessor,
@@ -170,14 +169,8 @@ public class DefaultAuditRouter implements AuditRouter {
 	}
 
 	private String[] _getEventTypes(Map<String, Object> properties) {
-		String eventTypes = (String)properties.get(AuditConstants.EVENT_TYPES);
-
-		if (Validator.isNull(eventTypes)) {
-			throw new IllegalArgumentException(
-				"The property \"" + AuditConstants.EVENT_TYPES + "\" is null");
-		}
-
-		return StringUtil.split(eventTypes);
+		return StringUtil.split(
+			(String)properties.get(AuditConstants.EVENT_TYPES));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
