@@ -1,0 +1,12 @@
+dependencies {
+	compileInclude group: "com.nimbusds", name: "oauth2-oidc-sdk", version: "8.11"
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testIntegrationCompile group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.13.4"
+	testIntegrationCompile group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.4"
+	testIntegrationCompile group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.13.4.2"
+	testIntegrationCompile project(":apps:portal-security-sso:portal-security-sso-openid-connect-api")
+	testIntegrationCompile project(":apps:portal-security-sso:portal-security-sso-openid-connect-impl")
+	testIntegrationCompile project(":apps:oauth-client:oauth-client-persistence-api")
+	testIntegrationCompile project(":apps:oauth-client:oauth-client-persistence-service")
+	testIntegrationCompile project(":test:arquillian-extension-junit-bridge")
+}
