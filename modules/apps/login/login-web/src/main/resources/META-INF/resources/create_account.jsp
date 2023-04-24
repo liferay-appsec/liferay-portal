@@ -230,7 +230,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "create-account"));
 					<clay:col
 						md="6"
 					>
-						<c:if test="<%= PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD %>">
+						<c:if test="<%= PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD, PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD) %>">
 							<aui:input label="password" name="password1" size="30" type="password" value="">
 								<aui:validator name="required" />
 							</aui:input>

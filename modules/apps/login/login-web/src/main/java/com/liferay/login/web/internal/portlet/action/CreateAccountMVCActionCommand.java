@@ -75,6 +75,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PwdGenerator;
 import com.liferay.portal.kernel.util.Validator;
@@ -152,7 +153,7 @@ public class CreateAccountMVCActionCommand extends BaseMVCActionCommand {
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			User.class.getName(), actionRequest);
 
-		if (PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD) {
+		if (PrefsPropsUtil.getBoolean(company.getCompanyId(), PropsKeys.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD, PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD)) {
 			autoPassword = false;
 
 			password1 = ParamUtil.getString(actionRequest, "password1");
