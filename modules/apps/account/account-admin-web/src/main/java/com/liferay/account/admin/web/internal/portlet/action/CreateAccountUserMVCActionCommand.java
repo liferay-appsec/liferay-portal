@@ -40,11 +40,11 @@ import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portal.kernel.util.PrefsPropsUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
 
 import java.time.Month;
 
@@ -146,15 +146,20 @@ public class CreateAccountUserMVCActionCommand
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			User.class.getName(), actionRequest);
+
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-		if (PrefsPropsUtil.getBoolean(themeDisplay.getCompanyId(), PropsKeys.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD, PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD)) {
+			WebKeys.THEME_DISPLAY);
+
+		if (PrefsPropsUtil.getBoolean(
+				themeDisplay.getCompanyId(),
+				PropsKeys.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD,
+				PropsValues.LOGIN_CREATE_ACCOUNT_ALLOW_CUSTOM_PASSWORD)) {
+
 			autoPassword = false;
 
 			password1 = ParamUtil.getString(actionRequest, "password1");
 			password2 = ParamUtil.getString(actionRequest, "password2");
 		}
-
 
 		User user = _userService.addUser(
 			themeDisplay.getCompanyId(), autoPassword, password1, password2,
