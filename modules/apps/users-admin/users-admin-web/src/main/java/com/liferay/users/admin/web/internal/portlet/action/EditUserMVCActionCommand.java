@@ -49,6 +49,7 @@ import com.liferay.portal.kernel.portlet.DynamicActionRequest;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.membershippolicy.MembershipPolicyException;
 import com.liferay.portal.kernel.service.ListTypeLocalService;
@@ -80,6 +81,7 @@ import com.liferay.users.admin.kernel.util.UsersAdmin;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
 
 import javax.portlet.ActionRequest;
@@ -349,6 +351,19 @@ public class EditUserMVCActionCommand
 		String emailAddress = BeanParamUtil.getString(
 			user, actionRequest, "emailAddress");
 
+		if (!screenName.equals(oldScreenName) ||
+			!emailAddress.equals(oldEmailAddress)) {
+
+			int authResult = _userLocalService.authenticateByUserId(
+				themeDisplay.getCompanyId(), user.getUserId(),
+				ParamUtil.getString(actionRequest, "password"), new HashMap<>(),
+				new HashMap<>(), new HashMap<>());
+
+			if (authResult != Authenticator.SUCCESS) {
+				throw new PrincipalException();
+			}
+		}
+
 		boolean deleteLogo = ParamUtil.getBoolean(actionRequest, "deleteLogo");
 
 		byte[] portraitBytes = null;
@@ -580,6 +595,9 @@ public class EditUserMVCActionCommand
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 	@Reference
 	private UsersAdmin _usersAdmin;
