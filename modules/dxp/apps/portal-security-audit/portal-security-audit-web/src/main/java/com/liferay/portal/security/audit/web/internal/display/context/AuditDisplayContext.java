@@ -95,18 +95,18 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), _getUserId(), _getUserName(),
-					startDate, endDate, _getEventType(), _getClassName(),
-					_getClassPK(), _getClientHost(), _getClientIP(),
-					_getServerName(), _getServerPort(), null,
+					_themeDisplay.getCompanyId(), _getGroupId(), _getUserId(),
+					_getUserName(), startDate, endDate, _getEventType(),
+					_getClassName(), _getClassPK(), _getClientHost(),
+					_getClientIP(), _getServerName(), _getServerPort(), null,
 					displayTerms.isAndOperator(), _searchContainer.getStart(),
 					_searchContainer.getEnd(),
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), _getUserId(), _getUserName(),
-					startDate, endDate, _getEventType(), _getClassName(),
-					_getClassPK(), _getClientHost(), _getClientIP(),
-					_getServerName(), _getServerPort(), null,
+					_themeDisplay.getCompanyId(), _getGroupId(), _getUserId(),
+					_getUserName(), startDate, endDate, _getEventType(),
+					_getClassName(), _getClassPK(), _getClientHost(),
+					_getClientIP(), _getServerName(), _getServerPort(), null,
 					displayTerms.isAndOperator()));
 		}
 		else {
@@ -117,17 +117,17 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), Long.valueOf(number),
-					keywords, null, null, keywords, keywords, keywords,
-					keywords, keywords, keywords, Integer.valueOf(number), null,
-					false, _searchContainer.getStart(),
-					_searchContainer.getEnd(),
+					_themeDisplay.getCompanyId(), _getGroupId(),
+					Long.valueOf(number), keywords, null, null, keywords,
+					keywords, keywords, keywords, keywords, keywords,
+					Integer.valueOf(number), null, false,
+					_searchContainer.getStart(), _searchContainer.getEnd(),
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), Long.valueOf(number),
-					keywords, null, null, keywords, keywords, keywords,
-					keywords, keywords, keywords, Integer.valueOf(number), null,
-					false));
+					_themeDisplay.getCompanyId(), _getGroupId(),
+					Long.valueOf(number), keywords, null, null, keywords,
+					keywords, keywords, keywords, keywords, keywords,
+					Integer.valueOf(number), null, false));
 		}
 
 		return _searchContainer;
@@ -249,6 +249,16 @@ public class AuditDisplayContext {
 		return _eventType;
 	}
 
+	private long _getGroupId() {
+		if (_groupId != null) {
+			return _groupId;
+		}
+
+		_groupId = ParamUtil.getInteger(_httpServletRequest, "groupId");
+
+		return _groupId;
+	}
+
 	private PortletURL _getPortletURL() throws Exception {
 		if (_portletURL != null) {
 			return _portletURL;
@@ -281,6 +291,8 @@ public class AuditDisplayContext {
 			"endDateYear", _getEndDateYear()
 		).setParameter(
 			"eventType", _getEventType()
+		).setParameter(
+			"groupId", _getGroupId()
 		).setParameter(
 			"serverName", _getServerName()
 		).setParameter(
@@ -424,6 +436,7 @@ public class AuditDisplayContext {
 	private Integer _endDateMonth;
 	private Integer _endDateYear;
 	private String _eventType;
+	private Integer _groupId;
 	private final HttpServletRequest _httpServletRequest;
 	private final LiferayPortletRequest _liferayPortletRequest;
 	private final LiferayPortletResponse _liferayPortletResponse;
