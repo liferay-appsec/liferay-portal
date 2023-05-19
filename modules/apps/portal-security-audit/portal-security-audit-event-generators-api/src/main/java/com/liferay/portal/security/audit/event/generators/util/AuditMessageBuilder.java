@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -90,7 +89,7 @@ public class AuditMessageBuilder {
 		String eventType, ClassedModel classedModel,
 		List<Attribute> attributes) {
 
-		long groupId = CompanyConstants.SYSTEM;
+		long groupId = 0;
 
 		if (classedModel instanceof GroupedModel) {
 			GroupedModel groupedModel = (GroupedModel)classedModel;
@@ -107,8 +106,7 @@ public class AuditMessageBuilder {
 		String eventType, String className, long classPK,
 		List<Attribute> attributes) {
 
-		return buildAuditMessage(
-			CompanyConstants.SYSTEM, eventType, className, classPK, attributes);
+		return buildAuditMessage(0, eventType, className, classPK, attributes);
 	}
 
 	private static JSONArray _getAttributesJSONArray(

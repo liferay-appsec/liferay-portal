@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalRunMode;
@@ -126,8 +125,8 @@ public class AuditMessage implements Serializable {
 		String eventType, long companyId, long userId, String userName) {
 
 		this(
-			eventType, companyId, CompanyConstants.SYSTEM, userId, userName,
-			null, null, null, null, null);
+			eventType, companyId, 0, userId, userName, null, null, null, null,
+			null);
 	}
 
 	public AuditMessage(
@@ -135,8 +134,8 @@ public class AuditMessage implements Serializable {
 		String className, String classPK) {
 
 		this(
-			eventType, companyId, CompanyConstants.SYSTEM, userId, userName,
-			className, classPK, null, null, null);
+			eventType, companyId, 0, userId, userName, className, classPK, null,
+			null, null);
 	}
 
 	public AuditMessage(
@@ -144,8 +143,8 @@ public class AuditMessage implements Serializable {
 		String className, String classPK, String message) {
 
 		this(
-			eventType, companyId, CompanyConstants.SYSTEM, userId, userName,
-			className, classPK, message, null, null);
+			eventType, companyId, 0, userId, userName, className, classPK,
+			message, null, null);
 	}
 
 	public AuditMessage(
@@ -154,8 +153,8 @@ public class AuditMessage implements Serializable {
 		JSONObject additionalInfoJSONObject) {
 
 		this(
-			eventType, companyId, CompanyConstants.SYSTEM, userId, userName,
-			className, classPK, message, timestamp, additionalInfoJSONObject);
+			eventType, companyId, 0, userId, userName, className, classPK,
+			message, timestamp, additionalInfoJSONObject);
 	}
 
 	public AuditMessage(
@@ -164,8 +163,8 @@ public class AuditMessage implements Serializable {
 		JSONObject additionalInfoJSONObject) {
 
 		this(
-			eventType, companyId, CompanyConstants.SYSTEM, userId, userName,
-			className, classPK, message, null, additionalInfoJSONObject);
+			eventType, companyId, 0, userId, userName, className, classPK,
+			message, null, additionalInfoJSONObject);
 	}
 
 	public JSONObject getAdditionalInfo() {
