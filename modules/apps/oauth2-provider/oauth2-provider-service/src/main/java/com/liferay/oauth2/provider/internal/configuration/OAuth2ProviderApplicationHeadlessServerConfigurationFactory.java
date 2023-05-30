@@ -49,7 +49,11 @@ import org.osgi.service.component.annotations.ConfigurationPolicy;
 @Component(
 	configurationPid = "com.liferay.oauth2.provider.configuration.OAuth2ProviderApplicationHeadlessServerConfiguration",
 	configurationPolicy = ConfigurationPolicy.REQUIRE,
-	property = "_portalK8sConfigMapModifier.cardinality.minimum=1", service = {}
+	property = {
+		"_portalK8sConfigMapModifier.cardinality.minimum=1",
+		"scopeFinders.target=(companyId=$[conf:companyId])"
+	},
+	service = {}
 )
 public class OAuth2ProviderApplicationHeadlessServerConfigurationFactory
 	extends BaseConfigurationFactory {

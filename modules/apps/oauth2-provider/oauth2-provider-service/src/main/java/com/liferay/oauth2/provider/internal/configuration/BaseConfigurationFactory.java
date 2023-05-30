@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.Collection;
 import java.util.Map;
 
+import org.osgi.service.cm.ConfigurationPlugin;
 import org.osgi.service.component.ComponentConstants;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
@@ -145,6 +146,11 @@ public abstract class BaseConfigurationFactory {
 
 	@Reference
 	protected CompanyLocalService companyLocalService;
+
+	@Reference(
+		target = "(config.plugin.id=org.apache.felix.configadmin.plugin.interpolation)"
+	)
+	protected ConfigurationPlugin configurationPlugin;
 
 	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
 	protected ModuleServiceLifecycle moduleServiceLifecycle;
