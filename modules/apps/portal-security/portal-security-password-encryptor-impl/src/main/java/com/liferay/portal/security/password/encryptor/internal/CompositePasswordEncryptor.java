@@ -188,20 +188,20 @@ public class CompositePasswordEncryptor
 			throw new IllegalArgumentException("Invalid algorithm");
 		}
 
-		PasswordEncryptor passwordEncryptor = null;
+		PasswordEncryptor passwordEncryptor = _serviceTrackerMap.getService(
+			algorithm);
 
-		if (algorithm.startsWith(TYPE_BCRYPT)) {
-			passwordEncryptor = _serviceTrackerMap.getService(TYPE_BCRYPT);
-		}
-		else if (algorithm.startsWith(TYPE_PBKDF2)) {
-			passwordEncryptor = _serviceTrackerMap.getService(TYPE_PBKDF2);
-		}
-		else if (algorithm.indexOf(CharPool.SLASH) > 0) {
-			passwordEncryptor = _serviceTrackerMap.getService(
-				algorithm.substring(0, algorithm.indexOf(CharPool.SLASH)));
-		}
-		else {
-			passwordEncryptor = _serviceTrackerMap.getService(algorithm);
+		if (passwordEncryptor == null) {
+			if (algorithm.startsWith(TYPE_BCRYPT)) {
+				passwordEncryptor = _serviceTrackerMap.getService(TYPE_BCRYPT);
+			}
+			else if (algorithm.startsWith(TYPE_PBKDF2)) {
+				passwordEncryptor = _serviceTrackerMap.getService(TYPE_PBKDF2);
+			}
+			else if (algorithm.indexOf(CharPool.SLASH) > 0) {
+				passwordEncryptor = _serviceTrackerMap.getService(
+					algorithm.substring(0, algorithm.indexOf(CharPool.SLASH)));
+			}
 		}
 
 		if (passwordEncryptor == null) {
