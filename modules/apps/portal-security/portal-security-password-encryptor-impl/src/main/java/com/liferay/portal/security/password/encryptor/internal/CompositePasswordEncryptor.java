@@ -20,6 +20,7 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
@@ -191,7 +192,9 @@ public class CompositePasswordEncryptor
 		PasswordEncryptor passwordEncryptor = _serviceTrackerMap.getService(
 			algorithm);
 
-		if (passwordEncryptor == null) {
+		if ((passwordEncryptor == null) ||
+			!FeatureFlagManagerUtil.isEnabled("LPS-177326")) {
+
 			if (algorithm.startsWith(TYPE_BCRYPT)) {
 				passwordEncryptor = _serviceTrackerMap.getService(TYPE_BCRYPT);
 			}
