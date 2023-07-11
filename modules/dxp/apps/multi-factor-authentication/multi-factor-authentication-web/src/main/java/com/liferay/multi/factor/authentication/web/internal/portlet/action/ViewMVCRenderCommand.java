@@ -112,6 +112,12 @@ public class ViewMVCRenderCommand implements MVCRenderCommand {
 			MFAWebKeys.BROWSER_MFA_CHECKERS, browserMFACheckers);
 		renderRequest.setAttribute(MFAWebKeys.MFA_USER_ID, mfaUserId);
 
+		String redirect = _getRedirectURL(renderRequest);
+
+		if (!redirect.isEmpty()) {
+			renderRequest.setAttribute(WebKeys.REDIRECT, redirect);
+		}
+
 		return "/mfa_verify/view.jsp";
 	}
 
@@ -155,6 +161,16 @@ public class ViewMVCRenderCommand implements MVCRenderCommand {
 
 		return GetterUtil.getLong(
 			httpSession.getAttribute(MFAWebKeys.MFA_USER_ID));
+	}
+
+	private String _getRedirectURL(PortletRequest portletRequest) {
+		HttpServletRequest httpServletRequest =
+			_portal.getOriginalServletRequest(
+				_portal.getHttpServletRequest(portletRequest));
+
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		return (String)httpSession.getAttribute(WebKeys.REDIRECT);
 	}
 
 	@Reference

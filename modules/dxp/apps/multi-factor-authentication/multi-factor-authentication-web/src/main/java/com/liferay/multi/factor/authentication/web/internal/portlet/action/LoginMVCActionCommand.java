@@ -372,8 +372,10 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 			liferayPortletURL.setWindowState(WindowState.MAXIMIZED);
 		}
 
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
+		
 		actionRequest.setAttribute(
-			WebKeys.REDIRECT, liferayPortletURL.toString());
+				WebKeys.REDIRECT, liferayPortletURL.toString());
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
@@ -382,6 +384,7 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 			MFAWebKeys.MFA_WEB_DIGEST,
 			DigesterUtil.digest(encryptedStateMapJSON));
 		httpSession.setAttribute(MFAWebKeys.MFA_WEB_KEY, key);
+		httpSession.setAttribute(WebKeys.REDIRECT, redirect);
 	}
 
 	private static final Accessor<Object, String> _STRING_ACCESSOR =
