@@ -15,7 +15,6 @@
 package com.liferay.users.admin.internal.search;
 
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -43,32 +42,16 @@ public class UserBulkReindexer implements BulkReindexer {
 		IndexableActionableDynamicQuery indexableActionableDynamicQuery =
 			userLocalService.getIndexableActionableDynamicQuery();
 
-		indexableActionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> dynamicQuery.add(
-				RestrictionsFactoryUtil.in("userId", classPKs)));
-		indexableActionableDynamicQuery.setCompanyId(companyId);
-		indexableActionableDynamicQuery.setPerformActionMethod(
-			(User user) -> {
-				if (!user.isGuestUser()) {
-					try {
-						indexableActionableDynamicQuery.addDocuments(
-							indexer.getDocument(user));
-					}
-					catch (PortalException portalException) {
-						if (_log.isWarnEnabled()) {
-							_log.warn(
-								"Unable to index user " + user.getUserId(),
-								portalException);
-						}
-					}
+		for (Long userId : classPKs) {
+			try {
+				_reindex(companyId, userId, indexableActionableDynamicQuery);
+			}
+			catch (PortalException portalException) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to index user " + userId, portalException);
 				}
-			});
-
-		try {
-			indexableActionableDynamicQuery.performActions();
-		}
-		catch (PortalException portalException) {
-			throw new RuntimeException(portalException);
+			}
 		}
 	}
 
@@ -79,6 +62,19 @@ public class UserBulkReindexer implements BulkReindexer {
 
 	@Reference
 	protected UserLocalService userLocalService;
+
+	private void _reindex(
+			long companyId, Long userId,
+			IndexableActionableDynamicQuery indexableActionableDynamicQuery)
+		throws PortalException {
+
+		User user = userLocalService.getUserById(companyId, userId);
+
+		if (!user.isGuestUser()) {
+			indexableActionableDynamicQuery.addDocuments(
+				indexer.getDocument(user));
+		}
+	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UserBulkReindexer.class);
