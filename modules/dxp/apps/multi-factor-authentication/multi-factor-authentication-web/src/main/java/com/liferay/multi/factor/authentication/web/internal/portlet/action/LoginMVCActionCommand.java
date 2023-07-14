@@ -373,6 +373,8 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
+		String login = ParamUtil.getString(actionRequest, "login");
+		String password = ParamUtil.getString(actionRequest, "password");
 		
 		actionRequest.setAttribute(
 				WebKeys.REDIRECT, liferayPortletURL.toString());
@@ -385,6 +387,10 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 			DigesterUtil.digest(encryptedStateMapJSON));
 		httpSession.setAttribute(MFAWebKeys.MFA_WEB_KEY, key);
 		httpSession.setAttribute(WebKeys.REDIRECT, redirect);
+		
+		httpSession.setAttribute("login", login);
+		httpSession.setAttribute("password", password);
+		
 	}
 
 	private static final Accessor<Object, String> _STRING_ACCESSOR =

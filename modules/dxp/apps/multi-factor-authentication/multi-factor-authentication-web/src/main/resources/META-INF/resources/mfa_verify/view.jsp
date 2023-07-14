@@ -18,6 +18,8 @@
 
 <%
 String redirect = (String)request.getAttribute(WebKeys.REDIRECT);
+String login = (String)request.getAttribute("login");
+String password = (String)request.getAttribute("password");
 
 BrowserMFAChecker browserMFAChecker = (BrowserMFAChecker)request.getAttribute(MFAWebKeys.BROWSER_MFA_CHECKER);
 String browserMFACheckerName = (String)request.getAttribute(MFAWebKeys.BROWSER_MFA_CHECKER_NAME);
@@ -35,6 +37,8 @@ int mfaCheckerIndex = ParamUtil.getInteger(request, "mfaCheckerIndex");
 	<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="mfaCheckerIndex" type="hidden" value="<%= mfaCheckerIndex %>" />
+	<aui:input name="login" type="hidden" value="<%= login %>" />
+	<aui:input name="password" type="hidden" value="<%= password %>" />
 
 	<liferay-ui:error key="mfaVerificationFailed" message="multi-factor-authentication-has-failed" />
 
