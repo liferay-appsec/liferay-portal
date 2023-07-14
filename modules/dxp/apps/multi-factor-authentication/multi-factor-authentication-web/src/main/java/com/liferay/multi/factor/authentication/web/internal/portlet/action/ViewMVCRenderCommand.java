@@ -168,22 +168,14 @@ public class ViewMVCRenderCommand implements MVCRenderCommand {
 			return themeDisplay.getUserId();
 		}
 
-		HttpServletRequest httpServletRequest =
-			_portal.getOriginalServletRequest(
-				_portal.getHttpServletRequest(portletRequest));
-
-		HttpSession httpSession = httpServletRequest.getSession();
+		HttpSession httpSession = _getHttpSession(portletRequest);
 
 		return GetterUtil.getLong(
 			httpSession.getAttribute(MFAWebKeys.MFA_USER_ID));
 	}
 
 	private String _getRedirectURL(PortletRequest portletRequest) {
-		HttpServletRequest httpServletRequest =
-			_portal.getOriginalServletRequest(
-				_portal.getHttpServletRequest(portletRequest));
-
-		HttpSession httpSession = httpServletRequest.getSession();
+		HttpSession httpSession = _getHttpSession(portletRequest);
 
 		return (String)httpSession.getAttribute(WebKeys.REDIRECT);
 	}
