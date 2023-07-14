@@ -95,10 +95,10 @@ public class VerifyMVCActionCommand extends BaseMVCActionCommand {
 				hideDefaultErrorMessage(actionRequest);
 
 				SessionErrors.add(actionRequest, "mfaVerificationFailed");
-			}  else {
-				_loginMVCActionCommand.processAction(actionRequest, actionResponse);
-
-				return;
+			}
+			else {
+				_loginMVCActionCommand.processAction(
+					actionRequest, actionResponse);
 			}
 		}
 		catch (Exception exception) {
@@ -124,16 +124,15 @@ public class VerifyMVCActionCommand extends BaseMVCActionCommand {
 			httpSession.getAttribute(MFAWebKeys.MFA_USER_ID));
 	}
 
+	@Reference(
+		target = "(component.name=com.liferay.multi.factor.authentication.web.internal.portlet.action.LoginMVCActionCommand)"
+	)
+	private MVCActionCommand _loginMVCActionCommand;
+
 	@Reference
 	private MFAPolicy _mfaPolicy;
 
 	@Reference
 	private Portal _portal;
-	
-	@Reference(
-			target = "(component.name=com.liferay.multi.factor.authentication.web.internal.portlet.action.LoginMVCActionCommand)"
-		)
-		private MVCActionCommand _loginMVCActionCommand;
-	
 
 }

@@ -114,18 +114,26 @@ public class ViewMVCRenderCommand implements MVCRenderCommand {
 
 		HttpSession httpSession = _getHttpSession(renderRequest);
 		String redirect = _getRedirectURL(renderRequest);
-		
-		String login = (String) httpSession.getAttribute("login");
-		String password =  (String) httpSession.getAttribute("password");
+
+		String login = (String)httpSession.getAttribute("login");
+		String password = (String)httpSession.getAttribute("password");
 
 		if (!redirect.isEmpty()) {
 			renderRequest.setAttribute(WebKeys.REDIRECT, redirect);
 		}
-		
+
 		renderRequest.setAttribute("login", login);
 		renderRequest.setAttribute("password", password);
 
 		return "/mfa_verify/view.jsp";
+	}
+
+	private HttpSession _getHttpSession(PortletRequest portletRequest) {
+		HttpServletRequest httpServletRequest =
+			_portal.getOriginalServletRequest(
+				_portal.getHttpServletRequest(portletRequest));
+
+		return httpServletRequest.getSession();
 	}
 
 	private String _getMFACheckerName(
@@ -178,14 +186,6 @@ public class ViewMVCRenderCommand implements MVCRenderCommand {
 		HttpSession httpSession = httpServletRequest.getSession();
 
 		return (String)httpSession.getAttribute(WebKeys.REDIRECT);
-	}
-	
-	private HttpSession _getHttpSession(PortletRequest portletRequest) {
-		HttpServletRequest httpServletRequest =
-				_portal.getOriginalServletRequest(
-					_portal.getHttpServletRequest(portletRequest));
-
-			return httpServletRequest.getSession();
 	}
 
 	@Reference

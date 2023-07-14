@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Accessor;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -55,7 +56,6 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.security.Key;
 
@@ -124,12 +124,11 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 					AuthenticatedSessionManagerUtil.getAuthenticatedUserId(
 						httpServletRequest, login, password, null);
 
-				long mfaUserId = _getMFAUserId(actionRequest);
-
 				if (_mfaPolicy.isSatisfied(
 						companyId, httpServletRequest, userId) ||
 					_mfaPolicy.isSatisfied(
-						companyId, httpServletRequest, mfaUserId)) {
+						companyId, httpServletRequest,
+						_getMFAUserId(actionRequest))) {
 
 					_loginMVCActionCommand.processAction(
 						actionRequest, actionResponse);
@@ -398,9 +397,9 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 		String redirect = ParamUtil.getString(actionRequest, "redirect");
 		String login = ParamUtil.getString(actionRequest, "login");
 		String password = ParamUtil.getString(actionRequest, "password");
-		
+
 		actionRequest.setAttribute(
-				WebKeys.REDIRECT, liferayPortletURL.toString());
+			WebKeys.REDIRECT, liferayPortletURL.toString());
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
@@ -410,10 +409,9 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 			DigesterUtil.digest(encryptedStateMapJSON));
 		httpSession.setAttribute(MFAWebKeys.MFA_WEB_KEY, key);
 		httpSession.setAttribute(WebKeys.REDIRECT, redirect);
-		
+
 		httpSession.setAttribute("login", login);
 		httpSession.setAttribute("password", password);
-		
 	}
 
 	private static final Accessor<Object, String> _STRING_ACCESSOR =
