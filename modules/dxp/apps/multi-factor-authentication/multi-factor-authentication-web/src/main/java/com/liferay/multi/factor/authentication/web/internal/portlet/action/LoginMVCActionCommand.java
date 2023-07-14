@@ -55,6 +55,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.security.Key;
 
@@ -123,8 +124,12 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 					AuthenticatedSessionManagerUtil.getAuthenticatedUserId(
 						httpServletRequest, login, password, null);
 
+				long mfaUserId = _getMFAUserId(actionRequest);
+
 				if (_mfaPolicy.isSatisfied(
-						companyId, httpServletRequest, userId)) {
+						companyId, httpServletRequest, userId) ||
+					_mfaPolicy.isSatisfied(
+						companyId, httpServletRequest, mfaUserId)) {
 
 					_loginMVCActionCommand.processAction(
 						actionRequest, actionResponse);
@@ -270,6 +275,24 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 			"returnToFullPageURL", returnToFullPageURL);
 
 		return liferayPortletURL;
+	}
+
+	private long _getMFAUserId(PortletRequest portletRequest) {
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		if (themeDisplay.isSignedIn()) {
+			return themeDisplay.getUserId();
+		}
+
+		HttpServletRequest httpServletRequest =
+			_portal.getOriginalServletRequest(
+				_portal.getHttpServletRequest(portletRequest));
+
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		return GetterUtil.getLong(
+			httpSession.getAttribute(MFAWebKeys.MFA_USER_ID));
 	}
 
 	private void _postProcessAuthFailure(
