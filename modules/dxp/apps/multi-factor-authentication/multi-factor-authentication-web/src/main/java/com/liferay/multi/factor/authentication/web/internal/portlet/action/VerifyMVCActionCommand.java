@@ -95,6 +95,10 @@ public class VerifyMVCActionCommand extends BaseMVCActionCommand {
 				hideDefaultErrorMessage(actionRequest);
 
 				SessionErrors.add(actionRequest, "mfaVerificationFailed");
+			}  else {
+				_loginMVCActionCommand.processAction(actionRequest, actionResponse);
+
+				return;
 			}
 		}
 		catch (Exception exception) {
@@ -125,5 +129,11 @@ public class VerifyMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private Portal _portal;
+	
+	@Reference(
+			target = "(component.name=com.liferay.multi.factor.authentication.web.internal.portlet.action.LoginMVCActionCommand)"
+		)
+		private MVCActionCommand _loginMVCActionCommand;
+	
 
 }
