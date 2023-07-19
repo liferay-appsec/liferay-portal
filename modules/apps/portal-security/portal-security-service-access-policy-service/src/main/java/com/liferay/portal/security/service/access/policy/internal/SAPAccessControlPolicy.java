@@ -19,6 +19,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.access.control.AccessControlPolicy;
@@ -35,8 +36,11 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.service.access.policy.configuration.HeadlessDiscoveryConfiguration;
 import com.liferay.portal.security.service.access.policy.configuration.SAPConfiguration;
 import com.liferay.portal.security.service.access.policy.constants.SAPConstants;
+import com.liferay.portal.security.service.access.policy.exception.HeadlessNotEnabledException;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
+
+import com.liferay.portal.kernel.log.Log;
 
 import java.lang.reflect.Method;
 
@@ -191,7 +195,7 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 						_getHeadlessDiscoveryConfiguration(CompanyThreadLocal.getCompanyId());
 				
 				if (!_headlessDiscoveryConfiguration.enableAPIExplorer()) {
-					throw new SecurityException("Access denied. "+className + " not enabled");
+					throw new HeadlessNotEnabledException("API Explorer not enabled");
 				}
 			}
 			
@@ -364,11 +368,14 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 				HeadlessDiscoveryConfiguration.class, companyId);
 	}
 	catch (ConfigurationException configurationException) {
-		//_log.error(configurationException);
+		      _log.error(configurationException);
 		}
 		return null;
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+			SAPAccessControlPolicy.class.getName());
+			
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
