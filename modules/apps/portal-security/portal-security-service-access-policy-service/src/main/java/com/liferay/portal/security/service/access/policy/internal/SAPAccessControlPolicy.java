@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPol
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicyThreadLocal;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.service.access.policy.configuration.HeadlessDiscoveryConfiguration;
 import com.liferay.portal.security.service.access.policy.configuration.SAPConfiguration;
 import com.liferay.portal.security.service.access.policy.constants.SAPConstants;
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
@@ -40,6 +41,7 @@ import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalSe
 import java.lang.reflect.Method;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -184,6 +186,15 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 		if (allowedServiceSignatures.contains(StringPool.STAR) ||
 			allowedServiceSignatures.contains(className)) {
 
+			if (className.contains("HeadlessDiscoveryAPIApplication")) {
+				HeadlessDiscoveryConfiguration _headlessDiscoveryConfiguration = 
+						_getHeadlessDiscoveryConfiguration(CompanyThreadLocal.getCompanyId());
+				
+				if (!_headlessDiscoveryConfiguration.enableAPIExplorer()) {
+					throw new SecurityException("Access denied. "+className + " not enabled");
+				}
+			}
+			
 			return;
 		}
 
@@ -343,6 +354,19 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 		}
 
 		return allowedServiceSignatures;
+	}
+	
+	private HeadlessDiscoveryConfiguration
+	_getHeadlessDiscoveryConfiguration(long companyId) {
+
+	try {
+		return _configurationProvider.getCompanyConfiguration(
+				HeadlessDiscoveryConfiguration.class, companyId);
+	}
+	catch (ConfigurationException configurationException) {
+		//_log.error(configurationException);
+		}
+		return null;
 	}
 
 	@Reference
