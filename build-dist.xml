@@ -15,7 +15,7 @@
 						app.server.type=tomcat
 					</app-server-properties-update>
 
-					<antcall target="unzip-tomcat" />
+					<antcall target="unzip-tomcat" /> #Rewrite comment
 				</else>
 			</if>
 
