@@ -19,6 +19,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
@@ -40,12 +41,9 @@ import com.liferay.portal.security.service.access.policy.exception.HeadlessNotEn
 import com.liferay.portal.security.service.access.policy.model.SAPEntry;
 import com.liferay.portal.security.service.access.policy.service.SAPEntryLocalService;
 
-import com.liferay.portal.kernel.log.Log;
-
 import java.lang.reflect.Method;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -191,14 +189,16 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 			allowedServiceSignatures.contains(className)) {
 
 			if (className.contains("HeadlessDiscoveryAPIApplication")) {
-				HeadlessDiscoveryConfiguration _headlessDiscoveryConfiguration = 
-						_getHeadlessDiscoveryConfiguration(CompanyThreadLocal.getCompanyId());
-				
-				if (!_headlessDiscoveryConfiguration.enableAPIExplorer()) {
-					throw new HeadlessNotEnabledException("API Explorer not enabled");
+				HeadlessDiscoveryConfiguration headlessDiscoveryConfiguration =
+					_getHeadlessDiscoveryConfiguration(
+						CompanyThreadLocal.getCompanyId());
+
+				if (!headlessDiscoveryConfiguration.enableAPIExplorer()) {
+					throw new HeadlessNotEnabledException(
+						"API Explorer not enabled");
 				}
 			}
-			
+
 			return;
 		}
 
@@ -268,6 +268,20 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 		}
 
 		return defaultServiceAccessPolicyNames;
+	}
+
+	private HeadlessDiscoveryConfiguration _getHeadlessDiscoveryConfiguration(
+		long companyId) {
+
+		try {
+			return _configurationProvider.getCompanyConfiguration(
+				HeadlessDiscoveryConfiguration.class, companyId);
+		}
+		catch (ConfigurationException configurationException) {
+			_log.error(configurationException);
+		}
+
+		return null;
 	}
 
 	private List<String> _getSystemServiceAccessPolicyNames(long companyId) {
@@ -359,23 +373,10 @@ public class SAPAccessControlPolicy extends BaseAccessControlPolicy {
 
 		return allowedServiceSignatures;
 	}
-	
-	private HeadlessDiscoveryConfiguration
-	_getHeadlessDiscoveryConfiguration(long companyId) {
-
-	try {
-		return _configurationProvider.getCompanyConfiguration(
-				HeadlessDiscoveryConfiguration.class, companyId);
-	}
-	catch (ConfigurationException configurationException) {
-		      _log.error(configurationException);
-		}
-		return null;
-	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-			SAPAccessControlPolicy.class.getName());
-			
+		SAPAccessControlPolicy.class.getName());
+
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 

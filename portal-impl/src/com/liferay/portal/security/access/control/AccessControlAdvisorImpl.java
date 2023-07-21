@@ -54,11 +54,14 @@ public class AccessControlAdvisorImpl implements AccessControlAdvisor {
 					_log.debug(securityException);
 				}
 
-				if (securityException.getMessage()
-						.contains("API Explorer")) {
+				if (securityException.getMessage(
+					).contains(
+						"API Explorer"
+					)) {
+
 					throw securityException;
 				}
-				
+
 				if (PropsValues.ACCESS_CONTROL_SANITIZE_SECURITY_EXCEPTION) {
 					throw new SecurityException();
 				}
