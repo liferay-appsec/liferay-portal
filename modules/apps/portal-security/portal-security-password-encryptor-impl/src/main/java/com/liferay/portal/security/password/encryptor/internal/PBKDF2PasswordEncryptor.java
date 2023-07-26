@@ -65,7 +65,7 @@ public class PBKDF2PasswordEncryptor
 
 			if (GetterUtil.getBoolean(
 					PropsUtil.get(
-						PropsKeys.PASSWORDS_ENCRYPTION_ENABLE_BOUNCY_CASTLE))) {
+						PropsKeys.PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED))) {
 
 				PKCS5S2ParametersGenerator generator =
 					new PKCS5S2ParametersGenerator();
