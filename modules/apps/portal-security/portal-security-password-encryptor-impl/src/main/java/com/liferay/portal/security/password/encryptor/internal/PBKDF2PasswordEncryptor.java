@@ -119,7 +119,7 @@ public class PBKDF2PasswordEncryptor
 
 	private static final boolean _PASSWORDS_ENCRYPTION_ENABLE_BOUNCY_CASTLE =
 		GetterUtil.getBoolean(
-			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ENABLE_BOUNCY_CASTLE));
+			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED));
 
 	private static final int _ROUNDS = 720000;
 
