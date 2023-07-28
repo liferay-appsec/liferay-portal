@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.password.encryptor.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -12,11 +13,18 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.DigesterImpl;
 import com.liferay.portal.util.PropsValues;
+
+import java.util.List;
+import java.util.logging.Level;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -79,6 +87,69 @@ public class CompositePasswordEncryptorTest {
 			PasswordEncryptor.class, new TestCustomPasswordEncryptor(),
 			MapUtil.singletonDictionary(
 				"type", _TYPE_CUSTOM_PASSWORD_ENCRYPTOR));
+	}
+
+	@Test
+	public void testBackwardCompatibilityOfPBKDF2Implementations()
+		throws Exception {
+
+		String prependedAlgorithm =
+			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA1";
+
+		String algorithm = prependedAlgorithm + "/128/720000";
+
+		String plainPassword = "password";
+
+		String expectedPassword;
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", true)) {
+
+			try (LogCapture logCapture = LoggerTestUtil.configureJDKLogger(
+					PBKDF2PasswordEncryptor.class.getName(), Level.ALL)) {
+
+				expectedPassword = PasswordEncryptorUtil.encrypt(
+					algorithm, plainPassword, (String)null);
+
+				_testBouncyCastleLogs(logCapture, 1, "The BouncyCastle implementation of PBKDF2 encryptor is enabled");
+			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", false)) {
+
+			try (LogCapture logCapture = LoggerTestUtil.configureJDKLogger(
+					PBKDF2PasswordEncryptor.class.getName(), Level.WARNING)) {
+
+				testEncrypt(plainPassword, expectedPassword);
+
+				_testBouncyCastleLogs(logCapture, 1, "The default implementation of PBKDF2 encryptor is enabled");
+			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", true)) {
+
+			String encryptedPassword =
+				"AAAAoAAB9ADyaBP3fTtsBh8YlRn1CU7VLYR/mnH7ADMNMz2o";
+
+			try (LogCapture logCapture = LoggerTestUtil.configureJDKLogger(
+					PBKDF2PasswordEncryptor.class.getName(), Level.WARNING)) {
+
+				testEncrypt(
+					plainPassword,
+					StringBundler.concat(
+						CharPool.OPEN_CURLY_BRACE, prependedAlgorithm,
+						CharPool.CLOSE_CURLY_BRACE, encryptedPassword));
+
+				testLegacyEncrypt(algorithm, plainPassword, encryptedPassword);
+
+				_testBouncyCastleLogs(logCapture, 2, "The BouncyCastle implementation of PBKDF2 encryptor is enabled");
+			}
+		}
 	}
 
 	@Test
@@ -306,6 +377,25 @@ public class CompositePasswordEncryptorTest {
 		finally {
 			PropsValues.PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY =
 				originalLegacyAlgorithm;
+		}
+	}
+
+	private void _testBouncyCastleLogs(
+		LogCapture logCapture, long expectedEntriesCount, String message) {
+
+		List<LogEntry> logEntries = logCapture.getLogEntries();
+
+		Assert.assertEquals(
+			logEntries.toString(), expectedEntriesCount, logEntries.size());
+
+		LogEntry logEntry0 = logEntries.get(0);
+
+		Assert.assertEquals(message, logEntry0.getMessage());
+
+		if (expectedEntriesCount == 2) {
+			LogEntry logEntry1 = logEntries.get(1);
+
+			Assert.assertEquals("The BouncyCastle implementation of PBKDF2 encryptor is enabled", logEntry1.getMessage());
 		}
 	}
 
