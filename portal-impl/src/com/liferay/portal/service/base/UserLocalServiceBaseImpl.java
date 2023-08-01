@@ -49,6 +49,7 @@ import com.liferay.portal.kernel.service.persistence.change.tracking.CTPersisten
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
 
@@ -480,6 +481,8 @@ public abstract class UserLocalServiceBaseImpl
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public User updateUser(User user) {
+		user.setEmailAddress(StringUtil.toLowerCase(StringUtil.trim(user.getEmailAddress())));
+		user.setScreenName(StringUtil.lowerCase(StringUtil.trim(user.getScreenName())));
 		return userPersistence.update(user);
 	}
 
