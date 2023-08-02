@@ -5,6 +5,7 @@
 
 package com.liferay.portal.servlet;
 
+import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpSessionWrapper;
 import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -26,6 +27,13 @@ public class AuthVerifierServletRequest extends ProtectedServletRequest {
 		super(httpServletRequest, String.valueOf(userId), authType);
 
 		_userId = userId;
+
+		if (_userId != null) {
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			auditRequestThreadLocal.setRealUserId(_userId);
+		}
 
 		httpServletRequest.removeAttribute(WebKeys.USER);
 		httpServletRequest.setAttribute(WebKeys.USER_ID, userId);
