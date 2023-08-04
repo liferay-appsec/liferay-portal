@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.password.encryptor.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -14,12 +15,9 @@ import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.DigesterImpl;
-import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import org.junit.Assert;
@@ -89,34 +87,44 @@ public class CompositePasswordEncryptorTest {
 	public void testBackwardCompatibilityOfPBKDF2Implementations()
 		throws Exception {
 
-		_testBouncyCastleProperty(true);
-
 		String prependedAlgorithm =
 			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA1";
 
 		String algorithm = prependedAlgorithm + "/128/720000";
 
 		String plainPassword = "password";
+		String expectedPassword;
 
-		String expectedPassword = PasswordEncryptorUtil.encrypt(
-			algorithm, plainPassword, (String)null);
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", true)) {
 
-		_testBouncyCastleProperty(false);
+			expectedPassword = PasswordEncryptorUtil.encrypt(
+				algorithm, plainPassword, (String)null);
+		}
 
-		testEncrypt(plainPassword, expectedPassword);
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", false)) {
 
-		_testBouncyCastleProperty(true);
+			testEncrypt(plainPassword, expectedPassword);
+		}
 
-		String encryptedPassword =
-			"AAAAoAAB9ADyaBP3fTtsBh8YlRn1CU7VLYR/mnH7ADMNMz2o";
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", true)) {
 
-		testEncrypt(
-			plainPassword,
-			StringBundler.concat(
-				CharPool.OPEN_CURLY_BRACE, prependedAlgorithm,
-				CharPool.CLOSE_CURLY_BRACE, encryptedPassword));
+			String encryptedPassword =
+				"AAAAoAAB9ADyaBP3fTtsBh8YlRn1CU7VLYR/mnH7ADMNMz2o";
 
-		testLegacyEncrypt(algorithm, plainPassword, encryptedPassword);
+			testEncrypt(
+				plainPassword,
+				StringBundler.concat(
+					CharPool.OPEN_CURLY_BRACE, prependedAlgorithm,
+					CharPool.CLOSE_CURLY_BRACE, encryptedPassword));
+
+			testLegacyEncrypt(algorithm, plainPassword, encryptedPassword);
+		}
 	}
 
 	@Test
@@ -345,11 +353,6 @@ public class CompositePasswordEncryptorTest {
 			PropsValues.PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY =
 				originalLegacyAlgorithm;
 		}
-	}
-
-	private void _testBouncyCastleProperty(boolean enabled) {
-		PropsValuesTestUtil.swapWithSafeCloseable(
-			"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", enabled);
 	}
 
 	private static final String _TYPE_CUSTOM_PASSWORD_ENCRYPTOR =
