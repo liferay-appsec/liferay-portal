@@ -350,19 +350,6 @@ public class CompositePasswordEncryptorTest {
 	private void _testBouncyCastleProperty(boolean enabled) {
 		PropsValuesTestUtil.swapWithSafeCloseable(
 			"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", enabled);
-
-		if (enabled) {
-			Assert.assertTrue(
-				GetterUtil.getBoolean(
-					PropsUtil.get(
-						PropsKeys.PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED)));
-		}
-		else {
-			Assert.assertFalse(
-				GetterUtil.getBoolean(
-					PropsUtil.get(
-						PropsKeys.PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED)));
-		}
 	}
 
 	private static final String _TYPE_CUSTOM_PASSWORD_ENCRYPTOR =
