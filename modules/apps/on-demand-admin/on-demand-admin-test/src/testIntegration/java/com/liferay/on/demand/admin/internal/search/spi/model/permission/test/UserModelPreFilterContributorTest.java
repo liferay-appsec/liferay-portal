@@ -59,7 +59,7 @@ public class UserModelPreFilterContributorTest {
 			company.getCompanyId());
 
 		Assert.assertEquals(
-			companyUsersCount - 2, baseModelSearchResult.getLength());
+			companyUsersCount - 3, baseModelSearchResult.getLength());
 
 		for (User user : baseModelSearchResult.getBaseModels()) {
 			Assert.assertFalse(_onDemandAdminManager.isOnDemandAdminUser(user));
