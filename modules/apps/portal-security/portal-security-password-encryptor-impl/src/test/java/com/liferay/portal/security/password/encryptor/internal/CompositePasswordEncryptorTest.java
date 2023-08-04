@@ -349,7 +349,7 @@ public class CompositePasswordEncryptorTest {
 
 	private void _testBouncyCastleProperty(boolean enabled) {
 		PropsValuesTestUtil.swapWithSafeCloseable(
-			"PASSWORDS_ENCRYPTION_ENABLE_BOUNCY_CASTLE", enabled);
+			"PASSWORDS_ENCRYPTION_BOUNCYCASTLE_ENABLED", enabled);
 
 		if (enabled) {
 			Assert.assertTrue(
