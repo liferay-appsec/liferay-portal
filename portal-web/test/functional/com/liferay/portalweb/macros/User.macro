@@ -1730,6 +1730,24 @@ definition {
 	}
 
 	macro editUserSiteCP {
+		var siteURLKey = StringUtil.replace(${siteName}, " ", "-");
+
+		var siteURLKey = StringUtil.lowerCase(${siteURLKey});
+
+		Site.openSiteSettingsAdmin(siteURLKey = ${siteURLKey});
+
+		Click(
+			key_itemName = "Site Configuration",
+			locator1 = "ListGroupItem#ITEM_TEXT");
+
+		Check.checkToggleSwitch(
+			key_toggleSwitchLabel = "Allow Manual Membership Management",
+			locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
+
+		PortletEntry.save();
+
+		User.openUsersAdmin();
+
 		UserNavigator.gotoUser(userScreenName = ${userScreenName});
 
 		User.selectMembership(assetType = "Sites");
