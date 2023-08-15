@@ -310,11 +310,6 @@ definition {
 			userEmailAddress = "userea@liferay.com",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
@@ -557,13 +552,9 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "userea@liferay.com");
 
-		User.openUsersAdmin();
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "usersn");
-
-		User.openUsersAdmin();
 
 		User.editUserSiteCP(
 			siteName = "google.com Name",
@@ -704,11 +695,6 @@ definition {
 			userEmailAddress = "userea@liferay.com",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "usersn");
@@ -783,11 +769,6 @@ definition {
 			User.editPasswordCP(
 				userEmailAddress = "userea${userNumber}@liferay.com",
 				userScreenName = "usersn${userNumber}");
-
-			ApplicationsMenu.gotoPortlet(
-				category = "Users",
-				panel = "Control Panel",
-				portlet = "Users and Organizations");
 
 			User.editUserSiteCP(
 				siteName = "Site Name",
@@ -1392,11 +1373,6 @@ definition {
 			userEmailAddress = "userea@liferay.com",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
@@ -1476,11 +1452,6 @@ definition {
 		var siteName = TestCase.getSiteName(siteName = ${siteName});
 
 		task ("Assgin Default Site to new user") {
-			ApplicationsMenu.gotoPortlet(
-				category = "Users",
-				panel = "Control Panel",
-				portlet = "Users and Organizations");
-
 			User.editUserSiteCP(
 				siteName = ${siteName},
 				userScreenName = "usersn");

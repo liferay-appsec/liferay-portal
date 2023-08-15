@@ -349,11 +349,6 @@ definition {
 			mimeType = "application/msword",
 			sourceFileName = "Document_1.doc");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
@@ -907,11 +902,6 @@ definition {
 			layoutName = "Documents and Media Page",
 			widgetName = "Documents and Media");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");
@@ -1149,11 +1139,6 @@ definition {
 			groupName = "Site Name",
 			mimeType = "application/msword",
 			sourceFileName = "Document_1.doc");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
 
 		User.editUserSiteCP(
 			siteName = "Site Name",

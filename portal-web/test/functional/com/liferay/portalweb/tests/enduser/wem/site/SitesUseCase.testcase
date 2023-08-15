@@ -273,16 +273,12 @@ definition {
 		}
 
 		task ("Assign the first organization site to user") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = "Organization Name 1",
 				userScreenName = "usersn");
 		}
 
 		task ("Assign the second organization site to user") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = "Organization Name 2",
 				userScreenName = "usersn");
@@ -398,8 +394,6 @@ definition {
 		}
 
 		task ("Assign current site to the user") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = ${siteName},
 				userScreenName = "usersn");
@@ -497,8 +491,6 @@ definition {
 		}
 
 		task ("Assign the created user to default site") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = ${siteName},
 				userScreenName = "usersn");
@@ -842,8 +834,6 @@ definition {
 		}
 
 		task ("Assign site to the user") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = "Site1 Name",
 				userScreenName = "usersn");

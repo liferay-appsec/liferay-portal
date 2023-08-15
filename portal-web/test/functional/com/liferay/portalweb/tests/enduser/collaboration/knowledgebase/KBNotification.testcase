@@ -106,8 +106,6 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "userea@liferay.com");
 
-		User.openUsersAdmin();
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "usersn");
@@ -184,11 +182,6 @@ definition {
 			agreeToTermsAndAnswerReminderQuery = "true",
 			requireReset = "false",
 			userEmailAddress = "userea@liferay.com");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
 
 		User.editUserSiteCP(
 			siteName = ${siteName},

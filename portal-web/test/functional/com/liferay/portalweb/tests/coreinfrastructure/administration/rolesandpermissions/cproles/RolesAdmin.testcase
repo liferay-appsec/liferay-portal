@@ -660,8 +660,6 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "userea@liferay.com");
 
-		User.openUsersAdmin();
-
 		User.editUserSiteCP(
 			siteName = "Site Name",
 			userScreenName = "usersn");

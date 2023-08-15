@@ -1421,8 +1421,6 @@ definition {
 			requirePasswordReset = "true",
 			userScreenName = "buyer");
 
-		Click(locator1 = "Icon#BACK");
-
 		User.editUserSiteCP(
 			siteName = "Speedwell",
 			userScreenName = "buyer");

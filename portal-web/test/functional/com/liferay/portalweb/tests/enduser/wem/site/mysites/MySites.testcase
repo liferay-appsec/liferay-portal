@@ -373,8 +373,6 @@ definition {
 		}
 
 		task ("Make user a member of new site via User Admin CP") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = "Site Name",
 				userScreenName = "usersn");

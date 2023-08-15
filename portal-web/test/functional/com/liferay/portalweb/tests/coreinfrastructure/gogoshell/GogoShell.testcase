@@ -137,8 +137,6 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "userea@liferay.com");
 
-		User.openUsersAdmin();
-
 		var siteName = TestCase.getSiteName(siteName = ${siteName});
 
 		User.editUserSiteCP(

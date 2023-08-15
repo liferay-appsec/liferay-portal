@@ -1014,11 +1014,6 @@ definition {
 			userLastName = "userln",
 			userScreenName = "usersn");
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "usersn");
@@ -1087,11 +1082,6 @@ definition {
 			userFirstName = "userfn",
 			userLastName = "userln",
 			userScreenName = "usersn");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
 
 		User.editUserSiteCP(
 			siteName = ${siteName},

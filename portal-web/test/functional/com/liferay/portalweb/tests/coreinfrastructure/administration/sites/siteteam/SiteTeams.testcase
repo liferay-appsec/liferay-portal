@@ -499,8 +499,6 @@ definition {
 		}
 
 		task ("Assign user to the created site") {
-			User.openUsersAdmin();
-
 			User.editUserSiteCP(
 				siteName = "Site Name",
 				userScreenName = "usersn1");
@@ -520,11 +518,6 @@ definition {
 		}
 
 		task ("Assign the second user to the created site") {
-			ApplicationsMenu.gotoPortlet(
-				category = "Users",
-				panel = "Control Panel",
-				portlet = "Users and Organizations");
-
 			User.editUserSiteCP(
 				siteName = "Site Name",
 				userScreenName = "usersn2");

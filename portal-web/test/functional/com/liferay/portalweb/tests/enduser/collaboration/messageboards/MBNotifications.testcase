@@ -479,11 +479,6 @@ definition {
 			requireReset = "false",
 			userEmailAddress = PropsUtil.get("email.address.3"));
 
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "usersn");

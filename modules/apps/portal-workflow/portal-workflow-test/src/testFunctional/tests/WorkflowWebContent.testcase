@@ -110,8 +110,6 @@ definition {
 
 		var siteName = TestCase.getSiteName(siteName = ${siteName});
 
-		User.openUsersAdmin();
-
 		User.editUserSiteCP(
 			siteName = ${siteName},
 			userScreenName = "user1");
