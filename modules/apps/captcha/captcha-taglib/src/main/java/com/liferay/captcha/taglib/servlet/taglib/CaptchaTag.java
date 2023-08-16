@@ -7,6 +7,7 @@ package com.liferay.captcha.taglib.servlet.taglib;
 
 import com.liferay.captcha.configuration.CaptchaConfiguration;
 import com.liferay.osgi.util.service.Snapshot;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
@@ -81,18 +82,20 @@ public class CaptchaTag extends IncludeTag {
 
 		String url = themeDisplay.getPathMain() + "/portal/captcha/get_image";
 
-		try {
-			CaptchaConfiguration captchaConfiguration =
-				ConfigurationProviderUtil.getSystemConfiguration(
-					CaptchaConfiguration.class);
+		if (FeatureFlagManagerUtil.isEnabled("LPS-185213")) {
+			try {
+				CaptchaConfiguration captchaConfiguration =
+					ConfigurationProviderUtil.getSystemConfiguration(
+						CaptchaConfiguration.class);
 
-			if (captchaConfiguration.enableSimpleCaptchaHeadlessAPI()) {
-				url = "/o/captcha/v1.0/simple";
+				if (captchaConfiguration.enableSimpleCaptchaHeadlessAPI()) {
+					url = "/o/captcha/v1.0/simple";
+				}
 			}
-		}
-		catch (ConfigurationException configurationException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(configurationException);
+			catch (ConfigurationException configurationException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(configurationException);
+				}
 			}
 		}
 
