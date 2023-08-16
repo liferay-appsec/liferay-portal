@@ -315,6 +315,11 @@ public class PortalUpgradeProcessRegistryImpl
 			new Version(26, 5, 0),
 			UpgradeModulesFactory.create(
 				new String[] {"com.liferay.asset.link.service"}, null));
+
+		upgradeVersionTreeMap.put(
+			new Version(26, 4, 1),
+			UpgradeModulesFactory.create(
+				new String[] {"com.liferay.user.associated.data.web"}, null));
 	}
 
 }
