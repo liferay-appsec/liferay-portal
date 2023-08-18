@@ -569,6 +569,9 @@ public class OrganizationResourceImpl
 				contextCompany.getCompanyId(), organization.getCustomFields(),
 				contextAcceptLanguage.getPreferredLocale()));
 
+		serviceContext.setExternalReferenceCode(
+			organization.getExternalReferenceCode());
+
 		return serviceContext;
 	}
 
