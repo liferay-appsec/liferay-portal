@@ -106,7 +106,9 @@ public class RememberMeAutoLogin extends BaseAutoLogin {
 
 			long userId = GetterUtil.getLong(credentials[0]);
 
-			if (guestUser.getUserId() == userId) {
+			User realUser = _userLocalService.getUserById(userId);
+
+			if ((guestUser.getUserId() == userId) || !realUser.isActive()) {
 				removeCookies(httpServletRequest, httpServletResponse);
 
 				return null;
