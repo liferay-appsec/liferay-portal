@@ -907,7 +907,7 @@ public class ServicePreAction extends Action {
 			realUser = UserLocalServiceUtil.getUserById(realUserId.longValue());
 		}
 
-		if (realUser == null || !realUser.isActive()) {
+		if ((realUser == null) || !realUser.isActive()) {
 			httpSession.invalidate();
 		}
 
