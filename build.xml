@@ -548,6 +548,15 @@ message.
 					/>
 				</copy>
 
+				<copy
+					todir="${app.server.shielded-container-lib.portal.dir}"
+				>
+					<fileset
+						dir="lib/portal"
+						includes="txw2.jar"
+					/>
+				</copy>
+
 				<if>
 					<equals arg1="${app.server.type}" arg2="tcserver" />
 					<then>
