@@ -238,7 +238,7 @@ public class OrganizationLocalServiceImpl
 		String[] types = getTypes();
 
 		return addOrganization(
-			userId, parentOrganizationId, name, types[0], 0, 0,
+			null, userId, parentOrganizationId, name, types[0], 0, 0,
 			ListTypeConstants.ORGANIZATION_STATUS_DEFAULT, StringPool.BLANK,
 			site, null);
 	}
@@ -272,9 +272,10 @@ public class OrganizationLocalServiceImpl
 	 */
 	@Override
 	public Organization addOrganization(
-			long userId, long parentOrganizationId, String name, String type,
-			long regionId, long countryId, long statusListTypeId,
-			String comments, boolean site, ServiceContext serviceContext)
+			String externalReferenceCode, long userId,
+			long parentOrganizationId, String name, String type, long regionId,
+			long countryId, long statusListTypeId, String comments,
+			boolean site, ServiceContext serviceContext)
 		throws PortalException {
 
 		// Organization
@@ -297,6 +298,7 @@ public class OrganizationLocalServiceImpl
 			organization.setUuid(serviceContext.getUuid());
 		}
 
+		organization.setExternalReferenceCode(externalReferenceCode);
 		organization.setCompanyId(user.getCompanyId());
 		organization.setUserId(user.getUserId());
 		organization.setUserName(user.getFullName());
@@ -440,10 +442,9 @@ public class OrganizationLocalServiceImpl
 
 		if (organization == null) {
 			organization = addOrganization(
-				userId, parentOrganizationId, name, type, regionId, countryId,
-				statusListTypeId, comments, site, serviceContext);
-
-			organization.setExternalReferenceCode(externalReferenceCode);
+				externalReferenceCode, userId, parentOrganizationId, name, type,
+				regionId, countryId, statusListTypeId, comments, site,
+				serviceContext);
 
 			PortalUtil.updateImageId(
 				organization, hasLogo, logoBytes, "logoId",
@@ -455,10 +456,10 @@ public class OrganizationLocalServiceImpl
 		}
 		else {
 			organization = updateOrganization(
-				user.getCompanyId(), organization.getOrganizationId(),
-				parentOrganizationId, name, type, regionId, countryId,
-				statusListTypeId, comments, hasLogo, logoBytes, site,
-				serviceContext);
+				externalReferenceCode, user.getCompanyId(),
+				organization.getOrganizationId(), parentOrganizationId, name,
+				type, regionId, countryId, statusListTypeId, comments, hasLogo,
+				logoBytes, site, serviceContext);
 		}
 
 		return organization;
@@ -2057,10 +2058,11 @@ public class OrganizationLocalServiceImpl
 	 */
 	@Override
 	public Organization updateOrganization(
-			long companyId, long organizationId, long parentOrganizationId,
-			String name, String type, long regionId, long countryId,
-			long statusListTypeId, String comments, boolean hasLogo,
-			byte[] logoBytes, boolean site, ServiceContext serviceContext)
+			String externalReferenceCode, long companyId, long organizationId,
+			long parentOrganizationId, String name, String type, long regionId,
+			long countryId, long statusListTypeId, String comments,
+			boolean hasLogo, byte[] logoBytes, boolean site,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		// Organization
@@ -2078,6 +2080,7 @@ public class OrganizationLocalServiceImpl
 		long oldParentOrganizationId = organization.getParentOrganizationId();
 		String oldName = organization.getName();
 
+		organization.setExternalReferenceCode(externalReferenceCode);
 		organization.setParentOrganizationId(parentOrganizationId);
 		organization.setTreePath(organization.buildTreePath());
 		organization.setName(name);
