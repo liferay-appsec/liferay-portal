@@ -112,7 +112,10 @@ public class CompositePasswordEncryptorTest {
 				expectedPassword = PasswordEncryptorUtil.encrypt(
 					algorithm, plainPassword, (String)null);
 
-				_testBouncyCastleLogs(logCapture, 1, "The BouncyCastle implementation of PBKDF2 encryptor is enabled");
+				_testBouncyCastleLogs(
+					logCapture, 1,
+					"The BouncyCastle implementation of PBKDF2 encryptor is " +
+						"enabled");
 			}
 		}
 
@@ -125,7 +128,10 @@ public class CompositePasswordEncryptorTest {
 
 				testEncrypt(plainPassword, expectedPassword);
 
-				_testBouncyCastleLogs(logCapture, 1, "The default implementation of PBKDF2 encryptor is enabled");
+				_testBouncyCastleLogs(
+					logCapture, 1,
+					"The default implementation of PBKDF2 encryptor is " +
+						"enabled");
 			}
 		}
 
@@ -147,7 +153,10 @@ public class CompositePasswordEncryptorTest {
 
 				testLegacyEncrypt(algorithm, plainPassword, encryptedPassword);
 
-				_testBouncyCastleLogs(logCapture, 2, "The BouncyCastle implementation of PBKDF2 encryptor is enabled");
+				_testBouncyCastleLogs(
+					logCapture, 2,
+					"The BouncyCastle implementation of PBKDF2 encryptor is " +
+						"enabled");
 			}
 		}
 	}
@@ -395,7 +404,10 @@ public class CompositePasswordEncryptorTest {
 		if (expectedEntriesCount == 2) {
 			LogEntry logEntry1 = logEntries.get(1);
 
-			Assert.assertEquals("The BouncyCastle implementation of PBKDF2 encryptor is enabled", logEntry1.getMessage());
+			Assert.assertEquals(
+				"The BouncyCastle implementation of PBKDF2 encryptor is " +
+					"enabled",
+				logEntry1.getMessage());
 		}
 	}
 
