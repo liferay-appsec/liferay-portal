@@ -56,6 +56,18 @@
 					This was recompiled for compatibility with JDK 5.
 				</comments>
 			</library>
+			<library>
+				<file-name>lib/development/txw2.jar</file-name>
+				<version>4.0.3</version>
+				<project-name>TXW2 Runtime</project-name>
+				<project-url>https://eclipse-ee4j.github.io/jaxb-ri/</project-url>
+				<licenses>
+					<license>
+						<license-name>Eclipse Distribution License - v 1.0</license-name>
+						<license-url>https://www.eclipse.org/org/documents/edl-v10.php</license-url>
+					</license>
+				</licenses>
+			</library>
 		</libraries>
 	</version>
 </versions>
