@@ -77,12 +77,14 @@
 				<#if portlet_display.isShowBackIcon()>
 					<div class="autofit-col">
 						<div class="autofit-section">
-							<a class="icon-monospaced portlet-icon-back text-default" href="${portlet_back_url}" title="<@liferay.language key="return-to-full-page" />">
-								<@liferay_ui["icon"]
+							<div class="icon-monospaced text-default" style="margin-top:-0.35rem " title="<@liferay.language key="return-to-full-page" />">
+								<@clay["button"]
+									displayType="unstyled"
 									icon="angle-left"
 									markupView="lexicon"
+									onClick="Liferay.Util.navigate('${portlet_back_url}')"
 								/>
-							</a>
+							</div>
 						</div>
 					</div>
 				</#if>
