@@ -44,12 +44,14 @@
 
 	<div class="${portlet_content_css_class}">
 		<#if portlet_display.isShowBackIcon()>
-			<a class="icon-monospaced list-unstyled portlet-icon-back text-default" href="${portlet_back_url}" title="<@liferay.language key="return-to-full-page" />">
-				<@liferay_ui["icon"]
+			<div class="icon-monospaced list-unstyled portlet-icon-back text-default" title="<@liferay.language key="return-to-full-page" />">
+				<@clay["button"]
+					displayType="unstyled"
 					icon="angle-left"
 					markupView="lexicon"
+					onClick="Liferay.Util.navigate('${portlet_back_url}')"
 				/>
-			</a>
+			</div>
 		</#if>
 
 		<div class="autofit-float autofit-row portlet-header">
