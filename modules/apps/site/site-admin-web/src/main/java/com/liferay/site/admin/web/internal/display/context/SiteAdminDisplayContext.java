@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.service.MembershipRequestLocalServiceUtil;
 import com.liferay.portal.kernel.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 import com.liferay.portal.kernel.service.permission.PortalPermissionUtil;
 import com.liferay.portal.kernel.servlet.taglib.ui.BreadcrumbEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -294,10 +293,8 @@ public class SiteAdminDisplayContext {
 			themeDisplay.getPermissionChecker();
 
 		if (!group.isCompany() &&
-			(PortalPermissionUtil.contains(
-				permissionChecker, ActionKeys.ADD_COMMUNITY) ||
-			 GroupPermissionUtil.contains(
-				 permissionChecker, group, ActionKeys.ADD_COMMUNITY))) {
+			PortalPermissionUtil.contains(
+				permissionChecker, ActionKeys.ADD_COMMUNITY)) {
 
 			return true;
 		}
