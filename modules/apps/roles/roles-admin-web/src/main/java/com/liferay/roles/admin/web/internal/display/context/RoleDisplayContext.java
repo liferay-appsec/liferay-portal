@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.service.permission.RolePermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -216,8 +217,8 @@ public class RoleDisplayContext {
 				navigationItem.setActive(true);
 				navigationItem.setHref(portletURL, "tabs2", "users");
 
-				String tabs2 = ParamUtil.getString(
-					_httpServletRequest, "tabs2", "users");
+				String tabs2 = HtmlUtil.escapeAttribute(
+					ParamUtil.getString(_httpServletRequest, "tabs2", "users"));
 
 				navigationItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, tabs2));
