@@ -41,11 +41,9 @@ List<NavigationItem> navigationItems =
 					navigationItem.setActive(true);
 					navigationItem.setHref(portletURL, "tabs2", "users");
 
-					String tabs2 = HtmlUtil.escape(ParamUtil.getString(
-						request, "tabs2", "users"));
+					String tabs2 = HtmlUtil.escape(ParamUtil.getString(request, "tabs2", "users"));
 
-					navigationItem.setLabel(
-						LanguageUtil.get(request, tabs2));
+					navigationItem.setLabel(LanguageUtil.get(request, tabs2));
 				});
 		}
 	};
