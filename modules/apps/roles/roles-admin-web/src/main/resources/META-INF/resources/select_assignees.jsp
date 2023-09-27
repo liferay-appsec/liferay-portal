@@ -32,10 +32,27 @@ EditRoleAssignmentsManagementToolbarDisplayContext editRoleAssignmentsManagement
 SearchContainer<?> searchContainer = editRoleAssignmentsManagementToolbarDisplayContext.getSearchContainer();
 
 PortletURL portletURL = editRoleAssignmentsManagementToolbarDisplayContext.getPortletURL();
+
+List<NavigationItem> navigationItems =
+	new JSPNavigationItemList(pageContext) {
+		{
+			add(
+				navigationItem -> {
+					navigationItem.setActive(true);
+					navigationItem.setHref(portletURL, "tabs2", "users");
+
+					String tabs2 = HtmlUtil.escape(ParamUtil.getString(
+						request, "tabs2", "users"));
+
+					navigationItem.setLabel(
+						LanguageUtil.get(request, tabs2));
+				});
+		}
+	};
 %>
 
 <clay:navigation-bar
-	navigationItems="<%= roleDisplayContext.getSelectAssigneesNavigationItems(portletURL) %>"
+	navigationItems="<%= navigationItems %>"
 />
 
 <clay:management-toolbar
