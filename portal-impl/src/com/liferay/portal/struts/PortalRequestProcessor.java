@@ -604,11 +604,22 @@ public class PortalRequestProcessor {
 		// Authenticated users must be active
 
 		if (user != null) {
-			if (!user.isActive()) {
-				SessionErrors.add(
-					httpSession, UserActiveException.class.getName());
 
-				return _PATH_PORTAL_ERROR;
+
+			if (!user.isActive()) {
+				
+				Long realUserId = (Long)httpSession.getAttribute(WebKeys.USER_ID);
+				
+				// If the user is not impersonated, add exception in session
+				if (realUserId == null) {
+					
+					SessionErrors.add(
+							httpSession, UserActiveException.class.getName());
+
+					return _PATH_PORTAL_ERROR;
+						
+				} 
+				return "/web/guest";
 			}
 
 			String portletId = ParamUtil.getString(
