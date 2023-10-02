@@ -604,21 +604,19 @@ public class PortalRequestProcessor {
 		// Authenticated users must be active
 
 		if (user != null) {
-
-
 			if (!user.isActive()) {
-				
-				Long realUserId = (Long)httpSession.getAttribute(WebKeys.USER_ID);
-				
+				Long realUserId = (Long)httpSession.getAttribute(
+					WebKeys.USER_ID);
+
 				// If the user is not impersonated, add exception in session
+
 				if (realUserId == null) {
-					
 					SessionErrors.add(
-							httpSession, UserActiveException.class.getName());
+						httpSession, UserActiveException.class.getName());
 
 					return _PATH_PORTAL_ERROR;
-						
-				} 
+				}
+
 				return "/web/guest";
 			}
 

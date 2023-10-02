@@ -7554,11 +7554,10 @@ public class PortalImpl implements Portal {
 		User doAsUser = UserLocalServiceUtil.getUserById(doAsUserId);
 
 		if (!doAsUser.isActive()) {
-
 			if (_log.isDebugEnabled()) {
-					_log.debug(
-						"Unable to impersonate " + doAsUserIdString +
-							" because the user is not active");
+				_log.debug(
+					"Unable to impersonate " + doAsUserIdString +
+						" because the user is not active");
 			}
 
 			return 0;
