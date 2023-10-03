@@ -240,6 +240,10 @@ else {
 <clay:sheet-section>
 	<h3 class="sheet-subtitle"><liferay-ui:message key="web-dav-password" /></h3>
 
+	<liferay-ui:message key="Your WebDav password will also be used for inbound Sharepoint connections using Digest authentication." />
+
+	<br /><br />
+
 	<c:if test="<%= Validator.isNotNull(selUser.getDigest()) %>">
 		<div class="alert alert-info">
 			<liferay-ui:message key="a-webdav-password-has-already-been-generated-and-will-be-expired-if-a-new-one-is-generated" />
