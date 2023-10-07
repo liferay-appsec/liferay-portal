@@ -5,7 +5,7 @@
 
 package com.liferay.scim.internal.resource;
 
-import com.liferay.scim.resource.UserResource;
+import com.liferay.scim.resource.SCIMUserResource;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -33,13 +33,13 @@ import org.osgi.service.component.annotations.Component;
 		"osgi.jaxrs.application.select=(osgi.jaxrs.name=Liferay.SCIM.Application)",
 		"osgi.jaxrs.resource=true"
 	},
-	service = UserResource.class
+	service = SCIMUserResource.class
 )
 @OpenAPIDefinition(
 	info = @Info(description = "SCIM 2.0 /Users endpoint", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0"), title = "/Users Endpoint Swagger Definition", version = "1.0")
 )
 @Path("/v2/Users")
-public class UserResourceImpl implements UserResource {
+public class SCIMUserResourceImpl implements SCIMUserResource {
 
 	@Consumes("application/scim+json")
 	@POST
