@@ -1,0 +1,4 @@
+Bundle-Activator: com.liferay.scim.charon.integration.internal.activator.SCIMCharonIntegrationBundleActivator
+Bundle-Name: Liferay SCIM Charon Integration
+Bundle-SymbolicName: com.liferay.scim.charon.integration
+Bundle-Version: 1.0.0
