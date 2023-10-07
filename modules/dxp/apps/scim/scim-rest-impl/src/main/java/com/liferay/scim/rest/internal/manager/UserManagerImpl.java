@@ -115,8 +115,15 @@ public class UserManagerImpl implements UserManager {
 	}
 
 	@Override
-	public void deleteUser(String userId) throws NotImplementedException {
-		throw new NotImplementedException();
+	public void deleteUser(String userId) throws CharonException {
+		try {
+			_scimUserManager.deleteScimUser(
+				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(userId));
+		}
+		catch (PortalException portalException) {
+			throw new CharonException(
+				"Unable to delete user with id " + userId, portalException);
+		}
 	}
 
 	@Override
