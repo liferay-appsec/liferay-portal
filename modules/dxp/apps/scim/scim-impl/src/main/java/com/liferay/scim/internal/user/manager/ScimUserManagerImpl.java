@@ -93,6 +93,20 @@ public class ScimUserManagerImpl implements ScimUserManager {
 	}
 
 	@Override
+	public void deleteScimUser(long companyId, long userId)
+		throws PortalException {
+
+		ScimUser scimUser = fetchScimUser(companyId, userId);
+
+		if (scimUser == null) {
+			return;
+		}
+
+		_userLocalService.updateStatus(
+			userId, WorkflowConstants.STATUS_INACTIVE, new ServiceContext());
+	}
+
+	@Override
 	public ScimUser fetchScimUser(long companyId, long userId) {
 		User user = _userLocalService.fetchUserById(userId);
 

@@ -18,6 +18,9 @@ public interface ScimUserManager {
 	public ScimUser addOrUpdateScimUser(ScimUser scimUser)
 		throws PortalException;
 
+	public void deleteScimUser(long companyId, long userId)
+		throws PortalException;
+
 	public ScimUser fetchScimUser(long companyId, long userId);
 
 }
