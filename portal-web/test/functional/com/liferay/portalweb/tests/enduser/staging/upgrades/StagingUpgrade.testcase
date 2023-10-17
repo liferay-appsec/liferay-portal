@@ -480,6 +480,7 @@ definition {
 	test ViewWarningMessageAfterUpgrade73101 {
 		property custom.properties = "feature.flag.LPS-190129=true";
 		property data.archive.type = "data-archive-local-staging-with-page-versioning";
+		property portal.upstream = "joyce";
 		property portal.version = "7.3.10.1";
 
 		task ("Given: Navigate to the Advanced Publish Process screen") {
@@ -526,6 +527,7 @@ definition {
 	test ViewWarningMessageWhenPublishFromStagingAdminAfterUpgrade73101 {
 		property custom.properties = "feature.flag.LPS-190129=true";
 		property data.archive.type = "data-archive-staging-with-default-setting";
+		property portal.upstream = "joyce";
 		property portal.version = "7.3.10.1";
 
 		task ("Given: Navigate to the Advanced Publish Process screen") {

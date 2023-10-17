@@ -1198,6 +1198,7 @@ definition {
 	@priority = 3
 	test ViewWarningMessageWhenChooseALL {
 		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}tunneling.servlet.shared.secret=1234567890123456${line.separator}feature.flag.LPS-190129=true";
+		property portal.upstream = "joyce";
 		property test.liferay.virtual.instance = "false";
 
 		task ("Given: Navigate to the Advanced Publish Process screen") {
@@ -1241,6 +1242,7 @@ definition {
 	@priority = 3
 	test ViewWarningMessageWhenChooseDateRange {
 		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}tunneling.servlet.shared.secret=1234567890123456${line.separator}feature.flag.LPS-190129=true";
+		property portal.upstream = "joyce";
 		property test.liferay.virtual.instance = "false";
 
 		task ("Given: Navigate to the Advanced Publish Process screen") {
@@ -1284,6 +1286,7 @@ definition {
 	@priority = 3
 	test ViewWarningMessageWhenPublishFromStagingAdmin {
 		property custom.properties = "auth.verifier.TunnelAuthVerifier.hosts.allowed=${line.separator}tunneling.servlet.shared.secret=1234567890123456${line.separator}feature.flag.LPS-190129=true";
+		property portal.upstream = "joyce";
 		property test.liferay.virtual.instance = "false";
 
 		task ("Given: Navigate to the Advanced Publish Process screen") {
