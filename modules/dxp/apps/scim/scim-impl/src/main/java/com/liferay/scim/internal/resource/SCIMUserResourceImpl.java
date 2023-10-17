@@ -7,10 +7,6 @@ package com.liferay.scim.internal.resource;
 
 import com.liferay.scim.resource.SCIMUserResource;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.info.License;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -34,9 +30,6 @@ import org.osgi.service.component.annotations.Component;
 		"osgi.jaxrs.resource=true"
 	},
 	service = SCIMUserResource.class
-)
-@OpenAPIDefinition(
-	info = @Info(description = "SCIM 2.0 /Users endpoint", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0"), title = "/Users Endpoint Swagger Definition", version = "1.0")
 )
 @Path("/v2/Users")
 public class SCIMUserResourceImpl implements SCIMUserResource {
