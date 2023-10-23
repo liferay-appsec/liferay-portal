@@ -5,12 +5,15 @@
 
 package com.liferay.cookies.internal.events;
 
+import com.liferay.cookies.internal.manager.util.CookiesConsentTypesCaching;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.events.Action;
 import com.liferay.portal.kernel.events.LifecycleAction;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.HashMap;
@@ -41,6 +44,23 @@ public class CookiesPreAction extends Action {
 		catch (Exception exception) {
 			_log.error(exception);
 		}
+	}
+
+	private String _getConsentTypeName(Integer consentType) {
+		String consentTypeName = StringPool.BLANK;
+
+		if (consentType == CookiesConstants.CONSENT_TYPE_FUNCTIONAL) {
+			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
+		}
+		else if (consentType == CookiesConstants.CONSENT_TYPE_PERFORMANCE) {
+			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
+		}
+		else if (consentType == CookiesConstants.CONSENT_TYPE_PERSONALIZATION) {
+			consentTypeName =
+				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
+		}
+
+		return consentTypeName;
 	}
 
 	private Map<String, String> _getCookieValues(Cookie[] cookies) {
@@ -83,7 +103,25 @@ public class CookiesPreAction extends Action {
 		boolean optionalConsent = false;
 
 		if (performanceConsent && functionalConsent && personalizationConsent) {
+			Map<String, Integer> cookieConsentTypesCache =
+				CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
+
 			optionalConsent = true;
+
+			for (Map.Entry<String, Integer> cookieConsentType :
+					cookieConsentTypesCache.entrySet()) {
+
+				boolean consentTypeValue = GetterUtil.getBoolean(
+					cookieValues.get(
+						_getConsentTypeName(cookieConsentType.getValue())));
+
+				if (!consentTypeValue) {
+					CookiesManagerUtil.deleteCookies(
+						CookiesManagerUtil.getDomain(httpServletRequest),
+						httpServletRequest, httpServletResponse,
+						cookieConsentType.getKey());
+				}
+			}
 		}
 
 		boolean userConsent = Validator.isNotNull(
