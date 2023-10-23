@@ -6,6 +6,7 @@
 package com.liferay.cookies.internal.manager;
 
 import com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration;
+import com.liferay.cookies.internal.manager.util.CookiesConsentTypesCaching;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -152,6 +153,8 @@ public class CookiesManagerImpl implements CookiesManager {
 				return false;
 			}
 		}
+
+		CookiesConsentTypesCaching.addCookie(cookie.getName(), consentType);
 
 		// LEP-5175
 
