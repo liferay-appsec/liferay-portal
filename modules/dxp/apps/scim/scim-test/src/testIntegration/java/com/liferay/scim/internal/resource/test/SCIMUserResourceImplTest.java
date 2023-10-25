@@ -20,8 +20,8 @@ import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.scim.client.configuration.SCIMClientOAuth2ApplicationConfiguration;
-import com.liferay.scim.resource.SCIMUserResource;
 
+import com.liferay.scim.resource.UserResource;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -77,7 +77,7 @@ public class SCIMUserResourceImplTest {
 
 		Assert.assertNull(user);
 
-		_scimUserResource.updateSCIMUser("1234", content);
+		_userResource.updateUser("1234", content);
 
 		user = _userLocalService.fetchUserByEmailAddress(
 			TestPropsValues.getCompanyId(), emailJSONObject.getString("value"));
@@ -92,7 +92,7 @@ public class SCIMUserResourceImplTest {
 	private JSONFactory _jsonFactory;
 
 	@Inject
-	private SCIMUserResource _scimUserResource;
+	private UserResource _userResource;
 
 	@Inject
 	private UserLocalService _userLocalService;
