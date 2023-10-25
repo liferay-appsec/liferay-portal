@@ -5,10 +5,13 @@
 
 package com.liferay.scim.rest.internal.resource.v1_0;
 
+import com.liferay.scim.rest.dto.v1_0.User;
 import com.liferay.scim.rest.resource.v1_0.UserResource;
-
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
+
+import javax.ws.rs.core.Response;
 
 /**
  * @author Olivér Kecskeméty
@@ -18,4 +21,17 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE, service = UserResource.class
 )
 public class UserResourceImpl extends BaseUserResourceImpl {
+
+	@Override
+	public Response postV2User(User user) throws Exception {
+		return _userResource.createUser(user.toString());
+	}
+
+	@Override
+	public Object getV2User(String id) throws Exception {
+		return _userResource.getUser(id);
+	}
+
+	@Reference
+	private com.liferay.scim.resource.UserResource _userResource;
 }
