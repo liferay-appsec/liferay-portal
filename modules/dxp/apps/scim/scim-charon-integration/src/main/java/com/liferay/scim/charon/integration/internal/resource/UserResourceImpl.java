@@ -10,7 +10,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.scim.charon.integration.internal.user.manager.UserManagerImpl;
-import com.liferay.scim.resource.SCIMUserResource;
+import com.liferay.scim.resource.UserResource;
 import com.liferay.scim.user.manager.SCIMUser;
 import com.liferay.scim.user.manager.SCIMUserManager;
 
@@ -35,29 +35,29 @@ import org.wso2.charon3.core.schema.SCIMConstants;
 /**
  * @author Rafael Praxedes
  */
-@Component(service = SCIMUserResource.class)
-public class SCIMUserResourceImpl implements SCIMUserResource {
+@Component(service = UserResource.class)
+public class UserResourceImpl implements UserResource {
 
 	@Override
-	public Response addSCIMUser(String resourceString) {
+	public Response createUser(String resourceString) {
 		return _buildResponse(
 			_userResourceManager.create(
 				resourceString, _userManager, null, null));
 	}
 
 	@Override
-	public Response deleteSCIMUser(String id) {
+	public Response deleteUser(String id) {
 		return _buildResponse(_userResourceManager.delete(id, _userManager));
 	}
 
 	@Override
-	public Response getSCIMUser(String id) {
+	public Response getUser(String id) {
 		return _buildResponse(
 			_userResourceManager.get(id, _userManager, null, null));
 	}
 
 	@Override
-	public Response getSCIMUsers(int count, int startIndex) {
+	public Response listUsers(int count, int startIndex) {
 		return _buildResponse(
 			_userResourceManager.listWithGET(
 				_userManager, null, startIndex, count, null, null, null, null,
@@ -65,13 +65,13 @@ public class SCIMUserResourceImpl implements SCIMUserResource {
 	}
 
 	@Override
-	public Response getSCIMUsers(String resourceString) {
+	public Response searchUser(String resourceString) {
 		return _buildResponse(
 			_userResourceManager.listWithPOST(resourceString, _userManager));
 	}
 
 	@Override
-	public Response updateSCIMUser(String id, String resourceString) {
+	public Response updateUser(String id, String resourceString) {
 		SCIMUser scimUser = _scimUserManager.fetchSCIMUser(
 			CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(id));
 
@@ -81,7 +81,7 @@ public class SCIMUserResourceImpl implements SCIMUserResource {
 					id, resourceString, _userManager, null, null));
 		}
 
-		return addSCIMUser(resourceString);
+		return createUser(resourceString);
 	}
 
 	@Activate
@@ -117,7 +117,7 @@ public class SCIMUserResourceImpl implements SCIMUserResource {
 
 	private void _registerLiferayUserSchemaExtension() throws Exception {
 		File file = _file.createTempFile(
-			SCIMUserResourceImpl.class.getResourceAsStream(
+			UserResourceImpl.class.getResourceAsStream(
 				"dependencies/liferay-user-schema-extension.json"));
 
 		SCIMUserSchemaExtensionBuilder scimUserSchemaExtensionBuilder =
