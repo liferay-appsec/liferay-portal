@@ -5,13 +5,15 @@
 
 package com.liferay.scim.rest.internal.resource.v1_0;
 
+import com.liferay.scim.rest.dto.v1_0.QueryAttributes;
 import com.liferay.scim.rest.dto.v1_0.User;
 import com.liferay.scim.rest.resource.v1_0.UserResource;
+
+import javax.ws.rs.core.Response;
+
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
-
-import javax.ws.rs.core.Response;
 
 /**
  * @author Olivér Kecskeméty
@@ -23,8 +25,15 @@ import javax.ws.rs.core.Response;
 public class UserResourceImpl extends BaseUserResourceImpl {
 
 	@Override
-	public Response postV2User(User user) throws Exception {
-		return _userResource.createUser(user.toString());
+	public Response deleteV2User(String id) throws Exception {
+		return _userResource.deleteUser(id);
+	}
+
+	@Override
+	public Object getV2User(Integer count, Integer startIndex)
+		throws Exception {
+
+		return _userResource.listUsers(count, startIndex);
 	}
 
 	@Override
@@ -32,6 +41,24 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 		return _userResource.getUser(id);
 	}
 
+	@Override
+	public Response postV2User(User user) throws Exception {
+		return _userResource.createUser(user.toString());
+	}
+
+	@Override
+	public Response postV2UserSearch(QueryAttributes queryAttributes)
+		throws Exception {
+
+		return _userResource.searchUser(queryAttributes.toString());
+	}
+
+	@Override
+	public Response putV2User(String id, User user) throws Exception {
+		return _userResource.updateUser(id, user.toString());
+	}
+
 	@Reference
 	private com.liferay.scim.resource.UserResource _userResource;
+
 }
