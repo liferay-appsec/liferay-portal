@@ -137,6 +137,8 @@ components:
                         A multi-valued list of complex objects containing the requested resources.
                     oneOf:
                         - $ref: "#/components/schemas/Group"
+                        - $ref: "#/components/schemas/ResourceType"
+                        - $ref: "#/components/schemas/Schema"
                         - $ref: "#/components/schemas/User"
                     type: object
                 itemsPerPage:
@@ -152,6 +154,251 @@ components:
                         The total number of results returned by the list or query operation.
                     type: integer
             type: object
+        ResourceType:
+            allOf:
+                - $ref: "#/components/schemas/BaseScim"
+                - properties:
+                      description:
+                          description:
+                              The resource type's human-readable description.
+                          type: string
+                      endpoint:
+                          description:
+                              The resource type's HTTP-addressable endpoint relative to the Base URL of the service
+                              provider, e.g., "Users".
+                          type: string
+                      id:
+                          description:
+                              The resource type's server unique id.
+                          type: string
+                      name:
+                          description:
+                              The resource type name.
+                          type: string
+                      schema:
+                          description:
+                              The resource type's primary/base schema URI, e.g.,
+                              "urn:ietf:params:scim:schemas:core:2.0:User".
+                          type: string
+                      schemaExtensions:
+                          description:
+                              A list of members of the Group.
+                          items:
+                              properties:
+                                  required:
+                                      description:
+                                          A Boolean value that specifies whether or not the schema extension is required
+                                          for the resource type.
+                                      type: boolean
+                                  schema:
+                                      description:
+                                          The URI of an extended schema, e.g., "urn:edu:2.0:Staff".
+                                      type: integer
+                              type: object
+                          type: array
+                  type: object
+        Schema:
+            description:
+                This section defines a way to specify the schema in use by resources available and accepted by a SCIM
+                service provider.
+            properties:
+                attributes:
+                    description:
+                        A complex type that defines service provider attributes and their qualities via the following
+                        set of sub-attributes
+                    items:
+                        allOf:
+                            - $ref: "#/components/schemas/MultiValuedAttribute"
+                            - properties:
+                                  canonicalValues:
+                                      description:
+                                          A collection of suggested canonical values that may be used (e.g., "work" and
+                                          "home").
+                                      items:
+                                          type: string
+                                      type: array
+                                  caseExact:
+                                      description:
+                                          A Boolean value that specifies whether or not a string attribute is case
+                                          sensitive.
+                                      type: boolean
+                                  description:
+                                      description:
+                                          The attribute's human-readable description.
+                                      type: string
+                                  multiValued:
+                                      description:
+                                          A Boolean value indicating the attribute's plurality.
+                                      type: boolean
+                                  mutability:
+                                      description:
+                                          A single keyword indicating the circumstances under which the value of the
+                                          attribute can be (re)defined.
+                                      enum: [immutable, readOnly, readWrite, writeOnly]
+                                      type: string
+                                  name:
+                                      description:
+                                          The attribute's name.
+                                      type: string
+                                  referenceTypes:
+                                      description:
+                                          A multi-valued array of JSON strings that indicate the SCIM resource types
+                                          that may be referenced.
+                                      items:
+                                          type: string
+                                      type: array
+                                  required:
+                                      description:
+                                          A Boolean value that specifies whether or not the attribute is required.
+                                      type: boolean
+                                  returned:
+                                      description:
+                                          A single keyword that indicates when an attribute and associated values are
+                                          returned in response to a GET request or in response to a PUT, POST, or PATCH
+                                          request.
+                                      enum: [always, default, never, request]
+                                      type: string
+                                  subAttributes:
+                                      description:
+                                          When an attribute is of type "complex", "subAttributes" defines a set of
+                                          sub-attributes.
+                                      type: object
+                                  type:
+                                      description:
+                                          The attribute's data type.
+                                      enum: [boolean, complex, decimal, dateTime, integer, reference, string]
+                                      type: string
+                                  uniqueness:
+                                      description:
+                                          A single keyword value that specifies how the service provider enforces
+                                          uniqueness of attribute values.
+                                      enum: [global, none, server]
+                                      type: string
+                              type: object
+                        type: object
+                    type: array
+                description:
+                    description:
+                        The schema's human-readable description.
+                    type: string
+                id:
+                    description:
+                        The unique URI of the schema.
+                    type: string
+                name:
+                    description:
+                        The schema's human-readable name.
+                    type: string
+            type: object
+        ServiceProviderConfiguration:
+            allOf:
+                - $ref: "#/components/schemas/BaseScim"
+                - properties:
+                      authenticationSchemes:
+                          description:
+                              A multi-valued complex type that specifies supported authentication scheme properties.
+                          items:
+                              allOf:
+                                  - $ref: "#/components/schemas/MultiValuedAttribute"
+                                  - properties:
+                                        description:
+                                            description:
+                                                A description of the authentication scheme.
+                                            type: string
+                                        documentationUri:
+                                            description:
+                                                An HTTP-addressable URL pointing to the authentication scheme's usage
+                                                documentation.
+                                            type: string
+                                        name:
+                                            description:
+                                                The common authentication scheme name, e.g., HTTP Basic.
+                                            type: string
+                                        specUri:
+                                            description:
+                                                An HTTP-addressable URL pointing to the authentication scheme's
+                                                specification.
+                                            type: string
+                                        type:
+                                            description:
+                                                The authentication scheme.
+                                            type: string
+                                    type: object
+                              type: object
+                          type: array
+                      bulk:
+                          description:
+                              A complex type that specifies bulk configuration options.
+                          properties:
+                              maxOperations:
+                                  description:
+                                      An integer value specifying the maximum number of operations.
+                                  type: integer
+                              maxPayloadSize:
+                                  description:
+                                      An integer value specifying the maximum payload size in bytes.
+                                  type: integer
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                      changePassword:
+                          description:
+                              A complex type that specifies configuration options related to changing a password.
+                          properties:
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                      documentationUri:
+                          description:
+                              An HTTP-addressable URL pointing to the service provider's human-consumable help
+                              documentation.
+                          type: string
+                      etag:
+                          description:
+                              A complex type that specifies ETag configuration options.
+                          properties:
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                      filter:
+                          description:
+                              A complex type that specifies FILTER options.
+                          properties:
+                              maxResults:
+                                  description:
+                                      An integer value specifying the maximum number of resources returned in a
+                                      response.
+                                  type: integer
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                      patch:
+                          description:
+                              A complex type that specifies PATCH configuration options.
+                          properties:
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                      sort:
+                          description:
+                              A complex type that specifies Sort configuration options.
+                          properties:
+                              supported:
+                                  description:
+                                      A Boolean value specifying whether or not the operation is supported.
+                                  type: boolean
+                          type: object
+                  type: object
         User:
             allOf:
                 - $ref: "#/components/schemas/BaseScim"
@@ -461,6 +708,78 @@ paths:
                     description:
                         The Group was successfully updated.
             tags: ["Group"]
+    /v2/ResourceTypes:
+        get:
+            description:
+                An HTTP GET to this endpoint is used to discover the types of resources available on a SCIM service
+                provider (e.g., Users and Groups).
+            operationId: getV2ResourceType
+            parameters:
+                - in: query
+                  name: count
+                  schema:
+                      type: integer
+                - in: query
+                  name: startIndex
+                  schema:
+                      type: integer
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/QueryResponse"
+                    description:
+                        The list of resource types.
+            tags: ["ResourceType"]
+    /v2/Schemas:
+        get:
+            description:
+                An HTTP GET to this endpoint is used to retrieve information about resource schemas supported by a SCIM
+                service provider.
+            operationId: getV2Schema
+            parameters:
+                - in: query
+                  name: count
+                  schema:
+                      type: integer
+                - in: query
+                  name: startIndex
+                  schema:
+                      type: integer
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/QueryResponse"
+                    description:
+                        The list of schemas.
+            tags: ["Schema"]
+    /v2/ServiceProviderConfig:
+        get:
+            description:
+                An HTTP GET to this endpoint will return a JSON structure that describes the SCIM specification features
+                available on a service provider.
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/ServiceProviderConfiguration"
+                    description:
+                        If the resource exists, the server responds with HTTP status code 200 (OK) and includes the
+                        result in the body of the response.
+            tags: ["ServiceProviderConfig"]
     /v2/Users:
         get:
             description:
