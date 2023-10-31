@@ -23,6 +23,19 @@ components:
                         type: string
                     type: array
             type: object
+        FilterSchema:
+            description:
+                A complex type that specifies FILTER options.
+            properties:
+                maxResults:
+                    description:
+                        An integer value specifying the maximum number of resources returned in a response.
+                    type: integer
+                supported:
+                    description:
+                        A Boolean value specifying whether or not the operation is supported.
+                    type: boolean
+            type: object
         Group:
             allOf:
                 - $ref: "#/components/schemas/BaseScim"
@@ -367,19 +380,7 @@ components:
                                   type: boolean
                           type: object
                       filter:
-                          description:
-                              A complex type that specifies FILTER options.
-                          properties:
-                              maxResults:
-                                  description:
-                                      An integer value specifying the maximum number of resources returned in a
-                                      response.
-                                  type: integer
-                              supported:
-                                  description:
-                                      A Boolean value specifying whether or not the operation is supported.
-                                  type: boolean
-                          type: object
+                          $ref: "#/components/schemas/FilterSchema"
                       patch:
                           description:
                               A complex type that specifies PATCH configuration options.
@@ -390,15 +391,17 @@ components:
                                   type: boolean
                           type: object
                       sort:
-                          description:
-                              A complex type that specifies Sort configuration options.
-                          properties:
-                              supported:
-                                  description:
-                                      A Boolean value specifying whether or not the operation is supported.
-                                  type: boolean
-                          type: object
+                          $ref: "#/components/schemas/SortSchema"
                   type: object
+        SortSchema:
+            description:
+                A complex type that specifies Sort configuration options.
+            properties:
+                supported:
+                    description:
+                        A Boolean value specifying whether or not the operation is supported.
+                    type: boolean
+            type: object
         User:
             allOf:
                 - $ref: "#/components/schemas/BaseScim"
