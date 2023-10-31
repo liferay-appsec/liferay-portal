@@ -684,6 +684,33 @@ paths:
                         If the resource exists, the server responds with HTTP status code 200 (OK) and includes the
                         result in the body of the response.
             tags: ["Group"]
+        patch:
+            description:
+                Updates a group.
+            operationId: patchV2Group
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/scim+json:
+                        schema:
+                            $ref: "#/components/schemas/GroupSchema"
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/GroupSchema"
+                    description:
+                        The Group was successfully updated.
+            tags: ["Group"]
         put:
             description:
                 Updates a group.
@@ -721,6 +748,13 @@ paths:
             tags: ["Me"]
         get:
             operationId: getV2Me
+            responses:
+                501:
+                    description:
+                        Not implemented.
+            tags: ["Me"]
+        patch:
+            operationId: patchV2Me
             responses:
                 501:
                     description:
@@ -920,6 +954,33 @@ paths:
                     description:
                         If the resource exists, the server responds with HTTP status code 200 (OK) and includes the
                         result in the body of the response.
+            tags: ["User"]
+        patch:
+            description:
+                Updates a user.
+            operationId: patchV2User
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/scim+json:
+                        schema:
+                            $ref: "#/components/schemas/User"
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/User"
+                    description:
+                        The User was successfully updated.
             tags: ["User"]
         put:
             description:
