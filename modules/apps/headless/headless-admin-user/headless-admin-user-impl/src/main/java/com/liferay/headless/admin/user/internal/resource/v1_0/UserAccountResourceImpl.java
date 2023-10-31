@@ -38,6 +38,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.captcha.CaptchaSettings;
 import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.exception.UserActiveException;
 import com.liferay.portal.kernel.exception.UserLockoutException;
 import com.liferay.portal.kernel.exception.UserPasswordException;
 import com.liferay.portal.kernel.model.Address;
@@ -771,6 +772,15 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 			Long userAccountId, UserAccount userAccount)
 		throws Exception {
 
+		User user = _userService.getUserById(userAccountId);
+
+		if ((user.getStatus() == WorkflowConstants.STATUS_PENDING)) {
+
+			throw new UserActiveException(
+				"User " + user.getUuid() +
+					" cannot be changed under verification");
+		}
+
 		String status = userAccount.getStatusAsString();
 
 		Integer workflowStatus = null;
@@ -800,8 +810,6 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 					accountBrief.getId(), userAccountId);
 			}
 		}
-
-		User user = _userService.getUserById(userAccountId);
 
 		String sms = null;
 		String facebook = null;
