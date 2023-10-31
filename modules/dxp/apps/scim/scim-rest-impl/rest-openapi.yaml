@@ -138,7 +138,7 @@ components:
                     oneOf:
                         - $ref: "#/components/schemas/Group"
                         - $ref: "#/components/schemas/ResourceType"
-                        - $ref: "#/components/schemas/Schema"
+                        - $ref: "#/components/schemas/SchemaType"
                         - $ref: "#/components/schemas/User"
                     type: object
                 itemsPerPage:
@@ -197,7 +197,7 @@ components:
                               type: object
                           type: array
                   type: object
-        Schema:
+        SchemaType:
             description:
                 This section defines a way to specify the schema in use by resources available and accepted by a SCIM
                 service provider.
