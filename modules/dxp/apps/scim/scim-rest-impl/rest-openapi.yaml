@@ -711,6 +711,35 @@ paths:
                     description:
                         The Group was successfully updated.
             tags: ["Group"]
+    /v2/Me:
+        delete:
+            operationId: deleteV2Me
+            responses:
+                501:
+                    description:
+                        Not implemented.
+            tags: ["Me"]
+        get:
+            operationId: getV2Me
+            responses:
+                501:
+                    description:
+                        Not implemented.
+            tags: ["Me"]
+        post:
+            operationId: postV2Me
+            responses:
+                501:
+                    description:
+                        Not implemented.
+            tags: ["Me"]
+        put:
+            operationId: putV2Me
+            responses:
+                501:
+                    description:
+                        Not implemented.
+            tags: ["Me"]
     /v2/ResourceTypes:
         get:
             description:
