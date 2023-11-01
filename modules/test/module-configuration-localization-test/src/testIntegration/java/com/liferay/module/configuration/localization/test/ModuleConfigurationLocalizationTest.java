@@ -21,6 +21,14 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,16 +37,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Lance Ji
@@ -84,6 +82,13 @@ public class ModuleConfigurationLocalizationTest {
 		Assert.assertTrue("Test failed due to: " + message, message.isEmpty());
 	}
 
+	private Boolean _checkPIDScope(List<String> pids) {
+		return pids.stream(
+		).allMatch(
+			pid -> pid.startsWith("com.liferay")
+		);
+	}
+
 	private String _collectBundleError(Bundle bundle) {
 		ExtendedMetaTypeInformation extendedMetaTypeInformation =
 			_extendedMetaTypeService.getMetaTypeInformation(bundle);
@@ -93,9 +98,7 @@ public class ModuleConfigurationLocalizationTest {
 		Collections.addAll(pids, extendedMetaTypeInformation.getFactoryPids());
 		Collections.addAll(pids, extendedMetaTypeInformation.getPids());
 
-		String bundleName = bundle.getSymbolicName();
-
-		if (pids.isEmpty() || !bundleName.startsWith("com.liferay")) {
+		if (pids.isEmpty() || !_checkPIDScope(pids)) {
 			return StringPool.BLANK;
 		}
 
