@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alvaro Saugar
  */
 @Component(
-	configurationPid = "com.liferay.scim.client.configuration.ScimClientOAuth2ApplicationConfiguration",
+	configurationPid = ScimConstants.CONFIGURATION_PID,
 	service = ConfigurationScreen.class
 )
 public class ScimPortalSettingsConfigurationScreenWrapper
@@ -140,10 +140,8 @@ public class ScimPortalSettingsConfigurationScreenWrapper
 						WebKeys.THEME_DISPLAY);
 
 				String filterString = StringBundler.concat(
-					"(&(service.factoryPid=",
-					"com.liferay.scim.client.configuration.",
-					"ScimClientOAuth2ApplicationConfiguration)(",
-					ScimConstants.PARAM_COMPANY_ID, "=",
+					"(&(service.factoryPid=", ScimConstants.CONFIGURATION_PID,
+					")(", ScimConstants.PARAM_COMPANY_ID, "=",
 					themeDisplay.getCompanyId(), "))");
 
 				Configuration[] configurations =
