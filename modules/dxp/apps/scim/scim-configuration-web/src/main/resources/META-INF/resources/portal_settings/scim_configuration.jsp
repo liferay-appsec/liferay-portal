@@ -79,7 +79,7 @@ if (paramToken == null) {
 		<aui:button id="genetareAccessToken" label="discard-changes" name="genetareAccessToken" small="<%= true %>" value="generate" />
 
 		<c:choose>
-			<c:when test="<%= paramToken != null %>">
+			<c:when test="<%= !paramToken.equals(StringPool.BLANK) %>">
 				</br> <label for="<portlet:namespace />revokeAccessToken">
 					<liferay-ui:message key="scim-revoke-all" />
 
