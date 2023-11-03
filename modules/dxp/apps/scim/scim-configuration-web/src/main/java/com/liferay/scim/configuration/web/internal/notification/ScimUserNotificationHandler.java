@@ -15,7 +15,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.scim.configuration.web.internal.constants.SCIMWebKeys;
+import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -24,14 +24,14 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alvaro Saugar
  */
 @Component(
-	property = "javax.portlet.name=" + SCIMWebKeys.SCIM_CONFIGURATION,
+	property = "javax.portlet.name=" + ScimWebKeys.SCIM_CONFIGURATION,
 	service = UserNotificationHandler.class
 )
-public class SCIMUserNotificationHandler extends BaseUserNotificationHandler {
+public class ScimUserNotificationHandler extends BaseUserNotificationHandler {
 
-	public SCIMUserNotificationHandler() {
+	public ScimUserNotificationHandler() {
 		setActionable(true);
-		setPortletId(SCIMWebKeys.SCIM_CONFIGURATION);
+		setPortletId(ScimWebKeys.SCIM_CONFIGURATION);
 	}
 
 	@Override
