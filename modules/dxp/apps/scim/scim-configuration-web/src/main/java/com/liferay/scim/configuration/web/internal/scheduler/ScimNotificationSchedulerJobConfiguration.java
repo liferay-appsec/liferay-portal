@@ -40,7 +40,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.scim.configuration.web.internal.constants.SCIMWebKeys;
+import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
 
 import java.io.IOException;
 
@@ -59,7 +59,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alvaro Saugar
  */
 @Component(service = SchedulerJobConfiguration.class)
-public class SCIMNotificationSchedulerJobConfiguration
+public class ScimNotificationSchedulerJobConfiguration
 	implements SchedulerJobConfiguration {
 
 	public static final int DAY = 1;
@@ -228,13 +228,13 @@ public class SCIMNotificationSchedulerJobConfiguration
 		try {
 			for (User user : users) {
 				if (UserNotificationManagerUtil.isDeliver(
-						user.getUserId(), SCIMWebKeys.SCIM_CONFIGURATION, 0,
+						user.getUserId(), ScimWebKeys.SCIM_CONFIGURATION, 0,
 						UserNotificationDefinition.NOTIFICATION_TYPE_ADD_ENTRY,
 						UserNotificationDeliveryConstants.TYPE_WEBSITE)) {
 
 					NotificationEvent notificationEvent = new NotificationEvent(
 						System.currentTimeMillis(),
-						SCIMWebKeys.SCIM_CONFIGURATION,
+						ScimWebKeys.SCIM_CONFIGURATION,
 						JSONUtil.put("body", body));
 
 					notificationEvent.setDeliveryType(
@@ -253,7 +253,7 @@ public class SCIMNotificationSchedulerJobConfiguration
 	private static final String _SCIM_CLIENT_ID_PREFIX = "SCIM_";
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		SCIMNotificationSchedulerJobConfiguration.class);
+		ScimNotificationSchedulerJobConfiguration.class);
 
 	@Reference
 	private CompanyLocalService _companyLocalService;

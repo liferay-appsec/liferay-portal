@@ -9,7 +9,7 @@ import com.liferay.portal.kernel.model.MembershipRequestConstants;
 import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
 import com.liferay.portal.kernel.notifications.UserNotificationDeliveryType;
-import com.liferay.scim.configuration.web.internal.constants.SCIMWebKeys;
+import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -17,14 +17,14 @@ import org.osgi.service.component.annotations.Component;
  * @author Alvaro Saugar
  */
 @Component(
-	property = "javax.portlet.name=" + SCIMWebKeys.SCIM_CONFIGURATION,
+	property = "javax.portlet.name=" + ScimWebKeys.SCIM_CONFIGURATION,
 	service = UserNotificationDefinition.class
 )
-public class SCIMUserNotificationDefinition extends UserNotificationDefinition {
+public class ScimUserNotificationDefinition extends UserNotificationDefinition {
 
-	public SCIMUserNotificationDefinition() {
+	public ScimUserNotificationDefinition() {
 		super(
-			SCIMWebKeys.SCIM_CONFIGURATION, 0,
+			ScimWebKeys.SCIM_CONFIGURATION, 0,
 			MembershipRequestConstants.STATUS_PENDING, "scim-email-subject");
 
 		addUserNotificationDeliveryType(
