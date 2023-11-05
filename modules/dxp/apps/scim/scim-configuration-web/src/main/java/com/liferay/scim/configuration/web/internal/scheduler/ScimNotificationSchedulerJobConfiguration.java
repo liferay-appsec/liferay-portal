@@ -16,6 +16,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -70,7 +71,13 @@ public class ScimNotificationSchedulerJobConfiguration
 
 	@Override
 	public UnsafeRunnable<Exception> getJobExecutorUnsafeRunnable() {
-		return () -> _companyLocalService.forEachCompany(
+		return () -> {
+
+			if (_isDisabled()) {
+				return;
+			}
+
+			_companyLocalService.forEachCompany(
 			company -> {
 				if (!company.isActive()) {
 					return;
@@ -78,6 +85,7 @@ public class ScimNotificationSchedulerJobConfiguration
 
 				_sendNotification(company.getCompanyId());
 			});
+		};
 	}
 
 	public OrderByComparator<OAuth2Authorization> getOrderByComparator() {
@@ -114,6 +122,15 @@ public class ScimNotificationSchedulerJobConfiguration
 		}
 
 		return body;
+	}
+
+	private boolean _isDisabled() {
+		if (FeatureFlagManagerUtil.isEnabled("LPS-96845")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _sendEmail(
