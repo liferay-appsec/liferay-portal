@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.scim.rest.internal.configuration;
+package com.liferay.scim.rest.configuration;
 
 import aQute.bnd.annotation.metatype.Meta;
-
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 
 /**
@@ -15,7 +14,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 @ExtendedObjectClassDefinition(generateUI = false)
 @Meta.OCD(
 	factory = true,
-	id = "com.liferay.scim.rest.internal.configuration.ScimClientOAuth2ApplicationConfiguration"
+	id = "com.liferay.scim.rest.configuration.ScimClientOAuth2ApplicationConfiguration"
 )
 public interface ScimClientOAuth2ApplicationConfiguration {
 
