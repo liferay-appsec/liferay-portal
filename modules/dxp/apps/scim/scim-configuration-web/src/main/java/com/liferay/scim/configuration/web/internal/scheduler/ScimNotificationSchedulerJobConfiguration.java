@@ -72,19 +72,18 @@ public class ScimNotificationSchedulerJobConfiguration
 	@Override
 	public UnsafeRunnable<Exception> getJobExecutorUnsafeRunnable() {
 		return () -> {
-
 			if (_isDisabled()) {
 				return;
 			}
 
 			_companyLocalService.forEachCompany(
-			company -> {
-				if (!company.isActive()) {
-					return;
-				}
+				company -> {
+					if (!company.isActive()) {
+						return;
+					}
 
-				_sendNotification(company.getCompanyId());
-			});
+					_sendNotification(company.getCompanyId());
+				});
 		};
 	}
 
@@ -126,7 +125,6 @@ public class ScimNotificationSchedulerJobConfiguration
 
 	private boolean _isDisabled() {
 		if (FeatureFlagManagerUtil.isEnabled("LPS-96845")) {
-
 			return true;
 		}
 
