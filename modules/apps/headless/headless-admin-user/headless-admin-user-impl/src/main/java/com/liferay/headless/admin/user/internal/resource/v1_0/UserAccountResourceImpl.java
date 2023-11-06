@@ -774,8 +774,7 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 		User user = _userService.getUserById(userAccountId);
 
-		if ((user.getStatus() == WorkflowConstants.STATUS_PENDING)) {
-
+		if (user.getStatus() == WorkflowConstants.STATUS_PENDING) {
 			throw new UserActiveException(
 				"User " + user.getUuid() +
 					" cannot be changed under verification");
