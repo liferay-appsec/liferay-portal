@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelListener;
+import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
@@ -61,11 +62,22 @@ public class UserGroupRoleModelListener
 
 			Group group = userGroupRole.getGroup();
 
-			additionalInfoJSONObject.put(
-				"scopeClassName", group.getClassName()
-			).put(
-				"scopeClassPK", group.getClassPK()
-			);
+			String className = group.getClassName();
+
+			if (className.equals(Group.class.getName())) {
+				additionalInfoJSONObject.put(
+					"groupId", group.getClassPK()
+				).put(
+					"groupName", group.getNameCurrentValue()
+				);
+			}
+			else if (className.equals(Organization.class.getName())) {
+				additionalInfoJSONObject.put(
+					"organizationId", group.getClassPK()
+				).put(
+					"organizationName", group.getNameCurrentValue()
+				);
+			}
 
 			_auditRouter.route(auditMessage);
 		}
