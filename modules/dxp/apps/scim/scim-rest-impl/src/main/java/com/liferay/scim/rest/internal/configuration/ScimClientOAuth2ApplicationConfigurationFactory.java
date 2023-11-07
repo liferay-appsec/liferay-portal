@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.scim.rest.configuration.ScimClientOAuth2ApplicationConfiguration;
 import com.liferay.scim.rest.internal.provider.ScimClientBearerTokenProvider;
 import com.liferay.scim.rest.util.ScimClientUtil;
 
@@ -51,7 +50,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Olivér Kecskeméty
  */
 @Component(
-	configurationPid = "com.liferay.scim.rest.configuration.ScimClientOAuth2ApplicationConfiguration",
+	configurationPid = "com.liferay.scim.rest.internal.configuration.ScimClientOAuth2ApplicationConfiguration",
 	configurationPolicy = ConfigurationPolicy.REQUIRE, service = {}
 )
 public class ScimClientOAuth2ApplicationConfigurationFactory {
