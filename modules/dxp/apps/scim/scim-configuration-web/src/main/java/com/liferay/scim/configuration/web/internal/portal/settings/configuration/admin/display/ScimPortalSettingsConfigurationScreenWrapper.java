@@ -141,8 +141,8 @@ public class ScimPortalSettingsConfigurationScreenWrapper
 
 				Configuration[] configurations =
 					_configurationAdmin.listConfigurations(
-						StringBundler.concat(
-							"(&(%s=%s*)(%s=%s))",
+						String.format(
+							"(&(%s=%s)(%s=%s))",
 							ConfigurationAdmin.SERVICE_FACTORYPID,
 							ScimConstants.CONFIGURATION_PID,
 							ScimConstants.PARAM_COMPANY_ID,

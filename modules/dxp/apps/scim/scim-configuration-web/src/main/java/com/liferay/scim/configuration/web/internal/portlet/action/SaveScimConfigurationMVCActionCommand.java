@@ -148,7 +148,7 @@ public class SaveScimConfigurationMVCActionCommand
 		else {
 			Configuration[] configurations =
 				_configurationAdmin.listConfigurations(
-					StringBundler.concat(
+					String.format(
 						"(&(%s=%s*)(%s=%s))",
 						ConfigurationAdmin.SERVICE_FACTORYPID,
 						ScimConstants.CONFIGURATION_PID,
