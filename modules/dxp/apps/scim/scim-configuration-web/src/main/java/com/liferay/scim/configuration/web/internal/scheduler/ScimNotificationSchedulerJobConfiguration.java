@@ -146,19 +146,17 @@ public class ScimNotificationSchedulerJobConfiguration
 		List<InternetAddress> bcc = TransformUtil.transform(
 			users,
 			user -> {
-				if (!StringUtil.equals(
-						user.getEmailAddress(), "test@liferay.com")) {
+				InternetAddress internetAddress = null;
 
-					try {
-						return new InternetAddress(
-							user.getEmailAddress(), user.getFullName());
-					}
-					catch (Exception exception) {
-						_log.error(exception);
-					}
+				try {
+					internetAddress = new InternetAddress(
+						user.getEmailAddress(), user.getFullName());
+				}
+				catch (Exception exception) {
+					_log.error(exception);
 				}
 
-				return null;
+				return internetAddress;
 			});
 
 		MailMessage mailMessage = new MailMessage(from, subject, body, true);
