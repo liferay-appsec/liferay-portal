@@ -234,21 +234,23 @@ public class ScimNotificationSchedulerJobConfiguration
 		throws Exception {
 
 		for (User user : users) {
-			if (UserNotificationManagerUtil.isDeliver(
+			if (!UserNotificationManagerUtil.isDeliver(
 					user.getUserId(), ScimWebKeys.SCIM_CONFIGURATION, 0,
 					UserNotificationDefinition.NOTIFICATION_TYPE_ADD_ENTRY,
 					UserNotificationDeliveryConstants.TYPE_WEBSITE)) {
 
-				NotificationEvent notificationEvent = new NotificationEvent(
-					System.currentTimeMillis(), ScimWebKeys.SCIM_CONFIGURATION,
-					JSONUtil.put("body", body));
-
-				notificationEvent.setDeliveryType(
-					UserNotificationDeliveryConstants.TYPE_WEBSITE);
-
-				_userNotificationEventLocalService.addUserNotificationEvent(
-					user.getUserId(), notificationEvent);
+				continue;
 			}
+
+			NotificationEvent notificationEvent = new NotificationEvent(
+				System.currentTimeMillis(), ScimWebKeys.SCIM_CONFIGURATION,
+				JSONUtil.put("body", body));
+
+			notificationEvent.setDeliveryType(
+				UserNotificationDeliveryConstants.TYPE_WEBSITE);
+
+			_userNotificationEventLocalService.addUserNotificationEvent(
+				user.getUserId(), notificationEvent);
 		}
 	}
 
