@@ -15,7 +15,6 @@ import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -78,13 +77,13 @@ public class ScimNotificationSchedulerJobConfiguration
 			}
 
 			_companyLocalService.forEachCompany(
-			company -> {
-				if (!company.isActive()) {
-					return;
-				}
+				company -> {
+					if (!company.isActive()) {
+						return;
+					}
 
-				_sendNotification(company.getCompanyId());
-			});
+					_sendNotification(company.getCompanyId());
+				});
 		};
 	}
 
@@ -167,101 +166,89 @@ public class ScimNotificationSchedulerJobConfiguration
 		_mailService.sendEmail(mailMessage);
 	}
 
-	private void _sendNotification(long companyId) {
-		List<OAuth2Application> oAuth2Applications = null;
+	private void _sendNotification(long companyId) throws Exception {
+		for (OAuth2Application oAuth2Application :
+				_oAuth2ApplicationLocalService.getOAuth2Applications(
+					companyId)) {
 
-		try {
-			oAuth2Applications =
-				_oAuth2ApplicationLocalService.getOAuth2Applications(companyId);
+			if (oAuth2Application.getClientId(
+				).startsWith(
+					_SCIM_CLIENT_ID_PREFIX
+				)) {
 
-			for (OAuth2Application oAuth2Application : oAuth2Applications) {
-				if (oAuth2Application.getClientId(
-					).startsWith(
-						_SCIM_CLIENT_ID_PREFIX
-					)) {
+				List<OAuth2Authorization> applicationOAuth2Authorizations =
+					_oAuth2AuthorizationLocalService.getOAuth2Authorizations(
+						oAuth2Application.getOAuth2ApplicationId(),
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+						getOrderByComparator());
 
-					List<OAuth2Authorization> applicationOAuth2Authorizations =
-						_oAuth2AuthorizationLocalService.
-							getOAuth2Authorizations(
-								oAuth2Application.getOAuth2ApplicationId(),
-								QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-								getOrderByComparator());
+				if (applicationOAuth2Authorizations != null) {
+					OAuth2Authorization applicationOAuth2Authorization =
+						applicationOAuth2Authorizations.get(0);
 
-					if (applicationOAuth2Authorizations != null) {
-						OAuth2Authorization applicationOAuth2Authorization =
-							applicationOAuth2Authorizations.get(0);
+					Date accessTokenExpirationDate =
+						applicationOAuth2Authorization.
+							getAccessTokenExpirationDate();
 
-						Date accessTokenExpirationDate =
-							applicationOAuth2Authorization.
-								getAccessTokenExpirationDate();
+					int daysBetween = DateUtil.getDaysBetween(
+						new Date(), accessTokenExpirationDate);
 
-						int daysBetween = DateUtil.getDaysBetween(
-							new Date(), accessTokenExpirationDate);
+					if ((daysBetween == MONTH) || (daysBetween == WEEK) ||
+						(daysBetween == DAY)) {
 
-						if ((daysBetween == MONTH) || (daysBetween == WEEK) ||
-							(daysBetween == DAY)) {
+						Role role = _roleLocalService.getRole(
+							companyId, RoleConstants.ADMINISTRATOR);
 
-							Role role = _roleLocalService.getRole(
-								companyId, RoleConstants.ADMINISTRATOR);
+						List<User> users = _userLocalService.getRoleUsers(
+							role.getRoleId());
 
-							List<User> users = _userLocalService.getRoleUsers(
-								role.getRoleId());
+						SimpleDateFormat formatter = new SimpleDateFormat(
+							"dd-MMM-yyyy");
 
-							SimpleDateFormat formatter = new SimpleDateFormat(
-								"dd-MMM-yyyy");
+						String strAccessTokenExpirationDate = formatter.format(
+							accessTokenExpirationDate);
 
-							String strAccessTokenExpirationDate =
-								formatter.format(accessTokenExpirationDate);
+						Company company = _companyLocalService.getCompany(
+							companyId);
 
-							Company company = _companyLocalService.getCompany(
-								companyId);
+						ResourceBundle resourceBundle =
+							ResourceBundleUtil.getBundle(
+								"content.Language", company.getLocale(),
+								getClass());
 
-							ResourceBundle resourceBundle =
-								ResourceBundleUtil.getBundle(
-									"content.Language", company.getLocale(),
-									getClass());
+						String subject = _language.get(
+							resourceBundle, "scim-email-subject");
 
-							String subject = _language.get(
-								resourceBundle, "scim-email-subject");
+						String body = _generateBody(
+							strAccessTokenExpirationDate);
 
-							String body = _generateBody(
-								strAccessTokenExpirationDate);
-
-							_sendNotificationEvent(users, body);
-							_sendEmail(company, subject, body, users);
-						}
+						_sendNotificationEvent(users, body);
+						_sendEmail(company, subject, body, users);
 					}
 				}
 			}
 		}
-		catch (Exception exception) {
-			throw new RuntimeException(exception);
-		}
 	}
 
-	private void _sendNotificationEvent(List<User> users, String body) {
-		try {
-			for (User user : users) {
-				if (UserNotificationManagerUtil.isDeliver(
-						user.getUserId(), ScimWebKeys.SCIM_CONFIGURATION, 0,
-						UserNotificationDefinition.NOTIFICATION_TYPE_ADD_ENTRY,
-						UserNotificationDeliveryConstants.TYPE_WEBSITE)) {
+	private void _sendNotificationEvent(List<User> users, String body)
+		throws Exception {
 
-					NotificationEvent notificationEvent = new NotificationEvent(
-						System.currentTimeMillis(),
-						ScimWebKeys.SCIM_CONFIGURATION,
-						JSONUtil.put("body", body));
+		for (User user : users) {
+			if (UserNotificationManagerUtil.isDeliver(
+					user.getUserId(), ScimWebKeys.SCIM_CONFIGURATION, 0,
+					UserNotificationDefinition.NOTIFICATION_TYPE_ADD_ENTRY,
+					UserNotificationDeliveryConstants.TYPE_WEBSITE)) {
 
-					notificationEvent.setDeliveryType(
-						UserNotificationDeliveryConstants.TYPE_WEBSITE);
+				NotificationEvent notificationEvent = new NotificationEvent(
+					System.currentTimeMillis(), ScimWebKeys.SCIM_CONFIGURATION,
+					JSONUtil.put("body", body));
 
-					_userNotificationEventLocalService.addUserNotificationEvent(
-						user.getUserId(), notificationEvent);
-				}
+				notificationEvent.setDeliveryType(
+					UserNotificationDeliveryConstants.TYPE_WEBSITE);
+
+				_userNotificationEventLocalService.addUserNotificationEvent(
+					user.getUserId(), notificationEvent);
 			}
-		}
-		catch (PortalException portalException) {
-			throw new RuntimeException(portalException);
 		}
 	}
 
