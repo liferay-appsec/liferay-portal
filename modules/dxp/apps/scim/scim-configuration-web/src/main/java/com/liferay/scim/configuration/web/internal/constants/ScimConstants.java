@@ -11,7 +11,7 @@ package com.liferay.scim.configuration.web.internal.constants;
 public class ScimConstants {
 
 	public static final String CONFIGURATION_PID =
-		"com.liferay.scim.client.configuration." +
+		"com.liferay.scim.rest.internal.configuration." +
 			"ScimClientOAuth2ApplicationConfiguration";
 
 	public static final String[] MATCHER_FIELD = {"userName", "email"};
