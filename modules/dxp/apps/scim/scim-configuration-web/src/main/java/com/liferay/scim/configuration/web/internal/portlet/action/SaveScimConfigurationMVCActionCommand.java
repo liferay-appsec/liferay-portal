@@ -146,13 +146,14 @@ public class SaveScimConfigurationMVCActionCommand
 				oAuth2Application.getOAuth2ApplicationId());
 		}
 		else {
-			String filterString = StringBundler.concat(
-				"(&(service.factoryPid=", ScimConstants.CONFIGURATION_PID, ")(",
-				ScimConstants.PARAM_COMPANY_ID, "=",
-				themeDisplay.getCompanyId(), "))");
-
 			Configuration[] configurations =
-				_configurationAdmin.listConfigurations(filterString);
+				_configurationAdmin.listConfigurations(
+					StringBundler.concat(
+						"(&(%s=%s*)(%s=%s))",
+						ConfigurationAdmin.SERVICE_FACTORYPID,
+						ScimConstants.CONFIGURATION_PID,
+						ScimConstants.PARAM_COMPANY_ID,
+						themeDisplay.getCompanyId()));
 
 			if (configurations != null) {
 				Configuration configuration = configurations[0];
