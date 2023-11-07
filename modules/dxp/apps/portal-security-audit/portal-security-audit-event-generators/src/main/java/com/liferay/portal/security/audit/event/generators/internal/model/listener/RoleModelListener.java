@@ -18,9 +18,9 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.OrganizationService;
+import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.UserGroupService;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
@@ -137,11 +137,11 @@ public class RoleModelListener extends BaseModelListener<Role> {
 
 				Group group = _groupLocalService.getGroup(groupId);
 
-				if (group.getClassNameId() == _classNameService.getClassNameId(
+				if (group.getClassNameId() == _classNameLocalService.getClassNameId(
 						Organization.class.getName())) {
 
 					Organization organization =
-						_organizationService.getOrganization(
+						_organizationLocalService.getOrganization(
 							group.getClassPK());
 
 					additionalInfoJSONObject.put(
@@ -151,10 +151,10 @@ public class RoleModelListener extends BaseModelListener<Role> {
 					);
 				}
 				else if (group.getClassNameId() ==
-							_classNameService.getClassNameId(
+						 _classNameLocalService.getClassNameId(
 								UserGroup.class.getName())) {
 
-					UserGroup userGroup = _userGroupService.getUserGroup(
+					UserGroup userGroup = _userGroupLocalService.getUserGroup(
 						group.getClassPK());
 
 					additionalInfoJSONObject.put(
@@ -208,19 +208,19 @@ public class RoleModelListener extends BaseModelListener<Role> {
 	private AuditRouter _auditRouter;
 
 	@Reference
-	private ClassNameLocalService _classNameService;
+	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private OrganizationService _organizationService;
+	private OrganizationLocalService _organizationLocalService;
 
 	@Reference
 	private RoleLocalService _roleLocalService;
 
 	@Reference
-	private UserGroupService _userGroupService;
+	private UserGroupLocalService _userGroupLocalService;
 
 	@Reference
 	private UserLocalService _userLocalService;
