@@ -14,7 +14,7 @@ public class ScimConstants {
 		"com.liferay.scim.rest.internal.configuration." +
 			"ScimClientOAuth2ApplicationConfiguration";
 
-	public static final String[] MATCHER_FIELD = {"userName", "email-address"};
+	public static final String[] MATCHER_FIELD = {"userName", "email"};
 
 	public static final String PARAM_APPLICATION_NAME = "applicationName";
 
