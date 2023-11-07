@@ -71,7 +71,6 @@ public class ScimNotificationSchedulerJobConfiguration
 	@Override
 	public UnsafeRunnable<Exception> getJobExecutorUnsafeRunnable() {
 		return () -> {
-
 			if (_isDisabled()) {
 				return;
 			}
@@ -125,7 +124,6 @@ public class ScimNotificationSchedulerJobConfiguration
 
 	private boolean _isDisabled() {
 		if (FeatureFlagManagerUtil.isEnabled("LPS-96845")) {
-
 			return true;
 		}
 
