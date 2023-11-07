@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
+import com.liferay.scim.rest.util.ScimClientUtil;
 
 import java.io.IOException;
 
@@ -48,6 +49,7 @@ import java.text.SimpleDateFormat;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import javax.mail.internet.InternetAddress;
@@ -169,10 +171,10 @@ public class ScimNotificationSchedulerJobConfiguration
 				_oAuth2ApplicationLocalService.getOAuth2Applications(
 					companyId)) {
 
-			if (oAuth2Application.getClientId(
-				).startsWith(
-					_SCIM_CLIENT_ID_PREFIX
-				)) {
+			if (Objects.equals(
+					oAuth2Application.getClientId(),
+					ScimClientUtil.generateScimClientId(
+						oAuth2Application.getName()))) {
 
 				List<OAuth2Authorization> applicationOAuth2Authorizations =
 					_oAuth2AuthorizationLocalService.getOAuth2Authorizations(
@@ -251,8 +253,6 @@ public class ScimNotificationSchedulerJobConfiguration
 				user.getUserId(), notificationEvent);
 		}
 	}
-
-	private static final String _SCIM_CLIENT_ID_PREFIX = "SCIM_";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ScimNotificationSchedulerJobConfiguration.class);
