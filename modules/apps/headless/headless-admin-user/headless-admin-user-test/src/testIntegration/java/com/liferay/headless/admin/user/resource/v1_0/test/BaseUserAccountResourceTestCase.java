@@ -2333,6 +2333,9 @@ public abstract class BaseUserAccountResourceTestCase {
 	}
 
 	@Test
+	public abstract void testGetUserAccountContainSiteRole() throws Exception;
+
+	@Test
 	public void testGetUserAccountsPage() throws Exception {
 		Page<UserAccount> page = userAccountResource.getUserAccountsPage(
 			null, null, Pagination.of(1, 10), null);

@@ -429,6 +429,7 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 		assertValid(getUserAccount);
 	}
 
+	@Override
 	@Test
 	public void testGetUserAccountContainSiteRole() throws Exception {
 		Group group = GroupTestUtil.addGroup();
