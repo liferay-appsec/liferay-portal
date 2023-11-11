@@ -30,14 +30,6 @@
 		"react-router-dom": "^5.0.1"
 	},
 	"description": "",
-	"jest": {
-		"collectCoverageFrom": [
-			"src/main/resources/META-INF/resources/js/**/*.js"
-		],
-		"testPathIgnorePatterns": [
-			"<rootDir>/test/js/[^/]+\\.js"
-		]
-	},
 	"main": "js/index.js",
 	"name": "@liferay/scim-configuration-web",
 	"private": true,
