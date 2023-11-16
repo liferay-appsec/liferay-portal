@@ -112,17 +112,12 @@ public class SimpleCaptchaImpl implements Captcha {
 
 		HttpSession httpSession = _getHttpSession(httpServletRequest);
 
-		String key = WebKeys.CAPTCHA_TEXT;
-
-		String portletId = ParamUtil.getString(httpServletRequest, "portletId");
-
-		if (Validator.isNotNull(portletId)) {
-			key = portal.getPortletNamespace(portletId) + key;
-		}
+		String httpSessionKey = _getHttpSessionKey(
+			WebKeys.CAPTCHA_TEXT, httpServletRequest);
 
 		nl.captcha.Captcha simpleCaptcha = getSimpleCaptcha();
 
-		httpSession.setAttribute(key, simpleCaptcha.getAnswer());
+		httpSession.setAttribute(httpSessionKey, simpleCaptcha.getAnswer());
 
 		httpServletResponse.setContentType(ContentTypes.IMAGE_PNG);
 
@@ -435,7 +430,11 @@ public class SimpleCaptchaImpl implements Captcha {
 	private String _getHttpSessionKey(
 		String key, HttpServletRequest httpServletRequest) {
 
-		String portletId = portal.getPortletId(httpServletRequest);
+		String portletId = ParamUtil.getString(httpServletRequest, "portletId");
+
+		if (Validator.isNull(portletId)) {
+			portletId = portal.getPortletId(httpServletRequest);
+		}
 
 		if (Validator.isNotNull(portletId)) {
 			return portal.getPortletNamespace(portletId) + key;
