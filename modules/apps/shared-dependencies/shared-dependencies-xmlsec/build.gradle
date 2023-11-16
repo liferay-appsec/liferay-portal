@@ -1,5 +1,5 @@
 dependencies {
-	compileOnly group: "org.apache.santuario", name: "xmlsec", version: "2.1.7"
+	compileOnly group: "org.apache.santuario", name: "xmlsec", version: "2.3.4"
 }
 
 deployDependencies {
