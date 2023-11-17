@@ -10,6 +10,7 @@ import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserService;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -52,6 +53,12 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 	}
 
 	@Override
+	public Object getV2UserById(String id) throws Exception {
+		return _buildResponse(
+			_userResourceManager.get(id, _userManager, null, null));
+	}
+
+	@Override
 	public Object getV2Users(Integer count, Integer startIndex)
 		throws Exception {
 
@@ -59,12 +66,6 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 			_userResourceManager.listWithGET(
 				_userManager, null, startIndex, count, null, null, null, null,
 				null));
-	}
-
-	@Override
-	public Object getV2UserById(String id) throws Exception {
-		return _buildResponse(
-			_userResourceManager.get(id, _userManager, null, null));
 	}
 
 	@Override
@@ -87,7 +88,7 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 			_classNameLocalService, _companyLocalService, _configurationAdmin,
 			_expandoColumnLocalService, _expandoTableLocalService,
 			_expandoValueLocalService, _searcher, _searchRequestBuilderFactory,
-			_userLocalService, _userService);
+			_userGroupLocalService, _userLocalService, _userService);
 	}
 
 	private Response _buildResponse(SCIMResponse scimResponse) {
@@ -141,6 +142,9 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 
 	@Reference
 	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
+
+	@Reference
+	private UserGroupLocalService _userGroupLocalService;
 
 	@Reference
 	private UserLocalService _userLocalService;
