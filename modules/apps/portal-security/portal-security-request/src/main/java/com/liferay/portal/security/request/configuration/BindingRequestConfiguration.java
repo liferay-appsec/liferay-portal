@@ -13,7 +13,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * @author Alvaro Saugar
  */
 @ExtendedObjectClassDefinition(
-	category = "security-tools", 
+	category = "security-tools", featureFlagKey = "LPS-189045",
 	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
