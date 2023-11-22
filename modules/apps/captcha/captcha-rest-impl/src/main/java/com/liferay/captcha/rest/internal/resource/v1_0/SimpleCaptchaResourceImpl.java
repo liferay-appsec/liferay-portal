@@ -45,8 +45,6 @@ public class SimpleCaptchaResourceImpl extends BaseSimpleCaptchaResourceImpl {
 		ByteArrayOutputStream imageByteArrayOutputStream =
 			new ByteArrayOutputStream();
 
-		String answer = captcha.serveImage(imageByteArrayOutputStream);
-
 		String base64CaptchaImage =
 			"data:image/png;base64," +
 				Base64.encode(imageByteArrayOutputStream.toByteArray());
@@ -56,7 +54,8 @@ public class SimpleCaptchaResourceImpl extends BaseSimpleCaptchaResourceImpl {
 		return new SimpleCaptcha() {
 			{
 				captchaToken = CaptchaTokenUtil.generateCaptchaToken(
-					contextCompany, answer);
+					contextCompany,
+					captcha.serveImage(imageByteArrayOutputStream));
 
 				image = base64CaptchaImage;
 			}
