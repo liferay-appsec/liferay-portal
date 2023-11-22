@@ -55,7 +55,9 @@ import com.liferay.scim.rest.internal.util.ScimGroupUtil;
 import com.liferay.scim.rest.internal.util.ScimUserUtil;
 import com.liferay.scim.rest.util.ScimClientUtil;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -183,8 +185,11 @@ public class UserManagerImpl implements UserManager {
 				"No user group found with group ID " + groupId);
 		}
 
+		List<ScimUser> scimUserMembers = _getUserGroupMembers(
+			userGroup.getPrimaryKey());
+
 		try {
-			return ScimGroupUtil.toGroup(userGroup);
+			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
 		catch (Exception exception) {
 			throw new CharonException(exception.getMessage(), exception);
@@ -340,7 +345,10 @@ public class UserManagerImpl implements UserManager {
 				_transactionConfig,
 				() -> _addOrUpdateUserGroup(company, group));
 
-			return ScimGroupUtil.toGroup(userGroup);
+			List<ScimUser> scimUserMembers = _getUserGroupMembers(
+				userGroup.getPrimaryKey());
+
+			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
 		catch (Throwable throwable) {
 			throw new CharonException(
@@ -420,10 +428,12 @@ public class UserManagerImpl implements UserManager {
 			company.getCompanyId(), group.getExternalId(),
 			GetterUtil.getLong(group.getId()));
 
+		long companyId = company.getCompanyId();
+
 		if (userGroup == null) {
 			userGroup = _userGroupLocalService.addUserGroup(
-				0, company.getCompanyId(), group.getDisplayName(), null,
-				new ServiceContext());
+				_userLocalService.getGuestUserId(companyId), companyId,
+				group.getDisplayName(), null, new ServiceContext());
 
 			userGroup.setExternalReferenceCode(group.getExternalId());
 
@@ -449,9 +459,8 @@ public class UserManagerImpl implements UserManager {
 			}
 
 			userGroup = _userGroupLocalService.updateUserGroup(
-				company.getCompanyId(), userGroup.getPrimaryKey(),
-				group.getDisplayName(), userGroup.getDescription(),
-				new ServiceContext());
+				companyId, userGroup.getPrimaryKey(), group.getDisplayName(),
+				userGroup.getDescription(), new ServiceContext());
 
 			if (!Objects.equals(
 					group.getExternalId(),
@@ -678,6 +687,19 @@ public class UserManagerImpl implements UserManager {
 
 			return ReflectionUtil.throwException(exception);
 		}
+	}
+
+	private List<ScimUser> _getUserGroupMembers(long userGroupId) {
+		List<com.liferay.portal.kernel.model.User> members =
+			_userLocalService.getUserGroupUsers(userGroupId);
+
+		List<ScimUser> scimUserMembers = new ArrayList<>();
+
+		for (com.liferay.portal.kernel.model.User member : members) {
+			scimUserMembers.add(_toScimUser(member));
+		}
+
+		return scimUserMembers;
 	}
 
 	private ScimUser _getScimUser(long companyId, long userId)

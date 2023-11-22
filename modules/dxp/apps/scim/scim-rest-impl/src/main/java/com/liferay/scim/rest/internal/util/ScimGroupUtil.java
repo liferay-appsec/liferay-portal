@@ -8,8 +8,10 @@ package com.liferay.scim.rest.internal.util;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.UserGroup;
+import com.liferay.scim.rest.internal.model.ScimUser;
 
 import java.util.Date;
+import java.util.List;
 
 import org.wso2.charon3.core.objects.Group;
 import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
@@ -20,8 +22,15 @@ import org.wso2.charon3.core.schema.SCIMConstants;
  */
 public class ScimGroupUtil {
 
-	public static Group toGroup(UserGroup userGroup) throws Exception {
+	public static Group toGroup(
+			UserGroup userGroup, List<ScimUser> scimUserMembers)
+		throws Exception {
+
 		Group group = new Group();
+
+		for (ScimUser scimUserMember : scimUserMembers) {
+			group.setMember(ScimUserUtil.toUser(scimUserMember));
+		}
 
 		group.replaceDisplayName(userGroup.getName());
 
