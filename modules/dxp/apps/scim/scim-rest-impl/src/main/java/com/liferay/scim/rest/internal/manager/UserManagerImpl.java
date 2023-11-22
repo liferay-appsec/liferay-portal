@@ -89,6 +89,7 @@ public class UserManagerImpl implements UserManager {
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin,
 		ExpandoColumnLocalService expandoColumnLocalService,
+		ExpandoTableLocalService expandoTableLocalService,
 		ExpandoValueLocalService expandoValueLocalService, Searcher searcher,
 		SearchRequestBuilderFactory searchRequestBuilderFactory,
 		UserGroupLocalService userGroupLocalService,
@@ -130,19 +131,22 @@ public class UserManagerImpl implements UserManager {
 
 	@Override
 	public void deleteGroup(String groupId) throws CharonException {
-		UserGroup userGroup = _fetchUserGroup(
-			CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
-
-		if (userGroup == null) {
-			return;
-		}
-
 		try {
+			UserGroup userGroup = _getUserGroup(
+				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
+
+			if (userGroup == null) {
+				return;
+			}
+
 			_userGroupLocalService.deleteUserGroup(userGroup);
+		}
+		catch (AbstractCharonException abstractCharonException) {
+			ReflectionUtil.throwException(abstractCharonException);
 		}
 		catch (PortalException portalException) {
 			throw new CharonException(
-				"Unable to delete user group with group ID " + groupId,
+				"Unable to delete group with group ID " + groupId,
 				portalException);
 		}
 	}
@@ -174,25 +178,24 @@ public class UserManagerImpl implements UserManager {
 
 	@Override
 	public Group getGroup(
-			String groupId, Map<String, Boolean> requiredAttributes)
-		throws CharonException, NotFoundException {
-
-		UserGroup userGroup = _fetchUserGroup(
-			CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
-
-		if (userGroup == null) {
-			throw new NotFoundException(
-				"No user group found with group ID " + groupId);
-		}
-
-		List<ScimUser> scimUserMembers = _getUserGroupMembers(
-			userGroup.getPrimaryKey());
+		String groupId, Map<String, Boolean> requiredAttributes) {
 
 		try {
+			UserGroup userGroup = _getUserGroup(
+				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
+
+			if (userGroup == null) {
+				throw new NotFoundException(
+					"No group found with group ID " + groupId);
+			}
+
+			List<ScimUser> scimUserMembers = _getUserGroupMembers(
+				userGroup.getPrimaryKey());
+
 			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
-		catch (Exception exception) {
-			throw new CharonException(exception.getMessage(), exception);
+		catch (AbstractCharonException abstractCharonException) {
+			return ReflectionUtil.throwException(abstractCharonException);
 		}
 	}
 
@@ -224,6 +227,72 @@ public class UserManagerImpl implements UserManager {
 		catch (Exception exception) {
 			return ReflectionUtil.throwException(exception);
 		}
+	}
+
+	@Override
+	public GroupsGetResponse listGroupsWithGET(
+		Node node, Integer startIndex, Integer count, String sortBy,
+		String sortOrder, String domainName,
+		Map<String, Boolean> requiredAttributes) {
+
+		if (startIndex != null) {
+			startIndex--;
+		}
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		ScimClientOAuth2ApplicationConfiguration
+			scimClientOAuth2ApplicationConfiguration =
+				_getScimClientOAuth2ApplicationConfiguration(
+					serviceContext.getCompanyId());
+
+		String scimClientId = ScimClientUtil.generateScimClientId(
+			scimClientOAuth2ApplicationConfiguration.oAuth2ApplicationName());
+
+		com.liferay.portal.search.searcher.SearchRequest searchRequest =
+			_searchRequestBuilderFactory.builder(
+			).modelIndexerClasses(
+				UserGroup.class
+			).companyId(
+				serviceContext.getCompanyId()
+			).fetchSource(
+				false
+			).fields(
+				new String[0]
+			).from(
+				startIndex
+			).emptySearchEnabled(
+				true
+			).size(
+				count
+			).withSearchContext(
+				searchContext -> {
+					searchContext.setAttribute(Field.GROUP_ID, 0L);
+					searchContext.setAttribute(
+						"expando__keyword__custom_fields__scimClientId",
+						scimClientId);
+					searchContext.setUserId(serviceContext.getUserId());
+				}
+			).build();
+
+		SearchResponse searchResponse = _searcher.search(searchRequest);
+
+		SearchHits searchHits = searchResponse.getSearchHits();
+
+		return new GroupsGetResponse(
+			(int)searchHits.getTotalHits(),
+			TransformUtil.transform(
+				searchHits.getSearchHits(),
+				searchHit -> {
+					Document document = searchHit.getDocument();
+
+					long userGroupId = document.getLong(Field.ENTRY_CLASS_PK);
+
+					return ScimGroupUtil.toGroup(
+						_userGroupLocalService.getUserGroup(userGroupId),
+						_getUserGroupMembers(userGroupId));
+				}));
 	}
 
 	@Override
@@ -350,10 +419,13 @@ public class UserManagerImpl implements UserManager {
 
 			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
+		catch (AbstractCharonException abstractCharonException) {
+			return ReflectionUtil.throwException(abstractCharonException);
+		}
 		catch (Throwable throwable) {
 			throw new CharonException(
-				"Unable to provision a portal user group for " +
-				group.getDisplayName(),
+				"Unable to provision a portal group for " +
+					group.getDisplayName(),
 				throwable);
 		}
 	}
@@ -417,14 +489,14 @@ public class UserManagerImpl implements UserManager {
 	}
 
 	private UserGroup _addOrUpdateUserGroup(Company company, Group group)
-		throws PortalException {
+		throws Exception {
 
 		ScimClientOAuth2ApplicationConfiguration
 			scimClientOAuth2ApplicationConfiguration =
 				_getScimClientOAuth2ApplicationConfiguration(
 					company.getCompanyId());
 
-		UserGroup userGroup = _fetchUserGroup(
+		UserGroup userGroup = _getUserGroup(
 			company.getCompanyId(), group.getExternalId(),
 			GetterUtil.getLong(group.getId()));
 
@@ -548,41 +620,6 @@ public class UserManagerImpl implements UserManager {
 		return null;
 	}
 
-	private UserGroup _fetchUserGroup(long companyId, long groupId) {
-		UserGroup userGroup = _userGroupLocalService.fetchUserGroup(groupId);
-
-		if (userGroup == null) {
-			return null;
-		}
-
-		ScimClientOAuth2ApplicationConfiguration
-			scimClientOAuth2ApplicationConfiguration =
-			_getScimClientOAuth2ApplicationConfiguration(companyId);
-
-		String scimClientId = ScimClientUtil.generateScimClientId(
-			scimClientOAuth2ApplicationConfiguration.oAuth2ApplicationName());
-
-		if (!Objects.equals(_getScimClientId(userGroup), scimClientId)) {
-			return null;
-		}
-
-		return userGroup;
-	}
-
-	private UserGroup _fetchUserGroup(
-		long companyId, String externalReferenceCode, long groupId) {
-
-		UserGroup userGroup =
-			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
-				externalReferenceCode, companyId);
-
-		if (userGroup != null) {
-			return userGroup;
-		}
-
-		return _fetchUserGroup(companyId, groupId);
-	}
-
 	private String _getScimClientId(
 		com.liferay.portal.kernel.model.User portalUser) {
 
@@ -617,7 +654,7 @@ public class UserManagerImpl implements UserManager {
 	private String _getScimClientId(UserGroup userGroup) {
 		ExpandoTable expandoTable = _expandoTableLocalService.fetchTable(
 			userGroup.getCompanyId(),
-			_classNameLocalService.getClassNameId(Group.class.getName()),
+			_classNameLocalService.getClassNameId(UserGroup.class.getName()),
 			ExpandoTableConstants.DEFAULT_TABLE_NAME);
 
 		if (expandoTable == null) {
@@ -689,19 +726,6 @@ public class UserManagerImpl implements UserManager {
 		}
 	}
 
-	private List<ScimUser> _getUserGroupMembers(long userGroupId) {
-		List<com.liferay.portal.kernel.model.User> members =
-			_userLocalService.getUserGroupUsers(userGroupId);
-
-		List<ScimUser> scimUserMembers = new ArrayList<>();
-
-		for (com.liferay.portal.kernel.model.User member : members) {
-			scimUserMembers.add(_toScimUser(member));
-		}
-
-		return scimUserMembers;
-	}
-
 	private ScimUser _getScimUser(long companyId, long userId)
 		throws AbstractCharonException {
 
@@ -731,6 +755,67 @@ public class UserManagerImpl implements UserManager {
 		}
 
 		return _toScimUser(portalUser);
+	}
+
+	private UserGroup _getUserGroup(long companyId, long groupId)
+		throws AbstractCharonException {
+
+		UserGroup userGroup = _userGroupLocalService.fetchUserGroup(groupId);
+
+		if (userGroup == null) {
+			throw new NotFoundException(
+				"No group found with group ID " + groupId);
+		}
+
+		String groupScimClientId = _getScimClientId(userGroup);
+
+		if (Validator.isNull(groupScimClientId)) {
+			throw new NotFoundException(
+				"No group found with group ID " + groupId);
+		}
+
+		ScimClientOAuth2ApplicationConfiguration
+			scimClientOAuth2ApplicationConfiguration =
+				_getScimClientOAuth2ApplicationConfiguration(companyId);
+
+		String scimClientId = ScimClientUtil.generateScimClientId(
+			scimClientOAuth2ApplicationConfiguration.oAuth2ApplicationName());
+
+		if (!Objects.equals(groupScimClientId, scimClientId)) {
+			throw new ConflictException(
+				"Group was provisioned by another SCIM client");
+		}
+
+		return userGroup;
+	}
+
+	private UserGroup _getUserGroup(
+			long companyId, String externalReferenceCode, long groupId)
+		throws AbstractCharonException {
+
+		UserGroup userGroup =
+			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
+				externalReferenceCode, companyId);
+
+		if (userGroup != null) {
+			throw new NotFoundException(
+				"No group found with group ID " + groupId);
+		}
+
+		return _getUserGroup(companyId, groupId);
+	}
+
+	private List<ScimUser> _getUserGroupMembers(long userGroupId) {
+		List<com.liferay.portal.kernel.model.User> members =
+			_userLocalService.getUserGroupUsers(userGroupId);
+
+		List<ScimUser> scimUserMembers = new ArrayList<>();
+
+		for (com.liferay.portal.kernel.model.User member : members) {
+			scimUserMembers.add(_toScimUser(member));
+		}
+
+		return scimUserMembers;
 	}
 
 	private void _saveScimClientId(
@@ -780,16 +865,16 @@ public class UserManagerImpl implements UserManager {
 	}
 
 	private void _saveScimClientId(String scimClientId, UserGroup userGroup)
-		throws PortalException {
+		throws Exception {
 
 		ExpandoTable expandoTable = _expandoTableLocalService.fetchTable(
 			userGroup.getCompanyId(),
-			_classNameLocalService.getClassNameId(Group.class.getName()),
+			_classNameLocalService.getClassNameId(UserGroup.class.getName()),
 			ExpandoTableConstants.DEFAULT_TABLE_NAME);
 
 		if (expandoTable == null) {
 			expandoTable = _expandoTableLocalService.addTable(
-				userGroup.getCompanyId(), Group.class.getName(),
+				userGroup.getCompanyId(), UserGroup.class.getName(),
 				ExpandoTableConstants.DEFAULT_TABLE_NAME);
 		}
 
@@ -800,10 +885,22 @@ public class UserManagerImpl implements UserManager {
 			expandoColumn = _expandoColumnLocalService.addColumn(
 				expandoTable.getTableId(), "scimClientId",
 				ExpandoColumnConstants.STRING);
+
+			UnicodeProperties unicodeProperties =
+				expandoColumn.getTypeSettingsProperties();
+
+			unicodeProperties.setProperty(
+				ExpandoColumnConstants.INDEX_TYPE,
+				String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
+
+			expandoColumn.setTypeSettingsProperties(unicodeProperties);
+
+			expandoColumn = _expandoColumnLocalService.updateExpandoColumn(
+				expandoColumn);
 		}
 
 		_expandoValueLocalService.addValue(
-			userGroup.getCompanyId(), Group.class.getName(),
+			userGroup.getCompanyId(), UserGroup.class.getName(),
 			ExpandoTableConstants.DEFAULT_TABLE_NAME, expandoColumn.getName(),
 			userGroup.getPrimaryKey(), scimClientId);
 	}
