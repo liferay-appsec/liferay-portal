@@ -88,7 +88,7 @@ public abstract class BaseGroupResourceImpl implements GroupResource {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/scim/v1.0/v2/Groups' -d $'{"displayName": ___, "externalId": ___, "members": ___, "meta": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/scim/v1.0/v2/Groups' -d $'{"displayName": ___, "externalId": ___, "members": ___, "meta": ___, "schemas": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(description = "Creates a group.")
 	@io.swagger.v3.oas.annotations.tags.Tags(
@@ -191,7 +191,7 @@ public abstract class BaseGroupResourceImpl implements GroupResource {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/scim/v1.0/v2/Groups/{id}' -d $'{"displayName": ___, "externalId": ___, "members": ___, "meta": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/scim/v1.0/v2/Groups/{id}' -d $'{"displayName": ___, "externalId": ___, "members": ___, "meta": ___, "schemas": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(description = "Updates a group.")
 	@io.swagger.v3.oas.annotations.Parameters(

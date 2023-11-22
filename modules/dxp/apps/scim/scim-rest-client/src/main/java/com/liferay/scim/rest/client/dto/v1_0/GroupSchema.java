@@ -127,6 +127,27 @@ public class GroupSchema implements Cloneable, Serializable {
 
 	protected Meta meta;
 
+	public String[] getSchemas() {
+		return schemas;
+	}
+
+	public void setSchemas(String[] schemas) {
+		this.schemas = schemas;
+	}
+
+	public void setSchemas(
+		UnsafeSupplier<String[], Exception> schemasUnsafeSupplier) {
+
+		try {
+			schemas = schemasUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String[] schemas;
+
 	@Override
 	public GroupSchema clone() throws CloneNotSupportedException {
 		return (GroupSchema)super.clone();

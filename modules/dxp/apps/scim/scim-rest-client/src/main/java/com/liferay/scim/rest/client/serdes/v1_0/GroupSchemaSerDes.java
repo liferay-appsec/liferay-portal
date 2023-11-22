@@ -119,6 +119,30 @@ public class GroupSchemaSerDes {
 			sb.append(String.valueOf(groupSchema.getMeta()));
 		}
 
+		if (groupSchema.getSchemas() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemas\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < groupSchema.getSchemas().length; i++) {
+				sb.append("\"");
+
+				sb.append(_escape(groupSchema.getSchemas()[i]));
+
+				sb.append("\"");
+
+				if ((i + 1) < groupSchema.getSchemas().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -172,6 +196,13 @@ public class GroupSchemaSerDes {
 		}
 		else {
 			map.put("meta", String.valueOf(groupSchema.getMeta()));
+		}
+
+		if (groupSchema.getSchemas() == null) {
+			map.put("schemas", null);
+		}
+		else {
+			map.put("schemas", String.valueOf(groupSchema.getSchemas()));
 		}
 
 		return map;
@@ -230,6 +261,12 @@ public class GroupSchemaSerDes {
 				if (jsonParserFieldValue != null) {
 					groupSchema.setMeta(
 						MetaSerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemas")) {
+				if (jsonParserFieldValue != null) {
+					groupSchema.setSchemas(
+						toStrings((Object[])jsonParserFieldValue));
 				}
 			}
 		}
