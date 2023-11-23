@@ -386,7 +386,7 @@ public class PropertiesFeatureFlagsCheck extends BaseFileCheck {
 	private static final Pattern _featureFlagPattern4 = Pattern.compile(
 		"\"featureFlag\": \"(.+?)\"");
 	private static final Pattern _featureFlagPattern5 = Pattern.compile(
-		"(?<=\\W)[ \t]featureFlagKey = \"(.+?)\"");
+		"featureFlagKey = \"([A-Z]+-\\d+)\"");
 	private static final Pattern _featureFlagsPattern = Pattern.compile(
 		"(\n|\\A)##\n## Feature Flag\n##(\n\n[\\s\\S]*?)(?=(\n\n##|\\Z))");
 	private static final Pattern _featureFlagUIPattern = Pattern.compile(
