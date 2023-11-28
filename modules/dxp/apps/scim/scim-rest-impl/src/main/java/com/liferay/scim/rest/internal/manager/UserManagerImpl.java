@@ -180,7 +180,7 @@ public class UserManagerImpl implements UserManager {
 				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
 
 			List<ScimUser> scimUserMembers = _getUserGroupMembers(
-				userGroup.getPrimaryKey());
+				CompanyThreadLocal.getCompanyId(), userGroup.getPrimaryKey());
 
 			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
@@ -281,7 +281,8 @@ public class UserManagerImpl implements UserManager {
 
 					return ScimGroupUtil.toGroup(
 						_userGroupLocalService.getUserGroup(userGroupId),
-						_getUserGroupMembers(userGroupId));
+						_getUserGroupMembers(
+							serviceContext.getCompanyId(), userGroupId));
 				}));
 	}
 
@@ -404,7 +405,7 @@ public class UserManagerImpl implements UserManager {
 				() -> _addOrUpdateUserGroup(company.getCompanyId(), group));
 
 			List<ScimUser> scimUserMembers = _getUserGroupMembers(
-				userGroup.getPrimaryKey());
+				company.getCompanyId(), userGroup.getPrimaryKey());
 
 			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
@@ -762,13 +763,33 @@ public class UserManagerImpl implements UserManager {
 		return _userGroupLocalService.fetchUserGroup(groupId);
 	}
 
-	private List<ScimUser> _getUserGroupMembers(long userGroupId) {
+	private List<ScimUser> _getUserGroupMembers(
+		long companyId, long userGroupId) {
+
 		List<com.liferay.portal.kernel.model.User> members =
 			_userLocalService.getUserGroupUsers(userGroupId);
 
 		List<ScimUser> scimUserMembers = new ArrayList<>();
 
 		for (com.liferay.portal.kernel.model.User member : members) {
+			String userScimClientId = _getScimClientId(member);
+
+			if (Validator.isNull(userScimClientId)) {
+				break;
+			}
+
+			ScimClientOAuth2ApplicationConfiguration
+				scimClientOAuth2ApplicationConfiguration =
+					_getScimClientOAuth2ApplicationConfiguration(companyId);
+
+			String scimClientId = ScimClientUtil.generateScimClientId(
+				scimClientOAuth2ApplicationConfiguration.
+					oAuth2ApplicationName());
+
+			if (!Objects.equals(userScimClientId, scimClientId)) {
+				break;
+			}
+
 			scimUserMembers.add(_toScimUser(member));
 		}
 
@@ -908,7 +929,7 @@ public class UserManagerImpl implements UserManager {
 				() -> _updateUserGroup(company.getCompanyId(), group));
 
 			List<ScimUser> scimUserMembers = _getUserGroupMembers(
-				userGroup.getPrimaryKey());
+				company.getCompanyId(), userGroup.getPrimaryKey());
 
 			return ScimGroupUtil.toGroup(userGroup, scimUserMembers);
 		}
