@@ -678,6 +678,34 @@ public class UserManagerImpl implements UserManager {
 		return expandoValue.getData();
 	}
 
+	private ExpandoColumn _getScimClientIdExpandoColumn(
+			ExpandoTable expandoTable)
+		throws Exception {
+
+		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
+			expandoTable.getTableId(), "scimClientId");
+
+		if (expandoColumn == null) {
+			expandoColumn = _expandoColumnLocalService.addColumn(
+				expandoTable.getTableId(), "scimClientId",
+				ExpandoColumnConstants.STRING);
+
+			UnicodeProperties unicodeProperties =
+				expandoColumn.getTypeSettingsProperties();
+
+			unicodeProperties.setProperty(
+				ExpandoColumnConstants.INDEX_TYPE,
+				String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
+
+			expandoColumn.setTypeSettingsProperties(unicodeProperties);
+
+			expandoColumn = _expandoColumnLocalService.updateExpandoColumn(
+				expandoColumn);
+		}
+
+		return expandoColumn;
+	}
+
 	private ScimClientOAuth2ApplicationConfiguration
 		_getScimClientOAuth2ApplicationConfiguration(long companyId) {
 
@@ -807,26 +835,8 @@ public class UserManagerImpl implements UserManager {
 				ExpandoTableConstants.DEFAULT_TABLE_NAME);
 		}
 
-		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
-			expandoTable.getTableId(), "scimClientId");
-
-		if (expandoColumn == null) {
-			expandoColumn = _expandoColumnLocalService.addColumn(
-				expandoTable.getTableId(), "scimClientId",
-				ExpandoColumnConstants.STRING);
-
-			UnicodeProperties unicodeProperties =
-				expandoColumn.getTypeSettingsProperties();
-
-			unicodeProperties.setProperty(
-				ExpandoColumnConstants.INDEX_TYPE,
-				String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
-
-			expandoColumn.setTypeSettingsProperties(unicodeProperties);
-
-			expandoColumn = _expandoColumnLocalService.updateExpandoColumn(
-				expandoColumn);
-		}
+		ExpandoColumn expandoColumn = _getScimClientIdExpandoColumn(
+			expandoTable);
 
 		_expandoValueLocalService.addValue(
 			portalUser.getCompanyId(),
@@ -849,26 +859,8 @@ public class UserManagerImpl implements UserManager {
 				ExpandoTableConstants.DEFAULT_TABLE_NAME);
 		}
 
-		ExpandoColumn expandoColumn = _expandoColumnLocalService.fetchColumn(
-			expandoTable.getTableId(), "scimClientId");
-
-		if (expandoColumn == null) {
-			expandoColumn = _expandoColumnLocalService.addColumn(
-				expandoTable.getTableId(), "scimClientId",
-				ExpandoColumnConstants.STRING);
-
-			UnicodeProperties unicodeProperties =
-				expandoColumn.getTypeSettingsProperties();
-
-			unicodeProperties.setProperty(
-				ExpandoColumnConstants.INDEX_TYPE,
-				String.valueOf(ExpandoColumnConstants.INDEX_TYPE_KEYWORD));
-
-			expandoColumn.setTypeSettingsProperties(unicodeProperties);
-
-			expandoColumn = _expandoColumnLocalService.updateExpandoColumn(
-				expandoColumn);
-		}
+		ExpandoColumn expandoColumn = _getScimClientIdExpandoColumn(
+			expandoTable);
 
 		_expandoValueLocalService.addValue(
 			userGroup.getCompanyId(), UserGroup.class.getName(),
