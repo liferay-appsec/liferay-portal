@@ -132,14 +132,10 @@ public class UserManagerImpl implements UserManager {
 	@Override
 	public void deleteGroup(String groupId) throws CharonException {
 		try {
-			UserGroup userGroup = _getUserGroup(
-				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
-
-			if (userGroup == null) {
-				return;
-			}
-
-			_userGroupLocalService.deleteUserGroup(userGroup);
+			_userGroupLocalService.deleteUserGroup(
+				_getUserGroup(
+					CompanyThreadLocal.getCompanyId(),
+					GetterUtil.getLong(groupId)));
 		}
 		catch (AbstractCharonException abstractCharonException) {
 			ReflectionUtil.throwException(abstractCharonException);
@@ -183,11 +179,6 @@ public class UserManagerImpl implements UserManager {
 		try {
 			UserGroup userGroup = _getUserGroup(
 				CompanyThreadLocal.getCompanyId(), GetterUtil.getLong(groupId));
-
-			if (userGroup == null) {
-				throw new NotFoundException(
-					"No group found with group ID " + groupId);
-			}
 
 			List<ScimUser> scimUserMembers = _getUserGroupMembers(
 				CompanyThreadLocal.getCompanyId(), userGroup.getPrimaryKey());
