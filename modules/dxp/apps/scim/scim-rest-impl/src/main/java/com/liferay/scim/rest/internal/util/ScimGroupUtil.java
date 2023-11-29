@@ -13,7 +13,6 @@ import com.liferay.scim.rest.internal.model.ScimUser;
 import java.util.Date;
 import java.util.List;
 
-import org.wso2.charon3.core.exceptions.CharonException;
 import org.wso2.charon3.core.objects.Group;
 import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon3.core.schema.SCIMConstants;
@@ -25,41 +24,36 @@ public class ScimGroupUtil {
 
 	public static Group toGroup(
 			UserGroup userGroup, List<ScimUser> scimUserMembers)
-		throws CharonException {
+		throws Exception {
 
-		try {
-			Group group = new Group();
+		Group group = new Group();
 
-			for (ScimUser scimUserMember : scimUserMembers) {
-				group.setMember(ScimUserUtil.toUser(scimUserMember));
-			}
-
-			group.replaceDisplayName(userGroup.getName());
-
-			Date createDate = userGroup.getCreateDate();
-
-			group.setCreatedInstant(createDate.toInstant());
-
-			group.setExternalId(userGroup.getExternalReferenceCode());
-			group.setId(String.valueOf(userGroup.getPrimaryKey()));
-
-			Date modifiedDate = userGroup.getModifiedDate();
-
-			group.setLastModifiedInstant(modifiedDate.toInstant());
-
-			group.setLocation(
-				StringBundler.concat(
-					AbstractResourceManager.getResourceEndpointURL(
-						SCIMConstants.GROUP_ENDPOINT),
-					CharPool.FORWARD_SLASH, userGroup.getPrimaryKey()));
-			group.setResourceType(SCIMConstants.GROUP);
-			group.setSchemas();
-
-			return group;
+		for (ScimUser scimUserMember : scimUserMembers) {
+			group.setMember(ScimUserUtil.toUser(scimUserMember));
 		}
-		catch (Exception exception) {
-			throw new CharonException(exception.getMessage(), exception);
-		}
+
+		group.replaceDisplayName(userGroup.getName());
+
+		Date createDate = userGroup.getCreateDate();
+
+		group.setCreatedInstant(createDate.toInstant());
+
+		group.setExternalId(userGroup.getExternalReferenceCode());
+		group.setId(String.valueOf(userGroup.getPrimaryKey()));
+
+		Date modifiedDate = userGroup.getModifiedDate();
+
+		group.setLastModifiedInstant(modifiedDate.toInstant());
+
+		group.setLocation(
+			StringBundler.concat(
+				AbstractResourceManager.getResourceEndpointURL(
+					SCIMConstants.GROUP_ENDPOINT),
+				CharPool.FORWARD_SLASH, userGroup.getPrimaryKey()));
+		group.setResourceType(SCIMConstants.GROUP);
+		group.setSchemas();
+
+		return group;
 	}
 
 }
