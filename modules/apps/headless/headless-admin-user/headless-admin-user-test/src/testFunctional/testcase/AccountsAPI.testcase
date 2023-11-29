@@ -1,0 +1,17 @@
+@component-name = "portal-headless"
+@disable-webdriver = "true"
+definition{
+
+	property portal.upstream = "true";
+	property testray.main.component.name = "Headless";
+
+    setUp {
+
+    }
+
+    tearDown {
+
+    }
+
+    
+}
