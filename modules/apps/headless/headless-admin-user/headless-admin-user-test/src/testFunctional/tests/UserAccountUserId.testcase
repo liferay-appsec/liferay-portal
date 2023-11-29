@@ -1,0 +1,257 @@
+@component-name = "portal-headless"
+@disable-webdriver = "true"
+definition {
+
+	property portal.upstream = "true";
+	property testray.main.component.name = "Headless";
+
+	static var newUserId = "placeholder";
+
+	setUp {
+		TestCase.setUpPortalInstanceNoSelenium();
+
+		OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
+
+		var newUser = UserAccountsAPI.createUser(
+			alternateName = "testUser",
+			emailAddress = "testUser@liferay.com",
+			familyName = "test",
+			givenName = "test");
+
+		var newUserId = JSONUtil.getWithJSONPath(${newUser}, "$.id");
+	}
+
+	tearDown {
+		UserIdAPI.deleteUser(userAccountId = ${newUserId});
+
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
+
+		if (${testLiferayVirtualInstance} == "true") {
+			PortalInstances.tearDownCPNoSelenium();
+		}
+	}
+
+	@description = "LPS-181135 TS3. Updating user status with invalid value by PUT and PATCH requests return error."
+	@priority = 4
+	test OnInvalidStatusHeadlessAPIsUserAccountMethodReturnsError {
+		task ("Send PUT request with invalid status value and check HTTP and User status.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PUT",
+				optionalFields = "\"status\": \"Invalid\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 400");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = '''{
+  "status" : "BAD_REQUEST",
+  "title" : "Unable to map JSON path: status"
+}''');
+
+			var response = UserIdAPI.getUser(userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+
+		task ("Send PATCH request with invalid status value and check HTTP and User status.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PATCH",
+				optionalFields = "\"status\": \"Avaliable\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 400");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = '''{
+  "status" : "BAD_REQUEST",
+  "title" : "Unable to map JSON path: status"
+}''');
+
+			var response = UserIdAPI.getUser(userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+	}
+
+	@description = "LPS-181135 TS2. Updating user status by PATCH request sets the status to Active/Inactive."
+	@priority = 4
+	test UserStatusIsSetableViaHeadlessAPIPatchUserAccountMethod {
+		task ("Deactivate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PATCH",
+				optionalFields = "\"status\" : \"Inactive\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Inactive\"");
+		}
+
+		task ("Activate user and check HTTP and user status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PATCH",
+				optionalFields = "\"status\" : \"Active\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+	}
+
+	@description = "LPS-181135 TS1. Updating user status by PUT request sets the status to Active/Inactive."
+	@priority = 4
+	test UserStatusIsSetableViaHeadlessAPIPutUserAccountMethod {
+		task ("Deactivate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PUT",
+				optionalFields = "\"status\" : \"Inactive\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Inactive\"");
+		}
+
+		task ("Activate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PUT",
+				optionalFields = "\"status\" : \"Active\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+	}
+
+	@description = "LPS-181135 TS6. Updating user status on non-root context portal."
+	@priority = 4
+	test UserStatusUpdateWorksOnNonRootContext {
+		property portal.context = "liferay";
+
+		task ("Deactivate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PATCH",
+				optionalFields = "\"status\" : \"Inactive\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Inactive\"");
+		}
+
+		task ("Activate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				httpMethod = "PUT",
+				optionalFields = "\"status\": \"Active\"",
+				printHeader = "true",
+				userAccountId = ${newUserId});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+	}
+
+	@description = "LPS-181135 TS5. Updating user status on virtual instance."
+	@priority = 4
+	test UserStatusUpdateWorksOnVirtualInstance {
+		var virtualHost = "www.able.com";
+
+		task ("Setup www.able.com and create a user.") {
+			HeadlessPortalInstanceAPI.addPortalInstance(
+				domain = ${virtualHost},
+				portalInstanceId = ${virtualHost},
+				virtualHost = ${virtualHost});
+
+			var newUser = UserAccountsAPI.createUser(
+				alternateName = "testUser2",
+				domain = ${virtualHost},
+				emailAddress = "testUser2@${virtualHost}",
+				familyName = "test2",
+				givenName = "test2",
+				virtualHost = ${virtualHost});
+
+			var newUserId2 = JSONUtil.getWithJSONPath(${newUser}, "$.id");
+		}
+
+		task ("Deactivate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				domain = ${virtualHost},
+				httpMethod = "PUT",
+				optionalFields = "\"status\": \"Inactive\"",
+				printHeader = "true",
+				userAccountId = ${newUserId2},
+				virtualHost = ${virtualHost});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Inactive\"");
+		}
+
+		task ("Activate user and check HTTP and User status of response.") {
+			var response = UserIdAPI.updateUser(
+				domain = ${virtualHost},
+				httpMethod = "PATCH",
+				optionalFields = "\"status\": \"Active\"",
+				printHeader = "true",
+				userAccountId = ${newUserId2},
+				virtualHost = ${virtualHost});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 200");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "\"status\" : \"Active\"");
+		}
+	}
+
+}
