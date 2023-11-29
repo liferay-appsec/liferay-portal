@@ -1,0 +1,121 @@
+definition {
+
+	@summary = "Creates a new user account on headless-admin-user/v1.0/user-accounts."
+	macro createUser(domain = null, virtualHost = null, port = null, alternateName = null, emailAddress = null, familyName = null, givenName = null, optionalFields = null, printHeader = null) {
+		Variables.assertDefined(parameterList = "${alternateName},${emailAddress},${familyName},${givenName}");
+
+		var header = UserAccountsAPI.curlSetUpHeader(
+			domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost});
+		var body = UserAccountsAPI.curlSetUpBody(
+			alternateName = ${alternateName},
+			domain = ${domain},
+			emailAddress = ${emailAddress},
+			familyName = ${familyName},
+			givenName = ${givenName},
+			optionalFields = ${optionalFields},
+			port = ${port},
+			virtualHost = ${virtualHost});
+
+		var request = StringUtil.add(${header}, ${body}, " ");
+
+		var response = JSONCurlUtil.post(${request});
+
+		return ${response};
+	}
+
+	@summary = "Sets up body for headless-admin-user/v1.0/user-accounts."
+	macro curlSetUpBody(domain = null, virtualHost = null, port = null, userAccountId = null, alternateName = null, emailAddress = null, familyName = null, givenName = null, optionalFields = null) {
+		if (!(isSet(alternateName)) && !(isSet(emailAddress)) && !(isSet(familyName)) && !(isSet(givenName))) {
+			var userData = UserIdAPI.getUser(
+				domain = ${domain},
+				port = ${port},
+				userAccountId = ${userAccountId},
+				virtualHost = ${virtualHost});
+
+			var alternateName = JSONUtil.getWithJSONPath(${userData}, "$.alternateName");
+			var emailAddress = JSONUtil.getWithJSONPath(${userData}, "$.emailAddress");
+			var familyName = JSONUtil.getWithJSONPath(${userData}, "$.familyName");
+			var givenName = JSONUtil.getWithJSONPath(${userData}, "$.givenName");
+		}
+
+		var bodyValues = '''
+                    "alternateName": "${alternateName}",
+        	        "emailAddress": "${emailAddress}",
+            	    "familyName": "${familyName}",
+                	"givenName": "${givenName}"
+		''';
+
+		if (isSet(optionalFields)) {
+			var bodyValues = StringUtil.concat(${bodyValues}, ", ${optionalFields}");
+		}
+
+		var body = "-d {${bodyValues}}";
+
+		return ${body};
+	}
+
+	@summary = "Sets up header for headless-admin-user/v1.0/user-accounts."
+	macro curlSetUpHeader(customObjectEntryId = null, domain = null, nestedFieldsDepth = null, fieldsValue = null, virtualHost = null, parameterValue = null, relationshipName = null, longParameterValue = null, userAccountId = null, parameter = null, printHeader = null) {
+		if (isSet(virtualHost)) {
+			if (!(isSet(port))) {
+				var port = 8080;
+			}
+
+			var portalURL = "http://${virtualHost}:${port}";
+		}
+		else {
+			var portalURL = JSONCompany.getPortalURL();
+		}
+
+		if (!(isSet(domain))) {
+			var domain = "liferay.com";
+		}
+
+		if (isSet(userAccountId)) {
+			var api = "user-accounts/${userAccountId}";
+
+			if (isSet(parameter)) {
+				var api = "user-accounts/${userAccountId}?${parameter}=${parameterValue}";
+			}
+
+			if (isSet(relationshipName)) {
+				var api = "user-accounts/${userAccountId}/${relationshipName}";
+
+				if (isSet(customObjectEntryId)) {
+					var api = "user-accounts/${userAccountId}/${relationshipName}/${customObjectEntryId}";
+				}
+			}
+		}
+		else if (isSet(nestedFieldsDepth)) {
+			if (!(isSet(longParameterValue))) {
+				var api = "user-accounts?nestedFieldsDepth=${nestedFieldsDepth}";
+			}
+			else if (isSet(fieldsValue)) {
+				var api = "user-accounts?${longParameterValue}\&nestedFieldsDepth=${nestedFieldsDepth}\&fields=${fieldsValue}";
+			}
+			else {
+				var api = "user-accounts?${longParameterValue}\&nestedFieldsDepth=${nestedFieldsDepth}";
+			}
+		}
+		else {
+			var api = "user-accounts";
+		}
+
+		var header = '''
+			${portalURL}/o/headless-admin-user/v1.0/${api} \
+				-u test@${domain}:test \
+				-H accept: application/json \
+				-H Content-Type: application/json
+		''';
+
+		if (isSet(printHeader) && (${printHeader} == "true")) {
+			var header = StringUtil.concat(${header}, " -i ");
+		}
+
+		return ${header};
+	}
+
+}

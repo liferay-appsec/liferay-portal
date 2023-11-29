@@ -1,0 +1,71 @@
+definition {
+
+	@summary = "Deletes user account from headless-admin-user/v1.0/user-accounts/{ususerAccountIderId}."
+	macro deleteUser(domain = null, userAccountId = null, virtualHost = null, port = null, printHeader = null) {
+		Variables.assertDefined(parameterList = ${userAccountId});
+
+		var request = UserAccountsAPI.curlSetUpHeader(
+			domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			userAccountId = ${userAccountId},
+			virtualHost = ${virtualHost});
+
+		var deletionResponse = JSONCurlUtil.delete(${request});
+
+		return ${deletionResponse};
+	}
+
+	@summary = "Gets user data from headless-admin-user/v1.0/user-accounts/{userAccountId}."
+	macro getUser(domain = null, userAccountId = null, virtualHost = null, port = null, printHeader = null) {
+		Variables.assertDefined(parameterList = ${userAccountId});
+
+		var request = UserAccountsAPI.curlSetUpHeader(
+			domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			userAccountId = ${userAccountId},
+			virtualHost = ${virtualHost});
+
+		var userAccountData = JSONCurlUtil.get(${request});
+
+		return ${userAccountData};
+	}
+
+	@summary = "Updates user on headless-admin-user/v1.0/user-accounts/{userAccountId}."
+	macro updateUser(domain = null, userAccountId = null, virtualHost = null, port = null, httpMethod = null, alternateName = null, emailAddress = null, familyName = null, givenName = null, optionalFields = null, printHeader = null) {
+		Variables.assertDefined(parameterList = "${userAccountId},${httpMethod}");
+
+		var header = UserAccountsAPI.curlSetUpHeader(
+			domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			userAccountId = ${userAccountId},
+			virtualHost = ${virtualHost});
+		var body = UserAccountsAPI.curlSetUpBody(
+			alternateName = ${alternateName},
+			domain = ${domain},
+			emailAddress = ${emailAddress},
+			familyName = ${familyName},
+			givenName = ${givenName},
+			optionalFields = ${optionalFields},
+			port = ${port},
+			userAccountId = ${userAccountId},
+			virtualHost = ${virtualHost});
+		var method = StringUtil.toLowerCase(${httpMethod});
+		var curl = StringUtil.add(${header}, ${body}, " ");
+
+		if (${method} == "put") {
+			var response = JSONCurlUtil.put(${curl});
+		}
+		else if (${method} == "patch") {
+			var response = JSONCurlUtil.patch(${curl});
+		}
+		else {
+			fail("Invalid HTTP method for the action.");
+		}
+
+		return ${response};
+	}
+
+}
