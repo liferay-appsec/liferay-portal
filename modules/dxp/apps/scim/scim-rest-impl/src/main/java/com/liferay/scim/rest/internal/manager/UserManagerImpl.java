@@ -807,23 +807,20 @@ public class UserManagerImpl implements UserManager {
 
 		List<ScimUser> scimUserMembers = new ArrayList<>();
 
+		ScimClientOAuth2ApplicationConfiguration
+			scimClientOAuth2ApplicationConfiguration =
+				_getScimClientOAuth2ApplicationConfiguration(companyId);
+
+		String scimClientId = ScimClientUtil.generateScimClientId(
+			scimClientOAuth2ApplicationConfiguration.oAuth2ApplicationName());
+
 		for (com.liferay.portal.kernel.model.User member : members) {
 			String userScimClientId = _getScimClientId(member);
 
-			if (Validator.isNull(userScimClientId)) {
-				break;
-			}
+			if (Validator.isNull(userScimClientId) ||
+				!Objects.equals(userScimClientId, scimClientId)) {
 
-			ScimClientOAuth2ApplicationConfiguration
-				scimClientOAuth2ApplicationConfiguration =
-					_getScimClientOAuth2ApplicationConfiguration(companyId);
-
-			String scimClientId = ScimClientUtil.generateScimClientId(
-				scimClientOAuth2ApplicationConfiguration.
-					oAuth2ApplicationName());
-
-			if (!Objects.equals(userScimClientId, scimClientId)) {
-				break;
+				continue;
 			}
 
 			scimUserMembers.add(_toScimUser(member));
