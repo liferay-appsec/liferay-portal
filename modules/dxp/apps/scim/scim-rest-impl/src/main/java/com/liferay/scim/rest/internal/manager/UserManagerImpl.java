@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.service.UserGroupService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
@@ -66,6 +67,7 @@ import org.wso2.charon3.core.exceptions.AbstractCharonException;
 import org.wso2.charon3.core.exceptions.BadRequestException;
 import org.wso2.charon3.core.exceptions.CharonException;
 import org.wso2.charon3.core.exceptions.ConflictException;
+import org.wso2.charon3.core.exceptions.ForbiddenException;
 import org.wso2.charon3.core.exceptions.NotFoundException;
 import org.wso2.charon3.core.exceptions.NotImplementedException;
 import org.wso2.charon3.core.extensions.UserManager;
@@ -91,7 +93,7 @@ public class UserManagerImpl implements UserManager {
 		ExpandoValueLocalService expandoValueLocalService, Searcher searcher,
 		SearchRequestBuilderFactory searchRequestBuilderFactory,
 		UserGroupLocalService userGroupLocalService,
-		UserLocalService userLocalService) {
+		UserGroupService userGroupService, UserLocalService userLocalService) {
 
 		_classNameLocalService = classNameLocalService;
 		_companyLocalService = companyLocalService;
@@ -102,6 +104,7 @@ public class UserManagerImpl implements UserManager {
 		_searcher = searcher;
 		_searchRequestBuilderFactory = searchRequestBuilderFactory;
 		_userGroupLocalService = userGroupLocalService;
+		_userGroupService = userGroupService;
 		_userLocalService = userLocalService;
 	}
 
@@ -130,10 +133,7 @@ public class UserManagerImpl implements UserManager {
 	@Override
 	public void deleteGroup(String groupId) throws CharonException {
 		try {
-			_userGroupLocalService.deleteUserGroup(
-				_getUserGroup(
-					CompanyThreadLocal.getCompanyId(),
-					GetterUtil.getLong(groupId)));
+			_userGroupService.deleteUserGroup(GetterUtil.getLong(groupId));
 		}
 		catch (AbstractCharonException abstractCharonException) {
 			ReflectionUtil.throwException(abstractCharonException);
@@ -279,7 +279,7 @@ public class UserManagerImpl implements UserManager {
 					long userGroupId = document.getLong(Field.ENTRY_CLASS_PK);
 
 					return ScimGroupUtil.toGroup(
-						_userGroupLocalService.getUserGroup(userGroupId));
+						_userGroupService.getUserGroup(userGroupId));
 				}));
 	}
 
@@ -485,11 +485,8 @@ public class UserManagerImpl implements UserManager {
 			company.getCompanyId(), group.getExternalId(),
 			GetterUtil.getLong(group.getId()));
 
-		long companyId = company.getCompanyId();
-
 		if (userGroup == null) {
-			userGroup = _userGroupLocalService.addUserGroup(
-				_userLocalService.getGuestUserId(companyId), companyId,
+			userGroup = _userGroupService.addUserGroup(
 				group.getDisplayName(), null, new ServiceContext());
 
 			userGroup.setExternalReferenceCode(group.getExternalId());
@@ -515,8 +512,8 @@ public class UserManagerImpl implements UserManager {
 					"Group was provisioned by another SCIM client");
 			}
 
-			userGroup = _userGroupLocalService.updateUserGroup(
-				companyId, userGroup.getPrimaryKey(), group.getDisplayName(),
+			userGroup = _userGroupService.updateUserGroup(
+				userGroup.getPrimaryKey(), group.getDisplayName(),
 				userGroup.getDescription(), new ServiceContext());
 
 			if (!Objects.equals(
@@ -787,8 +784,14 @@ public class UserManagerImpl implements UserManager {
 	private UserGroup _getUserGroup(long companyId, long userGroupId)
 		throws AbstractCharonException {
 
-		UserGroup userGroup = _userGroupLocalService.fetchUserGroup(
-			userGroupId);
+		UserGroup userGroup = null;
+
+		try {
+			userGroup = _userGroupService.fetchUserGroup(userGroupId);
+		}
+		catch (PortalException portalException) {
+			throw new ForbiddenException(portalException.getMessage());
+		}
 
 		if (userGroup == null) {
 			throw new NotFoundException(
@@ -978,6 +981,7 @@ public class UserManagerImpl implements UserManager {
 	private final Searcher _searcher;
 	private final SearchRequestBuilderFactory _searchRequestBuilderFactory;
 	private final UserGroupLocalService _userGroupLocalService;
+	private final UserGroupService _userGroupService;
 	private final UserLocalService _userLocalService;
 
 }
