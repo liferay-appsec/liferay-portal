@@ -22,7 +22,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
@@ -95,17 +95,12 @@ public class RoleLocalServiceTest {
 		_resourcePermission = ResourcePermissionTestUtil.addResourcePermission(
 			_arbitraryResourceAction.getBitwiseValue(),
 			_arbitraryResourceAction.getName(), _arbitraryRole.getRoleId());
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
 	}
 
 	@AfterClass
 	public static void tearDownClass() {
 		_resourcePermissionLocalService.deleteResourcePermission(
 			_resourcePermission);
-
-		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
 	@Test
@@ -182,14 +177,25 @@ public class RoleLocalServiceTest {
 		_user = UserTestUtil.addUser();
 		_userGroup = UserGroupTestUtil.addUserGroup();
 
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
-				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
-
 		_roleLocalService.addUserRole(_user.getUserId(), _role);
 		_roleLocalService.addGroupRole(_group.getGroupId(), _role);
-		_roleLocalService.addGroupRole(_organization.getGroupId(), _role);
-		_roleLocalService.addGroupRole(_userGroup.getGroupId(), _role);
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(
+					UserTestUtil.getAdminUser(
+						PortalUtil.getDefaultCompanyId())));
+
+			_roleLocalService.addGroupRole(_organization.getGroupId(), _role);
+			_roleLocalService.addGroupRole(_userGroup.getGroupId(), _role);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+		}
 
 		Assert.assertEquals(
 			4, _roleLocalService.getAssigneesTotal(_role.getRoleId()));
@@ -702,11 +708,6 @@ public class RoleLocalServiceTest {
 
 	@Inject
 	private static OrganizationLocalService _organizationLocalService;
-
-	private static PermissionChecker _originalPermissionChecker;
-
-	@Inject
-	private static PermissionCheckerFactory _permissionCheckerFactory;
 
 	@Inject
 	private static ResourceActionLocalService _resourceActionLocalService;

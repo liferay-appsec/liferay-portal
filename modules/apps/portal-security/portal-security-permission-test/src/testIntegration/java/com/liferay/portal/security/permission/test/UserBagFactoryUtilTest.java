@@ -14,7 +14,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.UserBag;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -76,14 +75,6 @@ public class UserBagFactoryUtilTest {
 		_userGroup = UserGroupTestUtil.addUserGroup(_childGroup.getGroupId());
 
 		_user = UserTestUtil.addUser();
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-	}
-
-	@After
-	public void tearDown() {
-		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
 	@Test
@@ -134,10 +125,6 @@ public class UserBagFactoryUtilTest {
 
 	@Test
 	public void testGetRoles() throws Exception {
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
-				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
-
 		Role regularRole = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
 		_userLocalService.addRoleUser(regularRole.getRoleId(), _user);
@@ -146,8 +133,24 @@ public class UserBagFactoryUtilTest {
 
 		_userLocalService.addRoleUser(groupRoleId, _user);
 
-		long organizationRoleId = RoleTestUtil.addOrganizationRole(
-			_childOrganization.getGroupId());
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		long organizationRoleId;
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(
+					UserTestUtil.getAdminUser(
+						PortalUtil.getDefaultCompanyId())));
+
+			organizationRoleId = RoleTestUtil.addOrganizationRole(
+				_childOrganization.getGroupId());
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+		}
 
 		_userLocalService.addRoleUser(organizationRoleId, _user);
 
@@ -258,9 +261,6 @@ public class UserBagFactoryUtilTest {
 		return userBag.getUserUserGroupGroups();
 	}
 
-	@Inject
-	private static PermissionCheckerFactory _permissionCheckerFactory;
-
 	@DeleteAfterTestRun
 	private Group _childGroup;
 
@@ -269,8 +269,6 @@ public class UserBagFactoryUtilTest {
 
 	@Inject
 	private GroupLocalService _groupLocalService;
-
-	private PermissionChecker _originalPermissionChecker;
 
 	@DeleteAfterTestRun
 	private Group _parentGroup;

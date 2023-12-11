@@ -14,7 +14,7 @@ import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
@@ -152,6 +152,13 @@ public class UserFinderTest {
 			TestPropsValues.getCompanyId(), null,
 			WorkflowConstants.STATUS_APPROVED, _inheritedUserGroupsParams);
 
+		_originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(
+				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
+
 		_roleId = RoleTestUtil.addRegularRole(_group.getGroupId());
 
 		_inheritedUserRolesParams = LinkedHashMapBuilder.<String, Object>put(
@@ -165,9 +172,6 @@ public class UserFinderTest {
 		).put(
 			"usersTeams", new Long[] {_team.getTeamId()}
 		).build();
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
 	}
 
 	@After
@@ -184,10 +188,6 @@ public class UserFinderTest {
 
 	@Test
 	public void testCountByKeywordsWithInheritedRoles() throws Exception {
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
-				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
-
 		int expectedCount = _userFinder.countByKeywords(
 			TestPropsValues.getCompanyId(), null,
 			WorkflowConstants.STATUS_APPROVED, _inheritedUserRolesParams);
@@ -328,10 +328,6 @@ public class UserFinderTest {
 
 	@Test
 	public void testFindByKeywordsWithInheritedRoles() throws Exception {
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
-				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
-
 		List<User> expectedUsers = _userFinder.findByKeywords(
 			TestPropsValues.getCompanyId(), null,
 			WorkflowConstants.STATUS_APPROVED, _inheritedUserRolesParams,
@@ -435,9 +431,6 @@ public class UserFinderTest {
 	private static boolean _organizationsMembershipStrict;
 	private static User _organizationUser1;
 	private static User _organizationUser2;
-
-	@Inject
-	private static PermissionCheckerFactory _permissionCheckerFactory;
 
 	@Inject
 	private static SocialRelationLocalService _socialRelationLocalService;

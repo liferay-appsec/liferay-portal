@@ -16,7 +16,7 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
@@ -69,15 +69,15 @@ public class UserGroupLocalServiceTest {
 		_userGroup1 = UserGroupTestUtil.addUserGroup();
 		_userGroup2 = UserGroupTestUtil.addUserGroup();
 
+		_originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
 		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
+			PermissionCheckerFactoryUtil.create(
 				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
 
 		GroupLocalServiceUtil.addRoleGroup(
 			_role.getRoleId(), _userGroup1.getGroupId());
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
 	}
 
 	@After
@@ -291,10 +291,6 @@ public class UserGroupLocalServiceTest {
 	}
 
 	private static int _count;
-
-	@Inject
-	private static PermissionCheckerFactory _permissionCheckerFactory;
-
 	private static Role _role;
 	private static UserGroup _userGroup1;
 	private static UserGroup _userGroup2;

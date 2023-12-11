@@ -50,7 +50,6 @@ import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -107,7 +106,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -178,14 +176,6 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 		).locale(
 			LocaleUtil.getDefault()
 		).build();
-
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
 	@Override
@@ -392,16 +382,28 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 	@Override
 	@Test
 	public void testGetUserAccount() throws Exception {
-		PermissionThreadLocal.setPermissionChecker(
-			_permissionCheckerFactory.create(
-				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
-
 		super.testGetUserAccount();
 
-		Group group = GroupTestUtil.addGroup();
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
 
-		Role groupRole = RoleTestUtil.addRole(
-			"Test Site Role", RoleConstants.TYPE_SITE);
+		Role groupRole;
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(
+					UserTestUtil.getAdminUser(
+						PortalUtil.getDefaultCompanyId())));
+
+			groupRole = RoleTestUtil.addRole(
+				"Test Site Role", RoleConstants.TYPE_SITE);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+		}
+
+		Group group = GroupTestUtil.addGroup();
 
 		User groupUser = UserTestUtil.addGroupUser(group, "Test Site Role");
 
@@ -428,9 +430,6 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 			JSONCompareMode.LENIENT);
 
 		User user = UserTestUtil.addUser();
-
-		PermissionChecker originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
 
 		try {
 			PermissionThreadLocal.setPermissionChecker(
@@ -1825,9 +1824,6 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 		return ListUtil.toLongArray(users, User.USER_ID_ACCESSOR);
 	}
 
-	@Inject
-	private static PermissionCheckerFactory _permissionCheckerFactory;
-
 	private AccountEntry _accountEntry;
 
 	@Inject
@@ -1847,7 +1843,6 @@ public class UserAccountResourceTest extends BaseUserAccountResourceTestCase {
 	@Inject
 	private OrganizationLocalService _organizationLocalService;
 
-	private PermissionChecker _originalPermissionChecker;
 	private UserAccountResource _otherUserAccountResource;
 	private UserAccount _regularUserAccount;
 	private String _regularUserAccountCurrentPassword;
