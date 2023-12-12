@@ -15,10 +15,12 @@ import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalServiceUtil;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -27,6 +29,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.search.test.util.SearchTestRule;
 import com.liferay.portal.service.persistence.constants.UserGroupFinderConstants;
 import com.liferay.portal.test.rule.Inject;
@@ -37,6 +40,7 @@ import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -65,8 +69,20 @@ public class UserGroupLocalServiceTest {
 		_userGroup1 = UserGroupTestUtil.addUserGroup();
 		_userGroup2 = UserGroupTestUtil.addUserGroup();
 
+		_originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		PermissionThreadLocal.setPermissionChecker(
+			PermissionCheckerFactoryUtil.create(
+				UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId())));
+
 		GroupLocalServiceUtil.addRoleGroup(
 			_role.getRoleId(), _userGroup1.getGroupId());
+	}
+
+	@After
+	public void tearDown() {
+		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 	}
 
 	@Test
@@ -279,10 +295,9 @@ public class UserGroupLocalServiceTest {
 	private static UserGroup _userGroup1;
 	private static UserGroup _userGroup2;
 
-	@Inject
-	private UserGroupLocalService _userGroupLocalService;
+	private PermissionChecker _originalPermissionChecker;
 
 	@Inject
-	private UserLocalService _userLocalService;
+	private UserGroupLocalService _userGroupLocalService;
 
 }
