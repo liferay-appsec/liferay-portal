@@ -21,6 +21,9 @@ import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -43,6 +46,7 @@ import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.comparator.RoleRoleIdComparator;
@@ -175,8 +179,23 @@ public class RoleLocalServiceTest {
 
 		_roleLocalService.addUserRole(_user.getUserId(), _role);
 		_roleLocalService.addGroupRole(_group.getGroupId(), _role);
-		_roleLocalService.addGroupRole(_organization.getGroupId(), _role);
-		_roleLocalService.addGroupRole(_userGroup.getGroupId(), _role);
+
+		PermissionChecker originalPermissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		try {
+			PermissionThreadLocal.setPermissionChecker(
+				PermissionCheckerFactoryUtil.create(
+					UserTestUtil.getAdminUser(
+						PortalUtil.getDefaultCompanyId())));
+
+			_roleLocalService.addGroupRole(_organization.getGroupId(), _role);
+			_roleLocalService.addGroupRole(_userGroup.getGroupId(), _role);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(
+				originalPermissionChecker);
+		}
 
 		Assert.assertEquals(
 			4, _roleLocalService.getAssigneesTotal(_role.getRoleId()));
