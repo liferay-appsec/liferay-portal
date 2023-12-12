@@ -20,4 +20,24 @@ definition {
 		}
 	}
 
+	macro verifyDefined(parameterList = null){
+		if (!(isSet(parameterList))) {
+			fail("Please define a parameter list in 'parameterList'");
+		}
+
+		for (var parameter : list ${parameterList}) {
+
+			// Regex will find an unset varable, we cannot use isSet
+
+			var undefined = StringUtil.matches(${parameter}, "\$\{[^\$\{\s]*\}");
+
+			// Only fail if match found and parameter was not set to false
+
+			if ((${undefined} == "true") && (${parameter} != "false")) {
+				//is warn exists? if not use echo
+				echo("Parameter: '${parameter}' has not been set. Please set it unless it is a negative testcase!");
+			}
+		}
+	}
+
 }

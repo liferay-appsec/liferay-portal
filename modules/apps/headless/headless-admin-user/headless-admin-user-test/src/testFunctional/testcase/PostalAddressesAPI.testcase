@@ -1,0 +1,77 @@
+@component-name = "portal-headless"
+@disable-webdriver = "true"
+definition{
+
+    property portal.upstream = "true";
+	property testray.main.component.name = "Headless";
+
+    static var newAccountId = "placeholder";
+
+    setUp{
+        TestCase.setUpPortalInstanceNoSelenium();
+
+        //OSGI config API enabeling?
+
+        var newAccount = AccountsAPI.createAccount(accountName ="testAccount");
+
+        var newAccountId = JSONUtil.getWithJSONPath(${newAccount}, "$.id");
+    }
+
+    tearDown{
+        AccountsAPI.deleteAccount(accountId = ${newAccountId});
+
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
+
+		if (${testLiferayVirtualInstance} == "true") {
+			PortalInstances.tearDownCPNoSelenium();
+		}
+    }
+
+    @summary = "LPS-182854 TS6."
+    test createPostalAddressWithMissingMandatoryDataFails(){
+        task("When a new postal address creation request is sent with missing mandatory field."){
+            PostalAddressesAPI.createPostalAddress(
+                addressCountry = "Croatia",
+                addressLocality = "TestCity6",
+                addressType = "billing-and-shipping",
+                addresName = "TestName6",
+                primaryAddress = "false",
+                postalCode = "1234",
+                streetAddressLine1 = "Test str. 6.");
+        }
+
+        task("Then an error message is returned."){
+            TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 400");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = '''{
+  "status" : "BAD_REQUEST",
+  "title" : "Region not found"
+}''');
+        }
+    }
+
+     @summary = "LPS-182854 TS7."
+    test createPostalAddressWithMissingMandatoryDataFails(){
+        task("When a new postal address creation request is sent with missing mandatory field."){
+            PostalAddressesAPI.updatePostalAddress(
+                postalCode = "1234");
+        }
+
+        task("Then an error message is returned."){
+            TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "HTTP/1.1 400");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = '''{
+  "status" : "BAD_REQUEST",
+  "title" : "Region not found"
+}''');
+        }
+    }
+}

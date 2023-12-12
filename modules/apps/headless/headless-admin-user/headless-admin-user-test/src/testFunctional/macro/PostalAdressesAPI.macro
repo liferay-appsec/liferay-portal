@@ -1,34 +1,166 @@
 definition{
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}"
-    macro getPostalAddress(){}
+    macro getPostalAddress(postalAddressId = null) {
+        Variables.assertDefined(parameterList = ${postalAddressId});
+
+            var request = PostalAddressesAPI._curlSetupHeader(
+                postalAddressId = ${postalAddressId},
+                domain = ${domain},
+                port = ${port},
+                printHeader = ${printHeader},
+                virtualHost = ${virtualHost}
+            );
+
+            return JSONCurlUtil.delete(${request});
+    }
 
     @summary = "/v1.0/user-accounts/{userAccountId}/postal-addresses"
-    macro getPostalAddressOfUser(){}
+    macro getPostalAddressesOfUser(userId =null) {
+    //macro getPostalAddresses(userId =null) {
+
+        Variables.assertDefined(parameterList = ${userId});
+
+        var request = PostalAddressesAPI._curlSetupHeader(
+            userId = ${userId},
+            domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost}
+        );
+
+        return JSONCurlUtil.get(${request});
+    }
 
     @summary = "/v1.0/accounts/{accountId}/postal-addresses"
-    macro getPostalAddressesOfAccount(){}
+    macro getPostalAddresses(accountId = null) {
+    //macro getPostalAddressesOfAccount(accountId = null) {
+
+        Variables.assertDefined(parameterList = ${accountId});
+
+        var request = PostalAddressesAPI._curlSetupHeader(
+            accountId = ${accountId},
+            domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost}
+        );
+
+        return JSONCurlUtil.get(${request});
+    }
 
     @summary = "/v1.0/organizations/{organizationId}/postal-addresses"
-    macro getPostalAddressOfOrganization(){}
+    macro getPostalAddressOfOrganization(organizationId = null) {
+    //macro getPostalAddressOfOrganization(organizationId = null) {
+        Variables.assertDefined(parameterList = ${organizationId});
 
-    @summary = "ALL 3 ???"
-    macro getPostalAddresses(){}
+        var request = PostalAddressesAPI._curlSetupHeader(
+            organizationId = ${organizationId},
+            domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost}
+        );
+
+        return JSONCurlUtil.get(${request});
+    }
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}"
-    macro updatePostalAddress(){}
+    macro deletePostalAddress(postalAddressId = null) {
+            Variables.assertDefined(parameterList = ${postalAddressId});
+
+            var request = PostalAddressesAPI._curlSetupHeader(
+                postalAddressId = ${postalAddressId},
+                domain = ${domain},
+                port = ${port},
+                printHeader = ${printHeader},
+                virtualHost = ${virtualHost}
+            );
+
+            return JSONCurlUtil.delete(${request});
+    }
+
+    @summary = "/v1.0/postal-addresses/{postalAddressId}. In this case all fields are optional as any can be updated."
+    macro updatePostalAddress(optionalFields = null) {
+        Variables.verifyDefined(parameterList = ${postalAddressId});
+
+                var header = PostalAddressesAPI._curlSetupHeader(
+                    postalAddressId = ${postalAddressId},
+                    domain = ${domain},
+                    port = ${port},
+                    printHeader = ${printHeader},
+                    virtualHost = ${virtualHost}
+                );
+
+                var body = PostalAddressesAPI._curlSetupBody(optionalFields = ${optionalFields});
+
+                var request = StringUtil.add(${header}, ${body}, " ");
+
+                return JSONCurlUtil.put(${request});
+    }
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}"
-    macro recreatePostalAddress(){}
+    macro recreatePostalAddress(postalAddressId = null, addressCountry = null, addressLocality = null, addressType = null, addressName = null, postalCode = null, primaryAddress = null, addressRegion = null, streetAddressLine1 = null){
+        Variables.verifyDefined(parameterList = "${postalAddressId},${addressCountry},${addressLocality},${addressType},${addressName},${postalCode},${primaryAddress},${addressRegion},${streetAddressLine1}");
 
-    @summary = "/v1.0/postal-addresses/{postalAddressId}"
-    macro deletePostalAddress(){}
+        var header = PostalAddressesAPI._curlSetupHeader(
+            postalAddressId = ${postalAddressId},
+            domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost}
+        );
+
+        var body = PostalAddressesAPI._curlSetupBody(mandatoryFields = '''
+                "addressCountry": "${addressCountry}",
+                "addressLocality": "${addressLocality}",
+                "addressRegion": "${addressRegion}",
+                "addressType": "${addressType}",
+                "name": "${addressName}",
+                "postalCode": "${postalCode}",
+                "primary": ${primaryAddress},
+                "streetAddressLine1": "${streetAddressLine1}"
+            ''',
+            optionalFields = ${optionalFields}
+        );
+
+        var request = StringUtil.add(${header}, ${body}, " ");
+
+        return JSONCurlUtil.put(${request});
+    }
 
     @summary = "/v1.0/accounts/{accountId}/postal-addresses"
-    macro createPostalAddress(){}
+    macro createPostalAddress(accountId = nul, addressCountry = null, addressLocality = null, addressType = null, addressName = null, postalCode = null, primaryAddress = null, addressRegion = null, streetAddressLine1 = null){
+        Variables.assertDefined(parameterList = "${accountId},${addressCountry},${addressLocality},${addressType},${addressName},${postalCode},${primaryAddress},${addressRegion},${streetAddressLine1}");
+
+        var header = PostalAddressesAPI._curlSetupHeader(
+            accountId = ${accountId},
+            domain = ${domain},
+			port = ${port},
+			printHeader = ${printHeader},
+			virtualHost = ${virtualHost}
+        );
+
+        var body = PostalAddressesAPI._curlSetupBody(mandatoryFields = '''
+                "addressCountry": "${addressCountry}",
+                "addressLocality": "${addressLocality}",
+                "addressType": "${addressType}",
+                "name": "${addressName}",
+                "postalCode": "${postalCode}",
+                "primary": ${primaryAddress},
+                "addressRegion": "${addressRegion}",
+                "streetAddressLine1": "${streetAddressLine1}"
+            ''',
+            optionalFields = ${optionalFields}
+        );
+
+        var request = StringUtil.add(${header}, ${body}, " ");
+
+        return JSONCurlUtil.post(${request});
+    }
 
     @summary=""
-    macro _curlSetupHeader(accountId = null, additionalResources = null, domain = null, virtualHost = null, port = null, printHeader = null, externalReferenceCode = null, requestParams = null, organizationId = null){
+    macro _curlSetupHeader(accountId = null, userId =null, postalAdressId = null, organizationId = null, additionalResources = null, domain = null, virtualHost = null, port = null, printHeader = null, requestParams = null){
         if (isSet(virtualHost)) {
 			if (!(isSet(port))) {
 				var port = 8080;
@@ -47,16 +179,30 @@ definition{
         else if (isSet(accountId)){
             var api = "accounts/${accountId}/postal-addresses";
         }
+        else if (isSet(userId)){
+            var api = "user-accounts/${userId}/postal-addresses";
+        }
         else if(isSet(${organizationId})){
             var api = "organizations/${organizationId}/postal-addresses";
         }
-        else{
+        else{ 
             var api="postal-addresses";
         }
 
         if(isSet(additionalResources)){
-            var api = StringUtil.add(${api}, ${additionalResources}, "/");
+            var api = StringUtil.concat(${api}, "/${additionalResources}");
         }
+
+        if (isSet(requestParams)) {
+			var api = StringUtil.concat(${api}, "?${requestParams}");
+		}
+
+        var header = '''
+			${portalURL}/o/headless-admin-user/v1.0/${api} \
+				-u test@${domain}:test \
+				-H accept: application/json \
+				-H Content-Type: application/json
+		''';
 
         if (isSet(printHeader) && (${printHeader} == "true")) {
 			var header = StringUtil.concat(${header}, " -i ");
@@ -66,29 +212,23 @@ definition{
     }
 
     @summary = ""
-    macro _curlSetupBody(fields = null){
-                Variables.assertDefined(parameterList = ${fields});
+    macro _curlSetupBody(mandatoryFields = null, optionalFields = null){
+		var bodyValues = "";
 
-//move
-        var bodyValues ='''
-  "addressCountry": "${addressCountry}",
-  "addressLocality": "${addressLocality}",
-  "addressType": "${addressType}",
-  "name": "${addressName}",
-  "postalCode": "${postalCode}",
-  "primary": ${primaryAddress},
-  "addressRegion": "${addressRegion}",
-  "streetAddressLine1": "${streetAddressLine1}"
-        ''';
-
-        var bodyValues = "";
-
-        if (isSet(fields)) {
-			var bodyValues = ${fields};
+		if (isSet(mandatoryFields)) {
+			var bodyValues = StringUtil.concat(${mandatoryFields});
 		}
 
-        var body = "-d {${bodyValues}}";
+		if (isSet(optionalFields)) {
+			if (isSet(mandatoryFields)) {
+				var bodyValues = StringUtil.concat(", ");
+			}
 
-        return ${body};
-    }
+			var bodyValues = StringUtil.concat(${optionalFields});
+		}
+
+		var body = "-d {${bodyValues}}";
+
+		return ${body};
+	}
 }
