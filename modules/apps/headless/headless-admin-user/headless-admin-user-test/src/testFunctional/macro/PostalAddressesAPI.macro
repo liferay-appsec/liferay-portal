@@ -12,12 +12,13 @@ definition{
                 virtualHost = ${virtualHost}
             );
 
-            return JSONCurlUtil.delete(${request});
+            var response = JSONCurlUtil.delete(${request});
+
+            return ${response};
     }
 
     @summary = "/v1.0/user-accounts/{userAccountId}/postal-addresses"
     macro getPostalAddressesOfUser(userId =null) {
-    //macro getPostalAddresses(userId =null) {
 
         Variables.assertDefined(parameterList = ${userId});
 
@@ -29,12 +30,13 @@ definition{
 			virtualHost = ${virtualHost}
         );
 
-        return JSONCurlUtil.get(${request});
+        var response = JSONCurlUtil.get(${request});
+
+        return ${response};
     }
 
     @summary = "/v1.0/accounts/{accountId}/postal-addresses"
     macro getPostalAddresses(accountId = null) {
-    //macro getPostalAddressesOfAccount(accountId = null) {
 
         Variables.assertDefined(parameterList = ${accountId});
 
@@ -46,12 +48,14 @@ definition{
 			virtualHost = ${virtualHost}
         );
 
-        return JSONCurlUtil.get(${request});
+        var response = JSONCurlUtil.get(${request});
+
+        return ${response};
+
     }
 
     @summary = "/v1.0/organizations/{organizationId}/postal-addresses"
     macro getPostalAddressOfOrganization(organizationId = null) {
-    //macro getPostalAddressOfOrganization(organizationId = null) {
         Variables.assertDefined(parameterList = ${organizationId});
 
         var request = PostalAddressesAPI._curlSetupHeader(
@@ -62,7 +66,10 @@ definition{
 			virtualHost = ${virtualHost}
         );
 
-        return JSONCurlUtil.get(${request});
+        var response = JSONCurlUtil.get(${request});
+
+        return ${response};
+
     }
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}"
@@ -77,12 +84,15 @@ definition{
                 virtualHost = ${virtualHost}
             );
 
-            return JSONCurlUtil.delete(${request});
+            var response = JSONCurlUtil.delete(${request});
+
+            return ${response};
+
     }
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}. In this case all fields are optional as any can be updated."
-    macro updatePostalAddress(optionalFields = null) {
-        Variables.verifyDefined(parameterList = ${postalAddressId});
+    macro updatePostalAddress(optionalFields = null, postalAddressId = null) {
+        Variables.verifyDefined(parameterList = "${postalAddressId},${optionalFields}");
 
                 var header = PostalAddressesAPI._curlSetupHeader(
                     postalAddressId = ${postalAddressId},
@@ -96,7 +106,10 @@ definition{
 
                 var request = StringUtil.add(${header}, ${body}, " ");
 
-                return JSONCurlUtil.put(${request});
+                var response = JSONCurlUtil.put(${request});
+
+                return ${response};
+
     }
 
     @summary = "/v1.0/postal-addresses/{postalAddressId}"
@@ -126,12 +139,14 @@ definition{
 
         var request = StringUtil.add(${header}, ${body}, " ");
 
-        return JSONCurlUtil.put(${request});
+        var response = JSONCurlUtil.put(${request});
+
+        return ${response};
     }
 
     @summary = "/v1.0/accounts/{accountId}/postal-addresses"
-    macro createPostalAddress(accountId = nul, addressCountry = null, addressLocality = null, addressType = null, addressName = null, postalCode = null, primaryAddress = null, addressRegion = null, streetAddressLine1 = null){
-        Variables.assertDefined(parameterList = "${accountId},${addressCountry},${addressLocality},${addressType},${addressName},${postalCode},${primaryAddress},${addressRegion},${streetAddressLine1}");
+    macro createPostalAddress(accountId = null, addressCountry = null, addressLocality = null, addressType = null, addressName = null, postalCode = null, primaryAddress = null, addressRegion = null, streetAddressLine1 = null){
+        Variables.verifyDefined(parameterList = "${accountId},${addressCountry},${addressLocality},${addressType},${addressName},${postalCode},${primaryAddress},${addressRegion},${streetAddressLine1}");
 
         var header = PostalAddressesAPI._curlSetupHeader(
             accountId = ${accountId},
@@ -156,18 +171,22 @@ definition{
 
         var request = StringUtil.add(${header}, ${body}, " ");
 
-        return JSONCurlUtil.post(${request});
+        var response = JSONCurlUtil.post(${request});
+
+        return ${response};
     }
 
-    @summary=""
+
+    @summary = "Creates header for curl call."
     macro _curlSetupHeader(accountId = null, userId =null, postalAdressId = null, organizationId = null, additionalResources = null, domain = null, virtualHost = null, port = null, printHeader = null, requestParams = null){
         if (isSet(virtualHost)) {
 			if (!(isSet(port))) {
 				var port = 8080;
 			}
-
-			var portalURL = "http://${virtualHost}:${port}";
-		}
+            var portalURL = "http://${virtualHost}:${port}";
+        } else {
+            var portalURL = JSONCompany.getPortalURL();
+	    }
 
         if (!(isSet(domain))) {
 			var domain = "liferay.com";
@@ -182,7 +201,7 @@ definition{
         else if (isSet(userId)){
             var api = "user-accounts/${userId}/postal-addresses";
         }
-        else if(isSet(${organizationId})){
+        else if (isSet(organizationId)){
             var api = "organizations/${organizationId}/postal-addresses";
         }
         else{ 
@@ -211,20 +230,20 @@ definition{
         return ${header};
     }
 
-    @summary = ""
+    @summary = "Creates body for curl call."
     macro _curlSetupBody(mandatoryFields = null, optionalFields = null){
 		var bodyValues = "";
 
 		if (isSet(mandatoryFields)) {
-			var bodyValues = StringUtil.concat(${mandatoryFields});
+			var bodyValues = StringUtil.concat(${bodyValues}, ${mandatoryFields});
 		}
 
 		if (isSet(optionalFields)) {
 			if (isSet(mandatoryFields)) {
-				var bodyValues = StringUtil.concat(", ");
+				var bodyValues = StringUtil.concat(${bodyValues}, ", ");
 			}
 
-			var bodyValues = StringUtil.concat(${optionalFields});
+			var bodyValues = StringUtil.concat(${bodyValues}, ${optionalFields});
 		}
 
 		var body = "-d {${bodyValues}}";

@@ -10,9 +10,9 @@ definition{
     setUp{
         TestCase.setUpPortalInstanceNoSelenium();
 
-        //OSGI config API enabeling?
+        OAuth2.deployInstanceConfigFile(osgiConfigFileName = "com.liferay.portal.remote.cors.configuration.PortalCORSConfiguration~allow~headless~admin~user.config");
 
-        var newAccount = AccountsAPI.createAccount(accountName ="testAccount");
+        var newAccount = AccountsAPI.createAccount(accountName = "testAccount");
 
         var newAccountId = JSONUtil.getWithJSONPath(${newAccount}, "$.id");
     }
@@ -27,23 +27,24 @@ definition{
 		}
     }
 
-    @summary = "LPS-182854 TS6."
-    test createPostalAddressWithMissingMandatoryDataFails(){
+    @description = "LPS-182854 TS6. Creation of postal address by POST call with missing mandatory fields fails."
+    test createPostalAddressByPOSTWithMissingMandatoryDataFails{
         task("When a new postal address creation request is sent with missing mandatory field."){
-            PostalAddressesAPI.createPostalAddress(
+            var response = PostalAddressesAPI.createPostalAddress(
+                accountId = ${newAccountId},
                 addressCountry = "Croatia",
                 addressLocality = "TestCity6",
                 addressType = "billing-and-shipping",
-                addresName = "TestName6",
+                addressName = "TestName6",
                 primaryAddress = "false",
                 postalCode = "1234",
-                streetAddressLine1 = "Test str. 6.");
+                    printHeader = "true");
         }
 
         task("Then an error message is returned."){
             TestUtils.assertPartialEquals(
 				actual = ${response},
-				expected = "HTTP/1.1 400");
+				expected = "\"status\" : \"NOT_FOUND\"");
 
 			TestUtils.assertPartialEquals(
 				actual = ${response},
@@ -54,23 +55,64 @@ definition{
         }
     }
 
-     @summary = "LPS-182854 TS7."
-    test createPostalAddressWithMissingMandatoryDataFails(){
+    @description = "LPS-182854 TS7. Creation of postal address by PUT call with missing mandatory fields fails."
+    test createPostalAddressByPUTWithMissingMandatoryDataFails{
         task("When a new postal address creation request is sent with missing mandatory field."){
-            PostalAddressesAPI.updatePostalAddress(
-                postalCode = "1234");
+            var response = PostalAddressesAPI.updatePostalAddress(
+                accountId = ${newAccountId},
+                postalCode = "1234",
+                    printHeader = "true");
         }
 
         task("Then an error message is returned."){
             TestUtils.assertPartialEquals(
 				actual = ${response},
-				expected = "HTTP/1.1 400");
+				expected = "\"status\" : \"NOT_FOUND\"");
 
 			TestUtils.assertPartialEquals(
 				actual = ${response},
 				expected = '''{
   "status" : "BAD_REQUEST",
   "title" : "Region not found"
+}''');
+        }
+    }
+
+    @description = "LPS-182854 TS8. Getting postal address by id returns proper data."
+    test getPostalAddress{
+            task("Given a new postal address"){
+                var response = PostalAddressesAPI.createPostalAddress(
+                    accountId = ${newAccountId},
+                    addressCountry = "Hungary",
+                    addressLocality = "Eger",
+                    addressRegion = "Heves",
+                    addressType = "billing-and-shipping",
+                    addressName = "itsATest",
+                    primaryAddress = "true",
+                    postalCode = "1234",
+                    streetAddressLine1 = "MyStreet 1.");
+                var addressId = JSONUtil.getWithJSONPath(${response}, "$.id");
+            }
+
+            task("When the postal address is requested"){
+                var response = PostalAddressesAPI.getPostalAddress(postalAddressId = ${addressId});
+            }
+
+            task("Then the right data is returned"){
+                TestUtils.assertPartialEquals(actual = ${response}, expected = "HTTP 404");
+
+                TestUtils.assertPartialEquals(actual = ${response}, expected = '''{
+  "addressCountry": "Hungary",
+  "addressLocality": "Eger",
+  "addressRegion": "Heves",
+  "addressType": "billing-and-shipping",
+  "id": ${addressId},
+  "name": "itsATest",
+  "postalCode": "1234",
+  "primary": true,
+  "streetAddressLine1": "MyStreet 1.",
+  "streetAddressLine2": "",
+  "streetAddressLine3": ""
 }''');
         }
     }

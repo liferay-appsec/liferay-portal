@@ -1,9 +1,9 @@
 definition{
 
-    @summary = ""
+    @summary = "/v1.0/accounts"
     macro getAccounts(filter = null, page = null, pageSize = null, search = null, sort = null, domain = null, virtualHost = null, port = null, printHeader = null){
 
-        var request = AccountsAPI._curlSetUpHeader(
+        var request = AccountsAPI._curlSetupHeader(
 			domain = ${domain},
 			port = ${port},
 			printHeader = ${printHeader},
@@ -14,45 +14,47 @@ definition{
 		return ${response};
     }
 
-    @summary = ""
+    @summary = "/v1.0/accounts"
     macro createAccount(accountName = null, optionalFields = null, domain = null, virtualHost = null, port = null, printHeader = null){
         Variables.assertDefined(parameterList = ${accountName});
 
-        var header = AccountsAPI._curlSetUpHeader(
+        var header = AccountsAPI._curlSetupHeader(
 			domain = ${domain},
 			port = ${port},
 			printHeader = ${printHeader},
 			virtualHost = ${virtualHost});
 
-        var fieldList = StringUtil.concat("\"name\": \"${accountName}\"", ", ${optionalFields}");
-        var body = AccountsAPI._curlSetUpBody(fields = ${fieldList});
+        if (isSet(optionalFields)){
+            var fieldList = StringUtil.concat("\"name\": \"${accountName}\"", ", ${optionalFields}");
+            var body = AccountsAPI._curlSetupBody(fields = ${fieldList});
+        } else {
+            var body = AccountsAPI._curlSetupBody(fields = "\"name\": \"${accountName}\"");
+        }
 
         var request = StringUtil.add(${header}, ${body}, " ");
-
+echo("đđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđđ ${request}");
         var response = JSONCurlUtil.post(${request});
 
 		return ${response};
     }
 
-    @summary = ""
+    @summary = "/v1.0/accounts/{accountId}"
     macro getAccount(accountId = null, domain = null, virtualHost = null, port = null, printHeader = null){
          Variables.assertDefined(parameterList = ${accountId});
 
-        var header = AccountsAPI._curlSetupHeader(
+        var request = AccountsAPI._curlSetupHeader(
             accountId = ${accountId},
 			domain = ${domain},
 			port = ${port},
 			printHeader = ${printHeader},
 			virtualHost = ${virtualHost});
         
-        var request = StringUtil.add(${header}, ${body}, " ");
-
         var response = JSONCurlUtil.get(${request});
 
 		return ${response};
     }
 
-    @summary = ""
+    @summary = "/v1.0/accounts/{accountId}"
     macro updateAccount(accountId = null, fields = null, httpMethod = null, domain = null, virtualHost = null, port = null, printHeader = null){
         Variables.assertDefined(parameterList = "${accountId},${fields}");
 
@@ -65,16 +67,16 @@ definition{
         var body = AccountsAPI._curlSetupBody(
 			fields = ${fields});
 
-        var method = StringUtil.toLowerCase(${httpMethod});
 		var request = StringUtil.add(${header}, ${body}, " ");
-		var response = JSONCurlUtil.put(${request});
-		
+
 		var response = JSONCurlUtil.patch(${request});
+
+        return ${response};
 		}
 		
-    @summary=""
+    @summary = "/v1.0/accounts/{accountId}"
     macro recreateAccount(accountId = null, accountName = null, optionalFields = null, httpMethod = null, domain = null, virtualHost = null, port = null, printHeader = null){
-        Variables.assertDefined(parameterList = "${accountName},${accountId},${optionalFields}");
+        Variables.verifyDefined(parameterList = "${accountName},${accountId},${optionalFields}");
 
         var header = AccountsAPI._curlSetupHeader(
             accountId = ${accountId},
@@ -83,9 +85,12 @@ definition{
 			printHeader = ${printHeader},
 			virtualHost = ${virtualHost});
 
-        var fieldList = StringUtil.concat("\"name\": \"${accountName}\"", ", ${optionalFields}");
-        var body = AccountsAPI._curlSetupBody(
-			fields = ${fieldList});
+        if (isSet(optionalFields)){
+            var fieldList = StringUtil.concat("\"name\": \"${accountName}\"", ", ${optionalFields}");
+            var body = AccountsAPI._curlSetupBody(fields = ${fieldList});
+        } else {
+            var body = AccountsAPI._curlSetupBody(fields = "\"name\": \"${accountName}\"");
+        }
 
         var request = StringUtil.add(${header}, ${body}, " ");
 
@@ -94,7 +99,7 @@ definition{
 		return ${response};
     }
 
-    @summary = ""
+    @summary = "/v1.0/accounts/{accountId}"
     macro deleteAccount(accountId = null, domain = null, virtualHost = null, port = null, printHeader = null){
         Variables.assertDefined(parameterList = ${accountId});
 
@@ -110,15 +115,16 @@ definition{
         return ${response};
     }
 
-    @summary=""
+    @summary = "Creates header for curl call."
     macro _curlSetupHeader(accountId = null, additionalResources = null, domain = null, virtualHost = null, port = null, printHeader = null, externalReferenceCode = null, requestParams = null, organizationId = null){
         if (isSet(virtualHost)) {
 			if (!(isSet(port))) {
 				var port = 8080;
 			}
-
-			var portalURL = "http://${virtualHost}:${port}";
-		}
+            var portalURL = "http://${virtualHost}:${port}";
+        } else {
+            var portalURL = JSONCompany.getPortalURL();
+	    }
 
         if (!(isSet(domain))) {
 			var domain = "liferay.com";
@@ -127,10 +133,10 @@ definition{
         if (isSet(accountId)){
             var api = "accounts/${accountId}";
         }
-        else if(isSet(externalReferenceCode)){
+        else if (isSet(externalReferenceCode)){
             var api = "accounts/by-external-reference-code/${externalReferenceCode}";
         }
-        else if(isSet(${organizationId})){
+        else if (isSet(organizationId)){
             var api = "organizations/${organizationId}/accounts";
         }
         else {
@@ -156,10 +162,11 @@ definition{
 			var header = StringUtil.concat(${header}, " -i ");
 		}
 
+        echo("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ${header}");
         return ${header};
     }
 
-    @summary = ""
+    @summary = "Creates body for curl call."
     macro _curlSetupBody(fields = null){
 
         var bodyValues = "";
