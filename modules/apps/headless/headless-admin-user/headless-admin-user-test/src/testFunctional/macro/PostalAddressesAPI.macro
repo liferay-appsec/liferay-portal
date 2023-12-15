@@ -106,7 +106,7 @@ definition{
 
                 var request = StringUtil.add(${header}, ${body}, " ");
 
-                var response = JSONCurlUtil.put(${request});
+                var response = JSONCurlUtil.patch(${request});
 
                 return ${response};
 

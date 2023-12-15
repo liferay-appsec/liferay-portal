@@ -44,7 +44,7 @@ definition{
         task("Then an error message is returned."){
             TestUtils.assertPartialEquals(
 				actual = ${response},
-				expected = "\"status\" : \"NOT_FOUND\"");
+				expected = "HTTP/1.1 400");
 
 			TestUtils.assertPartialEquals(
 				actual = ${response},
@@ -55,19 +55,33 @@ definition{
         }
     }
 
-    @description = "LPS-182854 TS7. Creation of postal address by PUT call with missing mandatory fields fails."
+    @description = "LPS-182854 TS7. Update of postal address by PUT call with missing mandatory fields fails."
     test createPostalAddressByPUTWithMissingMandatoryDataFails{
+        task("Given a new postal address"){
+                var response = PostalAddressesAPI.createPostalAddress(
+                    accountId = ${newAccountId},
+                    addressCountry = "Hungary",
+                    addressLocality = "Eger",
+                    addressRegion = "Heves",
+                    addressType = "billing-and-shipping",
+                    addressName = "itsATest",
+                    primaryAddress = "true",
+                    postalCode = "1234",
+                    streetAddressLine1 = "MyStreet 1.");
+                var newAddressId = JSONUtil.getWithJSONPath(${response}, "$.id");
+            }
+
         task("When a new postal address creation request is sent with missing mandatory field."){
-            var response = PostalAddressesAPI.updatePostalAddress(
-                accountId = ${newAccountId},
+            var response = PostalAddressesAPI.recreatePostalAddress(
+                postalAddressId = ${newAddressId},
                 postalCode = "1234",
-                    printHeader = "true");
+                printHeader = "true");
         }
 
         task("Then an error message is returned."){
             TestUtils.assertPartialEquals(
 				actual = ${response},
-				expected = "\"status\" : \"NOT_FOUND\"");
+				expected = "HTTP/1.1 400");
 
 			TestUtils.assertPartialEquals(
 				actual = ${response},
@@ -99,7 +113,7 @@ definition{
             }
 
             task("Then the right data is returned"){
-                TestUtils.assertPartialEquals(actual = ${response}, expected = "HTTP 404");
+                TestUtils.assertPartialEquals(actual = ${response}, expected = "HTTP 200");
 
                 TestUtils.assertPartialEquals(actual = ${response}, expected = '''{
   "addressCountry": "Hungary",
