@@ -6,6 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.security.auth.verifier;
 
 import com.liferay.oauth2.provider.constants.OAuth2ProviderConstants;
+import com.liferay.oauth2.provider.handler.OAuth2RESTAuthVerifierErrorResponseHandler;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProvider;
@@ -19,6 +20,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
@@ -97,6 +99,16 @@ public class OAuth2RESTAuthVerifier implements AuthVerifier {
 
 				httpServletResponse.setStatus(
 					HttpServletResponse.SC_UNAUTHORIZED);
+
+				OAuth2RESTAuthVerifierErrorResponseHandler
+					oAuth2RESTAuthVerifierErrorResponseHandler =
+						_oAuth2RESTAuthVerifierErrorResponseHandlerSnapshot.
+							get();
+
+				if (oAuth2RESTAuthVerifierErrorResponseHandler != null) {
+					oAuth2RESTAuthVerifierErrorResponseHandler.handle(
+						accessControlContext.getRequest(), httpServletResponse);
+				}
 
 				authVerifierResult.setState(
 					AuthVerifierResult.State.INVALID_CREDENTIALS);
@@ -213,6 +225,11 @@ public class OAuth2RESTAuthVerifier implements AuthVerifier {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		OAuth2RESTAuthVerifier.class);
+
+	private static final Snapshot<OAuth2RESTAuthVerifierErrorResponseHandler>
+		_oAuth2RESTAuthVerifierErrorResponseHandlerSnapshot = new Snapshot<>(
+			OAuth2RESTAuthVerifier.class,
+			OAuth2RESTAuthVerifierErrorResponseHandler.class, null, true);
 
 	@Reference(
 		policy = ReferencePolicy.DYNAMIC,
