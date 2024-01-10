@@ -68,9 +68,8 @@ public class CookiesPreAction extends Action {
 	}
 
 	private void _run(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws Exception {
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
 
 		Map<String, String> cookieValues = _getCookieValues(
 			httpServletRequest.getCookies());
@@ -86,24 +85,28 @@ public class CookiesPreAction extends Action {
 		boolean optionalConsent = false;
 
 		if (performanceConsent && functionalConsent && personalizationConsent) {
-			Map<String, Integer> cookieConsentTypesCache =
+			Map<String, Integer> knownCookies =
 				CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
 
 			optionalConsent = true;
 
-			for (Map.Entry<String, Integer> cookieConsentType :
-					cookieConsentTypesCache.entrySet()) {
+			for (String cookieName : cookieValues.keySet()) {
+				String knownCookieConsentType =
+					CookiesManagerImpl.getConsentTypeName(
+						knownCookies.get(cookieName));
 
-				boolean consentTypeValue = GetterUtil.getBoolean(
-					cookieValues.get(
-						CookiesManagerImpl.getConsentTypeName(
-							cookieConsentType.getValue())));
+				if (CookiesConstants.NAME_CONSENT_TYPE_NECESSARY.equals(
+						knownCookieConsentType)) {
 
-				if (!consentTypeValue) {
+					continue;
+				}
+
+				if (!GetterUtil.getBoolean(
+						cookieValues.get(knownCookieConsentType))) {
+
 					CookiesManagerUtil.deleteCookies(
 						CookiesManagerUtil.getDomain(httpServletRequest),
-						httpServletRequest, httpServletResponse,
-						cookieConsentType.getKey());
+						httpServletRequest, httpServletResponse, cookieName);
 				}
 			}
 		}
