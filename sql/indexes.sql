@@ -293,6 +293,8 @@ create unique index IX_982329B on RegionLocalization (regionId, languageId[$COLU
 
 create unique index IX_8BD6BCA7 on Release_ (servletContextName[$COLUMN_LENGTH:75$]);
 
+create index IX_4287398B on RememberMeToken (accessToken[$COLUMN_LENGTH:75$]);
+
 create unique index IX_97B21AA on Repository (groupId, name[$COLUMN_LENGTH:200$], portletId[$COLUMN_LENGTH:200$], ctCollectionId);
 create index IX_74C17B04 on Repository (uuid_[$COLUMN_LENGTH:75$]);
 

@@ -1140,6 +1140,16 @@ create table Release_ (
 	testString VARCHAR(1024) null
 );
 
+create table RememberMeToken (
+	mvccVersion LONG default 0 not null,
+	rememberMeTokenId LONG not null primary key,
+	companyId LONG,
+	userId LONG,
+	createDate DATE null,
+	accessToken VARCHAR(75) null,
+	expirationDate DATE null
+);
+
 create table Repository (
 	mvccVersion LONG default 0 not null,
 	ctCollectionId LONG default 0 not null,
