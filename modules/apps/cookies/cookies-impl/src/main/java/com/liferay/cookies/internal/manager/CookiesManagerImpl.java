@@ -98,7 +98,10 @@ public class CookiesManagerImpl implements CookiesManager {
 					"type: " + cookie.getName());
 		}
 
-		if (_knownCookies.get(cookie.getName()) != null) {
+		Map<String, Integer> knownCookies =
+			CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
+
+		if (knownCookies.get(cookie.getName()) != null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"The cookie will be added with the consent type used " +
@@ -107,7 +110,7 @@ public class CookiesManagerImpl implements CookiesManager {
 			}
 
 			return addCookie(
-				_knownCookies.get(cookie.getName()), cookie, httpServletRequest,
+				knownCookies.get(cookie.getName()), cookie, httpServletRequest,
 				httpServletResponse, secure);
 		}
 
@@ -156,8 +159,6 @@ public class CookiesManagerImpl implements CookiesManager {
 			}
 		}
 
-		CookiesConsentTypesCaching.addCookie(cookie.getName(), consentType);
-
 		// LEP-5175
 
 		cookie.setSecure(secure);
@@ -188,19 +189,22 @@ public class CookiesManagerImpl implements CookiesManager {
 			cookiesMap.put(StringUtil.toUpperCase(cookie.getName()), cookie);
 		}
 
+		Map<String, Integer> knownCookies =
+			CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
+
 		if (_log.isWarnEnabled() &&
-			(_knownCookies.get(cookie.getName()) != null) &&
-			(_knownCookies.get(cookie.getName()) != consentType)) {
+			(knownCookies.get(cookie.getName()) != null) &&
+			(knownCookies.get(cookie.getName()) != consentType)) {
 
 			_log.warn(
 				StringBundler.concat(
 					"The ", cookie.getName(),
 					" cookie was previously added with consent type ",
-					_knownCookies.get(cookie.getName()),
+					knownCookies.get(cookie.getName()),
 					" and will now be modified to consent type ", consentType));
 		}
 
-		_knownCookies.put(cookie.getName(), consentType);
+		CookiesConsentTypesCaching.addCookie(cookie.getName(), consentType);
 
 		return true;
 	}
@@ -617,7 +621,6 @@ public class CookiesManagerImpl implements CookiesManager {
 
 	private static final Map<String, Integer> _internalCookies =
 		new HashMap<>();
-	private static final Map<String, Integer> _knownCookies = new HashMap<>();
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
