@@ -5,7 +5,11 @@
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.NoSuchRememberMeTokenException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.RememberMeToken;
 import com.liferay.portal.kernel.service.persistence.RememberMeTokenUtil;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
@@ -44,6 +48,25 @@ public class RememberMeTokenLocalServiceImpl
 		throws NoSuchRememberMeTokenException {
 
 		return RememberMeTokenUtil.findByAccessToken(accessToken);
+	}
+
+	@Override
+	public void removeRememberMeToken(
+			Company company, String rememberMeAccessToken)
+		throws NoSuchRememberMeTokenException {
+
+		try {
+			rememberMeAccessToken = EncryptorUtil.decrypt(
+				company.getKeyObj(), rememberMeAccessToken);
+		}
+		catch (EncryptorException encryptorException) {
+			throw new SystemException(encryptorException);
+		}
+
+		RememberMeToken rememberMeToken = getRememberMeToken(
+			rememberMeAccessToken);
+
+		deleteRememberMeToken(rememberMeToken);
 	}
 
 }

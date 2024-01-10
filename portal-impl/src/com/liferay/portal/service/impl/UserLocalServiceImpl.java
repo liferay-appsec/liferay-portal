@@ -66,6 +66,7 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.PortalPreferences;
+import com.liferay.portal.kernel.model.RememberMeToken;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.Team;
@@ -124,6 +125,7 @@ import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.RecentLayoutBranchLocalService;
 import com.liferay.portal.kernel.service.RecentLayoutRevisionLocalService;
 import com.liferay.portal.kernel.service.RecentLayoutSetBranchLocalService;
+import com.liferay.portal.kernel.service.RememberMeTokenLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -1931,51 +1933,36 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * automatic login cookie.
 	 *
 	 * @param  companyId the primary key of the user's company
-	 * @param  name the encrypted primary key of the user
-	 * @param  password the encrypted password of the user
+	 * @param  accessToken the encrypted access token of the user
 	 * @return the user's primary key and password
 	 */
 	@Override
 	public KeyValuePair decryptUserId(
-			long companyId, String name, String password)
+			long companyId, String accessToken)
 		throws PortalException {
 
 		Company company = _companyPersistence.findByPrimaryKey(companyId);
 
 		try {
-			name = EncryptorUtil.decrypt(company.getKeyObj(), name);
+			accessToken = EncryptorUtil.decrypt(company.getKeyObj(), accessToken);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
 		}
 
-		try {
-			password = EncryptorUtil.decrypt(company.getKeyObj(), password);
-		}
-		catch (EncryptorException encryptorException) {
-			throw new SystemException(encryptorException);
-		}
+		RememberMeToken rememberMeToken = _rememberMeTokenLocalService.getRememberMeToken(accessToken);
 
-		long userId = GetterUtil.getLong(name);
+		long userId = rememberMeToken.getUserId();
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
-		String userPassword = user.getPassword();
+		if (isPasswordExpired(user)) {
+			user.setPasswordReset(true);
 
-		String encPassword = PasswordEncryptorUtil.encrypt(
-			password, userPassword);
-
-		if (userPassword.equals(encPassword)) {
-			if (isPasswordExpired(user)) {
-				user.setPasswordReset(true);
-
-				userPersistence.update(user);
-			}
-
-			return new KeyValuePair(name, password);
+			userPersistence.update(user);
 		}
 
-		throw new PrincipalException.MustBeAuthenticated(userId);
+		return new KeyValuePair(String.valueOf(userId), user.getPassword());
 	}
 
 	/**
@@ -7311,6 +7298,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	@BeanReference(type = RecentLayoutSetBranchLocalService.class)
 	private RecentLayoutSetBranchLocalService
 		_recentLayoutSetBranchLocalService;
+
+	@BeanReference(type = RememberMeTokenLocalService.class)
+	private RememberMeTokenLocalService _rememberMeTokenLocalService;
 
 	@BeanReference(type = ResourceLocalService.class)
 	private ResourceLocalService _resourceLocalService;
