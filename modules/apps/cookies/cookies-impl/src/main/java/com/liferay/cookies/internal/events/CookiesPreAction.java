@@ -5,8 +5,8 @@
 
 package com.liferay.cookies.internal.events;
 
+import com.liferay.cookies.internal.manager.CookiesManagerImpl;
 import com.liferay.cookies.internal.manager.util.CookiesConsentTypesCaching;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.events.Action;
@@ -44,23 +44,6 @@ public class CookiesPreAction extends Action {
 		catch (Exception exception) {
 			_log.error(exception);
 		}
-	}
-
-	private String _getConsentTypeName(Integer consentType) {
-		String consentTypeName = StringPool.BLANK;
-
-		if (consentType == CookiesConstants.CONSENT_TYPE_FUNCTIONAL) {
-			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
-		}
-		else if (consentType == CookiesConstants.CONSENT_TYPE_PERFORMANCE) {
-			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
-		}
-		else if (consentType == CookiesConstants.CONSENT_TYPE_PERSONALIZATION) {
-			consentTypeName =
-				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
-		}
-
-		return consentTypeName;
 	}
 
 	private Map<String, String> _getCookieValues(Cookie[] cookies) {
@@ -113,7 +96,8 @@ public class CookiesPreAction extends Action {
 
 				boolean consentTypeValue = GetterUtil.getBoolean(
 					cookieValues.get(
-						_getConsentTypeName(cookieConsentType.getValue())));
+						CookiesManagerImpl.getConsentTypeName(
+							cookieConsentType.getValue())));
 
 				if (!consentTypeValue) {
 					CookiesManagerUtil.deleteCookies(

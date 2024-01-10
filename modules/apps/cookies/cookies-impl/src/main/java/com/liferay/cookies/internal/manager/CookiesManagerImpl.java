@@ -63,6 +63,23 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class CookiesManagerImpl implements CookiesManager {
 
+	public static String getConsentTypeName(Integer consentType) {
+		String consentTypeName = StringPool.BLANK;
+
+		if (consentType == CookiesConstants.CONSENT_TYPE_FUNCTIONAL) {
+			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
+		}
+		else if (consentType == CookiesConstants.CONSENT_TYPE_PERFORMANCE) {
+			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
+		}
+		else if (consentType == CookiesConstants.CONSENT_TYPE_PERSONALIZATION) {
+			consentTypeName =
+				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
+		}
+
+		return consentTypeName;
+	}
+
 	@Override
 	public boolean addCookie(
 		Cookie cookie, HttpServletRequest httpServletRequest,
@@ -368,18 +385,7 @@ public class CookiesManagerImpl implements CookiesManager {
 			return true;
 		}
 
-		String consentCookieName = StringPool.BLANK;
-
-		if (consentType == CookiesConstants.CONSENT_TYPE_FUNCTIONAL) {
-			consentCookieName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
-		}
-		else if (consentType == CookiesConstants.CONSENT_TYPE_PERFORMANCE) {
-			consentCookieName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
-		}
-		else if (consentType == CookiesConstants.CONSENT_TYPE_PERSONALIZATION) {
-			consentCookieName =
-				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
-		}
+		String consentCookieName = getConsentTypeName(consentType);
 
 		String consentCookieValue = getCookieValue(
 			consentCookieName, httpServletRequest);
