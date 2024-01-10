@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.service.RememberMeTokenLocalServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
@@ -360,10 +361,20 @@ public abstract class BaseProfile {
 	}
 
 	public void logout(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse) {
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
+		throws PortalException {
 
 		String domain = CookiesManagerUtil.getDomain(httpServletRequest);
+
+		String rememberMeAccessToken = CookiesManagerUtil.getCookieValue(
+			CookiesConstants.NAME_REMEMBER_ME_ACCESS_TOKEN, httpServletRequest,
+			false);
+
+		if (Validator.isNotNull(rememberMeAccessToken)) {
+			RememberMeTokenLocalServiceUtil.removeRememberMeToken(
+				portal.getCompany(httpServletRequest), rememberMeAccessToken);
+		}
 
 		CookiesManagerUtil.deleteCookies(
 			domain, httpServletRequest, httpServletResponse,

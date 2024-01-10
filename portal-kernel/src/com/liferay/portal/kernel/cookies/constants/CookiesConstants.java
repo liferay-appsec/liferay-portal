@@ -51,7 +51,8 @@ public class CookiesConstants {
 
 	public static final String NAME_REMEMBER_ME = "REMEMBER_ME";
 
-	public static final String NAME_REMEMBER_ME_ACCESS_TOKEN = "REMEMBER_ME_ACCESS_TOKEN";
+	public static final String NAME_REMEMBER_ME_ACCESS_TOKEN =
+		"REMEMBER_ME_ACCESS_TOKEN";
 
 	public static final String NAME_REMOTE_PREFERENCE_PREFIX =
 		"REMOTE_PREFERENCE_";

@@ -24,7 +24,8 @@ public interface SingleLogoutProfile {
 
 	public void logout(
 		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse);
+		HttpServletResponse httpServletResponse)
+	   throws PortalException;
 
 	public void processIdpLogout(
 			HttpServletRequest httpServletRequest,
