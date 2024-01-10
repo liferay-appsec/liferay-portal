@@ -404,7 +404,7 @@ public class CookiesManagerImpl implements CookiesManager {
 	public boolean isEncodedCookie(String cookieName) {
 		if (cookieName.equals(CookiesConstants.NAME_ID) ||
 			cookieName.equals(CookiesConstants.NAME_LOGIN) ||
-			cookieName.equals(CookiesConstants.NAME_PASSWORD) ||
+			cookieName.equals(CookiesConstants.NAME_REMEMBER_ME_ACCESS_TOKEN) ||
 			cookieName.equals(CookiesConstants.NAME_USER_UUID)) {
 
 			return true;

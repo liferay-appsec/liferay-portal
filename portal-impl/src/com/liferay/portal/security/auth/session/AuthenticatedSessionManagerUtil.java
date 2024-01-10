@@ -214,7 +214,7 @@ public class AuthenticatedSessionManagerUtil {
 				httpServletRequest, httpServletResponse);
 
 			Cookie passwordCookie = new Cookie(
-				CookiesConstants.NAME_PASSWORD,
+				CookiesConstants.NAME_REMEMBER_ME_ACCESS_TOKEN,
 				EncryptorUtil.encrypt(company.getKeyObj(), password));
 
 			if (domain != null) {
@@ -269,7 +269,7 @@ public class AuthenticatedSessionManagerUtil {
 			domain, httpServletRequest, httpServletResponse,
 			CookiesConstants.NAME_COMPANY_ID,
 			CookiesConstants.NAME_GUEST_LANGUAGE_ID, CookiesConstants.NAME_ID,
-			CookiesConstants.NAME_PASSWORD, CookiesConstants.NAME_REMEMBER_ME);
+			CookiesConstants.NAME_REMEMBER_ME_ACCESS_TOKEN, CookiesConstants.NAME_REMEMBER_ME);
 
 		if (!rememberMe) {
 			CookiesManagerUtil.deleteCookies(

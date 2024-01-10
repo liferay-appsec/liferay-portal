@@ -375,7 +375,7 @@ public abstract class BaseProfile {
 
 		CookiesManagerUtil.deleteCookies(
 			domain, httpServletRequest, httpServletResponse,
-			CookiesConstants.NAME_PASSWORD);
+			CookiesConstants.NAME_REMEMBER_ME_ACCESS_TOKEN);
 
 		CookiesManagerUtil.deleteCookies(
 			domain, httpServletRequest, httpServletResponse,
