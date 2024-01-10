@@ -5,11 +5,45 @@
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.exception.NoSuchRememberMeTokenException;
+import com.liferay.portal.kernel.model.RememberMeToken;
+import com.liferay.portal.kernel.service.persistence.RememberMeTokenUtil;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.service.base.RememberMeTokenLocalServiceBaseImpl;
+
+import java.util.Date;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Manuele Castro
+ * @author Pedro Silvestre
  */
 public class RememberMeTokenLocalServiceImpl
 	extends RememberMeTokenLocalServiceBaseImpl {
+
+	@Override
+	public RememberMeToken addRememberMeToken(
+		long companyId, long userId, Date expirationDate) {
+
+		long rememberMeTokenId = counterLocalService.increment();
+
+		RememberMeToken rememberMeToken = rememberMeTokenPersistence.create(
+			rememberMeTokenId);
+
+		rememberMeToken.setCompanyId(companyId);
+		rememberMeToken.setUserId(userId);
+		rememberMeToken.setCreateDate(new Date());
+		rememberMeToken.setAccessToken(PortalUUIDUtil.generate());
+		rememberMeToken.setExpirationDate(expirationDate);
+
+		return rememberMeTokenPersistence.update(rememberMeToken);
+	}
+
+	@Override
+	public RememberMeToken getRememberMeToken(String accessToken)
+		throws NoSuchRememberMeTokenException {
+
+		return RememberMeTokenUtil.findByAccessToken(accessToken);
+	}
+
 }
