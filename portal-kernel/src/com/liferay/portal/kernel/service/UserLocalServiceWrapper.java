@@ -759,16 +759,15 @@ public class UserLocalServiceWrapper
 	 * automatic login cookie.
 	 *
 	 * @param companyId the primary key of the user's company
-	 * @param name the encrypted primary key of the user
-	 * @param password the encrypted password of the user
+	 * @param accessToken the encrypted access token of the user
 	 * @return the user's primary key and password
 	 */
 	@Override
 	public com.liferay.portal.kernel.util.KeyValuePair decryptUserId(
-			long companyId, String name, String password)
+			long companyId, String accessToken)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _userLocalService.decryptUserId(companyId, name, password);
+		return _userLocalService.decryptUserId(companyId, accessToken);
 	}
 
 	@Override

@@ -289,6 +289,15 @@ public class RememberMeTokenLocalServiceUtil {
 		return getService().getRememberMeTokensCount();
 	}
 
+	public static void removeRememberMeToken(
+			com.liferay.portal.kernel.model.Company company,
+			String rememberMeAccessToken)
+		throws com.liferay.portal.kernel.exception.
+			NoSuchRememberMeTokenException {
+
+		getService().removeRememberMeToken(company, rememberMeAccessToken);
+	}
+
 	/**
 	 * Updates the remember me token in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *

@@ -595,12 +595,10 @@ public interface UserLocalService
 	 * automatic login cookie.
 	 *
 	 * @param companyId the primary key of the user's company
-	 * @param name the encrypted primary key of the user
-	 * @param password the encrypted password of the user
+	 * @param accessToken the encrypted access token of the user
 	 * @return the user's primary key and password
 	 */
-	public KeyValuePair decryptUserId(
-			long companyId, String name, String password)
+	public KeyValuePair decryptUserId(long companyId, String accessToken)
 		throws PortalException;
 
 	public void deleteGroupUser(long groupId, long userId);

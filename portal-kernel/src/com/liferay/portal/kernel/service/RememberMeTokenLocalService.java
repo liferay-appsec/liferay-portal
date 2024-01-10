@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.dao.orm.Projection;
 import com.liferay.portal.kernel.exception.NoSuchRememberMeTokenException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.RememberMeToken;
 import com.liferay.portal.kernel.search.Indexable;
@@ -257,6 +258,10 @@ public interface RememberMeTokenLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getRememberMeTokensCount();
+
+	public void removeRememberMeToken(
+			Company company, String rememberMeAccessToken)
+		throws NoSuchRememberMeTokenException;
 
 	/**
 	 * Updates the remember me token in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
