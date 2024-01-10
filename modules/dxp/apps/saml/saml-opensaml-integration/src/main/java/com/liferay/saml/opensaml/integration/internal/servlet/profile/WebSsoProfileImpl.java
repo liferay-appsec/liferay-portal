@@ -1773,9 +1773,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	private void _redirectToLogin(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse,
-		SamlSsoRequestContext samlSsoRequestContext, boolean forceAuthn)
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse,
+			SamlSsoRequestContext samlSsoRequestContext, boolean forceAuthn)
 		throws PortalException {
 
 		HttpSession httpSession = httpServletRequest.getSession();

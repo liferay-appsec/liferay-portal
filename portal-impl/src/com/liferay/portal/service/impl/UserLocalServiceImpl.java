@@ -101,7 +101,6 @@ import com.liferay.portal.kernel.security.auth.FullNameGenerator;
 import com.liferay.portal.kernel.security.auth.FullNameGeneratorFactory;
 import com.liferay.portal.kernel.security.auth.FullNameValidator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.security.auth.ScreenNameValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
@@ -1937,20 +1936,21 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 * @return the user's primary key and password
 	 */
 	@Override
-	public KeyValuePair decryptUserId(
-			long companyId, String accessToken)
+	public KeyValuePair decryptUserId(long companyId, String accessToken)
 		throws PortalException {
 
 		Company company = _companyPersistence.findByPrimaryKey(companyId);
 
 		try {
-			accessToken = EncryptorUtil.decrypt(company.getKeyObj(), accessToken);
+			accessToken = EncryptorUtil.decrypt(
+				company.getKeyObj(), accessToken);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
 		}
 
-		RememberMeToken rememberMeToken = _rememberMeTokenLocalService.getRememberMeToken(accessToken);
+		RememberMeToken rememberMeToken =
+			_rememberMeTokenLocalService.getRememberMeToken(accessToken);
 
 		long userId = rememberMeToken.getUserId();
 
