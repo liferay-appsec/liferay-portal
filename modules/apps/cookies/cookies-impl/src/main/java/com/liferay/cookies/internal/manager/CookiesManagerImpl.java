@@ -8,7 +8,7 @@ package com.liferay.cookies.internal.manager;
 import com.google.common.net.InternetDomainName;
 
 import com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration;
-import com.liferay.cookies.internal.manager.util.CookiesConsentTypesCaching;
+import com.liferay.cookies.internal.manager.util.CookiesConsentTypeRegistry;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -63,21 +63,21 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class CookiesManagerImpl implements CookiesManager {
 
-	public static String getConsentTypeName(Integer consentType) {
-		String consentTypeName = StringPool.BLANK;
+	public static String getConsentCookieName(Integer consentType) {
+		String consentCookieName = StringPool.BLANK;
 
 		if (consentType == CookiesConstants.CONSENT_TYPE_FUNCTIONAL) {
-			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
+			consentCookieName = CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL;
 		}
 		else if (consentType == CookiesConstants.CONSENT_TYPE_PERFORMANCE) {
-			consentTypeName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
+			consentCookieName = CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
 		}
 		else if (consentType == CookiesConstants.CONSENT_TYPE_PERSONALIZATION) {
-			consentTypeName =
+			consentCookieName =
 				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
 		}
 
-		return consentTypeName;
+		return consentCookieName;
 	}
 
 	@Override
@@ -115,10 +115,9 @@ public class CookiesManagerImpl implements CookiesManager {
 					"type: " + cookie.getName());
 		}
 
-		Map<String, Integer> knownCookies =
-			CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
+		if (CookiesConsentTypeRegistry.getCookieConsentType(cookie.getName()) !=
+				-1) {
 
-		if (knownCookies.get(cookie.getName()) != null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"The cookie will be added with the consent type used " +
@@ -127,8 +126,9 @@ public class CookiesManagerImpl implements CookiesManager {
 			}
 
 			return addCookie(
-				knownCookies.get(cookie.getName()), cookie, httpServletRequest,
-				httpServletResponse, secure);
+				CookiesConsentTypeRegistry.getCookieConsentType(
+					cookie.getName()),
+				cookie, httpServletRequest, httpServletResponse, secure);
 		}
 
 		if (_log.isWarnEnabled()) {
@@ -206,22 +206,22 @@ public class CookiesManagerImpl implements CookiesManager {
 			cookiesMap.put(StringUtil.toUpperCase(cookie.getName()), cookie);
 		}
 
-		Map<String, Integer> knownCookies =
-			CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
+		int knownConsentType = CookiesConsentTypeRegistry.getCookieConsentType(
+			cookie.getName());
 
-		if (_log.isWarnEnabled() &&
-			(knownCookies.get(cookie.getName()) != null) &&
-			(knownCookies.get(cookie.getName()) != consentType)) {
+		if (_log.isWarnEnabled() && (knownConsentType != -1) &&
+			(knownConsentType != consentType)) {
 
 			_log.warn(
 				StringBundler.concat(
 					"The ", cookie.getName(),
 					" cookie was previously added with consent type ",
-					knownCookies.get(cookie.getName()),
+					knownConsentType,
 					" and will now be modified to consent type ", consentType));
 		}
 
-		CookiesConsentTypesCaching.addCookie(cookie.getName(), consentType);
+		CookiesConsentTypeRegistry.registerCookieConsentType(
+			cookie.getName(), consentType);
 
 		return true;
 	}
@@ -385,10 +385,8 @@ public class CookiesManagerImpl implements CookiesManager {
 			return true;
 		}
 
-		String consentCookieName = getConsentTypeName(consentType);
-
 		String consentCookieValue = getCookieValue(
-			consentCookieName, httpServletRequest);
+			getConsentCookieName(consentType), httpServletRequest);
 
 		if (Validator.isNotNull(consentCookieValue)) {
 			return GetterUtil.getBoolean(consentCookieValue);

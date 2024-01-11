@@ -6,7 +6,7 @@
 package com.liferay.cookies.internal.events;
 
 import com.liferay.cookies.internal.manager.CookiesManagerImpl;
-import com.liferay.cookies.internal.manager.util.CookiesConsentTypesCaching;
+import com.liferay.cookies.internal.manager.util.CookiesConsentTypeRegistry;
 import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.events.Action;
@@ -85,24 +85,23 @@ public class CookiesPreAction extends Action {
 		boolean optionalConsent = false;
 
 		if (performanceConsent && functionalConsent && personalizationConsent) {
-			Map<String, Integer> knownCookies =
-				CookiesConsentTypesCaching.getCookiesConsentTypesMapCache();
-
 			optionalConsent = true;
 
 			for (String cookieName : cookieValues.keySet()) {
-				String knownCookieConsentType =
-					CookiesManagerImpl.getConsentTypeName(
-						knownCookies.get(cookieName));
+				int cookieConsentType =
+					CookiesConsentTypeRegistry.getCookieConsentType(cookieName);
 
-				if (CookiesConstants.NAME_CONSENT_TYPE_NECESSARY.equals(
-						knownCookieConsentType)) {
+				String consentCookieName =
+					CookiesManagerImpl.getConsentCookieName(cookieConsentType);
+
+				if (cookieConsentType ==
+						CookiesConstants.CONSENT_TYPE_NECESSARY) {
 
 					continue;
 				}
 
 				if (!GetterUtil.getBoolean(
-						cookieValues.get(knownCookieConsentType))) {
+						cookieValues.get(consentCookieName))) {
 
 					CookiesManagerUtil.deleteCookies(
 						CookiesManagerUtil.getDomain(httpServletRequest),
