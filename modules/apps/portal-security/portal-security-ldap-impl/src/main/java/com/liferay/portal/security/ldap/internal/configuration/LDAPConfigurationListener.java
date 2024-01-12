@@ -40,10 +40,9 @@ public class LDAPConfigurationListener implements ConfigurationListener {
 		String factoryPid = configurationEvent.getFactoryPid();
 
 		if (Validator.isNull(factoryPid)) {
-			return;
+			factoryPid = configurationEvent.getPid();
 		}
-
-		if (factoryPid.endsWith(".scoped")) {
+		else if (factoryPid.endsWith(".scoped")) {
 			factoryPid = StringUtil.replaceLast(
 				factoryPid, ".scoped", StringPool.BLANK);
 		}
@@ -133,7 +132,7 @@ public class LDAPConfigurationListener implements ConfigurationListener {
 			try {
 				Configuration[] configurations =
 					_configurationAdmin.listConfigurations(
-						"(service.factoryPid=" + factoryPid + "*)");
+						"(service.pid=" + factoryPid + "*)");
 
 				if (configurations != null) {
 					for (Configuration configuration : configurations) {
