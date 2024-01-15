@@ -47,7 +47,7 @@ public class LDAPExportConfigurationProviderImplTest {
 	@Test
 	public void testGetDefaultSettings() throws Exception {
 		LDAPExportConfiguration ldapExportConfiguration =
-			_ldapExportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPExportConfiguration) _ldapExportConfigurationProvider.getConfiguration(_companyId);
 
 		Assert.assertEquals(
 			_defaultLDAPExportConfiguration.exportEnabled(),
@@ -71,7 +71,7 @@ public class LDAPExportConfigurationProviderImplTest {
 			).build());
 
 		LDAPExportConfiguration ldapExportConfiguration =
-			_ldapExportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPExportConfiguration) _ldapExportConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteFactoryConfiguration(
 			pid, LDAPExportConfiguration.class.getName());
@@ -93,7 +93,7 @@ public class LDAPExportConfigurationProviderImplTest {
 			).build());
 
 		LDAPExportConfiguration ldapExportConfiguration =
-			_ldapExportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPExportConfiguration) _ldapExportConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteConfiguration(
 			LDAPExportConfiguration.class.getName());

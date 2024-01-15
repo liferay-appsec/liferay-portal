@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -108,17 +109,18 @@ public class LDAPServerConfigurationProviderImpl
 	}
 
 	@Override
-	public LDAPServerConfiguration getConfiguration(long companyId) {
+	public Configuration getConfiguration(long companyId) {
 		List<LDAPServerConfiguration> ldapServerConfigurations =
 			getConfigurations(companyId);
 
-		LDAPServerConfiguration ldapServerConfiguration = null;
+		Configuration ldapServerConfiguration = null;
 
 		if (!ldapServerConfigurations.isEmpty()) {
-			ldapServerConfiguration = ldapServerConfigurations.get(0);
+			ldapServerConfiguration =
+				(Configuration) ldapServerConfigurations.get(0);
 		}
 		else {
-			ldapServerConfiguration = ConfigurableUtil.createConfigurable(
+			ldapServerConfiguration = (Configuration) ConfigurableUtil.createConfigurable(
 				getMetatype(), new HashMapDictionary<>());
 		}
 
@@ -126,7 +128,7 @@ public class LDAPServerConfigurationProviderImpl
 	}
 
 	@Override
-	public LDAPServerConfiguration getConfiguration(
+	public Configuration getConfiguration(
 		long companyId, long ldapServerId) {
 
 		Map<Long, ObjectValuePair<Configuration, LDAPServerConfiguration>>
@@ -139,7 +141,7 @@ public class LDAPServerConfigurationProviderImpl
 		if (MapUtil.isEmpty(objectValuePairs) &&
 			MapUtil.isEmpty(defaultObjectValuePairs)) {
 
-			return _defaultLDAPServerConfiguration;
+			return (Configuration) _defaultLDAPServerConfiguration;
 		}
 		else if (MapUtil.isEmpty(objectValuePairs)) {
 			objectValuePairs = defaultObjectValuePairs;
@@ -156,10 +158,10 @@ public class LDAPServerConfigurationProviderImpl
 		}
 
 		if (objectValuePair == null) {
-			return _defaultLDAPServerConfiguration;
+			return (Configuration) _defaultLDAPServerConfiguration;
 		}
 
-		return objectValuePair.getValue();
+		return (Configuration) objectValuePair.getValue();
 	}
 
 	@Override

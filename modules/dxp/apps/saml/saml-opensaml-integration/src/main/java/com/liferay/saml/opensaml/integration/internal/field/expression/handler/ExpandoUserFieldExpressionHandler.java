@@ -345,7 +345,7 @@ public class ExpandoUserFieldExpressionHandler
 
 		try {
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			safeLdapContext = _safePortalLDAP.getSafeLdapContext(

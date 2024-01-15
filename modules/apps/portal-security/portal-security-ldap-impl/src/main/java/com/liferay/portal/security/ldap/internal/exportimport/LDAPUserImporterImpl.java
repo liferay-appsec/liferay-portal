@@ -131,7 +131,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -209,7 +209,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 		try {
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			safeLdapContext = _safePortalLDAP.getSafeLdapContext(
@@ -464,7 +464,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		}
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		try {
 			long userId = _userLocalService.getGuestUserId(companyId);
@@ -543,10 +543,10 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		_lastImportTime = System.currentTimeMillis();
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -626,7 +626,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		boolean autoPassword = ldapUser.isAutoPassword();
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		if (!ldapImportConfiguration.importUserPasswordEnabled()) {
 			autoPassword =
@@ -693,7 +693,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 	protected User getUser(long companyId, LDAPUser ldapUser) throws Exception {
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		if (Objects.equals(
 				ldapImportConfiguration.importUserSyncStrategy(),
@@ -859,7 +859,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		Company company = _companyLocalService.getCompany(companyId);
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		if (!ldapImportConfiguration.importCreateRolePerGroup()) {
 			return;
@@ -934,7 +934,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		}
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				ldapImportContext.getCompanyId(),
 				ldapImportContext.getLdapServerId());
 
@@ -1110,7 +1110,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		Long userGroupId = null;
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(
 				ldapImportContext.getCompanyId());
 
 		if (ldapImportConfiguration.importGroupCacheEnabled()) {
@@ -1183,7 +1183,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				ldapImportContext.getCompanyId(),
 				ldapImportContext.getLdapServerId());
 
@@ -1331,7 +1331,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 			if (modifiedDate != null) {
 				LDAPServerConfiguration ldapServerConfiguration =
-					_ldapServerConfigurationProvider.getConfiguration(
+					(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 						ldapImportContext.getCompanyId(),
 						ldapImportContext.getLdapServerId());
 
@@ -1407,7 +1407,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 
 		try {
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			safeLdapContext = _safePortalLDAP.getSafeLdapContext(
@@ -1730,7 +1730,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		}
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		boolean passwordReset = ldapUser.isPasswordReset();
 
@@ -1772,7 +1772,7 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 		}
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {

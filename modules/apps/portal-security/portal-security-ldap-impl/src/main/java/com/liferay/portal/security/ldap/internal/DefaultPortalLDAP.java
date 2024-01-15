@@ -106,7 +106,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		String baseProviderURL = ldapServerConfiguration.baseProviderURL();
@@ -125,7 +125,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(companyId);
 
 		Properties environmentProperties = new Properties();
 
@@ -184,7 +184,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		LdapContext ldapContext = getContext(ldapServerId, companyId);
@@ -335,7 +335,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		String baseDN = ldapServerConfiguration.baseDN();
@@ -354,7 +354,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		String baseDN = ldapServerConfiguration.baseDN();
@@ -370,7 +370,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		return ldapServerConfiguration.groupsDN();
@@ -426,7 +426,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		}
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(companyId);
 
 		String[] attributeIds = {
 			_getNextRange(systemLDAPConfiguration, attribute.getID())
@@ -521,7 +521,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 			}
 
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			String baseDN = LDAPUtil.escapeCharacters(
@@ -724,7 +724,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		String baseDN = ldapServerConfiguration.baseDN();
@@ -743,7 +743,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		String baseDN = ldapServerConfiguration.baseDN();
@@ -759,7 +759,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		return ldapServerConfiguration.usersDN();
@@ -915,7 +915,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		try {
 			if (cookie != null) {
 				SystemLDAPConfiguration systemLDAPConfiguration =
-					_systemLDAPConfigurationProvider.getConfiguration(
+					(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(
 						companyId);
 
 				if (cookie.length == 0) {

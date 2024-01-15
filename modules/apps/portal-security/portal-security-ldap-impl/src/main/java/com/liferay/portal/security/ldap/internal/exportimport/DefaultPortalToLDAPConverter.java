@@ -173,7 +173,7 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				userGroup.getCompanyId(), ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -259,7 +259,7 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		long ldapServerId, User user, Properties userMappings) {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				user.getCompanyId(), ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -548,7 +548,7 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 		}
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(
 				user.getCompanyId());
 
 		String algorithm = ldapAuthConfiguration.passwordEncryptionAlgorithm();

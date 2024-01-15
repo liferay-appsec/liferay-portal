@@ -10,11 +10,11 @@
 <%
 ConfigurationProvider<LDAPExportConfiguration> ldapExportConfigurationProvider = ConfigurationProviderUtil.getLDAPExportConfigurationProvider();
 
-LDAPExportConfiguration ldapExportConfiguration = ldapExportConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
+LDAPExportConfiguration ldapExportConfiguration = (LDAPExportConfiguration) ldapExportConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
 
 ConfigurationProvider<LDAPImportConfiguration> ldapImportConfigurationProvider = ConfigurationProviderUtil.getLDAPImportConfigurationProvider();
 
-LDAPImportConfiguration ldapImportConfiguration = ldapImportConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
+LDAPImportConfiguration ldapImportConfiguration = (LDAPImportConfiguration) ldapImportConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
 
 boolean ldapImportEnabled = ldapImportConfiguration.importEnabled();
 %>

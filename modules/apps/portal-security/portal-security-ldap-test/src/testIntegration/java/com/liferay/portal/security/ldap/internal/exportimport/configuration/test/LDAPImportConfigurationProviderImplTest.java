@@ -47,7 +47,7 @@ public class LDAPImportConfigurationProviderImplTest {
 	@Test
 	public void testGetDefaultSettings() throws Exception {
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(_companyId);
 
 		Assert.assertEquals(
 			_defaultLDAPImportConfiguration.importEnabled(),
@@ -97,7 +97,7 @@ public class LDAPImportConfigurationProviderImplTest {
 			).build());
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteFactoryConfiguration(
 			pid, LDAPImportConfiguration.class.getName());
@@ -147,7 +147,7 @@ public class LDAPImportConfigurationProviderImplTest {
 			).build());
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(_companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteConfiguration(
 			LDAPImportConfiguration.class.getName());

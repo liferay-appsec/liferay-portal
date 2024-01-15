@@ -19,9 +19,9 @@ public interface ConfigurationProvider<T> {
 
 	public boolean delete(long companyId, long index);
 
-	public T getConfiguration(long companyId);
+	public Configuration getConfiguration(long companyId);
 
-	public T getConfiguration(long companyId, long index);
+	public Configuration getConfiguration(long companyId, long index);
 
 	public Dictionary<String, Object> getConfigurationProperties(
 		long companyId);

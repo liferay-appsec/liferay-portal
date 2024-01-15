@@ -47,7 +47,7 @@ public class LDAPAuthConfigurationProviderImplTest {
 	@Test
 	public void testGetDefaultSettings() throws Exception {
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(_companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(_companyId);
 
 		Assert.assertEquals(
 			_defaultLDAPAuthConfiguration.enabled(),
@@ -79,7 +79,7 @@ public class LDAPAuthConfigurationProviderImplTest {
 			).build());
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(_companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteFactoryConfiguration(
 			pid, LDAPAuthConfiguration.class.getName());
@@ -110,7 +110,7 @@ public class LDAPAuthConfigurationProviderImplTest {
 			).build());
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(_companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteConfiguration(
 			LDAPAuthConfiguration.class.getName());

@@ -10,7 +10,7 @@
 <%
 ConfigurationProvider<LDAPAuthConfiguration> ldapAuthConfigurationProvider = ConfigurationProviderUtil.getLDAPAuthConfigurationProvider();
 
-LDAPAuthConfiguration ldapAuthConfiguration = ldapAuthConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
+LDAPAuthConfiguration ldapAuthConfiguration = (LDAPAuthConfiguration) ldapAuthConfigurationProvider.getConfiguration(themeDisplay.getCompanyId());
 
 ConfigurationProvider<LDAPServerConfiguration> ldapServerConfigurationProvider = ConfigurationProviderUtil.getLDAPServerConfigurationProvider();
 

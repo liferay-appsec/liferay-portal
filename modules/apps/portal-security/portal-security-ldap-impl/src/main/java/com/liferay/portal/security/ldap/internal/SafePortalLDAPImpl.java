@@ -84,7 +84,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -202,7 +202,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -225,7 +225,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -271,7 +271,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -332,7 +332,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		}
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(companyId);
 
 		String[] attributeIds = {
 			_getNextRange(systemLDAPConfiguration, attribute.getID())
@@ -398,7 +398,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		long ldapServerId, long companyId) {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -417,7 +417,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		String credentials) {
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(companyId);
 
 		Properties environmentProperties = new Properties();
 
@@ -528,7 +528,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			}
 
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -673,7 +673,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -696,7 +696,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -742,7 +742,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		throws Exception {
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -893,7 +893,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		try {
 			if (cookie != null) {
 				SystemLDAPConfiguration systemLDAPConfiguration =
-					_systemLDAPConfigurationProvider.getConfiguration(
+					(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(
 						companyId);
 
 				if (cookie.length == 0) {

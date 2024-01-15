@@ -148,7 +148,7 @@ public class LDAPAuth implements Authenticator {
 		// auth method must be used in order to get the result control codes.
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(companyId);
 
 		String authMethod = ldapAuthConfiguration.method();
 
@@ -157,7 +157,7 @@ public class LDAPAuth implements Authenticator {
 				(Hashtable<String, Object>)ctx.getEnvironment();
 
 			SystemLDAPConfiguration systemLDAPConfiguration =
-				_systemLDAPConfigurationProvider.getConfiguration(companyId);
+				(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(companyId);
 
 			env.put(Context.REFERRAL, systemLDAPConfiguration.referral());
 
@@ -291,7 +291,7 @@ public class LDAPAuth implements Authenticator {
 
 		try {
 			LDAPServerConfiguration ldapServerConfiguration =
-				_ldapServerConfigurationProvider.getConfiguration(
+				(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 					companyId, ldapServerId);
 
 			if (ldapServerConfiguration.ldapServerId() != ldapServerId) {
@@ -386,7 +386,7 @@ public class LDAPAuth implements Authenticator {
 
 			if (errorMessage != null) {
 				SystemLDAPConfiguration systemLDAPConfiguration =
-					_systemLDAPConfigurationProvider.getConfiguration(
+					(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(
 						companyId);
 
 				for (String errorUserLockoutKeyword :
@@ -470,7 +470,7 @@ public class LDAPAuth implements Authenticator {
 		throws Exception {
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(companyId);
 
 		if (!ldapAuthConfiguration.enabled()) {
 			if (_log.isDebugEnabled()) {
@@ -492,7 +492,7 @@ public class LDAPAuth implements Authenticator {
 			password);
 
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		if (preferredLDAPServerResult == SUCCESS) {
 			if (_log.isDebugEnabled()) {
@@ -561,7 +561,7 @@ public class LDAPAuth implements Authenticator {
 		}
 
 		LDAPServerConfiguration ldapServerConfiguration =
-			_ldapServerConfigurationProvider.getConfiguration(
+			(LDAPServerConfiguration) _ldapServerConfigurationProvider.getConfiguration(
 				companyId, ldapServerId);
 
 		if (Validator.isNull(ldapServerConfiguration.baseProviderURL())) {
@@ -642,7 +642,7 @@ public class LDAPAuth implements Authenticator {
 		}
 
 		LDAPAuthConfiguration ldapAuthConfiguration =
-			_ldapAuthConfigurationProvider.getConfiguration(companyId);
+			(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(companyId);
 
 		if (ldapAuthConfiguration.required()) {
 			return failureCode;

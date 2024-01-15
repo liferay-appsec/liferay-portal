@@ -1,4 +1,5 @@
-<%--
+<%@ page
+	import="com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration" %><%--
 /**
  * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
@@ -14,7 +15,7 @@ String backURL = ParamUtil.getString(request, "backURL", redirect);
 
 long ldapServerId = ParamUtil.getLong(request, "ldapServerId");
 
-LDAPServerConfiguration ldapServerConfiguration = ldapServerConfigurationProvider.getConfiguration(themeDisplay.getCompanyId(), ldapServerId);
+LDAPServerConfiguration ldapServerConfiguration = (LDAPServerConfiguration) ldapServerConfigurationProvider.getConfiguration(themeDisplay.getCompanyId(), ldapServerId);
 
 String ldapServerName = ldapServerConfiguration.serverName();
 String ldapBaseProviderUrl = ldapServerConfiguration.baseProviderURL();

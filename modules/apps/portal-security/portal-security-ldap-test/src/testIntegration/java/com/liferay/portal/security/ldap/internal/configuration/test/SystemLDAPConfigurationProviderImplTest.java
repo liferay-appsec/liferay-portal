@@ -48,7 +48,7 @@ public class SystemLDAPConfigurationProviderImplTest {
 	@Test
 	public void testGetDefaultSettings() throws Exception {
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(_companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(_companyId);
 
 		Assert.assertEquals(
 			_defaultSystemLDAPConfiguration.factoryInitial(),
@@ -81,7 +81,7 @@ public class SystemLDAPConfigurationProviderImplTest {
 			).build());
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(_companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteFactoryConfiguration(
 			pid, SystemLDAPConfiguration.class.getName());
@@ -113,7 +113,7 @@ public class SystemLDAPConfigurationProviderImplTest {
 			).build());
 
 		SystemLDAPConfiguration systemLDAPConfiguration =
-			_systemLDAPConfigurationProvider.getConfiguration(_companyId);
+			(SystemLDAPConfiguration) _systemLDAPConfigurationProvider.getConfiguration(_companyId);
 
 		ConfigurationTestUtil.deleteConfiguration(
 			SystemLDAPConfiguration.class.getName());

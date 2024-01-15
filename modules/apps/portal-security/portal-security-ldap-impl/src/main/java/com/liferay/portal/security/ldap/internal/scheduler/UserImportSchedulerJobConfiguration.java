@@ -88,7 +88,7 @@ public class UserImportSchedulerJobConfiguration
 
 	private void _importUsers(long companyId, long time) throws Exception {
 		LDAPImportConfiguration ldapImportConfiguration =
-			_ldapImportConfigurationProvider.getConfiguration(companyId);
+			(LDAPImportConfiguration) _ldapImportConfigurationProvider.getConfiguration(companyId);
 
 		if (!ldapImportConfiguration.importEnabled()) {
 			if (_log.isDebugEnabled()) {

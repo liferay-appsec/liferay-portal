@@ -76,22 +76,22 @@ public abstract class CompanyScopedConfigurationProvider
 	}
 
 	@Override
-	public T getConfiguration(long companyId) {
-		T configurable = _getConfigurationFactoryId(companyId);
+	public Configuration getConfiguration(long companyId) {
+		Configuration configuration = _getConfigurationFactoryId(companyId);
 
-		if (configurable == null) {
-			configurable = _getConfigurationSystem();
+		if (configuration == null) {
+			configuration = _getConfigurationSystem();
 		}
 
-		if (configurable == null) {
-			return _defaultConfiguration;
+		if (configuration == null) {
+			return (Configuration) _defaultConfiguration;
 		}
 
-		return configurable;
+		return configuration;
 	}
 
 	@Override
-	public T getConfiguration(long companyId, long index) {
+	public Configuration getConfiguration(long companyId, long index) {
 		return getConfiguration(companyId);
 	}
 
@@ -257,20 +257,20 @@ public abstract class CompanyScopedConfigurationProvider
 
 	protected abstract ConfigurationAdmin getConfigurationAdmin();
 
-	private T _getConfigurationFactoryId(long companyId) {
+	private Configuration _getConfigurationFactoryId(long companyId) {
 		ObjectValuePair<Configuration, T> objectValuePair = _configurations.get(
 			companyId);
 
-		T configurable = null;
+		Configuration configuration = null;
 
 		if (objectValuePair != null) {
-			configurable = objectValuePair.getValue();
+			configuration = (Configuration) objectValuePair.getValue();
 		}
 
-		return configurable;
+		return configuration;
 	}
 
-	private T _getConfigurationSystem() {
+	private Configuration _getConfigurationSystem() {
 		try {
 			String filterString = StringBundler.concat(
 				"(&(service.pid=", getMetatypeId(), ")(",
@@ -281,8 +281,7 @@ public abstract class CompanyScopedConfigurationProvider
 				getConfigurationAdmin().listConfigurations(filterString);
 
 			if (configuration != null) {
-				return ConfigurableUtil.createConfigurable(
-					getMetatype(), configuration[0].getProperties());
+				return configuration[0];
 			}
 		}
 		catch (InvalidSyntaxException | IOException exception) {

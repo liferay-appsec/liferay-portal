@@ -376,7 +376,7 @@ public class LDAPUserExporterImpl implements UserExporter {
 		}
 		catch (NameNotFoundException nameNotFoundException) {
 			LDAPAuthConfiguration ldapAuthConfiguration =
-				_ldapAuthConfigurationProvider.getConfiguration(companyId);
+				(LDAPAuthConfiguration) _ldapAuthConfigurationProvider.getConfiguration(companyId);
 
 			if (ldapAuthConfiguration.required()) {
 				throw nameNotFoundException;
