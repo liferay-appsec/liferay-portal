@@ -1,3 +1,5 @@
+<%@ page import="com.liferay.portal.kernel.util.Constants" %>
+
 <%--
 /**
  * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
@@ -10,6 +12,14 @@
 <portlet:actionURL name="/portal_instances/add_instance" var="addInstanceURL" />
 
 <div class="add-instance-alert-container"></div>
+
+<c:if test="<%= (PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD).equals(
+	Constants.TEST)) %>">
+	<clay:alert
+		displayType="warning"
+		message="remove-this-message-delete-default-admin-password-property-value"
+	/>
+</c:if>
 
 <clay:container-fluid>
 	<liferay-frontend:edit-form
@@ -55,7 +65,7 @@
 					</aui:select>
 				</c:if>
 
-				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>">
+				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD))  %>">
 					<clay:sheet-section>
 						<h3 class="sheet-subtitle">
 							<liferay-ui:message key="administrator-user" />

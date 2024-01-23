@@ -98,6 +98,18 @@ if (Validator.isNull(titlePage)) {
 					<aui:input name="ticketId" type="hidden" value="<%= ticketId %>" />
 					<aui:input name="ticketKey" type="hidden" value="<%= ticketKey %>" />
 
+					<c:if test="<%= (PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD).equals(Constants.TEST)) %>">
+						<div class="alert alert-warning">
+							<span class="alert-indicator">
+								<svg aria-hidden="true" class="lexicon-icon lexicon-icon-warning-full">
+									<use xlink:href="<%= themeDisplay.getPathThemeSpritemap() %>#warning-full"></use>
+								</svg>
+							</span>
+
+							<liferay-ui:message key="remove-this-message-delete-default-admin-password-property-value" />
+						</div>
+					</c:if>
+
 					<c:if test="<%= !SessionErrors.isEmpty(request) %>">
 						<div class="alert alert-danger">
 							<c:choose>
