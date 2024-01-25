@@ -101,64 +101,8 @@ public class ContentSecurityPolicyFilter extends BasePortalFilter {
 			filterChain.doFilter(
 				httpServletRequest, contentSecurityPolicyHttpServletResponse);
 
-			String nonceAttribute = "nonce=\"" + nonce + "\"";
-			String escapedNonceAttribute = "nonce=\\\"" + nonce + "\\\"";
-
-			String content =
-				contentSecurityPolicyHttpServletResponse.getContent();
-
-			content = content.replaceAll(
-				"<(?i)link ", "<link " + nonceAttribute + " ");
-			content = content.replaceAll(
-				"<(?i)link>", "<link " + nonceAttribute + "");
-			content = content.replaceAll(
-				"<(?i)style ", "<style " + nonceAttribute + " ");
-			content = content.replaceAll(
-				"<(?i)style>", "<style " + nonceAttribute + ">");
-
-			Pattern pattern = Pattern.compile(
-				"\\{.*nonce=\".{" + nonce.length() + "}\".*\\}");
-
-			Matcher matcher = pattern.matcher(content);
-
-			while (matcher.find()) {
-				String matcherGroup = matcher.group();
-
-				String[] matcherArray = StringUtil.split(
-					matcherGroup, nonceAttribute);
-
-				StringBundler sb = new StringBundler(
-					(matcherArray.length * 2) - 1);
-
-				boolean overwrite = false;
-
-				int open = 0;
-
-				for (int i = 0; i < (matcherArray.length - 1); i++) {
-					sb.append(matcherArray[i]);
-
-					open += StringUtil.count(
-						matcherArray[i], CharPool.OPEN_CURLY_BRACE);
-
-					open -= StringUtil.count(
-						matcherArray[i], CharPool.CLOSE_CURLY_BRACE);
-
-					if (open > 0) {
-						sb.append(escapedNonceAttribute);
-						overwrite = true;
-					}
-					else {
-						sb.append(nonceAttribute);
-					}
-				}
-
-				if (overwrite) {
-					sb.append(matcherArray[matcherArray.length - 1]);
-
-					content = StringUtil.replace(
-						content, matcherGroup, sb.toString());
-				}
-			}
+			String content = rewriteContent(
+				nonce, contentSecurityPolicyHttpServletResponse.getContent());
 
 			printWriter.write(content);
 
@@ -169,6 +113,65 @@ public class ContentSecurityPolicyFilter extends BasePortalFilter {
 		finally {
 			_contentSecurityPolicyNonceManager.cleanUpNonce(httpServletRequest);
 		}
+	}
+
+	protected String rewriteContent(String nonce, String content) {
+		String nonceAttribute = "nonce=\"" + nonce + "\"";
+		String escapedNonceAttribute = "nonce=\\\"" + nonce + "\\\"";
+
+		content = content.replaceAll(
+			"<(?i)link ", "<link " + nonceAttribute + " ");
+		content = content.replaceAll(
+			"<(?i)link>", "<link " + nonceAttribute + "");
+		content = content.replaceAll(
+			"<(?i)style ", "<style " + nonceAttribute + " ");
+		content = content.replaceAll(
+			"<(?i)style>", "<style " + nonceAttribute + ">");
+
+		Pattern pattern = Pattern.compile(
+			"\\{.*nonce=\".{" + nonce.length() + "}\".*\\}");
+
+		Matcher matcher = pattern.matcher(content);
+
+		while (matcher.find()) {
+			String matcherGroup = matcher.group();
+
+			String[] matcherArray = StringUtil.split(
+				matcherGroup, nonceAttribute);
+
+			StringBundler sb = new StringBundler((matcherArray.length * 2) - 1);
+
+			boolean overwrite = false;
+
+			int open = 0;
+
+			for (int i = 0; i < (matcherArray.length - 1); i++) {
+				sb.append(matcherArray[i]);
+
+				open += StringUtil.count(
+					matcherArray[i], CharPool.OPEN_CURLY_BRACE);
+
+				open -= StringUtil.count(
+					matcherArray[i], CharPool.CLOSE_CURLY_BRACE);
+
+				if (open > 0) {
+					sb.append(escapedNonceAttribute);
+					overwrite = true;
+				}
+				else {
+					sb.append(nonceAttribute);
+				}
+			}
+
+			if (overwrite) {
+				sb.append(matcherArray[matcherArray.length - 1]);
+
+				content = StringUtil.replace(
+					content, matcherGroup, sb.toString());
+			}
+		}
+
+		return content;
 	}
 
 	private boolean _isExcludedURIPath(
