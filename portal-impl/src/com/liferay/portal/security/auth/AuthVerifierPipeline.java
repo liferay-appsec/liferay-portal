@@ -329,8 +329,11 @@ public class AuthVerifierPipeline {
 
 			if ((user != null) &&
 				(!user.isActive() ||
-				 !user.isEmailAddressVerificationComplete() ||
-				 user.isPasswordReset())) {
+				 (!PortalUtil.isImpersonated(
+					 PortalUtil.getOriginalServletRequest(
+						 accessControlContext.getRequest())) &&
+				  (!user.isEmailAddressVerificationComplete() ||
+				   user.isPasswordReset())))) {
 
 				long userId = authVerifierResult.getUserId();
 

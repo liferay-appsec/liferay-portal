@@ -5776,6 +5776,33 @@ public class PortalImpl implements Portal {
 	}
 
 	@Override
+	public boolean isImpersonated(HttpServletRequest httpServletRequest) {
+		if (!PropsValues.PORTAL_IMPERSONATION_ENABLE) {
+			return false;
+		}
+
+		String doAsUserIdString = httpServletRequest.getParameter("doAsUserId");
+
+		try {
+			if (getDoAsUserId(httpServletRequest, doAsUserIdString, false) >
+					0) {
+
+				return true;
+			}
+
+			return false;
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to determine if user is impersonated", exception);
+			}
+
+			return false;
+		}
+	}
+
+	@Override
 	public boolean isLayoutDescendant(Layout layout, long layoutId)
 		throws PortalException {
 
