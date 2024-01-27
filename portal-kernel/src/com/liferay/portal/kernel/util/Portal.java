@@ -1020,6 +1020,8 @@ public interface Portal {
 
 	public boolean isGroupOwner(User user, long groupId) throws Exception;
 
+	public boolean isImpersonated(HttpServletRequest httpServletRequest);
+
 	public boolean isLayoutDescendant(Layout layout, long layoutId)
 		throws PortalException;
 

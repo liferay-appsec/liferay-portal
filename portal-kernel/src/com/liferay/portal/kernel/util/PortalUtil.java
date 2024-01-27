@@ -1662,6 +1662,12 @@ public class PortalUtil {
 		return _portal.isGroupOwner(user, groupId);
 	}
 
+	public static boolean isImpersonated(
+		HttpServletRequest httpServletRequest) {
+
+		return _portal.isImpersonated(httpServletRequest);
+	}
+
 	public static boolean isLayoutDescendant(Layout layout, long layoutId)
 		throws PortalException {
 
