@@ -329,13 +329,15 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			HttpServletResponse httpServletResponse)
 		throws Exception {
 
+		boolean idpInitiatedSSO = false;
+
 		String samlMessageId = ParamUtil.getString(
 			httpServletRequest, "saml_message_id");
 
 		if (!Validator.isBlank(samlMessageId)) {
 			SamlSsoRequestContext samlSsoRequestContext =
 				_decodeAuthnConversationAfterLogin(
-					httpServletRequest, httpServletResponse);
+					httpServletRequest, httpServletResponse, idpInitiatedSSO);
 
 			if (samlSsoRequestContext != null) {
 				MessageContext<?> messageContext =
@@ -360,8 +362,6 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			}
 		}
 
-		boolean idpInitiatedSSO = false;
-
 		String entityId = ParamUtil.getString(httpServletRequest, "entityId");
 		String samlRequest = ParamUtil.getString(
 			httpServletRequest, "SAMLRequest");
@@ -373,7 +373,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		if (idpInitiatedSSO) {
 			SamlSsoRequestContext samlSsoRequestContext =
 				_decodeAuthnConversationAfterLogin(
-					httpServletRequest, httpServletResponse);
+					httpServletRequest, httpServletResponse, idpInitiatedSSO);
 
 			if (samlSsoRequestContext != null) {
 				MessageContext<?> messageContext =
@@ -420,7 +420,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			String relayState = ParamUtil.getString(
 				httpServletRequest, "RelayState");
 
-			samlBindingContext.setRelayState(relayState);
+			samlBindingContext.setRelayState(
+				_relayStateHelper.getRelayStateTokenFromRedirect(relayState));
 
 			SAMLPeerEntityContext samlPeerEntityContext =
 				messageContext.getSubcontext(SAMLPeerEntityContext.class);
@@ -1085,7 +1086,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 
 	private SamlSsoRequestContext _decodeAuthnConversationAfterLogin(
 			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
+			HttpServletResponse httpServletResponse, boolean idpInitiatedSSO)
 		throws Exception {
 
 		HttpSession httpSession = httpServletRequest.getSession();
@@ -1134,6 +1135,12 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 				messageContext.getSubcontext(SAMLBindingContext.class, true);
 
 			samlBindingContext.setRelayState(relayState);
+
+			if (idpInitiatedSSO) {
+				samlBindingContext.setRelayState(
+					_relayStateHelper.getRelayStateTokenFromRedirect(
+						relayState));
+			}
 
 			String samlSsoSessionId = getSamlSsoSessionId(httpServletRequest);
 
