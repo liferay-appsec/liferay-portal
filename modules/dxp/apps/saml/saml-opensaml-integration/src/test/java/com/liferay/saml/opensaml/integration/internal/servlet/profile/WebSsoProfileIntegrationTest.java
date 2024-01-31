@@ -323,7 +323,10 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		SAMLBindingContext samlBindingContext = messageContext.getSubcontext(
 			SAMLBindingContext.class);
 
-		Assert.assertEquals(RELAY_STATE, samlBindingContext.getRelayState());
+		Assert.assertEquals(
+			RELAY_STATE,
+			_relayStateHelperImpl.getRedirectFromRelayStateToken(
+				samlBindingContext.getRelayState()));
 
 		Assert.assertTrue(samlSsoRequestContext.isNewSession());
 	}
@@ -383,7 +386,10 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		SAMLBindingContext samlBindingContext = messageContext.getSubcontext(
 			SAMLBindingContext.class);
 
-		Assert.assertEquals(RELAY_STATE, samlBindingContext.getRelayState());
+		Assert.assertEquals(
+			RELAY_STATE,
+			_relayStateHelperImpl.getRedirectFromRelayStateToken(
+				samlBindingContext.getRelayState()));
 
 		Assert.assertTrue(samlSsoRequestContext.isNewSession());
 	}
