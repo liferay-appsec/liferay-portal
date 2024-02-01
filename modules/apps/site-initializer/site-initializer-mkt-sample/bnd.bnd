@@ -1,0 +1,6 @@
+Bundle-Name: Liferay Site Initializer Liferay MKT Sample
+Bundle-SymbolicName: com.liferay.site.initializer.liferay.marketplace.sample
+Bundle-Version: 1.0.0
+Liferay-Site-Initializer-Name: Liferay MKT Sample
+Provide-Capability: liferay.site.initializer
+Web-ContextPath: /site-initializer-mkt-sample
