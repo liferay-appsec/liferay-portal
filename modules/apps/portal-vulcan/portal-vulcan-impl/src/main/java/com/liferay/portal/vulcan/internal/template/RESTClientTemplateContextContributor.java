@@ -43,7 +43,10 @@ public class RESTClientTemplateContextContributor
 		HttpServletRequest httpServletRequest) {
 
 		contextObjects.put(
-			"restClient", new RESTClient(contextObjects, httpServletRequest));
+			"restClient",
+			new RESTClient(
+				contextObjects,
+				_portal.getOriginalServletRequest(httpServletRequest)));
 	}
 
 	public class RESTClient {
@@ -98,6 +101,9 @@ public class RESTClientTemplateContextContributor
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Portal _portal;
 
 	private ServletContext _servletContext;
 
