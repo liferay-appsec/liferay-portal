@@ -18,6 +18,7 @@ import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -102,6 +103,13 @@ public class UserModelListener extends BaseModelListener<User> {
 		attributesBuilder.add("timeZoneId");
 
 		List<Attribute> attributes = attributesBuilder.getAttributes();
+
+		for (Attribute attribute : attributes) {
+			if (Objects.equals(attribute.getName(), "reminderQueryAnswer")) {
+				attributes.remove(attribute);
+				attributes.add(new Attribute("reminderQueryAnswer"));
+			}
+		}
 
 		if (user.isPasswordModified()) {
 			attributes.add(new Attribute("password"));
