@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.exception.NoSuchPasswordPolicyException;
 import com.liferay.portal.kernel.exception.NoSuchVirtualHostException;
 import com.liferay.portal.kernel.exception.RequiredCompanyException;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
@@ -100,8 +101,14 @@ import com.liferay.portal.util.PropsValues;
 import com.liferay.site.model.adapter.StagedGroup;
 import com.liferay.sites.kernel.util.Sites;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,6 +193,111 @@ public class CompanyLocalServiceTest {
 
 		for (String webId : PortalInstances.getWebIds()) {
 			Assert.assertNotEquals(company.getWebId(), webId);
+		}
+	}
+
+	@Test
+	public void testAddAndDeleteCompanyWithAdminDefaultPasswordBlank()
+		throws Exception {
+
+		Company company = null;
+		Boolean findText1 = false;
+		Boolean findText2 = false;
+		String languageKey =
+			"remove-this-message-delete-default-admin-password-property-value";
+
+		try (SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DEFAULT_ADMIN_PASSWORD", null)) {
+
+			Locale defaultLocale = LocaleUtil.getDefault(); //getSiteDefault();
+
+			String searchText1 = LanguageUtil.get(defaultLocale, languageKey);
+			String searchText2 = LanguageUtil.get(
+				defaultLocale, "set-password");
+
+			String virtualHostName = "www.able.com";
+
+			company = addCompany(virtualHostName);
+
+			URL url = new URL("http://www.able.com:8080");
+
+			HttpURLConnection connection =
+				(HttpURLConnection)url.openConnection();
+
+			connection.setRequestMethod("GET");
+
+			BufferedReader reader = new BufferedReader(
+				new InputStreamReader(connection.getInputStream()));
+
+			StringBuilder response = new StringBuilder();
+			String line;
+
+			while (((line = reader.readLine()) != null) && !findText1) {
+				findText1 = line.contains(searchText1);
+				findText2 = line.contains(searchText2);
+				response.append(line);
+			}
+
+			reader.close();
+
+			Assert.assertFalse(findText1);
+			Assert.assertTrue(findText2);
+		}
+		finally {
+			if (company != null) {
+				_companyLocalService.deleteCompany(company);
+			}
+		}
+	}
+
+	@Test
+	public void testAddAndDeleteCompanyWithAdminDefaultPasswordSetToTest()
+		throws Exception {
+
+		Company company = null;
+		Boolean findText = false;
+		String languageKey =
+			"remove-this-message-delete-default-admin-password-property-value";
+
+		try (SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DEFAULT_ADMIN_PASSWORD", "test")) {
+
+			Locale defaultLocale = LocaleUtil.getDefault(); //getSiteDefault();
+
+			String searchText = LanguageUtil.get(defaultLocale, languageKey);
+
+			String virtualHostName = "www.able.com";
+
+			company = addCompany(virtualHostName);
+
+			URL url = new URL("http://www.able.com:8080");
+
+			HttpURLConnection connection =
+				(HttpURLConnection)url.openConnection();
+
+			connection.setRequestMethod("GET");
+
+			BufferedReader reader = new BufferedReader(
+				new InputStreamReader(connection.getInputStream()));
+
+			StringBuilder response = new StringBuilder();
+			String line;
+
+			while (((line = reader.readLine()) != null) && !findText) {
+				findText = line.contains(searchText);
+				response.append(line);
+			}
+
+			reader.close();
+
+			Assert.assertTrue(findText);
+		}
+		finally {
+			if (company != null) {
+				_companyLocalService.deleteCompany(company);
+			}
 		}
 	}
 
