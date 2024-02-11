@@ -43,6 +43,7 @@ page import="com.liferay.portal.kernel.util.PropsUtil" %><%@
 page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowConstants" %><%@
+page import="com.liferay.portal.util.PropsValues" %><%@
 page import="com.liferay.site.initializer.SiteInitializer" %><%@
 page import="com.liferay.site.initializer.SiteInitializerRegistry" %><%@
 page import="com.liferay.taglib.search.ResultRow" %>
