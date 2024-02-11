@@ -336,7 +336,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			finally {
 				safeCloseable.close();
 			}
-
 			throw new PortalException(throwable);
 		}
 		finally {

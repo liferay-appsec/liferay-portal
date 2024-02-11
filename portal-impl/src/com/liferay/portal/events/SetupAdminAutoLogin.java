@@ -20,6 +20,7 @@ import com.liferay.portal.util.PropsValues;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Objects;
 
 /**
  * @author Alvaro Saugar
@@ -46,7 +47,7 @@ public class SetupAdminAutoLogin extends BaseAutoLogin {
 		throws Exception {
 
 		if (Validator.isNotNull(PropsValues.DEFAULT_ADMIN_PASSWORD) &&
-			!PropsValues.DEFAULT_ADMIN_PASSWORD.equals(Constants.TEST)) {
+			!(Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST))) {
 
 			return null;
 		}

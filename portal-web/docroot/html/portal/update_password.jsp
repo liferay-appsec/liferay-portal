@@ -98,7 +98,11 @@ if (Validator.isNull(titlePage)) {
 					<aui:input name="ticketId" type="hidden" value="<%= ticketId %>" />
 					<aui:input name="ticketKey" type="hidden" value="<%= ticketKey %>" />
 
-					<c:if test="<%= (PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD).equals(Constants.TEST)) %>">
+
+					<%
+						System.out.println("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+System.out.println(PropsValues.DEFAULT_ADMIN_PASSWORD);					%>
+					<c:if test="<%= Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST) %>">
 						<div class="alert alert-warning">
 							<span class="alert-indicator">
 								<svg aria-hidden="true" class="lexicon-icon lexicon-icon-warning-full">
