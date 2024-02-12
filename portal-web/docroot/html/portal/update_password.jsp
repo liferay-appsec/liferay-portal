@@ -99,9 +99,6 @@ if (Validator.isNull(titlePage)) {
 					<aui:input name="ticketKey" type="hidden" value="<%= ticketKey %>" />
 
 
-					<%
-						System.out.println("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
-System.out.println(PropsValues.DEFAULT_ADMIN_PASSWORD);					%>
 					<c:if test="<%= Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST) %>">
 						<div class="alert alert-warning">
 							<span class="alert-indicator">
