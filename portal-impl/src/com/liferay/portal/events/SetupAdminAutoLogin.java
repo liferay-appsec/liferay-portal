@@ -18,9 +18,10 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.DefaultAdminUtil;
 import com.liferay.portal.util.PropsValues;
 
+import java.util.Objects;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Objects;
 
 /**
  * @author Alvaro Saugar
@@ -47,7 +48,8 @@ public class SetupAdminAutoLogin extends BaseAutoLogin {
 		throws Exception {
 
 		if (Validator.isNotNull(PropsValues.DEFAULT_ADMIN_PASSWORD) &&
-			!(Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST))) {
+			!Objects.equals(
+				PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST)) {
 
 			return null;
 		}

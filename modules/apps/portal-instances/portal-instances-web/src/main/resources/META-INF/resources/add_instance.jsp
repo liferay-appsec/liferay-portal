@@ -62,8 +62,7 @@
 					</aui:select>
 				</c:if>
 
-				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) ||
-								Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST)  %>">
+				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) || Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST) %>">
 					<clay:sheet-section>
 						<h3 class="sheet-subtitle">
 							<liferay-ui:message key="administrator-user" />

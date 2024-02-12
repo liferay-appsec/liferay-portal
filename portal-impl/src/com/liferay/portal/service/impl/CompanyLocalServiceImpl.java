@@ -283,9 +283,12 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 					String defaulAdminPassword = null;
 
-					if (!PropsValues.DEFAULT_ADMIN_PASSWORD.equals(Constants.TEST)) {
+					if (!PropsValues.DEFAULT_ADMIN_PASSWORD.equals(
+							Constants.TEST)) {
+
 						defaulAdminPassword = GetterUtil.getString(
-							defaultAdminPassword, PropsValues.DEFAULT_ADMIN_PASSWORD);
+							defaultAdminPassword,
+							PropsValues.DEFAULT_ADMIN_PASSWORD);
 					}
 
 					_userLocalService.addDefaultAdminUser(
@@ -336,6 +339,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			finally {
 				safeCloseable.close();
 			}
+
 			throw new PortalException(throwable);
 		}
 		finally {
