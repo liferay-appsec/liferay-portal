@@ -326,6 +326,17 @@ public class AuthVerifierPipeline {
 
 				return false;
 			}
+			else if (!user.isSetupComplete()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned user ", user.getUserId(),
+							" whose setup is incomplete"));
+				}
+
+				return false;
+			}
 
 			return true;
 		}
