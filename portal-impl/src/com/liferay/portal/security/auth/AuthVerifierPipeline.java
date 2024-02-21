@@ -278,6 +278,58 @@ public class AuthVerifierPipeline {
 			return mergedSettings;
 		}
 
+		private boolean _validate(
+			AccessControlContext accessControlContext,
+			AuthVerifier authVerifier, AuthVerifierResult authVerifierResult) {
+
+			User user = UserLocalServiceUtil.fetchUser(
+				authVerifierResult.getUserId());
+			Class<?> authVerifierClass = authVerifier.getClass();
+
+			if (!user.isActive()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned inactive user ", user.getUserId()));
+				}
+
+				return false;
+			}
+
+			if (PortalUtil.isImpersonated(
+					PortalUtil.getOriginalServletRequest(
+						accessControlContext.getRequest()))) {
+
+				return true;
+			}
+
+			if (!user.isEmailAddressVerificationComplete()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned user ", user.getUserId(),
+							" who must verify his email address"));
+				}
+
+				return false;
+			}
+			else if (user.isPasswordReset()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned user ", user.getUserId(),
+							" who must reset his password"));
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
 		private AuthVerifierResult _verifyWithAuthVerifierConfiguration(
 			AccessControlContext accessControlContext,
 			AuthVerifierConfiguration authVerifierConfiguration) {
@@ -328,46 +380,15 @@ public class AuthVerifierPipeline {
 				authVerifierResult.getUserId());
 
 			if ((user != null) &&
-				(!user.isActive() ||
-				 (!PortalUtil.isImpersonated(
-					 PortalUtil.getOriginalServletRequest(
-						 accessControlContext.getRequest())) &&
-				  (!user.isEmailAddressVerificationComplete() ||
-				   user.isPasswordReset())))) {
-
-				long userId = authVerifierResult.getUserId();
-
-				if (_log.isDebugEnabled()) {
-					Class<?> authVerifierClass = authVerifier.getClass();
-
-					if (!user.isActive()) {
-						_log.debug(
-							StringBundler.concat(
-								"Auth verifier ", authVerifierClass.getName(),
-								" returned inactive user ", userId));
-					}
-					else if (!user.isEmailAddressVerificationComplete()) {
-						_log.debug(
-							StringBundler.concat(
-								"Auth verifier ", authVerifierClass.getName(),
-								" returned user ", userId,
-								" who must verify his email address"));
-					}
-					else {
-						_log.debug(
-							StringBundler.concat(
-								"Auth verifier ", authVerifierClass.getName(),
-								" returned user ", userId,
-								" who must reset his password"));
-					}
-				}
+				!_validate(
+					accessControlContext, authVerifier, authVerifierResult)) {
 
 				authVerifierResult = new AuthVerifierResult();
 
 				authVerifierResult.setState(
 					AuthVerifierResult.State.UNSUCCESSFUL);
 
-				authVerifierResult.setUserId(userId);
+				authVerifierResult.setUserId(authVerifierResult.getUserId());
 			}
 
 			Map<String, Object> settings = _mergeSettings(
