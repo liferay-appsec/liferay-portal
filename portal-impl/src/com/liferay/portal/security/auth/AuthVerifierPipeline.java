@@ -301,7 +301,19 @@ public class AuthVerifierPipeline {
 					PortalUtil.getOriginalServletRequest(
 						accessControlContext.getRequest()))) {
 
-				return true;
+				if (HttpServletRequest.FORM_AUTH.equals(
+						authVerifier.getAuthType())) {
+
+					return true;
+				}
+				else if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Auth verifier ", authVerifierClass.getName(),
+							" returned user ", user.getUserId(), " through ",
+							"impersonation, but this is is unsupported for ",
+							"auth type ", authVerifier.getAuthType()));
+				}
 			}
 
 			if (!user.isEmailAddressVerificationComplete()) {
