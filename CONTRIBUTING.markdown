@@ -10,7 +10,7 @@ documentation.
 Liferay Portal is known for its innovative top quality features. To maintain
 this reputation, all code changes are reviewed by a core set of project
 maintainers. We encourage you to join our
-[Slack Chat](https://communitychat.liferay.com/) and introduce yourself to the
+[Slack Chat](https://communitychat.liferay.com) and introduce yourself to the
 core maintainer(s) and engage them as you contribute to the areas they maintain.
 
 To get a deeper understanding of Liferay Portal in general, make sure to read
