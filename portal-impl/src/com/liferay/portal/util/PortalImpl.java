@@ -5796,7 +5796,7 @@ public class PortalImpl implements Portal {
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to determine if user is impersonated", exception);
+					"Unable to impersonate " + doAsUserIdString, exception);
 			}
 
 			return false;
