@@ -297,10 +297,7 @@ public class AuthVerifierPipeline {
 				return false;
 			}
 
-			if (PortalUtil.isImpersonated(
-					PortalUtil.getOriginalServletRequest(
-						accessControlContext.getRequest()))) {
-
+			if (PortalUtil.isImpersonated(accessControlContext.getRequest())) {
 				if (HttpServletRequest.FORM_AUTH.equals(
 						authVerifier.getAuthType())) {
 

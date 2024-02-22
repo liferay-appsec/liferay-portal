@@ -5784,8 +5784,9 @@ public class PortalImpl implements Portal {
 		String doAsUserIdString = httpServletRequest.getParameter("doAsUserId");
 
 		try {
-			if (getDoAsUserId(httpServletRequest, doAsUserIdString, false) >
-					0) {
+			if (getDoAsUserId(
+					getOriginalServletRequest(httpServletRequest),
+					doAsUserIdString, false) > 0) {
 
 				return true;
 			}
