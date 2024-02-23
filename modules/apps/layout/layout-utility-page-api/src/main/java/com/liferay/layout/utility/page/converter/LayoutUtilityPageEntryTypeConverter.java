@@ -44,6 +44,9 @@ public class LayoutUtilityPageEntryTypeConverter {
 			"ErrorCode500",
 			LayoutUtilityPageEntryConstants.TYPE_SC_INTERNAL_SERVER_ERROR
 		).put(
+			"SignIn",
+			LayoutUtilityPageEntryConstants.TYPE_SIGN_IN
+		).put(
 			"TermsOfUse", LayoutUtilityPageEntryConstants.TYPE_TERMS_OF_USE
 		).build();
 
