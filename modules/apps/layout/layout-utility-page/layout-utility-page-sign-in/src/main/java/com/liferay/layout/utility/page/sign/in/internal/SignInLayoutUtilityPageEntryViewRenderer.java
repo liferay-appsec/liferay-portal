@@ -19,18 +19,18 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Olivér Kecskeméty
  */
-@Component(
-	property = "utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_SIGN_IN,
-	service = LayoutUtilityPageEntryViewRenderer.class
-)
 public class SignInLayoutUtilityPageEntryViewRenderer
 	implements LayoutUtilityPageEntryViewRenderer {
+
+	public SignInLayoutUtilityPageEntryViewRenderer(
+		Language language, ServletContext servletContext) {
+
+		_language = language;
+		_servletContext = servletContext;
+	}
 
 	@Override
 	public String getLabel(Locale locale) {
@@ -54,12 +54,7 @@ public class SignInLayoutUtilityPageEntryViewRenderer
 		requestDispatcher.include(httpServletRequest, httpServletResponse);
 	}
 
-	@Reference
-	private Language _language;
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.utility.page.sign.in)"
-	)
-	private ServletContext _servletContext;
+	private final Language _language;
+	private final ServletContext _servletContext;
 
 }
