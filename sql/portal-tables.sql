@@ -1437,7 +1437,7 @@ create table User_ (
 	createDate DATE null,
 	modifiedDate DATE null,
 	contactId LONG,
-	password_ VARCHAR(75) null,
+	password_ VARCHAR(255) null,
 	passwordEncrypted BOOLEAN,
 	passwordReset BOOLEAN,
 	passwordModifiedDate DATE null,
