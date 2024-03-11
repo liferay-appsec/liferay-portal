@@ -1498,7 +1498,9 @@
 		<field name="createDate" type="Date" />
 		<field name="modifiedDate" type="Date" />
 		<field name="contactId" type="long" />
-		<field name="password" type="String" />
+		<field name="password" type="String">
+			<hint name="max-length">255</hint>
+		</field>
 		<field name="passwordEncrypted" type="boolean" />
 		<field name="passwordReset" type="boolean" />
 		<field name="passwordModifiedDate" type="Date" />
