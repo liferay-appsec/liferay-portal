@@ -8,8 +8,6 @@ package com.liferay.layout.utility.page.create.account.internal;
 import com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRenderer;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.portal.kernel.language.Language;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 
@@ -24,12 +22,15 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * @author Alvaro Saugar
  */
-@Component(
-	property = "utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_CREATE_ACCOUNT,
-	service = LayoutUtilityPageEntryViewRenderer.class
-)
 public class CreateAccountLayoutUtilityPageEntryViewRenderer
 	implements LayoutUtilityPageEntryViewRenderer {
+
+	public CreateAccountLayoutUtilityPageEntryViewRenderer(
+		Language language, ServletContext servletContext) {
+
+		_language = language;
+		_servletContext = servletContext;
+	}
 
 	@Override
 	public String getLabel(Locale locale) {
@@ -48,11 +49,7 @@ public class CreateAccountLayoutUtilityPageEntryViewRenderer
 		throws IOException, ServletException {
 	}
 
-	@Reference
-	private Language _language;
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.utility.page.create.account)"
-	)
-	private ServletContext _servletContext;
+	private final Language _language;
+	private final ServletContext _servletContext;
 
 }
