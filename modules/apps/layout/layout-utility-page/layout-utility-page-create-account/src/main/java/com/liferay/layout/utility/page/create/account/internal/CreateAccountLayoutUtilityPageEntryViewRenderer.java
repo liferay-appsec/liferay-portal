@@ -19,26 +19,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
 /**
  * @author Alvaro Saugar
  */
-@Component(
-	property = "utility.page.type=" + LayoutUtilityPageEntryConstants.TYPE_CREATE_ACCOUNT,
-	service = LayoutUtilityPageEntryViewRenderer.class
-)
 public class CreateAccountLayoutUtilityPageEntryViewRenderer
 	implements LayoutUtilityPageEntryViewRenderer {
 
-	/*	public CreateAccountLayoutUtilityPageEntryViewRenderer(
-			Language language, ServletContext servletContext) {
+	public CreateAccountLayoutUtilityPageEntryViewRenderer(
+		Language language, ServletContext servletContext) {
 
-			_language = language;
-			_servletContext = servletContext;
-		}
-	 */
+		_language = language;
+		_servletContext = servletContext;
+	}
+
 	@Override
 	public String getLabel(Locale locale) {
 		return _language.get(locale, "create-account");
@@ -61,12 +54,7 @@ public class CreateAccountLayoutUtilityPageEntryViewRenderer
 		requestDispatcher.include(httpServletRequest, httpServletResponse);
 	}
 
-	@Reference
-	private Language _language;
-
-	@Reference(
-		target = "(osgi.web.symbolicname=com.liferay.layout.utility.page.create.account)"
-	)
-	private ServletContext _servletContext;
+	private final Language _language;
+	private final ServletContext _servletContext;
 
 }
