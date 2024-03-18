@@ -30,13 +30,15 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alvaro Saugar
  */
-@Component(property = "path=/portal/create_account", service = StrutsAction.class)
+@Component(
+	property = "path=/portal/create_account", service = StrutsAction.class
+)
 public class CreateAcctionStrutsAction implements StrutsAction {
 
 	@Override
 	public String execute(
-		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse)
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse)
 		throws Exception {
 
 		ThemeDisplay themeDisplay =
