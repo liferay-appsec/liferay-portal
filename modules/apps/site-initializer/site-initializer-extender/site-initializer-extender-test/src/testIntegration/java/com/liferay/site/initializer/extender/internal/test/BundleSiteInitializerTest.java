@@ -1971,6 +1971,20 @@ public class BundleSiteInitializerTest {
 		Assert.assertEquals("Test List Type Entry 6", listTypeEntry6.getName());
 	}
 
+	@FeatureFlags("LPD-6378")
+	private void _assertLoginLayoutUtilityPageEntries() {
+		LayoutUtilityPageEntry defaultLoginUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.
+				fetchDefaultLayoutUtilityPageEntry(
+					_group.getGroupId(),
+					LayoutUtilityPageEntryConstants.TYPE_LOGIN);
+
+		Assert.assertNotNull(defaultLoginUtilityPageEntry);
+		Assert.assertEquals(
+			"Test Default Login Layout Utility Page Entry",
+			defaultLoginUtilityPageEntry.getName());
+	}
+
 	private void _assertNotificationTemplate1() throws Exception {
 		NotificationTemplateResource.Builder
 			notificationTemplateResourceBuilder =
@@ -3880,6 +3894,7 @@ public class BundleSiteInitializerTest {
 		_assertLayoutSets();
 		_assertLayouts1();
 		_assertLayoutUtilityPageEntries();
+		_assertLoginLayoutUtilityPageEntries();
 		_assertListTypeDefinitions1();
 		_assertNotificationTemplate1();
 		_assertObjectDefinitions1();
