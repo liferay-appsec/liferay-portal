@@ -6,31 +6,23 @@
 package com.liferay.login.web.internal.servlet.taglib.include;
 
 import com.liferay.login.web.constants.LoginPortletKeys;
+import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
+import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManager;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
-import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.taglib.include.PageInclude;
 import com.liferay.taglib.ui.IconTag;
 
 import java.util.Objects;
 
 import javax.portlet.PortletConfig;
-import javax.portlet.PortletMode;
-import javax.portlet.PortletRequest;
-import javax.portlet.WindowState;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -92,18 +84,23 @@ public class CreateAccountNavigationPostPageInclude implements PageInclude {
 		iconTag.setMessage("create-account");
 
 		try {
-			String createAccountURL = null;
+			String url = StringPool.BLANK;
 
-			if (_featureFlagManager.isEnabled("LPD-6378")) {
-				createAccountURL = _getCreateAccountURL(
-					httpServletRequest, themeDisplay);
+			Layout layout =
+				_layoutUtilityPageEntryLayoutProvider.
+					getDefaultLayoutUtilityPageEntryLayout(
+						themeDisplay.getScopeGroupId(),
+						LayoutUtilityPageEntryConstants.TYPE_CREATE_ACCOUNT);
+
+			if (layout != null) {
+				url = _portal.getLayoutURL(layout, themeDisplay);
 			}
 			else {
-				createAccountURL = _portal.getCreateAccountURL(
+				url = _portal.getCreateAccountURL(
 					httpServletRequest, themeDisplay);
 			}
 
-			iconTag.setUrl(createAccountURL);
+			iconTag.setUrl(url);
 		}
 		catch (Exception exception) {
 			throw new JspException(exception);
@@ -112,66 +109,12 @@ public class CreateAccountNavigationPostPageInclude implements PageInclude {
 		iconTag.doTag(pageContext);
 	}
 
-	private String _getCreateAccountURL(
-			HttpServletRequest httpServletRequest, ThemeDisplay themeDisplay)
-		throws Exception {
-
-		if (Validator.isNull(PropsValues.COMPANY_SECURITY_STRANGERS_URL)) {
-			long plid = themeDisplay.getPlid();
-
-			Layout layout = themeDisplay.getLayout();
-
-			if (layout.isPrivateLayout()) {
-				plid = _layoutLocalService.getDefaultPlid(
-					layout.getGroupId(), false);
-			}
-
-			PortletConfig portletConfig =
-				(PortletConfig)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_CONFIG);
-
-			return PortletURLBuilder.create(
-				PortletURLFactoryUtil.create(
-					httpServletRequest, portletConfig.getPortletName(), plid,
-					PortletRequest.RENDER_PHASE)
-			).setMVCRenderCommandName(
-				"/login/create_account"
-			).setParameter(
-				"saveLastPath", false
-			).setPortletMode(
-				PortletMode.VIEW
-			).setWindowState(
-				WindowState.MAXIMIZED
-			).buildString();
-		}
-
-		try {
-			Layout layout = _layoutLocalService.getFriendlyURLLayout(
-				themeDisplay.getScopeGroupId(), false,
-				PropsValues.COMPANY_SECURITY_STRANGERS_URL);
-
-			return _portal.getLayoutURL(layout, themeDisplay);
-		}
-		catch (NoSuchLayoutException noSuchLayoutException) {
-
-			// LPS-52675
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(noSuchLayoutException);
-			}
-		}
-
-		return StringPool.BLANK;
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		CreateAccountNavigationPostPageInclude.class);
-
 	@Reference
 	private FeatureFlagManager _featureFlagManager;
 
 	@Reference
-	private LayoutLocalService _layoutLocalService;
+	private LayoutUtilityPageEntryLayoutProvider
+		_layoutUtilityPageEntryLayoutProvider;
 
 	@Reference
 	private Portal _portal;
