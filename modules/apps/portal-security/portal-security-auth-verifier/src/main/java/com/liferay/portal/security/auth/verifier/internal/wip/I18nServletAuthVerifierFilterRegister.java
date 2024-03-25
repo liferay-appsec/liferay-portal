@@ -38,18 +38,25 @@ public class I18nServletAuthVerifierFilterRegister {
 			urlPatterns.add(
 				"/" + locale.replace(StringPool.UNDERLINE, StringPool.DASH) +
 					"/o/*");
+			urlPatterns.add("/" + locale + "/o/*");
+
+			if (!urlPatterns.contains("/" + locale.substring(0, 2) + "/o/*")) {
+				urlPatterns.add("/" + locale.substring(0, 2) + "/o/*");
+			}
 		}
 
 		_serviceRegistration = bundleContext.registerService(
 			Filter.class, new AuthVerifierFilter(),
 			HashMapDictionaryBuilder.<String, Object>put(
-				"dispatcher", new String[] {"REQUEST"}
+				"dispatcher", new String[] {"REQUEST", "FORWARD"}
 			).put(
 				"servlet-context-name", ""
 			).put(
 				"servlet-filter-name", "I18n Servlet Auth Verifier Filter"
 			).put(
 				"url-pattern", ArrayUtil.toStringArray(urlPatterns)
+			).put(
+				"after-filter", "CTCollection Preview Filter"
 			).build());
 	}
 
