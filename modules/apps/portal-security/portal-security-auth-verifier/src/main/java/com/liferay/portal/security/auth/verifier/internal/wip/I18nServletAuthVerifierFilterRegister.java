@@ -57,6 +57,10 @@ public class I18nServletAuthVerifierFilterRegister {
 				"url-pattern", ArrayUtil.toStringArray(urlPatterns)
 			).put(
 				"after-filter", "CTCollection Preview Filter"
+			).put(
+				"init.param.auth.verifier.PortalSessionAuthVerifier.urls.includes", "*"
+			).put(
+				"init.param.auth.verifier.BasicAuthHeaderAuthVerifier.urls.includes", "*"
 			).build());
 	}
 
