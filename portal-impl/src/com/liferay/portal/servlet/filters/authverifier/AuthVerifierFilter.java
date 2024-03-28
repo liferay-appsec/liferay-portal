@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
 import com.liferay.portal.servlet.AuthVerifierServletRequest;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
@@ -32,9 +33,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
@@ -131,6 +134,19 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse, FilterChain filterChain)
 		throws Exception {
+
+		if (!Objects.equals(
+				httpServletRequest.getDispatcherType(),
+				DispatcherType.REQUEST) &&
+			(!Objects.equals(
+				httpServletRequest.getDispatcherType(),
+				DispatcherType.FORWARD) ||
+			 (httpServletRequest.getAttribute(WebKeys.I18N_PATH) == null))) {
+
+			filterChain.doFilter(httpServletRequest, httpServletResponse);
+
+			return;
+		}
 
 		if (!_isAccessAllowed(httpServletRequest, httpServletResponse) ||
 			_isApplySSL(httpServletRequest, httpServletResponse)) {
