@@ -5,9 +5,9 @@
 
 package com.liferay.login.web.internal.servlet.taglib.include;
 
-import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
+import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManager;
 import com.liferay.portal.kernel.model.Company;

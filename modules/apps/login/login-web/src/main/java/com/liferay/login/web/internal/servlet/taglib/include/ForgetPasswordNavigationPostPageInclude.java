@@ -18,13 +18,11 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.include.PageInclude;
-import com.liferay.taglib.portlet.RenderURLTag;
 import com.liferay.taglib.ui.IconTag;
 
 import java.util.Objects;
 
 import javax.portlet.PortletConfig;
-import javax.portlet.WindowState;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;

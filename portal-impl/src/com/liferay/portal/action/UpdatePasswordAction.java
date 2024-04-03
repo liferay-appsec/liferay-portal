@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Ticket;
 import com.liferay.portal.kernel.model.TicketConstants;
 import com.liferay.portal.kernel.model.User;
@@ -43,8 +44,6 @@ import com.liferay.portal.security.pwd.PwdToolkitUtilThreadLocal;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
-import com.liferay.portal.kernel.model.Layout;
-import com.liferay.petra.string.StringPool;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -103,8 +102,8 @@ public class UpdatePasswordAction implements Action {
 					httpServletRequest.setAttribute(
 						WebKeys.TITLE_SET_PASSWORD, "set-password");
 				}
-			} else if (user == null) {
-				String url = StringPool.BLANK;
+			}
+			else if (user == null) {
 				ThemeDisplay themeDisplay =
 					(ThemeDisplay)httpServletRequest.getAttribute(
 						WebKeys.THEME_DISPLAY);
@@ -113,40 +112,41 @@ public class UpdatePasswordAction implements Action {
 					LayoutUtilityPageEntryLayoutProviderUtil.
 						getDefaultLayoutUtilityPageEntryLayout(
 							themeDisplay.getScopeGroupId(),
-							LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
+							LayoutUtilityPageEntryConstants.
+								TYPE_FORGOT_PASSWORD);
 
 				if (layout != null) {
-					url = PortalUtil.getLayoutURL(layout, themeDisplay);
+					String url = PortalUtil.getLayoutURL(layout, themeDisplay);
 
-					String ticketId = ParamUtil.getString(httpServletRequest, "ticketId");
+					String ticketId = ParamUtil.getString(
+						httpServletRequest, "ticketId");
 
-					String ticketKey = ParamUtil.getString(httpServletRequest, "ticketKey");
+					String ticketKey = ParamUtil.getString(
+						httpServletRequest, "ticketKey");
 
-					String p_l_id = ParamUtil.getString(httpServletRequest, "p_l_id");
+					String p_l_id = ParamUtil.getString(
+						httpServletRequest, "p_l_id");
 
 					if (Validator.isNotNull(p_l_id)) {
 						url = HttpComponentsUtil.setParameter(
 							url, "p_l_id", p_l_id);
 					}
-					if (Validator.isNotNull(ticketId)) {
 
+					if (Validator.isNotNull(ticketId)) {
 						url = HttpComponentsUtil.setParameter(
 							url, "ticketId", ticketId);
 					}
 
 					if (Validator.isNotNull(ticketKey)) {
-
 						url = HttpComponentsUtil.setParameter(
 							url, "ticketKey", ticketKey);
 					}
 
 					httpServletResponse.sendRedirect(url);
-					return null;
 
+					return null;
 				}
 			}
-
-
 
 			return actionMapping.getActionForward("portal.update_password");
 		}
