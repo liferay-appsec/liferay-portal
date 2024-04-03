@@ -5,11 +5,16 @@
 
 package com.liferay.login.web.internal.servlet.taglib.include;
 
+import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
+import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.login.web.constants.LoginPortletKeys;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManager;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.taglib.include.PageInclude;
@@ -75,30 +80,45 @@ public class ForgetPasswordNavigationPostPageInclude implements PageInclude {
 			return;
 		}
 
-		RenderURLTag renderURLTag = new RenderURLTag();
-
-		renderURLTag.setPageContext(pageContext);
-
-		renderURLTag.addParam("saveLastPath", Boolean.FALSE.toString());
-		renderURLTag.addParam("mvcRenderCommandName", "/login/forgot_password");
-		renderURLTag.setVar("forgotPasswordURL");
-		renderURLTag.setWindowState(WindowState.MAXIMIZED.toString());
-
-		renderURLTag.doTag(pageContext);
-
-		String forgetPasswordURL = (String)pageContext.getAttribute(
-			"forgotPasswordURL");
-
 		IconTag iconTag = new IconTag();
 
 		iconTag.setCssClass("text-4");
 		iconTag.setMessage("forgot-password");
-		iconTag.setUrl(forgetPasswordURL);
+
+		try {
+			String url = StringPool.BLANK;
+
+			Layout layout =
+				_layoutUtilityPageEntryLayoutProvider.
+					getDefaultLayoutUtilityPageEntryLayout(
+						themeDisplay.getScopeGroupId(),
+						LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
+
+			if (layout != null) {
+				url = _portal.getLayoutURL(layout, themeDisplay);
+			}
+			else {
+				url = _portal.getCreateAccountURL(
+					httpServletRequest, themeDisplay);
+			}
+
+			iconTag.setUrl(url);
+		}
+		catch (Exception exception) {
+			throw new JspException(exception);
+		}
 
 		iconTag.doTag(pageContext);
 	}
 
 	@Reference
 	private FeatureFlagManager _featureFlagManager;
+
+	@Reference
+	private LayoutUtilityPageEntryLayoutProvider
+		_layoutUtilityPageEntryLayoutProvider;
+
+	@Reference
+	private Portal _portal;
 
 }
