@@ -5,8 +5,12 @@
 
 package com.liferay.login.web.internal.portlet.action;
 
+import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
+import com.liferay.layout.utility.page.kernel.provider.util.LayoutUtilityPageEntryLayoutProviderUtil;
 import com.liferay.login.web.constants.LoginPortletKeys;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -43,6 +47,21 @@ public class ForgotPasswordMVCRenderCommand implements MVCRenderCommand {
 		if (!company.isSendPasswordResetLink()) {
 			return "/login.jsp";
 		}
+
+		try {
+			Layout createAccountUtilityPage = LayoutUtilityPageEntryLayoutProviderUtil.
+				getDefaultLayoutUtilityPageEntryLayout(
+					themeDisplay.getScopeGroupId(),
+					LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
+
+			if (createAccountUtilityPage != null) {
+				return "/utility_page.jsp";
+			}
+		}
+		catch (PortalException e) {
+			throw new RuntimeException(e);
+		}
+
 
 		return "/forgot_password.jsp";
 	}

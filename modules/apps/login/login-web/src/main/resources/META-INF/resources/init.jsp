@@ -88,7 +88,10 @@ page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowConstants" %><%@
 page import="com.liferay.portal.security.auth.ScreenNameValidatorFactory" %><%@
-page import="com.liferay.portal.util.PropsValues" %>
+page import="com.liferay.portal.util.PropsValues" %><%@
+page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRenderer" %><%@
+page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRendererRegistryUtil" %><%@
+page import="com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants" %>
 
 <%@ page import="java.text.Format" %>
 
