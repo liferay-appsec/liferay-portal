@@ -9,6 +9,8 @@ import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryCo
 import com.liferay.layout.utility.page.kernel.provider.util.LayoutUtilityPageEntryLayoutProviderUtil;
 import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
@@ -49,21 +51,26 @@ public class ForgotPasswordMVCRenderCommand implements MVCRenderCommand {
 		}
 
 		try {
-			Layout createAccountUtilityPage = LayoutUtilityPageEntryLayoutProviderUtil.
-				getDefaultLayoutUtilityPageEntryLayout(
-					themeDisplay.getScopeGroupId(),
-					LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
+			Layout createAccountUtilityPage =
+				LayoutUtilityPageEntryLayoutProviderUtil.
+					getDefaultLayoutUtilityPageEntryLayout(
+						themeDisplay.getScopeGroupId(),
+						LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
 
 			if (createAccountUtilityPage != null) {
 				return "/utility_page.jsp";
 			}
 		}
-		catch (PortalException e) {
-			throw new RuntimeException(e);
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(portalException);
+			}
 		}
-
 
 		return "/forgot_password.jsp";
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ForgotPasswordMVCRenderCommand.class);
 
 }

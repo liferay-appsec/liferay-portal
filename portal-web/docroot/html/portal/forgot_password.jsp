@@ -8,6 +8,7 @@
 <%@ include file="/html/portal/init.jsp" %>
 
 <%
-	LayoutUtilityPageEntryViewRenderer layoutUtilityPageEntryViewRenderer = LayoutUtilityPageEntryViewRendererRegistryUtil.getLayoutUtilityPageEntryViewRenderer(LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
-	layoutUtilityPageEntryViewRenderer.renderHTML(request, response);
+LayoutUtilityPageEntryViewRenderer layoutUtilityPageEntryViewRenderer = LayoutUtilityPageEntryViewRendererRegistryUtil.getLayoutUtilityPageEntryViewRenderer(LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
+
+layoutUtilityPageEntryViewRenderer.renderHTML(request, response);
 %>

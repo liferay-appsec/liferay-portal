@@ -20,6 +20,9 @@ taglib uri="http://liferay.com/tld/user" prefix="liferay-user" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
 <%@ page import="com.liferay.captcha.configuration.CaptchaConfiguration" %><%@
+page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRenderer" %><%@
+page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRendererRegistryUtil" %><%@
+page import="com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants" %><%@
 page import="com.liferay.login.web.internal.display.context.ForgotPasswordConfigurationDisplayContext" %><%@
 page import="com.liferay.login.web.internal.portlet.util.LoginUtil" %><%@
 page import="com.liferay.login.web.internal.servlet.taglib.include.NavigationPageIncludeUtil" %><%@
@@ -88,10 +91,7 @@ page import="com.liferay.portal.kernel.util.Validator" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
 page import="com.liferay.portal.kernel.workflow.WorkflowConstants" %><%@
 page import="com.liferay.portal.security.auth.ScreenNameValidatorFactory" %><%@
-page import="com.liferay.portal.util.PropsValues" %><%@
-page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRenderer" %><%@
-page import="com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRendererRegistryUtil" %><%@
-page import="com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants" %>
+page import="com.liferay.portal.util.PropsValues" %>
 
 <%@ page import="java.text.Format" %>
 

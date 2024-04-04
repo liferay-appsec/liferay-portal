@@ -2946,6 +2946,7 @@ public class PortalImpl implements Portal {
 	public String getLayoutURL(Layout layout, ThemeDisplay themeDisplay)
 		throws PortalException {
 
+
 		return getLayoutURL(layout, themeDisplay, true);
 	}
 
