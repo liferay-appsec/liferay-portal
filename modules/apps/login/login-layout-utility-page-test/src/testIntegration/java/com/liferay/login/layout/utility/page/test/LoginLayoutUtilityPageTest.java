@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.login.utility.page.test;
+package com.liferay.login.layout.utility.page.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRendererRegistryUtil;
@@ -47,7 +47,7 @@ import org.junit.runner.RunWith;
  */
 @FeatureFlags("LPD-6378")
 @RunWith(Arquillian.class)
-public class LoginUtilityPageTest {
+public class LoginLayoutUtilityPageTest {
 
 	@ClassRule
 	@Rule
@@ -108,7 +108,7 @@ public class LoginUtilityPageTest {
 	}
 
 	@Test
-	public void testDefaultUtilityPagesAfterSiteInitialization()
+	public void testDefaultLayoutUtilityPagesAfterSiteInitialization()
 		throws PortalException {
 
 		try {
@@ -123,14 +123,14 @@ public class LoginUtilityPageTest {
 			Assert.fail();
 		}
 
-		_checkDefaultUtilityPageEntries(
+		_checkDefaultLayoutUtilityPageEntries(
 			LayoutUtilityPageEntryConstants.TYPE_LOGIN, "Sign In",
 			"com_liferay_login_web_portlet_LoginPortlet");
-		_checkDefaultUtilityPageEntries(
+		_checkDefaultLayoutUtilityPageEntries(
 			LayoutUtilityPageEntryConstants.TYPE_CREATE_ACCOUNT,
 			"Create Account",
 			"com_liferay_login_web_portlet_CreateAccountPortlet");
-		_checkDefaultUtilityPageEntries(
+		_checkDefaultLayoutUtilityPageEntries(
 			LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD,
 			"Forgot Password",
 			"com_liferay_login_web_portlet_ForgotPasswordPortlet");
@@ -152,31 +152,31 @@ public class LoginUtilityPageTest {
 					LayoutUtilityPageEntryConstants.TYPE_LOGIN));
 	}
 
-	private void _checkDefaultUtilityPageEntries(
+	private void _checkDefaultLayoutUtilityPageEntries(
 			String layoutUtilityPageEntryType,
-			String expectedUtilityPageEntryName, String expectedPortletId)
+			String expectedLayoutUtilityPageEntryName, String expectedPortletId)
 		throws PortalException {
 
 		Group guestGroup = _groupLocalService.getGroup(
 			TestPropsValues.getCompanyId(), GroupConstants.GUEST);
 
-		LayoutUtilityPageEntry defaultLoginUtilityPageEntry =
+		LayoutUtilityPageEntry defaultLayoutUtilityPageEntry =
 			_layoutUtilityPageEntryLocalService.
 				fetchDefaultLayoutUtilityPageEntry(
 					guestGroup.getGroupId(), layoutUtilityPageEntryType);
 
-		Assert.assertNotNull(defaultLoginUtilityPageEntry);
+		Assert.assertNotNull(defaultLayoutUtilityPageEntry);
 
 		Assert.assertEquals(
-			expectedUtilityPageEntryName,
-			defaultLoginUtilityPageEntry.getName());
+			expectedLayoutUtilityPageEntryName,
+			defaultLayoutUtilityPageEntry.getName());
 
-		long defaultLoginUtilityPageEntryPlid =
-			defaultLoginUtilityPageEntry.getPlid();
+		long defaultLayoutUtilityPageEntryPlid =
+			defaultLayoutUtilityPageEntry.getPlid();
 
 		List<PortletPreferences> portletPreferencesByPlid =
 			_portletPreferencesLocalService.getPortletPreferencesByPlid(
-				defaultLoginUtilityPageEntryPlid);
+				defaultLayoutUtilityPageEntryPlid);
 
 		Assert.assertEquals(
 			portletPreferencesByPlid.toString(), 1,
