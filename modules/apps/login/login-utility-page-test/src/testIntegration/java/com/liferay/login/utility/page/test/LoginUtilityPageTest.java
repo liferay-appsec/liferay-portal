@@ -12,6 +12,10 @@ import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.PortletPreferences;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -19,9 +23,17 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import java.io.IOException;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,7 +108,24 @@ public class LoginUtilityPageTest {
 	}
 
 	@Test
-	public void testDefaultUtilityPagesAfterSiteInitialization() {
+	public void testDefaultUtilityPagesAfterSiteInitialization()
+		throws PortalException {
+
+		try {
+			URL url = new URL("http://localhost:8080");
+
+			HttpURLConnection connection =
+				(HttpURLConnection)url.openConnection();
+
+			connection.setRequestMethod("GET");
+		}
+		catch (IOException ioException) {
+			Assert.fail();
+		}
+
+		_checkDefaultUtilityPageEntries(
+			LayoutUtilityPageEntryConstants.TYPE_LOGIN, "Sign In",
+			"com_liferay_login_web_portlet_LoginPortlet");
 	}
 
 	@Test
@@ -115,12 +144,54 @@ public class LoginUtilityPageTest {
 					LayoutUtilityPageEntryConstants.TYPE_LOGIN));
 	}
 
+	private void _checkDefaultUtilityPageEntries(
+			String layoutUtilityPageEntryType,
+			String expectedUtilityPageEntryName, String expectedPortletId)
+		throws PortalException {
+
+		Group guestGroup = _groupLocalService.getGroup(
+			TestPropsValues.getCompanyId(), GroupConstants.GUEST);
+
+		LayoutUtilityPageEntry defaultLoginUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.
+				fetchDefaultLayoutUtilityPageEntry(
+					guestGroup.getGroupId(), layoutUtilityPageEntryType);
+
+		Assert.assertNotNull(defaultLoginUtilityPageEntry);
+
+		Assert.assertEquals(
+			expectedUtilityPageEntryName,
+			defaultLoginUtilityPageEntry.getName());
+
+		long defaultLoginUtilityPageEntryPlid =
+			defaultLoginUtilityPageEntry.getPlid();
+
+		List<PortletPreferences> portletPreferencesByPlid =
+			_portletPreferencesLocalService.getPortletPreferencesByPlid(
+				defaultLoginUtilityPageEntryPlid);
+
+		Assert.assertEquals(
+			portletPreferencesByPlid.toString(), 1,
+			portletPreferencesByPlid.size());
+
+		PortletPreferences portletPreferences = portletPreferencesByPlid.get(0);
+
+		Assert.assertEquals(
+			expectedPortletId, portletPreferences.getPortletId());
+	}
+
 	@DeleteAfterTestRun
 	private Group _group;
 
 	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
+
+	@Inject
+	private PortletPreferencesLocalService _portletPreferencesLocalService;
 
 	private ServiceContext _serviceContext;
 
