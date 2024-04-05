@@ -130,6 +130,10 @@ public class LoginUtilityPageTest {
 			LayoutUtilityPageEntryConstants.TYPE_CREATE_ACCOUNT,
 			"Create Account",
 			"com_liferay_login_web_portlet_CreateAccountPortlet");
+		_checkDefaultUtilityPageEntries(
+			LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD,
+			"Forgot Password",
+			"com_liferay_login_web_portlet_ForgotPasswordPortlet");
 	}
 
 	@Test
