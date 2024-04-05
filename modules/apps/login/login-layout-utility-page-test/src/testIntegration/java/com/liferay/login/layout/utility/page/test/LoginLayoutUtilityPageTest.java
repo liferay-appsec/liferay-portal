@@ -112,7 +112,7 @@ public class LoginLayoutUtilityPageTest {
 		throws PortalException {
 
 		try {
-			URL url = new URL("http://localhost:8080");
+			URL url = new URL("http://www.liferay.com");
 
 			HttpURLConnection connection =
 				(HttpURLConnection)url.openConnection();
