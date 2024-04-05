@@ -83,8 +83,7 @@ public class ForgetPasswordNavigationPostPageInclude implements PageInclude {
 			_layoutUtilityPageEntryLayoutProvider.
 				getDefaultLayoutUtilityPageEntryLayout(
 					themeDisplay.getScopeGroupId(),
-					LayoutUtilityPageEntryConstants.
-						TYPE_FORGOT_PASSWORD);
+					LayoutUtilityPageEntryConstants.TYPE_FORGOT_PASSWORD);
 
 		String forgetPasswordURL = null;
 
@@ -97,7 +96,8 @@ public class ForgetPasswordNavigationPostPageInclude implements PageInclude {
 			renderURLTag.setPageContext(pageContext);
 
 			renderURLTag.addParam("saveLastPath", Boolean.FALSE.toString());
-			renderURLTag.addParam("mvcRenderCommandName", "/login/forgot_password");
+			renderURLTag.addParam(
+				"mvcRenderCommandName", "/login/forgot_password");
 			renderURLTag.setVar("forgotPasswordURL");
 			renderURLTag.setWindowState(WindowState.MAXIMIZED.toString());
 
