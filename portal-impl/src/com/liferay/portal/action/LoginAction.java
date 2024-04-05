@@ -5,7 +5,11 @@
 
 package com.liferay.portal.action;
 
+import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
+import com.liferay.layout.utility.page.kernel.provider.util.LayoutUtilityPageEntryLayoutProviderUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.WindowStateFactory;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
@@ -23,6 +27,8 @@ import com.liferay.portal.struts.Action;
 import com.liferay.portal.struts.model.ActionForward;
 import com.liferay.portal.struts.model.ActionMapping;
 import com.liferay.portal.util.PropsValues;
+
+import java.util.Objects;
 
 import javax.portlet.PortletMode;
 import javax.portlet.PortletRequest;
@@ -102,6 +108,23 @@ public class LoginAction implements Action {
 			}
 
 			httpServletResponse.sendRedirect(redirect);
+
+			return null;
+		}
+
+		Layout loginUtilityPage =
+			LayoutUtilityPageEntryLayoutProviderUtil.
+				getDefaultLayoutUtilityPageEntryLayout(
+					themeDisplay.getScopeGroupId(),
+					LayoutUtilityPageEntryConstants.TYPE_LOGIN);
+
+		if ((loginUtilityPage != null) &&
+			!Objects.equals(
+				getWindowState(httpServletRequest),
+				LiferayWindowState.EXCLUSIVE)) {
+
+			httpServletResponse.sendRedirect(
+				PortalUtil.getLayoutURL(loginUtilityPage, themeDisplay));
 
 			return null;
 		}
