@@ -8,8 +8,12 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {loginTest} from '../../fixtures/loginTest';
+import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 
 export const test = mergeTests(
+	featureFlagsTest({
+		'LPD-6378': true,
+	}),
 	loginTest()
 );
 
