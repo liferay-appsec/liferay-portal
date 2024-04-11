@@ -1,0 +1,4 @@
+Bundle-Name: Liferay Layout Utility Page Set Password
+Bundle-SymbolicName: com.liferay.layout.utility.page.set.password
+Bundle-Version: 1.0.0
+Web-ContextPath: /layout-utility-page-set-password
