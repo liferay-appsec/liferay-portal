@@ -28,6 +28,8 @@ import java.io.IOException;
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-login",
+		"com.liferay.portlet.display-category=category.tools",
+		"com.liferay.portlet.icon=/icons/login.png",
 		"com.liferay.portlet.preferences-owned-by-group=true",
 		"com.liferay.portlet.private-request-attributes=false",
 		"com.liferay.portlet.private-session-attributes=false",
@@ -36,6 +38,7 @@ import java.io.IOException;
 		"com.liferay.portlet.single-page-application=false",
 		"com.liferay.portlet.use-default-template=true",
 		"javax.portlet.expiration-cache=0",
+		"javax.portlet.display-name=Set Password",
 		"javax.portlet.init-param.add-process-action-success-action=false",
 		"javax.portlet.init-param.template-path=/META-INF/resources/",
 		"javax.portlet.init-param.view-template=/set_password.jsp",
@@ -54,12 +57,14 @@ public class SetPasswordPortlet extends MVCPortlet {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws IOException, PortletException {
 
-		if (!_isAllowedToRenderView(renderRequest)) {
+	/*	if (!_isAllowedToRenderView(renderRequest)) {
 			renderRequest.setAttribute(
 				getMVCPathAttributeName(renderResponse.getNamespace()),
 				"/login.jsp");
 		}
 
+
+	 */
 		super.render(renderRequest, renderResponse);
 	}
 
