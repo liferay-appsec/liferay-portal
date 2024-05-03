@@ -10,6 +10,7 @@ import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryCo
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
+import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -75,11 +76,10 @@ public class FacebookConnectNavigationPreJSPDynamicIncludeTest {
 	public void testIncludeOnUtilityPageWithFacebookConnectEnabled()
 		throws Exception {
 
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						TestPropsValues.getCompanyId(),
-						FacebookConnectConfiguration.class.getName(),
+		try (ConfigurationTemporarySwapper
+				configurationTemporarySwapper =
+					new ConfigurationTemporarySwapper(
+						"com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration",
 						HashMapDictionaryBuilder.<String, Object>put(
 							"enabled", true
 						).put(
@@ -112,25 +112,33 @@ public class FacebookConnectNavigationPreJSPDynamicIncludeTest {
 
 	@Test
 	public void testIncludeWithFacebookConnectDisabled() throws Exception {
-		MockHttpServletRequest mockHttpServletRequest =
-			_getMockHttpServletRequest();
+		try (ConfigurationTemporarySwapper
+				 configurationTemporarySwapper =
+				 new ConfigurationTemporarySwapper(
+					 "com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration",
+					 HashMapDictionaryBuilder.<String, Object>put(
+						 "enabled", false
+					 ).build())) {
 
-		_dynamicInclude.include(
-			mockHttpServletRequest, new MockHttpServletResponse(),
-			RandomTestUtil.randomString());
+			MockHttpServletRequest mockHttpServletRequest =
+				_getMockHttpServletRequest();
 
-		Assert.assertNull(
-			mockHttpServletRequest.getAttribute(
-				FacebookConnectWebKeys.FACEBOOK_AUTH_URL));
+			_dynamicInclude.include(
+				mockHttpServletRequest, new MockHttpServletResponse(),
+				RandomTestUtil.randomString());
+
+			Assert.assertNull(
+				mockHttpServletRequest.getAttribute(
+					FacebookConnectWebKeys.FACEBOOK_AUTH_URL));
+		}
 	}
 
 	@Test
 	public void testIncludeWithFacebookConnectEnabled() throws Exception {
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						TestPropsValues.getCompanyId(),
-						FacebookConnectConfiguration.class.getName(),
+		try (ConfigurationTemporarySwapper
+				configurationTemporarySwapper =
+					new ConfigurationTemporarySwapper(
+						"com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration",
 						HashMapDictionaryBuilder.<String, Object>put(
 							"enabled", true
 						).put(
