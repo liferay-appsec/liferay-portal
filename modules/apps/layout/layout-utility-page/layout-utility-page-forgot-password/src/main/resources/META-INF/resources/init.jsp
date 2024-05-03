@@ -6,7 +6,7 @@
 --%>
 
 <%@ taglib uri="http://liferay.com/tld/layout" prefix="liferay-layout" %><%@
-	taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %>
+taglib uri="http://liferay.com/tld/theme" prefix="liferay-theme" %>
 
 <%@ page import="com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants" %>
 
