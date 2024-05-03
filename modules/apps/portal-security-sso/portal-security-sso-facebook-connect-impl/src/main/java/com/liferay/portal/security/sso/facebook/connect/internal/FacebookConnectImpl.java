@@ -14,11 +14,13 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration;
+import com.liferay.portal.security.sso.facebook.connect.constants.FacebookConnectConstants;
 import com.liferay.portal.security.sso.facebook.connect.constants.FacebookConnectWebKeys;
 
 import javax.portlet.PortletRequest;
@@ -231,8 +233,10 @@ public class FacebookConnectImpl implements FacebookConnect {
 		long companyId) {
 
 		try {
-			return _configurationProvider.getCompanyConfiguration(
-				FacebookConnectConfiguration.class, companyId);
+			return _configurationProvider.getConfiguration(
+				FacebookConnectConfiguration.class,
+				new CompanyServiceSettingsLocator(
+					companyId, FacebookConnectConstants.SERVICE_NAME));
 		}
 		catch (ConfigurationException configurationException) {
 			_log.error(
