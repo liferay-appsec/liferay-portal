@@ -152,7 +152,7 @@ definition {
 		task ("Then: the configuration value changes cannot be saved because Title must have a value.") {
 			AssertElementPresent(
 				key_alertMessage = "This field is required.",
-				locator1 = "Message#ERROR_ENTER_A_VALID_VALUE");
+				locator1 = "Message#ERROR_FORM_FIELD_REQUIRED");
 		}
 	}
 
