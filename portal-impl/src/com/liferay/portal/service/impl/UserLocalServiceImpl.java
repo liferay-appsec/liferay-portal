@@ -6221,7 +6221,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 	private User checkLockoutRelease(User user, PasswordPolicy passwordPolicy) {
 		Date date = new Date();
-
 		int failedLoginAttempts = user.getFailedLoginAttempts();
 
 		if (failedLoginAttempts > 0) {
@@ -6262,6 +6261,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				user = userPersistence.update(user);
 			}
 		}
+
 		return user;
 	}
 
