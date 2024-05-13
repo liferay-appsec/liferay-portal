@@ -1769,7 +1769,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return;
 		}
 
-		doCheckFailureCountAndLockout(user, user.getPasswordPolicy());
+		doCheckLockout(user, user.getPasswordPolicy());
 	}
 
 	/**
@@ -6199,7 +6199,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		return searchContext;
 	}
 
-	protected User doCheckFailureCountAndLockout(
+	protected User doCheckLockout(
 			User user, PasswordPolicy passwordPolicy)
 		throws PortalException {
 
@@ -7359,7 +7359,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		if (!LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
 			PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-			user = doCheckFailureCountAndLockout(user, passwordPolicy);
+			user = doCheckLockout(user, passwordPolicy);
 
 			if (!PasswordModificationThreadLocal.isPasswordModified()) {
 				user = doCheckPasswordExpired(user, passwordPolicy);
