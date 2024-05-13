@@ -1804,7 +1804,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-		user = checkFailureCountRelease(user, passwordPolicy);
 		user = checkLockoutRelease(user, passwordPolicy);
 
 		checkLoginFailure(user);
@@ -6210,10 +6209,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return user;
 		}
 
-		// Reset failure count
-		user = checkFailureCountRelease(user, passwordPolicy);
-
-		// Reset lockout
 		user = checkLockoutRelease(user, passwordPolicy);
 
 		if (user.isLockout()) {
@@ -6224,7 +6219,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		return user;
 	}
 
-	private User checkFailureCountRelease(User user, PasswordPolicy passwordPolicy) {
+	private User checkLockoutRelease(User user, PasswordPolicy passwordPolicy) {
 		Date date = new Date();
 
 		int failedLoginAttempts = user.getFailedLoginAttempts();
@@ -6247,11 +6242,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				user = userPersistence.update(user);
 			}
 		}
-		return user;
-	}
-
-	private User checkLockoutRelease(User user, PasswordPolicy passwordPolicy) {
-		Date date = new Date();
 
 		if (user.isLockout()) {
 			Date lockoutDate = user.getLockoutDate();
