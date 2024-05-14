@@ -597,6 +597,7 @@ public class UserLocalServiceTest {
 
 		passwordPolicy.setLockout(true);
 		passwordPolicy.setLockoutDuration(3L);
+		passwordPolicy.setMaxFailure(0);
 
 		_passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
 
