@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PasswordPolicyLocalService;
+import com.liferay.portal.kernel.service.PasswordPolicyRelLocalService;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalService;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -78,6 +79,7 @@ import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portlet.passwordpoliciesadmin.util.test.PasswordPolicyTestUtil;
 import com.liferay.portal.util.DigesterImpl;
 
 import java.util.Calendar;
@@ -138,6 +140,17 @@ public class UserLocalServiceTest {
 		_bundleContext = bundle.getBundleContext();
 
 		_bundleActivator.start(_bundleContext);
+
+		_user = UserTestUtil.addUser();
+
+		_passwordPolicy = PasswordPolicyTestUtil.addPasswordPolicy(
+			ServiceContextTestUtil.getServiceContext(
+				_user.getGroupId(), _user.getUserId()),
+			false);
+
+		_passwordPolicyRelLocalService.addPasswordPolicyRel(
+			_passwordPolicy.getPasswordPolicyId(), User.class.getName(),
+			_user.getUserId());
 	}
 
 	@After
@@ -257,31 +270,26 @@ public class UserLocalServiceTest {
 	@Test
 	public void testFailureCountResetWhenResetFailureTimeIsOver()
 		throws Exception {
-
-		User user = UserTestUtil.addUser();
-
-		user.setLastFailedLoginDate(
+		_user.setLastFailedLoginDate(
 			DateUtil.newDate(
 				new Date(
 				).getTime() - 5000L));
-		user.setFailedLoginAttempts(3);
+		_user.setFailedLoginAttempts(3);
 
-		_userLocalService.updateUser(user);
+		_user = _userLocalService.updateUser(_user);
 
-		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+		_passwordPolicy.setLockout(false);
+		_passwordPolicy.setResetFailureCount(3L);
 
-		passwordPolicy.setLockout(false);
-		passwordPolicy.setResetFailureCount(3L);
-
-		_passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
+		_passwordPolicyLocalService.updatePasswordPolicy(_passwordPolicy);
 
 		_userLocalService.authenticateByEmailAddress(
-			user.getCompanyId(), user.getEmailAddress(),
+			_user.getCompanyId(), _user.getEmailAddress(),
 			RandomTestUtil.randomString(), null, null, null);
 
-		user = _userLocalService.fetchUser(user.getUserId());
+		_user = _userLocalService.fetchUser(_user.getUserId());
 
-		Assert.assertEquals(1, user.getFailedLoginAttempts());
+		Assert.assertEquals(1, _user.getFailedLoginAttempts());
 	}
 
 	@Test
@@ -585,31 +593,27 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testLockoutResetWhenLockoutResetTimeIsOver() throws Exception {
-		User user = UserTestUtil.addUser();
-
-		user.setLockout(true);
-		user.setLockoutDate(
+		_user.setLockout(true);
+		_user.setLockoutDate(
 			DateUtil.newDate(
 				new Date(
 				).getTime() - 5000L));
 
-		_userLocalService.updateUser(user);
+		_user = _userLocalService.updateUser(_user);
 
-		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+		_passwordPolicy.setLockout(true);
+		_passwordPolicy.setLockoutDuration(3L);
+		_passwordPolicy.setMaxFailure(0);
 
-		passwordPolicy.setLockout(true);
-		passwordPolicy.setLockoutDuration(3L);
-		passwordPolicy.setMaxFailure(0);
-
-		_passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
+		_passwordPolicyLocalService.updatePasswordPolicy(_passwordPolicy);
 
 		_userLocalService.authenticateByEmailAddress(
-			user.getCompanyId(), user.getEmailAddress(),
+			_user.getCompanyId(), _user.getEmailAddress(),
 			RandomTestUtil.randomString(), null, null, null);
 
-		user = _userLocalService.fetchUser(user.getUserId());
+		_user = _userLocalService.fetchUser(_user.getUserId());
 
-		Assert.assertFalse(user.isLockout());
+		Assert.assertFalse(_user.isLockout());
 	}
 
 	@Test
@@ -1087,12 +1091,14 @@ public class UserLocalServiceTest {
 	private AuditMessageProcessor _auditMessageProcessor;
 	private BundleActivator _bundleActivator;
 	private BundleContext _bundleContext;
-
-	@Inject
 	private GroupLocalService _groupLocalService;
+	private PasswordPolicy _passwordPolicy;
 
 	@Inject
 	private PasswordPolicyLocalService _passwordPolicyLocalService;
+
+	@Inject
+	private PasswordPolicyRelLocalService _passwordPolicyRelLocalService;
 
 	@Inject
 	private PortalPreferencesLocalService _portalPreferencesLocalService;
@@ -1107,6 +1113,8 @@ public class UserLocalServiceTest {
 
 	@Inject
 	private TicketLocalService _ticketLocalService;
+
+	private User _user;
 
 	@Inject
 	private UserGroupLocalService _userGroupLocalService;
