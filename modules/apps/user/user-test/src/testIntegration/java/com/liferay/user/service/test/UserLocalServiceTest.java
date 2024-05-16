@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.exception.UserLockoutException;
 import com.liferay.portal.kernel.exception.UserPasswordException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
@@ -80,11 +82,12 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portlet.passwordpoliciesadmin.util.test.PasswordPolicyTestUtil;
-import com.liferay.portal.util.DigesterImpl;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.junit.After;
@@ -140,27 +143,30 @@ public class UserLocalServiceTest {
 		_bundleContext = bundle.getBundleContext();
 
 		_bundleActivator.start(_bundleContext);
-
-		_user = UserTestUtil.addUser();
-
-		_passwordPolicy = PasswordPolicyTestUtil.addPasswordPolicy(
-			ServiceContextTestUtil.getServiceContext(
-				_user.getGroupId(), _user.getUserId()),
-			false);
-
-		_passwordPolicyRelLocalService.addPasswordPolicyRel(
-			_passwordPolicy.getPasswordPolicyId(), User.class.getName(),
-			_user.getUserId());
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		ListIterator<AutoCloseable> listIterator = autoCloseables.listIterator(
+			autoCloseables.size());
+
+		while (listIterator.hasPrevious()) {
+			AutoCloseable previousAutoCloseable = listIterator.previous();
+
+			try {
+				previousAutoCloseable.close();
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
+		}
+
 		_bundleActivator.stop(_bundleContext);
 	}
 
 	@Test
 	public void testAuthenticateByEmailAddress() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		String password = "password";
 
@@ -220,7 +226,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testDeleteUserDeletesNotificationEvents() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		_userNotificationEventLocalService.sendUserNotificationEvents(
 			user.getUserId(), null, 0, false, false,
@@ -237,7 +243,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testDeleteUserDeletesPreferences() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		_portalPreferencesLocalService.addPortalPreferences(
 			user.getUserId(), PortletKeys.PREFS_OWNER_TYPE_USER, null);
@@ -257,7 +263,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testDeleteUserDeletesTickets() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		_userLocalService.deleteUser(user);
 
@@ -270,26 +276,31 @@ public class UserLocalServiceTest {
 	@Test
 	public void testFailureCountResetWhenResetFailureTimeIsOver()
 		throws Exception {
-		_user.setLastFailedLoginDate(
+
+		User user = addUser(addPasswordPolicy());
+
+		user.setLastFailedLoginDate(
 			DateUtil.newDate(
 				new Date(
 				).getTime() - 5000L));
-		_user.setFailedLoginAttempts(3);
+		user.setFailedLoginAttempts(3);
 
-		_user = _userLocalService.updateUser(_user);
+		user = _userLocalService.updateUser(user);
 
-		_passwordPolicy.setLockout(false);
-		_passwordPolicy.setResetFailureCount(3L);
+		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-		_passwordPolicyLocalService.updatePasswordPolicy(_passwordPolicy);
+		passwordPolicy.setLockout(false);
+		passwordPolicy.setResetFailureCount(3L);
+
+		_passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
 
 		_userLocalService.authenticateByEmailAddress(
-			_user.getCompanyId(), _user.getEmailAddress(),
+			user.getCompanyId(), user.getEmailAddress(),
 			RandomTestUtil.randomString(), null, null, null);
 
-		_user = _userLocalService.fetchUser(_user.getUserId());
+		user = _userLocalService.fetchUser(user.getUserId());
 
-		Assert.assertEquals(1, _user.getFailedLoginAttempts());
+		Assert.assertEquals(1, user.getFailedLoginAttempts());
 	}
 
 	@Test
@@ -342,8 +353,8 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testGetNoAnnouncementsDeliveries() throws Exception {
-		User user1 = UserTestUtil.addUser();
-		User user2 = UserTestUtil.addUser();
+		User user1 = addUser();
+		User user2 = addUser();
 
 		_announcementsDeliveryLocalService.addUserDelivery(
 			user1.getUserId(), "general");
@@ -357,7 +368,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testGetNoGroups() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		_groupLocalService.deleteGroup(user.getGroupId());
 
@@ -524,7 +535,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testLockout() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		String password = "password";
 
@@ -593,32 +604,36 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testLockoutResetWhenLockoutResetTimeIsOver() throws Exception {
-		_user.setLockout(true);
-		_user.setLockoutDate(
+		User user = addUser(addPasswordPolicy());
+
+		user.setLockout(true);
+		user.setLockoutDate(
 			DateUtil.newDate(
 				new Date(
 				).getTime() - 5000L));
 
-		_user = _userLocalService.updateUser(_user);
+		user = _userLocalService.updateUser(user);
 
-		_passwordPolicy.setLockout(true);
-		_passwordPolicy.setLockoutDuration(3L);
-		_passwordPolicy.setMaxFailure(0);
+		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-		_passwordPolicyLocalService.updatePasswordPolicy(_passwordPolicy);
+		passwordPolicy.setLockout(true);
+		passwordPolicy.setMaxFailure(0);
+		passwordPolicy.setLockoutDuration(3L);
+
+		_passwordPolicyLocalService.updatePasswordPolicy(passwordPolicy);
 
 		_userLocalService.authenticateByEmailAddress(
-			_user.getCompanyId(), _user.getEmailAddress(),
+			user.getCompanyId(), user.getEmailAddress(),
 			RandomTestUtil.randomString(), null, null, null);
 
-		_user = _userLocalService.fetchUser(_user.getUserId());
+		user = _userLocalService.fetchUser(user.getUserId());
 
-		Assert.assertFalse(_user.isLockout());
+		Assert.assertFalse(user.isLockout());
 	}
 
 	@Test
 	public void testPasswordHistory() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
@@ -776,7 +791,8 @@ public class UserLocalServiceTest {
 			Assert.assertTrue(user.isServiceAccountUser());
 
 			PermissionThreadLocal.setPermissionChecker(
-				PermissionCheckerFactoryUtil.create(UserTestUtil.addUser()));
+				PermissionCheckerFactoryUtil.create(
+					addUser(addPasswordPolicy())));
 
 			users = _userLocalService.search(
 				TestPropsValues.getCompanyId(), null,
@@ -821,7 +837,7 @@ public class UserLocalServiceTest {
 			PermissionThreadLocal.getPermissionChecker();
 
 		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(UserTestUtil.addUser()));
+			PermissionCheckerFactoryUtil.create(addUser(addPasswordPolicy())));
 
 		try {
 			Map<Long, Integer> counts = _userLocalService.searchCounts(
@@ -849,7 +865,7 @@ public class UserLocalServiceTest {
 
 		organizationSite.setManualMembership(true);
 
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		UserGroup userGroup = UserGroupTestUtil.addUserGroup();
 
@@ -890,7 +906,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testSetRoleUsers() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		long roleId = RoleTestUtil.addGroupRole(user.getGroupId());
 
@@ -903,7 +919,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testUnsetRoleUsers() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		long roleId = RoleTestUtil.addGroupRole(user.getGroupId());
 
@@ -918,7 +934,7 @@ public class UserLocalServiceTest {
 	public void testUnsetRoleUsersLastAdministratorRole() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		UserTestUtil.addUser(group.getGroupId());
+		addUser(group.getGroupId());
 
 		List<User> groupUsers = _userLocalService.getGroupUsers(
 			group.getGroupId());
@@ -933,7 +949,7 @@ public class UserLocalServiceTest {
 	public void testUnsetRoleUsersUserRole() throws Exception {
 		Group group = GroupTestUtil.addGroup();
 
-		User user = UserTestUtil.addUser(group.getGroupId());
+		User user = addUser(group.getGroupId());
 
 		Role role = _roleLocalService.getRole(
 			group.getCompanyId(), RoleConstants.USER);
@@ -944,7 +960,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testUpdatePassword() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 		String password = RandomTestUtil.randomString(
 			UniqueStringRandomizerBumper.INSTANCE);
 
@@ -978,7 +994,7 @@ public class UserLocalServiceTest {
 					"_PASSWORDS_ENCRYPTION_ALGORITHM",
 					"PBKDF2WithHmacSHA1/160/720000")) {
 
-			User user = UserTestUtil.addUser();
+			User user = addUser(addPasswordPolicy());
 
 			String encryptedPassword = user.getPassword();
 
@@ -1029,7 +1045,7 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testUpdateUser() throws Exception {
-		User user = UserTestUtil.addUser();
+		User user = addUser(addPasswordPolicy());
 
 		TransactionConfig transactionConfig = TransactionConfig.Factory.create(
 			Propagation.REQUIRED, new Class<?>[] {Exception.class});
@@ -1065,17 +1081,62 @@ public class UserLocalServiceTest {
 		}
 	}
 
+	protected PasswordPolicy addPasswordPolicy() throws Exception {
+		PasswordPolicy passwordPolicy =
+			PasswordPolicyTestUtil.addPasswordPolicy(
+				ServiceContextTestUtil.getServiceContext(), false);
+
+		autoCloseables.add(
+			() -> _passwordPolicyLocalService.deletePasswordPolicy(
+				passwordPolicy));
+
+		return passwordPolicy;
+	}
+
+	protected User addUser() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		autoCloseables.add(() -> _userLocalService.deleteUser(user));
+
+		return user;
+	}
+
+	protected User addUser(long... groupIds) throws Exception {
+		User user = UserTestUtil.addUser(groupIds);
+
+		autoCloseables.add(() -> _userLocalService.deleteUser(user));
+
+		return user;
+	}
+
+	protected User addUser(PasswordPolicy passwordPolicy) throws Exception {
+		User user = addUser();
+
+		_passwordPolicyRelLocalService.addPasswordPolicyRel(
+			passwordPolicy.getPasswordPolicyId(), User.class.getName(),
+			user.getUserId());
+
+		return user;
+	}
+
+	protected ArrayList<AutoCloseable> autoCloseables = new ArrayList<>();
+
 	private long[] _addUsers(int numberOfUsers) throws Exception {
 		long[] userIds = new long[numberOfUsers];
 
+		PasswordPolicy passwordPolicy = addPasswordPolicy();
+
 		for (int i = 0; i < numberOfUsers; i++) {
-			User user = UserTestUtil.addUser();
+			User user = addUser(passwordPolicy);
 
 			userIds[i] = user.getUserId();
 		}
 
 		return userIds;
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		UserLocalServiceTest.class);
 
 	private static Company _company;
 
@@ -1091,8 +1152,9 @@ public class UserLocalServiceTest {
 	private AuditMessageProcessor _auditMessageProcessor;
 	private BundleActivator _bundleActivator;
 	private BundleContext _bundleContext;
+
+	@Inject
 	private GroupLocalService _groupLocalService;
-	private PasswordPolicy _passwordPolicy;
 
 	@Inject
 	private PasswordPolicyLocalService _passwordPolicyLocalService;
@@ -1113,8 +1175,6 @@ public class UserLocalServiceTest {
 
 	@Inject
 	private TicketLocalService _ticketLocalService;
-
-	private User _user;
 
 	@Inject
 	private UserGroupLocalService _userGroupLocalService;
