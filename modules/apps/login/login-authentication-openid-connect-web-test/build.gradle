@@ -4,7 +4,7 @@ dependencies {
 	testIntegrationImplementation project(
 			":apps:portal-configuration:portal-configuration-test-util")
 	testIntegrationImplementation project(
-			":apps:portal-security-sso:portal-security-sso-facebook-connect-api")
+			":apps:portal-security-sso:portal-security-sso-openid-connect-api")
 	testIntegrationImplementation project(
 			":apps:static:portal-configuration:portal-configuration-persistence-api")
 	testIntegrationImplementation project(
