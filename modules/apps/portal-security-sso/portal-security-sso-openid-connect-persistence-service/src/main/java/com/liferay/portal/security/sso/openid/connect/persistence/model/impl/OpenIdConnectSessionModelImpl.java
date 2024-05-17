@@ -63,7 +63,7 @@ public class OpenIdConnectSessionModelImpl
 	public static final Object[][] TABLE_COLUMNS = {
 		{"mvccVersion", Types.BIGINT}, {"openIdConnectSessionId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
-		{"modifiedDate", Types.TIMESTAMP}, {"accessToken", Types.VARCHAR},
+		{"modifiedDate", Types.TIMESTAMP}, {"accessToken", Types.CLOB},
 		{"accessTokenExpirationDate", Types.TIMESTAMP},
 		{"authServerWellKnownURI", Types.VARCHAR}, {"clientId", Types.VARCHAR},
 		{"idToken", Types.VARCHAR}, {"refreshToken", Types.VARCHAR}
@@ -78,7 +78,7 @@ public class OpenIdConnectSessionModelImpl
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
-		TABLE_COLUMNS_MAP.put("accessToken", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("accessToken", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("accessTokenExpirationDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("authServerWellKnownURI", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("clientId", Types.VARCHAR);
@@ -87,7 +87,7 @@ public class OpenIdConnectSessionModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table OpenIdConnectSession (mvccVersion LONG default 0 not null,openIdConnectSessionId LONG not null primary key,companyId LONG,userId LONG,modifiedDate DATE null,accessToken VARCHAR(3000) null,accessTokenExpirationDate DATE null,authServerWellKnownURI VARCHAR(256) null,clientId VARCHAR(256) null,idToken VARCHAR(3999) null,refreshToken VARCHAR(2000) null)";
+		"create table OpenIdConnectSession (mvccVersion LONG default 0 not null,openIdConnectSessionId LONG not null primary key,companyId LONG,userId LONG,modifiedDate DATE null,accessToken TEXT null,accessTokenExpirationDate DATE null,authServerWellKnownURI VARCHAR(256) null,clientId VARCHAR(256) null,idToken VARCHAR(3999) null,refreshToken VARCHAR(2000) null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table OpenIdConnectSession";

@@ -4,7 +4,7 @@ create table OpenIdConnectSession (
 	companyId LONG,
 	userId LONG,
 	modifiedDate DATE null,
-	accessToken VARCHAR(3000) null,
+	accessToken TEXT null,
 	accessTokenExpirationDate DATE null,
 	authServerWellKnownURI VARCHAR(256) null,
 	clientId VARCHAR(256) null,

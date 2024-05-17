@@ -166,7 +166,9 @@ public class OpenIdConnectSessionCacheModel
 	}
 
 	@Override
-	public void readExternal(ObjectInput objectInput) throws IOException {
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+
 		mvccVersion = objectInput.readLong();
 
 		openIdConnectSessionId = objectInput.readLong();
@@ -175,7 +177,7 @@ public class OpenIdConnectSessionCacheModel
 
 		userId = objectInput.readLong();
 		modifiedDate = objectInput.readLong();
-		accessToken = objectInput.readUTF();
+		accessToken = (String)objectInput.readObject();
 		accessTokenExpirationDate = objectInput.readLong();
 		authServerWellKnownURI = objectInput.readUTF();
 		clientId = objectInput.readUTF();
@@ -195,10 +197,10 @@ public class OpenIdConnectSessionCacheModel
 		objectOutput.writeLong(modifiedDate);
 
 		if (accessToken == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(accessToken);
+			objectOutput.writeObject(accessToken);
 		}
 
 		objectOutput.writeLong(accessTokenExpirationDate);
