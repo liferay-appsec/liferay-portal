@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletURLFactory;
@@ -32,6 +33,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Accessor;
@@ -118,6 +120,13 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 
 					_loginMVCActionCommand.processAction(
 						actionRequest, actionResponse);
+
+
+					User user = _userLocalService.fetchUser(userId);
+					if (user.getLastLoginDate() == null) {
+						_userLocalService.updateLastLogin(userId, user.getLoginIP());
+						_userLocalService.updatePasswordReset(userId, false);
+					}
 
 					return;
 				}
@@ -387,5 +396,8 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private PortletURLFactory _portletURLFactory;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }
