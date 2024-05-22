@@ -1,4 +1,7 @@
 dependencies {
+/*
+	testIntegrationImplementation group: "org.mockito", name: "mockito-core", version: "1.10.8"
+*/
 	testIntegrationImplementation project(
 			":apps:layout:layout-utility-page-api")
 	testIntegrationImplementation project(
@@ -9,4 +12,8 @@ dependencies {
 			":apps:static:portal-configuration:portal-configuration-persistence-api")
 	testIntegrationImplementation project(
 			":test:arquillian-extension-junit-bridge")
+	testIntegrationImplementation project(
+			":apps:oauth-client:oauth-client-persistence-api")
+	testIntegrationImplementation project(
+			":apps:oauth-client:oauth-client-persistence-service")
 }
