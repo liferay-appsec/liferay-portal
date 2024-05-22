@@ -9,6 +9,10 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
+import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
+import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalServiceUtil;
+import com.liferay.oauth.client.persistence.service.persistence.OAuthClientEntryPersistence;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -16,6 +20,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.servlet.taglib.BaseJSPDynamicInclude;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -39,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -70,7 +76,7 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	}
 
 	@Test
-	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled()
+	public void testIncludeOnUtilityPageWithFacebookConnectEnable()
 		throws Exception {
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
@@ -79,7 +85,7 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 					 HashMapDictionaryBuilder.<String, Object>put(
 						 "enabled", true
 					 ).put(
-						 "oauthAuthURL", RandomTestUtil.randomString()
+						 "tokenRefreshOffset", 400
 					 ).build())) {
 
 			_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
@@ -96,14 +102,72 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(layout);
 
-			_dynamicInclude.include(
-				mockHttpServletRequest, new MockHttpServletResponse(),
+			MockHttpServletResponse mockHttpServletResponse = new MockHttpServletResponse();
+
+			String _tokenRequestParametersJSON = "{\"grant_type\":\"authorization_code\",\"scope\":\"openid email profile\"}";
+			String _infoJson = "{\"removed Secrets and client ids, probably the test wont run without these, but I can not git push\"}";
+			String _authRequestParametersJSON = "{\"scope\":\"openid email profile\",\"response_type\":\"code\"}";
+			String _oidcUserInfoMapperJSON = "{\"address\":{\"zip\":\"address->postal_code\",\"country\":\"address->country\",\"city\":\"address->locality\",\"addressType\":\"\",\"street\":\"address->street_address\",\"region\":\"address->region\"},\"phone\":{\"phoneType\":\"\",\"phone\":\"phone_number\"},\"contact\":{\"birthdate\":\"birthdate\",\"gender\":\"gender\"},\"users_roles\":{\"roles\":\"\"},\"user\":{\"firstName\":\"given_name\",\"lastName\":\"family_name\",\"emailAddress\":\"email\",\"jobTitle\":\"\",\"languageId\":\"locale\",\"middleName\":\"middle_name\",\"screenName\":\"\"}}";
+
+			_oAuthClientEntryLocalService.addOAuthClientEntry(TestPropsValues.getUserId(), _authRequestParametersJSON,
+				"https://accounts.google.com/.well-known/openid-configuration", _infoJson,
+				_oidcUserInfoMapperJSON, _tokenRequestParametersJSON);
+
+			//it is ok
+
+			/*OAuthClientEntry oAuthClientEntry = _persistence.create(RandomTestUtil.nextLong());
+			oAuthClientEntry.setMvccVersion(RandomTestUtil.nextLong());
+			oAuthClientEntry.setUserName(RandomTestUtil.randomString());
+
+			oAuthClientEntry.setCreateDate(RandomTestUtil.nextDate());
+
+			oAuthClientEntry.setModifiedDate(RandomTestUtil.nextDate());
+
+			oAuthClientEntry.setAuthRequestParametersJSON(
 				RandomTestUtil.randomString());
 
-			Assert.assertNull(
-				mockHttpServletRequest.getAttribute(
-					OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME));
+			oAuthClientEntry.setAuthServerWellKnownURI(
+				RandomTestUtil.randomString());
+
+			oAuthClientEntry.setClientId(RandomTestUtil.randomString());
+
+			oAuthClientEntry.setInfoJSON(RandomTestUtil.randomString());
+
+			oAuthClientEntry.setOIDCUserInfoMapperJSON(
+				RandomTestUtil.randomString());
+
+			oAuthClientEntry.setTokenRequestParametersJSON(
+				RandomTestUtil.randomString());
+
+
+			oAuthClientEntry.setAuthServerWellKnownURI("openid-configuration");
+			oAuthClientEntry.setCompanyId(_group.getCompanyId());
+			oAuthClientEntry.setUserId(TestPropsValues.getUserId());
+			*//*ouauthBaeimpl.persist();*//*
+			OAuthClientEntryLocalServiceUtil.addOAuthClientEntry(_persistence.update(oAuthClientEntry));
+			*//*_persistence.update(oAuthClientEntry);*/
+
+			//1setup = mvcRenderCommandName = "/login/login"
+			/*String mvcRenderCommandName = ParamUtil.getString(
+				httpServletRequest, "mvcRenderCommandName");*/
+
+			//!_openIdConnect.isEnabled(themeDisplay.getCompanyId()) = true
+
+			mockHttpServletRequest.setParameter("hello Alvaro", OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME);
+			/*mockHttpServletRequest.setAttribute(WebKeys.THEME_DISPLAY,);*/
+
+
+			_dynamicInclude.include(
+				mockHttpServletRequest, mockHttpServletResponse,
+				RandomTestUtil.randomString());
+
+			Assert.assertEquals(mockHttpServletResponse.getIncludedUrl(), "trial");
+
+	/*		BaseJSPDynamicInclude trialMock = Mockito.mock(BaseJSPDynamicInclude.class);
+
+			Mockito.verifyNoInteractions(trialMock); //.include(mockHttpServletRequest, mockHttpServletResponse, "key");*/
 		}
+
 	}
 
 	@Test
@@ -202,6 +266,12 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	@Inject
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
+
+	@Inject
+	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
+
+	@Inject
+	private OAuthClientEntryPersistence _persistence;
 
 	private ServiceContext _serviceContext;
 
