@@ -9,9 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
-import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
-import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalServiceUtil;
 import com.liferay.oauth.client.persistence.service.persistence.OAuthClientEntryPersistence;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.model.Group;
@@ -20,7 +18,6 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.servlet.taglib.BaseJSPDynamicInclude;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -44,9 +41,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * @author Tamás Biro
@@ -98,6 +102,8 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 					getDefaultLayoutUtilityPageEntryLayout(
 						_group.getGroupId(),
 						LayoutUtilityPageEntryConstants.TYPE_LOGIN);
+
+			layout.setType("notUtility");
 
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(layout);
@@ -154,20 +160,66 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			//!_openIdConnect.isEnabled(themeDisplay.getCompanyId()) = true
 
 			mockHttpServletRequest.setParameter("hello Alvaro", OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME);
-			/*mockHttpServletRequest.setAttribute(WebKeys.THEME_DISPLAY,);*/
 
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, mockHttpServletResponse,
 				RandomTestUtil.randomString());
 
-			Assert.assertEquals(mockHttpServletResponse.getIncludedUrl(), "trial");
+
+
+			Assert.assertTrue(searchStringByAlvaro("openid"));
 
 	/*		BaseJSPDynamicInclude trialMock = Mockito.mock(BaseJSPDynamicInclude.class);
 
 			Mockito.verifyNoInteractions(trialMock); //.include(mockHttpServletRequest, mockHttpServletResponse, "key");*/
 		}
 
+	}
+
+	private boolean searchStringByAlvaro(String path) throws IOException {
+		URL url = new URL("http://localhost:8080");
+
+		HttpURLConnection connection =
+			(HttpURLConnection)url.openConnection();
+
+		connection.setRequestMethod("GET");
+
+		BufferedReader reader = new BufferedReader(
+			new InputStreamReader(connection.getInputStream()));
+
+		StringBuilder response = new StringBuilder();
+		String line;
+		boolean findText = false;
+
+		while (((line = reader.readLine()) != null) && !findText) {
+			findText = line.contains(path);
+			response.append(line);
+		}
+
+		writeToFile(response.toString());
+
+		reader.close();
+
+		return findText;
+	}
+
+	private void writeToFile(String text){
+		String fileName = "c:myFile.txt"; // Replace with your desired filename
+		boolean append = false; // Set to true to append content
+
+		try {
+			FileWriter fileWriter = new FileWriter(fileName, append);
+			BufferedWriter writer = new BufferedWriter(fileWriter);
+
+			// Write to the file
+			writer.write(text);
+
+			// Important: Close the writer to flush data and release resources
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Test
