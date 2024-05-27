@@ -1,7 +1,4 @@
 dependencies {
-/*
-	testIntegrationImplementation group: "org.mockito", name: "mockito-core", version: "1.10.8"
-*/
 	testIntegrationImplementation project(
 			":apps:layout:layout-utility-page-api")
 	testIntegrationImplementation project(
