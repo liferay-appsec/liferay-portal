@@ -8,7 +8,9 @@ package com.liferay.login.authentication.openid.connect.web.internal.servlet.tag
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
+import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -45,6 +47,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -63,20 +67,28 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 
 	@Before
 	public void setUp() throws Exception {
+		_userId = TestPropsValues.getUserId();
+
 		_group = GroupTestUtil.addGroup(
-			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(), 0);
+			TestPropsValues.getCompanyId(), _userId, 0);
+
+		_oAuthClientEntry = _addOAuthClientEntries(_userId);
 
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			_group.getGroupId());
 
 		ServiceContextThreadLocal.pushServiceContext(_serviceContext);
 
-		_mockHttpServletResponse = new MockHttpServletResponse();
+		_layoutUtilityPageEntry = _addLayoutUtilityPageEntryToLocalService();
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws PortalException {
 		ServiceContextThreadLocal.popServiceContext();
+
+		_oAuthClientEntryLocalService.deleteOAuthClientEntry(_oAuthClientEntry);
+
+		//_layoutUtilityPageEntryLocalService.deleteLayoutUtilityPageEntry(_layoutUtilityPageEntry);
 	}
 
 	@Test
@@ -92,12 +104,10 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 						"tokenRefreshOffset", 400
 					).build())) {
 
-			_addLayoutUtilityPageEntryToLocalService();
-
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("notUtility"));
 
-			_addOAuthClientEntries();
+			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -118,12 +128,10 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 						 "tokenRefreshOffset", 400
 					 ).build())) {
 
-			_addLayoutUtilityPageEntryToLocalService();
-
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("utility"));
 
-			_addOAuthClientEntries();
+			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -144,12 +152,10 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 						 "tokenRefreshOffset", 400
 					 ).build())) {
 
-			_addLayoutUtilityPageEntryToLocalService();
-
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("utility"));
 
-			_addOAuthClientEntries();
+			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -159,16 +165,16 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 		}
 	}
 
-	private void _addLayoutUtilityPageEntryToLocalService()
+	private LayoutUtilityPageEntry _addLayoutUtilityPageEntryToLocalService()
 		throws PortalException {
 
-		_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
+		return _layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(), 0, 0, true,
 			RandomTestUtil.randomString(),
 			LayoutUtilityPageEntryConstants.TYPE_LOGIN, 0, _serviceContext);
 	}
 
-	private void _addOAuthClientEntries() throws PortalException {
+	private OAuthClientEntry _addOAuthClientEntries(long userId) throws PortalException {
 		String authRequestParametersJSON =
 			"{\"scope\":\"openid email profile\",\"response_type\":\"code\"}";
 		String authServerWellKnowUri =
@@ -180,8 +186,8 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 		String tokenRequestParametersJSON =
 			"{\"grant_type\":\"authorization_code\",\"scope\":\"openid email profile\"}";
 
-		_oAuthClientEntryLocalService.addOAuthClientEntry(
-			TestPropsValues.getUserId(), authRequestParametersJSON,
+		return _oAuthClientEntryLocalService.addOAuthClientEntry(
+			userId, authRequestParametersJSON,
 			authServerWellKnowUri, infoJSON, oidcUserInfoMapperJSON,
 			tokenRequestParametersJSON);
 	}
@@ -236,10 +242,32 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			response.append(line);
 		}
 
+		writeToFile(response.toString());
+
 		reader.close();
 
 		return isContain;
 	}
+
+	private void writeToFile(String text){
+		String fileName = "c:myFile.txt"; // Replace with your desired filename
+		boolean append = false; // Set to true to append content
+
+		try {
+			FileWriter fileWriter = new FileWriter(fileName, append);
+			BufferedWriter writer = new BufferedWriter(fileWriter);
+
+			// Write to the file
+			writer.write(text);
+
+			// Important: Close the writer to flush data and release resources
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private long _userId;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
@@ -252,8 +280,8 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	@DeleteAfterTestRun
 	private Group _group;
 
-	@Inject
-	private LayoutLocalService _layoutLocalService;
+	@DeleteAfterTestRun
+	private LayoutUtilityPageEntry _layoutUtilityPageEntry;
 
 	@Inject
 	private LayoutUtilityPageEntryLayoutProvider
@@ -263,10 +291,11 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
 
-	private MockHttpServletResponse _mockHttpServletResponse;
-
 	@Inject
 	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
+
+	@DeleteAfterTestRun
+	private OAuthClientEntry _oAuthClientEntry;
 
 	private ServiceContext _serviceContext;
 
