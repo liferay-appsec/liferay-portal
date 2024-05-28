@@ -27,8 +27,6 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
@@ -46,7 +44,11 @@ import org.junit.runner.RunWith;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * @author Tamás Biro
@@ -101,66 +103,59 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 				mockHttpServletRequest, _mockHttpServletResponse,
 				RandomTestUtil.randomString());
 
-			String[] props = PropsUtil.getArray(
-				PropsKeys.LOGIN_FORM_NAVIGATION_PRE);
-
-			for (String string: props){
-				System.out.println(string);
-			}
-
-			Assert.assertTrue(Arrays.asList(props).contains("openid_connect.jsp"));
-
-			/*Assert.assertNull(
-				mockHttpServletRequest.getAttribute(
-					OpenIdConnectWebKeys.OPEN_ID_CONNECT_ACTION_URL)); //toDo: how to check if mockHttpServletResponse contains anything relevant to the test???*/
-		}
-	}
-
-	@Test
-	public void testIncludeOnUtilityPageWithOpenIdConnectDisabled() throws Exception {
-		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(
-					OpenIdConnectConfiguration.class.getName(),
-					HashMapDictionaryBuilder.<String, Object>put(
-						"enabled", false
-					).put(
-						"oauthAuthURL", RandomTestUtil.randomString()
-					).build())) {
-
-			MockHttpServletRequest mockHttpServletRequest =
-				_getMockHttpServletRequest();
-
-			_dynamicInclude.include(
-				mockHttpServletRequest, new MockHttpServletResponse(),
-				RandomTestUtil.randomString());
-
-			Assert.assertNull(
-				mockHttpServletRequest.getAttribute(
-					OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME));
+			Assert.assertTrue(_isStringInResponse("openid_connect_request"));
 		}
 	}
 
 	@Test
 	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled() throws Exception {
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(
-					OpenIdConnectConfiguration.class.getName(),
-					HashMapDictionaryBuilder.<String, Object>put(
-						"enabled", true
-					).put(
-						"oauthAuthURL", RandomTestUtil.randomString()
-					).build())) {
+				 new ConfigurationTemporarySwapper(
+					 OpenIdConnectConfiguration.class.getName(),
+					 HashMapDictionaryBuilder.<String, Object>put(
+						 "enabled", true
+					 ).put(
+						 "tokenRefreshOffset", 400
+					 ).build())) {
+
+			_addLayoutUtilityPageEntryToLocalService();
 
 			MockHttpServletRequest mockHttpServletRequest =
-				_getMockHttpServletRequest();
+				_getMockHttpServletRequest(_getLayout("utility"));
+
+			_addOAuthClientEntries();
 
 			_dynamicInclude.include(
-				mockHttpServletRequest, new MockHttpServletResponse(),
+				mockHttpServletRequest, _mockHttpServletResponse,
 				RandomTestUtil.randomString());
 
-			Assert.assertNotNull(
-				mockHttpServletRequest.getAttribute(
-					OpenIdConnectWebKeys.OPEN_ID_CONNECT_REQUEST_ACTION_NAME));
+			Assert.assertFalse(_isStringInResponse("openid_connect_request"));
+		}
+	}
+
+	@Test
+	public void testIncludeOnUtilityPageWithOpenIdConnectDisabled() throws Exception {
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				 new ConfigurationTemporarySwapper(
+					 OpenIdConnectConfiguration.class.getName(),
+					 HashMapDictionaryBuilder.<String, Object>put(
+						 "enabled", false
+					 ).put(
+						 "tokenRefreshOffset", 400
+					 ).build())) {
+
+			_addLayoutUtilityPageEntryToLocalService();
+
+			MockHttpServletRequest mockHttpServletRequest =
+				_getMockHttpServletRequest(_getLayout("utility"));
+
+			_addOAuthClientEntries();
+
+			_dynamicInclude.include(
+				mockHttpServletRequest, _mockHttpServletResponse,
+				RandomTestUtil.randomString());
+
+			Assert.assertFalse(_isStringInResponse("openid_connect_request"));
 		}
 	}
 
@@ -203,15 +198,6 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 		return layout;
 	}
 
-	private MockHttpServletRequest _getMockHttpServletRequest()
-		throws Exception {
-
-		Layout layout = _layoutLocalService.fetchDefaultLayout(
-			TestPropsValues.getGroupId(), false);
-
-		return _getMockHttpServletRequest(layout);
-	}
-
 	private MockHttpServletRequest _getMockHttpServletRequest(Layout layout)
 		throws Exception {
 
@@ -228,6 +214,31 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
 		return mockHttpServletRequest;
+	}
+
+	private boolean _isStringInResponse(String searchString) throws IOException {
+		URL url = new URL("http://localhost:8080/c/portal/login");
+
+		HttpURLConnection connection =
+			(HttpURLConnection)url.openConnection();
+
+		connection.setRequestMethod("GET");
+
+		BufferedReader reader = new BufferedReader(
+			new InputStreamReader(connection.getInputStream()));
+
+		StringBuilder response = new StringBuilder();
+		String line;
+		boolean isContain = false;
+
+		while (((line = reader.readLine()) != null) && !isContain) {
+			isContain = line.contains(searchString);
+			response.append(line);
+		}
+
+		reader.close();
+
+		return isContain;
 	}
 
 	@Inject
