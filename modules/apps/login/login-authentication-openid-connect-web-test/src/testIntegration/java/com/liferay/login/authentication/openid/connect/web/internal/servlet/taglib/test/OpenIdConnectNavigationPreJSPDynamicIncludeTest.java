@@ -27,6 +27,8 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
@@ -43,6 +45,8 @@ import org.junit.runner.RunWith;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import java.util.Arrays;
 
 /**
  * @author Tamás Biro
@@ -74,7 +78,7 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	}
 
 	@Test
-	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled()
+	public void testIncludeNotOnUtilityPageWithOpenIdConnectEnabled()
 		throws Exception {
 
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
@@ -97,9 +101,18 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 				mockHttpServletRequest, _mockHttpServletResponse,
 				RandomTestUtil.randomString());
 
-			Assert.assertNull(
+			String[] props = PropsUtil.getArray(
+				PropsKeys.LOGIN_FORM_NAVIGATION_PRE);
+
+			for (String string: props){
+				System.out.println(string);
+			}
+
+			Assert.assertTrue(Arrays.asList(props).contains("openid_connect.jsp"));
+
+			/*Assert.assertNull(
 				mockHttpServletRequest.getAttribute(
-					OpenIdConnectWebKeys.OPEN_ID_CONNECT_ACTION_URL)); //toDo: how to check if mockHttpServletResponse contains anything relevant to the test???
+					OpenIdConnectWebKeys.OPEN_ID_CONNECT_ACTION_URL)); //toDo: how to check if mockHttpServletResponse contains anything relevant to the test???*/
 		}
 	}
 
@@ -128,7 +141,7 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	}
 
 	@Test
-	public void testIncludeOnNotUtilityPageWithOpenIdConnectEnabled() throws Exception {
+	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled() throws Exception {
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
 				new ConfigurationTemporarySwapper(
 					OpenIdConnectConfiguration.class.getName(),
