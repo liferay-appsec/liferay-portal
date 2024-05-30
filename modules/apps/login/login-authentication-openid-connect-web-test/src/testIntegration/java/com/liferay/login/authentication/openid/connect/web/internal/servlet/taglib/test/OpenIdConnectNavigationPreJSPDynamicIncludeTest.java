@@ -17,7 +17,6 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
@@ -31,9 +30,17 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration;
-import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -45,14 +52,6 @@ import org.junit.runner.RunWith;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  * @author Tamás Biro
@@ -107,7 +106,10 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("notUtility"));
 
-			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
+			MockHttpServletResponse _mockHttpServletResponse =
+				new MockHttpServletResponse();
+
+			_layoutUtilityPageEntry = _addLayoutUtilityPageEntryToLocalService();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -118,20 +120,23 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	}
 
 	@Test
-	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled() throws Exception {
+	public void testIncludeOnUtilityPageWithOpenIdConnectDisabled()
+		throws Exception {
+
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				 new ConfigurationTemporarySwapper(
-					 OpenIdConnectConfiguration.class.getName(),
-					 HashMapDictionaryBuilder.<String, Object>put(
-						 "enabled", true
-					 ).put(
-						 "tokenRefreshOffset", 400
-					 ).build())) {
+				new ConfigurationTemporarySwapper(
+					OpenIdConnectConfiguration.class.getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"enabled", false
+					).put(
+						"tokenRefreshOffset", 400
+					).build())) {
 
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("utility"));
 
-			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
+			MockHttpServletResponse _mockHttpServletResponse =
+				new MockHttpServletResponse();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -142,20 +147,23 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	}
 
 	@Test
-	public void testIncludeOnUtilityPageWithOpenIdConnectDisabled() throws Exception {
+	public void testIncludeOnUtilityPageWithOpenIdConnectEnabled()
+		throws Exception {
+
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				 new ConfigurationTemporarySwapper(
-					 OpenIdConnectConfiguration.class.getName(),
-					 HashMapDictionaryBuilder.<String, Object>put(
-						 "enabled", false
-					 ).put(
-						 "tokenRefreshOffset", 400
-					 ).build())) {
+				new ConfigurationTemporarySwapper(
+					OpenIdConnectConfiguration.class.getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"enabled", true
+					).put(
+						"tokenRefreshOffset", 400
+					).build())) {
 
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(_getLayout("utility"));
 
-			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
+			MockHttpServletResponse _mockHttpServletResponse =
+				new MockHttpServletResponse();
 
 			_dynamicInclude.include(
 				mockHttpServletRequest, _mockHttpServletResponse,
@@ -174,22 +182,23 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 			LayoutUtilityPageEntryConstants.TYPE_LOGIN, 0, _serviceContext);
 	}
 
-	private OAuthClientEntry _addOAuthClientEntries(long userId) throws PortalException {
-		String authRequestParametersJSON =
-			"{\"scope\":\"openid email profile\",\"response_type\":\"code\"}";
+	private OAuthClientEntry _addOAuthClientEntries(long userId)
+		throws PortalException {
+
+		String authRequestParametersJSON = "{}";
 		String authServerWellKnowUri =
 			"https://accounts.google.com/.well-known/openid-configuration";
-		String infoJSON =
-			"{\"grant_types\":[\"authorization_code\",\"refresh_token\"],\"application_type\":\"web\",\"client_secret_expires_at\":0,\"scope\":\"openid email profile\",\"client_secrex\":\"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\",\"client_name\":\"Client to Google\",\"client_id\":\"310138411857-00g4940k2hn6kj778jo09rcbb5jbqp3f.apps.googleusercontent.com\",\"token_endpoint_auth_method\":\"client_secret_basic\",\"response_types\":[\"code\"],\"id_token_signed_response_alg\":\"RS256\"}";
+		String infoJSON = "{\"client_id\":\"mocked_id\"}";
 		String oidcUserInfoMapperJSON =
-			"{\"address\":{\"zip\":\"address->postal_code\",\"country\":\"address->country\",\"city\":\"address->locality\",\"addressType\":\"\",\"street\":\"address->street_address\",\"region\":\"address->region\"},\"phone\":{\"phoneType\":\"\",\"phone\":\"phone_number\"},\"contact\":{\"birthdate\":\"birthdate\",\"gender\":\"gender\"},\"users_roles\":{\"roles\":\"\"},\"user\":{\"firstName\":\"given_name\",\"lastName\":\"family_name\",\"emailAddress\":\"email\",\"jobTitle\":\"\",\"languageId\":\"locale\",\"middleName\":\"middle_name\",\"screenName\":\"\"}}";
-		String tokenRequestParametersJSON =
-			"{\"grant_type\":\"authorization_code\",\"scope\":\"openid email profile\"}";
+			"{\"address\":{\"zip\":\"address->postal_code\",\"country\":\"address->country\",\"city\":\"address->locality\",\"addressType\":\"\"," +
+				"\"street\":\"address->street_address\",\"region\":\"address->region\"},\"phone\":{\"phoneType\":\"\",\"phone\":\"phone_number\"}," +
+					"\"contact\":{\"birthdate\":\"birthdate\",\"gender\":\"gender\"},\"users_roles\":{\"roles\":\"\"},\"user\":{\"firstName\":\"given_name\"," +
+						"\"lastName\":\"family_name\",\"emailAddress\":\"email\",\"jobTitle\":\"\",\"languageId\":\"locale\",\"middleName\":\"middle_name\",\"screenName\":\"\"}}";
+		String tokenRequestParametersJSON = "{}";
 
 		return _oAuthClientEntryLocalService.addOAuthClientEntry(
-			userId, authRequestParametersJSON,
-			authServerWellKnowUri, infoJSON, oidcUserInfoMapperJSON,
-			tokenRequestParametersJSON);
+			userId, authRequestParametersJSON, authServerWellKnowUri, infoJSON,
+			oidcUserInfoMapperJSON, tokenRequestParametersJSON);
 	}
 
 	private Layout _getLayout(String type) throws PortalException {
@@ -222,11 +231,12 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 		return mockHttpServletRequest;
 	}
 
-	private boolean _isStringInResponse(String searchString) throws IOException {
+	private boolean _isStringInResponse(String searchString)
+		throws IOException {
+
 		URL url = new URL("http://localhost:8080/c/portal/login");
 
-		HttpURLConnection connection =
-			(HttpURLConnection)url.openConnection();
+		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 
 		connection.setRequestMethod("GET");
 
@@ -249,25 +259,27 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 		return isContain;
 	}
 
-	private void writeToFile(String text){
+	private void writeToFile(String text) {
 		String fileName = "c:myFile.txt"; // Replace with your desired filename
 		boolean append = false; // Set to true to append content
 
 		try {
 			FileWriter fileWriter = new FileWriter(fileName, append);
+
 			BufferedWriter writer = new BufferedWriter(fileWriter);
 
 			// Write to the file
+
 			writer.write(text);
 
 			// Important: Close the writer to flush data and release resources
+
 			writer.close();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
-	private long _userId;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
@@ -291,12 +303,13 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
 
-	@Inject
-	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
-
 	@DeleteAfterTestRun
 	private OAuthClientEntry _oAuthClientEntry;
 
+	@Inject
+	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
+
 	private ServiceContext _serviceContext;
+	private long _userId;
 
 }
