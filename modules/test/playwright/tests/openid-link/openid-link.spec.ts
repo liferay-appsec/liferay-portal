@@ -4,16 +4,11 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {loginTest} from '../../fixtures/loginTest';
+import performLogin from "../../utils/performLogin";
+import {getRandomInt} from "../../utils/getRandomInt";
 
 test('when openId connection is enabled and set on NOT Utility page, then the openId connection link is visible during sign in', async ({ page }) => {
-    await page.goto("http://localhost:8080");
-    await page.getByRole('button', { name: 'Sign In' }).click();
-    await page.getByLabel('Email Address').click();
-    await page.getByLabel('Email Address').fill('test@liferay.com');
-    await page.getByLabel('Password').click();
-    await page.getByLabel('Password').fill('test');
-    await page.getByLabel('Sign In- Loading').getByRole('button', { name: 'Sign In' }).click();
+    await performLogin(page, 'test');
     await page.getByLabel('Open Applications Menu').click();
     await page.getByRole('tab', { name: 'Control Panel' }).click();
     await page.getByRole('menuitem', { name: 'Instance Settings' }).click();
