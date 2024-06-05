@@ -41,15 +41,6 @@ public class OfflineOpenIdConnectSessionManagerTest {
 
 	@Test
 	public void testStartOpenIdConnectSession() throws Exception {
-		OfflineOpenIdConnectSessionManager offlineOpenIdConnectSessionManager =
-			new OfflineOpenIdConnectSessionManager();
-
-		OpenIdConnectSession openIdConnectSession = Mockito.mock(
-			OpenIdConnectSession.class);
-
-		OpenIdConnectSessionLocalService openIdConnectSessionLocalService =
-			Mockito.mock(OpenIdConnectSessionLocalService.class);
-
 		JSONFactory jsonFactory = new JSONFactoryImpl();
 
 		JSONObject oidcTokensValuesJSONObject = jsonFactory.createJSONObject(
@@ -70,16 +61,19 @@ public class OfflineOpenIdConnectSessionManagerTest {
 		String idTokenString = oidcTokensValuesJSONObject.getString(
 			"idTokenString");
 
-		RefreshToken refreshToken = new RefreshToken(
-			oidcTokensValuesJSONObject.getString("refreshToken"));
+		OfflineOpenIdConnectSessionManager offlineOpenIdConnectSessionManager =
+			new OfflineOpenIdConnectSessionManager();
 
-		OIDCTokens oidcTokens = new OIDCTokens(
-			idTokenString, accessToken, refreshToken);
+		OpenIdConnectSessionLocalService openIdConnectSessionLocalService =
+			Mockito.mock(OpenIdConnectSessionLocalService.class);
 
 		ReflectionTestUtil.setFieldValue(
 			offlineOpenIdConnectSessionManager,
 			"_openIdConnectSessionLocalService",
 			openIdConnectSessionLocalService);
+
+		OpenIdConnectSession openIdConnectSession = Mockito.mock(
+			OpenIdConnectSession.class);
 
 		Mockito.when(
 			openIdConnectSessionLocalService.fetchOpenIdConnectSession(
@@ -90,7 +84,11 @@ public class OfflineOpenIdConnectSessionManagerTest {
 
 		offlineOpenIdConnectSessionManager.startOpenIdConnectSession(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			oidcTokens, RandomTestUtil.randomLong());
+			new OIDCTokens(
+				idTokenString, accessToken,
+				new RefreshToken(
+					oidcTokensValuesJSONObject.getString("refreshToken"))),
+			RandomTestUtil.randomLong());
 
 		Mockito.verify(
 			openIdConnectSession
