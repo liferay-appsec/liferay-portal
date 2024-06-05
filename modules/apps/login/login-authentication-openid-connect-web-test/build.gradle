@@ -1,5 +1,9 @@
 dependencies {
 	testIntegrationImplementation project(
+			":apps:login:login-web-api")
+	testIntegrationImplementation project(
+			":apps:portal-security-sso:portal-security-sso-openid-connect-api")
+	testIntegrationImplementation project(
 			":apps:layout:layout-utility-page-api")
 	testIntegrationImplementation project(
 			":apps:portal-configuration:portal-configuration-test-util")

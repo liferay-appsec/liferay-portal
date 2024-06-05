@@ -10,16 +10,21 @@ import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryCo
 import com.liferay.layout.utility.page.kernel.provider.LayoutUtilityPageEntryLayoutProvider;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
+import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderRequest;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -28,6 +33,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration;
 import com.liferay.portal.test.rule.Inject;
@@ -41,6 +47,7 @@ import java.io.InputStreamReader;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -171,6 +178,66 @@ public class OpenIdConnectNavigationPreJSPDynamicIncludeTest {
 
 			Assert.assertFalse(_isStringInResponse("openid_connect_request"));
 		}
+	}
+
+	@Test
+	public void testIncludeRegularPageWithOpenIdConnectEnabled() throws Exception {
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				 new ConfigurationTemporarySwapper(
+					 OpenIdConnectConfiguration.class.getName(),
+					 HashMapDictionaryBuilder.<String, Object>put(
+						 "enabled", true
+					 ).put(
+						 "tokenRefreshOffset", 400
+					 ).build())) {
+
+			MockHttpServletRequest mockHttpServletRequest =
+				_getMockHttpServletRequest(
+					_addLayout(_group.getGroupId(), false));
+
+			MockLiferayPortletRenderRequest mockLiferayPortletRenderRequest =
+				new MockLiferayPortletRenderRequest() {
+
+					@Override
+					public String getPortletName() {
+						return LoginPortletKeys.LOGIN;
+					}
+				};
+
+			mockLiferayPortletRenderRequest.addParameter(
+				"p_p_state", "maximized");
+
+			mockLiferayPortletRenderRequest.setAttribute(
+				JavaConstants.JAVAX_PORTLET_REQUEST, mockLiferayPortletRenderRequest);
+
+			MockHttpServletResponse _mockHttpServletResponse = new MockHttpServletResponse();
+
+			_dynamicInclude.include(
+				mockHttpServletRequest, _mockHttpServletResponse,
+				RandomTestUtil.randomString());
+
+			String content = _mockHttpServletResponse.getContentAsString();
+
+			Assert.assertTrue(content.contains("OpenId Connect"));
+		}
+	}
+
+	private Layout _addLayout(long groupId, boolean privateLayout)
+		throws Exception {
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(groupId);
+
+		return LayoutLocalServiceUtil.addLayout(
+			TestPropsValues.getUserId(), groupId, privateLayout,
+			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(),
+			LayoutConstants.TYPE_PORTLET, StringPool.BLANK, false,
+			Collections.emptyMap(), serviceContext);
 	}
 
 	private LayoutUtilityPageEntry _addLayoutUtilityPageEntryToLocalService()
