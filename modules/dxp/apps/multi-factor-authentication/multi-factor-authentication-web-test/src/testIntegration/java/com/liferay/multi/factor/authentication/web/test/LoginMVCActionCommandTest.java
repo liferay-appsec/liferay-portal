@@ -3,31 +3,24 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.login.internal.portlet.action.test;
+package com.liferay.multi.factor.authentication.web.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.layout.test.util.ContentLayoutTestUtil;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
-import com.liferay.portal.kernel.model.ResourceConstants;
-import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
@@ -41,15 +34,13 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.kernel.service.UserLocalService;
 
-
-
-import java.net.HttpURLConnection;
-import java.net.URL;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -58,9 +49,6 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 
 /**
  * @author Alvaro Saugar
@@ -78,16 +66,11 @@ public class LoginMVCActionCommandTest {
 		//_originalName = PrincipalThreadLocal.getName();
 
 		_group = GroupTestUtil.addGroup();
-/*
-		_serviceContext = ServiceContextTestUtil.getServiceContext(
-			_group.getGroupId());
-
-		ServiceContextThreadLocal.pushServiceContext(_serviceContext);
-
-
- */
-
-
+		/*
+				_serviceContext = ServiceContextTestUtil.getServiceContext(
+					_group.getGroupId());
+				ServiceContextThreadLocal.pushServiceContext(_serviceContext);
+		 */
 		_company = _companyLocalService.getCompany(_group.getCompanyId());
 	}
 
@@ -96,65 +79,116 @@ public class LoginMVCActionCommandTest {
 		ServiceContextThreadLocal.popServiceContext();
 	}
 
-
 	@Test
 	public void testNormalStateWhenLoginFromAnUtilityPage() throws Exception {
 		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				 new ConfigurationTemporarySwapper(
-					 "com.liferay.multi.factor.authentication.email.otp." +
-					 "configuration.MFAEmailOTPConfiguration",
-					 HashMapDictionaryBuilder.<String, Object>put(
-						 "enabled", true
-					 ).build())) {
+				new ConfigurationTemporarySwapper(
+					"com.liferay.multi.factor.authentication.email.otp." +
+						"configuration.MFAEmailOTPConfiguration",
+					HashMapDictionaryBuilder.<String, Object>put(
+						"enabled", true
+					).build())) {
+
 			User user = UserTestUtil.addUser(_company);
 
 			try {
 				ServiceContextThreadLocal.pushServiceContext(
 					ServiceContextTestUtil.getServiceContext(
 						user.getGroupId(), user.getUserId()));
-				//crear usuario
 
+				String password = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 
-				_userLocalService.updatePassword(user.getUserId(), "passs",
-					"passs", user.getPasswordReset(), false);
+				_userLocalService.updatePassword(
+					user.getUserId(), password, password, false, false);
 
-				String passoword = user.getPassword();
-
-
-				try (ConfigurationTemporarySwapper configurationTemporarySwapper1 =
-						 new ConfigurationTemporarySwapper(
-							 "com.liferay.multi.factor.authentication.ip.address.internal.configuration.MFAIPAddressConfiguration",
-							 HashMapDictionaryBuilder.<String, Object>put(
-								 "enabled", true
-							 ).build())) {
-
+				try (ConfigurationTemporarySwapper
+						configurationTemporarySwapper1 =
+							new ConfigurationTemporarySwapper(
+								"com.liferay.multi.factor.authentication.ip." +
+									"address.internal.configuration." +
+										"MFAIPAddressConfiguration",
+								HashMapDictionaryBuilder.<String, Object>put(
+									"enabled", true
+								).build())) {
 
 					ReflectionTestUtil.invoke(
 						_mvcActionCommand, "doProcessAction",
-						new Class<?>[]{
-							ActionRequest.class, ActionResponse.class},
+						new Class<?>[] {
+							ActionRequest.class, ActionResponse.class
+						},
 						_getMockLiferayPortletActionRequest(
-							user.getEmailAddress(), user.getPassword()),
+							user.getEmailAddress(), password),
+						new MockLiferayPortletActionResponse());
+
+					User user1 = _userLocalService.getUser(user.getUserId());
+
+					Assert.assertFalse(user1.isPasswordReset());
+				}
+			}
+			catch (Exception exception) {
+				_log.error("Pushing Service Context ", exception);
+			}
+		}
+	}
+
+	@Test
+	public void testNormalStateWhenLoginFromAnUtilityPage1() throws Exception {
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					"com.liferay.multi.factor.authentication.email.otp." +
+						"configuration.MFAEmailOTPConfiguration",
+					HashMapDictionaryBuilder.<String, Object>put(
+						"enabled", true
+					).build())) {
+
+			User user = UserTestUtil.addUser(_company);
+
+			try {
+				ServiceContextThreadLocal.pushServiceContext(
+					ServiceContextTestUtil.getServiceContext(
+						user.getGroupId(), user.getUserId()));
+
+				String password = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+
+				_userLocalService.updatePassword(
+					user.getUserId(), password, password, true, false);
+
+				try (ConfigurationTemporarySwapper
+						configurationTemporarySwapper1 =
+							new ConfigurationTemporarySwapper(
+								"com.liferay.multi.factor.authentication.ip." +
+									"address.internal.configuration." +
+										"MFAIPAddressConfiguration",
+								HashMapDictionaryBuilder.<String, Object>put(
+									"enabled", true
+								).build())) {
+
+					ReflectionTestUtil.invoke(
+						_mvcActionCommand, "doProcessAction",
+						new Class<?>[] {
+							ActionRequest.class, ActionResponse.class
+						},
+						_getMockLiferayPortletActionRequest(
+							user.getEmailAddress(), password),
 						new MockLiferayPortletActionResponse());
 
 					User user1 = _userLocalService.getUser(user.getUserId());
 
 					Assert.assertEquals(
-						user.getPasswordReset(),
-						user1.getPasswordReset());
+						user.isPasswordReset(), user1.isPasswordReset());
+					Assert.assertTrue(user1.isPasswordReset());
 				}
-
-				}
-				catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-
-
+			}
+			catch (Exception exception) {
+				_log.error("Pushing Service Context ", exception);
+			}
 		}
 	}
 
 	private MockLiferayPortletActionRequest _getMockLiferayPortletActionRequest(
-		String email, String password)
+			String email, String password)
 		throws Exception {
 
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
@@ -164,11 +198,10 @@ public class LoginMVCActionCommandTest {
 			WebKeys.THEME_DISPLAY, _getThemeDisplay());
 
 		mockLiferayPortletActionRequest.setParameter("login", email);
-		mockLiferayPortletActionRequest.setParameter("password", "passs");
+		mockLiferayPortletActionRequest.setParameter("password", password);
 
 		return mockLiferayPortletActionRequest;
 	}
-
 
 	private ThemeDisplay _getThemeDisplay() throws Exception {
 		ThemeDisplay themeDisplay = new ThemeDisplay();
@@ -188,88 +221,14 @@ public class LoginMVCActionCommandTest {
 
 		return themeDisplay;
 	}
-	/*
-		public void testNormalStateWhenLoginFromAnUtilityPage() throws Exception {
-			try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-					 new ConfigurationTemporarySwapper(
-						 "com.liferay.login.web.internal.configuration." +
-						 "AuthLoginConfiguration",
-						 HashMapDictionaryBuilder.<String, Object>put(
-							 "promptEnabled", true
-						 ).build())) {
 
-				UserTestUtil.setUser(TestPropsValues.getUr());
+	private static final Log _log = LogFactoryUtil.getLog(
+		LoginMVCActionCommandTest.class);
 
-		/*		SiteInitializer siteInitializer =
-					_siteInitializerRegistry.getSiteInitializer(
-						"com.liferay.site.initializer.welcome");
+	private Company _company;
 
-				siteInitializer.initialize(_group.getGroupId());
-
-			Layout layout = _addTypeContentLayout(true);
-
-			_removeGuestViewPermission(layout);
-
-			PrincipalThreadLocal.setName(_originalName);
-
-			URL url = new URL(
-				"http://localhost:8080/web" + _group.getFriendlyURL() +
-				layout.getFriendlyURL());
-
-			HttpURLConnection connection =
-				(HttpURLConnection)url.openConnection();
-
-			connection.setRequestMethod("GET");
-
-			Assert.assertEquals(200, connection.getResponseCode());
-
-			String queryString = connection.getURL(
-			).getQuery();
-
-			Assert.assertTrue(queryString.contains("p_p_state=normal"));
-		}
-	}
-		*/
-	private Layout _addTypeContentLayout(boolean publish) throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextTestUtil.getServiceContext(
-				_group, TestPropsValues.getUserId());
-
-		Layout layout = _layoutLocalService.addLayout(
-			TestPropsValues.getUserId(), _group.getGroupId(), false,
-			LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
-			RandomTestUtil.randomString(), StringPool.BLANK, StringPool.BLANK,
-			LayoutConstants.TYPE_CONTENT, false, StringPool.BLANK,
-			serviceContext);
-
-		if (publish) {
-			Layout draftLayout = layout.fetchDraftLayout();
-
-			Assert.assertNotNull(draftLayout);
-
-			ContentLayoutTestUtil.publishLayout(draftLayout, layout);
-
-			layout = _layoutLocalService.getLayout(layout.getPlid());
-
-			Assert.assertTrue(layout.isPublished());
-		}
-		else {
-			Assert.assertFalse(layout.isPublished());
-		}
-
-		return layout;
-	}
-
-	private void _removeGuestViewPermission(Layout layout) throws Exception {
-		Role guestRole = _roleLocalService.getRole(
-			layout.getCompanyId(), RoleConstants.GUEST);
-
-		_resourcePermissionLocalService.removeResourcePermission(
-			layout.getCompanyId(), Layout.class.getName(),
-			ResourceConstants.SCOPE_INDIVIDUAL,
-			String.valueOf(layout.getPlid()), guestRole.getRoleId(),
-			ActionKeys.VIEW);
-	}
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 	@DeleteAfterTestRun
 	private Group _group;
@@ -277,7 +236,8 @@ public class LoginMVCActionCommandTest {
 	@Inject
 	private LayoutLocalService _layoutLocalService;
 
-	private String _originalName;
+	@Inject(filter = "mvc.command.name=/login/login")
+	private MVCActionCommand _mvcActionCommand;
 
 	@Inject
 	private Portal _portal;
@@ -287,18 +247,6 @@ public class LoginMVCActionCommandTest {
 
 	@Inject
 	private RoleLocalService _roleLocalService;
-
-	private ServiceContext _serviceContext;
-
-	@Inject(
-		filter = "mvc.command.name=/login/login"
-	)
-	private MVCActionCommand _mvcActionCommand;
-
-	private Company _company;
-
-	@Inject
-	private CompanyLocalService _companyLocalService;
 
 	@Inject
 	private UserLocalService _userLocalService;
