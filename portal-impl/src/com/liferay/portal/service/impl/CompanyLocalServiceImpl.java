@@ -101,6 +101,7 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
@@ -283,11 +284,20 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 					updatedCompany = _checkCompany(updatedCompany);
 
-					_userLocalService.addDefaultAdminUser(
-						updatedCompany.getCompanyId(),
-						GetterUtil.getString(
+					String defaulAdminPassword = null;
+
+					if (Validator.isNotNull(
+							PropsValues.DEFAULT_ADMIN_PASSWORD) &&
+						!PropsValues.DEFAULT_ADMIN_PASSWORD.equals(
+							Constants.TEST)) {
+
+						defaulAdminPassword = GetterUtil.getString(
 							defaultAdminPassword,
-							PropsValues.DEFAULT_ADMIN_PASSWORD),
+							PropsValues.DEFAULT_ADMIN_PASSWORD);
+					}
+
+					_userLocalService.addDefaultAdminUser(
+						updatedCompany.getCompanyId(), defaulAdminPassword,
 						GetterUtil.getString(
 							defaultAdminScreenName,
 							PropsValues.DEFAULT_ADMIN_SCREEN_NAME),
