@@ -11,6 +11,13 @@
 
 <div class="add-instance-alert-container"></div>
 
+<c:if test="<%= Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST) %>">
+	<clay:alert
+		displayType="warning"
+		message="remove-this-message-delete-default-admin-password-property-value"
+	/>
+</c:if>
+
 <clay:container-fluid>
 	<liferay-frontend:edit-form
 		action="<%= addInstanceURL %>"
@@ -55,7 +62,7 @@
 					</aui:select>
 				</c:if>
 
-				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) %>">
+				<c:if test="<%= Validator.isNull(PropsUtil.get(PropsKeys.DEFAULT_ADMIN_PASSWORD)) || Objects.equals(PropsValues.DEFAULT_ADMIN_PASSWORD, Constants.TEST) %>">
 					<clay:sheet-section>
 						<h3 class="sheet-subtitle">
 							<liferay-ui:message key="administrator-user" />
