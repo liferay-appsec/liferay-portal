@@ -146,7 +146,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 				public void execute(DependencySet dependencySet) {
 					GradleUtil.addDependency(
 						project, FIND_SECURITY_BUGS_CONFIGURATION_NAME,
-						"com.google.code.findbugs", "findbugs", "3.0.1");
+						"com.github.spotbugs", "spotbugs", "4.5.3");
 				}
 
 			});
@@ -542,7 +542,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 	private static final String _FIND_SECURITY_BUGS_INCLUDE_FILE_NAME =
 		"fsb-include.xml";
 
-	private static final String _VERSION = "1.10.1.LIFERAY-PATCHED-2";
+	private static final String _VERSION = "1.13.0.LIFERAY-PATCHED-1";
 
 	private static final Transformer<File, Task> _reportsFileGetter =
 		new Transformer<File, Task>() {
