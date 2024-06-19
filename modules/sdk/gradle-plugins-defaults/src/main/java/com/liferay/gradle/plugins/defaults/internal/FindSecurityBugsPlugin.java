@@ -466,6 +466,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 					writeFindBugsProjectTask.dependsOn(classesTaskProvider);
 					writeFindBugsProjectTask.dependsOn(
 						generateJSPJavaTaskProvider);
+					writeFindBugsProjectTask.dependsOn(compileJSPTaskProivder);
 
 					SourceSet mainSourceSet = _getSourceSet(
 						javaPluginConvention, SourceSet.MAIN_SOURCE_SET_NAME);
