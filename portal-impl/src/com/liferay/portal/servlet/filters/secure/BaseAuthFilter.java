@@ -175,6 +175,14 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 		}
 		else {
+			User actualUser = UserLocalServiceUtil.getUser(user.getUserId());
+
+			if (!actualUser.isActive()) {
+				httpSession.invalidate();
+
+				return null;
+			}
+
 			httpServletRequest = new ProtectedServletRequest(
 				httpServletRequest, String.valueOf(user.getUserId()),
 				HttpServletRequest.DIGEST_AUTH);
