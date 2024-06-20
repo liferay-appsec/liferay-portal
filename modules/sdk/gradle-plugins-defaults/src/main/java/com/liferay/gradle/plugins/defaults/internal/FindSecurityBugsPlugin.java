@@ -451,7 +451,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 	private void _configureTaskWriteFindBugsProjectProvider(
 		final Project project, final JavaPluginConvention javaPluginConvention,
 		final TaskProvider<Task> classesTaskProvider,
-		final TaskProvider<JavaCompile> compileJSPTaskProivder,
+		final TaskProvider<JavaCompile> compileJSPTaskProvider,
 		final TaskProvider<CompileJSPTask> generateJSPJavaTaskProvider,
 		TaskProvider<WriteFindBugsProjectTask>
 			writeFindBugsProjectTaskProvider) {
@@ -466,7 +466,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 					writeFindBugsProjectTask.dependsOn(classesTaskProvider);
 					writeFindBugsProjectTask.dependsOn(
 						generateJSPJavaTaskProvider);
-					writeFindBugsProjectTask.dependsOn(compileJSPTaskProivder);
+					writeFindBugsProjectTask.dependsOn(compileJSPTaskProvider);
 
 					SourceSet mainSourceSet = _getSourceSet(
 						javaPluginConvention, SourceSet.MAIN_SOURCE_SET_NAME);
@@ -475,7 +475,7 @@ public class FindSecurityBugsPlugin implements Plugin<Project> {
 						mainSourceSet.getJava();
 
 					final JavaCompile compileJSPJavaCompile =
-						compileJSPTaskProivder.get();
+						compileJSPTaskProvider.get();
 
 					writeFindBugsProjectTask.setAuxClasspath(
 						project.files(
