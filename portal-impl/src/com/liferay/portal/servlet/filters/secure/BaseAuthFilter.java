@@ -125,6 +125,15 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 		}
 		else {
+			// TODO test if WebDAV can use BasicAuth to see whether this change is needed
+			User actualUser = UserLocalServiceUtil.getUser(user.getUserId());
+
+			if (!actualUser.isActive()) {
+				httpSession.invalidate();
+
+				return null;
+			}
+
 			httpServletRequest = new ProtectedServletRequest(
 				httpServletRequest, String.valueOf(user.getUserId()),
 				HttpServletRequest.BASIC_AUTH);
