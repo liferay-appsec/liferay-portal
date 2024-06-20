@@ -46,7 +46,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -87,6 +86,8 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class LoginMVCActionCommand extends BaseMVCActionCommand {
 
+	public static final String RESET_PASSWORD = "RESET_PASSWORD";
+
 	@Override
 	protected void doProcessAction(
 			ActionRequest actionRequest, ActionResponse actionResponse)
@@ -115,23 +116,30 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 					_portal.getOriginalServletRequest(
 						_portal.getHttpServletRequest(actionRequest));
 
-				Company company = PortalUtil.getCompany(httpServletRequest);
+				String passwordReset = ParamUtil.getString(
+					actionRequest, RESET_PASSWORD);
 
-				String authType = company.getAuthType();
+				if (Validator.isNull(passwordReset)) {
+					Company company = _portal.getCompany(httpServletRequest);
 
-				User user = null;
+					String authType = company.getAuthType();
 
-				if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
-					user = _userLocalService.getUserByEmailAddress(
-						companyId, login);
-				}
-				else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
-					user = _userLocalService.getUserByScreenName(
-						companyId, login);
-				}
-				else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
-					user = _userLocalService.getUserById(
-						GetterUtil.getLong(login));
+					User user = null;
+
+					if (authType.equals(CompanyConstants.AUTH_TYPE_EA)) {
+						user = _userLocalService.getUserByEmailAddress(
+							companyId, login);
+					}
+					else if (authType.equals(CompanyConstants.AUTH_TYPE_SN)) {
+						user = _userLocalService.getUserByScreenName(
+							companyId, login);
+					}
+					else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
+						user = _userLocalService.getUserById(
+							GetterUtil.getLong(login));
+					}
+
+					passwordReset = String.valueOf(user.isPasswordReset());
 				}
 
 				long userId =
@@ -147,20 +155,16 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 					User userAuthenticated = _userLocalService.fetchUser(
 						userId);
 
-					if ((user.getUuid() == userAuthenticated.getUuid()) &&
-						(userAuthenticated.getLastLoginDate() == null) &&
-						!user.isPasswordReset()) {
-
-						_userLocalService.updateLastLogin(
-							userId, user.getLoginIP());
-						_userLocalService.updatePasswordReset(userId, false);
+					if (userAuthenticated.getLastLoginDate() == null) {
+						_userLocalService.updatePasswordReset(
+							userId, Boolean.getBoolean(passwordReset));
 					}
 
 					return;
 				}
 
 				if (userId > 0) {
-					_redirectToVerify(actionRequest, userId);
+					_redirectToVerify(actionRequest, userId, passwordReset);
 				}
 			}
 			catch (Exception exception) {
@@ -314,11 +318,23 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 		actionResponse.sendRedirect(portletURL.toString());
 	}
 
-	private void _redirectToVerify(ActionRequest actionRequest, long userId)
+	private void _redirectToVerify(
+			ActionRequest actionRequest, long userId, String passwordReset)
 		throws Exception {
 
 		Key key = _encryptor.generateKey();
 
+		/*		String[] passwordResetArray = {passwordReset};
+				HashMap<String, Object> build = HashMapBuilder.<String, Object>put(
+						"requestParameters",
+						() -> HashMapBuilder.putAll(
+							actionRequest.getParameterMap()
+						).remove(
+							"redirect"
+						).put(RESET_PASSWORD, passwordResetArray).build()
+					).build();
+
+			*/
 		String encryptedStateMapJSON = _encryptor.encrypt(
 			key,
 			_jsonFactory.looseSerializeDeep(
@@ -328,6 +344,8 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 						actionRequest.getParameterMap()
 					).remove(
 						"redirect"
+					).put(
+						RESET_PASSWORD, new String[] {passwordReset}
 					).build()
 				).build()));
 

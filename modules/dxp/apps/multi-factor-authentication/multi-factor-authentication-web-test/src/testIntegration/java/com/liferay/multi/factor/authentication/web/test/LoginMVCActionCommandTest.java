@@ -112,13 +112,15 @@ public class LoginMVCActionCommandTest {
 									"enabled", true
 								).build())) {
 
+					MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+						_getMockLiferayPortletActionRequest(
+							user.getEmailAddress(), password);
 					ReflectionTestUtil.invoke(
 						_mvcActionCommand, "doProcessAction",
 						new Class<?>[] {
 							ActionRequest.class, ActionResponse.class
 						},
-						_getMockLiferayPortletActionRequest(
-							user.getEmailAddress(), password),
+						mockLiferayPortletActionRequest,
 						new MockLiferayPortletActionResponse());
 
 					User user1 = _userLocalService.getUser(user.getUserId());
@@ -129,6 +131,11 @@ public class LoginMVCActionCommandTest {
 			catch (Exception exception) {
 				_log.error("Pushing Service Context ", exception);
 			}
+
+		//	HttpServletRequest hola = mockLiferayPortletActionRequest.getHttpServletRequest();
+		//	hola.getAttribute("REDIRECT");
+
+
 		}
 	}
 
