@@ -324,17 +324,6 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 
 		Key key = _encryptor.generateKey();
 
-		/*		String[] passwordResetArray = {passwordReset};
-				HashMap<String, Object> build = HashMapBuilder.<String, Object>put(
-						"requestParameters",
-						() -> HashMapBuilder.putAll(
-							actionRequest.getParameterMap()
-						).remove(
-							"redirect"
-						).put(RESET_PASSWORD, passwordResetArray).build()
-					).build();
-
-			*/
 		String encryptedStateMapJSON = _encryptor.encrypt(
 			key,
 			_jsonFactory.looseSerializeDeep(
