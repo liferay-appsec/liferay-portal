@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {expect, mergeTests} from '@playwright/test';
+import {expect, mergeTests, Page} from '@playwright/test';
 
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {instanceSettingsPagesTest} from '../../fixtures/singleSignOnSettingsPagesTest';
@@ -23,6 +23,14 @@ const test = mergeTests(
 	}),
 	utilityPagesPage
 );
+
+async function checkLinkIsHiddenAndReturn(
+	page: Page, view
+) {
+	await page.getByRole('menuitem', { name: view }).click();
+	await expect(page.getByText(openIdConfig.openIdLink)).toBeHidden();
+	await page.getByRole('link', { name: 'Return to Full Page' }).click();
+}
 
 async function setupOpenIdConnection(
 	singleSignOnSettingsPage: SingleSignOnSettingsPage
@@ -99,5 +107,8 @@ test.describe('OpenID connect link', () => {
 		await page.getByRole('menuitem', {name: 'Sign Out'}).click();
 		await page.goto(openIdConfig.loginPortletLink);
 		await expect(page.getByText(openIdConfig.openIdLink)).toBeHidden();
+		await checkLinkIsHiddenAndReturn(page,'Create Account');
+		await page.getByRole('button', { name: 'Sign In' }).click();
+		await checkLinkIsHiddenAndReturn(page,'Forgot Password');
 	});
 });
