@@ -316,7 +316,7 @@ definition {
 		}
 
 		if (${authenticationMethod} == "By Screen Name") {
-			var userLoginInfo = 'test:${PropsUtil.get("default.admin.password")}';
+			var userLoginInfo = "test:${PropsUtil.get(\"default.admin.password\")}";
 		}
 		else {
 			var userLoginInfo = JSONUtil2.formatJSONSuperAdminUser();
