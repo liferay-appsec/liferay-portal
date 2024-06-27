@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -58,14 +58,14 @@ public class SegmentsEntryRoleModelListener
 
 			additionalInfoJSONObject.put("roleId", roleId);
 
-			Role role = _roleLocalService.getRole(roleId);
+			Role role = roleLocalService.getRole(roleId);
 
 			additionalInfoJSONObject.put("roleName", role.getName());
 
 			Long segmentsEntryId = segmentsEntryRole.getSegmentsEntryId();
 
 			SegmentsEntry segmentsEntry =
-				_segmentsEntryLocalService.getSegmentsEntry(segmentsEntryId);
+				segmentsEntryLocalService.getSegmentsEntry(segmentsEntryId);
 
 			additionalInfoJSONObject.put(
 				"segmentsEntryId", segmentsEntryId
@@ -73,7 +73,7 @@ public class SegmentsEntryRoleModelListener
 				"segmentsEntryName", segmentsEntry.getNameCurrentValue()
 			);
 
-			_auditRouter.route(auditMessage);
+			auditRouter.route(auditMessage);
 		}
 		catch (Exception exception) {
 			throw new ModelListenerException(exception);
@@ -81,12 +81,12 @@ public class SegmentsEntryRoleModelListener
 	}
 
 	@Reference
-	private AuditRouter _auditRouter;
+	protected AuditRouter auditRouter;
 
 	@Reference
-	private RoleLocalService _roleLocalService;
+	protected RoleLocalService roleLocalService;
 
 	@Reference
-	private SegmentsEntryLocalService _segmentsEntryLocalService;
+	protected SegmentsEntryLocalService segmentsEntryLocalService;
 
 }
