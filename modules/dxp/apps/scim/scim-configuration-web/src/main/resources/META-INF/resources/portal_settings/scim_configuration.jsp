@@ -52,7 +52,7 @@ String oAuth2ApplicationName = GetterUtil.getString(request.getAttribute(ScimWeb
 		</div>
 	</div>
 
-		<c:if test="<%= oAuth2AccessToken != null %>">
+		<c:if test="<%= Validator.isNotNull(oAuth2AccessToken) %>">
 			<div class="alert alert-warning">
 				<liferay-ui:message arguments="<%= GetterUtil.getString(request.getAttribute(ScimWebKeys.SCIM_OAUTH2_ACCESS_TOKEN_EXPIRATION)) %>" key="scim-access-token-expiration-date-x" translateArguments="<%= false %>" />
 			</div>
