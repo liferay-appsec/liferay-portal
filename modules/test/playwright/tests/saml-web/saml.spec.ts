@@ -5,5 +5,10 @@
 
 import {test} from '@playwright/test';
 
+import {liferayConfig} from '../../liferay.config';
+import {samlIdpConfig} from './samlIdp.config';
+
 test('testing', async ({page}) => {
+	await page.goto(samlIdpConfig.environment.baseUrl);
+	await page.goto(liferayConfig.environment.baseUrl);
 });
