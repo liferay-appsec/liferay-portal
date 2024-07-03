@@ -44,6 +44,7 @@ export class ApplicationsMenuPage {
 	private readonly serverAdministrationItem: Locator;
 	private readonly siteTemplatesButton: Locator;
 	private readonly usersAndOrganizationsItem: Locator;
+	private readonly virtualInstancesItem: Locator;
 
 	constructor(page: Page) {
 		this.accountsItem = page.getByRole('menuitem', {
@@ -179,6 +180,10 @@ export class ApplicationsMenuPage {
 		this.usersAndOrganizationsItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Users and Organizations',
+		});
+		this.virtualInstancesItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Virtual Instances',
 		});
 	}
 
@@ -376,5 +381,11 @@ export class ApplicationsMenuPage {
 
 		await this.controlPanelButton.click();
 		await this.usersAndOrganizationsItem.click();
+	}
+
+	async goToVirtualInstances() {
+		await this.goto();
+		await this.controlPanelButton.click();
+		await this.virtualInstancesItem.click();
 	}
 }
