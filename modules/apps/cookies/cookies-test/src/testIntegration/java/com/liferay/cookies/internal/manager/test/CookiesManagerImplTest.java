@@ -11,7 +11,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.cookies.CookiesManager;
-import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -198,7 +197,7 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
@@ -223,7 +222,7 @@ public class CookiesManagerImplTest {
 
 			};
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
 			httpServletRequestWrapper, _mockHttpServletResponse);
 
@@ -248,11 +247,11 @@ public class CookiesManagerImplTest {
 			Cookie cookie = new Cookie(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-			CookiesManagerUtil.addCookie(
+			_cookiesManager.addCookie(
 				cookie, _mockHttpServletRequest, _mockHttpServletResponse);
 
 			Assert.assertNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 
 			List<LogEntry> logEntries = logCapture.getLogEntries();
@@ -291,20 +290,20 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_PERFORMANCE, cookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertNotNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
 				_mockHttpServletRequest));
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
 				_mockHttpServletRequest));
 	}
@@ -322,16 +321,16 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_PERFORMANCE, cookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
 				_mockHttpServletRequest));
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 	}
 
@@ -348,16 +347,16 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_PERFORMANCE, cookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
 				_mockHttpServletRequest));
 		Assert.assertNotNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 	}
 
@@ -398,23 +397,23 @@ public class CookiesManagerImplTest {
 			Cookie cookie = new Cookie(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-			CookiesManagerUtil.addCookie(
+			_cookiesManager.addCookie(
 				CookiesConstants.CONSENT_TYPE_PERFORMANCE, cookie,
 				_mockHttpServletRequest, _mockHttpServletResponse);
 
 			Assert.assertEquals(
 				cookie.getValue(),
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 
 			cookie.setValue(RandomTestUtil.randomString());
 
-			CookiesManagerUtil.addCookie(
+			_cookiesManager.addCookie(
 				cookie, _mockHttpServletRequest, _mockHttpServletResponse);
 
 			Assert.assertEquals(
 				cookie.getValue(),
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 
 			List<LogEntry> logEntries = logCapture.getLogEntries();
@@ -450,20 +449,20 @@ public class CookiesManagerImplTest {
 			Cookie cookie = new Cookie(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-			CookiesManagerUtil.addCookie(
+			_cookiesManager.addCookie(
 				CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
 				_mockHttpServletRequest, _mockHttpServletResponse);
 
 			Assert.assertNotNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 
-			CookiesManagerUtil.addCookie(
+			_cookiesManager.addCookie(
 				CookiesConstants.CONSENT_TYPE_FUNCTIONAL, cookie,
 				_mockHttpServletRequest, _mockHttpServletResponse);
 
 			Assert.assertNotNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 
 			List<LogEntry> logEntries = logCapture.getLogEntries();
@@ -498,16 +497,16 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_PERSONALIZATION, cookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
 				_mockHttpServletRequest));
 		Assert.assertNotNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 	}
 
@@ -530,13 +529,13 @@ public class CookiesManagerImplTest {
 
 		Cookie consentCookie = new Cookie(cookieName, String.valueOf(accepted));
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			CookiesConstants.CONSENT_TYPE_NECESSARY, consentCookie,
 			_mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertEquals(
 			String.valueOf(accepted),
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				consentCookie.getName(), _mockHttpServletRequest));
 	}
 
@@ -557,29 +556,29 @@ public class CookiesManagerImplTest {
 		Cookie cookie = new Cookie(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			consentType, cookie, _mockHttpServletRequest,
 			_mockHttpServletResponse);
 
 		if (consentType == CookiesConstants.CONSENT_TYPE_NECESSARY) {
 			Assert.assertNotNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 		}
 		else {
 			Assert.assertNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 		}
 
 		_addConsentCookie(true, consentType);
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			consentType, cookie, _mockHttpServletRequest,
 			_mockHttpServletResponse);
 
 		Assert.assertNotNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 	}
 
@@ -590,27 +589,27 @@ public class CookiesManagerImplTest {
 
 		Cookie cookie = new Cookie(name, RandomTestUtil.randomString());
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			cookie, _mockHttpServletRequest, _mockHttpServletResponse);
 
 		if (consentType == CookiesConstants.CONSENT_TYPE_NECESSARY) {
 			Assert.assertNotNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 		}
 		else {
 			Assert.assertNull(
-				CookiesManagerUtil.getCookieValue(
+				_cookiesManager.getCookieValue(
 					cookie.getName(), _mockHttpServletRequest));
 		}
 
 		_addConsentCookie(true, consentType);
 
-		CookiesManagerUtil.addCookie(
+		_cookiesManager.addCookie(
 			cookie, _mockHttpServletRequest, _mockHttpServletResponse);
 
 		Assert.assertNotNull(
-			CookiesManagerUtil.getCookieValue(
+			_cookiesManager.getCookieValue(
 				cookie.getName(), _mockHttpServletRequest));
 	}
 
