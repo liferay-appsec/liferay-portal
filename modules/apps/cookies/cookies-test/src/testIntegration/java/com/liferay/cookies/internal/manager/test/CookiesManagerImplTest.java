@@ -65,65 +65,78 @@ public class CookiesManagerImplTest {
 	public void testCookiePathIsCustomContextWhenUsingCustomContext()
 		throws Exception {
 
-		Cookie cookie = new Cookie(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString());
-
 		String customContextPath =
 			StringPool.SLASH + RandomTestUtil.randomString();
 
-		MockHttpServletRequest customContextMockHttpServletRequest =
-			new MockHttpServletRequest() {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					_cookiesManager, "_portal",
+					_getPortal(customContextPath))) {
 
-				@Override
-				public String getContextPath() {
-					return customContextPath;
-				}
+			Cookie cookie = new Cookie(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-			};
+			MockHttpServletRequest customContextMockHttpServletRequest =
+				new MockHttpServletRequest() {
 
-		CookiesManagerUtil.addCookie(
-			CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
-			customContextMockHttpServletRequest, _mockHttpServletResponse);
+					@Override
+					public String getContextPath() {
+						return customContextPath;
+					}
 
-		Assert.assertEquals(customContextPath, cookie.getPath());
+				};
+
+			_cookiesManager.addCookie(
+				CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
+				customContextMockHttpServletRequest, _mockHttpServletResponse);
+
+			Assert.assertEquals(customContextPath, cookie.getPath());
+		}
 	}
 
 	@Test
 	public void testCookiePathIsCustomContextWhenUsingCustomContextWithCustomModuleWebContextPath()
 		throws Exception {
 
-		Cookie cookie = new Cookie(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString());
-
 		String customContextPath =
 			StringPool.SLASH + RandomTestUtil.randomString();
 
-		MockHttpServletRequest customContextMockHttpServletRequest =
-			new MockHttpServletRequest() {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					_cookiesManager, "_portal",
+					_getPortal(customContextPath))) {
 
-				@Override
-				public String getContextPath() {
-					return customContextPath;
-				}
+			Cookie cookie = new Cookie(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-			};
+			MockHttpServletRequest customContextMockHttpServletRequest =
+				new MockHttpServletRequest() {
 
-		HttpServletRequestWrapper httpServletRequestWrapper =
-			new HttpServletRequestWrapper(customContextMockHttpServletRequest) {
+					@Override
+					public String getContextPath() {
+						return customContextPath;
+					}
 
-				@Override
-				public String getContextPath() {
-					return PortalUtil.getPathModule() + StringPool.SLASH +
-						RandomTestUtil.randomString();
-				}
+				};
 
-			};
+			HttpServletRequestWrapper httpServletRequestWrapper =
+				new HttpServletRequestWrapper(
+					customContextMockHttpServletRequest) {
 
-		CookiesManagerUtil.addCookie(
-			CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
-			httpServletRequestWrapper, _mockHttpServletResponse);
+					@Override
+					public String getContextPath() {
+						return PortalUtil.getPathModule() + StringPool.SLASH +
+							RandomTestUtil.randomString();
+					}
 
-		Assert.assertEquals(customContextPath, cookie.getPath());
+				};
+
+			_cookiesManager.addCookie(
+				CookiesConstants.CONSENT_TYPE_NECESSARY, cookie,
+				httpServletRequestWrapper, _mockHttpServletResponse);
+
+			Assert.assertEquals(customContextPath, cookie.getPath());
+		}
 	}
 
 	@Test
