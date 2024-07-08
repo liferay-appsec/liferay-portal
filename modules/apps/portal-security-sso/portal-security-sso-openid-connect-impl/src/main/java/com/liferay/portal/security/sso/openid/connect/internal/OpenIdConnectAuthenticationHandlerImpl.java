@@ -145,18 +145,20 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 			JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
 
-			JSONObject jsonObject = jwtClaimsSet.toJSONObject();
+			Map<String, Object> claims = jwtClaimsSet.toJSONObject();
 
 			List<String> emails = jwtClaimsSet.getStringListClaim("emails");
 
-			jsonObject.put("email", emails.get(0));
+			claims.put("email", emails.get(0));
 
-			jsonObject.put(
+			claims.put(
 				"family_name", jwtClaimsSet.getStringClaim("family_name"));
-			jsonObject.put(
-				"given_name", jwtClaimsSet.getStringClaim("given_name"));
+			claims.put("given_name", jwtClaimsSet.getStringClaim("given_name"));
 
-			UserInfo userInfo = new UserInfo(jsonObject);
+			UserInfo userInfo = new UserInfo(
+				JSONObjectUtils.parse(
+					com.nimbusds.jose.util.JSONObjectUtils.toJSONString(
+						claims)));
 
 			userInfoJSON = userInfo.toJSONString();
 		}
