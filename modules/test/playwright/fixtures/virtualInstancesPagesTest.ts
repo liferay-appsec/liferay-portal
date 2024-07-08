@@ -5,14 +5,19 @@
 
 import {test} from '@playwright/test';
 
+import {EditVirtualInstancePage} from '../pages/portal-instances-web/EditVirtualInstancePage';
 import {VirtualInstancesPage} from '../pages/portal-instances-web/VirtualInstancesPage';
 
 const virtualInstancesPagesTest = test.extend<{
-    virtualInstancesPage: VirtualInstancesPage;
+	editVirtualInstancePage: EditVirtualInstancePage;
+	virtualInstancesPage: VirtualInstancesPage;
 }>({
-    virtualInstancesPage: async ({page}, use) => {
-        await use(new VirtualInstancesPage(page));
-    },
+	editVirtualInstancePage: async ({page}, use) => {
+		await use(new EditVirtualInstancePage(page));
+	},
+	virtualInstancesPage: async ({page}, use) => {
+		await use(new VirtualInstancesPage(page));
+	},
 });
 
 export {virtualInstancesPagesTest};
