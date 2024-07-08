@@ -8,6 +8,7 @@ import {expect, mergeTests} from '@playwright/test';
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {loginTest} from '../../fixtures/loginTest';
+import {samlAdminPagesTest} from '../../fixtures/samlAdminPagesTest';
 import {virtualInstancesPagesTest} from '../../fixtures/virtualInstancesPagesTest';
 import {liferayConfig} from '../../liferay.config';
 import getRandomString from '../../utils/getRandomString';
@@ -17,6 +18,7 @@ export const test = mergeTests(
 	apiHelpersTest,
 	applicationsMenuPageTest,
 	loginTest(),
+	samlAdminPagesTest,
 	virtualInstancesPagesTest
 );
 
@@ -50,6 +52,27 @@ test('Create, edit, and delete a new virtual instance', async ({
 	).toBeVisible();
 
 	await virtualInstancesPage.deleteVirtualInstance(name);
+});
+
+test('Create a new virtual instance, and configure it for SAML IdP', async ({
+	editVirtualInstancePage,
+	samlAdminPage,
+	virtualInstancesPage,
+}) => {
+	// const name = getRandomString();
+	//
+	// await virtualInstancesPage.addNewVirtualInstance(
+	// 	undefined,
+	// 	undefined,
+	// 	name,
+	// 	undefined
+	// );
+
+	await samlAdminPage.configureSAML(false, 'testEntityId', 'Identity Provider');
+	await samlAdminPage.configureSAML(false, 'testEntityId2', 'Service Provider');
+
+
+	// await virtualInstancesPage.deleteVirtualInstance(name);
 });
 
 test('testing', async ({page}) => {
