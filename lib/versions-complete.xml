@@ -1839,13 +1839,13 @@
 			</library>
 			<library>
 				<file-name>com.liferay.oauth.client.persistence.service.jar!nimbus-jose-jwt.jar</file-name>
-				<version>8.14.1</version>
+				<version>9.40</version>
 				<project-name>Nimbus JOSE+JWT</project-name>
-				<project-url>https://bitbucket.org/connect2id/nimbus-jose-jwt</project-url>
+				<project-url>https://connect2id.com</project-url>
 				<licenses>
 					<license>
 						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
 					</license>
 				</licenses>
 			</library>
@@ -3204,13 +3204,13 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.security.sso.openid.connect.impl.jar!nimbus-jose-jwt.jar</file-name>
-				<version>8.14.1</version>
+				<version>9.40</version>
 				<project-name>Nimbus JOSE+JWT</project-name>
-				<project-url>https://bitbucket.org/connect2id/nimbus-jose-jwt</project-url>
+				<project-url>https://connect2id.com</project-url>
 				<licenses>
 					<license>
 						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
 					</license>
 				</licenses>
 			</library>
@@ -3264,13 +3264,13 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.security.sso.openid.connect.persistence.service.jar!nimbus-jose-jwt.jar</file-name>
-				<version>8.14.1</version>
+				<version>9.40</version>
 				<project-name>Nimbus JOSE+JWT</project-name>
-				<project-url>https://bitbucket.org/connect2id/nimbus-jose-jwt</project-url>
+				<project-url>https://connect2id.com</project-url>
 				<licenses>
 					<license>
 						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
 					</license>
 				</licenses>
 			</library>
