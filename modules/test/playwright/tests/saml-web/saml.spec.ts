@@ -57,6 +57,7 @@ test('Create, edit, and delete a new virtual instance', async ({
 test('Create a new virtual instance, and configure it for SAML IdP', async ({
 	editVirtualInstancePage,
 	samlAdminPage,
+	serviceProviderConnectionPage,
 	virtualInstancesPage,
 }) => {
 	// const name = getRandomString();
@@ -69,7 +70,11 @@ test('Create a new virtual instance, and configure it for SAML IdP', async ({
 	// );
 
 	await samlAdminPage.configureSAML(false, 'testEntityId', 'Identity Provider');
-	await samlAdminPage.configureSAML(false, 'testEntityId2', 'Service Provider');
+
+	await serviceProviderConnectionPage.addNewServiceProviderConnection(
+		'testSpName', 'testEntityId', undefined, undefined, undefined,
+		'http://localhost:8080/c/portal/saml/metadata');
+	//await samlAdminPage.configureSAML(false, 'testEntityId2', 'Service Provider');
 
 
 	// await virtualInstancesPage.deleteVirtualInstance(name);

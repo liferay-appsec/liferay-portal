@@ -6,12 +6,17 @@
 import {test} from '@playwright/test';
 
 import {SamlAdminPage} from '../pages/saml-web/SamlAdminPage';
+import {ServiceProviderConnectionPage} from '../pages/saml-web/ServiceProviderConnectionPage';
 
 const samlAdminPagesTest = test.extend<{
     samlAdminPage: SamlAdminPage;
+    serviceProviderConnectionPage: ServiceProviderConnectionPage;
 }>({
     samlAdminPage: async ({page}, use) => {
         await use(new SamlAdminPage(page));
+    },
+    serviceProviderConnectionPage: async ({page}, use) => {
+        await use(new ServiceProviderConnectionPage(page));
     },
 });
 
