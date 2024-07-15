@@ -8,6 +8,7 @@ package com.liferay.portal.servlet.filters.secure;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -155,10 +156,13 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 
 			if (userId > 0) {
+				user = UserLocalServiceUtil.getUser(userId);
+
 				httpServletRequest = setCredentials(
 					httpServletRequest, httpSession,
-					UserLocalServiceUtil.getUser(userId),
-					HttpServletRequest.DIGEST_AUTH);
+					user, HttpServletRequest.DIGEST_AUTH);
+
+				httpSession.setAttribute("DIGEST", user.getDigest());
 			}
 			else {
 				HttpAuthorizationHeader httpAuthorizationHeader =
@@ -173,6 +177,20 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 		}
 		else {
+			if (isDigestModified(httpSession)) {
+				httpSession.invalidate();
+
+				HttpAuthorizationHeader httpAuthorizationHeader =
+					new HttpAuthorizationHeader(
+						HttpAuthorizationHeader.SCHEME_DIGEST);
+
+				HttpAuthManagerUtil.generateChallenge(
+					httpServletRequest, httpServletResponse,
+					httpAuthorizationHeader);
+
+				return null;
+			}
+
 			httpServletRequest = new ProtectedServletRequest(
 				httpServletRequest, String.valueOf(user.getUserId()),
 				HttpServletRequest.DIGEST_AUTH);
@@ -194,6 +212,24 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 		}
 
 		PermissionThreadLocal.getPermissionChecker(user, true);
+	}
+
+	protected boolean isDigestModified(HttpSession httpSession)
+		throws PortalException {
+
+		User user = (User)httpSession.getAttribute(WebKeys.USER);
+
+		if (user != null) {
+			String digest = (String)httpSession.getAttribute("DIGEST");
+
+			user = UserLocalServiceUtil.getUser(user.getUserId());
+
+			if (!digest.equals(user.getDigest())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	@Override
