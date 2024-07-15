@@ -10,16 +10,22 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControl;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
+import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.model.impl.UserImpl;
 import com.liferay.portal.security.access.control.AccessControlImpl;
+import com.liferay.portal.servlet.filters.secure.BaseAuthFilter;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsValues;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import javax.servlet.FilterChain;
@@ -41,6 +47,9 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
+
+import org.mockito.Mockito;
 
 /**
  * @author Eric Yan
@@ -78,6 +87,47 @@ public class BaseAuthFilterTest {
 	@After
 	public void tearDown() {
 		AccessControlUtil.setAccessControlContext(null);
+	}
+
+	@Test
+	public void testDigestAuth() throws Exception {
+		MockHttpSession mockHttpSession = new MockHttpSession();
+	
+		String digest = RandomTestUtil.randomString();
+
+		mockHttpSession.setAttribute("DIGEST", digest);
+
+		User user = Mockito.mock(User.class);
+
+		Mockito.when(
+			user.getDigest()
+		).thenReturn(
+			digest
+		);
+
+		_mockHttpServletRequest.setSession(mockHttpSession);
+
+		Method method = BaseAuthFilter.class.getDeclaredMethod("digestAuth");
+		method.setAccessible(true);
+
+		_authFilter.digestAuth(_mockHttpServletRequest, _mockHttpServletResponse);
+
+		/*long companyId = PortalInstances.getCompanyId(httpServletRequest);
+
+		String remoteAddress = httpServletRequest.getRemoteAddr();
+
+		String nonce = NonceUtil.generate(companyId, remoteAddress);
+
+		httpAuthorizationHeader.setAuthParameter(
+			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_NONCE, nonce);
+
+		httpServletResponse.setHeader(
+			HttpHeaders.WWW_AUTHENTICATE, httpAuthorizationHeader.toString());
+
+		httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);*/
+
+		Assert.assertNotNull(_mockHttpServletResponse.getHeader(HttpHeaders.WWW_AUTHENTICATE));
+		Assert.assertEquals(_mockHttpServletResponse.getStatus(), 401);
 	}
 
 	@Test
