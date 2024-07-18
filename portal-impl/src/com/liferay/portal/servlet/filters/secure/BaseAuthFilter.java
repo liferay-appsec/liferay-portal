@@ -94,9 +94,9 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
-		User user1 = (User)httpSession.getAttribute(WebKeys.USER);
+		User sessionUser = (User)httpSession.getAttribute(WebKeys.USER);
 
-		if (user1 == null) {
+		if (sessionUser == null) {
 			long userId = 0;
 
 			try {
@@ -125,16 +125,16 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 		}
 		else {
-			User user2 = UserLocalServiceUtil.getUser(user1.getUserId());
+			User user = UserLocalServiceUtil.getUser(sessionUser.getUserId());
 
-			if (!user2.isActive()) {
+			if (!user.isActive()) {
 				httpSession.invalidate();
 
 				return null;
 			}
 
 			httpServletRequest = new ProtectedServletRequest(
-				httpServletRequest, String.valueOf(user1.getUserId()),
+				httpServletRequest, String.valueOf(sessionUser.getUserId()),
 				HttpServletRequest.BASIC_AUTH);
 
 			PrincipalThreadLocal.setPassword(
@@ -151,9 +151,9 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
-		User user1 = (User)httpSession.getAttribute(WebKeys.USER);
+		User sessionUser = (User)httpSession.getAttribute(WebKeys.USER);
 
-		if (user1 == null) {
+		if (sessionUser == null) {
 			long userId = 0;
 
 			try {
@@ -183,16 +183,16 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			}
 		}
 		else {
-			User user2 = UserLocalServiceUtil.getUser(user1.getUserId());
+			User user = UserLocalServiceUtil.getUser(sessionUser.getUserId());
 
-			if (!user2.isActive()) {
+			if (!user.isActive()) {
 				httpSession.invalidate();
 
 				return null;
 			}
 
 			httpServletRequest = new ProtectedServletRequest(
-				httpServletRequest, String.valueOf(user1.getUserId()),
+				httpServletRequest, String.valueOf(sessionUser.getUserId()),
 				HttpServletRequest.DIGEST_AUTH);
 
 			PrincipalThreadLocal.setPassword(
