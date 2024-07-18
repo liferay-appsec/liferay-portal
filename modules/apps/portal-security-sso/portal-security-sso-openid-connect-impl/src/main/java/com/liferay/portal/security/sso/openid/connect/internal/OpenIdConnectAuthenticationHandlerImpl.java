@@ -155,10 +155,7 @@ public class OpenIdConnectAuthenticationHandlerImpl
 				"family_name", jwtClaimsSet.getStringClaim("family_name"));
 			claims.put("given_name", jwtClaimsSet.getStringClaim("given_name"));
 
-			UserInfo userInfo = new UserInfo(
-				JSONObjectUtils.parse(
-					com.nimbusds.jose.util.JSONObjectUtils.toJSONString(
-						claims)));
+			UserInfo userInfo = new UserInfo(JWTClaimsSet.parse(claims));
 
 			userInfoJSON = userInfo.toJSONString();
 		}
