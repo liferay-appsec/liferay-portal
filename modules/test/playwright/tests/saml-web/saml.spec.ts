@@ -36,7 +36,7 @@ test('Create, edit, and delete a new virtual instance', async ({
 	);
 
 	const newName = getRandomString();
-
+	await editVirtualInstancePage.goto(name);
 	await editVirtualInstancePage.editVirtualInstance(
 		false,
 		name,
@@ -48,33 +48,33 @@ test('Create, edit, and delete a new virtual instance', async ({
 	await expect(
 		await virtualInstancesPage.page
 			.getByRole('row')
-			.getByText(name + ' ' + newName + ' ' + newName + '.com 0 100 No')
+			.getByText(name + ' ' + newName + ' ' + newName + '.com 1 100 No')
 	).toBeVisible();
 
 	await virtualInstancesPage.deleteVirtualInstance(name);
 });
 
 test('Create a new virtual instance, and configure it for SAML IdP', async ({
-	editVirtualInstancePage,
 	samlAdminPage,
 	serviceProviderConnectionPage,
 	virtualInstancesPage,
 }) => {
-	// const name = getRandomString();
-	//
-	// await virtualInstancesPage.addNewVirtualInstance(
-	// 	undefined,
-	// 	undefined,
-	// 	name,
-	// 	undefined
-	// );
+	const name = getRandomString();
+	
+	await virtualInstancesPage.addNewVirtualInstance(
+		undefined,
+		undefined,
+		name,
+		undefined
+	);
 
 	await samlAdminPage.configureSAML(false, 'testEntityId', 'Identity Provider');
 
 	await serviceProviderConnectionPage.addNewServiceProviderConnection(
 		'testSpName', 'testEntityId', undefined, undefined, undefined,
 		'http://localhost:8080/c/portal/saml/metadata');
-	//await samlAdminPage.configureSAML(false, 'testEntityId2', 'Service Provider');
+	
+	await samlAdminPage.configureSAML(false, 'testEntityId2', 'Service Provider');
 
 
 	// await virtualInstancesPage.deleteVirtualInstance(name);
