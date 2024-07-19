@@ -30,12 +30,12 @@ export class ServiceProviderConnectionPage {
         this.applicationsMenuPage = new ApplicationsMenuPage(page);
 
         //This is returning a new entries, maybe do .first()?
-        this.nameField = page.getByLabel('Name');
+        this.nameField = page.getByLabel('Name Required', { exact: true });
         this.entityIdField = page.getByLabel('Entity ID');
-        this.enabledField = page.getByText('Enabled');
+        this.enabledField = page.getByText('Enabled', { exact: true });
         this.assertionLifetimeField = page.getByLabel('Assertion Lifetime');
         this.forceEncryptionToggle = page.getByText('Force Encryption');
-        this.metadataUrlField = page.getByLabel('Metadata URL');
+        this.metadataUrlField = page.getByLabel('Metadata URL', { exact: true });
         this.nameIdentifierFormatField = page.getByLabel('Name Identifier Format');
         this.nameIdentifierAttributeNameField = page.getByLabel('Name Identifier Attribute Name');
         this.attributesEnabledToggle = page.getByText('Attributes Enabled');
@@ -132,9 +132,14 @@ export class ServiceProviderConnectionPage {
         await this.nameIdentifierAttributeNameField.fill(nameIdentifierAttributeName);
         await this.attributesEnabledToggle.setChecked(attributesEnabled);
         await this.attributesNamespaceEnabledToggle.setChecked(attributesNamespaceEnabled);
-        await this.attributesField.fill(attributes);
-        await this.keepAliveUrlField.fill(keepAliveUrl);
-
+        
+        if(attributes!== undefined){
+            await this.attributesField.fill(attributes);
+        }
+        if(keepAliveUrl !== undefined){
+            await this.keepAliveUrlField.fill(keepAliveUrl);
+        }
+        
         await this.saveButton.click();
 
         await expect(await this.successMessage).toBeVisible();
