@@ -40,7 +40,7 @@ export class SamlAdminPage {
 	) {
 		await this.applicationsMenuPage.goToSamlAdmin();
 
-		if (enabled != undefined) {
+		if (enabled !== undefined) {
 			await this.enabledField.setChecked(enabled);
 		}
 
@@ -57,6 +57,10 @@ export class SamlAdminPage {
 		await expect(await this.successMessage).toBeVisible();
 
 		await this.createOrReplaceCertificate();
+
+		await this.enabledField.check();
+
+		await this.saveButton.click()
 	}
 
 	private async createOrReplaceCertificate(
@@ -67,11 +71,11 @@ export class SamlAdminPage {
 		keyPassword = 'test',
 	) {
 
-		const locator = await this.page.getByRole('group', {name: encryption ? 'Encryption Certificate and Private Key' : 'Certificate and Private Key', exact: true})
+		const locator = await this.page.getByRole('group', {exact: true, name: encryption ? 'Encryption Certificate and Private Key' : 'Certificate and Private Key'})
 
 		let certificateButton = await locator.getByRole('button', {name: 'Create Certificate'});
 
-		if (certificateButton.isHidden()) {
+		if (! await certificateButton.isVisible()) {
 			certificateButton = await locator.getByRole('button', {name: 'Replace Certificate'});
 		}
 
