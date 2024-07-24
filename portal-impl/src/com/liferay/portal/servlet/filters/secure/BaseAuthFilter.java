@@ -113,13 +113,10 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 					HttpServletRequest.BASIC_AUTH);
 			}
 			else {
-				HttpAuthorizationHeader httpAuthorizationHeader =
-					new HttpAuthorizationHeader(
-						HttpAuthorizationHeader.SCHEME_BASIC);
-
 				HttpAuthManagerUtil.generateChallenge(
 					httpServletRequest, httpServletResponse,
-					httpAuthorizationHeader);
+					new HttpAuthorizationHeader(
+						HttpAuthorizationHeader.SCHEME_BASIC));
 
 				return null;
 			}
@@ -130,13 +127,10 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			if (!user2.isActive()) {
 				httpSession.invalidate();
 
-				HttpAuthorizationHeader httpAuthorizationHeader =
-					new HttpAuthorizationHeader(
-						HttpAuthorizationHeader.SCHEME_BASIC);
-
 				HttpAuthManagerUtil.generateChallenge(
 					httpServletRequest, httpServletResponse,
-					httpAuthorizationHeader);
+					new HttpAuthorizationHeader(
+						HttpAuthorizationHeader.SCHEME_BASIC));
 
 				return null;
 			}
@@ -179,13 +173,10 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 					HttpServletRequest.DIGEST_AUTH);
 			}
 			else {
-				HttpAuthorizationHeader httpAuthorizationHeader =
-					new HttpAuthorizationHeader(
-						HttpAuthorizationHeader.SCHEME_DIGEST);
-
 				HttpAuthManagerUtil.generateChallenge(
 					httpServletRequest, httpServletResponse,
-					httpAuthorizationHeader);
+					new HttpAuthorizationHeader(
+						HttpAuthorizationHeader.SCHEME_DIGEST));
 
 				return null;
 			}
@@ -196,13 +187,10 @@ public abstract class BaseAuthFilter extends BasePortalFilter {
 			if (!user2.isActive()) {
 				httpSession.invalidate();
 
-				HttpAuthorizationHeader httpAuthorizationHeader =
-					new HttpAuthorizationHeader(
-						HttpAuthorizationHeader.SCHEME_DIGEST);
-
 				HttpAuthManagerUtil.generateChallenge(
 					httpServletRequest, httpServletResponse,
-					httpAuthorizationHeader);
+					new HttpAuthorizationHeader(
+						HttpAuthorizationHeader.SCHEME_DIGEST));
 
 				return null;
 			}
