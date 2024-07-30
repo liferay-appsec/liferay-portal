@@ -223,15 +223,13 @@ definition {
 			// This pause is required to allow the test to wait for the access token to expire.
 
 			Pause(value1 = 60000);
-
-			Refresh();
 		}
 
 		task ("Assert that user is logged out as OIDC provider session is over") {
 			while (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
 				Pause(value1 = 1000);
 
-				Refresh();
+				Refresh.refreshNoSPARefresh();
 			}
 
 			User.viewLoggedOutPG();
