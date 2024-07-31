@@ -197,7 +197,7 @@ definition {
 	@priority = 5
 	test AssertUserIsLoggedOutWhenAccessTokenIsExpiredByOIDCProvider {
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration.config";
-		property osgi.module.configurations = "enabled=\"true\"${line.separator}tokenRefreshOffset=\"30\"${line.separator}tokenRefreshSchedulerInterval=\"50\"";
+		property osgi.module.configurations = "enabled=\"true\"${line.separator}tokenRefreshOffset=\"30\"";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
@@ -229,7 +229,7 @@ definition {
 			while (IsElementPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
 				Pause(value1 = 1000);
 
-				Refresh.refreshNoSPARefresh();
+				Refresh.refreshNoLiferayLog();
 			}
 
 			User.viewLoggedOutPG();
