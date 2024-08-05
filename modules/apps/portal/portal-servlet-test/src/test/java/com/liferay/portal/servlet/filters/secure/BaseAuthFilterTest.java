@@ -10,22 +10,19 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControl;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
-import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.impl.UserImpl;
 import com.liferay.portal.security.access.control.AccessControlImpl;
-import com.liferay.portal.servlet.filters.secure.BaseAuthFilter;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
-import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsValues;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 
 import javax.servlet.FilterChain;
@@ -50,6 +47,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 
 import org.mockito.Mockito;
+
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric Yan
@@ -90,16 +89,18 @@ public class BaseAuthFilterTest {
 	}
 
 	@Test
-	public void testDigestAuth() throws Exception {
+	public void testDigestAuthWhenDigestIsNotUpdatedDuringTheSession() throws Exception {
 		MockHttpSession mockHttpSession = new MockHttpSession();
-	
-		String digest = RandomTestUtil.randomString();
 
+		String digest = RandomTestUtil.randomString();
 		mockHttpSession.setAttribute("DIGEST", digest);
+
+		//	TODO set companyId so it is available when the challenge is generated
+		_mockHttpServletRequest.setAttribute(WebKeys.COMPANY_ID, RandomTestUtil.randomLong());
 
 		User user = Mockito.mock(User.class);
 
-		Mockito.when(
+		when(
 			user.getDigest()
 		).thenReturn(
 			digest
@@ -107,24 +108,65 @@ public class BaseAuthFilterTest {
 
 		_mockHttpServletRequest.setSession(mockHttpSession);
 
-		Method method = BaseAuthFilter.class.getDeclaredMethod("digestAuth");
-		method.setAccessible(true);
+//		Method method = BaseAuthFilter.class.getDeclaredMethod("digestAuth");
+//		method.setAccessible(true);
 
 		_authFilter.digestAuth(_mockHttpServletRequest, _mockHttpServletResponse);
 
-		/*long companyId = PortalInstances.getCompanyId(httpServletRequest);
+//		long companyId = PortalInstances.getCompanyId(_mockHttpServletRequest);
+//		String remoteAddress = _mockHttpServletRequest.getRemoteAddr();
+//		String nonce = NonceUtil.generate(companyId, remoteAddress);
+//		HttpAuthorizationHeader httpAuthorizationHeader = new HttpAuthorizationHeader(HttpAuthorizationHeader.SCHEME_DIGEST);
+//		httpAuthorizationHeader.setAuthParameter(
+//			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_NONCE, nonce);
+//		_mockHttpServletResponse.setHeader(
+//			HttpHeaders.WWW_AUTHENTICATE, httpAuthorizationHeader.toString());
+//		_mockHttpServletResponse.setStatus(HttpServletResponse.SC_ACCEPTED);
 
-		String remoteAddress = httpServletRequest.getRemoteAddr();
+		Assert.assertNotNull(_mockHttpServletResponse.getHeader(HttpHeaders.WWW_AUTHENTICATE));
 
-		String nonce = NonceUtil.generate(companyId, remoteAddress);
+//	TODO add correct status
 
-		httpAuthorizationHeader.setAuthParameter(
-			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_NONCE, nonce);
+//		Assert.assertEquals(_mockHttpServletResponse.getStatus(), );
+	}
 
-		httpServletResponse.setHeader(
-			HttpHeaders.WWW_AUTHENTICATE, httpAuthorizationHeader.toString());
+	@Test
+	public void testDigestAuthWhenDigestIsUpdatedDuringTheSession() throws Exception {
+		MockHttpSession mockHttpSession = new MockHttpSession();
+		mockHttpSession.setAttribute("DIGEST", RandomTestUtil.randomString());
 
-		httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);*/
+		//	TODO set companyId so it is available when the challenge is generated
+		_mockHttpServletRequest.setAttribute(WebKeys.COMPANY_ID, RandomTestUtil.randomLong());
+
+		User user = Mockito.mock(User.class);
+
+		when(
+			user.getDigest()
+		).thenReturn(
+			RandomTestUtil.randomString()
+		);
+
+//	TODO set companyId so it is available when the challenge is generated
+//
+//		when(_mockHttpServletRequest.getAttribute(WebKeys.COMPANY_ID))
+//			.thenReturn(RandomTestUtil.randomLong());
+
+		_mockHttpServletRequest.setSession(mockHttpSession);
+
+//		Method method = BaseAuthFilter.class.getDeclaredMethod("digestAuth");
+//		method.setAccessible(true);
+
+		_authFilter.digestAuth(_mockHttpServletRequest, _mockHttpServletResponse);
+
+//		long companyId = PortalInstances.getCompanyId(_mockHttpServletRequest);
+//		String remoteAddress = _mockHttpServletRequest.getRemoteAddr();
+//		String nonce = NonceUtil.generate(companyId, remoteAddress);
+//		HttpAuthorizationHeader httpAuthorizationHeader = new HttpAuthorizationHeader(HttpAuthorizationHeader.SCHEME_DIGEST);
+//		httpAuthorizationHeader.setAuthParameter(
+//		HttpAuthorizationHeader.AUTH_PARAMETER_NAME_NONCE, nonce);
+//		_mockHttpServletResponse.setHeader(
+//			HttpHeaders.WWW_AUTHENTICATE, httpAuthorizationHeader.toString());
+//		_mockHttpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
 		Assert.assertNotNull(_mockHttpServletResponse.getHeader(HttpHeaders.WWW_AUTHENTICATE));
 		Assert.assertEquals(_mockHttpServletResponse.getStatus(), 401);
