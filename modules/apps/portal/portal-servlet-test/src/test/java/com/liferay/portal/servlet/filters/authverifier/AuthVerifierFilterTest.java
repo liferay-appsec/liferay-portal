@@ -13,6 +13,8 @@ import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PrefsProps;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.security.access.control.AccessControlImpl;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
@@ -32,6 +34,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
@@ -163,7 +166,7 @@ public class AuthVerifierFilterTest {
 				"WEB_SERVER_FORWARDED_PORT_ENABLED", Boolean.TRUE);
 
 			_mockHttpServletRequest.addHeader(
-				"X-Forwarded-Host", "test.liferay.com");
+				"X-Forwarded-Host", "localhost");
 			_mockHttpServletRequest.addHeader("X-Forwarded-Port", "1234");
 
 			_mockFilterConfig.addInitParameter("https.required", "true");
@@ -181,7 +184,7 @@ public class AuthVerifierFilterTest {
 
 		String redirectURL = _mockHttpServletResponse.getRedirectedUrl();
 
-		String expectedRedirectURL = "https://test.liferay.com:1234";
+		String expectedRedirectURL = "https://localhost:1234";
 
 		Assert.assertEquals(expectedRedirectURL, redirectURL);
 	}
