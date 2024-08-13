@@ -150,7 +150,7 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 			List<String> emails = jwtClaimsSet.getStringListClaim("emails");
 
-			if (emails == null) {
+			if (emails == null || emails.isEmpty()) {
 				String email = jwtClaimsSet.getStringClaim("email");
 
 				if (email != null) {
