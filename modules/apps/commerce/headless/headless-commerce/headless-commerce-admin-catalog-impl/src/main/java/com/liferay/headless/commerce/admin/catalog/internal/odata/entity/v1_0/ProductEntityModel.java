@@ -29,12 +29,6 @@ public class ProductEntityModel implements EntityModel {
 	public ProductEntityModel(List<EntityField> entityFields) {
 		_entityFieldsMap = EntityModel.toEntityFieldsMap(
 			new CollectionEntityField(
-				new StringEntityField(
-					"categoryIds", locale -> "assetCategoryIds")),
-			new CollectionEntityField(
-				new StringEntityField(
-					"categoryNames", locale -> "assetCategoryNames")),
-			new CollectionEntityField(
 				new EntityField(
 					"channelId", EntityField.Type.INTEGER,
 					locale -> Field.getSortableFieldName(
@@ -43,6 +37,12 @@ public class ProductEntityModel implements EntityModel {
 					object -> _getCommerceChannelGroupId(object))),
 			new CollectionEntityField(
 				new IntegerEntityField("statusCode", locale -> Field.STATUS)),
+			new CollectionEntityField(
+				new StringEntityField(
+					"categoryIds", locale -> "assetCategoryIds")),
+			new CollectionEntityField(
+				new StringEntityField(
+					"categoryNames", locale -> "assetCategoryNames")),
 			new CollectionEntityField(
 				new StringEntityField("tags", locale -> "assetTagNames")),
 			new ComplexEntityField("customFields", entityFields),

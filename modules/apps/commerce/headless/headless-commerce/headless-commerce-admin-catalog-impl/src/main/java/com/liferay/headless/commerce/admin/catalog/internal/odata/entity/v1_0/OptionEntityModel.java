@@ -20,11 +20,11 @@ public class OptionEntityModel implements EntityModel {
 
 	public OptionEntityModel() {
 		_entityFieldsMap = EntityModel.toEntityFieldsMap(
+			new StringEntityField(
+				"fieldType", locale -> CPField.COMMERCE_OPTION_TYPE_KEY),
 			new StringEntityField("key", locale -> "key"),
 			new StringEntityField(
-				"name", locale -> Field.getSortableFieldName(Field.NAME)),
-			new StringEntityField(
-				"fieldType", locale -> CPField.COMMERCE_OPTION_TYPE_KEY));
+				"name", locale -> Field.getSortableFieldName(Field.NAME)));
 	}
 
 	@Override
