@@ -23,10 +23,10 @@ public class DiscountEntityModel implements EntityModel {
 		_entityFieldsMap = EntityModel.toEntityFieldsMap(
 			new CollectionEntityField(
 				new IntegerEntityField(
-					"accountId", locale -> "commerceAccountId")),
+					"accountGroupId", locale -> "commerceAccountGroupIds")),
 			new CollectionEntityField(
 				new IntegerEntityField(
-					"accountGroupId", locale -> "commerceAccountGroupIds")),
+					"accountId", locale -> "commerceAccountId")),
 			new CollectionEntityField(
 				new IntegerEntityField(
 					"channelId", locale -> "commerceChannelId")),

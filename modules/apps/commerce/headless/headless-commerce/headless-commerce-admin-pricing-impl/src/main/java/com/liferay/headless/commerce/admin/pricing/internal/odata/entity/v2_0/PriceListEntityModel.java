@@ -23,12 +23,14 @@ public class PriceListEntityModel implements EntityModel {
 
 	public PriceListEntityModel() {
 		_entityFieldsMap = EntityModel.toEntityFieldsMap(
-			new CollectionEntityField(
-				new IntegerEntityField(
-					"accountId", locale -> "commerceAccountId")),
+			new BooleanEntityField(
+				"catalogBasePriceList", locale -> "catalogBasePriceList"),
 			new CollectionEntityField(
 				new IntegerEntityField(
 					"accountGroupId", locale -> "commerceAccountGroupIds")),
+			new CollectionEntityField(
+				new IntegerEntityField(
+					"accountId", locale -> "commerceAccountId")),
 			new CollectionEntityField(
 				new IntegerEntityField("catalogId", locale -> "catalogId")),
 			new CollectionEntityField(
@@ -37,15 +39,13 @@ public class PriceListEntityModel implements EntityModel {
 			new CollectionEntityField(
 				new IntegerEntityField(
 					"orderTypeId", locale -> "commerceOrderTypeId")),
-			new StringEntityField(
-				"name", locale -> Field.getSortableFieldName("name")),
-			new BooleanEntityField(
-				"catalogBasePriceList", locale -> "catalogBasePriceList"),
-			new StringEntityField("type", locale -> "type"),
 			new DateTimeEntityField(
 				"createDate",
 				locale -> Field.getSortableFieldName(Field.CREATE_DATE),
-				locale -> Field.CREATE_DATE));
+				locale -> Field.CREATE_DATE),
+			new StringEntityField(
+				"name", locale -> Field.getSortableFieldName("name")),
+			new StringEntityField("type", locale -> "type"));
 	}
 
 	@Override
