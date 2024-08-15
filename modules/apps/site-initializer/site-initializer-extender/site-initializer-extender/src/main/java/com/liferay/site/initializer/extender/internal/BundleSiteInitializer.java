@@ -137,6 +137,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.GroupModel;
@@ -5550,12 +5551,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 		serviceContext.setAddGroupPermissions(true);
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setCompanyId(user.getCompanyId());
+
+		Company company = _companyLocalService.getCompany(
+			serviceContext.getCompanyId());
+
 		serviceContext.setPortalURL(
-			_companyLocalService.getCompany(
-				serviceContext.getCompanyId()
-			).getPortalURL(
-				serviceContext.getScopeGroupId()
-			));
+			company.getPortalURL(serviceContext.getScopeGroupId()));
+
 		serviceContext.setScopeGroupId(groupId);
 		serviceContext.setTimeZone(user.getTimeZone());
 		serviceContext.setUserId(user.getUserId());
