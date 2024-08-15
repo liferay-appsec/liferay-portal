@@ -25,16 +25,12 @@ public class OrderEntityModel implements EntityModel {
 			new CollectionEntityField(
 				new IntegerEntityField(
 					"accountId", locale -> "commerceAccountId")),
-			new IntegerEntityField("channelId", locale -> "commerceChannelId"),
 			new CollectionEntityField(
 				new IntegerEntityField("orderStatus", locale -> "orderStatus")),
-			new IntegerEntityField("orderId", locale -> Field.ENTRY_CLASS_PK),
 			new DateTimeEntityField(
 				"createDate",
 				locale -> Field.getSortableFieldName(Field.CREATE_DATE),
 				locale -> Field.CREATE_DATE),
-			new StringEntityField(
-				"creatorEmailAddress", locale -> "orderCreatorEmailAddress"),
 			new DateTimeEntityField(
 				"modifiedDate",
 				locale -> Field.getSortableFieldName(Field.MODIFIED_DATE),
@@ -42,11 +38,15 @@ public class OrderEntityModel implements EntityModel {
 			new DateTimeEntityField(
 				"orderDate", locale -> Field.getSortableFieldName("orderDate"),
 				locale -> "orderDate"),
+			new IntegerEntityField("channelId", locale -> "commerceChannelId"),
+			new IntegerEntityField("orderId", locale -> Field.ENTRY_CLASS_PK),
+			new IntegerEntityField(
+				"orderTypeId", locale -> "commerceOrderTypeId"),
+			new StringEntityField(
+				"creatorEmailAddress", locale -> "orderCreatorEmailAddress"),
 			new StringEntityField(
 				"orderTypeExternalReferenceCode",
-				locale -> "commerceOrderTypeExternalReferenceCode"),
-			new IntegerEntityField(
-				"orderTypeId", locale -> "commerceOrderTypeId"));
+				locale -> "commerceOrderTypeExternalReferenceCode"));
 	}
 
 	@Override
