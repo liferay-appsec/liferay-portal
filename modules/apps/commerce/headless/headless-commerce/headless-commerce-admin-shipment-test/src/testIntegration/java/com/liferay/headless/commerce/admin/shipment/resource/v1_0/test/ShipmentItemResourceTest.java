@@ -73,6 +73,9 @@ public class ShipmentItemResourceTest extends BaseShipmentItemResourceTestCase {
 		_commerceChannel = CommerceTestUtil.addCommerceChannel(
 			testGroup.getGroupId(), _commerceCurrency.getCode());
 
+		_commerceInventoryWarehouse1 = _addCommerceInventoryWarehouse();
+		_commerceInventoryWarehouse2 = _addCommerceInventoryWarehouse();
+
 		BigDecimal price = BigDecimal.valueOf(RandomTestUtil.randomDouble());
 
 		_cpInstance = CPTestUtil.addCPInstanceWithRandomSku(
@@ -86,10 +89,6 @@ public class ShipmentItemResourceTest extends BaseShipmentItemResourceTestCase {
 			_cpInstance.getCPInstanceId(), amount, BigDecimal.valueOf(5), 3);
 
 		_commerceOrderItems.addAll(_commerceOrder.getCommerceOrderItems());
-
-		_commerceInventoryWarehouse1 = _addCommerceInventoryWarehouse();
-
-		_commerceInventoryWarehouse2 = _addCommerceInventoryWarehouse();
 
 		_commerceShipment =
 			CommerceShipmentLocalServiceUtil.addCommerceShipment(
