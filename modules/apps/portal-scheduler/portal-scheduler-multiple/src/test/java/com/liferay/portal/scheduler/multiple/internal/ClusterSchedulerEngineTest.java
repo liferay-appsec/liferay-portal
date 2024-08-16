@@ -1417,9 +1417,9 @@ public class ClusterSchedulerEngineTest {
 		public void reset(
 			boolean master, int memoryClusterJobs, int persistentJobs) {
 
-			_methodHandler = null;
-
 			_master = master;
+
+			_methodHandler = null;
 
 			_mockSchedulerEngine.resetJobs(memoryClusterJobs, persistentJobs);
 		}
