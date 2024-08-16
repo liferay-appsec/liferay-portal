@@ -977,7 +977,6 @@ public class LayoutsImporterTest {
 		Assert.assertEquals(
 			fragmentEntry.getFragmentEntryId(),
 			fragmentEntryLink.getFragmentEntryId());
-
 		Assert.assertTrue(
 			fragmentEntryLink.getConfiguration(),
 			JSONUtil.equals(
