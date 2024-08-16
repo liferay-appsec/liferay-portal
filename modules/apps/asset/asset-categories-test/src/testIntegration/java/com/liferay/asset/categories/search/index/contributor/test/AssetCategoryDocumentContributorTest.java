@@ -189,20 +189,6 @@ public class AssetCategoryDocumentContributorTest {
 		return Objects.equals(searchEngine.getVendor(), "Solr");
 	}
 
-	private AssetVocabulary _setUpAssetVocabulary(int visibilityType)
-		throws Exception {
-
-		AssetVocabulary assetVocabulary =
-			_assetVocabularyLocalService.addVocabulary(
-				TestPropsValues.getUserId(), _group.getGroupId(),
-				RandomTestUtil.randomString(), _serviceContext);
-
-		assetVocabulary.setVisibilityType(visibilityType);
-
-		return _assetVocabularyLocalService.updateAssetVocabulary(
-			assetVocabulary);
-	}
-
 	private void _setUpAssetCategoriesAndAssetVocabulary() throws Exception {
 		AssetVocabulary internalAssetVocabulary = _setUpAssetVocabulary(
 			AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL);
@@ -236,6 +222,20 @@ public class AssetCategoryDocumentContributorTest {
 
 		_serviceContext.setAssetCategoryIds(
 			ArrayUtil.toLongArray(assetCategoryIds));
+	}
+
+	private AssetVocabulary _setUpAssetVocabulary(int visibilityType)
+		throws Exception {
+
+		AssetVocabulary assetVocabulary =
+			_assetVocabularyLocalService.addVocabulary(
+				TestPropsValues.getUserId(), _group.getGroupId(),
+				RandomTestUtil.randomString(), _serviceContext);
+
+		assetVocabulary.setVisibilityType(visibilityType);
+
+		return _assetVocabularyLocalService.updateAssetVocabulary(
+			assetVocabulary);
 	}
 
 	private void _testContribute(
