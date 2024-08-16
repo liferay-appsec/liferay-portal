@@ -72,7 +72,8 @@ public class ScimClientOAuth2ApplicationConfigurationFactory {
 							properties);
 
 				_oAuth2Application = _getOrAddOAuth2Application(
-					companyId, scimClientOAuth2ApplicationConfiguration);
+					companyId, scimClientOAuth2ApplicationConfiguration,
+					(long)properties.get("userId"));
 
 				_serviceRegistration = bundleContext.registerService(
 					BearerTokenProvider.class,
@@ -111,10 +112,9 @@ public class ScimClientOAuth2ApplicationConfigurationFactory {
 	private OAuth2Application _getOrAddOAuth2Application(
 			long companyId,
 			ScimClientOAuth2ApplicationConfiguration
-				scimClientOAuth2ApplicationConfiguration)
+				scimClientOAuth2ApplicationConfiguration,
+			long userId)
 		throws Exception {
-
-		User user = _userLocalService.getGuestUser(companyId);
 
 		User clientCredentialUser = _userLocalService.getUserByScreenName(
 			companyId, PropsValues.DEFAULT_ADMIN_SCREEN_NAME);
@@ -127,6 +127,8 @@ public class ScimClientOAuth2ApplicationConfigurationFactory {
 				companyId, clientId);
 
 		if (oAuth2Application == null) {
+			User user = _userLocalService.getUser(userId);
+
 			oAuth2Application =
 				_oAuth2ApplicationLocalService.addOAuth2Application(
 					companyId, user.getUserId(), user.getScreenName(),

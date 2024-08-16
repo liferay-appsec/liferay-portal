@@ -264,6 +264,7 @@ public class SaveScimConfigurationMVCActionCommand
 					"oAuth2ApplicationName",
 					ParamUtil.getString(
 						actionRequest, "oAuth2ApplicationName"));
+				properties.put("userId", themeDisplay.getUserId());
 
 				configuration.update(properties);
 			}
@@ -284,6 +285,8 @@ public class SaveScimConfigurationMVCActionCommand
 						"oAuth2ApplicationName",
 						ParamUtil.getString(
 							actionRequest, "oAuth2ApplicationName")
+					).put(
+						"userId", themeDisplay.getUserId()
 					).build());
 			}
 		}
