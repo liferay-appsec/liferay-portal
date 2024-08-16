@@ -4,6 +4,8 @@ Bundle-Version: 4.0.13
 Import-Package:\
 	!com.github.luben.zstd,\
 	\
+	!org.apache.commons.collections.*,\
+	\
 	!org.brotli.dec,\
 	\
 	*

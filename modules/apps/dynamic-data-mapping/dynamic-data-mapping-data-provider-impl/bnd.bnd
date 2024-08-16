@@ -8,6 +8,7 @@ Import-Package:\
 	\
 	!jakarta.json.*,\
 	\
+	!org.apache.commons.collections.*,\
 	!org.apache.commons.digester.*,\
 	!org.apache.commons.jexl2.*,\
 	!org.apache.commons.jxpath.*,\
