@@ -79,12 +79,11 @@ public class AssetCategoryDocumentContributorTest {
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			_group, user.getUserId());
 
-		_setUpAssetVocabularyAndCategories();
+		_setUpAssetCategoriesAndAssetVocabulary();
 
 		_blogsEntry = BlogsTestUtil.addEntryWithWorkflow(
 			user.getUserId(), RandomTestUtil.randomString(), false,
 			_serviceContext);
-
 		_journalArticle = JournalTestUtil.addArticle(
 			_group.getGroupId(), 0,
 			PortalUtil.getClassNameId(JournalArticle.class),
@@ -107,7 +106,6 @@ public class AssetCategoryDocumentContributorTest {
 			_getGroupAssetCategoryExpectedExternalReferenceCodes(
 				_publicAssetCategories),
 			"groupAssetCategoryExternalReferenceCodes");
-
 		_testContribute(
 			_journalArticle,
 			_getGroupAssetCategoryExpectedExternalReferenceCodes(
@@ -124,7 +122,6 @@ public class AssetCategoryDocumentContributorTest {
 			_getGroupAssetCategoryExpectedExternalReferenceCodes(
 				_internalAssetCategories),
 			"groupAssetInternalCategoryExternalReferenceCodes");
-
 		_testContribute(
 			_journalArticle,
 			_getGroupAssetCategoryExpectedExternalReferenceCodes(
@@ -141,7 +138,6 @@ public class AssetCategoryDocumentContributorTest {
 			_getGroupAssetVocabularyCategoryExternalReferenceCodes(
 				_publicAssetCategories),
 			"groupAssetVocabularyCategoryExternalReferenceCodes");
-
 		_testContribute(
 			_journalArticle,
 			_getGroupAssetVocabularyCategoryExternalReferenceCodes(
@@ -207,7 +203,7 @@ public class AssetCategoryDocumentContributorTest {
 			assetVocabulary);
 	}
 
-	private void _setUpAssetVocabularyAndCategories() throws Exception {
+	private void _setUpAssetCategoriesAndAssetVocabulary() throws Exception {
 		AssetVocabulary internalAssetVocabulary = _setUpAssetVocabulary(
 			AssetVocabularyConstants.VISIBILITY_TYPE_INTERNAL);
 

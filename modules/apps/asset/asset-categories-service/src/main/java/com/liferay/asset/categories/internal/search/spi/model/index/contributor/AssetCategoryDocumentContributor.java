@@ -258,7 +258,7 @@ public class AssetCategoryDocumentContributor
 		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to get assetVocabulary " +
+					"Unable to get asset vocabulary " +
 						assetCategory.getVocabularyId() +
 							" while indexing document",
 					portalException);
