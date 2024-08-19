@@ -14,15 +14,27 @@ export class SCIMApiHelper {
 		this.basePath = 'scim/v1.0/';
 	}
 
-	async getGroups() {
-		return this.apiHelpers.getResponse(
-			`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
-			false,
-			{
-				'Content-Type': 'application/scim+json',
-				...(await this.apiHelpers.getCSRFTokenHeader()),
-			}
-		);
+	async getGroups(oAuth2Token?: string) {
+		if (oAuth2Token) {
+			return this.apiHelpers.getResponse(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
+				false,
+				{
+					'Authorization': `Bearer ${oAuth2Token}`,
+					'Content-Type': 'application/scim+json',
+				}
+			);
+		}
+		else {
+			return this.apiHelpers.getResponse(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
+				false,
+				{
+					'Content-Type': 'application/scim+json',
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				}
+			);
+		}
 	}
 
 	async getUsers(oAuth2Token?: string) {
@@ -48,29 +60,57 @@ export class SCIMApiHelper {
 		}
 	}
 
-	async postGroup(data: any) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
-			{
-				data,
-				headers: {
-					'Content-Type': 'application/scim+json',
-					...(await this.apiHelpers.getCSRFTokenHeader()),
-				},
-			}
-		);
+	async postGroup(data: any, oAuth2Token?: string) {
+		if (oAuth2Token) {
+			return this.apiHelpers.post(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
+				{
+					data,
+					headers: {
+						'Authorization': `Bearer ${oAuth2Token}`,
+						'Content-Type': 'application/scim+json',
+					},
+				}
+			);
+		}
+		else {
+			return this.apiHelpers.post(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Groups`,
+				{
+					data,
+					headers: {
+						'Content-Type': 'application/scim+json',
+						...(await this.apiHelpers.getCSRFTokenHeader()),
+					},
+				}
+			);
+		}
 	}
 
-	async postUser(data: any) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}v2/Users`,
-			{
-				data,
-				headers: {
-					'Content-Type': 'application/scim+json',
-					...(await this.apiHelpers.getCSRFTokenHeader()),
-				},
-			}
-		);
+	async postUser(data: any, oAuth2Token?: string) {
+		if (oAuth2Token) {
+			return this.apiHelpers.post(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Users`,
+				{
+					data,
+					headers: {
+						'Authorization': `Bearer ${oAuth2Token}`,
+						'Content-Type': 'application/scim+json',
+					},
+				}
+			);
+		}
+		else {
+			return this.apiHelpers.post(
+				`${this.apiHelpers.baseUrl}${this.basePath}v2/Users`,
+				{
+					data,
+					headers: {
+						'Content-Type': 'application/scim+json',
+						...(await this.apiHelpers.getCSRFTokenHeader()),
+					},
+				}
+			);
+		}
 	}
 }
