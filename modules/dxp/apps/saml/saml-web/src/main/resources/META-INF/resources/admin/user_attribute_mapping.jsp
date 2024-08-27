@@ -24,6 +24,7 @@ String userIdentifierExpression = attributeMappingDisplayContext.getUserIdentifi
 		List<Map.Entry<String, String>> prefixEntries = attributeMappingDisplayContext.getMapEntries(prefix);
 		String userAttributeMappingsContentBox = HtmlUtil.getAUICompatibleId(prefix + ":userAttributeMappingsContentBox");
 		int[] userAttributeMappingsIndexes = attributeMappingDisplayContext.getIndexes(prefix);
+		int prefixEntriesIndex = 0;
 	%>
 
 		<aui:field-wrapper label="<%= userFieldExpressionHandler.getSectionLabel(locale) %>">
@@ -31,7 +32,7 @@ String userIdentifierExpression = attributeMappingDisplayContext.getUserIdentifi
 
 				<%
 				for (int i = 0; i < userAttributeMappingsIndexes.length; i++) {
-					int prefixEntriesIndex = userAttributeMappingsIndexes[i];
+					prefixEntriesIndex = userAttributeMappingsIndexes[i];
 
 					Map.Entry<String, String> userAttributeMappingEntry = prefixEntries.get(i);
 					String userFieldExpressionId = "attribute:" + prefix + ":userAttributeMappingFieldExpression-" + prefixEntriesIndex;
@@ -72,11 +73,46 @@ String userIdentifierExpression = attributeMappingDisplayContext.getUserIdentifi
 			</div>
 
 			<aui:script use="liferay-auto-fields">
+				var attributeUserIdentifierExpressionIndex =
+					'input[name="<portlet:namespace />attribute:userIdentifierExpressionIndex"]';
+
+				var updateSiblingRows = function (targetRow, newRowValue) {
+					var nextRow = targetRow.nextElementSibling;
+
+					while (nextRow != null) {
+						nextRow.querySelector(attributeUserIdentifierExpressionIndex).value =
+							newRowValue;
+
+						updateSiblingRows(nextRow, ++newRowValue);
+					}
+				};
+
 				new Liferay.AutoFields({
 					contentBox: '#<portlet:namespace /><%= userAttributeMappingsContentBox %>',
 					fieldIndexes:
 						'<portlet:namespace />attribute:<%= prefix %>:userAttributeMappingsIndexes',
 					namespace: '<portlet:namespace />',
+					on: {
+						clone(event) {
+							var originalRow = event.originalRow._node;
+							var originalRowValue = originalRow.querySelector(
+								attributeUserIdentifierExpressionIndex
+							).value;
+							var row = event.row._node;
+							row.querySelector(attributeUserIdentifierExpressionIndex).value =
+								++originalRowValue;
+
+							updateSiblingRows(row, ++originalRowValue);
+						},
+						delete(event) {
+							var deletedRow = event.deletedRow._node;
+							var deletedRowValue = deletedRow.querySelector(
+								attributeUserIdentifierExpressionIndex
+							).value;
+
+							updateSiblingRows(deletedRow, deletedRowValue);
+						},
+					},
 				}).render();
 			</aui:script>
 		</aui:field-wrapper>
