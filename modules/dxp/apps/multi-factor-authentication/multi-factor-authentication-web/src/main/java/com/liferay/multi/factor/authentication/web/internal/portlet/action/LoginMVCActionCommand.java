@@ -157,7 +157,7 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 
 					if (userAuthenticated.getLastLoginDate() == null) {
 						_userLocalService.updatePasswordReset(
-							userId, Boolean.getBoolean(passwordReset));
+							userId, Boolean.parseBoolean(passwordReset));
 					}
 
 					return;

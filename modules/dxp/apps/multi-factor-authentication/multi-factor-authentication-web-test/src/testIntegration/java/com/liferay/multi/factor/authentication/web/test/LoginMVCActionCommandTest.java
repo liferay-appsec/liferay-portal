@@ -6,7 +6,10 @@
 package com.liferay.multi.factor.authentication.web.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
+import com.liferay.layout.test.util.LayoutTestUtil;
+import com.liferay.multi.factor.authentication.spi.checker.headless.HeadlessMFAChecker;
+import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
+import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -33,6 +36,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -42,6 +46,9 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,6 +56,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+
+import org.springframework.mock.web.MockHttpServletRequest;
 
 /**
  * @author Alvaro Saugar
@@ -63,14 +76,8 @@ public class LoginMVCActionCommandTest {
 
 	@Before
 	public void setUp() throws Exception {
-		//_originalName = PrincipalThreadLocal.getName();
-
 		_group = GroupTestUtil.addGroup();
-		/*
-				_serviceContext = ServiceContextTestUtil.getServiceContext(
-					_group.getGroupId());
-				ServiceContextThreadLocal.pushServiceContext(_serviceContext);
-		 */
+
 		_company = _companyLocalService.getCompany(_group.getCompanyId());
 	}
 
@@ -80,14 +87,18 @@ public class LoginMVCActionCommandTest {
 	}
 
 	@Test
-	public void testNormalStateWhenLoginFromAnUtilityPage() throws Exception {
-		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(
-					"com.liferay.multi.factor.authentication.email.otp." +
-						"configuration.MFAEmailOTPConfiguration",
-					HashMapDictionaryBuilder.<String, Object>put(
-						"enabled", true
-					).build())) {
+	public void testResetPasswordValueDoesNotChangeWhenItIsFalse()
+		throws Exception {
+
+		try (CompanyConfigurationTemporarySwapper
+				configurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						_company.getCompanyId(),
+						"com.liferay.multi.factor.authentication.email.otp." +
+							"configuration.MFAEmailOTPConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"enabled", true
+						).build())) {
 
 			User user = UserTestUtil.addUser(_company);
 
@@ -102,52 +113,52 @@ public class LoginMVCActionCommandTest {
 				_userLocalService.updatePassword(
 					user.getUserId(), password, password, false, false);
 
-				try (ConfigurationTemporarySwapper
-						configurationTemporarySwapper1 =
-							new ConfigurationTemporarySwapper(
-								"com.liferay.multi.factor.authentication.ip." +
-									"address.internal.configuration." +
-										"MFAIPAddressConfiguration",
-								HashMapDictionaryBuilder.<String, Object>put(
-									"enabled", true
-								).build())) {
+				user = _userLocalService.getUser(user.getUserId());
 
-					MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
-						_getMockLiferayPortletActionRequest(
-							user.getEmailAddress(), password);
-					ReflectionTestUtil.invoke(
-						_mvcActionCommand, "doProcessAction",
-						new Class<?>[] {
-							ActionRequest.class, ActionResponse.class
-						},
-						mockLiferayPortletActionRequest,
-						new MockLiferayPortletActionResponse());
+				Bundle bundle = FrameworkUtil.getBundle(
+					LoginMVCActionCommandTest.class);
 
-					User user1 = _userLocalService.getUser(user.getUserId());
+				BundleContext bundleContext = bundle.getBundleContext();
 
-					Assert.assertFalse(user1.isPasswordReset());
-				}
+				// ServiceRegistration<?> serviceRegistration =
+
+				bundleContext.registerService(
+					HeadlessMFAChecker.class, new HeadlessMFATestChecker(),
+					MapUtil.singletonDictionary(
+						"companyId", _company.getCompanyId()));
+
+				ReflectionTestUtil.invoke(
+					_mvcActionCommand, "doProcessAction",
+					new Class<?>[] {ActionRequest.class, ActionResponse.class},
+					_getMockLiferayPortletActionRequest(
+						user, password, "false"),
+					new MockLiferayPortletActionResponse());
+
+				User user1 = _userLocalService.getUser(user.getUserId());
+
+				Assert.assertEquals(
+					user.isPasswordReset(), user1.isPasswordReset());
+				Assert.assertFalse(user1.isPasswordReset());
 			}
 			catch (Exception exception) {
 				_log.error("Pushing Service Context ", exception);
 			}
-
-		//	HttpServletRequest hola = mockLiferayPortletActionRequest.getHttpServletRequest();
-		//	hola.getAttribute("REDIRECT");
-
-
 		}
 	}
 
 	@Test
-	public void testNormalStateWhenLoginFromAnUtilityPage1() throws Exception {
-		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
-				new ConfigurationTemporarySwapper(
-					"com.liferay.multi.factor.authentication.email.otp." +
-						"configuration.MFAEmailOTPConfiguration",
-					HashMapDictionaryBuilder.<String, Object>put(
-						"enabled", true
-					).build())) {
+	public void testResetPasswordValueDoesNotChangeWhenItIsTrue()
+		throws Exception {
+
+		try (CompanyConfigurationTemporarySwapper
+				configurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						_company.getCompanyId(),
+						"com.liferay.multi.factor.authentication.email.otp." +
+							"configuration.MFAEmailOTPConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"enabled", true
+						).build())) {
 
 			User user = UserTestUtil.addUser(_company);
 
@@ -162,31 +173,31 @@ public class LoginMVCActionCommandTest {
 				_userLocalService.updatePassword(
 					user.getUserId(), password, password, true, false);
 
-				try (ConfigurationTemporarySwapper
-						configurationTemporarySwapper1 =
-							new ConfigurationTemporarySwapper(
-								"com.liferay.multi.factor.authentication.ip." +
-									"address.internal.configuration." +
-										"MFAIPAddressConfiguration",
-								HashMapDictionaryBuilder.<String, Object>put(
-									"enabled", true
-								).build())) {
+				user = _userLocalService.getUser(user.getUserId());
 
-					ReflectionTestUtil.invoke(
-						_mvcActionCommand, "doProcessAction",
-						new Class<?>[] {
-							ActionRequest.class, ActionResponse.class
-						},
-						_getMockLiferayPortletActionRequest(
-							user.getEmailAddress(), password),
-						new MockLiferayPortletActionResponse());
+				Bundle bundle = FrameworkUtil.getBundle(
+					LoginMVCActionCommandTest.class);
 
-					User user1 = _userLocalService.getUser(user.getUserId());
+				BundleContext bundleContext = bundle.getBundleContext();
 
-					Assert.assertEquals(
-						user.isPasswordReset(), user1.isPasswordReset());
-					Assert.assertTrue(user1.isPasswordReset());
-				}
+				// ServiceRegistration<?> serviceRegistration =
+
+				bundleContext.registerService(
+					HeadlessMFAChecker.class, new HeadlessMFATestChecker(),
+					MapUtil.singletonDictionary(
+						"companyId", _company.getCompanyId()));
+
+				ReflectionTestUtil.invoke(
+					_mvcActionCommand, "doProcessAction",
+					new Class<?>[] {ActionRequest.class, ActionResponse.class},
+					_getMockLiferayPortletActionRequest(user, password, "true"),
+					new MockLiferayPortletActionResponse());
+
+				User user1 = _userLocalService.getUser(user.getUserId());
+
+				Assert.assertEquals(
+					user.isPasswordReset(), user1.isPasswordReset());
+				Assert.assertTrue(user1.isPasswordReset());
 			}
 			catch (Exception exception) {
 				_log.error("Pushing Service Context ", exception);
@@ -194,8 +205,15 @@ public class LoginMVCActionCommandTest {
 		}
 	}
 
+	private void _addCookieSupportCookie(
+		MockHttpServletRequest mockHttpServletRequest) {
+
+		mockHttpServletRequest.setCookies(
+			new Cookie(CookiesConstants.NAME_COOKIE_SUPPORT, "true"));
+	}
+
 	private MockLiferayPortletActionRequest _getMockLiferayPortletActionRequest(
-			String email, String password)
+			User user, String password, String resetPassword)
 		throws Exception {
 
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
@@ -204,8 +222,15 @@ public class LoginMVCActionCommandTest {
 		mockLiferayPortletActionRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, _getThemeDisplay());
 
-		mockLiferayPortletActionRequest.setParameter("login", email);
+		mockLiferayPortletActionRequest.setParameter(
+			"login", user.getEmailAddress());
 		mockLiferayPortletActionRequest.setParameter("password", password);
+		mockLiferayPortletActionRequest.setParameter(
+			"RESET_PASSWORD", resetPassword);
+
+		_addCookieSupportCookie(
+			(MockHttpServletRequest)
+				mockLiferayPortletActionRequest.getHttpServletRequest());
 
 		return mockLiferayPortletActionRequest;
 	}
@@ -217,8 +242,8 @@ public class LoginMVCActionCommandTest {
 
 		LayoutSet layoutSet = _group.getPublicLayoutSet();
 
+		themeDisplay.setLayout(LayoutTestUtil.addTypeContentLayout(_group));
 		themeDisplay.setLookAndFeel(layoutSet.getTheme(), null);
-
 		themeDisplay.setPermissionChecker(
 			PermissionThreadLocal.getPermissionChecker());
 		themeDisplay.setRealUser(TestPropsValues.getUser());
@@ -257,5 +282,16 @@ public class LoginMVCActionCommandTest {
 
 	@Inject
 	private UserLocalService _userLocalService;
+
+	private static class HeadlessMFATestChecker implements HeadlessMFAChecker {
+
+		@Override
+		public boolean verifyHeadlessRequest(
+			HttpServletRequest httpServletRequest, long userId) {
+
+			return true;
+		}
+
+	}
 
 }
