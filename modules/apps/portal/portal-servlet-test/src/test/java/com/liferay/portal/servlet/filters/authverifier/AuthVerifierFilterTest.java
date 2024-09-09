@@ -159,6 +159,12 @@ public class AuthVerifierFilterTest {
 		boolean webServerForwardedPortEnabled =
 			PropsValues.WEB_SERVER_FORWARDED_PORT_ENABLED;
 
+		PrefsPropsUtil prefsPropsUtil = new PrefsPropsUtil();
+		PrefsProps mockedPrefsProps = Mockito.mock(PrefsProps.class);
+		Mockito.when(mockedPrefsProps.getString(0L, "cdn.host.http","")).thenReturn("http://test.liferay.com");
+		Mockito.when(mockedPrefsProps.getString(0L, "cdn.host.https","")).thenReturn("https://test.liferay.com");
+		prefsPropsUtil.setPrefsProps(mockedPrefsProps);
+
 		try {
 			_setPortalProperty(
 				"WEB_SERVER_FORWARDED_HOST_ENABLED", Boolean.TRUE);
@@ -166,7 +172,7 @@ public class AuthVerifierFilterTest {
 				"WEB_SERVER_FORWARDED_PORT_ENABLED", Boolean.TRUE);
 
 			_mockHttpServletRequest.addHeader(
-				"X-Forwarded-Host", "localhost");
+				"X-Forwarded-Host", "https://test.liferay.com");
 			_mockHttpServletRequest.addHeader("X-Forwarded-Port", "1234");
 
 			_mockFilterConfig.addInitParameter("https.required", "true");
@@ -184,7 +190,7 @@ public class AuthVerifierFilterTest {
 
 		String redirectURL = _mockHttpServletResponse.getRedirectedUrl();
 
-		String expectedRedirectURL = "https://localhost:1234";
+		String expectedRedirectURL = "https://test.liferay.com:1234";
 
 		Assert.assertEquals(expectedRedirectURL, redirectURL);
 	}
