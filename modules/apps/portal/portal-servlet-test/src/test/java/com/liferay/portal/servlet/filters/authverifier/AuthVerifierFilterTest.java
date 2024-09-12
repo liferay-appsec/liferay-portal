@@ -172,7 +172,7 @@ public class AuthVerifierFilterTest {
 				"WEB_SERVER_FORWARDED_PORT_ENABLED", Boolean.TRUE);
 
 			_mockHttpServletRequest.addHeader(
-				"X-Forwarded-Host", "https://test.liferay.com");
+				"X-Forwarded-Host", "test.liferay.com");
 			_mockHttpServletRequest.addHeader("X-Forwarded-Port", "1234");
 
 			_mockFilterConfig.addInitParameter("https.required", "true");
