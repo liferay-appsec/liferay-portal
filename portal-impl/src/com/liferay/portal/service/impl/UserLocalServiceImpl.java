@@ -1211,8 +1211,15 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			emailAddress = emailAddressGenerator.generate(companyId, userId);
 		}
 
+		long ldapServerId = -1;
+
+		if (serviceContext != null) {
+			ldapServerId = GetterUtil.getLong(
+				serviceContext.getAttribute("ldapServerId"), ldapServerId);
+		}
+
 		validate(
-			companyId, userId, autoPassword, password1, password2,
+			companyId, ldapServerId, userId, autoPassword, password1, password2,
 			autoScreenName, screenName, emailAddress, null, firstName,
 			middleName, lastName, organizationIds, locale);
 
@@ -1270,12 +1277,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		user.setPasswordReset(_isPasswordReset(companyId));
 		user.setScreenName(screenName);
 		user.setEmailAddress(emailAddress);
-
-		Long ldapServerId = null;
-
-		if (serviceContext != null) {
-			ldapServerId = (Long)serviceContext.getAttribute("ldapServerId");
-		}
 
 		if (ldapServerId != null) {
 			user.setLdapServerId(ldapServerId);
@@ -4827,9 +4828,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			}
 
 			validate(
-				companyId, user.getUserId(), autoPassword, password1, password2,
-				autoScreenName, screenName, emailAddress, null, firstName,
-				middleName, lastName, null, locale);
+				companyId, 0, user.getUserId(), autoPassword, password1,
+				password2, autoScreenName, screenName, emailAddress, null,
+				firstName, middleName, lastName, null, locale);
 
 			if (!autoPassword &&
 				(Validator.isNull(password1) || Validator.isNull(password2))) {
@@ -7006,12 +7007,31 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #validatePassword(long, String, String)}
+	 */
+	@Deprecated
 	protected void validate(
 			long companyId, long userId, boolean autoPassword, String password1,
 			String password2, boolean autoScreenName, String screenName,
 			String emailAddress, String openId, String firstName,
 			String middleName, String lastName, long[] organizationIds,
 			Locale locale)
+		throws PortalException {
+
+		validate(
+			companyId, 0, userId, autoPassword, password1, password2,
+			autoScreenName, screenName, emailAddress, openId, firstName,
+			middleName, lastName, organizationIds, locale);
+	}
+
+	protected void validate(
+			long companyId, long ldapServerId, long userId,
+			boolean autoPassword, String password1, String password2,
+			boolean autoScreenName, String screenName, String emailAddress,
+			String openId, String firstName, String middleName, String lastName,
+			long[] organizationIds, Locale locale)
 		throws PortalException {
 
 		validateMaxUsers(companyId);
@@ -7021,11 +7041,17 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		if (!autoPassword) {
-			PasswordPolicy passwordPolicy =
-				_passwordPolicyLocalService.getDefaultPasswordPolicy(companyId);
+			PasswordPolicy passwordPolicy = null;
 
-			PwdToolkitUtil.validate(
-				companyId, 0, password1, password2, passwordPolicy);
+			if ((ldapServerId <= 0) ||
+				!LDAPSettingsUtil.isPasswordPolicyEnabled(companyId)) {
+
+				passwordPolicy =
+					_passwordPolicyLocalService.getDefaultPasswordPolicy(
+						companyId);
+			}
+
+			PwdToolkitUtil.validate(0, password1, password2, passwordPolicy);
 		}
 
 		validateEmailAddress(companyId, emailAddress);
@@ -7234,8 +7260,20 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 	}
 
+	/**
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+	 *             #validatePassword(long, String, String)}
+	 */
+	@Deprecated
 	protected void validatePassword(
 			long companyId, long userId, String password1, String password2)
+		throws PortalException {
+
+		validatePassword(userId, password1, password2);
+	}
+
+	protected void validatePassword(
+			long userId, String password1, String password2)
 		throws PortalException {
 
 		if (Validator.isNull(password1) || Validator.isNull(password2)) {
@@ -7249,8 +7287,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		PasswordPolicy passwordPolicy =
 			_passwordPolicyLocalService.getPasswordPolicyByUserId(userId);
 
-		PwdToolkitUtil.validate(
-			companyId, userId, password1, password2, passwordPolicy);
+		PwdToolkitUtil.validate(userId, password1, password2, passwordPolicy);
 	}
 
 	protected void validateReminderQuery(
