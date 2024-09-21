@@ -1739,10 +1739,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 */
 	@Override
 	public void checkLockout(User user) throws PortalException {
-		if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
-			return;
-		}
-
 		doCheckLockout(user, user.getPasswordPolicy());
 	}
 
@@ -1823,10 +1819,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	 */
 	@Override
 	public void checkPasswordExpired(User user) throws PortalException {
-		if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
-			return;
-		}
-
 		doCheckPasswordExpired(user, user.getPasswordPolicy());
 	}
 
@@ -1854,7 +1846,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		if (autoPassword) {
 			String password = StringPool.BLANK;
 
-			if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
+			if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId()) &&
+				(user.getLdapServerId() > 0)) {
+
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
@@ -5189,7 +5183,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		catch (ModelListenerException modelListenerException) {
 			Throwable throwable = modelListenerException.getCause();
 
-			if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
+			if (LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId()) &&
+				(user.getLdapServerId() > 0)) {
+
 				String msg = GetterUtil.getString(throwable.getMessage());
 
 				String[] errorPasswordHistoryKeywords =
@@ -6149,7 +6145,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 	protected User doCheckLockout(User user, PasswordPolicy passwordPolicy)
 		throws PortalException {
 
-		if (!passwordPolicy.isLockout()) {
+		if ((passwordPolicy == null) || !passwordPolicy.isLockout()) {
 			return user;
 		}
 
@@ -6184,7 +6180,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Check if user should be forced to change password on first login
 
-		if (passwordPolicy.isChangeable() &&
+		if ((passwordPolicy != null) && passwordPolicy.isChangeable() &&
 			passwordPolicy.isChangeRequired() &&
 			(user.getLastLoginDate() == null)) {
 
@@ -6285,7 +6281,9 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			// Let LDAP handle max failure event
 
-			if (!LDAPSettingsUtil.isPasswordPolicyEnabled(companyId)) {
+			if (!LDAPSettingsUtil.isPasswordPolicyEnabled(companyId) ||
+				(user.getLdapServerId() <= 0)) {
+
 				PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
 				user = userPersistence.fetchByPrimaryKey(user.getUserId());
@@ -7292,14 +7290,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		// Check password policy to see if the is account locked out or if the
 		// password is expired
 
-		if (!LDAPSettingsUtil.isPasswordPolicyEnabled(user.getCompanyId())) {
-			PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-			user = doCheckLockout(user, passwordPolicy);
+		user = doCheckLockout(user, passwordPolicy);
 
-			if (!PasswordModificationThreadLocal.isPasswordModified()) {
-				user = doCheckPasswordExpired(user, passwordPolicy);
-			}
+		if (!PasswordModificationThreadLocal.isPasswordModified()) {
+			user = doCheckPasswordExpired(user, passwordPolicy);
 		}
 
 		return user;
