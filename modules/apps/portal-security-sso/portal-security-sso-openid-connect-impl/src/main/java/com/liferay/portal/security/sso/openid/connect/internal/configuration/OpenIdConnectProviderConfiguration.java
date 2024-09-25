@@ -126,4 +126,11 @@ public interface OpenIdConnectProviderConfiguration {
 	)
 	public String[] customTokenRequestParameters();
 
+	@Meta.AD(
+		deflt = "false", description = "send-locale-lowercase-help",
+		name = "send-locale-lowercase", required = false,
+		type = Meta.Type.Boolean
+	)
+	public boolean sendLocaleLowercase();
+
 }

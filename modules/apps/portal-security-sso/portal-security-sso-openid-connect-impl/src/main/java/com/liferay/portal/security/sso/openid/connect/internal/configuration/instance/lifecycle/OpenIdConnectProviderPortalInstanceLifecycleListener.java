@@ -327,6 +327,9 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 			_generateRequestParametersJSONObject(
 				"customTokenRequestParameters", properties);
 
+		requestParametersJSONObject.put(
+			"send_locale_lowercase", properties.get("sendLocaleLowercase"));
+
 		return requestParametersJSONObject.put(
 			"grant_type", "authorization_code"
 		).toString();

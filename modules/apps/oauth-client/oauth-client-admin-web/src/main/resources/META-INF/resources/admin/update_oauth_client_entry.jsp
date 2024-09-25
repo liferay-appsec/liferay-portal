@@ -16,6 +16,21 @@ portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
 
 renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "new-oauth-client") : LanguageUtil.get(request, "edit-oauth-client"));
+
+boolean sendLocaleLowercase = false;
+
+if (oAuthClientEntry != null) {
+	try {
+		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(oAuthClientEntry.getTokenRequestParametersJSON());
+
+		sendLocaleLowercase = jsonObject.getBoolean("send_locale_lowercase");
+	}
+	catch (JSONException jsonException) {
+		if (_log.isDebugEnabled()) {
+			_log.debug(jsonException);
+		}
+	}
+}
 %>
 
 <portlet:actionURL name="/oauth_client_admin/update_oauth_client_entry" var="updateOAuthClientEntryURL">
@@ -115,6 +130,8 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 						)
 					%>'
 				/>
+
+				<aui:input helpMessage="send-locale-lowercase-help" label="send-locale-lowercase" name="sendLocaleLowercase" type="checkbox" value="<%= sendLocaleLowercase %>" />
 
 				<h3 class="sheet-subtitle"><liferay-ui:message key="oauth-client-oidc-specific-configurations" /></h3>
 
@@ -250,3 +267,7 @@ renderResponse.setTitle((oAuthClientEntry == null) ? LanguageUtil.get(request, "
 		);
 	}
 </aui:script>
+
+<%!
+private static final Log _log = LogFactoryUtil.getLog("com_liferay_oauth_client_admin_web.update_oauth_client_entry_jsp");
+%>

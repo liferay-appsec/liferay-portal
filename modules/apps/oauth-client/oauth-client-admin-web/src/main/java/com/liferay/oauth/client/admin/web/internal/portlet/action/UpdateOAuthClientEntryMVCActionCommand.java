@@ -8,6 +8,9 @@ package com.liferay.oauth.client.admin.web.internal.portlet.action;
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -53,11 +56,15 @@ public class UpdateOAuthClientEntryMVCActionCommand
 			String tokenRequestParametersJSON = ParamUtil.getString(
 				actionRequest, "tokenRequestParametersJSON");
 
+			boolean sendLocaleLowerCase = ParamUtil.getBoolean(
+				actionRequest, "sendLocaleLowercase");
+
 			if (oAuthClientEntryId > 0) {
 				_oAuthClientEntryService.updateOAuthClientEntry(
 					oAuthClientEntryId, authRequestParametersJSON,
 					authServerWellKnownURI, infoJSON, oidcUserInfoMapperJSON,
-					tokenRequestParametersJSON);
+					_calculateTokenRequestParameterWithLocale(
+						tokenRequestParametersJSON, sendLocaleLowerCase));
 			}
 			else {
 				ThemeDisplay themeDisplay =
@@ -67,7 +74,8 @@ public class UpdateOAuthClientEntryMVCActionCommand
 				_oAuthClientEntryService.addOAuthClientEntry(
 					themeDisplay.getUserId(), authRequestParametersJSON,
 					authServerWellKnownURI, infoJSON, oidcUserInfoMapperJSON,
-					tokenRequestParametersJSON);
+					_calculateTokenRequestParameterWithLocale(
+						tokenRequestParametersJSON, sendLocaleLowerCase));
 			}
 
 			return true;
@@ -85,8 +93,24 @@ public class UpdateOAuthClientEntryMVCActionCommand
 		}
 	}
 
+	private String _calculateTokenRequestParameterWithLocale(
+			String tokenRequestParametersJSON, boolean sendLocaleLowerCase)
+		throws JSONException {
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			tokenRequestParametersJSON);
+
+		jsonObject.remove("send_locale_lowercase");
+		jsonObject.put("send_locale_lowercase", sendLocaleLowerCase);
+
+		return jsonObject.toString();
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpdateOAuthClientEntryMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private OAuthClientEntryService _oAuthClientEntryService;
