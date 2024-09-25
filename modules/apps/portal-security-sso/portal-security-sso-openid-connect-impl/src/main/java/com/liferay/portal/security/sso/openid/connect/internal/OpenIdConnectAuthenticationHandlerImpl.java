@@ -23,6 +23,7 @@ import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticatio
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
+import com.liferay.portal.security.sso.openid.connect.internal.model.LowercaseLangTag;
 import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectRequestParametersUtil;
@@ -201,21 +202,31 @@ public class OpenIdConnectAuthenticationHandlerImpl
 			_oAuthClientEntryLocalService.getOAuthClientEntry(
 				oAuthClientEntryId);
 
-		Map<String, Object> runtimeRequestParameters =
-			HashMapBuilder.<String, Object>put(
-				"code_challenge",
-				CodeChallenge.compute(CodeChallengeMethod.S256, codeVerifier)
-			).put(
-				"nonce", new Nonce()
-			).put(
-				"redirect_uri", _getLoginRedirectURI(httpServletRequest)
-			).put(
-				"state", new State()
-			).put(
-				"ui_locales", _getLangTags(httpServletRequest)
-			).build();
-
 		try {
+			JSONObject authenticationRequestParametersJSONObject =
+				JSONObjectUtils.parse(
+					oAuthClientEntry.getAuthRequestParametersJSON());
+
+			Map<String, Object> runtimeRequestParameters =
+				HashMapBuilder.<String, Object>put(
+					"code_challenge",
+					CodeChallenge.compute(
+						CodeChallengeMethod.S256, codeVerifier)
+				).put(
+					"nonce", new Nonce()
+				).put(
+					"redirect_uri", _getLoginRedirectURI(httpServletRequest)
+				).put(
+					"state", new State()
+				).put(
+					"ui_locales",
+					_getLangTags(
+						httpServletRequest,
+						OpenIdConnectRequestParametersUtil.
+							calculateUILocaleMode(
+								authenticationRequestParametersJSONObject))
+				).build();
+
 			OIDCProviderMetadata oidcProviderMetadata =
 				_authorizationServerMetadataResolver.
 					resolveOIDCProviderMetadata(
@@ -223,7 +234,7 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 			URI authenticationRequestURI = _getAuthenticationRequestURI(
 				oidcProviderMetadata.getAuthorizationEndpointURI(),
-				oAuthClientEntry.getAuthRequestParametersJSON(),
+				authenticationRequestParametersJSONObject,
 				oAuthClientEntry.getClientId(), runtimeRequestParameters);
 
 			if (_log.isDebugEnabled()) {
@@ -277,12 +288,9 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 	private URI _getAuthenticationRequestURI(
 			URI authenticationEndpointURI,
-			String authenticationRequestParametersJSON, String clientId,
-			Map<String, Object> runtimeRequestParameters)
+			JSONObject authenticationRequestParametersJSONObject,
+			String clientId, Map<String, Object> runtimeRequestParameters)
 		throws Exception {
-
-		JSONObject authenticationRequestParametersJSONObject =
-			JSONObjectUtils.parse(authenticationRequestParametersJSON);
 
 		AuthenticationRequest.Builder builder =
 			new AuthenticationRequest.Builder(
@@ -358,16 +366,26 @@ public class OpenIdConnectAuthenticationHandlerImpl
 		}
 	}
 
-	private List<LangTag> _getLangTags(HttpServletRequest httpServletRequest) {
+	private List<LangTag> _getLangTags(
+		HttpServletRequest httpServletRequest,
+		OpenIdConnectRequestParametersUtil.UILocaleMode uiLocaleMode) {
+
 		Locale locale = _portal.getLocale(httpServletRequest);
 
-		if (locale == null) {
+		if ((locale == null) ||
+			uiLocaleMode.equals(
+				OpenIdConnectRequestParametersUtil.UILocaleMode.DISABLED)) {
+
 			return null;
 		}
 
 		try {
 			return Collections.singletonList(
-				LangTag.parse(_language.getBCP47LangTag(locale)));
+				LowercaseLangTag.parse(
+					_language.getBCP47LangTag(locale),
+					uiLocaleMode.equals(
+						OpenIdConnectRequestParametersUtil.UILocaleMode.
+							LOWERCASE_BCP47_LANGUAGE_CODE)));
 		}
 		catch (LangTagException langTagException) {
 			if (_log.isDebugEnabled()) {
