@@ -220,7 +220,7 @@ public class OpenIdConnectAuthenticationHandlerImpl
 					"state", new State()
 				).put(
 					"ui_locales",
-					_getLangTags(
+					getLangTags(
 						httpServletRequest,
 						OpenIdConnectRequestParametersUtil.
 							calculateUILocaleMode(
@@ -270,6 +270,39 @@ public class OpenIdConnectAuthenticationHandlerImpl
 				_portal.getCompanyId(httpServletRequest),
 				openIdConnectProviderName, _oAuthClientEntryLocalService),
 			httpServletRequest, httpServletResponse);
+	}
+
+	protected List<LangTag> getLangTags(
+		HttpServletRequest httpServletRequest,
+		OpenIdConnectRequestParametersUtil.UILocaleMode uiLocaleMode) {
+
+		Locale locale = _portal.getLocale(httpServletRequest);
+
+		if ((locale == null) ||
+			uiLocaleMode.equals(
+				OpenIdConnectRequestParametersUtil.UILocaleMode.DISABLED)) {
+
+			return null;
+		}
+
+		try {
+			return Collections.singletonList(
+				LowercaseLangTag.parse(
+					_language.getBCP47LangTag(locale),
+					uiLocaleMode.equals(
+						OpenIdConnectRequestParametersUtil.UILocaleMode.
+							LOWERCASE_BCP47_LANGUAGE_CODE)));
+		}
+		catch (LangTagException langTagException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to create a lang tag with locale " +
+						locale.getLanguage(),
+					langTagException);
+			}
+
+			return null;
+		}
 	}
 
 	protected Map<String, Object> getUserInfoClaims(JWT jwt)
@@ -363,39 +396,6 @@ public class OpenIdConnectAuthenticationHandlerImpl
 					"Unable to process response from ", requestURL, ": ",
 					exception.getMessage()),
 				exception);
-		}
-	}
-
-	private List<LangTag> _getLangTags(
-		HttpServletRequest httpServletRequest,
-		OpenIdConnectRequestParametersUtil.UILocaleMode uiLocaleMode) {
-
-		Locale locale = _portal.getLocale(httpServletRequest);
-
-		if ((locale == null) ||
-			uiLocaleMode.equals(
-				OpenIdConnectRequestParametersUtil.UILocaleMode.DISABLED)) {
-
-			return null;
-		}
-
-		try {
-			return Collections.singletonList(
-				LowercaseLangTag.parse(
-					_language.getBCP47LangTag(locale),
-					uiLocaleMode.equals(
-						OpenIdConnectRequestParametersUtil.UILocaleMode.
-							LOWERCASE_BCP47_LANGUAGE_CODE)));
-		}
-		catch (LangTagException langTagException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Unable to create a lang tag with locale " +
-						locale.getLanguage(),
-					langTagException);
-			}
-
-			return null;
 		}
 	}
 
