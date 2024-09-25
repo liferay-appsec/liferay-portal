@@ -6,6 +6,7 @@
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringUtil;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.ResponseType;
@@ -22,6 +23,38 @@ import net.minidev.json.JSONObject;
  * @author Arthur Chan
  */
 public class OpenIdConnectRequestParametersUtil {
+
+	public static UILocaleMode calculateUILocaleMode(
+			JSONObject authRequestParametersJSONObject)
+		throws ParseException {
+
+		if (authRequestParametersJSONObject.containsKey(
+				"custom_request_parameters")) {
+
+			JSONObject customRequestParametersJSONObject =
+				JSONObjectUtils.getJSONObject(
+					authRequestParametersJSONObject,
+					"custom_request_parameters");
+
+			if (customRequestParametersJSONObject.containsKey("ui_locale")) {
+				String mode = customRequestParametersJSONObject.getAsString(
+					"ui_locale");
+
+				if (StringUtil.equalsIgnoreCase(
+						mode, "[\"$LOWERCASE_BCP47_LANGUAGE_CODE$\"]")) {
+
+					return UILocaleMode.LOWERCASE_BCP47_LANGUAGE_CODE;
+				}
+				else if (StringUtil.equalsIgnoreCase(
+							mode, "[\"$DISABLED$\"]")) {
+
+					return UILocaleMode.DISABLED;
+				}
+			}
+		}
+
+		return UILocaleMode.DEFAULT;
+	}
 
 	public static void consumeCustomRequestParameters(
 			BiConsumer<String, String[]> biConsumer,
@@ -73,6 +106,12 @@ public class OpenIdConnectRequestParametersUtil {
 
 		return Scope.parse(
 			JSONObjectUtils.getString(requestParametersJSONObject, "scope"));
+	}
+
+	public enum UILocaleMode {
+
+		DEFAULT, DISABLED, LOWERCASE_BCP47_LANGUAGE_CODE
+
 	}
 
 }
