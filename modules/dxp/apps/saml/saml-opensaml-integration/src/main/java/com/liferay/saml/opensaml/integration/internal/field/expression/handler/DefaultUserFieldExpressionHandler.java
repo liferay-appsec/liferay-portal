@@ -236,12 +236,12 @@ public class DefaultUserFieldExpressionHandler
 		if (!StringUtil.equalsIgnoreCase(
 				currentUser.getEmailAddress(), newUser.getEmailAddress())) {
 
-			currentUser = _userLocalService.updateEmailAddress(
-				currentUser.getUserId(), StringPool.BLANK,
+			newUser = _userLocalService.updateEmailAddress(
+				newUser.getUserId(), StringPool.BLANK,
 				newUser.getEmailAddress(), newUser.getEmailAddress());
 
-			_userLocalService.updateEmailAddressVerified(
-				currentUser.getUserId(), true);
+			newUser = _userLocalService.updateEmailAddressVerified(
+				newUser.getUserId(), true);
 		}
 
 		if (Objects.equals(
@@ -253,7 +253,7 @@ public class DefaultUserFieldExpressionHandler
 				currentUser.getScreenName(), newUser.getScreenName()) &&
 			Objects.equals(currentUser.getUuid(), newUser.getUuid())) {
 
-			return currentUser;
+			return newUser;
 		}
 
 		Contact contact = newUser.getContact();
