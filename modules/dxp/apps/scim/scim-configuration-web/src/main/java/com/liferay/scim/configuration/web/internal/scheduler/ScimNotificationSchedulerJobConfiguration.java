@@ -123,7 +123,7 @@ public class ScimNotificationSchedulerJobConfiguration
 					"/body.tmpl");
 
 			body = StringUtil.replace(
-				body, new String[] {"[$DATE_EXPIRATION_ACCESS_TOKEN$]"},
+				body, new String[] {"[$ACCESS_TOKEN_EXPIRATION_DATE$]"},
 				new String[] {strAccessTokenExpirationDate});
 		}
 		catch (IOException ioException) {
