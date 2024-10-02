@@ -728,7 +728,9 @@ public class UserManagerImpl implements UserManager {
 						companyId, "))"));
 
 			if (ArrayUtil.isEmpty(configurations)) {
-				return null;
+				return ReflectionUtil.throwException(
+					new NotFoundException(
+						"SCIM not configured for company " + companyId));
 			}
 
 			Configuration configuration = configurations[0];
