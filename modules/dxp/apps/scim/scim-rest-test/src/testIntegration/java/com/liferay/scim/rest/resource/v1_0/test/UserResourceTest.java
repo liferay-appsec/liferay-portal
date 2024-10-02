@@ -72,19 +72,6 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 	@BeforeClass
 	public static void setUpClass() throws Exception {
 		BaseUserResourceTestCase.setUpClass();
-
-		_pid = ConfigurationTestUtil.createFactoryConfiguration(
-			"com.liferay.scim.rest.internal.configuration." +
-				"ScimClientOAuth2ApplicationConfiguration",
-			HashMapDictionaryBuilder.<String, Object>put(
-				"companyId", TestPropsValues.getCompanyId()
-			).put(
-				"matcherField", "email"
-			).put(
-				"oAuth2ApplicationName", "scim-client-test"
-			).put(
-				"userId", TestPropsValues.getUserId()
-			).build());
 	}
 
 	@AfterClass
@@ -95,6 +82,11 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 	@Override
 	@Test
 	public void testDeleteV2User() throws Exception {
+		assertHttpResponseStatusCode(
+			404, userResource.getV2UserByIdHttpResponse("12345"));
+
+		_restoreScimTestConfiguration();
+
 		User user = testDeleteV2User_addUser();
 
 		assertHttpResponseStatusCode(
@@ -128,11 +120,18 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 			409,
 			userResource.deleteV2UserHttpResponse(
 				String.valueOf(portalUser.getUserId())));
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
 	}
 
 	@Override
 	@Test
 	public void testGetV2UserById() throws Exception {
+		assertHttpResponseStatusCode(
+			404, userResource.getV2UserByIdHttpResponse("12345"));
+
+		_restoreScimTestConfiguration();
+
 		assertHttpResponseStatusCode(
 			404, userResource.getV2UserByIdHttpResponse("12345"));
 
@@ -143,11 +142,18 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 
 		assertHttpResponseStatusCode(200, httpResponse);
 		assertValid(User.toDTO(httpResponse.getContent()));
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
 	}
 
 	@Override
 	@Test
 	public void testGetV2Users() throws Exception {
+		assertHttpResponseStatusCode(
+			404, userResource.getV2UsersHttpResponse(5, 0));
+
+		_restoreScimTestConfiguration();
+
 		UserTestUtil.addUser();
 
 		_assertListResponse(userResource.getV2Users(5, 0), 0, 0);
@@ -161,11 +167,20 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 
 		_assertListResponse(
 			userResource.getV2Users(5, 3), 3, 1, user1, user2, user3);
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
 	}
 
 	@Override
 	@Test
 	public void testPostV2User() throws Exception {
+		User postUserNotConfigured = randomUser();
+
+		assertHttpResponseStatusCode(
+			404, userResource.postV2UserHttpResponse(postUserNotConfigured));
+
+		_restoreScimTestConfiguration();
+
 		User postUser1 = randomUser();
 
 		userResource.postV2User(postUser1);
@@ -241,6 +256,8 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 
 		assertHttpResponseStatusCode(
 			409, userResource.postV2UserHttpResponse(postUser3));
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
 	}
 
 	@Ignore
@@ -252,6 +269,11 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 	@Override
 	@Test
 	public void testPutV2User() throws Exception {
+		assertHttpResponseStatusCode(
+			404, userResource.putV2UserHttpResponse("12345", randomUser()));
+
+		_restoreScimTestConfiguration();
+
 		assertHttpResponseStatusCode(
 			404, userResource.putV2UserHttpResponse("12345", randomUser()));
 
@@ -273,6 +295,8 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 			userResource.putV2UserHttpResponse(user2.getId(), user2);
 
 		assertEquals(user2, User.toDTO(httpResponse.getContent()));
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
 	}
 
 	@Override
@@ -431,6 +455,21 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 		Object userObject = userResource.getV2UserById(userId);
 
 		return User.toDTO(userObject.toString());
+	}
+
+	private void _restoreScimTestConfiguration() throws Exception {
+		_pid = ConfigurationTestUtil.createFactoryConfiguration(
+			"com.liferay.scim.rest.internal.configuration." +
+				"ScimClientOAuth2ApplicationConfiguration",
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companyId", TestPropsValues.getCompanyId()
+			).put(
+				"matcherField", "email"
+			).put(
+				"oAuth2ApplicationName", "scim-client-test"
+			).put(
+				"userId", TestPropsValues.getUserId()
+			).build());
 	}
 
 	private static String _pid;
