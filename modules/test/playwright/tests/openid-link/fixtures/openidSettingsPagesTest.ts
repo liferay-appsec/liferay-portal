@@ -5,19 +5,19 @@
 
 import {test} from '@playwright/test';
 
-import { OpenIdInstanceSettingsPage } from '../../../pages/portal-settings-authentication-openid-connect-web/OpenIdInstanceSettingsPage';
-import { OpenIdSystemSettingsPage } from '../../../pages/portal-settings-authentication-openid-connect-web/OpenIdSystemSettingsPage';
+import {OpenIdInstanceSettingsPage} from '../../../pages/portal-settings-authentication-openid-connect-web/OpenIdInstanceSettingsPage';
+import {OpenIdSystemSettingsPage} from '../../../pages/portal-settings-authentication-openid-connect-web/OpenIdSystemSettingsPage';
 
 const openIdSettingsPagesTest = test.extend<{
-    openIDInstanceSettingsPage: OpenIdInstanceSettingsPage,
-    openIDSystemSettingsPage : OpenIdSystemSettingsPage
+	openIDInstanceSettingsPage: OpenIdInstanceSettingsPage;
+	openIDSystemSettingsPage: OpenIdSystemSettingsPage;
 }>({
-    openIDInstanceSettingsPage: async ({page}, use) =>{
-        await use(new OpenIdInstanceSettingsPage(page))
-    },
-    openIDSystemSettingsPage : async ({page}, use)=>{
-        await use(new OpenIdSystemSettingsPage(page))
-    },
-})
+	openIDInstanceSettingsPage: async ({page}, use) => {
+		await use(new OpenIdInstanceSettingsPage(page));
+	},
+	openIDSystemSettingsPage: async ({page}, use) => {
+		await use(new OpenIdSystemSettingsPage(page));
+	},
+});
 
-export{openIdSettingsPagesTest};
+export {openIdSettingsPagesTest};

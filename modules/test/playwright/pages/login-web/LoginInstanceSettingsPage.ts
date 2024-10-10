@@ -5,6 +5,7 @@
 
 import {Locator, Page} from '@playwright/test';
 
+import { clickAndExpectToBeVisible } from '../../utils/clickAndExpectToBeVisible';
 import {waitForAlert} from '../../utils/waitForAlert';
 import {InstanceSettingsPage} from '../configuration-admin-web/InstanceSettingsPage';
 
@@ -26,24 +27,33 @@ export class LoginInstanceSettingsPage {
 	}
 
 	async enableLoginPrompt() {
+		await this.page.getByRole('menuitem',{name: 'Login'}).waitFor();
 		await this.page.getByLabel('Prompt Enabled').check();
 		await this.saveConfiguration();
 		await waitForAlert(this.page);
 	}
 
-	async disableLoginPrompt() {
-		await this.page.getByLabel('Prompt Enabled').uncheck();
-		await this.saveConfiguration();
-		await waitForAlert(this.page);
+	async resetLoginPrompt() {
+		await this.page.getByRole('button', {
+			name: 'Actions',
+		}).click();
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('link', {
+				name: 'Reset Default Values',
+			}),
+			trigger: this.page.getByRole('button', {
+				name: 'Actions',
+			}),
+		});
+
 	}
 
 	async saveConfiguration() {
 		if (await this.page.isVisible('button:has-text("Update")')) {
 			this.updateButton.click();
-
-			return;
+		}else{
+			this.saveButton.click();
 		}
-
-		this.saveButton.click();
 	}
 }

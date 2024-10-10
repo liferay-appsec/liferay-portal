@@ -5,36 +5,38 @@
 
 import {Locator, Page} from '@playwright/test';
 
-import { clickAndExpectToBeVisible } from '../../utils/clickAndExpectToBeVisible';
-import { waitForAlert } from '../../utils/waitForAlert';
-import { SystemSettingsPage } from '../configuration-admin-web/SystemSettingsPage';
+import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
+import {waitForAlert} from '../../utils/waitForAlert';
+import {SystemSettingsPage} from '../configuration-admin-web/SystemSettingsPage';
 
 export class OpenIdSystemSettingsPage {
-    readonly page: Page;
-    readonly systemSettingsPage : SystemSettingsPage;
-    readonly openIdConnectMenuItem: Locator;
+	readonly page: Page;
+	readonly systemSettingsPage: SystemSettingsPage;
+	readonly openIdConnectMenuItem: Locator;
 	readonly enabledCheckbox: Locator;
 	readonly saveButton: Locator;
 
-    constructor(page : Page ){ 
-        this.page = page;
-        this.systemSettingsPage = new SystemSettingsPage(page);
-        this.openIdConnectMenuItem = page.getByRole('menuitem', {
+	constructor(page: Page) {
+		this.page = page;
+		this.systemSettingsPage = new SystemSettingsPage(page);
+		this.openIdConnectMenuItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'OpenID Connect',
 		});
-        this.enabledCheckbox = page.getByText(' Enabled ');
+		this.enabledCheckbox = page.getByText(' Enabled ');
 		this.saveButton = page.getByRole('button', {name: /save|update/i});
-    }
+	}
 
-    async goTo(){
-        this.systemSettingsPage.goToSystemSetting('SSO','OpenID Connect');
-    }
+	async goTo() {
+		this.systemSettingsPage.goToSystemSetting('SSO', 'OpenID Connect');
+	}
 
-    async disableOpenIDConnect() {
-		await this.page.getByRole('button', {
-			name: 'Actions',
-		}).click();
+	async disableOpenIDConnect() {
+		await this.page
+			.getByRole('button', {
+				name: 'Actions',
+			})
+			.click();
 		await clickAndExpectToBeVisible({
 			autoClick: true,
 			target: this.page.getByRole('link', {
@@ -44,7 +46,7 @@ export class OpenIdSystemSettingsPage {
 				name: 'Actions',
 			}),
 		});
-        await waitForAlert(this.page);
+		await waitForAlert(this.page);
 	}
 
 	async enableOpenIDConnect() {
