@@ -80,7 +80,7 @@ definition {
 		}
 
 		task ("Then: Cookie category related cookies are saved with 12 months as expiration time.") {
-			CookieBanner.checkIfCookiesHasSixMonthsAsExpirationDate();
+			CookieBanner.checkIfCookiesHaveTwelveMonthsAsExpirationDate();
 		}
 	}
 

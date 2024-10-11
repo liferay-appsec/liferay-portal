@@ -99,7 +99,7 @@ definition {
 		var javascriptForCookieExpirationDate = '''var cookieName = "${cookieName}";
 													async function getCookieExpirationDate(){
 													try {
-															await cookieStore.get(cookieName).then(cookies => cookieExpirationDate = cookies.expires);
+															await cookieStore.get(cookieName).then(cookie => cookieExpirationDate = cookie.expires);
 															return (new Date(cookieExpirationDate)).toISOString().slice(0,13); // return format: YYYY-MM-DDTHH
 														  }
 														  catch(error){
@@ -112,7 +112,7 @@ definition {
 		var cookieExpirationDate = selenium.getEval(${javascriptForCookieExpirationDate});
 
 		if (${targetDate} != ${cookieExpirationDate}) {
-			TestUtils.fail(message = "Cookie expiration date is not 6 months ahead. The expected expiration date is:'${targetDate}' while the actual cookie has '${cookieExpirationDate}'.");
+			TestUtils.fail(message = "Cookie expiration date is not 12 months ahead. The expected expiration date is:'${targetDate}' while the actual cookie has '${cookieExpirationDate}'.");
 		}
 	}
 

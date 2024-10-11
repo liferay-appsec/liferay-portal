@@ -6,9 +6,9 @@ definition {
 		WaitForElementNotPresent(locator1 = "COOKIES_CONSENT_PANEL_IFRAME");
 	}
 
-	@description = "Check if Cookies has 6 months as expiration date"
+	@description = "Check if Cookies have 12 months as expiration date"
 	@summary = "Default summary"
-	macro checkIfCookiesHasSixMonthsAsExpirationDate() {
+	macro checkIfCookiesHaveTwelveMonthsAsExpirationDate() {
 		CookieHelper.checkSelectedCookieExpirationDate(cookieName = "CONSENT_TYPE_PERFORMANCE");
 
 		CookieHelper.checkSelectedCookieExpirationDate(cookieName = "CONSENT_TYPE_FUNCTIONAL");
