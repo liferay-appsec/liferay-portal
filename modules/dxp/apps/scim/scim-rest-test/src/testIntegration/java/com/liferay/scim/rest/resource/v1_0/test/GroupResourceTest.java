@@ -175,10 +175,8 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 	@Override
 	@Test
 	public void testPostV2Group() throws Exception {
-		Group postGroupNotConfigured = randomGroup();
-
 		assertHttpResponseStatusCode(
-			404, groupResource.postV2GroupHttpResponse(postGroupNotConfigured));
+			404, groupResource.postV2GroupHttpResponse(randomGroup()));
 
 		_pid = _createScimClientOAuth2ApplicationConfiguration();
 

@@ -174,10 +174,8 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 	@Override
 	@Test
 	public void testPostV2User() throws Exception {
-		User postUserNotConfigured = randomUser();
-
 		assertHttpResponseStatusCode(
-			404, userResource.postV2UserHttpResponse(postUserNotConfigured));
+			404, userResource.postV2UserHttpResponse(randomUser()));
 
 		_restoreScimTestConfiguration();
 
