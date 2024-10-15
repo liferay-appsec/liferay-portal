@@ -84,7 +84,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 		assertHttpResponseStatusCode(
 			404, groupResource.getV2GroupByIdHttpResponse("12345"));
 
-		_pid = _restoreScimTestConfiguration();
+		_pid = _createScimClientOAuth2ApplicationConfiguration();
 
 		Group group = testDeleteV2Group_addGroup();
 
@@ -129,7 +129,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 		assertHttpResponseStatusCode(
 			404, groupResource.getV2GroupByIdHttpResponse("12345"));
 
-		_pid = _restoreScimTestConfiguration();
+		_pid = _createScimClientOAuth2ApplicationConfiguration();
 
 		assertHttpResponseStatusCode(
 			404, groupResource.getV2GroupByIdHttpResponse("12345"));
@@ -151,7 +151,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 		assertHttpResponseStatusCode(
 			404, groupResource.getV2GroupsHttpResponse(5, 0));
 
-		_pid = _restoreScimTestConfiguration();
+		_pid = _createScimClientOAuth2ApplicationConfiguration();
 
 		_userGroupLocalService.addUserGroup(
 			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
@@ -180,7 +180,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 		assertHttpResponseStatusCode(
 			404, groupResource.postV2GroupHttpResponse(postGroupNotConfigured));
 
-		_pid = _restoreScimTestConfiguration();
+		_pid = _createScimClientOAuth2ApplicationConfiguration();
 
 		Group postGroup1 = randomGroup();
 
@@ -262,7 +262,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 			groupResource.putV2GroupHttpResponse(
 				randomGroupNotConfigured.getId(), randomGroupNotConfigured));
 
-		_pid = _restoreScimTestConfiguration();
+		_pid = _createScimClientOAuth2ApplicationConfiguration();
 
 		Group group = testDeleteV2Group_addGroup();
 
@@ -455,7 +455,7 @@ public class GroupResourceTest extends BaseGroupResourceTestCase {
 		return Group.toDTO(groupObject.toString());
 	}
 
-	private static String _restoreScimTestConfiguration() throws Exception {
+	private static String _createScimClientOAuth2ApplicationConfiguration() throws Exception {
 		return ConfigurationTestUtil.createFactoryConfiguration(
 			"com.liferay.scim.rest.internal.configuration." +
 				"ScimClientOAuth2ApplicationConfiguration",
