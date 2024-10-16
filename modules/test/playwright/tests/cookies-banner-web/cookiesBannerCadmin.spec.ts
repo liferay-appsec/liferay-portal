@@ -7,66 +7,33 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {isolatedLayoutTest} from '../../fixtures/isolatedLayoutTest';
 import {loginTest} from '../../fixtures/loginTest';
-import {systemSettingsPageTest} from '../../fixtures/systemSettingsPageTest';
-import {waitForAlert} from '../../utils/waitForAlert';
+import {cookieBannerPageTest} from './fixtures/cookieBannerPageTest';
 
 export const test = mergeTests(
 	isolatedLayoutTest(),
 	loginTest(),
-	systemSettingsPageTest
+	cookieBannerPageTest
 );
 
-test('LPD-25440 Cookie Banner Cadmin', async ({page, systemSettingsPage}) => {
+test.afterEach(async ({cookieBannerPage}) => {
+	await cookieBannerPage.goToSystemSetting();
+
+	await cookieBannerPage.actionsButton.waitFor({state: 'visible'})
+
+	await cookieBannerPage.resetCookiePreferences();
+});
+
+test('LPD-25440 Cookie Banner Cadmin', async ({cookieBannerPage, page}) => {
 	await test.step('Enable Third Party Cookies', async () => {
-		await systemSettingsPage.goToSystemSetting(
-			'Cookies',
-			'Preference Handling'
-		);
-
-		const enabledButton = page.getByLabel('Enabled');
-
-		await enabledButton.waitFor({state: 'visible'});
-
-		const isChecked = await enabledButton.isChecked();
-
-		if (!isChecked) {
-			await enabledButton.click();
-		}
-
-		await expect(enabledButton).toBeChecked();
-
-		const updateButton = page.getByRole('button', {
-			name: 'Update',
-		});
-
-		const saveButton = page.getByRole('button', {
-			name: 'Save',
-		});
-
-		if (await saveButton.isVisible()) {
-			await saveButton.click();
-		}
-		else if (await updateButton.isVisible()) {
-			await updateButton.click();
-		}
-
-		await waitForAlert(page);
+		await cookieBannerPage.enableThirdPartyCookies();
 	});
 
 	await test.step('Open Configuration', async () => {
 		await page.goto('/');
 
-		await page
-			.locator(
-				'#p_p_id_com_liferay_cookies_banner_web_portlet_CookiesBannerPortlet_'
-			)
-			.waitFor({state: 'visible'});
+		await cookieBannerPage.cookieBanner.waitFor({state: 'visible'});
 
-		const configuration = page.getByRole('button', {name: 'Configuration'});
-
-		await configuration.waitFor({state: 'visible'});
-
-		await configuration.click();
+		await cookieBannerPage.cookieBannerConfigurationButton.click();
 	});
 
 	await test.step('Check cadmin is not applied', async () => {
