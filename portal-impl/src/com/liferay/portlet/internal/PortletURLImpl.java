@@ -813,6 +813,13 @@ public class PortletURLImpl
 		clearCache();
 	}
 
+	@Override
+	public void setUseNamespace(boolean namespace) {
+		_useNamespace = namespace;
+
+		clearCache();
+	}
+
 	public void setWindowState(String windowState) throws WindowStateException {
 		setWindowState(WindowStateFactory.getWindowState(windowState));
 	}
@@ -1341,7 +1348,7 @@ public class PortletURLImpl
 
 		if (!name.startsWith(PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE) &&
 			!name.startsWith(namespace) &&
-			!PortalUtil.isReservedParameter(name)) {
+			!PortalUtil.isReservedParameter(name) && _useNamespace) {
 
 			if (_encodedNamespace == null) {
 				_encodedNamespace = URLCodec.encodeURL(namespace);
@@ -1766,6 +1773,7 @@ public class PortletURLImpl
 	private String _resourceID;
 	private boolean _secure;
 	private String _toString;
+	private boolean _useNamespace = true;
 	private boolean _windowStateRestoreCurrentView;
 	private String _windowStateString;
 

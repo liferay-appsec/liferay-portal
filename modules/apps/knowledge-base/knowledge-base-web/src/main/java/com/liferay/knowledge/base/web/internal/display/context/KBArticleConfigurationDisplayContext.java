@@ -72,8 +72,8 @@ public class KBArticleConfigurationDisplayContext {
 		PortletURL portletURL = ActionURLTag.doTag(
 			PortletRequest.ACTION_PHASE, null, null, null, null, null, null,
 			null, null, LayoutConstants.DEFAULT_PLID,
-			LayoutConstants.DEFAULT_PLID, null, null, null, 0, 0, true, null,
-			null, _httpServletRequest);
+			LayoutConstants.DEFAULT_PLID, null, null, null, 0, 0, null, true,
+			null, null, _httpServletRequest);
 
 		return portletURL.toString();
 	}

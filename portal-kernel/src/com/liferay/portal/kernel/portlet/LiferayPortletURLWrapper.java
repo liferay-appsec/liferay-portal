@@ -197,6 +197,11 @@ public class LiferayPortletURLWrapper
 	}
 
 	@Override
+	public void setUseNamespace(boolean namespace) {
+		_liferayPortletURL.setUseNamespace(namespace);
+	}
+
+	@Override
 	public void setWindowStateRestoreCurrentView(
 		boolean windowStateRestoreCurrentView) {
 

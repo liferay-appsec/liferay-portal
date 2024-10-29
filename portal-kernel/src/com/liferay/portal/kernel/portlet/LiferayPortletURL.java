@@ -293,6 +293,8 @@ public interface LiferayPortletURL
 
 	public void setRemovedParameterNames(Set<String> removedParamNames);
 
+	public void setUseNamespace(boolean namespace);
+
 	/**
 	 * Sets whether this portlet restores to the current view when toggling
 	 * between maximized and normal states.

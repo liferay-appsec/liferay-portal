@@ -94,7 +94,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, String name,
 			long plid, long refererPlid, String portletName, Boolean anchor,
 			Boolean encrypt, long doAsGroupId, long doAsUserId,
-			Boolean portletConfiguration, String queryString)
+			Boolean useNamespace, Boolean portletConfiguration,
+			String queryString)
 		throws Exception {
 
 		String resourceID = null;
@@ -107,8 +108,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			PortletRequest.ACTION_PHASE, windowState, portletMode, secure,
 			copyCurrentRenderParameters, escapeXml, name, resourceID,
 			cacheability, plid, refererPlid, portletName, anchor, encrypt,
-			doAsGroupId, doAsUserId, portletConfiguration, parameterMap,
-			removedParameterNames, _httpServletRequest);
+			doAsGroupId, doAsUserId, useNamespace, portletConfiguration,
+			parameterMap, removedParameterNames, _httpServletRequest);
 
 		return portletURL.toString();
 	}
@@ -128,12 +129,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		Boolean encrypt = null;
 		long doAsGroupId = 0;
 		long doAsUserId = 0;
+		Boolean useNamespace = null;
 		Boolean portletConfiguration = null;
 
 		return actionURL(
 			windowState, portletMode, secure, copyCurrentRenderParameters,
 			escapeXml, name, plid, refererPlid, portletName, anchor, encrypt,
-			doAsGroupId, doAsUserId, portletConfiguration, queryString);
+			doAsGroupId, doAsUserId, portletConfiguration, useNamespace,
+			queryString);
 	}
 
 	@Override
@@ -358,7 +361,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, long plid,
 			long refererPlid, String portletName, Boolean anchor,
 			Boolean encrypt, long doAsGroupId, long doAsUserId,
-			Boolean portletConfiguration, String queryString)
+			Boolean useNamespace, Boolean portletConfiguration,
+			String queryString)
 		throws Exception {
 
 		String name = null;
@@ -372,8 +376,8 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 			PortletRequest.RENDER_PHASE, windowState, portletMode, secure,
 			copyCurrentRenderParameters, escapeXml, name, resourceID,
 			cacheability, plid, refererPlid, portletName, anchor, encrypt,
-			doAsGroupId, doAsUserId, portletConfiguration, parameterMap,
-			removedParameterNames, _httpServletRequest);
+			doAsGroupId, doAsUserId, useNamespace, portletConfiguration,
+			parameterMap, removedParameterNames, _httpServletRequest);
 
 		return portletURL.toString();
 	}
@@ -392,12 +396,14 @@ public class VelocityTaglibImpl implements VelocityTaglib {
 		Boolean encrypt = null;
 		long doAsGroupId = 0;
 		long doAsUserId = 0;
+		Boolean useNamespace = null;
 		Boolean portletConfiguration = null;
 
 		return renderURL(
 			windowState, portletMode, secure, copyCurrentRenderParameters,
 			escapeXml, plid, referPlid, portletName, anchor, encrypt,
-			doAsGroupId, doAsUserId, portletConfiguration, queryString);
+			doAsGroupId, doAsUserId, useNamespace, portletConfiguration,
+			queryString);
 	}
 
 	@Override

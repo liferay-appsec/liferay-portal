@@ -33,7 +33,8 @@ public interface VelocityTaglib {
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, String name,
 			long plid, long refererPlid, String portletName, Boolean anchor,
 			Boolean encrypt, long doAsGroupId, long doAsUserId,
-			Boolean portletConfiguration, String queryString)
+			Boolean useNamespace, Boolean portletConfiguration,
+			String queryString)
 		throws Exception;
 
 	public String actionURL(
@@ -106,7 +107,8 @@ public interface VelocityTaglib {
 			Boolean copyCurrentRenderParameters, Boolean escapeXml, long plid,
 			long refererPlid, String portletName, Boolean anchor,
 			Boolean encrypt, long doAsGroupId, long doAsUserId,
-			Boolean portletConfiguration, String queryString)
+			Boolean useNamespace, Boolean portletConfiguration,
+			String queryString)
 		throws Exception;
 
 	public String renderURL(

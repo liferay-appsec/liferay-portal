@@ -274,6 +274,10 @@ public class MockLiferayPortletURL implements LiferayPortletURL, RenderURL {
 	}
 
 	@Override
+	public void setUseNamespace(boolean namespace) {
+	}
+
+	@Override
 	public void setWindowState(WindowState windowState)
 		throws WindowStateException {
 	}

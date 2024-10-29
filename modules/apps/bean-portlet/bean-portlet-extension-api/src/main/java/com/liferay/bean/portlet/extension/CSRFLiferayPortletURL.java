@@ -288,6 +288,11 @@ public class CSRFLiferayPortletURL implements LiferayPortletURL {
 	}
 
 	@Override
+	public void setUseNamespace(boolean namespace) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void setWindowState(WindowState windowState) {
 		throw new UnsupportedOperationException();
 	}

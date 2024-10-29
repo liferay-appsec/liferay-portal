@@ -50,8 +50,8 @@ public class ActionURLTag
 			Boolean escapeXml, String name, String resourceID,
 			String cacheability, long plid, long refererPlid,
 			String portletName, Boolean anchor, Boolean encrypt,
-			long doAsGroupId, long doAsUserId, Boolean portletConfiguration,
-			Map<String, String[]> parameterMap,
+			long doAsGroupId, long doAsUserId, Boolean useNamespace,
+			Boolean portletConfiguration, Map<String, String[]> parameterMap,
 			Set<String> removedParameterNames,
 			HttpServletRequest httpServletRequest)
 		throws Exception {
@@ -131,6 +131,10 @@ public class ActionURLTag
 
 		if (doAsUserId > 0) {
 			liferayPortletURL.setDoAsUserId(doAsUserId);
+		}
+
+		if (useNamespace != null) {
+			liferayPortletURL.setUseNamespace(useNamespace);
 		}
 
 		String settingsScope = null;
@@ -217,8 +221,8 @@ public class ActionURLTag
 				getLifecycle(), _windowState, _portletMode, _secure,
 				_copyCurrentRenderParameters, _escapeXml, _name, _resourceID,
 				_cacheability, _plid, _refererPlid, _portletName, _anchor,
-				_encrypt, _doAsGroupId, _doAsUserId, _portletConfiguration,
-				getParams(), getRemovedParameterNames(),
+				_encrypt, _doAsGroupId, _doAsUserId, _useNamespace,
+				_portletConfiguration, getParams(), getRemovedParameterNames(),
 				(HttpServletRequest)pageContext.getRequest());
 
 			if (Validator.isNotNull(_var)) {
@@ -321,6 +325,10 @@ public class ActionURLTag
 		_secure = Boolean.valueOf(secure);
 	}
 
+	public void setUseNamespace(boolean namespace) {
+		_useNamespace = namespace;
+	}
+
 	public void setVar(String var) {
 		_var = var;
 	}
@@ -401,6 +409,7 @@ public class ActionURLTag
 	private long _refererPlid = LayoutConstants.DEFAULT_PLID;
 	private String _resourceID;
 	private Boolean _secure;
+	private Boolean _useNamespace;
 	private String _var;
 	private String _varImpl;
 	private String _windowState;

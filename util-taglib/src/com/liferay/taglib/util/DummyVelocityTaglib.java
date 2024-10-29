@@ -36,7 +36,8 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 		Boolean copyCurrentRenderParameters, Boolean escapeXml, String name,
 		long plid, long refererPlid, String portletName, Boolean anchor,
 		Boolean encrypt, long doAsGroupId, long doAsUserId,
-		Boolean portletConfiguration, String queryString) {
+		Boolean useNamespace, Boolean portletConfiguration,
+		String queryString) {
 
 		return null;
 	}
@@ -156,8 +157,8 @@ public class DummyVelocityTaglib implements VelocityTaglib {
 		String windowState, String portletMode, Boolean secure,
 		Boolean copyCurrentRenderParameters, Boolean escapeXml, long plid,
 		long refererPlid, String portletName, Boolean anchor, Boolean encrypt,
-		long doAsGroupId, long doAsUserId, Boolean portletConfiguration,
-		String queryString) {
+		long doAsGroupId, long doAsUserId, Boolean useNamespace,
+		Boolean portletConfiguration, String queryString) {
 
 		return null;
 	}
