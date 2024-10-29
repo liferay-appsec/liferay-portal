@@ -6,6 +6,7 @@
 package com.liferay.portal.security.auto.login.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.action.UpdatePasswordAction;
 import com.liferay.portal.kernel.model.Company;
@@ -26,13 +27,21 @@ import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.struts.Action;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.util.Date;
 
@@ -81,6 +90,34 @@ public class UpdatePasswordActionTest {
 			company.getCompanyId(), user.getEmailAddress());
 
 		Assert.assertNotNull(user.getLastLoginDate());
+
+		// Update password link returns alert message when the ticket is
+		// no longer valid and user is logged out
+
+		_testAlertMessage(user);
+
+		// Update password link returns alert message when the ticket is
+		// no longer valid and user is logged out
+
+		_loginUser(user);
+
+		_testAlertMessage(user);
+	}
+
+	private void _loginUser(User user) throws Exception {
+		UserTestUtil.setUser(user);
+
+		URL url = new URL(
+			"http://localhost:8080/c/portal/login?p_l_id=" +
+				TestPropsValues.getPlid(user.getGroupId()) +
+					"&windowState=exclusive");
+
+		HttpURLConnection httpURLConnection =
+			(HttpURLConnection)url.openConnection();
+
+		httpURLConnection.setRequestMethod("GET");
+
+		Assert.assertEquals(200, httpURLConnection.getResponseCode());
 	}
 
 	private MockHttpServletRequest _mockHttpServletRequest(
@@ -128,6 +165,9 @@ public class UpdatePasswordActionTest {
 			TicketConstants.TYPE_PASSWORD, null, expirationDate,
 			new ServiceContext());
 
+		_ticketId = String.valueOf(ticket.getTicketId());
+		_ticketKey = ticket.getKey();
+
 		mockHttpServletRequest.setParameter(
 			"ticketId", String.valueOf(ticket.getTicketId()));
 		mockHttpServletRequest.setParameter("ticketKey", ticket.getKey());
@@ -148,6 +188,46 @@ public class UpdatePasswordActionTest {
 
 		return mockHttpServletRequest;
 	}
+
+	private void _testAlertMessage(User user) throws Exception {
+		URL url = new URL(
+			StringBundler.concat(
+				"http://localhost:8080/c/portal/update_password?languageId=",
+				user.getLanguageId(), "&ticketId=", _ticketId, "&ticketKey=",
+				_ticketKey));
+
+		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+
+		connection.setRequestMethod("GET");
+
+		BufferedReader reader = new BufferedReader(
+			new InputStreamReader(connection.getInputStream()));
+
+		boolean findText = false;
+		String searchText = "Your password reset link is no longer valid";
+
+		StringBuilder response = new StringBuilder();
+		String line;
+
+		while (((line = reader.readLine()) != null) && !findText) {
+			findText = line.contains(searchText);
+
+			if (findText) {
+				response.append(StringUtil.trim(line));
+			}
+		}
+
+		reader.close();
+
+		Assert.assertTrue(
+			response.toString(
+			).contains(
+				searchText
+			));
+	}
+
+	private String _ticketId;
+	private String _ticketKey;
 
 	@Inject
 	private TicketLocalService _ticketLocalService;
