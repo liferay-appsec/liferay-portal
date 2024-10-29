@@ -7,7 +7,7 @@
 
 <%@ include file="/init.jsp" %>
 
-<liferay-portlet:resourceURL id="/audit/export_audit_events" var="exportURL">
+<liferay-portlet:resourceURL id="/audit/export_audit_events" useNamespace="<%= false %>" var="exportURL">
 	<portlet:param name="endDateAmPm" value="<%= String.valueOf(auditDisplayContext.getEndDateAmPm()) %>" />
 	<portlet:param name="endDateDay" value="<%= String.valueOf(auditDisplayContext.getEndDateDay()) %>" />
 	<portlet:param name="endDateHour" value="<%= String.valueOf(auditDisplayContext.getEndDateHour()) %>" />

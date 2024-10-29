@@ -197,7 +197,8 @@ public class AuditDisplayContext {
 			return _searchContainer;
 		}
 
-		DisplayTerms displayTerms = new DisplayTerms(_liferayPortletRequest);
+		DisplayTerms displayTerms = new DisplayTerms(
+			(HttpServletRequest)_servletRequestWrapper.getRequest());
 
 		_searchContainer = new SearchContainer(
 			_liferayPortletRequest, displayTerms, null,
@@ -384,10 +385,7 @@ public class AuditDisplayContext {
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + param,
 			ParamUtil.getInteger(
 				(HttpServletRequest)_servletRequestWrapper.getRequest(), param,
-				ParamUtil.getInteger(
-					(HttpServletRequest)_servletRequestWrapper.getRequest(),
-					_liferayPortletResponse.getNamespace() + param,
-					defaultValue)));
+				defaultValue));
 	}
 
 	private PortletURL _getPortletURL() throws Exception {
