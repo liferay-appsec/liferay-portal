@@ -60,6 +60,8 @@ public class ExpandoValueModelListener extends BaseModelListener<ExpandoValue> {
 				return;
 			}
 
+			ExpandoColumn expandoColumn = null;
+
 			List<SamlPeerBinding> samlPeerBindings =
 				_samlPeerBindingLocalService.getUserSamlPeerBindings(
 					expandoValue.getCompanyId(), expandoValue.getClassPK(),
@@ -98,9 +100,10 @@ public class ExpandoValueModelListener extends BaseModelListener<ExpandoValue> {
 					String attributeName = nameIdAttribute.substring(
 						"expando:".length());
 
-					ExpandoColumn expandoColumn =
-						_expandoColumnLocalService.getColumn(
+					if (expandoColumn == null) {
+						expandoColumn = _expandoColumnLocalService.getColumn(
 							expandoValue.getColumnId());
+					}
 
 					if (Objects.equals(
 							attributeName, expandoColumn.getName())) {
