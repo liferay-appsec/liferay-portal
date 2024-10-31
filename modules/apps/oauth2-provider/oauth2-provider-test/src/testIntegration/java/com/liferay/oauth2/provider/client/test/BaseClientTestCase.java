@@ -10,10 +10,14 @@ import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
@@ -131,7 +135,17 @@ public abstract class BaseClientTestCase {
 
 		UriBuilder uriBuilder = runtimeDelegate.createUriBuilder();
 
-		return client.target(uriBuilder.uri("http://localhost:8080"));
+		try {
+			Company testCompany = CompanyLocalServiceUtil.getCompany(
+				TestPropsValues.getCompanyId());
+
+			return client.target(
+				uriBuilder.uri(
+					"http://" + testCompany.getVirtualHostname() + ":8080"));
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
 	}
 
 	protected Invocation.Builder authorize(

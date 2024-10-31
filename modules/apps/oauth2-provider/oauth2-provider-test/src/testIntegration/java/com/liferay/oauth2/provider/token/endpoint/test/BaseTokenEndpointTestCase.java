@@ -16,8 +16,8 @@ import com.liferay.oauth2.provider.internal.test.JWTAssertionClientAuthenticatio
 import com.liferay.oauth2.provider.internal.test.util.JWTAssertionUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Arrays;
@@ -52,7 +52,7 @@ public abstract class BaseTokenEndpointTestCase extends BaseClientTestCase {
 		@Override
 		protected void prepareTest() throws Exception {
 			User user = UserTestUtil.getAdminUser(
-				PortalUtil.getDefaultCompanyId());
+				TestPropsValues.getCompanyId());
 
 			clientAuthentications.put(
 				TEST_CLIENT_ID_1,
@@ -115,6 +115,8 @@ public abstract class BaseTokenEndpointTestCase extends BaseClientTestCase {
 		AuthorizationGrant authorizationGrant,
 		ClientAuthentication clientAuthentication) {
 
+		Invocation.Builder invocationBuilder = _getInvocationBuilder();
+
 		MultivaluedMap<String, String> multivaluedMap =
 			new MultivaluedHashMap<>();
 
@@ -123,7 +125,7 @@ public abstract class BaseTokenEndpointTestCase extends BaseClientTestCase {
 		multivaluedMap.putAll(
 			clientAuthentication.getClientAuthenticationParameters());
 
-		return _invocationBuilder.post(Entity.form(multivaluedMap));
+		return invocationBuilder.post(Entity.form(multivaluedMap));
 	}
 
 	protected String parseAccessTokenString(Response response) {
@@ -146,12 +148,9 @@ public abstract class BaseTokenEndpointTestCase extends BaseClientTestCase {
 	protected static final Map<String, ClientAuthentication>
 		clientAuthentications = new HashMap<>();
 
-	private static Invocation.Builder _getInvocationBuilder() {
+	private Invocation.Builder _getInvocationBuilder() {
 		return getInvocationBuilder(
 			null, getTokenWebTarget(), Function.identity());
 	}
-
-	private static final Invocation.Builder _invocationBuilder =
-		_getInvocationBuilder();
 
 }
