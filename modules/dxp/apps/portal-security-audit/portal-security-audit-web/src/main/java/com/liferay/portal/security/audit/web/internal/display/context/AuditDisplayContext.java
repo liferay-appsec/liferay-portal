@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -71,7 +72,7 @@ public class AuditDisplayContext {
 			return _className;
 		}
 
-		_className = ParamUtil.getString(_httpServletRequest, "className");
+		_className = _getRenderParamWithOrWithoutNamespace("className");
 
 		return _className;
 	}
@@ -81,7 +82,7 @@ public class AuditDisplayContext {
 			return _classPK;
 		}
 
-		_classPK = ParamUtil.getString(_httpServletRequest, "classPK");
+		_classPK = _getRenderParamWithOrWithoutNamespace("classPK");
 
 		return _classPK;
 	}
@@ -91,7 +92,7 @@ public class AuditDisplayContext {
 			return _clientHost;
 		}
 
-		_clientHost = ParamUtil.getString(_httpServletRequest, "clientHost");
+		_clientHost = _getRenderParamWithOrWithoutNamespace("clientHost");
 
 		return _clientHost;
 	}
@@ -101,7 +102,7 @@ public class AuditDisplayContext {
 			return _clientIP;
 		}
 
-		_clientIP = ParamUtil.getString(_httpServletRequest, "clientIP");
+		_clientIP = _getRenderParamWithOrWithoutNamespace("clientIP");
 
 		return _clientIP;
 	}
@@ -177,7 +178,7 @@ public class AuditDisplayContext {
 			return _eventType;
 		}
 
-		_eventType = ParamUtil.getString(_httpServletRequest, "eventType");
+		_eventType = _getRenderParamWithOrWithoutNamespace("eventType");
 
 		return _eventType;
 	}
@@ -187,9 +188,20 @@ public class AuditDisplayContext {
 			return _groupId;
 		}
 
-		_groupId = ParamUtil.getInteger(_httpServletRequest, "groupId");
+		_groupId = GetterUtil.getInteger(
+			_getRenderParamWithOrWithoutNamespace("groupId"));
 
 		return _groupId;
+	}
+
+	public String getKeywords() {
+		if (_keywords != null) {
+			return _keywords;
+		}
+
+		_keywords = _getRenderParamWithOrWithoutNamespace("keywords");
+
+		return _keywords;
 	}
 
 	public SearchContainer<AuditEvent> getSearchContainer() throws Exception {
@@ -216,7 +228,7 @@ public class AuditDisplayContext {
 			range[1] = _searchContainer.getEnd();
 		}
 
-		if (displayTerms.isAdvancedSearch()) {
+		if (isAdvancedSearch()) {
 			Date endDate = PortalUtil.getDate(
 				getEndDateMonth(), getEndDateDay(), getEndDateYear(),
 				(getEndDateAmPm() != Calendar.PM) ? getEndDateHour() :
@@ -235,17 +247,17 @@ public class AuditDisplayContext {
 					getUserName(), startDate, endDate, getEventType(),
 					getClassName(), getClassPK(), getClientHost(),
 					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator(), range[0], range[1],
+					isAndOperator(), range[0], range[1],
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
 					getUserName(), startDate, endDate, getEventType(),
 					getClassName(), getClassPK(), getClientHost(),
 					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator()));
+					isAndOperator()));
 		}
 		else {
-			String keywords = displayTerms.getKeywords();
+			String keywords = getKeywords();
 
 			String number =
 				Validator.isNumber(keywords) ? keywords : String.valueOf(0);
@@ -272,7 +284,7 @@ public class AuditDisplayContext {
 			return _serverName;
 		}
 
-		_serverName = ParamUtil.getString(_httpServletRequest, "serverName");
+		_serverName = _getRenderParamWithOrWithoutNamespace("serverName");
 
 		return _serverName;
 	}
@@ -282,7 +294,8 @@ public class AuditDisplayContext {
 			return _serverPort;
 		}
 
-		_serverPort = ParamUtil.getInteger(_httpServletRequest, "serverPort");
+		_serverPort = GetterUtil.getInteger(
+			_getRenderParamWithOrWithoutNamespace("serverPort"));
 
 		return _serverPort;
 	}
@@ -358,7 +371,8 @@ public class AuditDisplayContext {
 			return _userId;
 		}
 
-		_userId = ParamUtil.getLong(_httpServletRequest, "userId");
+		_userId = GetterUtil.getLong(
+			_getRenderParamWithOrWithoutNamespace("userId"));
 
 		return _userId;
 	}
@@ -368,9 +382,19 @@ public class AuditDisplayContext {
 			return _userName;
 		}
 
-		_userName = ParamUtil.getString(_httpServletRequest, "userName");
+		_userName = _getRenderParamWithOrWithoutNamespace("userName");
 
 		return _userName;
+	}
+
+	public boolean isAdvancedSearch() {
+		return GetterUtil.getBoolean(
+			_getRenderParamWithOrWithoutNamespace("advancedSearch"));
+	}
+
+	public boolean isAndOperator() {
+		return GetterUtil.getBoolean(
+			_getRenderParamWithOrWithoutNamespace("andOperator"));
 	}
 
 	public void setPaging(boolean paging) {
@@ -398,6 +422,8 @@ public class AuditDisplayContext {
 				PortletURLUtil.getCurrent(
 					_liferayPortletRequest, _liferayPortletResponse),
 				_liferayPortletResponse)
+		).setKeywords(
+			getKeywords()
 		).setParameter(
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "endDateAmPm",
 			getEndDateAmPm()
@@ -435,6 +461,10 @@ public class AuditDisplayContext {
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "startDateYear",
 			getStartDateYear()
 		).setParameter(
+			"advancedSearch", isAdvancedSearch()
+		).setParameter(
+			"andOperator", isAndOperator()
+		).setParameter(
 			"className", getClassName()
 		).setParameter(
 			"classPK", getClassPK()
@@ -459,6 +489,13 @@ public class AuditDisplayContext {
 		return _portletURL;
 	}
 
+	private String _getRenderParamWithOrWithoutNamespace(String param) {
+		return ParamUtil.getString(
+			(HttpServletRequest)_servletRequestWrapper.getRequest(),
+			PortletQName.PRIVATE_RENDER_PARAMETER_NAMESPACE + param,
+			ParamUtil.getString(_httpServletRequest, param));
+	}
+
 	private String _className;
 	private String _classPK;
 	private String _clientHost;
@@ -472,6 +509,7 @@ public class AuditDisplayContext {
 	private String _eventType;
 	private Integer _groupId;
 	private final HttpServletRequest _httpServletRequest;
+	private String _keywords;
 	private final LiferayPortletRequest _liferayPortletRequest;
 	private final LiferayPortletResponse _liferayPortletResponse;
 	private boolean _paging = true;
