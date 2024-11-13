@@ -4835,7 +4835,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			}
 
 			validate(
-				companyId, 0, user.getUserId(), autoPassword, password1,
+				companyId, -1, user.getUserId(), autoPassword, password1,
 				password2, autoScreenName, screenName, emailAddress, null,
 				firstName, middleName, lastName, null, locale);
 
@@ -7043,7 +7043,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		throws PortalException {
 
 		validate(
-			companyId, 0, userId, autoPassword, password1, password2,
+			companyId, -1, userId, autoPassword, password1, password2,
 			autoScreenName, screenName, emailAddress, openId, firstName,
 			middleName, lastName, organizationIds, locale);
 	}
