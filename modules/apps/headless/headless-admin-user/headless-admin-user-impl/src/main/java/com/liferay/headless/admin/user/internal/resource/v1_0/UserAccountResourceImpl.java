@@ -882,12 +882,13 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 		boolean autoPassword = false;
 		String password = userAccount.getPassword();
 
-		if (Validator.isNull(password)) {
-			autoPassword = true;
-		}
-
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			contextHttpServletRequest);
+
+		if (Validator.isNull(password)) {
+			autoPassword = true;
+			serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
 
 		serviceContext.setExpandoBridgeAttributes(
 			CustomFieldsUtil.toMap(
@@ -968,6 +969,11 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 			_contactLocalService.updateContact(contact);
 
 			user = _userService.getUserById(user.getUserId());
+		}
+		if (Validator.isNull(password)) {
+			_userLocalService.updateStatus(
+				user, WorkflowConstants.STATUS_INCOMPLETE,
+				new ServiceContext());
 		}
 
 		return _toUserAccount(user);
