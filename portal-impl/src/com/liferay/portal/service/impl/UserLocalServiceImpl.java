@@ -267,17 +267,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		throws PortalException {
 
 		long creatorUserId = 0;
-		boolean autoPassword = false;
-
-		boolean passwordReset = _isPasswordReset(companyId);
-
-		boolean sendEmail = false;
-
-		if (Validator.isNull(password)) {
-			autoPassword = true;
-			passwordReset = true;
-			sendEmail = true;
-		}
 
 		boolean autoScreenName = false;
 
@@ -325,6 +314,20 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		serviceContext.setPathMain(PortalUtil.getPathMain());
 		serviceContext.setPortalURL(company.getPortalURL(0));
 
+		boolean autoPassword = false;
+
+		boolean passwordReset = _isPasswordReset(companyId);
+
+		boolean sendEmail = false;
+
+		if (Validator.isNull(password)) {
+			autoPassword = true;
+			passwordReset = true;
+			sendEmail = true;
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
 		User defaultAdminUser = addUser(
 			creatorUserId, companyId, autoPassword, password, password,
 			autoScreenName, screenName, emailAddress, locale, firstName,
@@ -338,6 +341,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				WorkflowConstants.LABEL_PENDING);
 
 			defaultAdminUser = userPersistence.update(defaultAdminUser);
+
+			updateStatus(
+				defaultAdminUser, WorkflowConstants.STATUS_INCOMPLETE,
+				new ServiceContext());
 		}
 
 		updateEmailAddressVerified(defaultAdminUser.getUserId(), true);
