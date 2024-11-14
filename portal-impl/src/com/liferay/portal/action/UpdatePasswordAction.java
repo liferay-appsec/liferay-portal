@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.TicketLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpMethods;
@@ -272,6 +273,8 @@ public class UpdatePasswordAction implements Action {
 		String password2 = httpServletRequest.getParameter("password2");
 		boolean passwordReset = false;
 
+		boolean passwordWasBlank = _isUserPasswordBlank(userId);
+
 		boolean previousValidate = PwdToolkitUtilThreadLocal.isValidate();
 
 		try {
@@ -291,6 +294,11 @@ public class UpdatePasswordAction implements Action {
 				user.setReminderQueryAnswer(null);
 
 				user = UserLocalServiceUtil.updateUser(user);
+			}
+
+			if ((passwordWasBlank) && (user.getStatus() == WorkflowConstants.ACTION_SAVE_DRAFT)) {
+				UserLocalServiceUtil.updateStatus(
+					user, WorkflowConstants.STATUS_APPROVED, new ServiceContext());
 			}
 
 			Date passwordModifiedDate = user.getPasswordModifiedDate();
@@ -356,6 +364,18 @@ public class UpdatePasswordAction implements Action {
 
 		if ((defaultAdminUser != null) &&
 			(defaultAdminUser.getUserId() == user.getUserId())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isUserPasswordBlank(long userId) {
+		User user = UserLocalServiceUtil.fetchUser(userId);
+
+		if ((user != null) &&
+			(Validator.isNotNull(user.getPassword()))) {
 
 			return true;
 		}
