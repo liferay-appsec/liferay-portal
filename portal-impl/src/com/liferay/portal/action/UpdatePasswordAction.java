@@ -296,9 +296,12 @@ public class UpdatePasswordAction implements Action {
 				user = UserLocalServiceUtil.updateUser(user);
 			}
 
-			if ((passwordWasBlank) && (user.getStatus() == WorkflowConstants.ACTION_SAVE_DRAFT)) {
+			if (passwordWasBlank &&
+				(user.getStatus() == WorkflowConstants.STATUS_INCOMPLETE)) {
+
 				UserLocalServiceUtil.updateStatus(
-					user, WorkflowConstants.STATUS_APPROVED, new ServiceContext());
+					user, WorkflowConstants.STATUS_APPROVED,
+					new ServiceContext());
 			}
 
 			Date passwordModifiedDate = user.getPasswordModifiedDate();
@@ -374,9 +377,7 @@ public class UpdatePasswordAction implements Action {
 	private boolean _isUserPasswordBlank(long userId) {
 		User user = UserLocalServiceUtil.fetchUser(userId);
 
-		if ((user != null) &&
-			(Validator.isNotNull(user.getPassword()))) {
-
+		if ((user != null) && Validator.isNull(user.getPassword())) {
 			return true;
 		}
 
