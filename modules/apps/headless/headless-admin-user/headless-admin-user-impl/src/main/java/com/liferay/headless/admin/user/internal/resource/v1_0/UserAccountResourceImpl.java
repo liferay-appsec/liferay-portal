@@ -887,7 +887,6 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 		if (Validator.isNull(password)) {
 			autoPassword = true;
-			serviceContext.setWorkflowAction(WorkflowConstants.ACTION_SAVE_DRAFT);
 		}
 
 		serviceContext.setExpandoBridgeAttributes(
@@ -970,6 +969,7 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 			user = _userService.getUserById(user.getUserId());
 		}
+
 		if (Validator.isNull(password)) {
 			_userLocalService.updateStatus(
 				user, WorkflowConstants.STATUS_INCOMPLETE,
