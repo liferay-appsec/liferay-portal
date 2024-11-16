@@ -89,7 +89,7 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.EMAIL);
+				_createSamlPeerBindingAndConnection(false, NameIDType.EMAIL);
 
 			_user.setEmailAddress(
 				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
@@ -110,11 +110,36 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.UNSPECIFIED);
+				_createSamlPeerBindingAndConnection(
+					false, NameIDType.UNSPECIFIED);
 
 			_user.setEmailAddress(
 				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
 					"@liferay.com");
+
+			_user = _userLocalService.updateUser(_user);
+
+			samlPeerBinding = _samlPeerBindingLocalService.getSamlPeerBinding(
+				samlPeerBinding.getSamlPeerBindingId());
+
+			Assert.assertFalse(samlPeerBinding.isDeleted());
+		}
+	}
+
+	@Test
+	public void testUpdateIdpUserPeerBindingExpando() throws Exception {
+		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
+				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
+
+			SamlPeerBinding samlPeerBinding =
+				_createSamlPeerBindingAndConnection(
+					true, NameIDType.UNSPECIFIED);
+
+			_user.setEmailAddress(
+				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
+					"@liferay.com");
+
+			_user.setScreenName(RandomTestUtil.randomString());
 
 			_user = _userLocalService.updateUser(_user);
 
@@ -131,7 +156,7 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.EMAIL);
+				_createSamlPeerBindingAndConnection(false, NameIDType.EMAIL);
 
 			_user.setScreenName(RandomTestUtil.randomString());
 
@@ -152,7 +177,8 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.UNSPECIFIED);
+				_createSamlPeerBindingAndConnection(
+					false, NameIDType.UNSPECIFIED);
 
 			_user.setScreenName(RandomTestUtil.randomString());
 
@@ -171,7 +197,7 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.EMAIL);
+				_createSamlPeerBindingAndConnection(false, NameIDType.EMAIL);
 
 			_user.setEmailAddress(
 				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
@@ -192,11 +218,36 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.UNSPECIFIED);
+				_createSamlPeerBindingAndConnection(
+					false, NameIDType.UNSPECIFIED);
 
 			_user.setEmailAddress(
 				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
 					"@liferay.com");
+
+			_user = _userLocalService.updateUser(_user);
+
+			samlPeerBinding = _samlPeerBindingLocalService.getSamlPeerBinding(
+				samlPeerBinding.getSamlPeerBindingId());
+
+			Assert.assertFalse(samlPeerBinding.isDeleted());
+		}
+	}
+
+	@Test
+	public void testUpdateSpUserPeerBindingExpando() throws Exception {
+		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
+				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
+
+			SamlPeerBinding samlPeerBinding =
+				_createSamlPeerBindingAndConnection(
+					true, NameIDType.UNSPECIFIED);
+
+			_user.setEmailAddress(
+				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
+					"@liferay.com");
+
+			_user.setScreenName(RandomTestUtil.randomString());
 
 			_user = _userLocalService.updateUser(_user);
 
@@ -213,7 +264,7 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.EMAIL);
+				_createSamlPeerBindingAndConnection(false, NameIDType.EMAIL);
 
 			_user.setScreenName(RandomTestUtil.randomString());
 
@@ -234,7 +285,8 @@ public class UserModelListenerTest {
 				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
 
 			SamlPeerBinding samlPeerBinding =
-				_createSamlPeerBindingAndConnection(NameIDType.UNSPECIFIED);
+				_createSamlPeerBindingAndConnection(
+					false, NameIDType.UNSPECIFIED);
 
 			_user.setScreenName(RandomTestUtil.randomString());
 
@@ -248,14 +300,18 @@ public class UserModelListenerTest {
 	}
 
 	private SamlPeerBinding _createSamlPeerBindingAndConnection(
-			String samlNameIdFormat)
+			boolean expandoIdentifier, String samlNameIdFormat)
 		throws Exception {
 
 		String nameIdAttribute;
 		String samlEntityId = RandomTestUtil.randomString();
 		String samlNameIdValue;
 
-		if (samlNameIdFormat.equals(NameIDType.EMAIL)) {
+		if (expandoIdentifier) {
+			nameIdAttribute = "expando:" + RandomTestUtil.randomString();
+			samlNameIdValue = RandomTestUtil.randomString();
+		}
+		else if (samlNameIdFormat.equals(NameIDType.EMAIL)) {
 			nameIdAttribute = "emailAddress";
 			samlNameIdValue = _user.getEmailAddress();
 		}
@@ -283,7 +339,14 @@ public class UserModelListenerTest {
 
 			samlSpIdpConnection.setNameIdFormat(samlNameIdFormat);
 			samlSpIdpConnection.setSamlIdpEntityId(samlEntityId);
-			samlSpIdpConnection.setUserIdentifierExpression("dynamic");
+
+			if (expandoIdentifier) {
+				samlSpIdpConnection.setUserIdentifierExpression(
+					"attribute:" + nameIdAttribute);
+			}
+			else {
+				samlSpIdpConnection.setUserIdentifierExpression("dynamic");
+			}
 
 			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
 				samlSpIdpConnection);
