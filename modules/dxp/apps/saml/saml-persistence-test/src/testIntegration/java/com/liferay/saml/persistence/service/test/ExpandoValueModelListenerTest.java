@@ -125,6 +125,33 @@ public class ExpandoValueModelListenerTest {
 	}
 
 	@Test
+	public void testUpdateIdpUserOtherExpandoPeerBindingExpando()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
+				SamlProviderConfigurationKeys.SAML_ROLE_IDP)) {
+
+			ExpandoColumn newExpandoColumn = ExpandoTestUtil.addColumn(
+				_expandoTable, RandomTestUtil.randomString(),
+				ExpandoColumnConstants.STRING);
+
+			ExpandoValue newExpandoValue = ExpandoTestUtil.addValue(
+				_expandoTable, newExpandoColumn, _user.getUserId(),
+				RandomTestUtil.randomString());
+
+			SamlPeerBinding samlPeerBinding =
+				_createSamlPeerBindingAndConnection();
+
+			_expandoValueLocalService.updateExpandoValue(newExpandoValue);
+
+			samlPeerBinding = _samlPeerBindingLocalService.getSamlPeerBinding(
+				samlPeerBinding.getSamlPeerBindingId());
+
+			Assert.assertFalse(samlPeerBinding.isDeleted());
+		}
+	}
+
+	@Test
 	public void testUpdateSpUserExpandoPeerBindingExpando() throws Exception {
 		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
 				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
@@ -141,6 +168,33 @@ public class ExpandoValueModelListenerTest {
 				samlPeerBinding.getSamlPeerBindingId());
 
 			Assert.assertTrue(samlPeerBinding.isDeleted());
+		}
+	}
+
+	@Test
+	public void testUpdateSpUserOtherExpandoPeerBindingExpando()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
+				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
+
+			ExpandoColumn newExpandoColumn = ExpandoTestUtil.addColumn(
+				_expandoTable, RandomTestUtil.randomString(),
+				ExpandoColumnConstants.STRING);
+
+			ExpandoValue newExpandoValue = ExpandoTestUtil.addValue(
+				_expandoTable, newExpandoColumn, _user.getUserId(),
+				RandomTestUtil.randomString());
+
+			SamlPeerBinding samlPeerBinding =
+				_createSamlPeerBindingAndConnection();
+
+			_expandoValueLocalService.updateExpandoValue(newExpandoValue);
+
+			samlPeerBinding = _samlPeerBindingLocalService.getSamlPeerBinding(
+				samlPeerBinding.getSamlPeerBindingId());
+
+			Assert.assertFalse(samlPeerBinding.isDeleted());
 		}
 	}
 
