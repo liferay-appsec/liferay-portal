@@ -2,6 +2,7 @@ dependencies {
 	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.util.java", version: "default"
 	testIntegrationImplementation group: "org.opensaml", name: "opensaml-saml-api", version: "3.3.0"
+	testIntegrationImplementation project(":apps:expando:expando-test-util")
 	testIntegrationImplementation project(":dxp:apps:saml:saml-api")
 	testIntegrationImplementation project(":dxp:apps:saml:saml-persistence-api")
 	testIntegrationImplementation project(":dxp:apps:saml:saml-persistence-service")
