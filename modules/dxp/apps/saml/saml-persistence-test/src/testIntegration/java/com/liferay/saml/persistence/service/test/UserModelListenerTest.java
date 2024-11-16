@@ -278,6 +278,45 @@ public class UserModelListenerTest {
 	}
 
 	@Test
+	public void testUpdateSpUserScreenNamePeerBindingNone() throws Exception {
+		try (SafeCloseable safeCloseable = _updateSamlRoleWithSafeCloseable(
+				SamlProviderConfigurationKeys.SAML_ROLE_SP)) {
+
+			String samlIdpEntityId = RandomTestUtil.randomString();
+
+			SamlSpIdpConnection samlSpIdpConnection =
+				_samlSpIdpConnectionLocalService.createSamlSpIdpConnection(
+					_counterLocalService.increment());
+
+			samlSpIdpConnection.setNameIdFormat(NameIDType.UNSPECIFIED);
+			samlSpIdpConnection.setSamlIdpEntityId(samlIdpEntityId);
+			samlSpIdpConnection.setUserIdentifierExpression("none");
+
+			_samlSpIdpConnectionLocalService.updateSamlSpIdpConnection(
+				samlSpIdpConnection);
+
+			SamlPeerBinding samlPeerBinding =
+				_samlPeerBindingLocalService.addSamlPeerBinding(
+					_user.getUserId(), NameIDType.UNSPECIFIED, StringPool.BLANK,
+					StringPool.BLANK, StringPool.BLANK,
+					RandomTestUtil.randomString(), samlIdpEntityId);
+
+			_user.setEmailAddress(
+				RandomTestUtil.randomString() + RandomTestUtil.nextLong() +
+					"@liferay.com");
+
+			_user.setScreenName(RandomTestUtil.randomString());
+
+			_user = _userLocalService.updateUser(_user);
+
+			samlPeerBinding = _samlPeerBindingLocalService.getSamlPeerBinding(
+				samlPeerBinding.getSamlPeerBindingId());
+
+			Assert.assertFalse(samlPeerBinding.isDeleted());
+		}
+	}
+
+	@Test
 	public void testUpdateSpUserScreenNamePeerBindingScreenName()
 		throws Exception {
 
