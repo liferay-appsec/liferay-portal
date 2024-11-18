@@ -320,7 +320,8 @@ public class ForgotPasswordMVCActionCommand extends BaseMVCActionCommand {
 					"Reminder query answer does not match answer");
 			}
 
-			if (_prefsProps.getBoolean(
+			if (Validator.isNotNull(user.getPassword()) &&
+				_prefsProps.getBoolean(
 					user.getCompanyId(),
 					PropsKeys.USERS_REMINDER_QUERIES_REQUIRED,
 					PropsValues.USERS_REMINDER_QUERIES_REQUIRED) &&
