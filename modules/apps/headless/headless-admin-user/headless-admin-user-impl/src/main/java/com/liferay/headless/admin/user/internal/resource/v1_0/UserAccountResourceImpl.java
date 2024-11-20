@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.UserLockoutException;
 import com.liferay.portal.kernel.exception.UserPasswordException;
 import com.liferay.portal.kernel.model.Address;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.ListTypeConstants;
@@ -70,6 +71,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.service.ContactLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -888,6 +890,12 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			contextHttpServletRequest);
+
+		Company company = _companyService.getCompanyById(
+			contextCompany.getCompanyId());
+
+		serviceContext.setPathMain(Portal.PATH_MAIN);
+		serviceContext.setPortalURL(company.getPortalURL(0));
 
 		serviceContext.setExpandoBridgeAttributes(
 			CustomFieldsUtil.toMap(
@@ -1752,6 +1760,9 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 	@Reference
 	private CaptchaSettings _captchaSettings;
+
+	@Reference
+	private CompanyService _companyService;
 
 	@Reference
 	private ContactLocalService _contactLocalService;
