@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.opensaml.integration.internal.binding.SamlBinding;
 import com.liferay.saml.opensaml.integration.internal.binding.SamlBindingProvider;
@@ -420,6 +421,9 @@ public abstract class BaseProfile {
 				domain, httpServletRequest, httpServletResponse,
 				CookiesConstants.NAME_LOGIN);
 		}
+
+		httpServletRequest.removeAttribute(WebKeys.USER);
+		httpServletRequest.removeAttribute(WebKeys.USER_ID);
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
