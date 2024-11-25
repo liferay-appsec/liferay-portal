@@ -34,7 +34,6 @@ import {UsersAndOrganizationsPage} from '../../pages/users-admin-web/UsersAndOrg
 import {getRandomInt} from '../../utils/getRandomInt';
 import getRandomString from '../../utils/getRandomString';
 import performLogin, {performLogout} from '../../utils/performLogin';
-import {reloadUntilVisible} from '../../utils/reloadUntilVisible';
 import {waitForAlert} from '../../utils/waitForAlert';
 import {
 	TIdentityProvider,
@@ -1327,11 +1326,6 @@ test('Verify IdP initiated SLO also logs out of authenticated SP when Require Au
 		name: 'Sign In',
 	});
 
-	await reloadUntilVisible({
-		myLocator: signInButton,
-		page: newPage,
-	});
-
 	expect(await signInButton).toBeVisible();
 });
 
@@ -1419,11 +1413,6 @@ test('Verify IdP initiated SLO logs out of multiple authenticated SPs.  See LPS-
 
 		const signInButton = await spIntancePage.getByRole('button', {
 			name: 'Sign In',
-		});
-
-		await reloadUntilVisible({
-			myLocator: signInButton,
-			page: spIntancePage,
 		});
 
 		expect(await signInButton).toBeVisible();
