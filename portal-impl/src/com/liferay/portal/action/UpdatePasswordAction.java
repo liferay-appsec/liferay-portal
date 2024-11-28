@@ -96,6 +96,9 @@ public class UpdatePasswordAction implements Action {
 						WorkflowConstants.LABEL_PENDING)) {
 
 					httpServletRequest.setAttribute(
+						"set_password_admin", true);
+
+					httpServletRequest.setAttribute(
 						WebKeys.TITLE_SET_PASSWORD, "set-password");
 				}
 			}

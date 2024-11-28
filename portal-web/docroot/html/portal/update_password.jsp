@@ -12,6 +12,8 @@ String currentURL = PortalUtil.getCurrentURL(request);
 
 String referer = ParamUtil.getString(request, WebKeys.REFERER, currentURL);
 
+Boolean setAdminPassword = (Boolean)request.getAttribute("set_password_admin");
+
 Ticket ticket = (Ticket)request.getAttribute(WebKeys.TICKET);
 
 String ticketId = ParamUtil.getString(request, "ticketId");
@@ -48,7 +50,7 @@ if (Validator.isNull(titlePage)) {
 
 	<div class="sheet-text">
 		<c:choose>
-			<c:when test="<%= ticket == null %>">
+			<c:when test="<%= ((ticket == null) && Validator.isNull(setAdminPassword)) %>">
 				<div class="alert alert-warning">
 					<c:choose>
 						<c:when test="<%= (ticket == null) && (ticketKey != null) && Validator.isNull(ticketId) %>">
