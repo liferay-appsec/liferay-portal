@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -169,19 +169,54 @@ public class MethodParameterExtractorTest {
 
 	private static class TestStaticClass {
 
-		private void _mapGenerics(Map<Object, Integer> map) {
+		public TestStaticClass(Map<Object, Integer> map) {
+			_mapGenerics(map);
 		}
+
+		private void _mapGenerics(Map<Object, Integer> map) {
+			_map = map;
+		}
+
+		private Map<Object, Integer> _map;
 
 	}
 
 	private class TestClass {
 
+		public TestClass(
+			String testString, List<Long> testLongList, double testDouble,
+			long testLong) {
+
+			_stringWithGenerics(testString, testLongList);
+			_withPrimitives(testDouble, testLong);
+
+			if ((_testLong == 0L) || (_testDouble == 0.0) ||
+				_testList.isEmpty() || _testString.isEmpty()) {
+
+				_setupComplete = true;
+			}
+			else {
+				_setupComplete = false;
+			}
+		}
+
 		private String _stringWithGenerics(String a, List<Long> longList) {
+			_testString = a;
+			_testList = longList;
+
 			return "return";
 		}
 
 		private void _withPrimitives(double a, long b) {
+			_testDouble = a;
+			_testLong = b;
 		}
+
+		private final boolean _setupComplete;
+		private double _testDouble;
+		private List<Long> _testList;
+		private long _testLong;
+		private String _testString;
 
 	}
 
