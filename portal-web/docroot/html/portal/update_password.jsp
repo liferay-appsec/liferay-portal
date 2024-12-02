@@ -14,18 +14,18 @@ String referer = ParamUtil.getString(request, WebKeys.REFERER, currentURL);
 
 User defaultAdminUser = DefaultAdminUtil.fetchDefaultAdmin(
 	themeDisplay.getCompanyId());
-boolean isAdminUser = false;
+boolean adminUser = false;
 if ((defaultAdminUser != null) &&
 	(defaultAdminUser.getUserId() == themeDisplay.getUserId())) {
 
-	isAdminUser = true;
+	adminUser = true;
 }
 
 User currentUser = themeDisplay.getUser();
 
-Boolean isPasswordBlank = false;
+Boolean passwordBlank = false;
 if ((currentUser != null) && (Validator.isNull(currentUser.getPassword()))) {
-	isPasswordBlank = true;
+	passwordBlank = true;
 }
 
 Ticket ticket = (Ticket)request.getAttribute(WebKeys.TICKET);
@@ -54,7 +54,7 @@ if (Validator.isNull(titlePage)) {
 
 	<div class="sheet-text">
 		<c:choose>
-			<c:when test="<%= ((ticket == null && !isAdminUser) && !isPasswordBlank) %>">
+			<c:when test="<%= ((ticket == null && !adminUser) && !passwordBlank) %>">
 
 				<%@ include file="/html/portal/update_password_ticket_error.jspf" %>
 
