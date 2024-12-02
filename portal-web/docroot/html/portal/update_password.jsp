@@ -12,6 +12,22 @@ String currentURL = PortalUtil.getCurrentURL(request);
 
 String referer = ParamUtil.getString(request, WebKeys.REFERER, currentURL);
 
+User defaultAdminUser = DefaultAdminUtil.fetchDefaultAdmin(
+	themeDisplay.getCompanyId());
+boolean isAdminUser = false;
+if ((defaultAdminUser != null) &&
+	(defaultAdminUser.getUserId() == themeDisplay.getUserId())) {
+
+	isAdminUser = true;
+}
+
+User currentUser = themeDisplay.getUser();
+
+Boolean isPasswordBlank = false;
+if ((currentUser != null) && (Validator.isNull(currentUser.getPassword()))) {
+	isPasswordBlank = true;
+}
+
 Ticket ticket = (Ticket)request.getAttribute(WebKeys.TICKET);
 
 String ticketId = ParamUtil.getString(request, "ticketId");
@@ -32,44 +48,16 @@ if (Validator.isNull(titlePage)) {
 %>
 
 <div class="mt-4 sheet sheet-lg">
-	<div class="sheet-header">
-		<div class="autofit-padded-no-gutters-x autofit-row">
-			<div class="autofit-col autofit-col-expand">
-				<h2 class="sheet-title">
-					<liferay-ui:message key="<%= titlePage %>" />
-				</h2>
-			</div>
 
-			<div class="autofit-col">
-				<%@ include file="/html/portal/select_language.jspf" %>
-			</div>
-		</div>
-	</div>
+	<%@ include file="/html/portal/update_password_title.jspf" %>
+
 
 	<div class="sheet-text">
 		<c:choose>
-			<c:when test="<%= ticket == null %>">
-				<div class="alert alert-warning">
-					<c:choose>
-						<c:when test="<%= (ticket == null) && (ticketKey != null) && Validator.isNull(ticketId) %>">
-							<liferay-ui:message key="this-link-format-is-no-longer-recognized-please-request-a-new-link" />
-						</c:when>
-						<c:otherwise>
-							<liferay-ui:message key="your-password-reset-link-is-no-longer-valid" />
-						</c:otherwise>
-					</c:choose>
+			<c:when test="<%= ((ticket == null && !isAdminUser) && !isPasswordBlank) %>">
 
-					<%
-					PortletURL portletURL = PortletURLFactoryUtil.create(request, PortletKeys.LOGIN, PortletRequest.RENDER_PHASE);
+				<%@ include file="/html/portal/update_password_ticket_error.jspf" %>
 
-					portletURL.setParameter("mvcRenderCommandName", "/login/forgot_password");
-					portletURL.setWindowState(WindowState.MAXIMIZED);
-					%>
-
-					<div class="reset-link-contaner">
-						<aui:a href="<%= portletURL.toString() %>" label="request-a-new-password-reset-link"></aui:a>
-					</div>
-				</div>
 			</c:when>
 			<c:when test="<%= SessionErrors.contains(request, UserLockoutException.LDAPLockout.class.getName()) %>">
 				<div class="alert alert-danger">
