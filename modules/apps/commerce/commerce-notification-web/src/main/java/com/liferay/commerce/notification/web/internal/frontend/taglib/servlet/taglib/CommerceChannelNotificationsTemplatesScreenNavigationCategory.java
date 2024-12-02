@@ -19,11 +19,13 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  * @author Luca Pellizzon
+ * @deprecated As of Cavanaugh (7.4.x)
  */
 @Component(
 	property = "screen.navigation.category.order:Integer=35",
 	service = ScreenNavigationCategory.class
 )
+@Deprecated
 public class CommerceChannelNotificationsTemplatesScreenNavigationCategory
 	implements ScreenNavigationCategory {
 
@@ -45,6 +47,11 @@ public class CommerceChannelNotificationsTemplatesScreenNavigationCategory
 	public String getScreenNavigationKey() {
 		return CommerceNotificationScreenNavigationConstants.
 			SCREEN_NAVIGATION_KEY_COMMERCE_CHANNEL_GENERAL;
+	}
+
+	@Override
+	public boolean isDeprecated() {
+		return true;
 	}
 
 	@Reference

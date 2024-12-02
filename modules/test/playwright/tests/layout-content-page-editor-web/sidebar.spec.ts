@@ -27,7 +27,7 @@ import {closeProductMenu, openProductMenu} from '../../utils/productMenu';
 import getBasicWebContentStructureId from '../../utils/structured-content/getBasicWebContentStructureId';
 import {waitForAlert} from '../../utils/waitForAlert';
 import {journalPagesTest} from '../journal-web/fixtures/journalPagesTest';
-import {ANIMALS_COLLECTION_NAME} from '../setup/page-management-site/constants';
+import {ANIMALS_COLLECTION_NAME} from '../setup/page-management-site/constants/animals';
 import getCollectionDefinition from './utils/getCollectionDefinition';
 import getFragmentDefinition from './utils/getFragmentDefinition';
 import getGridDefinition from './utils/getGridDefinition';
@@ -497,7 +497,7 @@ test.describe('Fragments Panel', () => {
 			if ((await favoriteButton.count()) > 1) {
 				await favoriteButton.first().click();
 
-				expect(favoriteButton).toHaveCount(1);
+				await expect(favoriteButton).toHaveCount(1);
 			}
 
 			await favoriteButton.click();
@@ -1068,7 +1068,8 @@ test.describe('Page Contents Panel', () => {
 						.locator('.journal-article-button-row')
 						.isVisible()
 				) {
-					page.locator('.journal-article-button-row')
+					await page
+						.locator('.journal-article-button-row')
 						.getByRole('button', {name: 'Publish'})
 						.click();
 
@@ -1319,6 +1320,74 @@ test.describe('Page Contents Panel', () => {
 	);
 
 	test(
+		'Search mapped assets',
+		{
+			tag: '@LPS-122148',
+		},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create a page with a Heading fragment
+
+			const headingId = getRandomString();
+
+			const headingDefinition = getFragmentDefinition({
+				id: headingId,
+				key: 'BASIC_COMPONENT-heading',
+			});
+
+			const layoutTitle = getRandomString();
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([headingDefinition]),
+				siteId: site.id,
+				title: layoutTitle,
+			});
+
+			// Create basic web content
+
+			const basicWebContentTitle = getRandomString();
+
+			await apiHelpers.jsonWebServicesJournal.addWebContent({
+				ddmStructureId: await getBasicWebContentStructureId(apiHelpers),
+				groupId: site.id,
+				titleMap: {en_US: basicWebContentTitle},
+			});
+
+			// Go to edit mode of page and map the editable to te BWC
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			await page.getByText('Heading Example', {exact: true}).waitFor();
+
+			await pageEditorPage.selectEditable(headingId, 'element-text');
+
+			await pageEditorPage.setMappedItem({
+				entity: 'Web Content',
+				entry: basicWebContentTitle,
+				field: 'Title',
+			});
+
+			// Go to Page Contents panel and assert permissions
+
+			await pageEditorPage.goToSidebarTab('Page Content');
+
+			// Search by keywods
+
+			await expect(page.getByTitle(basicWebContentTitle)).toBeVisible();
+
+			await page.getByPlaceholder('Search...').fill(getRandomString());
+
+			await expect(
+				page.getByTitle(basicWebContentTitle)
+			).not.toBeVisible();
+
+			await page.getByPlaceholder('Search...').fill(basicWebContentTitle);
+
+			await expect(page.getByTitle(basicWebContentTitle)).toBeVisible();
+		}
+	);
+
+	test(
 		'View collection, mapped content and mapped content via content display in page content panel',
 		{
 			tag: '@LPS-125985',
@@ -1538,6 +1607,130 @@ test.describe('Page Contents Panel', () => {
 			await expect(page.getByTitle('Default Text')).toBeVisible();
 
 			await expect(page.getByTitle('E1 Text')).not.toBeVisible();
+		}
+	);
+
+	test(
+		'View permissions and usage of mapped web content in Contents panel',
+		{
+			tag: '@LPS-96794',
+		},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create a page with a Heading fragment
+
+			const headingId = getRandomString();
+
+			const headingDefinition = getFragmentDefinition({
+				id: headingId,
+				key: 'BASIC_COMPONENT-heading',
+			});
+
+			const layoutTitle = getRandomString();
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([headingDefinition]),
+				siteId: site.id,
+				title: layoutTitle,
+			});
+
+			// Create basic web content
+
+			const basicWebContentTitle = getRandomString();
+
+			await apiHelpers.jsonWebServicesJournal.addWebContent({
+				ddmStructureId: await getBasicWebContentStructureId(apiHelpers),
+				groupId: site.id,
+				titleMap: {en_US: basicWebContentTitle},
+			});
+
+			// Go to edit mode of page and map the editable to te BWC
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			await page.getByText('Heading Example', {exact: true}).waitFor();
+
+			await pageEditorPage.selectEditable(headingId, 'element-text');
+
+			await pageEditorPage.setMappedItem({
+				entity: 'Web Content',
+				entry: basicWebContentTitle,
+				field: 'Title',
+			});
+
+			// Go to Page Contents panel and assert permissions
+
+			await pageEditorPage.goToSidebarTab('Page Content');
+
+			// Assert content page editor can edit/view permissions
+
+			const panel = page.getByLabel('Page Content Panel');
+
+			const content = panel.locator(
+				'.page-editor__page-contents__page-content'
+			);
+
+			await expect(async () => {
+				await hoverAndExpectToBeVisible({
+					autoClick: true,
+					target: content.getByLabel(
+						`Actions for ${basicWebContentTitle}`
+					),
+					trigger: content,
+				});
+
+				await page
+					.getByRole('menuitem', {
+						name: 'Permissions',
+					})
+					.waitFor();
+
+				await page
+					.getByRole('menuitem', {
+						name: 'Permissions',
+					})
+					.click({timeout: 1000});
+
+				await expect(
+					page
+						.frameLocator('iframe[title="Permissions"]')
+						.getByText('Guest')
+				).toBeVisible({timeout: 1000});
+
+				await page.getByLabel('close', {exact: true}).click();
+			}).toPass();
+
+			// Assert content page editor can view usages
+
+			await expect(async () => {
+				await hoverAndExpectToBeVisible({
+					autoClick: true,
+					target: content.getByLabel(
+						`Actions for ${basicWebContentTitle}`
+					),
+					trigger: content,
+				});
+
+				await page
+					.getByRole('menuitem', {
+						name: 'View Usages',
+					})
+					.waitFor();
+
+				await page
+					.getByRole('menuitem', {
+						name: 'View Usages',
+					})
+					.click();
+
+				const iframe = page.frameLocator('iframe[title="View Usages"]');
+
+				await expect(
+					iframe.getByRole('heading', {name: 'All (1)'})
+				).toBeVisible();
+
+				await expect(iframe.getByText(layoutTitle)).toBeVisible();
+			}).toPass();
 		}
 	);
 });

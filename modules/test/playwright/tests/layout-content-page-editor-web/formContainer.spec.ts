@@ -9,9 +9,11 @@ import {
 	ObjectValidationRuleApi,
 } from '@liferay/object-admin-rest-client-js';
 import {expect, mergeTests} from '@playwright/test';
+import path from 'path';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {displayPageTemplatesPagesTest} from '../../fixtures/displayPageTemplatesPagesTest';
+import {documentLibraryPagesTest} from '../../fixtures/documentLibraryPages.fixtures';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {objectPagesTest} from '../../fixtures/objectPagesTest';
@@ -22,13 +24,8 @@ import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import fillAndClickOutside from '../../utils/fillAndClickOutside';
 import getRandomString from '../../utils/getRandomString';
 import {waitForAlert} from '../../utils/waitForAlert';
-import {
-	ALL_FIELDS_OBJECT_ERC,
-	LEMON_OBJECT_ERC,
-	POTATO_OBJECT_ERC,
-} from '../setup/page-management-site/constants';
-import {deleteObjectEntries} from '../setup/page-management-site/utils/deleteObjectEntries';
-import {gotoObjectEntries} from '../setup/page-management-site/utils/gotoObjectEntries';
+import {getObjectERC} from '../setup/page-management-site/utils/getObjectERC';
+import {goToObjectEntity} from '../setup/page-management-site/utils/goToObjectEntity';
 import getFormContainerDefinition from './utils/getFormContainerDefinition';
 import getFragmentDefinition from './utils/getFragmentDefinition';
 import getPageDefinition from './utils/getPageDefinition';
@@ -37,6 +34,7 @@ import getWidgetDefinition from './utils/getWidgetDefinition';
 const test = mergeTests(
 	apiHelpersTest,
 	displayPageTemplatesPagesTest,
+	documentLibraryPagesTest,
 	featureFlagsTest({
 		'LPD-10727': true,
 		'LPD-37927': true,
@@ -141,14 +139,6 @@ test.describe('Form Configuration', () => {
 					'Thank you. Your information was successfully received.'
 				)
 				.waitFor();
-
-			// Delete entries
-
-			await deleteObjectEntries({
-				apiHelpers,
-				entityName: 'lemons',
-				site: pageManagementSite,
-			});
 		}
 	);
 
@@ -250,14 +240,6 @@ test.describe('Form Configuration', () => {
 				expect(firstAlertDisappears).toBe(true);
 				expect(moreAlertsAppear).toBe(false);
 			}).toPass();
-
-			// Delete Lemon entry
-
-			await deleteObjectEntries({
-				apiHelpers,
-				entityName: 'lemons',
-				site: pageManagementSite,
-			});
 		}
 	);
 });
@@ -277,7 +259,7 @@ test.describe('Captcha Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -344,7 +326,7 @@ test.describe('Checkbox Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -438,7 +420,7 @@ test.describe('Checkbox Fragment', () => {
 
 			const {body: objectValidationRule} =
 				await objectValidationRuleApiClient.postObjectDefinitionByExternalReferenceCodeObjectValidationRule(
-					ALL_FIELDS_OBJECT_ERC,
+					getObjectERC('All Fields'),
 					{
 						active: true,
 						engine: 'ddm',
@@ -470,7 +452,7 @@ test.describe('Checkbox Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -539,7 +521,7 @@ test.describe('Date Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -631,7 +613,7 @@ test.describe('Date Fragment', () => {
 
 			const {body: objectValidationRule} =
 				await objectValidationRuleApiClient.postObjectDefinitionByExternalReferenceCodeObjectValidationRule(
-					ALL_FIELDS_OBJECT_ERC,
+					getObjectERC('All Fields'),
 					{
 						active: true,
 						engine: 'ddm',
@@ -663,7 +645,7 @@ test.describe('Date Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -743,7 +725,7 @@ test.describe('Date and Time Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -853,27 +835,563 @@ test.describe('Date and Time Fragment', () => {
 
 			// Go to custom object admin
 
-			await gotoObjectEntries({
+			await goToObjectEntity({
 				entityName: 'All Fields',
 				page,
 			});
 
 			// Check the date and time of the object entry
 
-			const row = page
-				.locator('.dnd-tr')
-				.filter({hasText: 'Date And Time'})
-				.last();
+			const row = page.locator('.dnd-tbody .dnd-tr').first();
 
 			await expect(row).toContainText('Oct 10, 2022, 10:10 AM');
+		}
+	);
+});
 
-			// Delete entries
+test.describe('File Upload Fragment', () => {
+	test(
+		"Cannot clear object entry's mandatory attached file via associated display page",
+		{
+			tag: '@LPS-191357',
+		},
+		async ({
+			apiHelpers,
+			displayPageTemplatesPage,
+			page,
+			pageEditorPage,
+			pageManagementSite,
+		}) => {
 
-			await deleteObjectEntries({
-				apiHelpers,
-				entityName: 'allfieldsobjects',
-				site: pageManagementSite,
+			// Create a Display page for the all fields object
+
+			await displayPageTemplatesPage.goto(
+				pageManagementSite.friendlyUrlPath
+			);
+
+			const displayPageTemplateName = getRandomString();
+
+			await displayPageTemplatesPage.createTemplate({
+				contentType: 'All Fields',
+				name: displayPageTemplateName,
 			});
+
+			await displayPageTemplatesPage.editTemplate(
+				displayPageTemplateName
+			);
+
+			// Add a Form Container and map it to file upload field
+
+			await pageEditorPage.addFragment(
+				'Form Components',
+				'Form Container'
+			);
+
+			const fragmentId =
+				await pageEditorPage.getFragmentId('Form Container');
+
+			await pageEditorPage.mapFormFragment(
+				fragmentId,
+				'All Fields (Default)',
+				['Computer File']
+			);
+
+			// Mark upload file as required
+
+			const dptFileUploadId =
+				await pageEditorPage.getFragmentId('File Upload');
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Mark as Required',
+				fragmentId: dptFileUploadId,
+				tab: 'General',
+				value: true,
+			});
+
+			await displayPageTemplatesPage.publishTemplate();
+
+			// Mark display page as default
+
+			await displayPageTemplatesPage.goto(
+				pageManagementSite.friendlyUrlPath
+			);
+
+			await displayPageTemplatesPage.markAsDefault(
+				displayPageTemplateName
+			);
+
+			// Create a page with a form fragment with a file upload fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('All Fields')
+				)
+			).body;
+
+			const fileUploadId = getRandomString();
+
+			const fileUploadDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_fileUpload',
+				},
+				id: fileUploadId,
+				key: 'INPUTS-file-upload',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+				objectDefinitionClassName,
+				pageElements: [fileUploadDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Mark upload file as required
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Mark as Required',
+				fragmentId: fileUploadId,
+				tab: 'General',
+				value: true,
+			});
+
+			// Change redirect to display page after submit
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Success Action',
+				fragmentId: formId,
+				tab: 'General',
+				value: 'Go to Entry Display Page',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Display Page',
+				fragmentId: formId,
+				tab: 'General',
+				value: 'Default',
+			});
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Select file from computer
+
+			const fileChooserPromise = page.waitForEvent('filechooser');
+
+			const fileUploadInput = page.locator('.file-upload');
+
+			await fileUploadInput
+				.getByText('Select File', {exact: true})
+				.click();
+
+			const fileChooser = await fileChooserPromise;
+
+			await fileChooser.setFiles(
+				path.join(__dirname, '/dependencies/image.jpg')
+			);
+
+			await expect(fileUploadInput.getByText('image')).toBeVisible();
+
+			// Submit form
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			// Assert form is submitted and user is redirected to display page
+
+			await expect(page.getByText('Computer File')).toBeVisible();
+
+			await expect(fileUploadInput.getByText('image')).toBeVisible();
+
+			// Assert form is not submitted if mandatory field is cleared
+
+			await page.locator('[id*="file-upload-remove-button"]').click();
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(page.getByText('Computer File')).toBeVisible();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).not.toBeVisible();
+		}
+	);
+
+	test(
+		'Configure fragment mapped to File Upload field',
+		{
+			tag: '@LPS-157806',
+		},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a page with a form fragment with a file upload fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('All Fields')
+				)
+			).body;
+
+			const fileUploadId = getRandomString();
+
+			const fileUploadDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_fileUpload',
+				},
+				id: fileUploadId,
+				key: 'INPUTS-file-upload',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [fileUploadDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Assert default configuration values
+
+			await pageEditorPage.selectFragment(fileUploadId);
+
+			await expect(
+				page.getByLabel('Show Label', {exact: true})
+			).toBeChecked();
+
+			await expect(
+				page.getByLabel('Show Help Text', {exact: true})
+			).not.toBeChecked();
+
+			await expect(
+				page.getByLabel('Help Text', {exact: true})
+			).toHaveValue('Add your help text here.');
+
+			await expect(
+				page.getByLabel('Show Supported File Info', {exact: true})
+			).toBeChecked();
+
+			const fileUploadInput = page.locator('.file-upload');
+
+			await expect(
+				fileUploadInput.getByText(
+					'Upload a .jpeg,.jpg,.pdf,.png no larger than 2 MB.',
+					{exact: true}
+				)
+			).toBeVisible();
+
+			// Change button text
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Button Text',
+				fragmentId: fileUploadId,
+				tab: 'General',
+				value: 'Upload',
+			});
+
+			await expect(
+				fileUploadInput.getByText('Upload', {exact: true})
+			).toBeVisible();
+
+			await pageEditorPage.publishPage();
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await expect(
+				fileUploadInput.getByRole('button', {name: 'Upload'})
+			).toBeVisible();
+		}
+	);
+
+	test(
+		'Upload file from computer',
+		{
+			tag: '@LPS-155170',
+		},
+		async ({apiHelpers, documentLibraryPage, page, pageManagementSite}) => {
+
+			// Create a page with a form fragment with a file upload fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('All Fields')
+				)
+			).body;
+
+			const fileUploadId = getRandomString();
+
+			const fileUploadDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_fileUpload',
+				},
+				id: fileUploadId,
+				key: 'INPUTS-file-upload',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [fileUploadDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Select file from computer
+
+			const fileChooserPromise = page.waitForEvent('filechooser');
+
+			const fileUploadInput = page.locator('.file-upload');
+
+			await fileUploadInput
+				.getByText('Select File', {exact: true})
+				.click();
+
+			const fileChooser = await fileChooserPromise;
+
+			await fileChooser.setFiles(
+				path.join(__dirname, '/dependencies/image.jpg')
+			);
+
+			await expect(fileUploadInput.getByText('image')).toBeVisible();
+
+			// Submit form
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			// Assert document is added to document library
+
+			await documentLibraryPage.goto(pageManagementSite.friendlyUrlPath);
+
+			await page.getByRole('link', {name: 'FileUpload'}).click();
+
+			await expect(page.getByRole('link', {name: 'image'})).toBeVisible();
+		}
+	);
+
+	test(
+		'Upload file from document library',
+		{
+			tag: '@LPS-194129',
+		},
+		async ({apiHelpers, page, pageManagementSite}) => {
+
+			// Create a page with a form fragment with a file upload fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('All Fields')
+				)
+			).body;
+
+			const fileUploadId = getRandomString();
+
+			const fileUploadDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_dlFileUpload',
+				},
+				id: fileUploadId,
+				key: 'INPUTS-file-upload',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [fileUploadDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Select file from document library
+
+			const fileUploadInput = page.locator('.file-upload');
+
+			await fileUploadInput
+				.getByText('Select File', {exact: true})
+				.click();
+
+			// Assert jpg files are not present
+
+			const dialogIFrame = page.frameLocator('iframe');
+
+			await expect(
+				dialogIFrame.getByText(
+					'Drag & Drop Your Files or Browse to Upload'
+				)
+			).toBeVisible();
+
+			await expect(
+				dialogIFrame.getByText('balinese.jpg')
+			).not.toBeVisible();
+		}
+	);
+
+	test(
+		'View error messages from File Upload field',
+		{
+			tag: '@LPS-151402',
+		},
+		async ({apiHelpers, page, pageManagementSite}) => {
+
+			// Create a page with a form fragment with a file upload fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('All Fields')
+				)
+			).body;
+
+			const fileUploadId = getRandomString();
+
+			const fileUploadDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_fileUpload',
+				},
+				id: fileUploadId,
+				key: 'INPUTS-file-upload',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [fileUploadDefinition, submitFragmentDefinition],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to view mode
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Select file from computer
+
+			const fileChooserPromise = page.waitForEvent('filechooser');
+
+			const fileUploadInput = page.locator('.file-upload');
+
+			await fileUploadInput
+				.getByText('Select File', {exact: true})
+				.click();
+
+			const fileChooser = await fileChooserPromise;
+
+			await fileChooser.setFiles(
+				path.join(__dirname, '/dependencies/high_resolution_photo.jpg')
+			);
+
+			await expect(
+				fileUploadInput.getByText('high_resolution_photo')
+			).toBeVisible();
+
+			// Submit form
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			// Assert error message
+
+			await expect(
+				page.getByText(
+					'File size is larger than the allowed maximum upload size (2 MB).'
+				)
+			).toBeVisible();
 		}
 	);
 });
@@ -912,7 +1430,7 @@ test.describe('Form Localization', () => {
 
 		// Map the form to the All Fields object and publish the page
 
-		await pageEditorPage.mapFormFragment(formId, 'All Fields Object');
+		await pageEditorPage.mapFormFragment(formId, 'All Fields');
 
 		await pageEditorPage.publishPage();
 
@@ -957,7 +1475,7 @@ test.describe('Form Localization', () => {
 
 		await page.getByRole('button', {name: 'Submit'}).click();
 
-		expect(
+		await expect(
 			page.getByText(
 				'Thank you. Your information was successfully received.'
 			)
@@ -965,7 +1483,7 @@ test.describe('Form Localization', () => {
 
 		// Go to custom object admin an check the values
 
-		await gotoObjectEntries({
+		await goToObjectEntity({
 			entityName: 'All Fields',
 			page,
 		});
@@ -1004,14 +1522,6 @@ test.describe('Form Localization', () => {
 				.getByText('rich text español')
 		).toBeVisible();
 		await expect(page.getByText('text español')).toBeVisible();
-
-		// Delete entries
-
-		await deleteObjectEntries({
-			apiHelpers,
-			entityName: 'allfieldsobjects',
-			site: pageManagementSite,
-		});
 	});
 });
 
@@ -1164,9 +1674,9 @@ test.describe('Numeric input field', () => {
 
 		const lemonWeightInput = page.getByLabel('Lemon Weight');
 
-		expect(lemonWeightInput).toHaveAttribute('type', 'number');
-		expect(lemonWeightInput).toHaveAttribute('max');
-		expect(lemonWeightInput).toHaveAttribute('min');
+		await expect(lemonWeightInput).toHaveAttribute('type', 'number');
+		await expect(lemonWeightInput).toHaveAttribute('max');
+		await expect(lemonWeightInput).toHaveAttribute('min');
 
 		// Submit the form with a wrong value
 
@@ -1189,12 +1699,6 @@ test.describe('Numeric input field', () => {
 				'Thank you. Your information was successfully received.'
 			)
 		).toBeVisible();
-
-		await deleteObjectEntries({
-			apiHelpers,
-			entityName: 'lemons',
-			site: pageManagementSite,
-		});
 	});
 });
 
@@ -1500,7 +2004,7 @@ test.describe('Submit button', () => {
 
 			await page.getByLabel('Publish', {exact: true}).click();
 
-			expect(
+			await expect(
 				page.getByText(
 					'form does not allow creating entries as draft. Review the button configuration and set it to approved to generate valid entries.'
 				)
@@ -1552,8 +2056,8 @@ test.describe('Submit button', () => {
 
 				// Go to entity
 
-				await gotoObjectEntries({
-					entityName: 'Lemons',
+				await goToObjectEntity({
+					entityName: 'Lemon',
 					page,
 				});
 
@@ -1839,12 +2343,13 @@ test.describe('Submit button', () => {
 				await checkObjectEntryStatus('300', 'Approved');
 			});
 
-			// Delete previously created object entries
+			await test.step('Restore default value', async () => {
+				await objectDetailsPage.goto('Lemon');
 
-			await deleteObjectEntries({
-				apiHelpers,
-				entityName: 'lemons',
-				site: pageManagementSite,
+				await objectDetailsPage.updateConfiguration({
+					fieldLabel: 'Allow Users to Save Entries as Draft',
+					value: false,
+				});
 			});
 		}
 	);
@@ -2158,7 +2663,7 @@ test.describe('Picklist input field', () => {
 
 			await page.getByText('carton').click();
 
-			expect(page.getByLabel('Material')).toHaveValue('Carton');
+			await expect(page.getByLabel('Material')).toHaveValue('Carton');
 		}
 	);
 });
@@ -2178,7 +2683,7 @@ test.describe('Rich Text Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -2272,7 +2777,7 @@ test.describe('Rich Text Fragment', () => {
 
 			const {body: objectValidationRule} =
 				await objectValidationRuleApiClient.postObjectDefinitionByExternalReferenceCodeObjectValidationRule(
-					ALL_FIELDS_OBJECT_ERC,
+					getObjectERC('All Fields'),
 					{
 						active: true,
 						engine: 'ddm',
@@ -2304,7 +2809,7 @@ test.describe('Rich Text Fragment', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					ALL_FIELDS_OBJECT_ERC
+					getObjectERC('All Fields')
 				)
 			).body;
 
@@ -2584,7 +3089,7 @@ test.describe('Multistep', () => {
 
 			await pageEditorPage.addFragment('Form Components', 'Stepper');
 
-			expect(
+			await expect(
 				page.getByText(
 					'Adding a stepper fragment inside a simple form will turn it into a multistep form. Are you sure you want to continue?'
 				)
@@ -2631,7 +3136,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -2711,7 +3216,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -2808,7 +3313,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -2884,7 +3389,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3015,7 +3520,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3111,7 +3616,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3179,7 +3684,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3258,7 +3763,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3365,7 +3870,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					POTATO_OBJECT_ERC
+					getObjectERC('Potato')
 				)
 			).body;
 
@@ -3511,7 +4016,7 @@ test.describe('Multistep', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3729,7 +4234,7 @@ test.describe('Edit mode form errors', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 
@@ -3778,7 +4283,7 @@ test.describe('Edit mode form errors', () => {
 
 			const {className: objectDefinitionClassName} = (
 				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-					LEMON_OBJECT_ERC
+					getObjectERC('Lemon')
 				)
 			).body;
 

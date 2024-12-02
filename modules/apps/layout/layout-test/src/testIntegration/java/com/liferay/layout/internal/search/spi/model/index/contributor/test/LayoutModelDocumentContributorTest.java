@@ -33,6 +33,7 @@ import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
@@ -167,6 +168,24 @@ public class LayoutModelDocumentContributorTest {
 	}
 
 	@Test
+	@TestInfo("LPD-43082")
+	public void testReindexPublishedDraftLayoutWithFreeMarkerUsingLocale()
+		throws Exception {
+
+		String contentText = RandomTestUtil.randomString();
+
+		_addFragmentEntryLinkToLayout(
+			"{}", contentText + "[@liferay.language key=\"success\" /]",
+			_draftLayout);
+
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
+
+		_assertSearch(
+			contentText + LanguageUtil.get(LocaleUtil.GERMANY, "success"),
+			LocaleUtil.GERMANY);
+	}
+
+	@Test
 	public void testReindexPublishedDraftLayoutWithLayoutLocalization()
 		throws Exception {
 
@@ -189,7 +208,7 @@ public class LayoutModelDocumentContributorTest {
 
 		_assertReindexDraftLayout(draftElementText, _draftLayout);
 
-		_assertSearch(elementText);
+		_assertSearch(elementText, _locale);
 	}
 
 	@Test
@@ -568,7 +587,7 @@ public class LayoutModelDocumentContributorTest {
 		Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 
 		for (String keywords : expectedContents) {
-			_assertSearch(keywords);
+			_assertSearch(keywords, _locale);
 		}
 	}
 
@@ -595,7 +614,7 @@ public class LayoutModelDocumentContributorTest {
 
 		Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 
-		_assertSearch(elementText);
+		_assertSearch(elementText, _locale);
 	}
 
 	private void _assertReindexPublishedLayoutFragmentEntryLinkWithPortlet()
@@ -632,14 +651,14 @@ public class LayoutModelDocumentContributorTest {
 		_assertReindex(content);
 	}
 
-	private void _assertSearch(String keywords) {
+	private void _assertSearch(String keywords, Locale locale) {
 		Document document = _layoutIndexerFixture.searchOnlyOne(
-			keywords, _locale);
+			keywords, locale);
 
 		Assert.assertNotNull(document);
 
 		String content = document.get(
-			Field.getLocalizedName(_locale, Field.CONTENT));
+			Field.getLocalizedName(locale, Field.CONTENT));
 
 		Assert.assertTrue(
 			content, StringUtil.contains(content, keywords, StringPool.BLANK));

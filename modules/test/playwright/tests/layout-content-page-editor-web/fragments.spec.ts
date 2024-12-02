@@ -32,11 +32,9 @@ import {journalPagesTest} from '../journal-web/fixtures/journalPagesTest';
 import {
 	ANIMAL_DDM_STRUCTURE_KEY,
 	ANIMAL_DDM_TEMPLATE_KEY,
-	LEMON_BASKET_OBJECT_ERC,
-	LEMON_OBJECT_ERC,
-} from '../setup/page-management-site/constants';
-import {deleteObjectEntries} from '../setup/page-management-site/utils/deleteObjectEntries';
-import {gotoObjectEntries} from '../setup/page-management-site/utils/gotoObjectEntries';
+} from '../setup/page-management-site/constants/animals';
+import {getObjectERC} from '../setup/page-management-site/utils/getObjectERC';
+import {goToObjectEntity} from '../setup/page-management-site/utils/goToObjectEntity';
 import getContainerDefinition from './utils/getContainerDefinition';
 import getFormContainerDefinition from './utils/getFormContainerDefinition';
 import getFragmentDefinition from './utils/getFragmentDefinition';
@@ -1851,7 +1849,7 @@ test.describe('Tags Fragment', () => {
 
 		const {className: objectDefinitionClassName} = (
 			await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-				LEMON_OBJECT_ERC
+				getObjectERC('Lemon')
 			)
 		).body;
 
@@ -1954,8 +1952,8 @@ test.describe('Tags Fragment', () => {
 
 		// Go to the object definition page and check the Tags fragment
 
-		await gotoObjectEntries({
-			entityName: 'Lemons',
+		await goToObjectEntity({
+			entityName: 'Lemon',
 			page,
 		});
 
@@ -1976,14 +1974,6 @@ test.describe('Tags Fragment', () => {
 		await apiHelpers.headlessAdminTaxonomy.deleteKeyword({
 			id: globalTag.id,
 		});
-
-		// Delete Lemon entry
-
-		await deleteObjectEntries({
-			apiHelpers,
-			entityName: 'lemons',
-			site: pageManagementSite,
-		});
 	});
 
 	test('Checks that an info message appears when categorization is disabled', async ({
@@ -2001,7 +1991,7 @@ test.describe('Tags Fragment', () => {
 
 		const {className: objectDefinitionClassName} = (
 			await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-				LEMON_BASKET_OBJECT_ERC
+				getObjectERC('Lemon Basket')
 			)
 		).body;
 
@@ -2200,6 +2190,8 @@ test.describe('Dropzone', () => {
 			await page.getByPlaceholder('Name').fill(compositionName);
 
 			await page.getByRole('button', {name: 'Save'}).click();
+
+			await waitForAlert(page, 'The fragment was created successfully.');
 
 			// Check the composition has been saved
 

@@ -22,7 +22,7 @@ import {waitForAlert} from '../../utils/waitForAlert';
 import getFormContainerDefinition from '../layout-content-page-editor-web/utils/getFormContainerDefinition';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
-import {LEMON_OBJECT_ERC} from '../setup/page-management-site/constants';
+import {getObjectERC} from '../setup/page-management-site/utils/getObjectERC';
 
 const test = mergeTests(
 	apiHelpersTest,
@@ -144,6 +144,8 @@ test(
 		await expect(page.getByText('Image')).toBeVisible();
 
 		// Create fragment
+
+		await page.getByRole('link', {name: 'Fragments'}).click();
 
 		const fragmentName = getRandomString();
 
@@ -782,7 +784,7 @@ test(
 
 		const {className: objectDefinitionClassName} = (
 			await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
-				LEMON_OBJECT_ERC
+				getObjectERC('Lemon')
 			)
 		).body;
 

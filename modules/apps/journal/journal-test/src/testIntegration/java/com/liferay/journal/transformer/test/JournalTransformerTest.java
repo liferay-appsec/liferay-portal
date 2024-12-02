@@ -66,6 +66,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -172,11 +173,13 @@ public class JournalTransformerTest {
 	}
 
 	@Test
-	public void testCreateTemplateNode() throws Exception {
+	public void testCreateTemplateNode() {
 		_testCreateTemplateNodeDocumentLibraryDDMFormField();
 		_testCreateTemplateNodeSelectTypeDDMFormFieldWithNoOptions();
 		_testCreateTemplateNodeSelectTypeDDMFormFieldWithOptions();
 		_testCreateTemplateNodeSelectTypeDDMFormFieldWithoutOptions();
+		_testCreateTemplateNodeTextDDMFormFieldWithHTML();
+		_testCreateTemplateNodeTextDDMFormFieldWithPlainText();
 	}
 
 	@Test
@@ -696,9 +699,7 @@ public class JournalTransformerTest {
 			FileUtil.getBytes(getClass(), "dependencies/" + fileName));
 	}
 
-	private void _testCreateTemplateNodeDocumentLibraryDDMFormField()
-		throws Exception {
-
+	private void _testCreateTemplateNodeDocumentLibraryDDMFormField() {
 		DDMFormField ddmFormField = new DDMFormField(
 			"name", DDMFormFieldTypeConstants.DOCUMENT_LIBRARY);
 
@@ -847,6 +848,42 @@ public class JournalTransformerTest {
 		Assert.assertEquals("select", templateNode.getType());
 		Assert.assertTrue(ListUtil.isEmpty(templateNode.getOptions()));
 		Assert.assertTrue(MapUtil.isEmpty(templateNode.getOptionsMap()));
+	}
+
+	private void _testCreateTemplateNodeTextDDMFormField(String text) {
+		DDMFormField ddmFormField = new DDMFormField(
+			"text", DDMFormFieldTypeConstants.TEXT);
+
+		ddmFormField.setDataType("text");
+
+		Document document = SAXReaderUtil.createDocument();
+
+		Element rootElement = document.addElement("root");
+
+		Element dynamicContentElement = rootElement.addElement(
+			"dynamic-content");
+
+		dynamicContentElement.setText(text);
+
+		TemplateNode templateNode = ReflectionTestUtil.invoke(
+			_journalTransformer, "_createTemplateNode",
+			new Class<?>[] {
+				DDMFormField.class, Element.class, Locale.class,
+				ThemeDisplay.class
+			},
+			ddmFormField, rootElement, LocaleUtil.getDefault(),
+			new ThemeDisplay());
+
+		Assert.assertEquals(HtmlUtil.escape(text), templateNode.getData());
+	}
+
+	private void _testCreateTemplateNodeTextDDMFormFieldWithHTML() {
+		_testCreateTemplateNodeTextDDMFormField(
+			"<img src=\"x\" onerror=alert(document.cookie)>");
+	}
+
+	private void _testCreateTemplateNodeTextDDMFormFieldWithPlainText() {
+		_testCreateTemplateNodeTextDDMFormField(RandomTestUtil.randomString());
 	}
 
 	private static Object _journalTransformer;

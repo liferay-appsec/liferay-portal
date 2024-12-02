@@ -2,9 +2,9 @@
 	"enableLocalization": true,
 	"externalReferenceCode": "all-fields-object-erc",
 	"label": {
-		"en_US": "All Fields Object"
+		"en_US": "All Fields"
 	},
-	"name": "AllFieldsObject",
+	"name": "AllFields",
 	"objectFields": [
 		{
 			"DBType": "Boolean",
@@ -67,6 +67,68 @@
 			"type": "Clob"
 		},
 		{
+			"DBType": "Long",
+			"businessType": "Attachment",
+			"externalReferenceCode": "computer-file-upload-erc",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "Computer File"
+			},
+			"localized": false,
+			"name": "fileUpload",
+			"objectFieldSettings": [
+				{
+					"name": "acceptedFileExtensions",
+					"value": "jpeg, jpg, pdf, png"
+				},
+				{
+					"name": "maximumFileSize",
+					"value": 2
+				},
+				{
+					"name": "fileSource",
+					"value": "userComputer"
+				},
+				{
+					"name": "showFilesInDocumentsAndMedia",
+					"value": true
+				},
+				{
+					"name": "storageDLFolderPath",
+					"value": "/FileUpload"
+				}
+			],
+			"type": "Long"
+		},
+		{
+			"DBType": "Long",
+			"businessType": "Attachment",
+			"externalReferenceCode": "dl-file-upload-erc",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "DL File"
+			},
+			"localized": false,
+			"name": "dlFileUpload",
+			"objectFieldSettings": [
+				{
+					"name": "acceptedFileExtensions",
+					"value": "pdf"
+				},
+				{
+					"name": "maximumFileSize",
+					"value": 100
+				},
+				{
+					"name": "fileSource",
+					"value": "documentsAndMedia"
+				}
+			],
+			"type": "Long"
+		},
+		{
 			"DBType": "String",
 			"businessType": "Text",
 			"externalReferenceCode": "text-erc",
@@ -97,7 +159,7 @@
 	],
 	"panelCategoryKey": "site_administration.content",
 	"pluralLabel": {
-		"en_US": "All Fields Objet"
+		"en_US": "All Fields"
 	},
 	"scope": "site"
 }
