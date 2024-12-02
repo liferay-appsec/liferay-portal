@@ -12,6 +12,20 @@ String currentURL = PortalUtil.getCurrentURL(request);
 
 String referer = ParamUtil.getString(request, WebKeys.REFERER, currentURL);
 
+User defaultAdminUser = DefaultAdminUtil.fetchDefaultAdmin(themeDisplay.getCompanyId());
+boolean adminUser = false;
+
+if ((defaultAdminUser != null) && (defaultAdminUser.getUserId() == themeDisplay.getUserId())) {
+	adminUser = true;
+}
+
+User currentUser = themeDisplay.getUser();
+Boolean passwordBlank = false;
+
+if ((currentUser != null) && Validator.isNull(currentUser.getPassword())) {
+	passwordBlank = true;
+}
+
 Ticket ticket = (Ticket)request.getAttribute(WebKeys.TICKET);
 
 String ticketId = ParamUtil.getString(request, "ticketId");
@@ -36,7 +50,7 @@ if (Validator.isNull(titlePage)) {
 		<div class="autofit-padded-no-gutters-x autofit-row">
 			<div class="autofit-col autofit-col-expand">
 				<h2 class="sheet-title">
-					<liferay-ui:message key="<%= titlePage %>" />
+					<liferay-ui:message key='<%= passwordBlank? "set-password" : "change-password" %>' />
 				</h2>
 			</div>
 
@@ -48,7 +62,7 @@ if (Validator.isNull(titlePage)) {
 
 	<div class="sheet-text">
 		<c:choose>
-			<c:when test="<%= ticket == null %>">
+			<c:when test="<%= ((ticket == null && !adminUser) && !passwordBlank) %>">
 				<div class="alert alert-warning">
 					<c:choose>
 						<c:when test="<%= (ticket == null) && (ticketKey != null) && Validator.isNull(ticketId) %>">
