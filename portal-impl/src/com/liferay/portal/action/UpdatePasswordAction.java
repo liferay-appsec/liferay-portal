@@ -86,20 +86,6 @@ public class UpdatePasswordAction implements Action {
 					user.getUserId(), true);
 			}
 
-			User user = PortalUtil.getUser(httpServletRequest);
-
-			if ((user != null) && _isUserDefaultAdmin(user)) {
-				String reminderQueryAnswer = user.getReminderQueryAnswer();
-
-				if (Validator.isNotNull(reminderQueryAnswer) &&
-					reminderQueryAnswer.equals(
-						WorkflowConstants.LABEL_PENDING)) {
-
-					httpServletRequest.setAttribute(
-						WebKeys.TITLE_SET_PASSWORD, "set-password");
-				}
-			}
-
 			return actionMapping.getActionForward("portal.update_password");
 		}
 
