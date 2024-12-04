@@ -6,9 +6,13 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
+import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {loginTest} from '../../fixtures/loginTest';
+import { getTempDir } from '../../utils/temp';
+import { readFileSync } from 'fs';
+import { reloadUntilVisible } from '../../utils/reloadUntilVisible';
 
-export const test = mergeTests(loginTest(), applicationsMenuPageTest);
+export const test = mergeTests(loginTest(), applicationsMenuPageTest, apiHelpersTest);
 
 const AUDIT_PORTLET_NAMESPACE =
 	'_com_liferay_portal_security_audit_web_portlet_AuditPortlet_';
@@ -41,58 +45,96 @@ const fields = [
 	'userId',
 ];
 
-test('LPD-40224: Check if the export audit events request body has all the search parameters', async ({
+test('LPD-40224: Check if the export audit events .csv is being filtered by the search fields', async ({
+	apiHelpers,
 	applicationsMenuPage,
 	page,
 }) => {
 	page.on('dialog', (dialog) => dialog.accept());
 
-	await applicationsMenuPage.goToAudit();
+	//Post a new user to create some User related audit events
+	
+	const user = await apiHelpers.headlessAdminUser.postUserAccount();
 
-	await page.locator('#toggle_id_audit_event_searchtoggleAdvanced').click();
+	try {
+		await applicationsMenuPage.goToAudit();
 
-	await page.locator('.lexicon-icon-search').click();
+		await page.locator('#toggle_id_audit_event_searchtoggleAdvanced').click();
 
-	await page.waitForTimeout(500);
+		await page.locator(`#${AUDIT_PORTLET_NAMESPACE}className:visible`)
+		.fill('com.liferay.portal.kernel.model.User');
 
-	// Populate map with all the date parameters
+		await page.locator('.lexicon-icon-search').click();
 
-	const dateValues = {};
+		await page.waitForTimeout(500);
 
-	for (const field of dateFields) {
-		const inputElement = page.locator(`#${field}`);
-		const inputValue = await inputElement.inputValue();
+		const locator = page.getByRole('cell', {name: "UPDATE"})
 
-		dateValues[field] = inputValue;
-	}
+		await reloadUntilVisible({
+			myLocator: locator,
+			page: page
+		})
 
-	// On the export request, check if the body has all parameters
+		// Populate map with all the date parameters
 
-	page.on('request', async (request) => {
-		if (request.url().includes('export_audit_events')) {
-			const requestBody = request.postData();
+		const dateValues = {};
 
-			for (const field of dateFields) {
-				expect(requestBody).toContain(
-					`${AUDIT_PORTLET_NAMESPACE + field}=${dateValues[field]}`
-				);
-			}
+		for (const field of dateFields) {
+			const inputElement = page.locator(`#${field}`);
+			const inputValue = await inputElement.inputValue();
 
-			for (const field of fields) {
-				expect(requestBody).toContain(AUDIT_PORTLET_NAMESPACE + field);
-			}
+			dateValues[field] = inputValue;
 		}
-	});
 
-	const options = page.getByLabel('Options');
+		// On the export request, check if the body has all parameters
 
-	await options.click();
+		page.on('request', async (request) => {
+			if (request.url().includes('export_audit_events')) {
+				const requestBody = request.postData();
 
-	const menuItem = page.getByRole('menuitem', {
-		name: 'Export Audit Events',
-	});
+				for (const field of dateFields) {
+					expect(requestBody).toContain(
+						`${AUDIT_PORTLET_NAMESPACE + field}=${dateValues[field]}`
+					);
+				}
 
-	await menuItem.click();
+				for (const field of fields) {
+					expect(requestBody).toContain(AUDIT_PORTLET_NAMESPACE + field);
+				}
+			}
+		});
+
+		const options = page.getByLabel('Options');
+
+		await options.click();
+
+		const menuItem = page.getByRole('menuitem', {
+			name: 'Export Audit Events',
+		});
+
+		await menuItem.click();
+
+		// With just one user added, there should only be three events excluding LOGIN in the .csv
+
+		const downloadPromise = page.waitForEvent('download');
+
+		const download = await downloadPromise;
+
+		const filePath = getTempDir() + download.suggestedFilename();
+
+		await download.saveAs(filePath);
+
+		const content = readFileSync(filePath, 'utf8');
+
+		const regex = '/\b(ADD|ASSIGN|UPDATE)\b/g';
+
+		const matches = content.match(regex);
+
+		expect(matches).toHaveLength(3);
+	}
+	finally {
+		await apiHelpers.headlessAdminUser.deleteUserAccount(Number(user.id));
+	}
 });
 
 test("LPS-192555: Assert that the page's URL with advanced search doesn't get over 2048 characters", async ({
