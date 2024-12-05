@@ -9,6 +9,7 @@ import {readFileSync, statSync} from 'fs';
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {loginTest} from '../../fixtures/loginTest';
+import fillAndClickOutside from '../../utils/fillAndClickOutside';
 import {reloadUntilVisible} from '../../utils/reloadUntilVisible';
 import {getTempDir} from '../../utils/temp';
 
@@ -136,9 +137,11 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		const content = readFileSync(filePath, 'utf8');
 
-		expect(content).toContain(user.id);
+		expect(content).toContain(String(user.id));
 
-		const matches = content.match('/\b(ADD|ASSIGN|UPDATE)\b/g');
+		const regex = new RegExp('(ADD|ASSIGN|UPDATE)', 'g');
+
+		const matches = content.match(regex);
 
 		expect(matches).toHaveLength(3);
 	}
@@ -151,17 +154,23 @@ test('LPD-40224: Check if the audit events filtered by date are being exported',
 	applicationsMenuPage,
 	page,
 }) => {
+	page.on('dialog', (dialog) => dialog.accept());
+
 	await applicationsMenuPage.goToAudit();
 
 	await page.locator('#toggle_id_audit_event_searchtoggleAdvanced').click();
 
 	await page.locator('#startDate').fill('01/01/2001');
 
-	await page.locator('#endDate').fill('01/01/2001');
+	const endDateField = page.locator('#endDate');
+
+	await fillAndClickOutside(page, endDateField, '01/01/2001');
 
 	await page.locator('.lexicon-icon-search').click();
 
 	await page.waitForTimeout(500);
+
+	await expect(page.getByText('There are no events.')).toBeVisible();
 
 	const options = page.getByLabel('Options');
 
@@ -171,9 +180,9 @@ test('LPD-40224: Check if the audit events filtered by date are being exported',
 		name: 'Export Audit Events',
 	});
 
-	const downloadPromise = page.waitForEvent('download');
-
 	await menuItem.click();
+
+	const downloadPromise = page.waitForEvent('download');
 
 	const download = await downloadPromise;
 
