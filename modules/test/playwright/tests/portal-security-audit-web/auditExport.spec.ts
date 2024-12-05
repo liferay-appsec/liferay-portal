@@ -4,15 +4,19 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
+import {readFileSync} from 'fs';
 
-import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {loginTest} from '../../fixtures/loginTest';
-import { getTempDir } from '../../utils/temp';
-import { readFileSync } from 'fs';
-import { reloadUntilVisible } from '../../utils/reloadUntilVisible';
+import {reloadUntilVisible} from '../../utils/reloadUntilVisible';
+import {getTempDir} from '../../utils/temp';
 
-export const test = mergeTests(loginTest(), applicationsMenuPageTest, apiHelpersTest);
+export const test = mergeTests(
+	loginTest(),
+	applicationsMenuPageTest,
+	apiHelpersTest
+);
 
 const AUDIT_PORTLET_NAMESPACE =
 	'_com_liferay_portal_security_audit_web_portlet_AuditPortlet_';
@@ -52,28 +56,31 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 }) => {
 	page.on('dialog', (dialog) => dialog.accept());
 
-	//Post a new user to create some User related audit events
-	
+	// Post a new user to create some User related audit events
+
 	const user = await apiHelpers.headlessAdminUser.postUserAccount();
 
 	try {
 		await applicationsMenuPage.goToAudit();
 
-		await page.locator('#toggle_id_audit_event_searchtoggleAdvanced').click();
+		await page
+			.locator('#toggle_id_audit_event_searchtoggleAdvanced')
+			.click();
 
-		await page.locator(`#${AUDIT_PORTLET_NAMESPACE}className:visible`)
-		.fill('com.liferay.portal.kernel.model.User');
+		await page
+			.locator(`#${AUDIT_PORTLET_NAMESPACE}className:visible`)
+			.fill('com.liferay.portal.kernel.model.User');
 
 		await page.locator('.lexicon-icon-search').click();
 
 		await page.waitForTimeout(500);
 
-		const locator = page.getByRole('cell', {name: "UPDATE"})
+		const locator = page.getByRole('cell', {name: 'UPDATE'});
 
 		await reloadUntilVisible({
 			myLocator: locator,
-			page: page
-		})
+			page,
+		});
 
 		// Populate map with all the date parameters
 
@@ -99,7 +106,9 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 				}
 
 				for (const field of fields) {
-					expect(requestBody).toContain(AUDIT_PORTLET_NAMESPACE + field);
+					expect(requestBody).toContain(
+						AUDIT_PORTLET_NAMESPACE + field
+					);
 				}
 			}
 		});
@@ -126,9 +135,7 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		const content = readFileSync(filePath, 'utf8');
 
-		const regex = '/\b(ADD|ASSIGN|UPDATE)\b/g';
-
-		const matches = content.match(regex);
+		const matches = content.match('/\b(ADD|ASSIGN|UPDATE)\b/g');
 
 		expect(matches).toHaveLength(3);
 	}
