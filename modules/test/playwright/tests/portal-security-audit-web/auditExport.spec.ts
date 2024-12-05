@@ -68,16 +68,17 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 			.click();
 
 		await page
-			.locator(`#${AUDIT_PORTLET_NAMESPACE}className:visible`)
-			.fill('com.liferay.portal.kernel.model.User');
+			.locator(`#${AUDIT_PORTLET_NAMESPACE}classPK:visible`)
+			.fill(String(user.id));
 
 		await page.locator('.lexicon-icon-search').click();
 
-		await page.waitForTimeout(500);
+		await page.waitForTimeout(10000);
 
 		const locator = page.getByRole('cell', {name: 'UPDATE'});
 
 		await reloadUntilVisible({
+			maxAttempts: 10,
 			myLocator: locator,
 			page,
 		});
@@ -123,7 +124,7 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		await menuItem.click();
 
-		// With just one user added, there should only be three events excluding LOGIN in the .csv
+		// When a user is added, three audit events are registered, so check for them specifically in the .csv
 
 		const downloadPromise = page.waitForEvent('download');
 
@@ -134,6 +135,8 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 		await download.saveAs(filePath);
 
 		const content = readFileSync(filePath, 'utf8');
+
+		expect(content).toContain(user.id);
 
 		const matches = content.match('/\b(ADD|ASSIGN|UPDATE)\b/g');
 

@@ -6,4 +6,5 @@
 export const config = {
 	name: 'portal-security-audit-web',
 	testDir: 'tests/portal-security-audit-web',
+	timeout: 180 * 1000,
 };
