@@ -9,7 +9,7 @@
 
 <liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/audit/export_audit_events" var="exportURL" />
 
-<aui:form action='<%= exportURL + "&compress=0&etag=0&strip=0" %>' method="post" name="auditExportFm">
+<aui:form action='<%= exportURL + "&compress=0&etag=0&strip=0" %>' method="post" name="exportAuditEventsFm">
 	<aui:input name="advancedSearch" type="hidden" value='<%= ParamUtil.getBoolean(request, portletDisplay.getNamespace() + "advancedSearch") %>' />
 	<aui:input name="andOperator" type="hidden" value='<%= ParamUtil.getBoolean(request, portletDisplay.getNamespace() + "andOperator") %>' />
 	<aui:input name="className" type="hidden" value="<%= auditDisplayContext.getClassName() %>" />
@@ -47,7 +47,7 @@
 				onConfirm: (isConfirmed) => {
 					if (isConfirmed) {
 						Liferay.Util.postForm(
-							document.<portlet:namespace />auditExportFm
+							document.<portlet:namespace />exportAuditEventsFm
 						);
 					}
 				},
