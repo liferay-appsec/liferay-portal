@@ -76,7 +76,7 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		await page.waitForTimeout(10000);
 
-		const locator = page.getByRole('cell', {name: 'UPDATE'});
+		const locator = await page.getByRole('cell', {name: 'UPDATE'});
 
 		await reloadUntilVisible({
 			maxAttempts: 10,
@@ -89,7 +89,7 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 		const dateValues = {};
 
 		for (const field of dateFields) {
-			const inputElement = page.locator(`#${field}`);
+			const inputElement = await page.locator(`#${field}`);
 			const inputValue = await inputElement.inputValue();
 
 			dateValues[field] = inputValue;
@@ -97,7 +97,7 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		// On the export request, check if the body has all parameters
 
-		page.on('request', async (request) => {
+		await page.on('request', async (request) => {
 			if (request.url().includes('export_audit_events')) {
 				const requestBody = request.postData();
 
@@ -115,15 +115,15 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 			}
 		});
 
-		const options = page.getByLabel('Options');
+		const options = await page.getByLabel('Options');
 
 		await options.click();
 
-		const menuItem = page.getByRole('menuitem', {
+		const menuItem = await page.getByRole('menuitem', {
 			name: 'Export Audit Events',
 		});
 
-		const downloadPromise = page.waitForEvent('download');
+		const downloadPromise = await page.waitForEvent('download');
 
 		await menuItem.click();
 
@@ -135,13 +135,13 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 
 		await download.saveAs(filePath);
 
-		const content = readFileSync(filePath, 'utf8');
+		const content = await readFileSync(filePath, 'utf8');
 
 		expect(content).toContain(String(user.id));
 
 		const regex = new RegExp('(ADD|ASSIGN|UPDATE)', 'g');
 
-		const matches = content.match(regex);
+		const matches = await content.match(regex);
 
 		expect(matches).toHaveLength(3);
 	}
@@ -162,7 +162,7 @@ test('LPD-40224: Check if the audit events filtered by date are being exported',
 
 	await page.locator('#startDate').fill('01/01/2001');
 
-	const endDateField = page.locator('#endDate');
+	const endDateField = await page.locator('#endDate');
 
 	await fillAndClickOutside(page, endDateField, '01/01/2001');
 
@@ -172,17 +172,17 @@ test('LPD-40224: Check if the audit events filtered by date are being exported',
 
 	await expect(page.getByText('There are no events.')).toBeVisible();
 
-	const options = page.getByLabel('Options');
+	const options = await page.getByLabel('Options');
 
 	await options.click();
 
-	const menuItem = page.getByRole('menuitem', {
+	const menuItem = await page.getByRole('menuitem', {
 		name: 'Export Audit Events',
 	});
 
 	await menuItem.click();
 
-	const downloadPromise = page.waitForEvent('download');
+	const downloadPromise = await page.waitForEvent('download');
 
 	const download = await downloadPromise;
 
