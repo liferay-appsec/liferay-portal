@@ -123,11 +123,11 @@ test('LPD-40224: Check if the export audit events .csv is being filtered by the 
 			name: 'Export Audit Events',
 		});
 
-		const downloadPromise = await page.waitForEvent('download');
-
 		await menuItem.click();
 
 		// When a user is added, three audit events are registered, so check for them specifically in the .csv
+
+		const downloadPromise = await page.waitForEvent('download');
 
 		const download = await downloadPromise;
 
