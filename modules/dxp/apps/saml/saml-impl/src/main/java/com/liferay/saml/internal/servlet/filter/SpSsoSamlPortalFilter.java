@@ -9,12 +9,14 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.struts.LastPath;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
@@ -203,7 +205,19 @@ public class SpSsoSamlPortalFilter extends BaseSamlPortalFilter {
 					lastPath.getParameters());
 			}
 			else {
-				relayState = _portal.getHomeURL(httpServletRequest);
+				relayState = PrefsPropsUtil.getString(
+					_portal.getCompanyId(httpServletRequest),
+					PropsKeys.DEFAULT_LANDING_PAGE_PATH);
+
+				if (Validator.isNull(relayState)) {
+					Company company = _portal.getCompany(httpServletRequest);
+
+					relayState = company.getHomeURL();
+
+					if (Validator.isNull(relayState)) {
+						relayState = _portal.getHomeURL(httpServletRequest);
+					}
+				}
 			}
 		}
 
