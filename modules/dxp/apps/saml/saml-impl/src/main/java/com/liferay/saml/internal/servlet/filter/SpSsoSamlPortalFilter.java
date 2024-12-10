@@ -187,22 +187,24 @@ public class SpSsoSamlPortalFilter extends BaseSamlPortalFilter {
 			relayState = _portal.escapeRedirect(relayState);
 		}
 
-		HttpSession httpSession = httpServletRequest.getSession();
+		if (Validator.isNull(relayState)) {
+			HttpSession httpSession = httpServletRequest.getSession();
 
-		LastPath lastPath = (LastPath)httpSession.getAttribute(
-			WebKeys.LAST_PATH);
+			LastPath lastPath = (LastPath)httpSession.getAttribute(
+				WebKeys.LAST_PATH);
 
-		if (GetterUtil.getBoolean(
-				_props.get(PropsKeys.AUTH_FORWARD_BY_LAST_PATH)) &&
-			(lastPath != null) && Validator.isNull(relayState)) {
+			if (GetterUtil.getBoolean(
+					_props.get(PropsKeys.AUTH_FORWARD_BY_LAST_PATH)) &&
+				(lastPath != null)) {
 
-			relayState = StringBundler.concat(
-				_portal.getPortalURL(httpServletRequest),
-				lastPath.getContextPath(), lastPath.getPath(),
-				lastPath.getParameters());
-		}
-		else if (Validator.isNull(relayState)) {
-			relayState = _portal.getHomeURL(httpServletRequest);
+				relayState = StringBundler.concat(
+					_portal.getPortalURL(httpServletRequest),
+					lastPath.getContextPath(), lastPath.getPath(),
+					lastPath.getParameters());
+			}
+			else {
+				relayState = _portal.getHomeURL(httpServletRequest);
+			}
 		}
 
 		_webSsoProfile.sendAuthnRequest(
