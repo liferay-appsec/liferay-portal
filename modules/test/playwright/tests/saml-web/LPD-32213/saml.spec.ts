@@ -248,3 +248,72 @@ test('LPD-32213 AC1 TC3: Verify SP initiated SSO with a Default Landing Page and
 		DEFAULT_SP_URL + defaultLandingPagePath
 	);
 });
+
+test('LPD-32213 AC1 TC4: Verify SP initiated SSO with a Home Url configured on SP instance redirects user back to the Home Url.', async ({
+	browser,
+}) => {
+	const idpAdminPage = await configureVirtualInstanceForSaml(
+		browser,
+		DEFAULT_IDP_NAME,
+		'Identity Provider'
+	);
+
+	const spAdminPage = await configureVirtualInstanceForSaml(
+		browser,
+		DEFAULT_SP_NAME,
+		'Service Provider'
+	);
+
+	await connectSpAndIdp(
+		idpAdminPage,
+		DEFAULT_IDP_NAME,
+		spAdminPage,
+		DEFAULT_SP_NAME
+	);
+
+	// Create a user on the IdP instance
+
+	const userAccount = await createUser(idpAdminPage, DEFAULT_IDP_NAME);
+
+	// Configure Home Url on SP instance
+
+	const pagesAdminPage = new PagesAdminPage(spAdminPage);
+
+	await pagesAdminPage.goto();
+
+	const homeUrlPageTitle = getRandomString();
+
+	await pagesAdminPage.createNewPage({
+		name: homeUrlPageTitle,
+	});
+
+	const homeUrlPagePath = '/web/guest/' + homeUrlPageTitle;
+
+	// Configure Default Landing Page and Home Url
+
+	const instanceSettingsPage = new InstanceSettingsPage(spAdminPage);
+
+	await instanceSettingsPage.goToInstanceSetting(
+		'Instance Configuration',
+		'General',
+		false
+	);
+
+	const generalPage = new GeneralPage(instanceSettingsPage.page);
+
+	await generalPage.editHomeUrl(homeUrlPagePath);
+
+	resetAfterTestGeneralPage.add(DEFAULT_SP_NAME);
+
+	// SP initiated SSO
+
+	const newPage = await performSpInitiatedSSO(
+		browser,
+		userAccount.emailAddress,
+		DEFAULT_SP_URL
+	);
+
+	// Expect to be redirected back to Default Landing Page configuration value
+
+	expect(await newPage.url()).toContain(DEFAULT_SP_URL + homeUrlPagePath);
+});
