@@ -720,7 +720,7 @@ definition {
 			User.logoutPG();
 
 			User.firstLoginUI(
-				password = PropsUtil.get("default.admin.password"),
+				password = "test",
 				userEmailAddress = "userea@liferay.com");
 		}
 
@@ -731,7 +731,7 @@ definition {
 				portalURL = ${portalURL},
 				recipient = "userfn userln",
 				userEmailAddress = "userea@liferay.com",
-				userPassword = PropsUtil.get("default.admin.password"));
+				userPassword = "test");
 		}
 	}
 
