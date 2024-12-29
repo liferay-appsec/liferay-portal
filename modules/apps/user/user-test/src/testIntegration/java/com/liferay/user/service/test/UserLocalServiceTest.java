@@ -1191,6 +1191,10 @@ public class UserLocalServiceTest {
 
 		Ticket ticket = tickets.get(0);
 
+		Assert.assertEquals(
+			TicketConstants.TYPE_EMAIL_ADDRESS, ticket.getType());
+		Assert.assertNotNull(ticket.getExpirationDate());
+
 		ticket.setExpirationDate(new Date(System.currentTimeMillis()));
 
 		ticket = _ticketLocalService.updateTicket(ticket);
@@ -1214,12 +1218,21 @@ public class UserLocalServiceTest {
 				TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
 				TestPropsValues.getUserId()));
 
+		Company company =
+			_companyLocalService.getCompany(TestPropsValues.getCompanyId());
+
+		Assert.assertTrue("company.isStrangersVerify() must be true", company.isStrangersVerify());
+		Assert.assertFalse("user.isEmailAddressVerified() must be false", user.isEmailAddressVerified());
+
 		List<Ticket> tickets = _ticketLocalService.getTickets(
 			user.getCompanyId(), User.class.getName(), user.getUserId());
 
 		Ticket ticket = tickets.get(0);
 
+		Assert.assertEquals(
+			TicketConstants.TYPE_EMAIL_ADDRESS, ticket.getType());
 		Assert.assertFalse(ticket.isExpired());
+		Assert.assertNotNull(ticket.getExpirationDate());
 
 		_userLocalService.verifyEmailAddress(ticket.getKey());
 
