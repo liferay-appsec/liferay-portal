@@ -204,14 +204,12 @@ public class OpenIdConnectTokenRequestUtil {
 			}
 		}
 
-		if ((authorizationCodeGrant instanceof RefreshTokenGrant) &&
-			(oidcTokens.getIDToken() == null)) {
-
-			return;
-		}
-
 		try {
-			idTokenValidator.validate(oidcTokens.getIDToken(), nonce);
+			if (!(authorizationCodeGrant instanceof RefreshTokenGrant) ||
+				(oidcTokens.getIDToken() != null)) {
+
+				idTokenValidator.validate(oidcTokens.getIDToken(), nonce);
+			}
 		}
 		catch (BadJOSEException | JOSEException exception) {
 			throw new OpenIdConnectServiceException.TokenException(
