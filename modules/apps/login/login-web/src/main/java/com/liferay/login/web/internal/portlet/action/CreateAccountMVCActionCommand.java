@@ -306,32 +306,31 @@ public class CreateAccountMVCActionCommand extends BaseMVCActionCommand {
 						"mvcPath", "/update_account.jsp");
 				}
 			}
-
-			if (exception instanceof AddressCityException ||
-				exception instanceof AddressStreetException ||
-				exception instanceof AddressZipException ||
-				exception instanceof CaptchaException ||
-				exception instanceof CompanyMaxUsersException ||
-				exception instanceof ContactBirthdayException ||
-				exception instanceof ContactNameException ||
-				exception instanceof DuplicateOpenIdException ||
-				exception instanceof EmailAddressException ||
-				exception instanceof GroupFriendlyURLException ||
-				exception instanceof NoSuchCountryException ||
-				exception instanceof NoSuchListTypeException ||
-				exception instanceof NoSuchOrganizationException ||
-				exception instanceof NoSuchRegionException ||
-				exception instanceof OrganizationParentException ||
-				exception instanceof PhoneNumberException ||
-				exception instanceof RequiredFieldException ||
-				exception instanceof RequiredUserException ||
-				exception instanceof TermsOfUseException ||
-				exception instanceof UserEmailAddressException ||
-				exception instanceof UserIdException ||
-				exception instanceof UserPasswordException ||
-				exception instanceof UserScreenNameException ||
-				exception instanceof UserSmsException ||
-				exception instanceof WebsiteURLException) {
+			else if (exception instanceof AddressCityException ||
+					 exception instanceof AddressStreetException ||
+					 exception instanceof AddressZipException ||
+					 exception instanceof CaptchaException ||
+					 exception instanceof CompanyMaxUsersException ||
+					 exception instanceof ContactBirthdayException ||
+					 exception instanceof ContactNameException ||
+					 exception instanceof DuplicateOpenIdException ||
+					 exception instanceof EmailAddressException ||
+					 exception instanceof GroupFriendlyURLException ||
+					 exception instanceof NoSuchCountryException ||
+					 exception instanceof NoSuchListTypeException ||
+					 exception instanceof NoSuchOrganizationException ||
+					 exception instanceof NoSuchRegionException ||
+					 exception instanceof OrganizationParentException ||
+					 exception instanceof PhoneNumberException ||
+					 exception instanceof RequiredFieldException ||
+					 exception instanceof RequiredUserException ||
+					 exception instanceof TermsOfUseException ||
+					 exception instanceof UserEmailAddressException ||
+					 exception instanceof UserIdException ||
+					 exception instanceof UserPasswordException ||
+					 exception instanceof UserScreenNameException ||
+					 exception instanceof UserSmsException ||
+					 exception instanceof WebsiteURLException) {
 
 				SessionErrors.add(
 					actionRequest, exception.getClass(), exception);
