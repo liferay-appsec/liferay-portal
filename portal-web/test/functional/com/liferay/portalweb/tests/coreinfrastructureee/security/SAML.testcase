@@ -1849,16 +1849,16 @@ definition {
 
 			SAML.setupIDP(
 				idpURL = "http://localhost:8080",
+				password = PropsUtil.get("default.admin.password"),
 				samlEntityId = "samlidp",
-                userEmailAddress = "test@liferay.com",
-                password = PropsUtil.get("default.admin.password"));
+				userEmailAddress = "test@liferay.com");
 
 			SAML.setupSP(
 				encryptionCertificate = "true",
+				password = PropsUtil.get("default.admin.password"),
 				samlEntityId = "samlsp",
 				spURL = "http://www.able.com:8080",
-				userEmailAddress = "test@www.able.com",
-				password = PropsUtil.get("default.admin.password"));
+				userEmailAddress = "test@www.able.com");
 		}
 
 		task ("Add IdP configurations to SP") {

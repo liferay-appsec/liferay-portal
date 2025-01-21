@@ -287,17 +287,16 @@ definition {
 			if (isSet(userEmailAddress)) {
 				if (isSet(password)) {
 					User.firstLoginUI(
-                    	password = ${password},
-                    	specificURL = ${idpURL},
-                    	userEmailAddress = ${userEmailAddress});
+						password = ${password},
+						specificURL = ${idpURL},
+						userEmailAddress = ${userEmailAddress});
 				}
 				else {
 					User.firstLoginUI(
-                		password = "test",
-                		specificURL = ${idpURL},
-                		userEmailAddress = ${userEmailAddress});
+						password = "test",
+						specificURL = ${idpURL},
+						userEmailAddress = ${userEmailAddress});
 				}
-
 			}
 			else {
 				User.firstLoginUI(
@@ -843,9 +842,9 @@ definition {
 			idpSessionMaximumAge = ${idpSessionMaximumAge},
 			idpURL = ${idpURL},
 			keystoreEnabled = ${keystoreEnabled},
+			password = ${password},
 			samlEntityId = ${samlEntityId},
-			userEmailAddress = ${userEmailAddress},
-			password = ${password});
+			userEmailAddress = ${userEmailAddress});
 
 		// Logout from identity provider site
 
