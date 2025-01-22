@@ -1839,6 +1839,10 @@ definition {
 				Type(
 					locator1 = "TextInput#CUSTOM_FIELD",
 					value1 = ${userCustomField});
+
+				takeScreenshot();
+				Pause(value1 = 5000);
+				takeScreenshot();
 			}
 			else {
 				Type(
@@ -1847,7 +1851,7 @@ definition {
 					value1 = ${userCustomField});
 			}
 		}
-
+		takeScreenshot();
 		PortletEntry.save();
 
 		if (isSet(userScreenNameEdit)) {
