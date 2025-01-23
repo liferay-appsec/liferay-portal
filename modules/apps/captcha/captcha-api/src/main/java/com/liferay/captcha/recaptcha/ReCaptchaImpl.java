@@ -110,8 +110,8 @@ public class ReCaptchaImpl extends SimpleCaptchaImpl {
 			options.addPart(
 				"secret", captchaConfiguration.reCaptchaPrivateKey());
 		}
-		catch (Throwable throwable) {
-			_log.error(throwable);
+		catch (Exception exception) {
+			_log.error(exception);
 		}
 
 		options.addPart("remoteip", httpServletRequest.getRemoteAddr());
