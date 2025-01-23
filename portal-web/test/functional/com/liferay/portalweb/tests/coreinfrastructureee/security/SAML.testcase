@@ -19,7 +19,7 @@ definition {
 
 		User.firstLoginPG();
 
-		SAML.enableSAMLDebugLogs();
+		//SAML.enableSAMLDebugLogs();
 	}
 
 	@description = "This is a use case for LPS-32577. Add user inherited roles as SAML attribute statements."
@@ -895,6 +895,7 @@ definition {
 
 		var identityProviderEntityId = "samlidp";
 		var serviceProviderEntityId = "samlsp";
+		var passwordasl = PropsUtil.get("default.admin.password");
 
 		task ("Add virtual instance able.com") {
 			HeadlessPortalInstanceAPI.addPortalInstance(
@@ -910,6 +911,7 @@ definition {
 		task ("Setup IdP at localhost:8080 and SP at able.com:8080") {
 			SAML.setupIDP(
 				idpURL = "http://localhost:8080",
+				password = ${passwordasl},
 				samlEntityId = ${identityProviderEntityId},
 				userEmailAddress = "test@liferay.com");
 
@@ -1847,15 +1849,17 @@ definition {
 		task ("Logout, setup IdP and SP") {
 			User.logoutPG();
 
+			var passwordProp = PropsUtil.get("default.admin.password");
+
 			SAML.setupIDP(
 				idpURL = "http://localhost:8080",
-				password = PropsUtil.get("default.admin.password"),
+				password = ${passwordProp},
 				samlEntityId = "samlidp",
-				userEmailAddress = "test@liferay.com");
+				userEmailAddress = "test@liferay.com");			
 
 			SAML.setupSP(
 				encryptionCertificate = "true",
-				password = PropsUtil.get("default.admin.password"),
+				password = ${passwordProp},
 				samlEntityId = "samlsp",
 				spURL = "http://www.able.com:8080",
 				userEmailAddress = "test@www.able.com");

@@ -106,13 +106,24 @@ definition {
 	@description = "Add Identity Provider Configurations to Service Provider"
 	@summary = "Default summary"
 	macro addIDPConfigurationsToServiceProvider(idpUserMembershipsAttributeMappingText = null, idpCustomFieldAttributeMappingText = null, userEmailAddress = null, idpUserMembershipsAttributeMapping = null, idpAttributeMappingText = null, userResolution = null, idpEntityId = null, idpCustomFieldAttributeMapping = null, idpKeepAliveURL = null, uploadMetadataXML = null, idpAttributeMapping = null, nameIdentifierFormat = null, idpMetadataURLRaw = null, userMatchingAttributeIndex = null, idpURL = null, spURL = null) {
-		if (isSet(userEmailAddress)) {
-			User.firstLoginUI(
-				password = "test",
-				specificURL = ${spURL},
-				userEmailAddress = ${userEmailAddress});
+
+        if (isSet(userEmailAddress)) {
+        		if (contains(${userEmailAddress}, "test@")) {
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${userEmailAddress});
+                }
+                else {
+
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${spURL},
+						userEmailAddress = ${userEmailAddress});
+				}
 		}
 		else {
+
 			User.firstLoginUI(
 				password = PropsUtil.get("default.admin.password"),
 				specificURL = ${spURL},
@@ -285,6 +296,7 @@ definition {
 
 		if (isSet(idpURL)) {
 			if (isSet(userEmailAddress)) {
+
 				if (isSet(password)) {
 					User.firstLoginUI(
 						password = ${password},
@@ -326,6 +338,7 @@ definition {
 
 			SAMLNavigation.gotoGeneral();
 		}
+
 
 		SAMLRole.enable(samlEntityId = ${samlEntityId});
 
@@ -837,6 +850,7 @@ definition {
 	@description = "7.4-SAML-S1: Configure Portal Instance to act as a SAML Identity Provider"
 	@summary = "Default summary"
 	macro setupIDP(idpSessionMaximumAge = null, idpSessionIdleTimeout = null, idpURL = null, userEmailAddress = null, samlEntityId = null, keystoreEnabled = null, password = null) {
+
 		SAML.configureLiferaySAMLAsIdP(
 			idpSessionIdleTimeout = ${idpSessionIdleTimeout},
 			idpSessionMaximumAge = ${idpSessionMaximumAge},
@@ -860,10 +874,19 @@ definition {
 
 		if (IsElementNotPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
 			if (isSet(userEmailAddress)) {
-				User.firstLoginUI(
-					password = "test",
-					specificURL = ${spURL},
-					userEmailAddress = ${userEmailAddress});
+				if (contains(${userEmailAddress}, "test@")) {
+
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${userEmailAddress});
+                }
+				else {
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${spURL},
+						userEmailAddress = ${userEmailAddress});
+				}
 			}
 			else {
 				User.firstLoginUI(
