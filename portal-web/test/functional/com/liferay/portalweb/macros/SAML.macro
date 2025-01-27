@@ -167,10 +167,19 @@ definition {
 		// Add a configured SP connection to an IdP
 
 		if (isSet(userEmailAddress)) {
-			User.firstLoginUI(
-				password = "test",
-				specificURL = ${idpURL},
-				userEmailAddress = ${userEmailAddress});
+			if (contains(${userEmailAddress}, "test@")) {
+
+				User.firstLoginUI(
+					password = PropsUtil.get("default.admin.password"),
+					specificURL = ${spURL},
+					userEmailAddress = ${userEmailAddress});
+            }
+			else {
+				User.firstLoginUI(
+					password = "test",
+					specificURL = ${idpURL},
+					userEmailAddress = ${userEmailAddress});
+				}
 		}
 		else {
 			User.firstLoginUI(
@@ -297,9 +306,9 @@ definition {
 		if (isSet(idpURL)) {
 			if (isSet(userEmailAddress)) {
 
-				if (isSet(password)) {
+				if (contains(${userEmailAddress}, "test@")) {
 					User.firstLoginUI(
-						password = ${password},
+						password = PropsUtil.get("default.admin.password"),
 						specificURL = ${idpURL},
 						userEmailAddress = ${userEmailAddress});
 				}
@@ -356,10 +365,19 @@ definition {
 
 		if (IsElementNotPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
 			if (isSet(userEmailAddress)) {
-				User.firstLoginUI(
-					password = "test",
-					specificURL = ${spURL},
-					userEmailAddress = ${userEmailAddress});
+				if (contains(${userEmailAddress}, "test@")) {
+
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${userEmailAddress});
+                }
+				else {
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${spURL},
+						userEmailAddress = ${userEmailAddress});
+				}
 			}
 			else {
 				User.firstLoginUI(
@@ -419,10 +437,19 @@ definition {
 
 		if (IsElementNotPresent(locator1 = "UserBar#USER_AVATAR_IMAGE")) {
 			if (isSet(sPUserEmailAddress)) {
-				User.firstLoginUI(
-					password = "test",
-					specificURL = ${spURL},
-					userEmailAddress = ${sPUserEmailAddress});
+				if (contains(${sPUserEmailAddress}, "test@")) {
+
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${sPUserEmailAddress});
+                }
+				else {
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${spURL},
+						userEmailAddress = ${sPUserEmailAddress});
+				}
 			}
 			else {
 				User.firstLoginUI(
@@ -549,6 +576,7 @@ definition {
 	@description = "Edit Service Provider Configurations of IdP"
 	@summary = "Default summary"
 	macro editServiceProviderConnection(spEntityId = null, idpURL = null, spAttributes = null) {
+
 		User.firstLoginUI(
 			password = PropsUtil.get("default.admin.password"),
 			specificURL = ${idpURL},
@@ -569,10 +597,19 @@ definition {
 	@summary = "Default summary"
 	macro enableEncryptionOnSPConnection(idpURL = null, userEmailAddress = null, samlEntityId = null) {
 		if (isSet(userEmailAddress)) {
-			User.firstLoginUI(
-				password = "test",
-				specificURL = ${idpURL},
-				userEmailAddress = ${userEmailAddress});
+			if (contains(${userEmailAddress}, "test@")) {
+
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${userEmailAddress});
+                }
+				else {
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${idpURL},
+						userEmailAddress = ${userEmailAddress});
+				}
 		}
 		else {
 			User.firstLoginUI(
@@ -613,10 +650,19 @@ definition {
 	@summary = "Default summary"
 	macro enableSPRoles(userEmailAddress = null, spURL = null, samlEntityId = null) {
 		if (isSet(userEmailAddress)) {
-			User.firstLoginUI(
-				password = "test",
-				specificURL = ${spURL},
-				userEmailAddress = ${userEmailAddress});
+			if (contains(${userEmailAddress}, "test@")) {
+
+        			User.firstLoginUI(
+        				password = PropsUtil.get("default.admin.password"),
+        				specificURL = ${spURL},
+        				userEmailAddress = ${userEmailAddress});
+                }
+				else {
+					User.firstLoginUI(
+						password = "test",
+						specificURL = ${spURL},
+						userEmailAddress = ${userEmailAddress});
+				}
 		}
 		else {
 			User.firstLoginUI(

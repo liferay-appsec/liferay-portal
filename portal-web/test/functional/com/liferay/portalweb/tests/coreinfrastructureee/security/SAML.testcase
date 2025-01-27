@@ -19,7 +19,7 @@ definition {
 
 		User.firstLoginPG();
 
-		//SAML.enableSAMLDebugLogs();
+		SAML.enableSAMLDebugLogs();
 	}
 
 	@description = "This is a use case for LPS-32577. Add user inherited roles as SAML attribute statements."
@@ -969,7 +969,7 @@ definition {
 
 		task ("SSO with new user to SP and assert authentication failed error message") {
 			User.firstLoginUI(
-				emailPassword = PropsUtil.get("default.admin.password"),
+				emailPassword = "test",
 				specificURL = "http://www.able.com:8080",
 				userEmailAddress = "usera@liferay.com");
 
