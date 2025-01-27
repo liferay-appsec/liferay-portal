@@ -202,6 +202,7 @@ definition {
 	@summary = "Default summary"
 	macro authorizeMyApplication(clientId = null, portalURL = null, clientSecret = null, noAuthorize = null, newTab = null) {
 		var oauth2URL = PropsUtil.get("oauth2.url");
+		var userPassword = PropsUtil.get("default.admin.password");
 
 		if (${newTab} == "true") {
 			Open.openInTheNewTab(value1 = "${oauth2URL}/grant-type-authorization-code");
@@ -234,7 +235,7 @@ definition {
 
 			Type(
 				locator1 = "TextInput#PASSWORD",
-				value1 = "test");
+				value1 = ${userPassword});
 
 			Click(locator1 = "Button#SIGN_IN");
 		}
