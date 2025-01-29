@@ -1154,9 +1154,11 @@ definition {
 
 			UserNavigator.gotoPassword();
 
+			var userPassword = PropsUtil.get("default.admin.password");
+
 			Type(
 				locator1 = "TextInput#CURRENT_PASSWORD",
-				value1 = "test");
+				value1 = "${userPassword}");
 
 			Type(
 				locator1 = "UsersAndOrganizationsEditUser#PASSWORD_NEW_PASSWORD_FIELD",
