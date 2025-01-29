@@ -26,7 +26,7 @@ definition {
 
 		task ("Login at able.com and send otp email") {
 			User.firstLoginUI(
-				password = PropsUtil.get("default.admin.password"),
+				password = "test",
 				specificURL = "http://www.able.com:8080",
 				userEmailAddress = "test@www.able.com");
 
@@ -39,7 +39,7 @@ definition {
 				recipient = "test test",
 				specificURL = "http://www.able.com:8080",
 				userEmailAddress = "test@www.able.com",
-				userPassword = PropsUtil.get("default.admin.password"));
+				userPassword = "test";
 		}
 
 		task ("View OTP email sender") {
@@ -61,7 +61,7 @@ definition {
 
 		task ("Login and send OTP email") {
 			User.firstLoginUI(
-				password = PropsUtil.get("default.admin.password"),
+				password = "test",
 				userEmailAddress = "test@liferay.com");
 
 			MultiFactorAuthentication.sendOTPEmailPG();
@@ -72,7 +72,7 @@ definition {
 				portalURL = ${portalURL},
 				recipient = "test test",
 				userEmailAddress = "test@liferay.com",
-				userPassword = PropsUtil.get("default.admin.password"));
+				userPassword = "test";
 		}
 
 		task ("View OTP email sender") {
