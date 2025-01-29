@@ -39,7 +39,7 @@ definition {
 				recipient = "test test",
 				specificURL = "http://www.able.com:8080",
 				userEmailAddress = "test@www.able.com",
-				userPassword = "test";
+				userPassword = "test");
 		}
 
 		task ("View OTP email sender") {
@@ -72,7 +72,7 @@ definition {
 				portalURL = ${portalURL},
 				recipient = "test test",
 				userEmailAddress = "test@liferay.com",
-				userPassword = "test";
+				userPassword = "test");
 		}
 
 		task ("View OTP email sender") {
