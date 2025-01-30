@@ -57,7 +57,10 @@ definition {
 		}
 
 		task ("When: Edit the OIDC connection") {
-			User.firstLoginPG();
+			User.firstLoginUI(
+				password = "test",
+				userEmailAddress = "test@liferay.com"
+			);
 
 			OAuthClient.openOAuthClientAdmin(navbar = "Clients");
 
