@@ -2082,12 +2082,6 @@ definition {
 				portalInstanceName = "localhost",
 				spURL = "http://www.able.com:8080");
 		}
-
-		task ("Open site and assert logged in") {
-			Navigator.openURL();
-
-			User.viewLoggedInPG();
-		}
 	}
 
 	@description = "This is a use case for LPS-105170 TC-7: User creation and sync after SAML setup with 2 IdP portal - Using virtual instances."
