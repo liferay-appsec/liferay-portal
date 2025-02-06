@@ -33,6 +33,7 @@ definition {
 	@description = "Creating new user on the IdP portal and syncing his data by logging in on the SP portal then verify the user data on the My Account page"
 	@summary = "Default summary"
 	macro addAndSyncNewUser(newUserFirstName = null, idpName = null, newUserPortalURL = null, newUserScreenName = null, newUserMiddleName = null, samlMultiIdPs = null, newUserEmailAddress = null, creatorEmailAddress = null, creatorPassword = null, newUserJobTitle = null, portalInstanceName = null, newUserLastName = null, spURL = null) {
+
 		JSONUser.addUser(
 			creatorEmailAddress = ${creatorEmailAddress},
 			creatorPassword = ${creatorPassword},
@@ -165,13 +166,11 @@ definition {
 	macro addSPConfigurationsToIdentityProvider(uploadMetadataXML = null, nameIdentifierFormat = null, spEntityId = null, idpURL = null, spKeepAliveURL = null, userEmailAddress = null, spURL = null, nameIdentifierAttributeName = null, spAttributes = null) {
 
 		// Add a configured SP connection to an IdP
-
 		if (isSet(userEmailAddress)) {
 			if (contains(${userEmailAddress}, "test@")) {
-
 				User.firstLoginUI(
 					password = PropsUtil.get("default.admin.password"),
-					specificURL = ${spURL},
+					specificURL = ${idpURL},
 					userEmailAddress = ${userEmailAddress});
             }
 			else {
@@ -187,7 +186,6 @@ definition {
 				specificURL = ${idpURL},
 				userEmailAddress = "test@liferay.com");
 		}
-
 		SAML.goToSAMLAdmin(baseURL = ${idpURL});
 
 		SAMLNavigation.gotoServiceProviderConnection();
