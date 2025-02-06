@@ -2340,7 +2340,7 @@ definition {
 			User.logoutPG();
 
 			User.firstLoginUI(
-				emailPassword = PropsUtil.get("default.admin.password"),
+				emailPassword = "test",
 				specificURL = "http://www.able.com:8080",
 				userEmailAddress = "user1@liferay.com");
 
