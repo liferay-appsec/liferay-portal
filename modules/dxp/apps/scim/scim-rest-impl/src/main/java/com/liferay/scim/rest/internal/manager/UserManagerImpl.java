@@ -73,6 +73,7 @@ import org.wso2.charon3.core.objects.Group;
 import org.wso2.charon3.core.objects.User;
 import org.wso2.charon3.core.objects.plainobjects.GroupsGetResponse;
 import org.wso2.charon3.core.objects.plainobjects.UsersGetResponse;
+import org.wso2.charon3.core.utils.codeutils.ExpressionNode;
 import org.wso2.charon3.core.utils.codeutils.Node;
 import org.wso2.charon3.core.utils.codeutils.SearchRequest;
 
@@ -330,6 +331,8 @@ public class UserManagerImpl implements UserManager {
 		String sortOrder, String domainName,
 		Map<String, Boolean> requiredAttributes) {
 
+		ExpressionNode expressionNode = (ExpressionNode)node;
+
 		if (startIndex != null) {
 			startIndex--;
 		}
@@ -363,12 +366,29 @@ public class UserManagerImpl implements UserManager {
 				count
 			).withSearchContext(
 				searchContext -> {
+					searchContext.setAndSearch(true);
 					searchContext.setAttribute(Field.GROUP_ID, 0L);
 					searchContext.setAttribute(
 						Field.STATUS, WorkflowConstants.STATUS_APPROVED);
 					searchContext.setAttribute(
 						"expando__keyword__custom_fields__scimClientId",
 						scimClientId);
+
+					if (expressionNode != null) {
+						if (expressionNode.getAttributeValue(
+							).contains(
+								"userName"
+							)) {
+
+							searchContext.setAttribute(
+								"screenName", expressionNode.getValue());
+						}
+						else {
+							searchContext.setAttribute(
+								"emailAddress", expressionNode.getValue());
+						}
+					}
+
 					searchContext.setUserId(serviceContext.getUserId());
 				}
 			).build();
