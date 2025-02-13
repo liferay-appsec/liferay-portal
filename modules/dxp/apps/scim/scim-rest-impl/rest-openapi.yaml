@@ -93,6 +93,33 @@ components:
                         The attribute's significant value, e.g., email address, phone number.
                     type: string
             type: object
+        Operation:
+            properties:
+                op:
+                    description:
+                        The method that should be used in the operation.
+                        Possible values
+                            add
+                            remove
+                            replace
+                    enum: [ add, remove, replace ]
+                    type: string
+                path:
+                    description:
+                        Add the path to specify the attribute/sub-attribute that should be updated.
+                    type: string
+                value:
+                    description:
+                        The value that should be updated.
+                    type: string
+            type: object
+        PatchOp:
+            properties:
+                Operations:
+                    items:
+                        $ref: "#/components/schemas/Operation"
+                    type: array
+            type: object
         QueryAttributes:
             properties:
                 attributes:
@@ -487,6 +514,10 @@ paths:
                   schema:
                       type: integer
                 - in: query
+                  name: filter
+                  schema:
+                      type: string
+                - in: query
                   name: startIndex
                   schema:
                       type: integer
@@ -585,6 +616,36 @@ paths:
                         If the resource exists, the server responds with HTTP status code 200 (OK) and includes the
                         result in the body of the response.
             tags: ["User"]
+        patch:
+            description:
+                Updates a user.
+            operationId: patchV2User
+            parameters:
+                - in: path
+                  name: id
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PatchOp"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/PatchOp"
+            responses:
+                200:
+                    content:
+                        application/scim+json:
+                            schema:
+                                oneOf:
+                                    - format: binary
+                                      type: string
+                                    - $ref: "#/components/schemas/User"
+                    description:
+                        The User was successfully updated.
+            tags: [ "User" ]
         put:
             description:
                 Updates a user.
