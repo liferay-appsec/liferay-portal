@@ -175,7 +175,7 @@ public class ScimUtil {
 		user.replaceEmails(
 			Collections.singletonList(
 				new MultiValuedComplexType(
-					"default", true, null, scimUser.getEmailAddress(), null)));
+					"work", true, null, scimUser.getEmailAddress(), null)));
 
 		ScimName scimName = new ScimName();
 
