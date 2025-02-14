@@ -92,6 +92,47 @@ public class PatchOp implements Serializable {
 	@JsonIgnore
 	private Supplier<Operation[]> _OperationsSupplier;
 
+	@Schema(description = "the schema associated to this operation")
+	public String[] getSchemas() {
+		if (_schemasSupplier != null) {
+			schemas = _schemasSupplier.get();
+
+			_schemasSupplier = null;
+		}
+
+		return schemas;
+	}
+
+	public void setSchemas(String[] schemas) {
+		this.schemas = schemas;
+
+		_schemasSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setSchemas(
+		UnsafeSupplier<String[], Exception> schemasUnsafeSupplier) {
+
+		_schemasSupplier = () -> {
+			try {
+				return schemasUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(description = "the schema associated to this operation")
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String[] schemas;
+
+	@JsonIgnore
+	private Supplier<String[]> _schemasSupplier;
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -134,6 +175,32 @@ public class PatchOp implements Serializable {
 				sb.append(String.valueOf(Operations[i]));
 
 				if ((i + 1) < Operations.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		String[] schemas = getSchemas();
+
+		if (schemas != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemas\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < schemas.length; i++) {
+				sb.append("\"");
+
+				sb.append(_escape(schemas[i]));
+
+				sb.append("\"");
+
+				if ((i + 1) < schemas.length) {
 					sb.append(", ");
 				}
 			}

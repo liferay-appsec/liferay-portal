@@ -65,6 +65,26 @@ public class PatchOpSerDes {
 			sb.append("]");
 		}
 
+		if (patchOp.getSchemas() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemas\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < patchOp.getSchemas().length; i++) {
+				sb.append(_toJSON(patchOp.getSchemas()[i]));
+
+				if ((i + 1) < patchOp.getSchemas().length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
 		sb.append("}");
 
 		return sb.toString();
@@ -90,6 +110,13 @@ public class PatchOpSerDes {
 			map.put("Operations", String.valueOf(patchOp.getOperations()));
 		}
 
+		if (patchOp.getSchemas() == null) {
+			map.put("schemas", null);
+		}
+		else {
+			map.put("schemas", String.valueOf(patchOp.getSchemas()));
+		}
+
 		return map;
 	}
 
@@ -108,6 +135,9 @@ public class PatchOpSerDes {
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
 			if (Objects.equals(jsonParserFieldName, "Operations")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemas")) {
 				return false;
 			}
 
@@ -133,6 +163,12 @@ public class PatchOpSerDes {
 					}
 
 					patchOp.setOperations(OperationsArray);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemas")) {
+				if (jsonParserFieldValue != null) {
+					patchOp.setSchemas(
+						toStrings((Object[])jsonParserFieldValue));
 				}
 			}
 		}

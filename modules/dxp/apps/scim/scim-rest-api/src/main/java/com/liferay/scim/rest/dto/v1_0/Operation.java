@@ -5,15 +5,13 @@
 
 package com.liferay.scim.rest.dto.v1_0;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
@@ -53,12 +51,10 @@ public class Operation implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(Operation.class, json);
 	}
 
-	@JsonGetter("op")
 	@Schema(
 		description = "The method that should be used in the operation. Possible values add remove replace"
 	)
-	@Valid
-	public Op getOp() {
+	public String getOp() {
 		if (_opSupplier != null) {
 			op = _opSupplier.get();
 
@@ -68,25 +64,14 @@ public class Operation implements Serializable {
 		return op;
 	}
 
-	@JsonIgnore
-	public String getOpAsString() {
-		Op op = getOp();
-
-		if (op == null) {
-			return null;
-		}
-
-		return op.toString();
-	}
-
-	public void setOp(Op op) {
+	public void setOp(String op) {
 		this.op = op;
 
 		_opSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setOp(UnsafeSupplier<Op, Exception> opUnsafeSupplier) {
+	public void setOp(UnsafeSupplier<String, Exception> opUnsafeSupplier) {
 		_opSupplier = () -> {
 			try {
 				return opUnsafeSupplier.get();
@@ -104,10 +89,10 @@ public class Operation implements Serializable {
 		description = "The method that should be used in the operation. Possible values add remove replace"
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Op op;
+	protected String op;
 
 	@JsonIgnore
-	private Supplier<Op> _opSupplier;
+	private Supplier<String> _opSupplier;
 
 	@Schema(
 		description = "Add the path to specify the attribute/sub-attribute that should be updated."
@@ -153,7 +138,8 @@ public class Operation implements Serializable {
 	private Supplier<String> _pathSupplier;
 
 	@Schema(description = "The value that should be updated.")
-	public String getValue() {
+	@Valid
+	public Object getValue() {
 		if (_valueSupplier != null) {
 			value = _valueSupplier.get();
 
@@ -163,7 +149,7 @@ public class Operation implements Serializable {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 
 		_valueSupplier = null;
@@ -171,7 +157,7 @@ public class Operation implements Serializable {
 
 	@JsonIgnore
 	public void setValue(
-		UnsafeSupplier<String, Exception> valueUnsafeSupplier) {
+		UnsafeSupplier<Object, Exception> valueUnsafeSupplier) {
 
 		_valueSupplier = () -> {
 			try {
@@ -188,10 +174,10 @@ public class Operation implements Serializable {
 
 	@GraphQLField(description = "The value that should be updated.")
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String value;
+	protected Object value;
 
 	@JsonIgnore
-	private Supplier<String> _valueSupplier;
+	private Supplier<Object> _valueSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -220,7 +206,7 @@ public class Operation implements Serializable {
 
 		sb.append("{");
 
-		Op op = getOp();
+		String op = getOp();
 
 		if (op != null) {
 			if (sb.length() > 1) {
@@ -231,7 +217,7 @@ public class Operation implements Serializable {
 
 			sb.append("\"");
 
-			sb.append(op);
+			sb.append(_escape(op));
 
 			sb.append("\"");
 		}
@@ -252,7 +238,7 @@ public class Operation implements Serializable {
 			sb.append("\"");
 		}
 
-		String value = getValue();
+		Object value = getValue();
 
 		if (value != null) {
 			if (sb.length() > 1) {
@@ -261,11 +247,17 @@ public class Operation implements Serializable {
 
 			sb.append("\"value\": ");
 
-			sb.append("\"");
-
-			sb.append(_escape(value));
-
-			sb.append("\"");
+			if (value instanceof Map) {
+				sb.append(JSONFactoryUtil.createJSONObject((Map<?, ?>)value));
+			}
+			else if (value instanceof String) {
+				sb.append("\"");
+				sb.append(_escape((String)value));
+				sb.append("\"");
+			}
+			else {
+				sb.append(value);
+			}
 		}
 
 		sb.append("}");
@@ -279,44 +271,6 @@ public class Operation implements Serializable {
 		name = "x-class-name"
 	)
 	public String xClassName;
-
-	@GraphQLName("Op")
-	public static enum Op {
-
-		ADD("add"), REMOVE("remove"), REPLACE("replace");
-
-		@JsonCreator
-		public static Op create(String value) {
-			if ((value == null) || value.equals("")) {
-				return null;
-			}
-
-			for (Op op : values()) {
-				if (Objects.equals(op.getValue(), value)) {
-					return op;
-				}
-			}
-
-			throw new IllegalArgumentException("Invalid enum value: " + value);
-		}
-
-		@JsonValue
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Op(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
 
 	private static String _escape(Object object) {
 		return StringUtil.replace(

@@ -53,7 +53,7 @@ public class OperationSerDes {
 
 			sb.append("\"");
 
-			sb.append(operation.getOp());
+			sb.append(_escape(operation.getOp()));
 
 			sb.append("\"");
 		}
@@ -79,11 +79,14 @@ public class OperationSerDes {
 
 			sb.append("\"value\": ");
 
-			sb.append("\"");
-
-			sb.append(_escape(operation.getValue()));
-
-			sb.append("\"");
+			if (operation.getValue() instanceof String) {
+				sb.append("\"");
+				sb.append((String)operation.getValue());
+				sb.append("\"");
+			}
+			else {
+				sb.append(operation.getValue());
+			}
 		}
 
 		sb.append("}");
@@ -162,8 +165,7 @@ public class OperationSerDes {
 
 			if (Objects.equals(jsonParserFieldName, "op")) {
 				if (jsonParserFieldValue != null) {
-					operation.setOp(
-						Operation.Op.create((String)jsonParserFieldValue));
+					operation.setOp((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "path")) {
@@ -173,7 +175,7 @@ public class OperationSerDes {
 			}
 			else if (Objects.equals(jsonParserFieldName, "value")) {
 				if (jsonParserFieldValue != null) {
-					operation.setValue((String)jsonParserFieldValue);
+					operation.setValue((Object)jsonParserFieldValue);
 				}
 			}
 		}

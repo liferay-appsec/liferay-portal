@@ -725,7 +725,7 @@ public interface UserResource {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
 
-			httpInvoker.body(patchOp.toString(), "application/json");
+			httpInvoker.body(patchOp.toString(), "application/scim+json");
 
 			if (_builder._locale != null) {
 				httpInvoker.header(

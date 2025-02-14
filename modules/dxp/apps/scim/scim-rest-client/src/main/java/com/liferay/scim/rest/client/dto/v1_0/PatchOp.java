@@ -46,6 +46,27 @@ public class PatchOp implements Cloneable, Serializable {
 
 	protected Operation[] Operations;
 
+	public String[] getSchemas() {
+		return schemas;
+	}
+
+	public void setSchemas(String[] schemas) {
+		this.schemas = schemas;
+	}
+
+	public void setSchemas(
+		UnsafeSupplier<String[], Exception> schemasUnsafeSupplier) {
+
+		try {
+			schemas = schemasUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String[] schemas;
+
 	@Override
 	public PatchOp clone() throws CloneNotSupportedException {
 		return (PatchOp)super.clone();

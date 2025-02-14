@@ -25,23 +25,15 @@ public class Operation implements Cloneable, Serializable {
 		return OperationSerDes.toDTO(json);
 	}
 
-	public Op getOp() {
+	public String getOp() {
 		return op;
 	}
 
-	public String getOpAsString() {
-		if (op == null) {
-			return null;
-		}
-
-		return op.toString();
-	}
-
-	public void setOp(Op op) {
+	public void setOp(String op) {
 		this.op = op;
 	}
 
-	public void setOp(UnsafeSupplier<Op, Exception> opUnsafeSupplier) {
+	public void setOp(UnsafeSupplier<String, Exception> opUnsafeSupplier) {
 		try {
 			op = opUnsafeSupplier.get();
 		}
@@ -50,7 +42,7 @@ public class Operation implements Cloneable, Serializable {
 		}
 	}
 
-	protected Op op;
+	protected String op;
 
 	public String getPath() {
 		return path;
@@ -71,16 +63,16 @@ public class Operation implements Cloneable, Serializable {
 
 	protected String path;
 
-	public String getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 
 	public void setValue(
-		UnsafeSupplier<String, Exception> valueUnsafeSupplier) {
+		UnsafeSupplier<Object, Exception> valueUnsafeSupplier) {
 
 		try {
 			value = valueUnsafeSupplier.get();
@@ -90,7 +82,7 @@ public class Operation implements Cloneable, Serializable {
 		}
 	}
 
-	protected String value;
+	protected Object value;
 
 	@Override
 	public Operation clone() throws CloneNotSupportedException {
@@ -121,39 +113,6 @@ public class Operation implements Cloneable, Serializable {
 
 	public String toString() {
 		return OperationSerDes.toJSON(this);
-	}
-
-	public static enum Op {
-
-		ADD("add"), REMOVE("remove"), REPLACE("replace");
-
-		public static Op create(String value) {
-			for (Op op : values()) {
-				if (Objects.equals(op.getValue(), value) ||
-					Objects.equals(op.name(), value)) {
-
-					return op;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Op(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
 	}
 
 }

@@ -193,7 +193,7 @@ public abstract class BaseUserResourceImpl implements UserResource {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/scim/v1.0/v2/Users/{id}' -d $'{"Operations": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/scim/v1.0/v2/Users/{id}' -d $'{"Operations": ___, "schemas": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(description = "Updates a user.")
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -207,7 +207,7 @@ public abstract class BaseUserResourceImpl implements UserResource {
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "User")}
 	)
-	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.Consumes("application/scim+json")
 	@javax.ws.rs.PATCH
 	@javax.ws.rs.Path("/v2/Users/{id}")
 	@javax.ws.rs.Produces("application/scim+json")
