@@ -9,6 +9,9 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.URLUtil;
 
@@ -21,11 +24,10 @@ import java.util.Map;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
-import org.wso2.charon3.core.exceptions.BadRequestException;
-import org.wso2.charon3.core.exceptions.CharonException;
+import org.wso2.charon3.core.exceptions.AbstractCharonException;
 import org.wso2.charon3.core.exceptions.ConflictException;
+import org.wso2.charon3.core.exceptions.InternalErrorException;
 import org.wso2.charon3.core.exceptions.NotFoundException;
-import org.wso2.charon3.core.exceptions.NotImplementedException;
 import org.wso2.charon3.core.extensions.UserManager;
 import org.wso2.charon3.core.protocol.ResponseCodeConstants;
 import org.wso2.charon3.core.protocol.SCIMResponse;
@@ -44,21 +46,21 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 		String excludeAttributes) {
 
 		try {
-			userManager.getCoreSchema();
+			if (userManager != null) {
+				userManager.getCoreSchema();
 
-			return new SCIMResponse(
-				ResponseCodeConstants.CODE_OK, getSchemas(),
-				getResponseHeaders());
-		}
-		catch (BadRequestException | CharonException | NotFoundException |
-			   NotImplementedException e) {
+				return new SCIMResponse(
+					ResponseCodeConstants.CODE_OK, _getSchemas(attributes),
+					_getResponseHeaders());
+			}
 
-			return AbstractResourceManager.encodeSCIMException(e);
+			String error = "Provided user manager handler is null.";
+
+			throw new InternalErrorException(error);
 		}
-		catch (IOException | JSONException exceptione) {
-			return new SCIMResponse(
-				ResponseCodeConstants.CODE_INTERNAL_ERROR,
-				"Error getting the schemas", null);
+		catch (AbstractCharonException abstractCharonException) {
+			return AbstractResourceManager.encodeSCIMException(
+				abstractCharonException);
 		}
 		catch (Exception exception) {
 			if (exception instanceof ConflictException) {
@@ -70,27 +72,33 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 		}
 	}
 
-	private JSONObject _createSchema(String jsonFile)
+	private JSONObject _createSchema(String attribute, String jsonFile)
 		throws IOException, JSONException {
 
 		Bundle bundle = FrameworkUtil.getBundle(
 			SchemaResourceManagerImpl.class);
 
-		URL urlUserSchemaJson = bundle.getResource(
+		URL userSchemaURL = bundle.getResource(
 			"META-INF/schemas/json/" + jsonFile);
 
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			URLUtil.toString(urlUserSchemaJson));
+			URLUtil.toString(userSchemaURL));
 
-		JSONArray schemas = JSONFactoryUtil.createJSONArray();
+		JSONObject metaJSONObject = (JSONObject)jsonObject.get("meta");
 
-		schemas.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
-		jsonObject.put("schemas", schemas);
+		String locationString = (String)metaJSONObject.get("location");
+
+		metaJSONObject.put("location", attribute + locationString);
+
+		JSONArray schemasJSONArray = JSONUtil.put(
+			"urn:ietf:params:scim:schemas:core:2.0:Schema");
+
+		jsonObject.put("schemas", schemasJSONArray);
 
 		return jsonObject;
 	}
 
-	private Map<String, String> getResponseHeaders() throws NotFoundException {
+	private Map<String, String> _getResponseHeaders() throws NotFoundException {
 		return HashMapBuilder.put(
 			SCIMConstants.CONTENT_TYPE_HEADER, SCIMConstants.APPLICATION_JSON
 		).put(
@@ -99,30 +107,45 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 		).build();
 	}
 
-	private String getSchemas() throws IOException, JSONException {
-		JSONArray schemas = JSONFactoryUtil.createJSONArray(
-			"urn:ietf:params:scim:api:messages:2.0:ListResponse");
+	private String _getSchemas(String attribute)
+		throws AbstractCharonException {
 
-		JSONObject root = JSONFactoryUtil.createJSONObject(
-			HashMapBuilder.put(
-				"itemsPerPage", 3
-			).put(
-				"startIndex", 1
-			).put(
-				"totalResults", 3
-			).build());
+		try {
+			JSONArray schemasJSONArray = JSONFactoryUtil.createJSONArray(
+				"[\"urn:ietf:params:scim:api:messages:2.0:ListResponse\"]");
 
-		root.put("schemas", schemas);
+			JSONObject rootJSONObject = JSONFactoryUtil.createJSONObject(
+				HashMapBuilder.put(
+					"itemsPerPage", 3
+				).put(
+					"startIndex", 1
+				).put(
+					"totalResults", 3
+				).build());
 
-		JSONArray resources = JSONFactoryUtil.createJSONArray();
+			rootJSONObject.put("schemas", schemasJSONArray);
 
-		resources.put(_createSchema("user-schema.json"));
-		resources.put(_createSchema("user-extension-schema.json"));
-		resources.put(_createSchema("group-schema.json"));
+			JSONArray resourcesJSONArray = JSONUtil.putAll(
+				_createSchema(attribute, "user-schema.json"),
+				_createSchema(attribute, "user-extension-schema.json"),
+				_createSchema(attribute, "group-schema.json"));
 
-		root.put("Resources", resources);
+			rootJSONObject.put("Resources", resourcesJSONArray);
 
-		return root.toString();
+			return rootJSONObject.toString();
+		}
+		catch (IOException | JSONException exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			String error = "Error getting the schemas.";
+
+			throw new InternalErrorException(error);
+		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SchemaResourceManagerImpl.class);
 
 }

@@ -55,6 +55,7 @@ import com.liferay.scim.rest.internal.model.ScimUser;
 import com.liferay.scim.rest.internal.util.ScimUtil;
 import com.liferay.scim.rest.util.ScimClientUtil;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +77,6 @@ import org.wso2.charon3.core.objects.Group;
 import org.wso2.charon3.core.objects.User;
 import org.wso2.charon3.core.objects.plainobjects.GroupsGetResponse;
 import org.wso2.charon3.core.objects.plainobjects.UsersGetResponse;
-import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon3.core.utils.codeutils.ExpressionNode;
 import org.wso2.charon3.core.utils.codeutils.Node;
 import org.wso2.charon3.core.utils.codeutils.SearchRequest;
@@ -202,12 +202,10 @@ public class UserManagerImpl implements UserManager {
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		ScimClientOAuth2ApplicationConfiguration
-			scimClientOAuth2ApplicationConfiguration =
-				_getScimClientOAuth2ApplicationConfiguration(
-					serviceContext.getCompanyId());
+		_getScimClientOAuth2ApplicationConfiguration(
+			serviceContext.getCompanyId());
 
-		return null;
+		return new ArrayList<>();
 	}
 
 	@Override
