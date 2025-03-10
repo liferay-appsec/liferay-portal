@@ -165,12 +165,12 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 			JSONObject rootJSONObject = JSONUtil.put(
 				"itemsPerPage", 3
 			).put(
+				"schemas", schemasJSONArray
+			).put(
 				"startIndex", 1
 			).put(
 				"totalResults", schemaIdJsonFileNameStringMap.size()
 			);
-
-			rootJSONObject.put("schemas", schemasJSONArray);
 
 			JSONArray resourcesJSONArray = JSONFactoryUtil.createJSONArray();
 
