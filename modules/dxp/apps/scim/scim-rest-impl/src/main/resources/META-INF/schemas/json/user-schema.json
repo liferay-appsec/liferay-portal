@@ -151,18 +151,8 @@
 					"uniqueness": "none"
 				},
 				{
-					"caseExact": false,
-					"description": "A human-readable name, primarily used for display purposes. READ-ONLY.",
-					"multiValued": false,
-					"mutability": "readOnly",
-					"name": "display",
-					"required": false,
-					"returned": "default",
-					"type": "string",
-					"uniqueness": "none"
-				},
-				{
 					"canonicalValues": [
+						"work"
 					],
 					"caseExact": false,
 					"description": "A label indicating the attribute's function, e.g., 'work' or 'home'.",
