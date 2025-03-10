@@ -100,9 +100,9 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 			URLUtil.toString(userSchemaURL));
 
-		JSONObject metaJSONObject = (JSONObject)jsonObject.get("meta");
+		JSONObject metaJSONObject = jsonObject.getJSONObject("meta");
 
-		String locationString = (String)metaJSONObject.get("location");
+		String locationString = metaJSONObject.getString("location");
 
 		metaJSONObject.put("location", attribute + locationString);
 
@@ -162,14 +162,13 @@ public class SchemaResourceManagerImpl extends SchemaResourceManager {
 			Map<String, String> schemaIdJsonFileNameStringMap =
 				ScimUtil.getMapSchemaIdJsonFileName();
 
-			JSONObject rootJSONObject = JSONFactoryUtil.createJSONObject(
-				HashMapBuilder.put(
-					"itemsPerPage", 3
-				).put(
-					"startIndex", 1
-				).put(
-					"totalResults", schemaIdJsonFileNameStringMap.size()
-				).build());
+			JSONObject rootJSONObject = JSONUtil.put(
+				"itemsPerPage", 3
+			).put(
+				"startIndex", 1
+			).put(
+				"totalResults", schemaIdJsonFileNameStringMap.size()
+			);
 
 			rootJSONObject.put("schemas", schemasJSONArray);
 
