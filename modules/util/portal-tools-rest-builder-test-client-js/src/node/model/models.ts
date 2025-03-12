@@ -14,16 +14,20 @@ import localVarRequest from 'request';
 	import {EnumTestEntity} from './enumTestEntity';
 	import {Facet} from './facet';
 	import {FacetValue} from './facetValue';
+	import {Filter} from './filter';
 	import {JSONMapAttributeTestEntity} from './jSONMapAttributeTestEntity';
 	import {NestedArrayItemsTestEntity} from './nestedArrayItemsTestEntity';
 	import {NestedTestEntity} from './nestedTestEntity';
 	import {PageCompanyTestEntity} from './pageCompanyTestEntity';
 	import {PageEntityModelResourceTestEntity1} from './pageEntityModelResourceTestEntity1';
+	import {PageFilter} from './pageFilter';
 	import {PagePermission} from './pagePermission';
 	import {PageSiteTestEntity} from './pageSiteTestEntity';
+	import {PageSort} from './pageSort';
 	import {PageTestEntity} from './pageTestEntity';
 	import {Permission} from './permission';
 	import {SiteTestEntity} from './siteTestEntity';
+	import {Sort} from './sort';
 	import {TestEntity} from './testEntity';
 	import {TestEntityAddress} from './testEntityAddress';
 	import {UnreferencedTestEntity} from './unreferencedTestEntity';
@@ -37,16 +41,20 @@ import localVarRequest from 'request';
 	export * from './enumTestEntity';
 	export * from './facet';
 	export * from './facetValue';
+	export * from './filter';
 	export * from './jSONMapAttributeTestEntity';
 	export * from './nestedArrayItemsTestEntity';
 	export * from './nestedTestEntity';
 	export * from './pageCompanyTestEntity';
 	export * from './pageEntityModelResourceTestEntity1';
+	export * from './pageFilter';
 	export * from './pagePermission';
 	export * from './pageSiteTestEntity';
+	export * from './pageSort';
 	export * from './pageTestEntity';
 	export * from './permission';
 	export * from './siteTestEntity';
+	export * from './sort';
 	export * from './testEntity';
 	export * from './testEntityAddress';
 	export * from './unreferencedTestEntity';
@@ -86,16 +94,20 @@ const typeMap: {[index: string]: any} = {
 	EnumTestEntity,
 	Facet,
 	FacetValue,
+	Filter,
 	JSONMapAttributeTestEntity,
 	NestedArrayItemsTestEntity,
 	NestedTestEntity,
 	PageCompanyTestEntity,
 	PageEntityModelResourceTestEntity1,
+	PageFilter,
 	PagePermission,
 	PageSiteTestEntity,
+	PageSort,
 	PageTestEntity,
 	Permission,
 	SiteTestEntity,
+	Sort,
 	TestEntity,
 	TestEntityAddress,
 	UnreferencedTestEntity,
