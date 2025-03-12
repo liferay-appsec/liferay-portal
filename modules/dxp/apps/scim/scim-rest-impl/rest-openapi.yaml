@@ -46,7 +46,7 @@ components:
                         type: string
                     type: array
             type: object
-        FilterSupport:
+        Filter:
             properties:
                 maxResults:
                     readOnly: true
@@ -253,7 +253,7 @@ components:
                             type: boolean
                     type: object
                 filter:
-                    $ref: "#/components/schemas/FilterSupport"
+                    $ref: "#/components/schemas/Filter"
                 meta:
                     $ref: "#/components/schemas/Meta"
                 patch:
@@ -269,9 +269,9 @@ components:
                         type: string
                     type: array
                 sort:
-                    $ref: "#/components/schemas/SortSupport"
+                    $ref: "#/components/schemas/Sort"
             type: object
-        SortSupport:
+        Sort:
             properties:
                 supported:
                     readOnly: true
