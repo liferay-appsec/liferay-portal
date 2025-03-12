@@ -5,18 +5,24 @@
 
 package com.liferay.scim.rest.internal.resource.v1_0;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.scim.rest.internal.util.ScimUtil;
 import com.liferay.scim.rest.resource.v1_0.ServiceProviderConfigResource;
 
+import java.util.Map;
+
 import javax.ws.rs.core.Response;
 
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -24,8 +30,10 @@ import org.osgi.service.component.annotations.ServiceScope;
 
 import org.wso2.charon3.core.exceptions.AbstractCharonException;
 import org.wso2.charon3.core.exceptions.ConflictException;
+import org.wso2.charon3.core.exceptions.InternalErrorException;
 import org.wso2.charon3.core.exceptions.NotFoundException;
 import org.wso2.charon3.core.protocol.ResponseCodeConstants;
+import org.wso2.charon3.core.protocol.SCIMResponse;
 import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon3.core.schema.SCIMConstants;
 
@@ -42,143 +50,97 @@ public class ServiceProviderConfigResourceImpl
 
 	@Override
 	public Object getV2ServiceProviderConfig() throws Exception {
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
+		return _buildResponse(_getSCIMResponse());
+	}
 
+	private Response _buildResponse(SCIMResponse scimResponse) {
 		Response.ResponseBuilder responseBuilder = Response.status(
-			ResponseCodeConstants.CODE_OK);
+			scimResponse.getResponseStatus());
 
-		responseBuilder.header(
+		if (scimResponse.getResponseMessage() != null) {
+			responseBuilder.entity(scimResponse.getResponseMessage());
+		}
+
+		Map<String, String> map = scimResponse.getHeaderParamMap();
+
+		if (MapUtil.isNotEmpty(map)) {
+			for (Map.Entry<String, String> entry : map.entrySet()) {
+				responseBuilder.header(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return responseBuilder.build();
+	}
+
+	private Map<String, String> _getResponseHeaders() throws NotFoundException {
+		return HashMapBuilder.put(
 			SCIMConstants.CONTENT_TYPE_HEADER, SCIMConstants.APPLICATION_JSON
-		).header(
+		).put(
 			SCIMConstants.LOCATION_HEADER,
 			AbstractResourceManager.getResourceEndpointURL(
 				SCIMConstants.SERVICE_PROVIDER_CONFIG_ENDPOINT)
-		);
+		).build();
+	}
 
+	private SCIMResponse _getSCIMResponse() throws Exception {
 		try {
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
+
 			ScimUtil.getScimClientOAuth2ApplicationConfiguration(
 				serviceContext.getCompanyId(), _configurationAdmin);
-		}
-		catch (javax.ws.rs.NotFoundException notFoundException) {
-			responseBuilder = Response.status(
-				ResponseCodeConstants.CODE_RESOURCE_NOT_FOUND);
 
-			responseBuilder.entity(
-				JSONUtil.put(
-					"detail", notFoundException.getMessage()
-				).put(
-					"schemas",
-					_jsonFactory.createJSONArray(
-						"[\"urn:ietf:params:scim:api:messages:2.0:Error\"]")
-				).put(
-					"status", "404"
-				).toString());
-
-			return responseBuilder.build();
-		}
-
-		try {
-			responseBuilder.entity(_getServiceProviderConfig());
-
-			return responseBuilder.build();
+			return new SCIMResponse(
+				ResponseCodeConstants.CODE_OK, _read(), _getResponseHeaders());
 		}
 		catch (AbstractCharonException abstractCharonException) {
-			responseBuilder.entity(
-				AbstractResourceManager.encodeSCIMException(
-					abstractCharonException));
-
-			return responseBuilder.build();
+			return AbstractResourceManager.encodeSCIMException(
+				abstractCharonException);
 		}
 		catch (Exception exception) {
 			if (exception instanceof ConflictException) {
-				responseBuilder.entity(
-					AbstractResourceManager.encodeSCIMException(
-						(ConflictException)exception));
-
-				return responseBuilder.build();
+				return AbstractResourceManager.encodeSCIMException(
+					(ConflictException)exception);
 			}
 
 			throw exception;
 		}
 	}
 
-	private String _getServiceProviderConfig()
-		throws JSONException, NotFoundException {
+	private String _read() throws InternalErrorException {
+		try {
+			Bundle bundle = FrameworkUtil.getBundle(
+				ServiceProviderConfigResourceImpl.class);
 
-		return JSONUtil.put(
-			"authenticationSchemes",
-			_jsonFactory.createJSONArray(
-				StringBundler.concat(
-					StringPool.OPEN_BRACKET,
-					JSONUtil.put(
-						"description",
-						"Authentication scheme using the OAuth Bearer Token " +
-							"Standard"
-					).put(
-						"documentationUri", "https://learn.liferay.com"
-					).put(
-						"name", "OAuth Bearer Token"
-					).put(
-						"primary", true
-					).put(
-						"specUri", "http://www.rfc-editor.org/info/rfc6750"
-					).put(
-						"type", "oauthbearertoken"
-					),
-					StringPool.CLOSE_BRACKET))
-		).put(
-			"bulk",
-			JSONUtil.put(
-				"maxOperations", 0
-			).put(
-				"maxPayloadSize", 0
-			).put(
-				"supported", false
-			)
-		).put(
-			"changePassword", JSONUtil.put("supported", false)
-		).put(
-			"documentationUri",
-			StringBundler.concat(
-				"https://learn.liferay.com/w/dxp/installation-and-upgrades",
-				"/securing-liferay",
-				"/system-for-cross-domain-identity-management-scim")
-		).put(
-			"etag", JSONUtil.put("supported", false)
-		).put(
-			"filter",
-			JSONUtil.put(
-				"maxResults", 100
-			).put(
-				"supported", true
-			)
-		).put(
-			"meta",
-			JSONUtil.put(
-				"created", "2025-03-13T00:00Z"
-			).put(
-				"lastModified", "2025-03-13T00:00Z"
-			).put(
+			JSONObject serviceProviderConfigJSONObject =
+				_jsonFactory.createJSONObject(
+					URLUtil.toString(
+						bundle.getResource(
+							"META-INF/service-provider-config" +
+								"/service-provider-config.json")));
+
+			JSONObject metaJSONObject =
+				serviceProviderConfigJSONObject.getJSONObject("meta");
+
+			metaJSONObject.put(
 				"location",
 				AbstractResourceManager.getResourceEndpointURL(
-					SCIMConstants.SERVICE_PROVIDER_CONFIG_ENDPOINT)
-			).put(
-				"resourceType", "ServiceProviderConfig"
-			).put(
-				"version", "1"
-			)
-		).put(
-			"patch", JSONUtil.put("supported", true)
-		).put(
-			"schemas",
-			_jsonFactory.createJSONArray(
-				"[\"urn:ietf:params:scim:schemas:core:2.0:" +
-					"ServiceProviderConfig\"]")
-		).put(
-			"sort", JSONUtil.put("supported", false)
-		).toString();
+					SCIMConstants.SERVICE_PROVIDER_CONFIG_ENDPOINT));
+
+			return serviceProviderConfigJSONObject.toString();
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			throw new InternalErrorException(
+				"Error reading service-provider-config.json file");
+		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ServiceProviderConfigResourceImpl.class);
 
 	@Reference
 	private ConfigurationAdmin _configurationAdmin;
