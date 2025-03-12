@@ -130,16 +130,16 @@ public class ServiceProviderConfig implements Cloneable, Serializable {
 
 	protected Etag etag;
 
-	public FilterSupport getFilter() {
+	public Filter getFilter() {
 		return filter;
 	}
 
-	public void setFilter(FilterSupport filter) {
+	public void setFilter(Filter filter) {
 		this.filter = filter;
 	}
 
 	public void setFilter(
-		UnsafeSupplier<FilterSupport, Exception> filterUnsafeSupplier) {
+		UnsafeSupplier<Filter, Exception> filterUnsafeSupplier) {
 
 		try {
 			filter = filterUnsafeSupplier.get();
@@ -149,7 +149,7 @@ public class ServiceProviderConfig implements Cloneable, Serializable {
 		}
 	}
 
-	protected FilterSupport filter;
+	protected Filter filter;
 
 	public Meta getMeta() {
 		return meta;
@@ -210,17 +210,15 @@ public class ServiceProviderConfig implements Cloneable, Serializable {
 
 	protected String[] schemas;
 
-	public SortSupport getSort() {
+	public Sort getSort() {
 		return sort;
 	}
 
-	public void setSort(SortSupport sort) {
+	public void setSort(Sort sort) {
 		this.sort = sort;
 	}
 
-	public void setSort(
-		UnsafeSupplier<SortSupport, Exception> sortUnsafeSupplier) {
-
+	public void setSort(UnsafeSupplier<Sort, Exception> sortUnsafeSupplier) {
 		try {
 			sort = sortUnsafeSupplier.get();
 		}
@@ -229,7 +227,7 @@ public class ServiceProviderConfig implements Cloneable, Serializable {
 		}
 	}
 
-	protected SortSupport sort;
+	protected Sort sort;
 
 	@Override
 	public ServiceProviderConfig clone() throws CloneNotSupportedException {

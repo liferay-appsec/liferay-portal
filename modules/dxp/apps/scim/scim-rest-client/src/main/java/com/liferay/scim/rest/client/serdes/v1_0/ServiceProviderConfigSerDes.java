@@ -387,8 +387,7 @@ public class ServiceProviderConfigSerDes {
 			else if (Objects.equals(jsonParserFieldName, "filter")) {
 				if (jsonParserFieldValue != null) {
 					serviceProviderConfig.setFilter(
-						FilterSupportSerDes.toDTO(
-							(String)jsonParserFieldValue));
+						FilterSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "meta")) {
@@ -412,7 +411,7 @@ public class ServiceProviderConfigSerDes {
 			else if (Objects.equals(jsonParserFieldName, "sort")) {
 				if (jsonParserFieldValue != null) {
 					serviceProviderConfig.setSort(
-						SortSupportSerDes.toDTO((String)jsonParserFieldValue));
+						SortSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
 		}

@@ -262,7 +262,7 @@ public class ServiceProviderConfig implements Serializable {
 
 	@Schema
 	@Valid
-	public FilterSupport getFilter() {
+	public Filter getFilter() {
 		if (_filterSupplier != null) {
 			filter = _filterSupplier.get();
 
@@ -272,7 +272,7 @@ public class ServiceProviderConfig implements Serializable {
 		return filter;
 	}
 
-	public void setFilter(FilterSupport filter) {
+	public void setFilter(Filter filter) {
 		this.filter = filter;
 
 		_filterSupplier = null;
@@ -280,7 +280,7 @@ public class ServiceProviderConfig implements Serializable {
 
 	@JsonIgnore
 	public void setFilter(
-		UnsafeSupplier<FilterSupport, Exception> filterUnsafeSupplier) {
+		UnsafeSupplier<Filter, Exception> filterUnsafeSupplier) {
 
 		_filterSupplier = () -> {
 			try {
@@ -297,10 +297,10 @@ public class ServiceProviderConfig implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected FilterSupport filter;
+	protected Filter filter;
 
 	@JsonIgnore
-	private Supplier<FilterSupport> _filterSupplier;
+	private Supplier<Filter> _filterSupplier;
 
 	@Schema
 	@Valid
@@ -425,7 +425,7 @@ public class ServiceProviderConfig implements Serializable {
 
 	@Schema
 	@Valid
-	public SortSupport getSort() {
+	public Sort getSort() {
 		if (_sortSupplier != null) {
 			sort = _sortSupplier.get();
 
@@ -435,16 +435,14 @@ public class ServiceProviderConfig implements Serializable {
 		return sort;
 	}
 
-	public void setSort(SortSupport sort) {
+	public void setSort(Sort sort) {
 		this.sort = sort;
 
 		_sortSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setSort(
-		UnsafeSupplier<SortSupport, Exception> sortUnsafeSupplier) {
-
+	public void setSort(UnsafeSupplier<Sort, Exception> sortUnsafeSupplier) {
 		_sortSupplier = () -> {
 			try {
 				return sortUnsafeSupplier.get();
@@ -460,10 +458,10 @@ public class ServiceProviderConfig implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected SortSupport sort;
+	protected Sort sort;
 
 	@JsonIgnore
-	private Supplier<SortSupport> _sortSupplier;
+	private Supplier<Sort> _sortSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -568,7 +566,7 @@ public class ServiceProviderConfig implements Serializable {
 			sb.append(String.valueOf(etag));
 		}
 
-		FilterSupport filter = getFilter();
+		Filter filter = getFilter();
 
 		if (filter != null) {
 			if (sb.length() > 1) {
@@ -630,7 +628,7 @@ public class ServiceProviderConfig implements Serializable {
 			sb.append("]");
 		}
 
-		SortSupport sort = getSort();
+		Sort sort = getSort();
 
 		if (sort != null) {
 			if (sb.length() > 1) {

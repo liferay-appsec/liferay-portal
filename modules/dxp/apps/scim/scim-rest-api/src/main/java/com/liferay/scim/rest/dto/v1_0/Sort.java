@@ -35,17 +35,17 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @generated
  */
 @Generated("")
-@GraphQLName("SortSupport")
+@GraphQLName("Sort")
 @JsonFilter("Liferay.Vulcan")
-@XmlRootElement(name = "SortSupport")
-public class SortSupport implements Serializable {
+@XmlRootElement(name = "Sort")
+public class Sort implements Serializable {
 
-	public static SortSupport toDTO(String json) {
-		return ObjectMapperUtil.readValue(SortSupport.class, json);
+	public static Sort toDTO(String json) {
+		return ObjectMapperUtil.readValue(Sort.class, json);
 	}
 
-	public static SortSupport unsafeToDTO(String json) {
-		return ObjectMapperUtil.unsafeReadValue(SortSupport.class, json);
+	public static Sort unsafeToDTO(String json) {
+		return ObjectMapperUtil.unsafeReadValue(Sort.class, json);
 	}
 
 	@Schema
@@ -95,13 +95,13 @@ public class SortSupport implements Serializable {
 			return true;
 		}
 
-		if (!(object instanceof SortSupport)) {
+		if (!(object instanceof Sort)) {
 			return false;
 		}
 
-		SortSupport sortSupport = (SortSupport)object;
+		Sort sort = (Sort)object;
 
-		return Objects.equals(toString(), sortSupport.toString());
+		return Objects.equals(toString(), sort.toString());
 	}
 
 	@Override
@@ -135,7 +135,7 @@ public class SortSupport implements Serializable {
 
 	@Schema(
 		accessMode = Schema.AccessMode.READ_ONLY,
-		defaultValue = "com.liferay.scim.rest.dto.v1_0.SortSupport",
+		defaultValue = "com.liferay.scim.rest.dto.v1_0.Sort",
 		name = "x-class-name"
 	)
 	public String xClassName;

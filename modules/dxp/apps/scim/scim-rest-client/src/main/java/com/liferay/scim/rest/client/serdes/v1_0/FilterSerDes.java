@@ -5,7 +5,7 @@
 
 package com.liferay.scim.rest.client.serdes.v1_0;
 
-import com.liferay.scim.rest.client.dto.v1_0.SortSupport;
+import com.liferay.scim.rest.client.dto.v1_0.Filter;
 import com.liferay.scim.rest.client.json.BaseJSONParser;
 
 import java.util.Iterator;
@@ -21,24 +21,22 @@ import javax.annotation.Generated;
  * @generated
  */
 @Generated("")
-public class SortSupportSerDes {
+public class FilterSerDes {
 
-	public static SortSupport toDTO(String json) {
-		SortSupportJSONParser sortSupportJSONParser =
-			new SortSupportJSONParser();
+	public static Filter toDTO(String json) {
+		FilterJSONParser filterJSONParser = new FilterJSONParser();
 
-		return sortSupportJSONParser.parseToDTO(json);
+		return filterJSONParser.parseToDTO(json);
 	}
 
-	public static SortSupport[] toDTOs(String json) {
-		SortSupportJSONParser sortSupportJSONParser =
-			new SortSupportJSONParser();
+	public static Filter[] toDTOs(String json) {
+		FilterJSONParser filterJSONParser = new FilterJSONParser();
 
-		return sortSupportJSONParser.parseToDTOs(json);
+		return filterJSONParser.parseToDTOs(json);
 	}
 
-	public static String toJSON(SortSupport sortSupport) {
-		if (sortSupport == null) {
+	public static String toJSON(Filter filter) {
+		if (filter == null) {
 			return "null";
 		}
 
@@ -46,14 +44,24 @@ public class SortSupportSerDes {
 
 		sb.append("{");
 
-		if (sortSupport.getSupported() != null) {
+		if (filter.getMaxResults() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"maxResults\": ");
+
+			sb.append(filter.getMaxResults());
+		}
+
+		if (filter.getSupported() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
 			sb.append("\"supported\": ");
 
-			sb.append(sortSupport.getSupported());
+			sb.append(filter.getSupported());
 		}
 
 		sb.append("}");
@@ -62,45 +70,53 @@ public class SortSupportSerDes {
 	}
 
 	public static Map<String, Object> toMap(String json) {
-		SortSupportJSONParser sortSupportJSONParser =
-			new SortSupportJSONParser();
+		FilterJSONParser filterJSONParser = new FilterJSONParser();
 
-		return sortSupportJSONParser.parseToMap(json);
+		return filterJSONParser.parseToMap(json);
 	}
 
-	public static Map<String, String> toMap(SortSupport sortSupport) {
-		if (sortSupport == null) {
+	public static Map<String, String> toMap(Filter filter) {
+		if (filter == null) {
 			return null;
 		}
 
 		Map<String, String> map = new TreeMap<>();
 
-		if (sortSupport.getSupported() == null) {
+		if (filter.getMaxResults() == null) {
+			map.put("maxResults", null);
+		}
+		else {
+			map.put("maxResults", String.valueOf(filter.getMaxResults()));
+		}
+
+		if (filter.getSupported() == null) {
 			map.put("supported", null);
 		}
 		else {
-			map.put("supported", String.valueOf(sortSupport.getSupported()));
+			map.put("supported", String.valueOf(filter.getSupported()));
 		}
 
 		return map;
 	}
 
-	public static class SortSupportJSONParser
-		extends BaseJSONParser<SortSupport> {
+	public static class FilterJSONParser extends BaseJSONParser<Filter> {
 
 		@Override
-		protected SortSupport createDTO() {
-			return new SortSupport();
+		protected Filter createDTO() {
+			return new Filter();
 		}
 
 		@Override
-		protected SortSupport[] createDTOArray(int size) {
-			return new SortSupport[size];
+		protected Filter[] createDTOArray(int size) {
+			return new Filter[size];
 		}
 
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
-			if (Objects.equals(jsonParserFieldName, "supported")) {
+			if (Objects.equals(jsonParserFieldName, "maxResults")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "supported")) {
 				return false;
 			}
 
@@ -109,12 +125,18 @@ public class SortSupportSerDes {
 
 		@Override
 		protected void setField(
-			SortSupport sortSupport, String jsonParserFieldName,
+			Filter filter, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "supported")) {
+			if (Objects.equals(jsonParserFieldName, "maxResults")) {
 				if (jsonParserFieldValue != null) {
-					sortSupport.setSupported((Boolean)jsonParserFieldValue);
+					filter.setMaxResults(
+						Integer.valueOf((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "supported")) {
+				if (jsonParserFieldValue != null) {
+					filter.setSupported((Boolean)jsonParserFieldValue);
 				}
 			}
 		}

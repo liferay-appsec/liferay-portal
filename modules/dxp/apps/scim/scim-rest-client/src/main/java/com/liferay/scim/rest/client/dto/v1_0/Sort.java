@@ -6,7 +6,7 @@
 package com.liferay.scim.rest.client.dto.v1_0;
 
 import com.liferay.scim.rest.client.function.UnsafeSupplier;
-import com.liferay.scim.rest.client.serdes.v1_0.SortSupportSerDes;
+import com.liferay.scim.rest.client.serdes.v1_0.SortSerDes;
 
 import java.io.Serializable;
 
@@ -19,10 +19,10 @@ import javax.annotation.Generated;
  * @generated
  */
 @Generated("")
-public class SortSupport implements Cloneable, Serializable {
+public class Sort implements Cloneable, Serializable {
 
-	public static SortSupport toDTO(String json) {
-		return SortSupportSerDes.toDTO(json);
+	public static Sort toDTO(String json) {
+		return SortSerDes.toDTO(json);
 	}
 
 	public Boolean getSupported() {
@@ -47,8 +47,8 @@ public class SortSupport implements Cloneable, Serializable {
 	protected Boolean supported;
 
 	@Override
-	public SortSupport clone() throws CloneNotSupportedException {
-		return (SortSupport)super.clone();
+	public Sort clone() throws CloneNotSupportedException {
+		return (Sort)super.clone();
 	}
 
 	@Override
@@ -57,13 +57,13 @@ public class SortSupport implements Cloneable, Serializable {
 			return true;
 		}
 
-		if (!(object instanceof SortSupport)) {
+		if (!(object instanceof Sort)) {
 			return false;
 		}
 
-		SortSupport sortSupport = (SortSupport)object;
+		Sort sort = (Sort)object;
 
-		return Objects.equals(toString(), sortSupport.toString());
+		return Objects.equals(toString(), sort.toString());
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class SortSupport implements Cloneable, Serializable {
 	}
 
 	public String toString() {
-		return SortSupportSerDes.toJSON(this);
+		return SortSerDes.toJSON(this);
 	}
 
 }

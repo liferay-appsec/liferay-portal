@@ -6,7 +6,7 @@
 package com.liferay.scim.rest.client.dto.v1_0;
 
 import com.liferay.scim.rest.client.function.UnsafeSupplier;
-import com.liferay.scim.rest.client.serdes.v1_0.FilterSupportSerDes;
+import com.liferay.scim.rest.client.serdes.v1_0.FilterSerDes;
 
 import java.io.Serializable;
 
@@ -19,10 +19,10 @@ import javax.annotation.Generated;
  * @generated
  */
 @Generated("")
-public class FilterSupport implements Cloneable, Serializable {
+public class Filter implements Cloneable, Serializable {
 
-	public static FilterSupport toDTO(String json) {
-		return FilterSupportSerDes.toDTO(json);
+	public static Filter toDTO(String json) {
+		return FilterSerDes.toDTO(json);
 	}
 
 	public Integer getMaxResults() {
@@ -68,8 +68,8 @@ public class FilterSupport implements Cloneable, Serializable {
 	protected Boolean supported;
 
 	@Override
-	public FilterSupport clone() throws CloneNotSupportedException {
-		return (FilterSupport)super.clone();
+	public Filter clone() throws CloneNotSupportedException {
+		return (Filter)super.clone();
 	}
 
 	@Override
@@ -78,13 +78,13 @@ public class FilterSupport implements Cloneable, Serializable {
 			return true;
 		}
 
-		if (!(object instanceof FilterSupport)) {
+		if (!(object instanceof Filter)) {
 			return false;
 		}
 
-		FilterSupport filterSupport = (FilterSupport)object;
+		Filter filter = (Filter)object;
 
-		return Objects.equals(toString(), filterSupport.toString());
+		return Objects.equals(toString(), filter.toString());
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class FilterSupport implements Cloneable, Serializable {
 	}
 
 	public String toString() {
-		return FilterSupportSerDes.toJSON(this);
+		return FilterSerDes.toJSON(this);
 	}
 
 }

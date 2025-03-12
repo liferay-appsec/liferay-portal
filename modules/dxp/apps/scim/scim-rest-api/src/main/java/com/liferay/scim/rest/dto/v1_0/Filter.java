@@ -35,17 +35,17 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @generated
  */
 @Generated("")
-@GraphQLName("FilterSupport")
+@GraphQLName("Filter")
 @JsonFilter("Liferay.Vulcan")
-@XmlRootElement(name = "FilterSupport")
-public class FilterSupport implements Serializable {
+@XmlRootElement(name = "Filter")
+public class Filter implements Serializable {
 
-	public static FilterSupport toDTO(String json) {
-		return ObjectMapperUtil.readValue(FilterSupport.class, json);
+	public static Filter toDTO(String json) {
+		return ObjectMapperUtil.readValue(Filter.class, json);
 	}
 
-	public static FilterSupport unsafeToDTO(String json) {
-		return ObjectMapperUtil.unsafeReadValue(FilterSupport.class, json);
+	public static Filter unsafeToDTO(String json) {
+		return ObjectMapperUtil.unsafeReadValue(Filter.class, json);
 	}
 
 	@Schema
@@ -136,13 +136,13 @@ public class FilterSupport implements Serializable {
 			return true;
 		}
 
-		if (!(object instanceof FilterSupport)) {
+		if (!(object instanceof Filter)) {
 			return false;
 		}
 
-		FilterSupport filterSupport = (FilterSupport)object;
+		Filter filter = (Filter)object;
 
-		return Objects.equals(toString(), filterSupport.toString());
+		return Objects.equals(toString(), filter.toString());
 	}
 
 	@Override
@@ -188,7 +188,7 @@ public class FilterSupport implements Serializable {
 
 	@Schema(
 		accessMode = Schema.AccessMode.READ_ONLY,
-		defaultValue = "com.liferay.scim.rest.dto.v1_0.FilterSupport",
+		defaultValue = "com.liferay.scim.rest.dto.v1_0.Filter",
 		name = "x-class-name"
 	)
 	public String xClassName;
