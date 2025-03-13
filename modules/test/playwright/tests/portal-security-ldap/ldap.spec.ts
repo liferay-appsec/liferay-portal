@@ -34,6 +34,8 @@ export const test = mergeTests(
 
 const LDAP_GROUP_1 = 'ldapgroup1';
 const LDAP_GROUP_2 = 'ldapgroup2';
+const LDAP_GROUP_3 = 'ldapgroup3';
+const LDAP_GROUP_3_MODIFIED = 'ldapgroup3modified';
 
 const LDAP_USER_1: TUserAccount = {
 	alternateName: 'ldapuser1',
@@ -49,6 +51,22 @@ const LDAP_USER_2: TUserAccount = {
 	familyName: 'last',
 	givenName: 'first',
 	password: 'test',
+};
+
+const LDAP_USER_3: TUserAccount = {
+	alternateName: 'ldapuser3',
+	emailAddress: 'ldapuser3@liferay.com',
+	familyName: 'last',
+	givenName: 'first',
+	password: 'test',
+};
+
+const LDAP_USER_3_MODIFIED: TUserAccount = {
+	alternateName: 'ldapuser3modified',
+	emailAddress: 'ldapuser3@liferay.com',
+	familyName: 'lastmodified',
+	givenName: 'firstmodified',
+	password: 'testmodified',
 };
 
 test.afterAll(async ({browser}) => {
@@ -79,7 +97,12 @@ test.afterEach(
 		});
 
 		await test.step('Delete LDAP users from portal if present', async () => {
-			for (const ldapUser of [LDAP_USER_1, LDAP_USER_2]) {
+			for (const ldapUser of [
+				LDAP_USER_1,
+				LDAP_USER_2,
+				LDAP_USER_3,
+				LDAP_USER_3_MODIFIED,
+			]) {
 				const user =
 					await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
 						ldapUser.emailAddress
@@ -149,15 +172,27 @@ test.beforeAll(async ({browser}) => {
 		);
 	});
 
-	// Add LDAP user info to userData so we can authenticate via performLogin
+	// Add LDAP user info to userData so we can authenticate via performLogin or
+	// performLoginViaApi
 
-	for (const ldapUser of [LDAP_USER_1, LDAP_USER_2]) {
+	for (const ldapUser of [LDAP_USER_1, LDAP_USER_2, LDAP_USER_3]) {
 		userData[ldapUser.alternateName] = {
 			name: ldapUser.givenName,
-			password: 'test',
+			password: ldapUser.password,
 			surname: ldapUser.familyName,
 		};
 	}
+
+	// The modified user is a special case, because it uses the existing email
+	// address, but the data and credentials are different.  We can workaround
+	// the performLogin constraints by using the email as the key, and passing
+	// in a blank 'domain' argument.
+
+	userData[LDAP_USER_3_MODIFIED.emailAddress] = {
+		name: LDAP_USER_3_MODIFIED.givenName,
+		password: LDAP_USER_3_MODIFIED.password,
+		surname: LDAP_USER_3_MODIFIED.familyName,
+	};
 });
 
 test('LPD-47223 AC1 TC1: Verify LDAP import via authentication imports user attributes and user groups, but only for the user being authenticated', async ({
@@ -306,6 +341,171 @@ test('LPD-47223 AC1 TC1: Verify LDAP import via authentication imports user attr
 				name: LDAP_GROUP_2,
 			})
 		).toBeVisible();
+	});
+});
+
+test('LPD-47223 AC2 TC2: Verify LDAP bulk import updates user information and membership', async ({
+	browser,
+	editUserPage,
+	ldapConfigurationPage,
+	ldapServerPage,
+	usersAndOrganizationsPage,
+}) => {
+	const ldapServer: TLdapServer = {
+		authenticationSearchFilter: '(&(mail=@email_address@)(cn=ldapuser3))',
+		defaultValues: 'OpenLDAP',
+		ignoreUserSearchFilterForAuthentication: false,
+		importSearchFilterUser: '(&(objectClass=inetOrgPerson)(cn=ldapuser3))',
+		principal: 'cn=admin,dc=example,dc=com',
+		serverName: getRandomString(),
+	};
+
+	await test.step('Add LDAP server', async () => {
+		await ldapServerPage.addLdapServer(ldapServer);
+	});
+
+	await test.step(`Verify LDAP server connection tests display ${LDAP_USER_3.alternateName} but not ${LDAP_USER_3_MODIFIED.alternateName}`, async () => {
+		await ldapServerPage.viewLdapServer(ldapServer.serverName, false);
+
+		await ldapServerPage.testLdapUsers.click();
+
+		await expect(
+			await ldapServerPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_USER_3.alternateName,
+			})
+		).toBeVisible();
+
+		await expect(
+			await ldapServerPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_USER_3_MODIFIED.alternateName,
+			})
+		).not.toBeVisible();
+
+		await ldapServerPage.closeButton.click();
+
+		await ldapServerPage.cancelButton.click();
+	});
+
+	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
+		const ldapConfiguration: TLdapConfiguration = {
+			enableImport: true,
+			enabled: true,
+			importInterval: 1,
+		};
+
+		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
+
+		await ldapConfigurationPage.page.waitForTimeout(60 * 1000);
+	});
+
+	await test.step('Assert user data and membership was imported correctly', async () => {
+		await usersAndOrganizationsPage.goToUsers(false);
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink(
+				LDAP_USER_3.alternateName
+			)
+		).click();
+
+		await expect(editUserPage.emailAddressInput).toHaveValue(
+			LDAP_USER_3.emailAddress
+		);
+
+		await expect(editUserPage.firstNameInput).toHaveValue(
+			LDAP_USER_3.givenName
+		);
+
+		await expect(editUserPage.lastNameInput).toHaveValue(
+			LDAP_USER_3.familyName
+		);
+
+		await expect(editUserPage.screenNameInput).toHaveValue(
+			LDAP_USER_3.alternateName
+		);
+
+		await editUserPage.membershipsLink.click();
+
+		await expect(
+			await editUserPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_GROUP_3,
+			})
+		).toBeVisible();
+
+		await expect(
+			await editUserPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_GROUP_3_MODIFIED,
+			})
+		).not.toBeVisible();
+	});
+
+	await test.step('Change user data and memberships on LDAP server by adjusting import filter, since we cannot modify LDAP server from playwright test.  The email will stay the same, so the portal will think the user was actually updated in LDAP.', async () => {
+		ldapServer.authenticationSearchFilter =
+			'(&(mail=@email_address@)(cn=ldapuser3modified))';
+		ldapServer.importSearchFilterUser =
+			'(&(objectClass=inetOrgPerson)(cn=ldapuser3modified))';
+
+		await ldapServerPage.editLdapServer(ldapServer);
+	});
+
+	await test.step('Wait one minute, then assert user data and membership was updated correctly', async () => {
+		await usersAndOrganizationsPage.page.waitForTimeout(60 * 1000);
+
+		await usersAndOrganizationsPage.goToUsers(false);
+
+		await expect(
+			await usersAndOrganizationsPage.usersTableCell(
+				LDAP_USER_3.alternateName
+			)
+		).toBeHidden();
+
+		await (
+			await usersAndOrganizationsPage.usersTableRowLink(
+				LDAP_USER_3_MODIFIED.alternateName
+			)
+		).click();
+
+		await expect(editUserPage.firstNameInput).toHaveValue(
+			LDAP_USER_3_MODIFIED.givenName
+		);
+
+		await expect(editUserPage.lastNameInput).toHaveValue(
+			LDAP_USER_3_MODIFIED.familyName
+		);
+
+		await expect(editUserPage.screenNameInput).toHaveValue(
+			LDAP_USER_3_MODIFIED.alternateName
+		);
+
+		await editUserPage.membershipsLink.click();
+
+		await expect(
+			await editUserPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_GROUP_3,
+			})
+		).not.toBeVisible();
+
+		await expect(
+			await editUserPage.page.getByRole('cell', {
+				exact: true,
+				name: LDAP_GROUP_3_MODIFIED,
+			})
+		).toBeVisible();
+	});
+
+	await test.step('Assert user password updated correctly', async () => {
+		const page = await browser.newPage();
+
+		await performLogin(
+			page,
+			LDAP_USER_3_MODIFIED.emailAddress,
+			undefined,
+			''
+		);
 	});
 });
 
