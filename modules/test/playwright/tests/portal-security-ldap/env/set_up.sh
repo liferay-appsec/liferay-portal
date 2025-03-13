@@ -6,6 +6,10 @@ echo CURRENT_DIR_NAME=${CURRENT_DIR_NAME}
 
 source ${CURRENT_DIR_NAME}/../../../env/common.sh
 
+DEPENDENCIES_DIR_NAME=${CURRENT_DIR_NAME}/../dependencies
+
+echo DEPENDENCIES_DIR_NAME=${DEPENDENCIES_DIR_NAME}
+
 function ldap_set_up {
 	echo "Starting slapd:"
 	/usr/local/libexec/slapd -F /usr/local/etc/slapd.d
@@ -16,7 +20,7 @@ function ldap_set_up {
 		echo "Command succeeded"
 	fi
 
-	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${CURRENT_DIR_NAME}/exampleCompany.ldif -w "secret"
+	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${DEPENDENCIES_DIR_NAME}/exampleCompany.ldif -w "secret"
 
 	if [ $? -ne 0 ]; then
 		echo "Command failed with exit status $?"
@@ -24,7 +28,7 @@ function ldap_set_up {
 		echo "Command succeeded"
 	fi
 
-	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${CURRENT_DIR_NAME}/admin.ldif -w "secret"
+	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${DEPENDENCIES_DIR_NAME}/admin.ldif -w "secret"
 
 	if [ $? -ne 0 ]; then
 		echo "Command failed with exit status $?"
@@ -32,7 +36,7 @@ function ldap_set_up {
 		echo "Command succeeded"
 	fi
 
-	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${CURRENT_DIR_NAME}/addUsers.ldif -w "secret"
+	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${DEPENDENCIES_DIR_NAME}/addUsers.ldif -w "secret"
 
 	if [ $? -ne 0 ]; then
 		echo "Command failed with exit status $?"
@@ -40,7 +44,7 @@ function ldap_set_up {
 		echo "Command succeeded"
 	fi
 
-	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${CURRENT_DIR_NAME}/addGroups.ldif -w "secret"
+	ldapadd -cx -D "cn=admin,dc=example,dc=com" -f ${DEPENDENCIES_DIR_NAME}/addGroups.ldif -w "secret"
 
 	if [ $? -ne 0 ]; then
 		echo "Command failed with exit status $?"
