@@ -10,7 +10,9 @@ import {contentSecurityPolicyPagesTest} from '../../fixtures/contentSecurityPoli
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {pageEditorPagesTest} from '../../fixtures/pageEditorPagesTest';
+import {virtualInstancesPagesTest} from '../../fixtures/virtualInstancesPagesTest';
 import {liferayConfig} from '../../liferay.config';
+import {ContentSecurityPolicyPage} from '../../pages/portal-security-content-security-policy/ContentSecurityPolicyPage';
 import getRandomString from '../../utils/getRandomString';
 import {performLoginViaApi} from '../../utils/performLogin';
 import getFragmentDefinition from '../layout-content-page-editor-web/utils/getFragmentDefinition';
@@ -21,7 +23,8 @@ export const test = mergeTests(
 	contentSecurityPolicyPagesTest,
 	isolatedSiteTest,
 	loginTest(),
-	pageEditorPagesTest
+	pageEditorPagesTest,
+	virtualInstancesPagesTest
 );
 
 test.afterEach(
@@ -288,6 +291,236 @@ test('CSP connect-src blocks connections', async ({
 	});
 
 	expect(cspErrors.length).toBeGreaterThanOrEqual(9);
+});
+
+test('CSP frame-ancestors directive in the same instance', async ({
+	apiHelpers,
+	contentSecurityPolicyPage,
+	page,
+	pageEditorPage,
+	site,
+}) => {
+	const layout = await apiHelpers.headlessDelivery.createSitePage({
+		pageDefinition: getPageDefinition([
+			getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-html',
+			}),
+		]),
+		siteId: site.id,
+		title: getRandomString(),
+	});
+
+	await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+	await pageEditorPage.editHTMLEditable({
+		editableId: 'element-html',
+		fragmentId: await pageEditorPage.getFragmentId('HTML'),
+		value: `<object
+					type="text/html"
+					data="${liferayConfig.environment.baseUrl}"
+					width="300"
+					height="200">
+				</object>
+
+				<embed
+					type="text/html"
+					src="${liferayConfig.environment.baseUrl}"
+					width="300"
+					height="200" />
+
+				<iframe
+					id="inlineFrameExample"
+					title="Inline Frame Example"
+					width="300"
+					height="200"
+					src="${liferayConfig.environment.baseUrl}">
+				</iframe>`,
+	});
+
+	await pageEditorPage.publishPage();
+
+	await test.step('CSP frame-ancestors allows framing from same instance', async () => {
+		await contentSecurityPolicyPage.gotoAndConfigurePolicy(
+			`frame-ancestors 'self';`
+		);
+
+		const cspErrors = [];
+
+		page.on('console', (msg) => {
+			if (
+				msg.type() === 'error' &&
+				msg
+					.text()
+					.includes(
+						'Content Security Policy directive: "frame-ancestors'
+					)
+			) {
+				cspErrors.push({text: msg.text(), type: msg.type()});
+			}
+		});
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		expect(cspErrors.length).toBeLessThanOrEqual(0);
+	});
+
+	await test.step('CSP frame-ancestors blocks framing from same instance', async () => {
+		await contentSecurityPolicyPage.gotoAndConfigurePolicy(
+			`frame-ancestors 'none';`
+		);
+
+		const cspErrors = [];
+
+		page.on('console', (msg) => {
+			if (
+				msg.type() === 'error' &&
+				msg
+					.text()
+					.includes(
+						'Content Security Policy directive: "frame-ancestors'
+					)
+			) {
+				cspErrors.push({text: msg.text(), type: msg.type()});
+			}
+		});
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+	});
+});
+
+test('CSP frame-ancestors directive in a specific domain', async ({
+	apiHelpers,
+	browser,
+	page,
+	pageEditorPage,
+	site,
+	virtualInstancesPage,
+}) => {
+	const layout = await apiHelpers.headlessDelivery.createSitePage({
+		pageDefinition: getPageDefinition([
+			getFragmentDefinition({
+				id: getRandomString(),
+				key: 'BASIC_COMPONENT-html',
+			}),
+		]),
+		siteId: site.id,
+		title: getRandomString(),
+	});
+
+	await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+	const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.able.com';
+
+	await pageEditorPage.editHTMLEditable({
+		editableId: 'element-html',
+		fragmentId: await pageEditorPage.getFragmentId('HTML'),
+		value: `<object
+					type="text/html"
+					data="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080"
+					width="300"
+					height="200">
+				</object>
+
+				<embed
+					type="text/html"
+					src="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080"
+					width="300"
+					height="200" />
+
+				<iframe
+					id="inlineFrameExample"
+					title="Inline Frame Example"
+					width="300"
+					height="200"
+					src="http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080">
+				</iframe>`,
+	});
+
+	await pageEditorPage.publishPage();
+
+	await virtualInstancesPage.addNewVirtualInstance(
+		DEFAULT_VIRTUAL_INSTANCE_NAME
+	);
+
+	const defaultBaseUrl = liferayConfig.environment.baseUrl;
+
+	liferayConfig.environment.baseUrl = `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`;
+
+	const newPage = await browser.newPage({
+		baseURL: `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`,
+	});
+
+	await performLoginViaApi(
+		newPage,
+		'test',
+		`@${DEFAULT_VIRTUAL_INSTANCE_NAME}.com`
+	);
+
+	const virtualInstanceContentSecurityPolicyPage =
+		new ContentSecurityPolicyPage(newPage);
+
+	await test.step('CSP frame-ancestors allows framing from specific domain', async () => {
+		await virtualInstanceContentSecurityPolicyPage.gotoAndConfigurePolicy(
+			`frame-ancestors 'self' ${defaultBaseUrl};`
+		);
+
+		liferayConfig.environment.baseUrl = defaultBaseUrl;
+
+		const cspErrors = [];
+
+		page.on('console', (msg) => {
+			if (
+				msg.type() === 'error' &&
+				msg
+					.text()
+					.includes(
+						'Content Security Policy directive: "frame-ancestors'
+					)
+			) {
+				cspErrors.push({text: msg.text(), type: msg.type()});
+			}
+		});
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		expect(cspErrors.length).toBeGreaterThanOrEqual(0);
+	});
+
+	await test.step('CSP frame-ancestors blocks framing from specific domain', async () => {
+		liferayConfig.environment.baseUrl = `http://${DEFAULT_VIRTUAL_INSTANCE_NAME}:8080`;
+
+		await virtualInstanceContentSecurityPolicyPage.gotoAndConfigurePolicy(
+			`frame-ancestors 'self';`
+		);
+
+		liferayConfig.environment.baseUrl = defaultBaseUrl;
+
+		const cspErrors = [];
+
+		page.on('console', (msg) => {
+			if (
+				msg.type() === 'error' &&
+				msg
+					.text()
+					.includes(
+						'Content Security Policy directive: "frame-ancestors'
+					)
+			) {
+				cspErrors.push({text: msg.text(), type: msg.type()});
+			}
+		});
+
+		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+
+		expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+	});
+
+	await virtualInstancesPage.deleteVirtualInstance(
+		DEFAULT_VIRTUAL_INSTANCE_NAME
+	);
 });
 
 test("CSP img-src allow images from 'self'", async ({
