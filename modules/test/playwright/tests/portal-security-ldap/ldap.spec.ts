@@ -545,7 +545,7 @@ test('LPD-47223 AC2 TC2: Verify LDAP bulk import updates user information and me
 	});
 });
 
-test('LPD-47223 AC3 TC3: Verify LDAP import via authentication with multiple matching LDAP servers imports/updates only user groups for the first matching LDAP server', async ({
+test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with multiple matching LDAP servers imports/updates only user groups for the first matching LDAP server', async ({
 	browser,
 	editUserPage,
 	ldapConfigurationPage,
@@ -766,6 +766,171 @@ test('LPD-47223 AC3 TC3: Verify LDAP import via authentication with multiple mat
 				name: LDAP_GROUP_4_B,
 			})
 		).toBeVisible();
+	});
+
+	await test.step('LPD-47223 AC3 TC3 End, AC3 TC4 Start: Verify if second ldap server is the first to match during authentication, only changes from that server will be reflected', async () => {
+		await test.step('Update first LDAP server so it no longer matches any users', async () => {
+			ldapServerA.authenticationSearchFilter =
+				'(&(mail=@email_address@)(cn=fakeuser))';
+			ldapServerA.importSearchFilterUser =
+				'(&(objectClass=inetOrgPerson)(cn=fakeuser))';
+
+			await ldapServerPage.editLdapServer(ldapServerA);
+
+			await test.step(`Verify first LDAP server still only imports ${LDAP_GROUP_4_A}, but not any users`, async () => {
+				await ldapServerPage.viewLdapServer(
+					ldapServerA.serverName,
+					false
+				);
+
+				await ldapServerPage.testLdapGroups.click();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						name: LDAP_GROUP_4_A,
+					})
+				).toBeVisible();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						name: LDAP_GROUP_4_B,
+					})
+				).not.toBeVisible();
+
+				await ldapServerPage.closeButton.click();
+
+				await ldapServerPage.testLdapUsers.click();
+
+				await expect(
+					await ldapServerPage.page.getByText('No users were found')
+				).toBeVisible();
+
+				await ldapServerPage.closeButton.click();
+
+				await ldapServerPage.cancelButton.click();
+			});
+		});
+
+		await test.step(`Authenticate with ${LDAP_USER_4.alternateName}, triggering an import from LDAP server B only`, async () => {
+			const page = await browser.newPage();
+
+			await performLogin(page, LDAP_USER_4.alternateName);
+		});
+
+		await test.step(`Assert membership was revoked for the second LDAP server's group`, async () => {
+			await usersAndOrganizationsPage.goToUsers(false);
+
+			await (
+				await usersAndOrganizationsPage.usersTableRowLink(
+					LDAP_USER_4.alternateName
+				)
+			).click();
+
+			await editUserPage.membershipsLink.click();
+
+			await expect(
+				await editUserPage.page.getByRole('cell', {
+					exact: true,
+					name: LDAP_GROUP_4_A,
+				})
+			).toBeHidden();
+
+			await expect(
+				await editUserPage.page.getByRole('cell', {
+					exact: true,
+					name: LDAP_GROUP_4_B,
+				})
+			).toBeHidden();
+		});
+
+		await test.step(`Update second LDAP server so it now matches the user with ${LDAP_GROUP_4_A} membership`, async () => {
+			ldapServerB.authenticationSearchFilter = `(&(mail=@email_address@)(cn=${LDAP_USER_4_A.alternateName}))`;
+			ldapServerB.importSearchFilterUser = `(&(objectClass=inetOrgPerson)(cn=${LDAP_USER_4_A.alternateName}))`;
+
+			await ldapServerPage.editLdapServer(ldapServerB);
+
+			await test.step(`Verify second LDAP server still only imports ${LDAP_GROUP_4_B}, and now ${LDAP_USER_4_A.alternateName}`, async () => {
+				await ldapServerPage.viewLdapServer(
+					ldapServerB.serverName,
+					false
+				);
+
+				await ldapServerPage.testLdapGroups.click();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						name: LDAP_GROUP_4_A,
+					})
+				).not.toBeVisible();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						name: LDAP_GROUP_4_B,
+					})
+				).toBeVisible();
+
+				await ldapServerPage.closeButton.click();
+
+				await ldapServerPage.testLdapUsers.click();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						exact: true,
+						name: LDAP_USER_4.alternateName,
+					})
+				).not.toBeVisible();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						exact: true,
+						name: LDAP_USER_4_A.alternateName,
+					})
+				).toBeVisible();
+
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						exact: true,
+						name: LDAP_USER_4_AB.alternateName,
+					})
+				).not.toBeVisible();
+
+				await ldapServerPage.closeButton.click();
+
+				await ldapServerPage.cancelButton.click();
+			});
+		});
+
+		await test.step(`Authenticate with ${LDAP_USER_4_A.alternateName}, triggering an import from LDAP server B only`, async () => {
+			const page = await browser.newPage();
+
+			await performLogin(page, LDAP_USER_4_A.emailAddress, undefined, '');
+		});
+
+		await test.step(`Assert membership was not added for the first LDAP server's group`, async () => {
+			await usersAndOrganizationsPage.goToUsers(false);
+
+			await (
+				await usersAndOrganizationsPage.usersTableRowLink(
+					LDAP_USER_4_A.alternateName
+				)
+			).click();
+
+			await editUserPage.membershipsLink.click();
+
+			await expect(
+				await editUserPage.page.getByRole('cell', {
+					exact: true,
+					name: LDAP_GROUP_4_A,
+				})
+			).toBeHidden();
+
+			await expect(
+				await editUserPage.page.getByRole('cell', {
+					exact: true,
+					name: LDAP_GROUP_4_B,
+				})
+			).toBeHidden();
+		});
 	});
 });
 
