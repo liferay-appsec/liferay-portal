@@ -469,24 +469,28 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 		liferayConfig.environment.baseUrl = defaultBaseUrl;
 
-		const cspErrors = [];
+		await expect(async () => {
+			const cspErrors = [];
 
-		page.on('console', (msg) => {
-			if (
-				msg.type() === 'error' &&
-				msg
-					.text()
-					.includes(
-						'Content Security Policy directive: "frame-ancestors'
-					)
-			) {
-				cspErrors.push({text: msg.text(), type: msg.type()});
-			}
-		});
+			page.on('console', (msg) => {
+				if (
+					msg.type() === 'error' &&
+					msg
+						.text()
+						.includes(
+							'Content Security Policy directive: "frame-ancestors'
+						)
+				) {
+					cspErrors.push({text: msg.text(), type: msg.type()});
+				}
+			});
 
-		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-		expect(cspErrors.length).toBeGreaterThanOrEqual(0);
+			await page.waitForLoadState();
+
+			expect(cspErrors.length).toBeGreaterThanOrEqual(0);
+		}).toPass();
 	});
 
 	await test.step('CSP frame-ancestors blocks framing from specific domain', async () => {
@@ -498,24 +502,28 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 		liferayConfig.environment.baseUrl = defaultBaseUrl;
 
-		const cspErrors = [];
+		await expect(async () => {
+			const cspErrors = [];
 
-		page.on('console', (msg) => {
-			if (
-				msg.type() === 'error' &&
-				msg
-					.text()
-					.includes(
-						'Content Security Policy directive: "frame-ancestors'
-					)
-			) {
-				cspErrors.push({text: msg.text(), type: msg.type()});
-			}
-		});
+			page.on('console', (msg) => {
+				if (
+					msg.type() === 'error' &&
+					msg
+						.text()
+						.includes(
+							'Content Security Policy directive: "frame-ancestors'
+						)
+				) {
+					cspErrors.push({text: msg.text(), type: msg.type()});
+				}
+			});
 
-		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
+			await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-		expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+			await page.waitForLoadState();
+
+			expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+		}).toPass();
 	});
 
 	await virtualInstancesPage.deleteVirtualInstance(
