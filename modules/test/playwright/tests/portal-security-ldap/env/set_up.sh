@@ -17,27 +17,21 @@ function ldap_set_up {
 #	cp ${modifiedSlapdLdif} ${ciSlapdLdifLocation}
 
 	echo "displaying slapd.ldif:"
-	echo $(<ciSlapdLdifLocation)
-
-	if [ -d /usr/local/etc/slapd.d ]
-	then
-		echo "deleting slapd.d"
-		rm -rf /usr/local/etc/slapd.d
-	else
-		echo "slapd.d does not exist"
-	fi
-
-	mkdir /usr/local/etc/slapd.d
+	echo "$(<ciSlapdLdifLocation)"
+	echo or
+	cat ${ciSlapdLdifLocation}
 
 	if [ -d /usr/local/etc/slapd.d ]
 	then
 		echo "slapd.d exists"
 	else
-		echo "slapd.d still does not exist"
-	fi
+		echo "slapd.d does not exist, making dir now"
 
-	echo "Performing slapadd:"
-	/usr/local/sbin/slapadd -n 0 -F /usr/local/etc/slapd.d -l ${ciSlapdLdifLocation}
+		mkdir /usr/local/etc/slapd.d
+
+		echo "Performing slapadd:"
+		/usr/local/sbin/slapadd -n 0 -F /usr/local/etc/slapd.d -l ${ciSlapdLdifLocation}
+	fi
 
 	###########################################################################
 	# End: steps can be removed with next CI release
@@ -57,7 +51,17 @@ function ldap_set_up {
 	ldapadd -cx -D "cn=admin,dc=example,dc=com" -w "secret" -f ${exampleCompanyLdif}
 
 	if [ $? -ne 0 ]; then
-		echo "Command failed with exit status $?"
+		echo "Command failed with exit status $?.  Let's try removing the *.default files first"
+
+		rm -f ./usr/local/etc/openldap/*.default
+
+		ldapadd -cx -D "cn=admin,dc=example,dc=com" -w "secret" -f ${exampleCompanyLdif}
+
+			if [ $? -ne 0 ]; then
+				echo "didn't work that time either"
+			else
+				echo "Command succeeded that time"
+			fi
 	else
 		echo "Command succeeded"
 	fi
