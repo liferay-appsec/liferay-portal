@@ -12,9 +12,12 @@ function ldap_set_up {
 	###########################################################################
 
 	local ciSlapdLdifLocation="/usr/local/etc/openldap/slapd.ldif"
-	local modifiedSlapdLdif="${CURRENT_DIR_NAME}/modifiedSlapd.ldif"
+#	local modifiedSlapdLdif="${CURRENT_DIR_NAME}/modifiedSlapd.ldif"
 
-	cp ${modifiedSlapdLdif} ${ciSlapdLdifLocation}
+#	cp ${modifiedSlapdLdif} ${ciSlapdLdifLocation}
+
+	echo "displaying slapd.ldif:"
+	echo $(<ciSlapdLdifLocation)
 
 	if [ -d /usr/local/etc/slapd.d ]
 	then
