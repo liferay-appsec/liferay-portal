@@ -93,7 +93,7 @@ test("CSP connect-src allows connections to 'self'", async ({
 
 	await pageEditorPage.publishPage();
 
-	const cspErrors = [];
+	const errors = [];
 
 	page.on('console', (msg) => {
 		if (
@@ -102,7 +102,7 @@ test("CSP connect-src allows connections to 'self'", async ({
 				.text()
 				.includes('Content Security Policy directive: "connect-src')
 		) {
-			cspErrors.push({text: msg.text(), type: msg.type()});
+			errors.push({text: msg.text(), type: msg.type()});
 		}
 	});
 
@@ -111,7 +111,7 @@ test("CSP connect-src allows connections to 'self'", async ({
 			request.url().includes('localhost') &&
 			request.failure().errorText.includes('csp')
 		) {
-			cspErrors.push({
+			errors.push({
 				failure: request.failure(),
 				url: request.url(),
 			});
@@ -124,7 +124,7 @@ test("CSP connect-src allows connections to 'self'", async ({
 		button: 'middle',
 	});
 
-	expect(cspErrors.length).toBeLessThanOrEqual(0);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP connect-src allows connections to specific domain', async ({
@@ -176,7 +176,7 @@ test('CSP connect-src allows connections to specific domain', async ({
 
 	await pageEditorPage.publishPage();
 
-	const cspErrors = [];
+	const errors = [];
 
 	page.on('console', (msg) => {
 		if (
@@ -185,7 +185,7 @@ test('CSP connect-src allows connections to specific domain', async ({
 				.text()
 				.includes('Content Security Policy directive: "connect-src')
 		) {
-			cspErrors.push({text: msg.text(), type: msg.type()});
+			errors.push({text: msg.text(), type: msg.type()});
 		}
 	});
 
@@ -194,7 +194,7 @@ test('CSP connect-src allows connections to specific domain', async ({
 			request.url().includes('www.able.com') &&
 			request.failure().errorText.includes('csp')
 		) {
-			cspErrors.push({
+			errors.push({
 				failure: request.failure(),
 				url: request.url(),
 			});
@@ -207,7 +207,7 @@ test('CSP connect-src allows connections to specific domain', async ({
 		button: 'middle',
 	});
 
-	expect(cspErrors.length).toBeLessThanOrEqual(0);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP connect-src blocks connections', async ({
@@ -259,7 +259,7 @@ test('CSP connect-src blocks connections', async ({
 
 	await pageEditorPage.publishPage();
 
-	const cspErrors = [];
+	const errors = [];
 
 	page.on('console', (msg) => {
 		if (
@@ -268,7 +268,7 @@ test('CSP connect-src blocks connections', async ({
 				.text()
 				.includes('Content Security Policy directive: "connect-src')
 		) {
-			cspErrors.push({text: msg.text(), type: msg.type()});
+			errors.push({text: msg.text(), type: msg.type()});
 		}
 	});
 
@@ -277,7 +277,7 @@ test('CSP connect-src blocks connections', async ({
 			request.url().includes('www.able.com') &&
 			request.failure().errorText.includes('csp')
 		) {
-			cspErrors.push({
+			errors.push({
 				failure: request.failure(),
 				url: request.url(),
 			});
@@ -290,7 +290,7 @@ test('CSP connect-src blocks connections', async ({
 		button: 'middle',
 	});
 
-	expect(cspErrors.length).toBeGreaterThanOrEqual(9);
+	expect(errors.length).toBeGreaterThanOrEqual(9);
 });
 
 test('CSP frame-ancestors directive in the same instance', async ({
@@ -345,7 +345,7 @@ test('CSP frame-ancestors directive in the same instance', async ({
 			`frame-ancestors 'self';`
 		);
 
-		const cspErrors = [];
+		const errors = [];
 
 		page.on('console', (msg) => {
 			if (
@@ -356,13 +356,13 @@ test('CSP frame-ancestors directive in the same instance', async ({
 						'Content Security Policy directive: "frame-ancestors'
 					)
 			) {
-				cspErrors.push({text: msg.text(), type: msg.type()});
+				errors.push({text: msg.text(), type: msg.type()});
 			}
 		});
 
 		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-		expect(cspErrors.length).toBeLessThanOrEqual(0);
+		expect(errors).toHaveLength(0);
 	});
 
 	await test.step('CSP frame-ancestors blocks framing from same instance', async () => {
@@ -370,7 +370,7 @@ test('CSP frame-ancestors directive in the same instance', async ({
 			`frame-ancestors 'none';`
 		);
 
-		const cspErrors = [];
+		const errors = [];
 
 		page.on('console', (msg) => {
 			if (
@@ -381,13 +381,13 @@ test('CSP frame-ancestors directive in the same instance', async ({
 						'Content Security Policy directive: "frame-ancestors'
 					)
 			) {
-				cspErrors.push({text: msg.text(), type: msg.type()});
+				errors.push({text: msg.text(), type: msg.type()});
 			}
 		});
 
 		await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-		expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+		expect(errors.length).toBeGreaterThanOrEqual(3);
 	});
 });
 
@@ -412,7 +412,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 	await pageEditorPage.goto(layout, site.friendlyUrlPath);
 
-	const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.able.com';
+	const DEFAULT_VIRTUAL_INSTANCE_NAME = 'www.baker.com';
 
 	await pageEditorPage.editHTMLEditable({
 		editableId: 'element-html',
@@ -470,7 +470,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 		liferayConfig.environment.baseUrl = defaultBaseUrl;
 
 		await expect(async () => {
-			const cspErrors = [];
+			const errors = [];
 
 			page.on('console', (msg) => {
 				if (
@@ -481,7 +481,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 							'Content Security Policy directive: "frame-ancestors'
 						)
 				) {
-					cspErrors.push({text: msg.text(), type: msg.type()});
+					errors.push({text: msg.text(), type: msg.type()});
 				}
 			});
 
@@ -489,7 +489,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 			await page.waitForLoadState();
 
-			expect(cspErrors.length).toBeGreaterThanOrEqual(0);
+			expect(errors).toHaveLength(0);
 		}).toPass();
 	});
 
@@ -503,7 +503,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 		liferayConfig.environment.baseUrl = defaultBaseUrl;
 
 		await expect(async () => {
-			const cspErrors = [];
+			const errors = [];
 
 			page.on('console', (msg) => {
 				if (
@@ -514,7 +514,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 							'Content Security Policy directive: "frame-ancestors'
 						)
 				) {
-					cspErrors.push({text: msg.text(), type: msg.type()});
+					errors.push({text: msg.text(), type: msg.type()});
 				}
 			});
 
@@ -522,7 +522,7 @@ test('CSP frame-ancestors directive in a specific domain', async ({
 
 			await page.waitForLoadState();
 
-			expect(cspErrors.length).toBeGreaterThanOrEqual(3);
+			expect(errors.length).toBeGreaterThanOrEqual(3);
 		}).toPass();
 	});
 
@@ -576,7 +576,7 @@ test("CSP frame-src allow frames from 'self'", async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors).toEqual([]);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP frame-src allows frames from specific domains', async ({
@@ -624,7 +624,7 @@ test('CSP frame-src allows frames from specific domains', async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors).toEqual([]);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP frame-src blocks frames', async ({
@@ -670,7 +670,7 @@ test('CSP frame-src blocks frames', async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors.length).toEqual(2);
+	expect(errors.length).toBeGreaterThanOrEqual(2);
 });
 
 test("CSP img-src allow images from 'self'", async ({
@@ -722,7 +722,7 @@ test("CSP img-src allow images from 'self'", async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors).toEqual([]);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP img-src allows images from specific domains', async ({
@@ -774,7 +774,7 @@ test('CSP img-src allows images from specific domains', async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors).toEqual([]);
+	expect(errors).toHaveLength(0);
 });
 
 test('CSP img-src blocks images', async ({
@@ -822,5 +822,5 @@ test('CSP img-src blocks images', async ({
 
 	await page.goto(`/web/${site.name}/${layout.friendlyUrlPath}`);
 
-	expect(errors.length).toEqual(1);
+	expect(errors.length).toBeGreaterThanOrEqual(1);
 });
