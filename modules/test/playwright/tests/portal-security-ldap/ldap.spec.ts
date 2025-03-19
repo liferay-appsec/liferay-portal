@@ -665,8 +665,6 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 			).toBeVisible();
 
 			await ldapServerPage.closeButton.click();
-
-			await ldapServerPage.cancelButton.click();
 		});
 	});
 
@@ -1006,8 +1004,6 @@ test('LPD-47428: Verify a single LDAP user can belong to multiple User Groups im
 			).not.toBeVisible();
 
 			await ldapServerPage.closeButton.click();
-
-			await ldapServerPage.cancelButton.click();
 		});
 	});
 
