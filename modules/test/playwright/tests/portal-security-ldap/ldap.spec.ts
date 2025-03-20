@@ -17,6 +17,7 @@ import {
 	TLdapServer,
 } from '../../helpers/LdapConfigurationHelper';
 import {SystemSettingsPage} from '../../pages/configuration-admin-web/SystemSettingsPage';
+import {LdapServerPage} from '../../pages/portal-security-ldap/LdapServerPage';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../utils/getRandomString';
 import performLogin, {userData} from '../../utils/performLogin';
@@ -249,47 +250,20 @@ test('LPD-47223 AC1 TC1: Verify LDAP import via authentication imports user attr
 		await ldapServerPage.addLdapServer(ldapServer);
 	});
 
-	await test.step('Verify LDAP server connection tests display two users and two groups', async () => {
-		await ldapServerPage.viewLdapServer(ldapServer.serverName, false);
+	await testAndExpectLdapEntries(
+		'group',
+		[LDAP_GROUP_1, LDAP_GROUP_2],
+		ldapServer.serverName,
+		ldapServerPage
+	);
 
-		await ldapServerPage.testLdapUsers.click();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_USER_1.alternateName,
-			})
-		).toBeVisible();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_USER_2.alternateName,
-			})
-		).toBeVisible();
-
-		await ldapServerPage.closeButton.click();
-
-		await ldapServerPage.testLdapGroups.click();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_GROUP_1,
-			})
-		).toBeVisible();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_GROUP_2,
-			})
-		).toBeVisible();
-
-		await ldapServerPage.closeButton.click();
-
-		await ldapServerPage.cancelButton.click();
-	});
+	await testAndExpectLdapEntries(
+		'user',
+		[LDAP_USER_1.alternateName, LDAP_USER_2.alternateName],
+		ldapServer.serverName,
+		ldapServerPage,
+		true
+	);
 
 	await test.step('Enable LDAP, but prevent bulk import', async () => {
 		const ldapConfiguration: TLdapConfiguration = {
@@ -400,29 +374,14 @@ test('LPD-47223 AC2 TC2: Verify LDAP bulk import updates user information and me
 		await ldapServerPage.addLdapServer(ldapServer);
 	});
 
-	await test.step(`Verify LDAP server connection tests display ${LDAP_USER_3.alternateName} but not ${LDAP_USER_3_MODIFIED.alternateName}`, async () => {
-		await ldapServerPage.viewLdapServer(ldapServer.serverName, false);
-
-		await ldapServerPage.testLdapUsers.click();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_USER_3.alternateName,
-			})
-		).toBeVisible();
-
-		await expect(
-			await ldapServerPage.page.getByRole('cell', {
-				exact: true,
-				name: LDAP_USER_3_MODIFIED.alternateName,
-			})
-		).not.toBeVisible();
-
-		await ldapServerPage.closeButton.click();
-
-		await ldapServerPage.cancelButton.click();
-	});
+	await testAndExpectLdapEntries(
+		'user',
+		[LDAP_USER_3.alternateName],
+		ldapServer.serverName,
+		ldapServerPage,
+		true,
+		[LDAP_USER_3_MODIFIED.alternateName]
+	);
 
 	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
 		const ldapConfiguration: TLdapConfiguration = {
@@ -572,100 +531,45 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 			await ldapServerPage.addLdapServer(ldapServerA);
 		});
 
-		await test.step(`Verify first LDAP server only imports ${LDAP_GROUP_4_A} and ${LDAP_USER_4_AB.alternateName}`, async () => {
-			await ldapServerPage.viewLdapServer(ldapServerA.serverName, false);
+		await testAndExpectLdapEntries(
+			'group',
+			[LDAP_GROUP_4_A],
+			ldapServerA.serverName,
+			ldapServerPage,
+			undefined,
+			[LDAP_GROUP_4_B]
+		);
 
-			await ldapServerPage.testLdapGroups.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_4_A,
-				})
-			).toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_4_B,
-				})
-			).not.toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-
-			await ldapServerPage.testLdapUsers.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4.alternateName,
-				})
-			).not.toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4_A.alternateName,
-				})
-			).not.toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4_AB.alternateName,
-				})
-			).toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-			await ldapServerPage.cancelButton.click();
-		});
+		await testAndExpectLdapEntries(
+			'user',
+			[LDAP_USER_4_AB.alternateName],
+			ldapServerA.serverName,
+			ldapServerPage,
+			true,
+			[LDAP_USER_4.alternateName, LDAP_USER_4_A.alternateName]
+		);
 
 		await test.step('Add second LDAP server', async () => {
 			await ldapServerPage.addLdapServer(ldapServerB, false);
 		});
 
-		await test.step(`Verify second LDAP server only imports ${LDAP_GROUP_4_B} and ${LDAP_USER_4_AB.alternateName}`, async () => {
-			await ldapServerPage.viewLdapServer(ldapServerB.serverName, false);
+		await testAndExpectLdapEntries(
+			'group',
+			[LDAP_GROUP_4_B],
+			ldapServerB.serverName,
+			ldapServerPage,
+			undefined,
+			[LDAP_GROUP_4_A]
+		);
 
-			await ldapServerPage.testLdapGroups.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_4_B,
-				})
-			).toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_4_A,
-				})
-			).not.toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-
-			await ldapServerPage.testLdapUsers.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4.alternateName,
-				})
-			).not.toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4_A.alternateName,
-				})
-			).not.toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					exact: true,
-					name: LDAP_USER_4_AB.alternateName,
-				})
-			).toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-		});
+		await testAndExpectLdapEntries(
+			'user',
+			[LDAP_USER_4_AB.alternateName],
+			ldapServerB.serverName,
+			ldapServerPage,
+			undefined,
+			[LDAP_USER_4.alternateName, LDAP_USER_4_A.alternateName]
+		);
 	});
 
 	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
@@ -777,38 +681,22 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 
 			await ldapServerPage.editLdapServer(ldapServerA);
 
-			await test.step(`Verify first LDAP server still only imports ${LDAP_GROUP_4_A}, but not any users`, async () => {
-				await ldapServerPage.viewLdapServer(
-					ldapServerA.serverName,
-					false
-				);
+			await testAndExpectLdapEntries(
+				'group',
+				[LDAP_GROUP_4_A],
+				ldapServerA.serverName,
+				ldapServerPage,
+				undefined,
+				[LDAP_GROUP_4_B]
+			);
 
-				await ldapServerPage.testLdapGroups.click();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						name: LDAP_GROUP_4_A,
-					})
-				).toBeVisible();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						name: LDAP_GROUP_4_B,
-					})
-				).not.toBeVisible();
-
-				await ldapServerPage.closeButton.click();
-
-				await ldapServerPage.testLdapUsers.click();
-
-				await expect(
-					await ldapServerPage.page.getByText('No users were found')
-				).toBeVisible();
-
-				await ldapServerPage.closeButton.click();
-
-				await ldapServerPage.cancelButton.click();
-			});
+			await testAndExpectLdapEntries(
+				'user',
+				[],
+				ldapServerA.serverName,
+				ldapServerPage,
+				true
+			);
 		});
 
 		await test.step(`Authenticate with ${LDAP_USER_4.alternateName}, triggering an import from LDAP server B only`, async () => {
@@ -849,55 +737,23 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 
 			await ldapServerPage.editLdapServer(ldapServerB);
 
-			await test.step(`Verify second LDAP server still only imports ${LDAP_GROUP_4_B}, and now ${LDAP_USER_4_A.alternateName}`, async () => {
-				await ldapServerPage.viewLdapServer(
-					ldapServerB.serverName,
-					false
-				);
+			await testAndExpectLdapEntries(
+				'group',
+				[LDAP_GROUP_4_B],
+				ldapServerB.serverName,
+				ldapServerPage,
+				undefined,
+				[LDAP_GROUP_4_A]
+			);
 
-				await ldapServerPage.testLdapGroups.click();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						name: LDAP_GROUP_4_A,
-					})
-				).not.toBeVisible();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						name: LDAP_GROUP_4_B,
-					})
-				).toBeVisible();
-
-				await ldapServerPage.closeButton.click();
-
-				await ldapServerPage.testLdapUsers.click();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						exact: true,
-						name: LDAP_USER_4.alternateName,
-					})
-				).not.toBeVisible();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						exact: true,
-						name: LDAP_USER_4_A.alternateName,
-					})
-				).toBeVisible();
-
-				await expect(
-					await ldapServerPage.page.getByRole('cell', {
-						exact: true,
-						name: LDAP_USER_4_AB.alternateName,
-					})
-				).not.toBeVisible();
-
-				await ldapServerPage.closeButton.click();
-
-				await ldapServerPage.cancelButton.click();
-			});
+			await testAndExpectLdapEntries(
+				'user',
+				[LDAP_USER_4_A.alternateName],
+				ldapServerB.serverName,
+				ldapServerPage,
+				true,
+				[LDAP_USER_4.alternateName, LDAP_USER_4_AB.alternateName]
+			);
 		});
 
 		await test.step(`Authenticate with ${LDAP_USER_4_A.alternateName}, triggering an import from LDAP server B only`, async () => {
@@ -960,51 +816,27 @@ test('LPD-47428: Verify a single LDAP user can belong to multiple User Groups im
 			await ldapServerPage.addLdapServer(ldapServer1);
 		});
 
-		await test.step('Verify first LDAP server it only imports the first group', async () => {
-			await ldapServerPage.viewLdapServer(ldapServer1.serverName, false);
-
-			await ldapServerPage.testLdapGroups.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_1,
-				})
-			).toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_2,
-				})
-			).not.toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-
-			await ldapServerPage.cancelButton.click();
-		});
+		await testAndExpectLdapEntries(
+			'group',
+			[LDAP_GROUP_1],
+			ldapServer1.serverName,
+			ldapServerPage,
+			true,
+			[LDAP_GROUP_2]
+		);
 
 		await test.step('Add second LDAP server', async () => {
 			await ldapServerPage.addLdapServer(ldapServer2, false);
 		});
 
-		await test.step('Verify second LDAP server it only imports the second group', async () => {
-			await ldapServerPage.viewLdapServer(ldapServer2.serverName, false);
-
-			await ldapServerPage.testLdapGroups.click();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_2,
-				})
-			).toBeVisible();
-
-			await expect(
-				await ldapServerPage.page.getByRole('cell', {
-					name: LDAP_GROUP_1,
-				})
-			).not.toBeVisible();
-
-			await ldapServerPage.closeButton.click();
-		});
+		await testAndExpectLdapEntries(
+			'group',
+			[LDAP_GROUP_2],
+			ldapServer2.serverName,
+			ldapServerPage,
+			undefined,
+			[LDAP_GROUP_1]
+		);
 	});
 
 	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
@@ -1169,6 +1001,69 @@ test('smoke: Add LDAP server, verify connection, users, and groups are mapped pr
 		).toBeHidden();
 	});
 });
+
+async function testAndExpectLdapEntries(
+	entryType: 'group' | 'user',
+	expectedVisibleEntries: string[],
+	ldapServerName: string,
+	ldapServerPage: LdapServerPage,
+	clickCancel = false,
+	expectedNotVisibleEntriess?: string[]
+) {
+	await ldapServerPage.viewLdapServer(ldapServerName, true);
+
+	if (entryType === 'group') {
+		await ldapServerPage.testLdapGroups.click();
+	}
+	else {
+		await ldapServerPage.testLdapUsers.click();
+	}
+
+	if (expectedVisibleEntries.length <= 0) {
+		await test.step(`Verify LDAP server test displays no ${entryType}s`, async () => {
+			await expect(
+				await ldapServerPage.page.getByText(
+					`No ${entryType}s were found`
+				)
+			).toBeVisible();
+		});
+	}
+	else {
+		await test.step(`Verify LDAP server test ${entryType}s displays ${expectedVisibleEntries.join(
+			', '
+		)}`, async () => {
+			for (const expectedVisibleEntry of expectedVisibleEntries) {
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						exact: true,
+						name: expectedVisibleEntry,
+					})
+				).toBeVisible();
+			}
+		});
+	}
+
+	if (expectedNotVisibleEntriess) {
+		await test.step(`Verify LDAP server test ${entryType}s does not display ${expectedNotVisibleEntriess.join(
+			', '
+		)}`, async () => {
+			for (const expectedNotVisibleEntry of expectedNotVisibleEntriess) {
+				await expect(
+					await ldapServerPage.page.getByRole('cell', {
+						exact: true,
+						name: expectedNotVisibleEntry,
+					})
+				).not.toBeVisible();
+			}
+		});
+	}
+
+	await ldapServerPage.closeButton.click();
+
+	if (clickCancel) {
+		await ldapServerPage.cancelButton.click();
+	}
+}
 
 async function resetLdapImportSystemSettings(
 	systemSettingsPage: SystemSettingsPage
