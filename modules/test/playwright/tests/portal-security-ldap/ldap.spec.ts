@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {expect, mergeTests} from '@playwright/test';
+import {Page, expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
 import {instanceSettingsPagesTest} from '../../fixtures/instanceSettingsPagesTest';
@@ -17,7 +17,10 @@ import {
 	TLdapServer,
 } from '../../helpers/LdapConfigurationHelper';
 import {SystemSettingsPage} from '../../pages/configuration-admin-web/SystemSettingsPage';
+import {LdapConfigurationPage} from '../../pages/portal-security-ldap/LdapConfigurationPage';
 import {LdapServerPage} from '../../pages/portal-security-ldap/LdapServerPage';
+import {ApplicationsMenuPage} from '../../pages/product-navigation-applications-menu/ApplicationsMenuPage';
+import {ServerAdministrationPage} from '../../pages/server-admin-web/ServerAdministrationPage';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import getRandomString from '../../utils/getRandomString';
 import performLogin, {userData} from '../../utils/performLogin';
@@ -177,30 +180,7 @@ test.afterEach(
 	}
 );
 
-test.beforeAll(async ({browser}) => {
-	const page = await browser.newPage();
-
-	await performLogin(page, 'test');
-
-	const systemSettingsPage = new SystemSettingsPage(page);
-
-	// The import interval at the System Settings level controls the scheduled
-	// job trigger.  Set it low so we can trigger imports during tests.
-
-	await test.step('Set LDAP Import Interval to 1 at System level', async () => {
-		await resetLdapImportSystemSettings(systemSettingsPage);
-
-		await systemSettingsPage.page.getByLabel('Import Interval').fill('1');
-
-		await systemSettingsPage.page
-			.getByRole('button', {name: 'Save'})
-			.click();
-
-		await waitForAlert(
-			systemSettingsPage.page,
-			`Success:Your request completed successfully.`
-		);
-	});
+test.beforeAll(async () => {
 
 	// Add LDAP user info to userData so we can authenticate via performLogin or
 	// performLoginViaApi
@@ -232,10 +212,27 @@ test.beforeAll(async ({browser}) => {
 	}
 });
 
+test.beforeEach(async ({browser}) => {
+	await test.step('Enable LDAP, but prevent bulk import.  We can manually trigger bulk import via groovy script instead of waiting the import interval.', async () => {
+		const page = await browser.newPage();
+
+		await performLogin(page, 'test');
+
+		const ldapConfigurationPage = new LdapConfigurationPage(page);
+
+		const ldapConfiguration: TLdapConfiguration = {
+			enableImport: true,
+			enabled: true,
+			importInterval: 0,
+		};
+
+		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
+	});
+});
+
 test('LPD-47223 AC1 TC1: Verify LDAP import via authentication imports user attributes and user groups, but only for the user being authenticated', async ({
 	browser,
 	editUserPage,
-	ldapConfigurationPage,
 	ldapServerPage,
 	userGroupsPage,
 	usersAndOrganizationsPage,
@@ -264,16 +261,6 @@ test('LPD-47223 AC1 TC1: Verify LDAP import via authentication imports user attr
 		ldapServerPage,
 		true
 	);
-
-	await test.step('Enable LDAP, but prevent bulk import', async () => {
-		const ldapConfiguration: TLdapConfiguration = {
-			enableImport: true,
-			enabled: true,
-			importInterval: 0,
-		};
-
-		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
-	});
 
 	await test.step(`Authenticate with ${LDAP_USER_2.alternateName}`, async () => {
 		const page = await browser.newPage();
@@ -383,17 +370,7 @@ test('LPD-47223 AC2 TC2: Verify LDAP bulk import updates user information and me
 		[LDAP_USER_3_MODIFIED.alternateName]
 	);
 
-	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
-		const ldapConfiguration: TLdapConfiguration = {
-			enableImport: true,
-			enabled: true,
-			importInterval: 1,
-		};
-
-		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
-
-		await ldapConfigurationPage.page.waitForTimeout(60 * 1000);
-	});
+	await invokeLdapImport(ldapConfigurationPage.page);
 
 	await test.step('Assert user data and membership was imported correctly', async () => {
 		await usersAndOrganizationsPage.goToUsers(false);
@@ -446,9 +423,9 @@ test('LPD-47223 AC2 TC2: Verify LDAP bulk import updates user information and me
 		await ldapServerPage.editLdapServer(ldapServer);
 	});
 
-	await test.step('Wait one minute, then assert user data and membership was updated correctly', async () => {
-		await usersAndOrganizationsPage.page.waitForTimeout(60 * 1000);
+	await invokeLdapImport(ldapServerPage.page);
 
+	await test.step('Assert user data and membership was updated correctly', async () => {
 		await usersAndOrganizationsPage.goToUsers(false);
 
 		await expect(
@@ -572,17 +549,7 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 		);
 	});
 
-	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
-		const ldapConfiguration: TLdapConfiguration = {
-			enableImport: true,
-			enabled: true,
-			importInterval: 1,
-		};
-
-		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
-
-		await ldapConfigurationPage.page.waitForTimeout(60 * 1000);
-	});
+	await invokeLdapImport(ldapConfigurationPage.page);
 
 	await test.step(`Assert ${LDAP_USER_4_AB.alternateName} was imported`, async () => {
 		await usersAndOrganizationsPage.goToUsers(false);
@@ -616,16 +583,6 @@ test('LPD-47223 AC3 TC3 and AC3 TC4: Verify LDAP import via authentication with 
 				name: LDAP_GROUP_4_B,
 			})
 		).toBeVisible();
-	});
-
-	await test.step('Keep LDAP enabled, but disable bulk import', async () => {
-		const ldapConfiguration: TLdapConfiguration = {
-			enableImport: true,
-			enabled: true,
-			importInterval: 0,
-		};
-
-		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
 	});
 
 	await test.step('Change memberships on LDAP server by adjusting import filter, since we cannot modify LDAP server from playwright test.  The email will stay the same, so the portal will think the user was actually removed from the groups on the LDAP server.', async () => {
@@ -839,18 +796,15 @@ test('LPD-47428: Verify a single LDAP user can belong to multiple User Groups im
 		);
 	});
 
-	await test.step('Enable LDAP and wait for 1 minute, so import interval can be reached, triggering a bulk import', async () => {
+	await test.step(`Change LDAP Import Method to 'Group'`, async () => {
 		const ldapConfiguration: TLdapConfiguration = {
-			enableImport: true,
-			enabled: true,
-			importInterval: 1,
 			importMethod: 'Group',
 		};
 
 		await ldapConfigurationPage.updateLDAPConfiguration(ldapConfiguration);
-
-		await ldapConfigurationPage.page.waitForTimeout(60 * 1000);
 	});
+
+	await invokeLdapImport(ldapConfigurationPage.page);
 
 	await test.step('View User Groups associated with the LDAP user, and verify they were correctly imported', async () => {
 		await usersAndOrganizationsPage.goToUsers(false);
@@ -1001,6 +955,27 @@ test('smoke: Add LDAP server, verify connection, users, and groups are mapped pr
 		).toBeHidden();
 	});
 });
+
+async function invokeLdapImport(page: Page) {
+	await test.step('Manually trigger bulk import', async () => {
+		const applicationsMenuPage = new ApplicationsMenuPage(page);
+
+		await applicationsMenuPage.goToServerAdministration();
+
+		const script = `
+			import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+			import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
+			import org.osgi.framework.BundleContext;
+			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+			def ldapUserImporter = bundleContext.getService(bundleContext.getServiceReference(LDAPUserImporter.class));
+			ldapUserImporter.importUsers();
+		`;
+
+		const serverAdministrationPage = new ServerAdministrationPage(page);
+
+		await serverAdministrationPage.executeScript(script);
+	});
+}
 
 async function testAndExpectLdapEntries(
 	entryType: 'group' | 'user',
