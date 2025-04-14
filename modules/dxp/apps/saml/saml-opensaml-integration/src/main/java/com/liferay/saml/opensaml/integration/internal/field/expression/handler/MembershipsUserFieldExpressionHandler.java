@@ -53,14 +53,9 @@ public class MembershipsUserFieldExpressionHandler
 			userProcessorContext.bind(
 				_processingIndex,
 				(currentUser, newUser, serviceContext) -> {
-					if (userProcessorContext.isDefined(
-							String.class, "userGroups")) {
-
-						_userGroupLocalService.setUserUserGroups(
-							newUser.getUserId(),
-							ArrayUtil.toArray(
-								userGroupIds.toArray(new Long[0])));
-					}
+					_userGroupLocalService.setUserUserGroups(
+						newUser.getUserId(),
+						ArrayUtil.toArray(userGroupIds.toArray(new Long[0])));
 
 					return newUser;
 				});
@@ -101,6 +96,38 @@ public class MembershipsUserFieldExpressionHandler
 					userGroupIds.add(userGroup.getUserGroupId());
 				}
 			});
+
+		// START CUSTOMIZATION
+
+		userBind.mapStringArray(
+			"userGroupsLDAP",
+			(user, values) -> {
+				if (values == null) {
+					return;
+				}
+
+				for (String value : values) {
+
+					// PARSE FORMAT: cn=ROLE_NAME,ou=groups,ou=identities
+
+					String name = value.substring(
+						3, value.indexOf(StringPool.COMMA));
+
+					UserGroup userGroup = _userGroupLocalService.fetchUserGroup(
+						user.getCompanyId(), name);
+
+					if (userGroup != null) {
+						userGroupIds.add(userGroup.getUserGroupId());
+					}
+					else if (_log.isWarnEnabled()) {
+						_log.warn("Ignored unknown user group: " + name);
+						_log.warn("Extracted from: " + value);
+					}
+				}
+			});
+
+		// END CUSTOMIZATION
+
 	}
 
 	@Override
@@ -157,6 +184,7 @@ public class MembershipsUserFieldExpressionHandler
 	private UserLocalService _userLocalService;
 
 	private final List<String> _validFieldExpressions =
-		Collections.unmodifiableList(Arrays.asList("userGroups"));
+		Collections.unmodifiableList(
+			Arrays.asList("userGroups", "userGroupsLDAP"));
 
 }
