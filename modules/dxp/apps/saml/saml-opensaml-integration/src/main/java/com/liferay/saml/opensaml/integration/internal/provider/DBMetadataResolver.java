@@ -116,9 +116,9 @@ public class DBMetadataResolver extends AbstractMetadataResolver {
 				return samlIdpSpConnection.getMetadataXml();
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe);
+				_log.debug(portalException);
 			}
 		}
 
@@ -135,9 +135,9 @@ public class DBMetadataResolver extends AbstractMetadataResolver {
 				return samlSpIdpConnection.getMetadataXml();
 			}
 		}
-		catch (PortalException pe) {
+		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(pe);
+				_log.debug(portalException);
 			}
 		}
 

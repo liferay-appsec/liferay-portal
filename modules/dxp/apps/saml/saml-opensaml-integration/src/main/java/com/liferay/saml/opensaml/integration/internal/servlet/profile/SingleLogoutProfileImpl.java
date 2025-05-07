@@ -788,7 +788,11 @@ public class SingleLogoutProfileImpl
 			_samlIdpSpConnectionLocalService.getSamlIdpSpConnection(
 				companyId, entityId);
 		}
-		catch (PortalException e) {
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
 			return false;
 		}
 
@@ -802,7 +806,11 @@ public class SingleLogoutProfileImpl
 			_samlSpIdpConnectionLocalService.getSamlSpIdpConnection(
 				companyId, entityId);
 		}
-		catch (PortalException e) {
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
 			return false;
 		}
 
@@ -1482,7 +1490,7 @@ public class SingleLogoutProfileImpl
 				samlSpSessionLocalService.fetchSamlSpSessionsBySessionIndex(
 					CompanyThreadLocal.getCompanyId(), sessionIndex);
 
-			if (Validator.isNull(samlSpSessions)) {
+			if (samlSpSessions == null) {
 				continue;
 			}
 

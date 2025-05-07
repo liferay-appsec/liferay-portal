@@ -70,7 +70,7 @@ public interface SamlProviderConfiguration {
 
 	@Meta.AD(
 		deflt = "3000", description = "saml-sp-clock-skew-description",
-		id = "saml.sp.clock.skew", name = "saml-sp-clock-skew", required = false
+		id = "saml.sp.clock.skew", name = "clock-skew", required = false
 	)
 	public long clockSkew();
 
@@ -81,7 +81,7 @@ public interface SamlProviderConfiguration {
 	)
 	public int defaultAssertionLifetime();
 
-	@Meta.AD(id = "saml.enabled", name = "saml-enabled", required = false)
+	@Meta.AD(id = "saml.enabled", name = "enabled", required = false)
 	public boolean enabled();
 
 	@Meta.AD(
@@ -100,7 +100,10 @@ public interface SamlProviderConfiguration {
 	@Meta.AD(
 		deflt = SamlProviderConfigurationKeys.SAML_ROLE_SP, id = "saml.role",
 		name = "saml-role",
-		optionLabels = {"saml-role-idp", "saml-role-sp", "saml-role-both"},
+		optionLabels = {
+			"identity-provider", "service-provider",
+			"identity-and-service-provider"
+		},
 		optionValues = {
 			SamlProviderConfigurationKeys.SAML_ROLE_IDP,
 			SamlProviderConfigurationKeys.SAML_ROLE_SP,
