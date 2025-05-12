@@ -92,6 +92,8 @@ export function signInButtonPropsTransformer({
 							document.querySelector('.loading-animation')
 						) {
 							updateModalContent(modalContentHTML);
+							document.getElementsByClassName("btn disabled btn-primary")[0].disabled=false;
+							document.getElementsByClassName("btn disabled btn-primary")[0].classList.remove("disabled");
 						}
 					},
 					size: 'md',

@@ -173,7 +173,7 @@
 				</aui:fieldset>
 
 				<aui:button-row>
-					<aui:button type="submit" value="sign-in" />
+					<aui:button disabled="true" type="submit" value="sign-in" />
 				</aui:button-row>
 			</aui:form>
 
@@ -219,6 +219,10 @@
 					});
 				}
 			}
+			AUI().ready(function (A){
+				document.getElementsByClassName("btn disabled btn-primary")[0].disabled=false;
+				document.getElementsByClassName("btn disabled btn-primary")[0].classList.remove("disabled");
+			});
 		</aui:script>
 	</c:otherwise>
 </c:choose>
