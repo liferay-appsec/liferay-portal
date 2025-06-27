@@ -96,6 +96,8 @@ public class UpdatePasswordAction implements Action {
 			UpdatePasswordActionUtil.updatePassword(
 				UpdatePasswordAction.class.getName(), httpServletRequest,
 				httpServletResponse,
+				httpServletRequest.getParameter("password1"),
+				httpServletRequest.getParameter("password2"),
 				ParamUtil.getString(httpServletRequest, WebKeys.REFERER),
 				httpServletResponse::sendRedirect, themeDisplay, ticket);
 

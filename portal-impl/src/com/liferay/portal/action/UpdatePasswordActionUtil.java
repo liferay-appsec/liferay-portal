@@ -119,7 +119,8 @@ public class UpdatePasswordActionUtil {
 
 	public static void updatePassword(
 			String csrfOrigin, HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse, String redirect,
+			HttpServletResponse httpServletResponse, String password1,
+			String password2, String redirect,
 			UnsafeConsumer<String, Exception> redirectUnsafeConsumer,
 			ThemeDisplay themeDisplay, Ticket ticket)
 		throws Exception {
@@ -137,8 +138,6 @@ public class UpdatePasswordActionUtil {
 			userId = themeDisplay.getUserId();
 		}
 
-		String password1 = httpServletRequest.getParameter("password1");
-		String password2 = httpServletRequest.getParameter("password2");
 		boolean passwordReset = false;
 
 		boolean previousValidate = PwdToolkitUtilThreadLocal.isValidate();
