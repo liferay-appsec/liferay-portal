@@ -88,8 +88,6 @@ public class UpdatePasswordActionTest {
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(group.getGroupId());
 
-		ServiceContextThreadLocal.pushServiceContext(serviceContext);
-
 		_user = UserTestUtil.addGroupUser(group, RoleConstants.POWER_USER);
 
 		_nonguestFragmentEntryHtml = RandomTestUtil.randomString();
@@ -107,9 +105,6 @@ public class UpdatePasswordActionTest {
 
 		_guestLayoutUtilityPageEntry = _addLayoutUtilityPageEntry(
 			_guestFragmentEntryHtml, guestGroup, serviceContext);
-
-		UserTestUtil.setUser(
-			_userLocalService.getGuestUser(_company.getCompanyId()));
 	}
 
 	@After
