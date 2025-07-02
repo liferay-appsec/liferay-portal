@@ -99,87 +99,6 @@ const LDAP_USER_4_AB: TUserAccount = {
 	password: 'test',
 };
 
-test.afterAll(async ({browser}) => {
-	const page = await browser.newPage();
-
-	await performLogin(page, 'test');
-
-	const systemSettingsPage = new SystemSettingsPage(page);
-
-	await test.step('Reset System Settings LDAP configuration', async () => {
-		await resetLdapImportSystemSettings(systemSettingsPage);
-	});
-});
-
-test.afterEach(
-	async ({
-		apiHelpers,
-		ldapConfigurationPage,
-		ldapServerPage,
-		userGroupsPage,
-	}) => {
-		await test.step('Delete LDAP servers from portal', async () => {
-			await ldapServerPage.deleteLdapServers();
-		});
-
-		await test.step('Reset LDAP Instance Settings', async () => {
-			await ldapConfigurationPage.resetLdapConfiguration();
-		});
-
-		await test.step('Delete LDAP users from portal if present', async () => {
-			for (const ldapUser of [
-				LDAP_USER_1,
-				LDAP_USER_2,
-				LDAP_USER_3,
-				LDAP_USER_3_MODIFIED,
-				LDAP_USER_4,
-				LDAP_USER_4_A,
-				LDAP_USER_4_AB,
-			]) {
-				const user =
-					await apiHelpers.headlessAdminUser.getUserAccountByEmailAddress(
-						ldapUser.emailAddress
-					);
-
-				if (user.id !== undefined) {
-					await apiHelpers.headlessAdminUser.deleteUserAccount(
-						Number(user.id)
-					);
-				}
-			}
-		});
-
-		await test.step('Delete LDAP groups from portal if present', async () => {
-			await userGroupsPage.goto();
-
-			const selectAllCheckbox = userGroupsPage.page.getByLabel(
-				'Select All Items on the Page'
-			);
-
-			await selectAllCheckbox.waitFor();
-
-			await userGroupsPage.page.waitForTimeout(1000);
-
-			if (await selectAllCheckbox.isEnabled()) {
-				await selectAllCheckbox.click();
-
-				userGroupsPage.page.once('dialog', async (dialog) => {
-					dialog.accept();
-				});
-
-				await userGroupsPage.page
-					.getByRole('button', {name: 'Delete'})
-					.click();
-
-				await waitForAlert(
-					userGroupsPage.page,
-					`Success:Your request completed successfully.`
-				);
-			}
-		});
-	}
-);
-
 test.beforeAll(async () => {
 
 	// Add LDAP user info to userData so we can authenticate via performLogin or
@@ -985,6 +904,20 @@ test('smoke: Add LDAP server, verify connection, users, and groups are mapped pr
 			})
 		).toBeHidden();
 	});
+});
+
+test('LPD-57008 Verify if the unused error keywords are no longer present', async ({
+	ldapConfigurationPage,
+}) => {
+	await test.step('Go to LDAP Connection tab', async () => {
+		await ldapConfigurationPage.goToConnectionTab();
+	})
+	
+	await test.step('Check if unused password error keywords fields are visible', async () => {		
+		for (const errorKeywordField of ldapConfigurationPage.getUnusedPasswordErrorKeywordsFields()) {
+			await expect(errorKeywordField).not.toBeVisible();
+		}
+	})
 });
 
 async function invokeLdapImport(page: Page, ldapServer?: TLdapServer) {

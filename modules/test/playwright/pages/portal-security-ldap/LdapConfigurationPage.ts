@@ -29,6 +29,7 @@ export class LdapConfigurationPage {
 	readonly importUserSyncStrategy: Locator;
 	readonly instanceSettingsPage: InstanceSettingsPage;
 	readonly lockExpirationTime: Locator;
+	readonly unusedPasswordErrorKeywordsFields: Locator[];
 	readonly method: Locator;
 	readonly page: Page;
 	readonly passwordEncryptionAlgorithm: Locator;
@@ -100,6 +101,25 @@ export class LdapConfigurationPage {
 		await this.page.getByRole('menuitem', {name: 'Servers'}).click();
 
 		await this.addLdapServerButton.waitFor();
+	}
+
+	async goToConnectionTab(forceReload = true) {
+		if (forceReload) {
+			await this.goTo();
+		}
+
+		await this.page.getByRole('menuitem', {name: 'Connection'}).click();
+		
+		await this.page.getByText('Factory Initial').waitFor();
+	}
+
+	getUnusedPasswordErrorKeywordsFields(){
+		return [
+			this.page.getByText('Error Password Age Keywords'), this.page.getByLabel('Error Password Age Keywords', { exact: true }),
+			this.page.getByText('Error Password Not Changeable Keywords'), this.page.getByLabel('Error Password Not Changeable Keywords', { exact: true }),
+			this.page.getByText('Error Password Syntax Keywords'), this.page.getByLabel('Error Password Syntax Keywords', { exact: true }),
+			this.page.getByText('Error Password Trivial Text Keywords'), this.page.getByLabel('Error Password Trivial Text Keywords', { exact: true }),
+		];
 	}
 
 	async resetLdapConfiguration() {
