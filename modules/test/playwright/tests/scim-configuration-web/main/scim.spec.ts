@@ -23,6 +23,7 @@ export const test = mergeTests(
 	featureFlagsTest({
 		'LPS-96845': {enabled: true},
 	}),
+
 	loginTest(),
 	applicationsMenuPageTest,
 	serverAdministrationPageTest,
@@ -493,5 +494,122 @@ test('LPD-37452 verify expando field is not visible for group added to SCIM', as
 	await expect(await page.getByLabel('Scimclientid')).not.toBeVisible();
 
 	await scimConfigurationPage.goTo();
+	await scimConfigurationPage.resetClientData();
+});
+
+test('LPD-56434 Verify addresses attribute works properly with SCIM user provisioning', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		addresses: [
+			{
+				country: 'GB',
+				formatted:
+					'Muffin Man\n' +
+					'1234 Drury Lane\n' +
+					'Great Britain, England 54321\n' +
+					'United Kingdom',
+				locality: 'Great Britain',
+				postalCode: '54321',
+				primary: false,
+				region: 'England',
+				streetAddress: 'Muffin Man\n' + '1234 Drury Lane',
+				type: 'personal',
+			},
+			{
+				country: 'US',
+				formatted:
+					'The President of the United States\n' +
+					'1600 Pennsylvania Ave NW\n' +
+					'Washington, District of Columbia 20500\n' +
+					'United States',
+				locality: 'Washington',
+				postalCode: '20500',
+				primary: true,
+				region: 'District of Columbia',
+				streetAddress:
+					'The President of the United States\n' +
+					'1600 Pennsylvania Ave NW',
+				type: 'business',
+			},
+		],
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await editUserPage.contactLink.click();
+
+	await editUserPage.addressesLink.waitFor();
+
+	for (const address of newUser.addresses) {
+		const addressLines = address.formatted.split('\n');
+
+		const li = await editUserPage.page
+			.locator('li')
+			.filter({hasText: addressLines[0]});
+
+		await expect(li).toBeVisible();
+
+		addressLines.forEach((value) => {
+			expect(li.getByText(value)).toBeVisible();
+		});
+
+		if (address.type === 'business') {
+			await expect(await li.getByText('Business')).toBeVisible();
+		}
+		else if (address.type === 'personal') {
+			await expect(await li.getByText('Personal')).toBeVisible();
+		}
+
+		if (address.primary) {
+			await expect(await li.getByText('Primary')).toBeVisible();
+		}
+		else {
+			await expect(await li.getByText('Primary')).not.toBeVisible();
+		}
+	}
+
+	await scimConfigurationPage.goTo();
+
 	await scimConfigurationPage.resetClientData();
 });
