@@ -10,6 +10,7 @@ import {searchTableRowByValue} from './UsersAndOrganizationsPage';
 
 export class EditUserPage {
 	readonly accountsLink: Locator;
+	readonly addressesLink: Locator;
 	readonly appsLink: Locator;
 	readonly backLink: Locator;
 	readonly birthdayInput: Locator;
@@ -17,6 +18,8 @@ export class EditUserPage {
 	readonly changeImageButton: Locator;
 	readonly clearImageButton: Locator;
 	readonly confirmButton: Locator;
+	readonly contactInformationLink: Locator;
+	readonly contactLink: Locator;
 	readonly customField: (fieldName: string) => Promise<Locator>;
 	readonly doneButton: Locator;
 	readonly emailAddressError: Locator;
@@ -131,6 +134,10 @@ export class EditUserPage {
 			exact: true,
 			name: 'Accounts',
 		});
+		this.addressesLink = page.getByRole('link', {
+			exact: true,
+			name: 'Addresses',
+		});
 		this.appsLink = page.getByRole('link', {
 			exact: true,
 			name: 'Apps',
@@ -147,6 +154,14 @@ export class EditUserPage {
 		});
 		this.changeImageButton = page.getByLabel('Change Image');
 		this.clearImageButton = page.getByLabel('Clear Image');
+		this.contactLink = page.getByRole('link', {
+			exact: true,
+			name: 'Contact',
+		});
+		this.contactInformationLink = page.getByRole('link', {
+			exact: true,
+			name: 'Contact Information',
+		});
 		this.customField = async (fieldName: string) => {
 			await page.getByText('Custom Fields').waitFor({timeout: 15 * 1000});
 
