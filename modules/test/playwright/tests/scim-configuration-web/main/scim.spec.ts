@@ -613,3 +613,124 @@ test('LPD-56434 Verify addresses attribute works properly with SCIM user provisi
 
 	await scimConfigurationPage.resetClientData();
 });
+
+test('LPD-56434 Verify attributes which require custom fields are implemented', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		displayName: 'testDisplayName',
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		entitlements: [
+			{
+				value: 'testEntitlement1',
+			},
+			{
+				value: 'testEntitlement2',
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		nickName: 'testNickName',
+		photos: [
+			{
+				value: 'testPhoto1',
+			},
+			{
+				value: 'testPhoto2',
+			},
+		],
+		preferredLanguage: 'testPreferredLanguage',
+		userName: `able${randomNumber}.baker`,
+		userType: 'testUserType',
+		x509Certificates: [
+			{
+				value: 'testx509Certificate1',
+			},
+			{
+				value: 'testx509Certificate2',
+			},
+		],
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await expect(await editUserPage.customField('scimDisplayName')).toHaveValue(
+		newUser.displayName,
+		{timeout: 30 * 1000}
+	);
+
+	await expect(
+		await editUserPage.customField('scimEntitlements')
+	).toHaveValue(
+		newUser.entitlements[0].value + '\n' + newUser.entitlements[1].value,
+		{timeout: 30 * 1000}
+	);
+
+	await expect(await editUserPage.customField('scimNickName')).toHaveValue(
+		newUser.nickName,
+		{timeout: 30 * 1000}
+	);
+
+	await expect(await editUserPage.customField('scimPhotos')).toHaveValue(
+		newUser.photos[0].value + '\n' + newUser.photos[1].value,
+		{timeout: 30 * 1000}
+	);
+
+	await expect(
+		await editUserPage.customField('scimPreferredLanguage')
+	).toHaveValue(newUser.preferredLanguage, {timeout: 30 * 1000});
+
+	await expect(await editUserPage.customField('scimUserType')).toHaveValue(
+		newUser.userType,
+		{timeout: 30 * 1000}
+	);
+
+	await expect(
+		await editUserPage.customField('scimX509Certificates')
+	).toHaveValue(
+		newUser.x509Certificates[0].value +
+			'\n' +
+			newUser.x509Certificates[1].value,
+		{timeout: 30 * 1000}
+	);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
