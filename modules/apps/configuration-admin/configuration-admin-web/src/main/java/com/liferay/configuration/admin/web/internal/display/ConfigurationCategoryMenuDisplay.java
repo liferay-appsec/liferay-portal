@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -76,7 +77,10 @@ public class ConfigurationCategoryMenuDisplay {
 					verticalNavItem.put(
 						"deprecated", curConfigurationEntry.isDeprecated());
 					verticalNavItem.setActive(
-						configurationEntry.equals(curConfigurationEntry));
+						configurationEntry.equals(curConfigurationEntry) ||
+						Objects.equals(
+							configurationEntry.getKey(),
+							curConfigurationEntry.getKey()));
 					verticalNavItem.setHref(
 						curConfigurationEntry.getEditURL(
 							renderRequest, renderResponse));
