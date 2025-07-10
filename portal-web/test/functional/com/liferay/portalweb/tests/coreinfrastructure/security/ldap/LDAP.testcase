@@ -575,8 +575,8 @@ definition {
 
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
-				configurationName = "Authentication",
-				configurationScope = "Virtual Instance Scope");
+				configurationName = "General",
+				configurationScope = "System Scope");
 
 			FormFields.viewCheckboxNotChecked(fieldName = "Enabled");
 
@@ -588,8 +588,8 @@ definition {
 
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
-				configurationName = "Authentication",
-				configurationScope = "Virtual Instance Scope");
+				configurationName = "General",
+				configurationScope = "System Scope");
 
 			FormFields.viewCheckboxNotChecked(fieldName = "Enabled");
 		}
@@ -607,7 +607,7 @@ definition {
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
 				configurationName = "Servers",
-				configurationScope = "Virtual Instance Scope");
+				configurationScope = "System Scope");
 
 			Button.clickAdd();
 
