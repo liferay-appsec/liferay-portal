@@ -907,3 +907,81 @@ test('LPD-56434 Verify ims works with provisioned SCIM user', async ({
 
 	await scimConfigurationPage.resetClientData();
 });
+
+test('LPD-56434 Verify name attribute and subattributes work with provisioned SCIM user', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+			honorificPrefix: 'Dr',
+			honorificSuffix: 'Phd',
+			middleName: 'testMiddleName',
+		},
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await editUserPage.emailAddressInput.waitFor();
+
+	await expect(editUserPage.firstNameInput).toHaveValue(
+		newUser.name.givenName
+	);
+
+	await expect(editUserPage.lastNameInput).toHaveValue(
+		newUser.name.familyName
+	);
+
+	await expect(editUserPage.middleNameInput).toHaveValue(
+		newUser.name.middleName
+	);
+
+	await expect(editUserPage.prefixInput).toHaveValue(
+		newUser.name.honorificPrefix
+	);
+
+	await expect(editUserPage.suffixInput).toHaveValue(
+		newUser.name.honorificSuffix
+	);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
