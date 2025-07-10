@@ -26,6 +26,7 @@ export class EditUserPage {
 	readonly emailAddressInvalidError: Locator;
 	readonly firstNameInput: Locator;
 	readonly generateWebDAVPasswordButton: Locator;
+	readonly jabberInput: Locator;
 	readonly informationLink: Locator;
 	readonly lastNameInput: Locator;
 	readonly maxFileSizeText: Locator;
@@ -119,6 +120,7 @@ export class EditUserPage {
 	readonly selectUserGroupsButton: Locator;
 	readonly selectUserLanguage: Locator;
 	readonly siteRolesTable: DataTablePage;
+	readonly skypeInput: Locator;
 	readonly tagCheckbox: (tagName: string) => Locator;
 	readonly tagInput: (name: string) => Locator;
 	readonly tagsFrame: FrameLocator;
@@ -196,6 +198,7 @@ export class EditUserPage {
 			exact: true,
 			name: 'Information',
 		});
+		this.jabberInput = page.getByLabel('Jabber');
 		this.lastNameInput = page.getByLabel('Last Name');
 		this.maxFileSizeText = page
 			.frameLocator('iframe[title="Upload Image"]')
@@ -486,6 +489,7 @@ export class EditUserPage {
 				'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_siteRolesSearchContainer'
 			)
 		);
+		this.skypeInput = page.getByLabel('Skype');
 		this.tagCheckbox = (tagName) => this.tagsFrame.getByLabel(tagName);
 		this.tagInput = (name) => page.getByRole('row', {name});
 		this.tagsFrame = page.frameLocator(`iframe[title="Tags"]`);
