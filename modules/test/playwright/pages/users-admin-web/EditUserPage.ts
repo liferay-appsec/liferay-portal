@@ -52,6 +52,7 @@ export class EditUserPage {
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
 	readonly membershipsUserGroupsTable: Locator;
+	readonly middleNameInput: Locator;
 	readonly myOrganizationsSelectOrganizationButton: Locator;
 	readonly myOrganizationsSelectOrganizationsTable: Locator;
 	readonly myOrganizationsSelectOrganizationsTableRow: (
@@ -67,6 +68,7 @@ export class EditUserPage {
 	readonly passwordInput: Locator;
 	readonly passwordReenterInput: Locator;
 	readonly passwordLink: Locator;
+	readonly prefixInput: Locator;
 	readonly profileAndDashboardLink: Locator;
 	readonly regularRoleCell: (name: string) => Locator;
 	readonly regularRoleCellButton: (name: string) => Locator;
@@ -127,6 +129,7 @@ export class EditUserPage {
 	readonly selectUserLanguage: Locator;
 	readonly siteRolesTable: DataTablePage;
 	readonly skypeInput: Locator;
+	readonly suffixInput: Locator;
 	readonly tagCheckbox: (tagName: string) => Locator;
 	readonly tagInput: (name: string) => Locator;
 	readonly tagsFrame: FrameLocator;
@@ -266,6 +269,7 @@ export class EditUserPage {
 			exact: true,
 			name: 'Memberships',
 		});
+		this.middleNameInput = page.getByLabel('Middle Name');
 		this.myOrganizationsSelectOrganizationButton = page.locator(
 			'#_com_liferay_users_admin_web_portlet_MyOrganizationsPortlet_selectOrganizationLink'
 		);
@@ -313,6 +317,7 @@ export class EditUserPage {
 			exact: true,
 			name: 'Password',
 		});
+		this.prefixInput = page.getByLabel('Prefix');
 		this.profileAndDashboardLink = page.getByRole('link', {
 			exact: true,
 			name: 'Profile and Dashboard',
@@ -511,6 +516,7 @@ export class EditUserPage {
 			)
 		);
 		this.skypeInput = page.getByLabel('Skype');
+		this.suffixInput = page.getByLabel('Suffix');
 		this.tagCheckbox = (tagName) => this.tagsFrame.getByLabel(tagName);
 		this.tagInput = (name) => page.getByRole('row', {name});
 		this.tagsFrame = page.frameLocator(`iframe[title="Tags"]`);
