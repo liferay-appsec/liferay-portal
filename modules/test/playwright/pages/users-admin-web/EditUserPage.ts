@@ -10,6 +10,12 @@ import {searchTableRowByValue} from './UsersAndOrganizationsPage';
 
 export class EditUserPage {
 	readonly accountsLink: Locator;
+	readonly additionalEmailAddressesTableRow: (
+		colPosition: number,
+		value: string,
+		strictEqual?: boolean
+	) => Promise<{column: Locator; row: Locator}>;
+	readonly additionalEmailAddressesTable: Locator;
 	readonly addressesLink: Locator;
 	readonly appsLink: Locator;
 	readonly backLink: Locator;
@@ -136,6 +142,21 @@ export class EditUserPage {
 			exact: true,
 			name: 'Accounts',
 		});
+		this.additionalEmailAddressesTableRow = async (
+			colPosition: number,
+			value: string,
+			strictEqual: boolean
+		) => {
+			return await searchTableRowByValue(
+				this.additionalEmailAddressesTable,
+				colPosition,
+				value,
+				strictEqual
+			);
+		};
+		this.additionalEmailAddressesTable = page.locator(
+			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_emailAddressesSearchContainer'
+		);
 		this.addressesLink = page.getByRole('link', {
 			exact: true,
 			name: 'Addresses',

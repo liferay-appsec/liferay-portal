@@ -735,6 +735,100 @@ test('LPD-56434 Verify attributes which require custom fields are implemented', 
 	await scimConfigurationPage.resetClientData();
 });
 
+test('LPD-56434 Verify emails attribute works with provisioned SCIM user', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		emails: [
+			{
+				primary: false,
+				type: 'default',
+				value: 'emailAddress1@liferay.com',
+			},
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+			{
+				primary: false,
+				type: 'default',
+				value: 'emailAddress3@liferay.com',
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	// Verify primary email is used as user's email, not necessarily the first
+
+	await expect(editUserPage.emailAddressInput).toHaveValue(
+		`able${randomNumber}@liferay.com`
+	);
+
+	await editUserPage.contactLink.click();
+
+	await editUserPage.contactInformationLink.waitFor();
+
+	await editUserPage.contactInformationLink.click();
+
+	for (const email of newUser.emails) {
+		const row = (
+			await editUserPage.additionalEmailAddressesTableRow(
+				0,
+				email.value,
+				true
+			)
+		).row;
+
+		await expect(row).toBeVisible();
+
+		if (email.primary) {
+			await expect(await row.getByText('Primary')).toBeVisible();
+		}
+		else {
+			await expect(await row.getByText('Primary')).not.toBeVisible();
+		}
+	}
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
+
 test('LPD-56434 Verify ims works with provisioned SCIM user', async ({
 	editUserPage,
 	page,
