@@ -69,6 +69,12 @@ export class EditUserPage {
 	readonly passwordInput: Locator;
 	readonly passwordReenterInput: Locator;
 	readonly passwordLink: Locator;
+	readonly phoneNumbersTableRow: (
+		colPosition: number,
+		value: string,
+		strictEqual?: boolean
+	) => Promise<{column: Locator; row: Locator}>;
+	readonly phoneNumbersTable: Locator;
 	readonly prefixInput: Locator;
 	readonly profileAndDashboardLink: Locator;
 	readonly regularRoleCell: (name: string) => Locator;
@@ -321,6 +327,21 @@ export class EditUserPage {
 			exact: true,
 			name: 'Password',
 		});
+		this.phoneNumbersTableRow = async (
+			colPosition: number,
+			value: string,
+			strictEqual: boolean
+		) => {
+			return await searchTableRowByValue(
+				this.phoneNumbersTable,
+				colPosition,
+				value,
+				strictEqual
+			);
+		};
+		this.phoneNumbersTable = page.locator(
+			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_phonesSearchContainer'
+		);
 		this.prefixInput = page.getByLabel('Prefix');
 		this.profileAndDashboardLink = page.getByRole('link', {
 			exact: true,
