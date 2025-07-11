@@ -985,3 +985,91 @@ test('LPD-56434 Verify name attribute and subattributes work with provisioned SC
 
 	await scimConfigurationPage.resetClientData();
 });
+
+test('LPD-56434 Verify phoneNumbers attribute works properly with SCIM user provisioning', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		phoneNumbers: [
+			{
+				primary: true,
+				type: 'Business',
+				value: '555-555-5555',
+			},
+			{
+				primary: false,
+				type: 'Personal',
+				value: '555-555-4444',
+			},
+		],
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await editUserPage.contactLink.click();
+
+	await editUserPage.contactInformationLink.waitFor();
+
+	await editUserPage.contactInformationLink.click();
+
+	for (const phoneNumber of newUser.phoneNumbers) {
+		const row = (
+			await editUserPage.phoneNumbersTableRow(0, phoneNumber.value, true)
+		).row;
+
+		await expect(row).toBeVisible();
+
+		if (phoneNumber.primary) {
+			await expect(await row.getByText('Primary')).toBeVisible();
+		}
+		else {
+			await expect(await row.getByText('Primary')).not.toBeVisible();
+		}
+
+		await expect(await row.getByText(phoneNumber.type)).toBeVisible();
+	}
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
