@@ -1222,3 +1222,67 @@ test('LPD-56434 Verify roles attribute works with provisioned SCIM user', async 
 
 	await scimConfigurationPage.resetClientData();
 });
+
+test('LPD-56434 Verify timezone works with provisioned SCIM user', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		timezone: 'America/Los_Angeles',
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await editUserPage.preferencesLink.click();
+
+	await editUserPage.displaySettingsLink.click();
+
+	await editUserPage.timeZoneInput.waitFor();
+
+	await expect(await editUserPage.timeZoneInput).toHaveValue(
+		newUser.timezone
+	);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
