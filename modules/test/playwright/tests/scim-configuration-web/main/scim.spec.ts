@@ -1073,3 +1073,73 @@ test('LPD-56434 Verify phoneNumbers attribute works properly with SCIM user prov
 
 	await scimConfigurationPage.resetClientData();
 });
+
+test('LPD-56434 Verify profileUrl works with provisioned SCIM user', async ({
+	editUserPage,
+	page,
+	usersAndOrganizationsPage,
+}) => {
+	const scimConfigurationPage = new SCIMConfigurationPage(page);
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.configureSCIM('email', 'Test SCIM Client');
+
+	await scimConfigurationPage.generateToken();
+
+	const accessToken =
+		await scimConfigurationPage.accessTokenField.inputValue();
+
+	const randomNumber = getRandomInt();
+
+	const newUser = {
+		active: true,
+		emails: [
+			{
+				primary: true,
+				type: 'default',
+				value: `able${randomNumber}@liferay.com`,
+			},
+		],
+		name: {
+			familyName: `Baker ${randomNumber}`,
+			givenName: `Able ${randomNumber}`,
+		},
+		profileUrl: 'http://testProfileUrl.com',
+		userName: `able${randomNumber}.baker`,
+	};
+
+	const apiHelper = new ApiHelpers(page);
+
+	await apiHelper.scim.postUserWithOAuth(newUser, accessToken);
+
+	const response = await (
+		await apiHelper.scim.getUsersWithOAuth(accessToken)
+	).text();
+
+	expect(response).toContain('"totalResults":1');
+
+	await usersAndOrganizationsPage.goto(false);
+
+	await usersAndOrganizationsPage.goToUser(newUser.userName);
+
+	await editUserPage.contactLink.click();
+
+	await editUserPage.contactInformationLink.waitFor();
+
+	await editUserPage.contactInformationLink.click();
+
+	const row = (
+		await editUserPage.websitesTableRow(0, newUser.profileUrl, true)
+	).row;
+
+	await expect(row).toBeVisible();
+
+	await expect(await row.getByText('Personal')).toBeVisible();
+
+	await expect(await row.getByText('Primary')).toBeVisible();
+
+	await scimConfigurationPage.goTo();
+
+	await scimConfigurationPage.resetClientData();
+});
