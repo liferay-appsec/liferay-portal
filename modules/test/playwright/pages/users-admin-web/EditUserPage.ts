@@ -144,6 +144,12 @@ export class EditUserPage {
 	readonly uploadImageDoneButton: Locator;
 	readonly userIDInput: Locator;
 	readonly webDAVPasswordLabel: Locator;
+	readonly websitesTableRow: (
+		colPosition: number,
+		value: string,
+		strictEqual?: boolean
+	) => Promise<{column: Locator; row: Locator}>;
+	readonly websitesTable: Locator;
 	readonly yourPasswordInput: Locator;
 
 	constructor(page: Page) {
@@ -554,6 +560,21 @@ export class EditUserPage {
 		this.userIDInput = page.getByLabel('User ID');
 		this.webDAVPasswordLabel = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_webDAVPassword'
+		);
+		this.websitesTableRow = async (
+			colPosition: number,
+			value: string,
+			strictEqual: boolean
+		) => {
+			return await searchTableRowByValue(
+				this.websitesTable,
+				colPosition,
+				value,
+				strictEqual
+			);
+		};
+		this.websitesTable = page.locator(
+			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_websitesSearchContainer'
 		);
 
 		this.confirmButton = this.passwordConfirmationFrame.getByRole(
