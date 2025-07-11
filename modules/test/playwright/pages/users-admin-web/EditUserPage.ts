@@ -27,6 +27,7 @@ export class EditUserPage {
 	readonly contactInformationLink: Locator;
 	readonly contactLink: Locator;
 	readonly customField: (fieldName: string) => Promise<Locator>;
+	readonly displaySettingsLink: Locator;
 	readonly doneButton: Locator;
 	readonly emailAddressError: Locator;
 	readonly emailAddressInput: Locator;
@@ -75,6 +76,7 @@ export class EditUserPage {
 		strictEqual?: boolean
 	) => Promise<{column: Locator; row: Locator}>;
 	readonly phoneNumbersTable: Locator;
+	readonly preferencesLink: Locator;
 	readonly prefixInput: Locator;
 	readonly profileAndDashboardLink: Locator;
 	readonly regularRoleCell: (name: string) => Locator;
@@ -140,6 +142,7 @@ export class EditUserPage {
 	readonly tagCheckbox: (tagName: string) => Locator;
 	readonly tagInput: (name: string) => Locator;
 	readonly tagsFrame: FrameLocator;
+	readonly timeZoneInput: Locator;
 	readonly uploadImageSelectImageButton: Locator;
 	readonly uploadImageDoneButton: Locator;
 	readonly userIDInput: Locator;
@@ -211,6 +214,10 @@ export class EditUserPage {
 
 			throw new Error(`Cannot locate Custom Field ${fieldName}`);
 		};
+		this.displaySettingsLink = page.getByRole('link', {
+			exact: true,
+			name: 'Display Settings',
+		});
 		this.doneButton = page.getByRole('button', {name: 'Done'});
 		this.emailAddressError = page
 			.locator(
@@ -348,6 +355,10 @@ export class EditUserPage {
 		this.phoneNumbersTable = page.locator(
 			'#_com_liferay_users_admin_web_portlet_UsersAdminPortlet_phonesSearchContainer'
 		);
+		this.preferencesLink = page.getByRole('link', {
+			exact: true,
+			name: 'Preferences',
+		});
 		this.prefixInput = page.getByLabel('Prefix');
 		this.profileAndDashboardLink = page.getByRole('link', {
 			exact: true,
@@ -551,6 +562,7 @@ export class EditUserPage {
 		this.tagCheckbox = (tagName) => this.tagsFrame.getByLabel(tagName);
 		this.tagInput = (name) => page.getByRole('row', {name});
 		this.tagsFrame = page.frameLocator(`iframe[title="Tags"]`);
+		this.timeZoneInput = page.getByLabel('Time Zone');
 		this.uploadImageSelectImageButton = page
 			.frameLocator('iframe[title="Upload Image"]')
 			.getByLabel('Select Image');
