@@ -575,8 +575,8 @@ definition {
 
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
-				configurationName = "Authentication",
-				configurationScope = "Virtual Instance Scope");
+				configurationName = "General",
+				configurationScope = "System Scope");
 
 			FormFields.viewCheckboxNotChecked(fieldName = "Enabled");
 
@@ -588,8 +588,8 @@ definition {
 
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
-				configurationName = "Authentication",
-				configurationScope = "Virtual Instance Scope");
+				configurationName = "General",
+				configurationScope = "System Scope");
 
 			FormFields.viewCheckboxNotChecked(fieldName = "Enabled");
 		}
@@ -607,13 +607,13 @@ definition {
 			SystemSettings.gotoConfiguration(
 				configurationCategory = "LDAP",
 				configurationName = "Servers",
-				configurationScope = "Virtual Instance Scope");
+				configurationScope = "System Scope");
 
 			Button.clickAdd();
 
 			Type(
-				locator1 = "LDAP#LDAP_CONNECTION_ID_FIELD",
-				value1 = 123);
+				locator1 = "LDAP#LDAP_CONNECTION_SERVER_NAME_FIELD",
+				value1 = "test");
 
 			Type(
 				locator1 = "LDAP#LDAP_CONNECTION_CREDENTIAL_FIELD",
@@ -628,8 +628,8 @@ definition {
 			Button.clickSave();
 
 			Click(
-				key_text = 123,
-				locator1 = "LDAP#LDAP_CONNECTION_SERVER_ID");
+				key_text = "test",
+				locator1 = "LDAP#LDAP_CONNECTION_ADDED_SERVER_LINK");
 
 			AssertTextEquals(
 				locator1 = "LDAP#LDAP_CONNECTION_CREDENTIAL_FIELD",

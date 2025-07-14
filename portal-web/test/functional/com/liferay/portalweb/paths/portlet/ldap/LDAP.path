@@ -25,6 +25,16 @@
 	<td>//td[contains(@class, 'lfr-ldap-server-id-column')]//a</td>
 	<td></td>
 </tr>
+<tr>
+	<td>LDAP_CONNECTION_SERVER_NAME_FIELD</td>
+	<td>//input[contains(@name,'serverName')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>LDAP_CONNECTION_ADDED_SERVER_LINK</td>
+	<td>//a[contains(@href,'_ldapServerId')]</td>
+	<td></td>
+</tr>
 </tbody>
 </table>
 </body>
