@@ -30,7 +30,7 @@ type EmailRecipients = {
 };
 
 type EmailNotificationRecipients = {
-	[key in 'roleName']?: string;
+	[key in 'name']?: string;
 };
 
 type UserNotificationRecipients = {
