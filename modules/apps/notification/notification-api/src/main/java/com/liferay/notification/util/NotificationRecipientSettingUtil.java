@@ -117,7 +117,7 @@ public class NotificationRecipientSettingUtil {
 
 			roles.add(
 				HashMapBuilder.put(
-					NotificationRecipientSettingConstants.NAME_ROLE_NAME,
+					NotificationRecipientSettingConstants.NAME_NAME,
 					String.valueOf(value)
 				).build());
 		}

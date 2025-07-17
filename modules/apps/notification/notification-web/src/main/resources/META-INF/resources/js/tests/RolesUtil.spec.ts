@@ -8,10 +8,10 @@ import {MultiSelectItem} from '@liferay/object-js-components-web';
 
 import {
 	getCheckedChildren,
-	getUserNotificationRoles,
-	handleMultiSelectRoleItemsChange,
+	handleMultiSelectItemsChange,
 	uncheckMultiSelectItemChildrens,
-} from '../components/SettingsContainer/rolesUtil';
+} from '../components/SettingsContainer/multiSelectUtil';
+import {getUserNotificationRoles} from '../components/SettingsContainer/rolesUtil';
 
 it('Assert role names checked items', () => {
 	const children = [
@@ -43,14 +43,14 @@ it('Assert role names checked items', () => {
 	];
 
 	const rolesNamesList = [
-		{roleName: 'Account Administrator'},
-		{roleName: 'Account Manager'},
-		{roleName: 'Account Member'},
-		{roleName: 'Administrator'},
-		{roleName: 'Analytics Administrator'},
-		{roleName: 'Order Manager'},
-		{roleName: 'Organization Administrator'},
-		{roleName: 'Owner'},
+		{name: 'Account Administrator'},
+		{name: 'Account Manager'},
+		{name: 'Account Member'},
+		{name: 'Administrator'},
+		{name: 'Analytics Administrator'},
+		{name: 'Order Manager'},
+		{name: 'Organization Administrator'},
+		{name: 'Owner'},
 	];
 
 	const checkedChildren = getCheckedChildren(rolesNamesList, children);
@@ -197,23 +197,23 @@ it('verify that handleMultiSelectRoleItemsChange generates new recipients in the
 		},
 	] as MultiSelectItem[];
 
-	const newRecipients = handleMultiSelectRoleItemsChange(itemsGroupMock);
+	const newRecipients = handleMultiSelectItemsChange(itemsGroupMock);
 
 	expect(newRecipients).toStrictEqual([
 		{
-			roleName: 'Account Administrator',
+			name: 'Account Administrator',
 		},
 		{
-			roleName: 'Account Supplier',
+			name: 'Account Supplier',
 		},
 		{
-			roleName: 'Buyer',
+			name: 'Buyer',
 		},
 		{
-			roleName: 'Power User',
+			name: 'Power User',
 		},
 		{
-			roleName: 'Supplier',
+			name: 'Supplier',
 		},
 	]);
 });

@@ -140,7 +140,7 @@ public abstract class BaseNotificationType implements NotificationType {
 
 				for (Map<String, String> roleMap : _toList(entry.getValue())) {
 					String roleName = roleMap.get(
-						NotificationRecipientSettingConstants.NAME_ROLE_NAME);
+						NotificationRecipientSettingConstants.NAME_NAME);
 
 					if (Validator.isNull(roleName) ||
 						roleNames.contains(roleName)) {

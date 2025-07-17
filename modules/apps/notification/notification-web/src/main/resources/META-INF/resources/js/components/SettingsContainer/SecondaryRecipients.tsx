@@ -19,9 +19,9 @@ import React, {useEffect, useState} from 'react';
 
 import {
 	getCheckedChildren,
-	handleMultiSelectRoleItemsChange,
+	handleMultiSelectItemsChange,
 	uncheckMultiSelectItemChildrens,
-} from './rolesUtil';
+} from './multiSelectUtil';
 
 interface SecondaryRecipientsProps {
 	emailNotificationRoles: MultiSelectItem[];
@@ -55,7 +55,7 @@ export function SecondaryRecipient({
 		recipientKey: 'cc' | 'bcc',
 		setRoleList: (value: MultiSelectItem[]) => void
 	) => {
-		const newRecipients = handleMultiSelectRoleItemsChange(items);
+		const newRecipients = handleMultiSelectItemsChange(items);
 
 		setValues({
 			...values,

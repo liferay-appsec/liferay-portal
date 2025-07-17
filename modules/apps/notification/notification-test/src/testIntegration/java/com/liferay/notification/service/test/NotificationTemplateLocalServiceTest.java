@@ -69,7 +69,7 @@ public class NotificationTemplateLocalServiceTest {
 			StringBundler.concat(
 				"The settings ", notificationRecipientSettingName,
 				StringPool.COMMA_AND_SPACE,
-				NotificationRecipientSettingConstants.NAME_ROLE_NAME,
+				NotificationRecipientSettingConstants.NAME_NAME,
 				" are not allowed"),
 			() -> _notificationTemplateLocalService.addNotificationTemplate(
 				NotificationTemplateUtil.createNotificationContext(
@@ -82,8 +82,7 @@ public class NotificationTemplateLocalServiceTest {
 								RandomTestUtil.randomString()),
 						NotificationTemplateUtil.
 							createNotificationRecipientSetting(
-								NotificationRecipientSettingConstants.
-									NAME_ROLE_NAME,
+								NotificationRecipientSettingConstants.NAME_NAME,
 								RandomTestUtil.randomString())),
 					StringUtil.randomString(256),
 					NotificationConstants.TYPE_EMAIL)));

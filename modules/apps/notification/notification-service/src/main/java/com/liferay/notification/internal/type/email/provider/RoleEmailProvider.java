@@ -166,8 +166,7 @@ public class RoleEmailProvider implements EmailProvider {
 		for (Map<String, String> roleMap : (List<Map<String, String>>)value) {
 			Role role = _roleLocalService.fetchRole(
 				notificationContext.getCompanyId(),
-				roleMap.get(
-					NotificationRecipientSettingConstants.NAME_ROLE_NAME));
+				roleMap.get(NotificationRecipientSettingConstants.NAME_NAME));
 
 			if ((role == null) ||
 				((role.getType() != RoleConstants.TYPE_ACCOUNT) &&
