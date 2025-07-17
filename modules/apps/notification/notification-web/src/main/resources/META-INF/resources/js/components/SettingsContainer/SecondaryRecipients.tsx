@@ -25,6 +25,7 @@ import {
 
 interface SecondaryRecipientsProps {
 	emailNotificationRoles: MultiSelectItem[];
+	emailNotificationUserGroups: MultiSelectItem[];
 	learnResources: ILearnResourceContext;
 	recipientOptions: LabelValueObject[];
 	setValues: (values: Partial<NotificationTemplate>) => void;
@@ -41,19 +42,26 @@ export function resetRecipientTypeValue(newRecipientTypeValue: string) {
 
 export function SecondaryRecipient({
 	emailNotificationRoles,
+	emailNotificationUserGroups,
 	learnResources,
 	recipientOptions,
 	setValues,
 	values,
 }: SecondaryRecipientsProps) {
 	const [bccRolesList, setBCCRolesList] = useState<MultiSelectItem[]>([]);
+	const [bccUserGroupsList, setBCCUserGroupsList] = useState<
+		MultiSelectItem[]
+	>([]);
 	const [ccRolesList, setCCRolesList] = useState<MultiSelectItem[]>([]);
+	const [ccUserGroupsList, setCCUserGroupsList] = useState<MultiSelectItem[]>(
+		[]
+	);
 	const [recipient] = values.recipients as EmailRecipients[];
 
-	const handleRecipientRoleChange = (
+	const handleRecipientItemChange = (
 		items: MultiSelectItem[],
 		recipientKey: 'cc' | 'bcc',
-		setRoleList: (value: MultiSelectItem[]) => void
+		setItemList: (value: MultiSelectItem[]) => void
 	) => {
 		const newRecipients = handleMultiSelectItemsChange(items);
 
@@ -67,7 +75,7 @@ export function SecondaryRecipient({
 			],
 		});
 
-		setRoleList(items);
+		setItemList(items);
 	};
 
 	const handleRecipientTypeChange = (
@@ -75,11 +83,18 @@ export function SecondaryRecipient({
 		recipientKey: 'cc' | 'bcc',
 		roleList: MultiSelectItem[],
 		recipientTypeKey: 'ccType' | 'bccType',
-		setRoleList: (value: MultiSelectItem[]) => void
+		setRoleList: (value: MultiSelectItem[]) => void,
+		setUserGroupList: (value: MultiSelectItem[]) => void,
+		userGroupList: MultiSelectItem[]
 	) => {
-		if (newRecipientTypeValue === 'email') {
+		if (newRecipientTypeValue !== 'role') {
 			const newRoleList = uncheckMultiSelectItemChildrens(roleList);
 			setRoleList(newRoleList);
+		}
+		if (newRecipientTypeValue !== 'user-group') {
+			const newUserGroupList =
+				uncheckMultiSelectItemChildrens(userGroupList);
+			setUserGroupList(newUserGroupList);
 		}
 		setValues({
 			...values,
@@ -100,66 +115,116 @@ export function SecondaryRecipient({
 			setCCRolesList(emailNotificationRoles);
 		}
 
-		if (
-			recipient.ccType === 'role' &&
-			Array.isArray(recipient.cc) &&
-			!!recipient.cc.length &&
-			(!!ccRolesList.length || !!emailNotificationRoles.length)
-		) {
-			const baseRoleList = ccRolesList.length
-				? ccRolesList
-				: emailNotificationRoles;
+		if (emailNotificationUserGroups.length && !ccUserGroupsList.length) {
+			setCCUserGroupsList(emailNotificationUserGroups);
+		}
 
-			setCCRolesList(
-				baseRoleList.map((baseRoleElement) => {
-					return {
-						...baseRoleElement,
-						children: getCheckedChildren(
-							recipient.cc as EmailNotificationRecipients[],
-							baseRoleElement.children
-						),
-					};
-				})
-			);
+		if (Array.isArray(recipient.cc) && !!recipient.cc.length) {
+			if (
+				recipient.ccType === 'role' &&
+				(!!ccRolesList.length || !!emailNotificationRoles.length)
+			) {
+				const baseRoleList = ccRolesList.length
+					? ccRolesList
+					: emailNotificationRoles;
+
+				setCCRolesList(
+					baseRoleList.map((baseRoleElement) => {
+						return {
+							...baseRoleElement,
+							children: getCheckedChildren(
+								recipient.cc as EmailNotificationRecipients[],
+								baseRoleElement.children
+							),
+						};
+					})
+				);
+			}
+			else if (
+				recipient.ccType === 'user-group' &&
+				(!!ccUserGroupsList.length ||
+					!!emailNotificationUserGroups.length)
+			) {
+				const baseUserGroupList = ccUserGroupsList.length
+					? ccUserGroupsList
+					: emailNotificationUserGroups;
+
+				setCCUserGroupsList(
+					baseUserGroupList.map((baseUserGroupElement) => {
+						return {
+							...baseUserGroupElement,
+							children: getCheckedChildren(
+								recipient.cc as EmailNotificationRecipients[],
+								baseUserGroupElement.children
+							),
+						};
+					})
+				);
+			}
 
 			return;
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [emailNotificationRoles, recipient.cc]);
+	}, [emailNotificationRoles, emailNotificationUserGroups, recipient.cc]);
 
 	useEffect(() => {
 		if (emailNotificationRoles.length && !bccRolesList.length) {
 			setBCCRolesList(emailNotificationRoles);
 		}
 
-		if (
-			recipient.bccType === 'role' &&
-			Array.isArray(recipient.bcc) &&
-			!!recipient.bcc.length &&
-			(!!bccRolesList.length || !!emailNotificationRoles.length)
-		) {
-			const baseRoleList = bccRolesList.length
-				? bccRolesList
-				: emailNotificationRoles;
+		if (emailNotificationUserGroups.length && !bccUserGroupsList.length) {
+			setBCCUserGroupsList(emailNotificationUserGroups);
+		}
 
-			setBCCRolesList(
-				baseRoleList.map((baseRoleElement) => {
-					return {
-						...baseRoleElement,
-						children: getCheckedChildren(
-							recipient.bcc as EmailNotificationRecipients[],
-							baseRoleElement.children
-						),
-					};
-				})
-			);
+		if (Array.isArray(recipient.bcc) && !!recipient.bcc.length) {
+			if (
+				recipient.bccType === 'role' &&
+				(!!bccRolesList.length || !!emailNotificationRoles.length)
+			) {
+				const baseRoleList = bccRolesList.length
+					? bccRolesList
+					: emailNotificationRoles;
+
+				setBCCRolesList(
+					baseRoleList.map((baseRoleElement) => {
+						return {
+							...baseRoleElement,
+							children: getCheckedChildren(
+								recipient.bcc as EmailNotificationRecipients[],
+								baseRoleElement.children
+							),
+						};
+					})
+				);
+			}
+			else if (
+				recipient.bccType === 'user-group' &&
+				(!!bccUserGroupsList.length ||
+					!!emailNotificationUserGroups.length)
+			) {
+				const baseUserGroupList = bccUserGroupsList.length
+					? bccUserGroupsList
+					: emailNotificationUserGroups;
+
+				setBCCUserGroupsList(
+					baseUserGroupList.map((baseUserGroupElement) => {
+						return {
+							...baseUserGroupElement,
+							children: getCheckedChildren(
+								recipient.bcc as EmailNotificationRecipients[],
+								baseUserGroupElement.children
+							),
+						};
+					})
+				);
+			}
 
 			return;
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [emailNotificationRoles, recipient.bcc]);
+	}, [emailNotificationRoles, emailNotificationUserGroups, recipient.bcc]);
 
 	return (
 		<>
@@ -181,7 +246,9 @@ export function SecondaryRecipient({
 										'cc',
 										ccRolesList,
 										'ccType',
-										setCCRolesList
+										setCCRolesList,
+										setCCUserGroupsList,
+										ccUserGroupsList
 									);
 								}}
 								selectedKey={recipient.ccType}
@@ -189,7 +256,7 @@ export function SecondaryRecipient({
 						</div>
 
 						<div className="col-lg-6">
-							{recipient.ccType === 'email' && (
+							{recipient.ccType === 'email' ? (
 								<Input
 									disabled={values.system}
 									feedbackMessage={Liferay.Language.get(
@@ -219,49 +286,77 @@ export function SecondaryRecipient({
 										).cc as string
 									}
 								/>
-							)}
-
-							{recipient.ccType === 'role' && (
+							) : (
 								<div className="lfr__notification-template-email-notification-settings-multiple-select">
 									<MultipleSelect
 										disabled={values.system}
-										id="secondaryRecipientRolesCC"
-										label={Liferay.Language.get('role')}
-										options={ccRolesList}
-										placeholder={Liferay.Language.get(
-											'select-role'
-										)}
+										id={
+											recipient.ccType === 'role'
+												? 'secondaryRecipientRolesCC'
+												: 'secondaryRecipientUserGroupsCC'
+										}
+										label={
+											recipient.ccType === 'role'
+												? Liferay.Language.get('role')
+												: Liferay.Language.get(
+														'user-group'
+													)
+										}
+										options={
+											recipient.ccType === 'role'
+												? ccRolesList
+												: ccUserGroupsList
+										}
+										placeholder={
+											recipient.ccType === 'role'
+												? Liferay.Language.get(
+														'select-role'
+													)
+												: Liferay.Language.get(
+														'select-user-group'
+													)
+										}
 										search
-										searchPlaceholder={Liferay.Language.get(
-											'search-for-a-role'
-										)}
+										searchPlaceholder={
+											recipient.ccType === 'role'
+												? Liferay.Language.get(
+														'search-for-a-role'
+													)
+												: Liferay.Language.get(
+														'search-for-a-user-group'
+													)
+										}
 										selectAllOption
 										setOptions={(items) => {
-											handleRecipientRoleChange(
+											handleRecipientItemChange(
 												items,
 												'cc',
-												setCCRolesList
+												recipient.ccType === 'role'
+													? setCCRolesList
+													: setCCUserGroupsList
 											);
 										}}
 									/>
 
-									<LearnResourcesContext.Provider
-										value={learnResources}
-									>
-										<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
-											<span>
-												{Liferay.Language.get(
-													'account-roles-are-subject-to-account-restrictions'
-												)}
-											</span>
-											&nbsp;
-											<LearnMessage
-												className="alert-link"
-												resource="notification-web"
-												resourceKey="general"
-											/>
-										</div>
-									</LearnResourcesContext.Provider>
+									{recipient.toType === 'role' && (
+										<LearnResourcesContext.Provider
+											value={learnResources}
+										>
+											<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
+												<span>
+													{Liferay.Language.get(
+														'account-roles-are-subject-to-account-restrictions'
+													)}
+												</span>
+												&nbsp;
+												<LearnMessage
+													className="alert-link"
+													resource="notification-web"
+													resourceKey="general"
+												/>
+											</div>
+										</LearnResourcesContext.Provider>
+									)}
 								</div>
 							)}
 						</div>
@@ -287,7 +382,9 @@ export function SecondaryRecipient({
 										'bcc',
 										bccRolesList,
 										'bccType',
-										setBCCRolesList
+										setBCCRolesList,
+										setBCCUserGroupsList,
+										bccUserGroupsList
 									);
 								}}
 								selectedKey={recipient.bccType}
@@ -295,7 +392,7 @@ export function SecondaryRecipient({
 						</div>
 
 						<div className="col-lg-6">
-							{recipient.bccType === 'email' && (
+							{recipient.bccType === 'email' ? (
 								<Input
 									disabled={values.system}
 									feedbackMessage={Liferay.Language.get(
@@ -325,49 +422,77 @@ export function SecondaryRecipient({
 										).bcc as string
 									}
 								/>
-							)}
-
-							{recipient.bccType === 'role' && (
+							) : (
 								<div className="lfr__notification-template-email-notification-settings-multiple-select">
 									<MultipleSelect
 										disabled={values.system}
-										id="secondaryRecipientRolesBCC"
-										label={Liferay.Language.get('role')}
-										options={bccRolesList}
-										placeholder={Liferay.Language.get(
-											'select-role'
-										)}
+										id={
+											recipient.bccType === 'role'
+												? 'secondaryRecipientRolesBCC'
+												: 'secondaryRecipientUserGroupsBCC'
+										}
+										label={
+											recipient.bccType === 'role'
+												? Liferay.Language.get('role')
+												: Liferay.Language.get(
+														'user-group'
+													)
+										}
+										options={
+											recipient.bccType === 'role'
+												? bccRolesList
+												: bccUserGroupsList
+										}
+										placeholder={
+											recipient.bccType === 'role'
+												? Liferay.Language.get(
+														'select-role'
+													)
+												: Liferay.Language.get(
+														'select-user-group'
+													)
+										}
 										search
-										searchPlaceholder={Liferay.Language.get(
-											'search-for-a-role'
-										)}
+										searchPlaceholder={
+											recipient.bccType === 'role'
+												? Liferay.Language.get(
+														'search-for-a-role'
+													)
+												: Liferay.Language.get(
+														'search-for-a-user-group'
+													)
+										}
 										selectAllOption
 										setOptions={(items) => {
-											handleRecipientRoleChange(
+											handleRecipientItemChange(
 												items,
 												'bcc',
-												setBCCRolesList
+												recipient.bccType === 'role'
+													? setBCCRolesList
+													: setBCCUserGroupsList
 											);
 										}}
 									/>
 
-									<LearnResourcesContext.Provider
-										value={learnResources}
-									>
-										<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
-											<span>
-												{Liferay.Language.get(
-													'account-roles-are-subject-to-account-restrictions'
-												)}
-											</span>
-											&nbsp;
-											<LearnMessage
-												className="alert-link"
-												resource="notification-web"
-												resourceKey="general"
-											/>
-										</div>
-									</LearnResourcesContext.Provider>
+									{recipient.toType === 'role' && (
+										<LearnResourcesContext.Provider
+											value={learnResources}
+										>
+											<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
+												<span>
+													{Liferay.Language.get(
+														'account-roles-are-subject-to-account-restrictions'
+													)}
+												</span>
+												&nbsp;
+												<LearnMessage
+													className="alert-link"
+													resource="notification-web"
+													resourceKey="general"
+												/>
+											</div>
+										</LearnResourcesContext.Provider>
+									)}
 								</div>
 							)}
 						</div>

@@ -30,6 +30,7 @@ import {
 
 interface PrimaryRecipientProps {
 	emailNotificationRoles: MultiSelectItem[];
+	emailNotificationUserGroups: MultiSelectItem[];
 	errors: FormError<NotificationTemplate & NotificationTemplateError>;
 	learnResources: ILearnResourceContext;
 	recipientOptions: LabelValueObject[];
@@ -48,6 +49,7 @@ export function resetRecipientValue(value: React.Key) {
 
 export function PrimaryRecipient({
 	emailNotificationRoles,
+	emailNotificationUserGroups,
 	errors,
 	learnResources,
 	recipientOptions,
@@ -57,39 +59,67 @@ export function PrimaryRecipient({
 }: PrimaryRecipientProps) {
 	const [recipient] = values.recipients as EmailRecipients[];
 	const [toRolesList, setToRolesList] = useState<MultiSelectItem[]>([]);
+	const [toUserGroupsList, setToUserGroupsList] = useState<MultiSelectItem[]>(
+		[]
+	);
 
 	useEffect(() => {
 		if (emailNotificationRoles.length && !toRolesList.length) {
 			setToRolesList(emailNotificationRoles);
 		}
 
-		if (
-			recipient.toType === 'role' &&
-			Array.isArray(recipient.to) &&
-			!!recipient.to.length &&
-			(!!toRolesList.length || !!emailNotificationRoles.length)
-		) {
-			const baseRoleList = toRolesList.length
-				? toRolesList
-				: emailNotificationRoles;
+		if (emailNotificationUserGroups.length && !toUserGroupsList.length) {
+			setToUserGroupsList(emailNotificationUserGroups);
+		}
 
-			setToRolesList(
-				baseRoleList.map((baseRoleElement) => {
-					return {
-						...baseRoleElement,
-						children: getCheckedChildren(
-							recipient.to as EmailNotificationRecipients[],
-							baseRoleElement.children
-						),
-					};
-				})
-			);
+		if (Array.isArray(recipient.to) && !!recipient.to.length) {
+			if (
+				recipient.toType === 'role' &&
+				(!!toRolesList.length || !!emailNotificationRoles.length)
+			) {
+				const baseRoleList = toRolesList.length
+					? toRolesList
+					: emailNotificationRoles;
+
+				setToRolesList(
+					baseRoleList.map((baseRoleElement) => {
+						return {
+							...baseRoleElement,
+							children: getCheckedChildren(
+								recipient.to as EmailNotificationRecipients[],
+								baseRoleElement.children
+							),
+						};
+					})
+				);
+			}
+			else if (
+				recipient.toType === 'user-group' &&
+				(!!toUserGroupsList.length ||
+					!!emailNotificationUserGroups.length)
+			) {
+				const baseUserGroupList = toUserGroupsList.length
+					? toUserGroupsList
+					: emailNotificationUserGroups;
+
+				setToUserGroupsList(
+					baseUserGroupList.map((baseUserGroupElement) => {
+						return {
+							...baseUserGroupElement,
+							children: getCheckedChildren(
+								recipient.to as EmailNotificationRecipients[],
+								baseUserGroupElement.children
+							),
+						};
+					})
+				);
+			}
 
 			return;
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [emailNotificationRoles, recipient.to]);
+	}, [emailNotificationRoles, emailNotificationUserGroups, recipient.to]);
 
 	return (
 		<>
@@ -103,6 +133,12 @@ export function PrimaryRecipient({
 						const newToRoleList =
 							uncheckMultiSelectItemChildrens(toRolesList);
 						setToRolesList(newToRoleList);
+					}
+
+					if (value !== 'user-group') {
+						const newToUserGroupList =
+							uncheckMultiSelectItemChildrens(toUserGroupsList);
+						setToUserGroupsList(newToUserGroupList);
 					}
 					setValues({
 						...values,
@@ -119,7 +155,7 @@ export function PrimaryRecipient({
 				selectedKey={recipient.toType}
 			/>
 
-			{recipient.toType === 'email' && (
+			{recipient.toType === 'email' ? (
 				<div className="lfr__notification-template-email-notification-settings-primary-recipient-input-localized">
 					<InputLocalized
 						disabled={values.system}
@@ -147,22 +183,40 @@ export function PrimaryRecipient({
 						translations={recipient.to as LocalizedValue<string>}
 					/>
 				</div>
-			)}
-
-			{recipient.toType === 'role' && (
+			) : (
 				<div className="lfr__notification-template-email-notification-settings-multiple-select">
 					<MultipleSelect
 						disabled={values.system}
 						error={errors.to}
-						id="primaryRecipientRoles"
-						label={Liferay.Language.get('role')}
-						options={toRolesList}
-						placeholder={Liferay.Language.get('select-role')}
+						id={
+							recipient.toType === 'role'
+								? 'primaryRecipientRoles'
+								: 'primaryRecipientUserGroups'
+						}
+						label={
+							recipient.toType === 'role'
+								? Liferay.Language.get('role')
+								: Liferay.Language.get('user-group')
+						}
+						options={
+							recipient.toType === 'role'
+								? toRolesList
+								: toUserGroupsList
+						}
+						placeholder={
+							recipient.toType === 'role'
+								? Liferay.Language.get('select-role')
+								: Liferay.Language.get('select-user-group')
+						}
 						required
 						search
-						searchPlaceholder={Liferay.Language.get(
-							'search-for-a-role'
-						)}
+						searchPlaceholder={
+							recipient.toType === 'role'
+								? Liferay.Language.get('search-for-a-role')
+								: Liferay.Language.get(
+										'search-for-a-user-group'
+									)
+						}
 						selectAllOption
 						setOptions={(items) => {
 							const newRecipients =
@@ -178,25 +232,32 @@ export function PrimaryRecipient({
 								],
 							});
 
-							setToRolesList(items);
+							if (recipient.toType === 'role') {
+								setToRolesList(items);
+							}
+							else {
+								setToUserGroupsList(items);
+							}
 						}}
 					/>
 
-					<LearnResourcesContext.Provider value={learnResources}>
-						<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
-							<span>
-								{Liferay.Language.get(
-									'account-roles-are-subject-to-account-restrictions'
-								)}
-							</span>
-							&nbsp;
-							<LearnMessage
-								className="alert-link"
-								resource="notification-web"
-								resourceKey="general"
-							/>
-						</div>
-					</LearnResourcesContext.Provider>
+					{recipient.toType === 'role' && (
+						<LearnResourcesContext.Provider value={learnResources}>
+							<div className="lfr__notification-template-email-notification-settings-multiple-select-help-text">
+								<span>
+									{Liferay.Language.get(
+										'account-roles-are-subject-to-account-restrictions'
+									)}
+								</span>
+								&nbsp;
+								<LearnMessage
+									className="alert-link"
+									resource="notification-web"
+									resourceKey="general"
+								/>
+							</div>
+						</LearnResourcesContext.Provider>
+					)}
 				</div>
 			)}
 
