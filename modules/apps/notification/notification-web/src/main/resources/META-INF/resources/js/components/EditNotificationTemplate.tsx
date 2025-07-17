@@ -24,6 +24,7 @@ import ContentContainer from './ContentContainer/ContentContainer';
 import DefinitionOfTermsContainer from './DefinitionOfTermsContainer/DefinitionOfTermsContainer';
 import {SettingsContainer} from './SettingsContainer/SettingsContainer';
 import {getEmailNotificationRoles} from './SettingsContainer/rolesUtil';
+import {getEmailNotificationUserGroups} from './SettingsContainer/userGroupsUtil';
 
 import './EditNotificationTemplate.scss';
 
@@ -117,6 +118,9 @@ export default function EditNotificationTemplate({
 	const [emailNotificationRoles, setEmailNotificationRoles] = useState<
 		MultiSelectItem[]
 	>([]);
+
+	const [emailNotificationUserGroups, setEmailNotificationUserGroups] =
+		useState<MultiSelectItem[]>([]);
 
 	const onSubmit = async (notification: NotificationTemplate) => {
 		if (isSubmitted) {
@@ -289,6 +293,9 @@ export default function EditNotificationTemplate({
 				setEmailNotificationRoles(
 					await getEmailNotificationRoles(baseResourceURL)
 				);
+				setEmailNotificationUserGroups(
+					await getEmailNotificationUserGroups(baseResourceURL)
+				);
 			}
 
 			const objectDefinitionsItems = await API.getObjectDefinitions();
@@ -376,6 +383,9 @@ export default function EditNotificationTemplate({
 						>
 							<SettingsContainer
 								emailNotificationRoles={emailNotificationRoles}
+								emailNotificationUserGroups={
+									emailNotificationUserGroups
+								}
 								errors={errors}
 								learnResources={learnResources}
 								selectedLocale={selectedLocale}

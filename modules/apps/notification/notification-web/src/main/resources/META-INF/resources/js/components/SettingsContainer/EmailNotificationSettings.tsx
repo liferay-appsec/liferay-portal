@@ -17,6 +17,7 @@ import './EmailNotificationSettings.scss';
 
 interface EmailNotificationSettingsProps {
 	emailNotificationRoles: MultiSelectItem[];
+	emailNotificationUserGroups: MultiSelectItem[];
 	errors: FormError<NotificationTemplate & NotificationTemplateError>;
 	learnResources: ILearnResourceContext;
 	selectedLocale: Locale;
@@ -33,10 +34,15 @@ const RECIPIENT_OPTIONS = [
 		label: Liferay.Language.get('roles'),
 		value: 'role',
 	},
+	{
+		label: Liferay.Language.get('user-groups'),
+		value: 'user-groups',
+	},
 ] as LabelValueObject[];
 
 export function EmailNotificationSettings({
 	emailNotificationRoles,
+	emailNotificationUserGroups,
 	errors,
 	learnResources,
 	selectedLocale,
@@ -66,6 +72,9 @@ export function EmailNotificationSettings({
 				<ClayPanel.Body>
 					<PrimaryRecipient
 						emailNotificationRoles={emailNotificationRoles}
+						emailNotificationUserGroups={
+							emailNotificationUserGroups
+						}
 						errors={errors}
 						learnResources={learnResources}
 						recipientOptions={RECIPIENT_OPTIONS}
@@ -83,6 +92,9 @@ export function EmailNotificationSettings({
 				<ClayPanel.Body>
 					<SecondaryRecipient
 						emailNotificationRoles={emailNotificationRoles}
+						emailNotificationUserGroups={
+							emailNotificationUserGroups
+						}
 						learnResources={learnResources}
 						recipientOptions={RECIPIENT_OPTIONS}
 						setValues={setValues}
