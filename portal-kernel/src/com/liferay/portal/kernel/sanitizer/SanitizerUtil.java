@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.sanitizer;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.Map;
 
@@ -44,8 +45,26 @@ public class SanitizerUtil {
 			Map<String, Object> options)
 		throws SanitizerException {
 
+		Sanitizer antiSamySanitizer = null;
+
 		for (Sanitizer sanitizer : _sanitizers) {
+			if (StringUtil.contains(
+					sanitizer.getClass(
+					).getName(),
+					"antisamy", ".")) {
+
+				antiSamySanitizer = sanitizer;
+
+				continue;
+			}
+
 			content = sanitizer.sanitize(
+				companyId, groupId, userId, className, classPK, contentType,
+				modes, content, options);
+		}
+
+		if (antiSamySanitizer != null) {
+			content = antiSamySanitizer.sanitize(
 				companyId, groupId, userId, className, classPK, contentType,
 				modes, content, options);
 		}
