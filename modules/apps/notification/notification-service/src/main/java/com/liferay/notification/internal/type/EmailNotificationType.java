@@ -26,6 +26,7 @@ import com.liferay.notification.internal.type.email.provider.DefaultEmailProvide
 import com.liferay.notification.internal.type.email.provider.EmailProvider;
 import com.liferay.notification.internal.type.email.provider.RoleEmailProvider;
 import com.liferay.notification.internal.type.email.provider.SubscribersEmailProvider;
+import com.liferay.notification.internal.type.email.provider.UserGroupEmailProvider;
 import com.liferay.notification.model.NotificationQueueEntry;
 import com.liferay.notification.model.NotificationQueueEntryAttachment;
 import com.liferay.notification.model.NotificationRecipient;
@@ -67,6 +68,7 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.template.StringTemplateResource;
@@ -316,10 +318,14 @@ public class EmailNotificationType extends BaseNotificationType {
 				NotificationRecipientSettingConstants.NAME_TO));
 
 		if (Validator.isNull(validEmailAddresses) &&
-			Objects.equals(
+			(Objects.equals(
 				notificationRecipientSettings.get(
 					NotificationRecipientSettingConstants.NAME_TO_TYPE),
-				NotificationRecipientConstants.TYPE_ROLE)) {
+				NotificationRecipientConstants.TYPE_ROLE) ||
+			 Objects.equals(
+				 notificationRecipientSettings.get(
+					 NotificationRecipientSettingConstants.NAME_TO_TYPE),
+				 NotificationRecipientConstants.TYPE_USER_GROUP))) {
 
 			return;
 		}
@@ -509,6 +515,11 @@ public class EmailNotificationType extends BaseNotificationType {
 			new SubscribersEmailProvider(
 				_objectEntryFolderLocalService, _objectEntryLocalService,
 				_subscriptionLocalService, _userLocalService));
+		_emailProviders.put(
+			NotificationRecipientConstants.TYPE_USER_GROUP,
+			new UserGroupEmailProvider(
+				_permissionCheckerFactory, _userGroupLocalService,
+				_userLocalService));
 
 		_serviceTrackerList = ServiceTrackerListFactory.open(
 			bundleContext, TemplateContextContributor.class,
@@ -843,6 +854,9 @@ public class EmailNotificationType extends BaseNotificationType {
 
 	@Reference
 	private TemplateNodeFactory _templateNodeFactory;
+
+	@Reference
+	private UserGroupLocalService _userGroupLocalService;
 
 	@Reference
 	private UserGroupRoleLocalService _userGroupRoleLocalService;
