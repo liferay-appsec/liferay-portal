@@ -20,6 +20,10 @@ interface User {
 	givenName: string;
 }
 
+interface UserGroup {
+	name: string;
+}
+
 interface UserNotificationSettingsProps {
 	setValues: (values: Partial<NotificationTemplate>) => void;
 	values: NotificationTemplate;
@@ -35,10 +39,16 @@ const RECIPIENT_OPTIONS = [
 		value: 'user',
 	},
 	{
+		label: Liferay.Language.get('user-groups'),
+		value: 'user-groups',
+	},
+	{
 		label: Liferay.Language.get('role'),
 		value: 'role',
 	},
-] as LabelValueObject[];
+].filter((item) =>
+	!Liferay.FeatureFlags['LPD-57578'] ? item.value !== 'user-groups' : true
+) as LabelValueObject[];
 
 export function UserNotificationSettings({
 	setValues,
@@ -47,6 +57,8 @@ export function UserNotificationSettings({
 	const [rolesList, setRolesList] = useState<MultiSelectItem[]>([]);
 	const [toTerms, setToTerms] = useState<string>('');
 	const [userList, setUserList] = useState<MultiSelectItem[]>([]);
+	const [userGroupList, setUserGroupList] = useState<MultiSelectItem[]>([]);
+	const [userGroupSearch, setUserGroupSearch] = useState<string>('');
 
 	const getUserRoles = async () => {
 		const roles = getUserNotificationRoles(
@@ -97,9 +109,47 @@ export function UserNotificationSettings({
 		setRolesList([]);
 	};
 
+	const getUserGroups = async () => {
+		const apiURL = '/o/headless-admin-user/v1.0/user-groups';
+		const query = `${apiURL}?page=-1&sort=name:asc`;
+
+		const response = await fetch(query, {
+			headers: HEADERS,
+			method: 'GET',
+		});
+
+		const {items} = (await response.json()) as {items: UserGroup[]};
+
+		const userGroups = {
+			children: items.map(({name}) => {
+				const selectedUserGroup = !!(
+					values.recipients as Partial<UserNotificationRecipients>[]
+				).find((recipient) => recipient['name'] === name);
+
+				return {
+					checked: selectedUserGroup,
+					label: name,
+					value: name,
+				};
+			}),
+			label: '',
+			value: 'userGroupList',
+		} as MultiSelectItem;
+
+		setUserList([]);
+		setRolesList([]);
+		setUserGroupList([userGroups]);
+	};
+
 	const handleMultiSelectItemsChange = (items: MultiSelectItem[]) => {
-		const key =
-			values.recipientType === 'role' ? 'roleName' : 'userScreenName';
+		const keySet = {
+			'role': 'roleName',
+			'term': 'userScreenName',
+			'user': 'userScreenName',
+			'user-groups': 'name',
+		} as {[key: string]: UserNotificationRecipients};
+
+		const key = keySet[values.recipientType];
 
 		const newRecipients: UserNotificationRecipients[] = [];
 
@@ -135,6 +185,12 @@ export function UserNotificationSettings({
 
 			if (values.recipientType === 'user') {
 				await getUserAccounts();
+
+				return;
+			}
+
+			if (values.recipientType === 'user-groups') {
+				await getUserGroups();
 
 				return;
 			}
@@ -234,6 +290,27 @@ export function UserNotificationSettings({
 					}}
 				/>
 			)}
+
+			{values.recipientType === 'user-groups' &&
+				Liferay.FeatureFlags['LPD-57578'] && (
+					<MultipleSelect
+						disabled={values.system}
+						label={Liferay.Language.get('user-groups')}
+						onChange={setUserGroupSearch}
+						options={userGroupList}
+						placeholder={Liferay.Language.get('select-one-or-more')}
+						search
+						searchPlaceholder={Liferay.Language.get(
+							'search-for-a-user-group'
+						)}
+						selectAllOption
+						setOptions={(items) => {
+							handleMultiSelectItemsChange(items);
+							setUserGroupList(items);
+						}}
+						value={userGroupSearch}
+					/>
+				)}
 		</>
 	);
 }
