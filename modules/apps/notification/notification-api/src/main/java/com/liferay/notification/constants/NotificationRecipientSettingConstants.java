@@ -22,6 +22,8 @@ public class NotificationRecipientSettingConstants {
 
 	public static final String NAME_FROM_NAME = "fromName";
 
+	public static final String NAME_NAME = "name";
+
 	public static final String NAME_ROLE_NAME = "roleName";
 
 	public static final String NAME_SINGLE_RECIPIENT = "singleRecipient";

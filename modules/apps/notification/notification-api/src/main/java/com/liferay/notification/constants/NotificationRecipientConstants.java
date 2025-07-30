@@ -18,4 +18,6 @@ public class NotificationRecipientConstants {
 
 	public static final String TYPE_USER = "user";
 
+	public static final String TYPE_USER_GROUPS = "user-groups";
+
 }
