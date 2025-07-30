@@ -104,18 +104,23 @@ public class NotificationRecipientSettingUtil {
 					recipientTypes.get(
 						NotificationRecipientSettingConstants.
 							getRecipientTypeName(name)),
-					NotificationRecipientConstants.TYPE_ROLE)) {
+					NotificationRecipientConstants.TYPE_ROLE) &&
+				!StringUtil.equals(
+					recipientTypes.get(
+						NotificationRecipientSettingConstants.
+							getRecipientTypeName(name)),
+					NotificationRecipientConstants.TYPE_USER_GROUP)) {
 
 				map.put(name, value);
 
 				continue;
 			}
 
-			List<Map<String, String>> roles =
+			List<Map<String, String>> names =
 				(List<Map<String, String>>)map.computeIfAbsent(
 					name, key -> new ArrayList<>());
 
-			roles.add(
+			names.add(
 				HashMapBuilder.put(
 					NotificationRecipientSettingConstants.NAME_NAME,
 					String.valueOf(value)
