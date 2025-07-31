@@ -147,8 +147,7 @@ export function UserNotificationSettings({
 			'term': 'userScreenName',
 			'user': 'userScreenName',
 			'user-groups': 'name',
-		} as {[key: string]: UserNotificationRecipients};
-
+		};
 		const key = keySet[values.recipientType];
 
 		const newRecipients: UserNotificationRecipients[] = [];
