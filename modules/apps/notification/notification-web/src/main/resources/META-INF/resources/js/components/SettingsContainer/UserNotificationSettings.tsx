@@ -46,7 +46,11 @@ const RECIPIENT_OPTIONS = [
 		label: Liferay.Language.get('role'),
 		value: 'role',
 	},
-] as LabelValueObject[];
+].filter((item) =>
+	!Liferay.FeatureFlags['LPD-57578']
+		? item.value !== 'user-groups'
+		: true
+) as LabelValueObject[];
 
 export function UserNotificationSettings({
 	setValues,
@@ -119,12 +123,10 @@ export function UserNotificationSettings({
 		const {items} = (await response.json()) as {items: UserGroup[]};
 
 		const userGroups = {
-			children: items.map(({ id, name }) => {
+			children: items.map(({id, name}) => {
 				const selectedUserGroup = !!(
 					values.recipients as Partial<UserNotificationRecipients>[]
-				).find(
-					(recipient) => recipient['name'] === name
-				);
+				).find((recipient) => recipient['name'] === name);
 
 				return {
 					checked: selectedUserGroup,
@@ -138,15 +140,15 @@ export function UserNotificationSettings({
 
 		setUserList([]);
 		setRolesList([]);
-		setUserGroupList([userGroups])
+		setUserGroupList([userGroups]);
 	};
 
 	const handleMultiSelectItemsChange = (items: MultiSelectItem[]) => {
 		const keySet = {
-			'role' : 'roleName',
+			'role': 'roleName',
 			'user': 'userScreenName',
-			'user-groups': 'name'
-		}
+			'user-groups': 'name',
+		};
 		const key = keySet[values.recipientType];
 
 		const newRecipients: UserNotificationRecipients[] = [];
@@ -289,23 +291,26 @@ export function UserNotificationSettings({
 				/>
 			)}
 
-			{values.recipientType === 'user-groups' && (
-				<MultipleSelect
-					selectAllOption
-					search
-					searchPlaceholder={Liferay.Language.get('search-for-a-user-group')}
-					disabled={values.system}
-					label={Liferay.Language.get('user-groups')}
-					placeholder={Liferay.Language.get('select-one-or-more')}
-					options={userGroupList}
-					setOptions={(items) => {
-						handleMultiSelectItemsChange(items);
-						setUserGroupList(items);
-					}}
-					onChange={setUserGroupSearch}
-					value={userGroupSearch}
-				/>
-			)}
+			{values.recipientType === 'user-groups' &&
+				Liferay.FeatureFlags['LPD-57578'] && (
+					<MultipleSelect
+						disabled={values.system}
+						label={Liferay.Language.get('user-groups')}
+						onChange={setUserGroupSearch}
+						options={userGroupList}
+						placeholder={Liferay.Language.get('select-one-or-more')}
+						search
+						searchPlaceholder={Liferay.Language.get(
+							'search-for-a-user-group'
+						)}
+						selectAllOption
+						setOptions={(items) => {
+							handleMultiSelectItemsChange(items);
+							setUserGroupList(items);
+						}}
+						value={userGroupSearch}
+					/>
+				)}
 		</>
 	);
 }
