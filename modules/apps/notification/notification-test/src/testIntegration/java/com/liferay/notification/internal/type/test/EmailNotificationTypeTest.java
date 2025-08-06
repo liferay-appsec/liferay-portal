@@ -1518,9 +1518,6 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 			_addObjectDefinitionWithNotificationTemplateObjectAction(Role role)
 		throws Exception {
 
-		ObjectDefinition objectDefinition =
-			_addAndPublishCustomObjectDefinition(false);
-
 		NotificationTemplate notificationTemplate =
 			notificationTemplateLocalService.addNotificationTemplate(
 				NotificationTemplateUtil.createNotificationContext(
@@ -1560,6 +1557,9 @@ public class EmailNotificationTypeTest extends BaseNotificationTypeTest {
 								NotificationRecipientConstants.TYPE_ROLE)),
 					RandomTestUtil.randomString(),
 					NotificationConstants.TYPE_EMAIL, Collections.emptyList()));
+
+		ObjectDefinition objectDefinition =
+			_addAndPublishCustomObjectDefinition(false);
 
 		_addObjectAction(
 			objectDefinition.getObjectDefinitionId(),
