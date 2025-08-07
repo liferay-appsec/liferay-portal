@@ -8,6 +8,7 @@ package com.liferay.notification.internal.type.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.notification.constants.NotificationConstants;
 import com.liferay.notification.constants.NotificationRecipientConstants;
+import com.liferay.notification.constants.NotificationRecipientSettingConstants;
 import com.liferay.notification.constants.NotificationTemplateConstants;
 import com.liferay.notification.context.NotificationContext;
 import com.liferay.notification.model.NotificationQueueEntry;
@@ -130,10 +131,12 @@ public class UserNotificationTypeTest extends BaseNotificationTypeTest {
 			Arrays.asList(
 				NotificationRecipientSettingUtil.
 					createNotificationRecipientSetting(
-						"roleName", RoleConstants.ADMINISTRATOR),
+						NotificationRecipientSettingConstants.NAME_ROLE_NAME,
+						RoleConstants.ADMINISTRATOR),
 				NotificationRecipientSettingUtil.
 					createNotificationRecipientSetting(
-						"roleName", role.getName())),
+						NotificationRecipientSettingConstants.NAME_ROLE_NAME,
+						role.getName())),
 			NotificationRecipientConstants.TYPE_ROLE);
 	}
 
@@ -171,7 +174,9 @@ public class UserNotificationTypeTest extends BaseNotificationTypeTest {
 					Collections.singletonList(
 						NotificationRecipientSettingUtil.
 							createNotificationRecipientSetting(
-								"roleName", role.getName())),
+								NotificationRecipientSettingConstants.
+									NAME_ROLE_NAME,
+								role.getName())),
 					NotificationRecipientConstants.TYPE_ROLE)));
 
 		_assertNotificationQueueEntry(user.getFullName());
@@ -195,7 +200,9 @@ public class UserNotificationTypeTest extends BaseNotificationTypeTest {
 					Collections.singletonList(
 						NotificationRecipientSettingUtil.
 							createNotificationRecipientSetting(
-								"roleName", siteRole.getName())),
+								NotificationRecipientSettingConstants.
+									NAME_ROLE_NAME,
+								siteRole.getName())),
 					NotificationRecipientConstants.TYPE_ROLE)),
 			childObjectDefinition, group.getGroupKey(), user);
 
