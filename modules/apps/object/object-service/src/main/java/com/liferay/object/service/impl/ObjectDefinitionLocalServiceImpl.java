@@ -153,6 +153,7 @@ import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.SystemEventLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
@@ -3240,12 +3241,12 @@ public class ObjectDefinitionLocalServiceImpl
 					objectDefinition.getScope(),
 					ObjectDefinitionConstants.SCOPE_DEPOT)) {
 
-			ObjectDefinitionThreadLocal.handleAsValidationError(
-				new ObjectDefinitionSettingNameException.NotAllowedNames(
-					objectDefinition.getShortName(),
-					objectDefinitionSettingsValuesMap.keySet()),
-				null);
-		}
+				ObjectDefinitionThreadLocal.handleAsValidationError(
+					new ObjectDefinitionSettingNameException.NotAllowedNames(
+						objectDefinition.getShortName(),
+						objectDefinitionSettingsValuesMap.keySet()),
+					null);
+			}
 
 			String acceptAllGroups = objectDefinitionSettingsValuesMap.get(
 				ObjectDefinitionSettingConstants.NAME_ACCEPT_ALL_GROUPS);
@@ -3253,24 +3254,25 @@ public class ObjectDefinitionLocalServiceImpl
 			if ((acceptAllGroups != null) &&
 				!acceptAllGroups.equals(StringPool.TRUE)) {
 
-			ObjectDefinitionThreadLocal.handleAsValidationError(
-				new ObjectDefinitionSettingValueException.InvalidValue(
-					objectDefinition.getShortName(),
-					ObjectDefinitionSettingConstants.NAME_ACCEPT_ALL_GROUPS,
-					acceptAllGroups),
-				null);
-		}
+				ObjectDefinitionThreadLocal.handleAsValidationError(
+					new ObjectDefinitionSettingValueException.InvalidValue(
+						objectDefinition.getShortName(),
+						ObjectDefinitionSettingConstants.NAME_ACCEPT_ALL_GROUPS,
+						acceptAllGroups),
+					null);
+			}
 
 			if (objectDefinitionSettingsValuesMap.containsKey(
 					ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS)) {
 
 				if (acceptAllGroups != null) {
 					ObjectDefinitionThreadLocal.handleAsValidationError(
-						new ObjectDefinitionSettingNameException.NotAllowedNames(
-							objectDefinition.getShortName(),
-							Set.of(
-								ObjectDefinitionSettingConstants.
-									NAME_ACCEPTED_GROUP_IDS)),
+						new ObjectDefinitionSettingNameException.
+							NotAllowedNames(
+								objectDefinition.getShortName(),
+								Set.of(
+									ObjectDefinitionSettingConstants.
+										NAME_ACCEPTED_GROUP_IDS)),
 						null);
 				}
 
@@ -3282,17 +3284,18 @@ public class ObjectDefinitionLocalServiceImpl
 					ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS);
 
 				for (String acceptedGroupId :
-					acceptedGroupIds.split("\\s*,\\s*")) {
+						acceptedGroupIds.split("\\s*,\\s*")) {
 
 					if (!objectScopeProvider.isValidGroupId(
-						GetterUtil.getLong(acceptedGroupId))) {
+							GetterUtil.getLong(acceptedGroupId))) {
 
 						ObjectDefinitionThreadLocal.handleAsValidationError(
-							new ObjectDefinitionSettingValueException.InvalidValue(
-								objectDefinition.getShortName(),
-								ObjectDefinitionSettingConstants.
-									NAME_ACCEPTED_GROUP_IDS,
-								acceptedGroupId),
+							new ObjectDefinitionSettingValueException.
+								InvalidValue(
+									objectDefinition.getShortName(),
+									ObjectDefinitionSettingConstants.
+										NAME_ACCEPTED_GROUP_IDS,
+									acceptedGroupId),
 							null);
 					}
 				}
