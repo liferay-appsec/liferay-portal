@@ -16,11 +16,12 @@ String displayStyle = oAuth2ApplicationsManagementToolbarDisplayContext.getDispl
 %>
 
 <liferay-ui:error embed="<%= false %>" exception="<%= OAuth2ApplicationRequiredException.class %>">
+
 	<%
-		OAuth2ApplicationRequiredException oAuth2ApplicationRequiredException = (OAuth2ApplicationRequiredException)errorException;
+	OAuth2ApplicationRequiredException oAuth2ApplicationRequiredException = (OAuth2ApplicationRequiredException)errorException;
 	%>
 
-	<liferay-ui:message key="<%=oAuth2ApplicationRequiredException.getMessage()  %>" />
+	<liferay-ui:message key="<%= oAuth2ApplicationRequiredException.getMessage() %>" />
 </liferay-ui:error>
 
 <clay:management-toolbar
