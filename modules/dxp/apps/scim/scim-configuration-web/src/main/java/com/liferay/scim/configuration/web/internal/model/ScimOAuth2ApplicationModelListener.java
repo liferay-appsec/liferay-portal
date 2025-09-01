@@ -13,16 +13,18 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.scim.configuration.web.internal.util.ScimThreadLocal;
 import com.liferay.scim.rest.util.ScimClientUtil;
+import com.liferay.scim.rest.util.ScimThreadLocal;
+
+import java.io.IOException;
+
+import java.util.Objects;
+
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * @author Christian Moura
