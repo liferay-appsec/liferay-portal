@@ -37,6 +37,15 @@ public class ObjectFieldLocalServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.object.service.impl.ObjectFieldLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
+	public static void _partialValidateObjectFields(
+			long objectDefinitionId,
+			Map<java.util.Locale, String> objectDefinitionLabel)
+		throws PortalException {
+
+		getService()._partialValidateObjectFields(
+			objectDefinitionId, objectDefinitionLabel);
+	}
+
 	public static ObjectField addCustomObjectField(
 			String externalReferenceCode, long userId,
 			long listTypeDefinitionId, long objectDefinitionId,
@@ -585,16 +594,6 @@ public class ObjectFieldLocalServiceUtil {
 		getService().validateExternalReferenceCode(
 			externalReferenceCode, objectFieldId, companyId,
 			objectDefinitionId);
-	}
-
-	public static void validateObjectFields(
-			long objectDefinitionId, String objectDefinitionDefaultLanguageId,
-			Map<java.util.Locale, String> objectDefinitionLabel)
-		throws PortalException {
-
-		getService().validateObjectFields(
-			objectDefinitionId, objectDefinitionDefaultLanguageId,
-			objectDefinitionLabel);
 	}
 
 	public static void validateReadOnlyAndReadOnlyConditionExpression(
