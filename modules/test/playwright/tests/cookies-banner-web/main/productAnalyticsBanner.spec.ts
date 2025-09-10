@@ -148,3 +148,65 @@ test(
 		});
 	}
 );
+
+test(
+	'AC1: After opting-in in Product Analytics Banner, cookies banner shows up when cookie config is enabled',
+	{tag: '@LPD-60005'},
+	async ({page, productAnalyticsBannerPage}) => {
+		await test.step('Verify Product Analytics Banner is present', async () => {
+			await expect(
+				await productAnalyticsBannerPage.bannerLocator
+			).toBeVisible();
+		});
+
+		const acceptAll = page.getByRole('button', {name: 'Accept All'});
+
+		await acceptAll.waitFor({state: 'visible'});
+
+		await acceptAll.click();
+
+
+		await test.step('Verify Product Analytics Banner is no longer present', async () => {
+			await expect(
+				await productAnalyticsBannerPage.bannerLocator
+			).not.toBeVisible();
+		});
+
+		await test.step('Verify Cookies Banner shows up', async () => {
+			await expect(
+				await page.locator('#p_p_id_com_liferay_cookies_banner_web_portlet_CookiesBannerPortlet_')
+			).toBeVisible();
+		});
+	}
+);
+
+test(
+	'AC2: After opting-out in Product Analytics Banner, cookies banner shows up when cookie config is enabled',
+	{tag: '@LPD-60005'},
+	async ({page, productAnalyticsBannerPage}) => {
+		await test.step('Verify Product Analytics Banner is present', async () => {
+			await expect(
+				await productAnalyticsBannerPage.bannerLocator
+			).toBeVisible();
+		});
+
+		const acceptAll = page.getByRole('button', {name: 'Decline All'});
+
+		await acceptAll.waitFor({state: 'visible'});
+
+		await acceptAll.click();
+
+
+		await test.step('Verify Product Analytics Banner is no longer present', async () => {
+			await expect(
+				await productAnalyticsBannerPage.bannerLocator
+			).not.toBeVisible();
+		});
+
+		await test.step('Verify Cookies Banner shows up', async () => {
+			await expect(
+				await page.locator('#p_p_id_com_liferay_cookies_banner_web_portlet_CookiesBannerPortlet_')
+			).toBeVisible();
+		});
+	}
+);
