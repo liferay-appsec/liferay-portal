@@ -191,7 +191,8 @@ public class ObjectDefinitionServiceUtil {
 			Map<java.util.Locale, String> pluralLabelMap, String scope,
 			int status,
 			List<com.liferay.object.model.ObjectDefinitionSetting>
-				objectDefinitionSettings)
+				objectDefinitionSettings,
+			List<com.liferay.object.model.ObjectField> objectFields)
 		throws PortalException {
 
 		return getService().updateCustomObjectDefinition(
@@ -205,7 +206,7 @@ public class ObjectDefinitionServiceUtil {
 			enableObjectEntrySubscription, enableObjectEntryVersioning,
 			friendlyURLSeparator, labelMap, name, panelAppOrder,
 			panelCategoryKey, portlet, pluralLabelMap, scope, status,
-			objectDefinitionSettings);
+			objectDefinitionSettings, objectFields);
 	}
 
 	public static ObjectDefinition updateExternalReferenceCode(
@@ -220,12 +221,13 @@ public class ObjectDefinitionServiceUtil {
 			String externalReferenceCode, long objectDefinitionId,
 			long objectFolderId, long titleObjectFieldId,
 			List<com.liferay.object.model.ObjectDefinitionSetting>
-				objectDefinitionSettings)
+				objectDefinitionSettings,
+			List<com.liferay.object.model.ObjectField> objectFields)
 		throws PortalException {
 
 		return getService().updateSystemObjectDefinition(
 			externalReferenceCode, objectDefinitionId, objectFolderId,
-			titleObjectFieldId, objectDefinitionSettings);
+			titleObjectFieldId, objectDefinitionSettings, objectFields);
 	}
 
 	public static ObjectDefinition updateTitleObjectFieldId(

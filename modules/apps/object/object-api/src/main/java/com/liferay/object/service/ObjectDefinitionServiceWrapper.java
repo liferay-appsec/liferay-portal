@@ -219,7 +219,9 @@ public class ObjectDefinitionServiceWrapper
 				java.util.Map<java.util.Locale, String> pluralLabelMap,
 				String scope, int status,
 				java.util.List<com.liferay.object.model.ObjectDefinitionSetting>
-					objectDefinitionSettings)
+					objectDefinitionSettings,
+				java.util.List<com.liferay.object.model.ObjectField>
+					objectFields)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionService.updateCustomObjectDefinition(
@@ -233,7 +235,7 @@ public class ObjectDefinitionServiceWrapper
 			enableObjectEntrySubscription, enableObjectEntryVersioning,
 			friendlyURLSeparator, labelMap, name, panelAppOrder,
 			panelCategoryKey, portlet, pluralLabelMap, scope, status,
-			objectDefinitionSettings);
+			objectDefinitionSettings, objectFields);
 	}
 
 	@Override
@@ -252,12 +254,14 @@ public class ObjectDefinitionServiceWrapper
 				String externalReferenceCode, long objectDefinitionId,
 				long objectFolderId, long titleObjectFieldId,
 				java.util.List<com.liferay.object.model.ObjectDefinitionSetting>
-					objectDefinitionSettings)
+					objectDefinitionSettings,
+				java.util.List<com.liferay.object.model.ObjectField>
+					objectFields)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectDefinitionService.updateSystemObjectDefinition(
 			externalReferenceCode, objectDefinitionId, objectFolderId,
-			titleObjectFieldId, objectDefinitionSettings);
+			titleObjectFieldId, objectDefinitionSettings, objectFields);
 	}
 
 	@Override

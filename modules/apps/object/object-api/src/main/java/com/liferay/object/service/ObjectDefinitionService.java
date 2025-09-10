@@ -144,7 +144,8 @@ public interface ObjectDefinitionService extends BaseService {
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
 			Map<Locale, String> pluralLabelMap, String scope, int status,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields)
 		throws PortalException;
 
 	public ObjectDefinition updateExternalReferenceCode(
@@ -154,7 +155,8 @@ public interface ObjectDefinitionService extends BaseService {
 	public ObjectDefinition updateSystemObjectDefinition(
 			String externalReferenceCode, long objectDefinitionId,
 			long objectFolderId, long titleObjectFieldId,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields)
 		throws PortalException;
 
 	public ObjectDefinition updateTitleObjectFieldId(

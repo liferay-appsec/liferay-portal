@@ -451,7 +451,8 @@ public interface ObjectDefinitionLocalService
 			Map<Locale, String> labelMap, String name, String panelAppOrder,
 			String panelCategoryKey, boolean portlet,
 			Map<Locale, String> pluralLabelMap, String scope, int status,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields)
 		throws PortalException;
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -486,7 +487,8 @@ public interface ObjectDefinitionLocalService
 	public ObjectDefinition updateSystemObjectDefinition(
 			String externalReferenceCode, long objectDefinitionId,
 			long objectFolderId, long titleObjectFieldId,
-			List<ObjectDefinitionSetting> objectDefinitionSettings)
+			List<ObjectDefinitionSetting> objectDefinitionSettings,
+			List<ObjectField> objectFields)
 		throws PortalException;
 
 	@Indexable(type = IndexableType.REINDEX)

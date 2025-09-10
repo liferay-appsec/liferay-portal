@@ -30,14 +30,6 @@ public class ObjectFieldLocalServiceWrapper
 	}
 
 	@Override
-	public void _partialValidateObjectFields(
-			com.liferay.object.model.ObjectDefinition objectDefinition)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		_objectFieldLocalService._partialValidateObjectFields(objectDefinition);
-	}
-
-	@Override
 	public com.liferay.object.model.ObjectField addCustomObjectField(
 			String externalReferenceCode, long userId,
 			long listTypeDefinitionId, long objectDefinitionId,
@@ -682,6 +674,16 @@ public class ObjectFieldLocalServiceWrapper
 		_objectFieldLocalService.validateExternalReferenceCode(
 			externalReferenceCode, objectFieldId, companyId,
 			objectDefinitionId);
+	}
+
+	@Override
+	public void validateObjectFields(
+			com.liferay.object.model.ObjectDefinition objectDefinition,
+			java.util.List<com.liferay.object.model.ObjectField> objectFields)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_objectFieldLocalService.validateObjectFields(
+			objectDefinition, objectFields);
 	}
 
 	@Override
