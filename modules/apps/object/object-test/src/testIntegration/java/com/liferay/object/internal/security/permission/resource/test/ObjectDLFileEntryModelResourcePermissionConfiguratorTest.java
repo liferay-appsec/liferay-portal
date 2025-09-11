@@ -21,6 +21,7 @@ import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -30,6 +31,7 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
@@ -149,9 +151,9 @@ public class ObjectDLFileEntryModelResourcePermissionConfiguratorTest {
 				HttpMethod.GET,
 				ObjectFieldUtil.getAttachmentDownloadURL(
 					_dlURLHelper, fileEntry, 0,
-					_objectDefinition.getExternalReferenceCode(),
-					_objectEntry.getExternalReferenceCode(),
-					_objectField.getExternalReferenceCode(), _themeDisplay));
+					_objectDefinition.getExternalReferenceCode(), _objectEntry,
+					_objectEntryService, _objectField,
+					GuestOrUserUtil.getPermissionChecker(), _themeDisplay));
 
 		mockHttpServletRequest.addParameter("download", "true");
 		mockHttpServletRequest.addParameter(
@@ -261,6 +263,9 @@ public class ObjectDLFileEntryModelResourcePermissionConfiguratorTest {
 
 	@Inject
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Inject
+	private ObjectEntryService _objectEntryService;
 
 	private ObjectField _objectField;
 
