@@ -66,7 +66,8 @@ test(
 	}
 );
 
-test('Verify specific Consent types can be configured from the Consent Panel',
+test(
+	'Verify specific Consent types can be configured from the Consent Panel',
 	{tag: '@LPD-60006'},
 	async ({
 		page,

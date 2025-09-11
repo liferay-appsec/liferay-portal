@@ -6,29 +6,29 @@
 import {Locator, Page} from '@playwright/test';
 
 export class ProductAnalyticsBannerPage {
-    readonly acceptAllButton: Locator;
-    readonly bannerLocator: Locator;
-    readonly customizeButton: Locator;
-    readonly declineAllButton: Locator;
-    readonly page: Page;
+	readonly acceptAllButton: Locator;
+	readonly bannerLocator: Locator;
+	readonly customizeButton: Locator;
+	readonly declineAllButton: Locator;
+	readonly page: Page;
 
-    constructor(page: Page) {
-        this.bannerLocator = page.locator(
-            '#p_p_id_com_liferay_cookies_banner_web_portlet_ProductAnalyticsBannerPortlet_'
-        );
+	constructor(page: Page) {
+		this.bannerLocator = page.locator(
+			'#p_p_id_com_liferay_cookies_banner_web_portlet_ProductAnalyticsBannerPortlet_'
+		);
 
-        this.acceptAllButton = this.bannerLocator.getByRole('button', {
-            exact: true,
-            name: 'Accept All',
-        });
-        this.customizeButton = this.bannerLocator.getByRole('button', {
-            exact: true,
-            name: 'Customize',
-        });
-        this.declineAllButton = this.bannerLocator.getByRole('button', {
-            exact: true,
-            name: 'Decline All',
-        });
-        this.page = page;
-    }
+		this.acceptAllButton = this.bannerLocator.getByRole('button', {
+			exact: true,
+			name: 'Accept All',
+		});
+		this.customizeButton = this.bannerLocator.getByRole('button', {
+			exact: true,
+			name: 'Customize',
+		});
+		this.declineAllButton = this.bannerLocator.getByRole('button', {
+			exact: true,
+			name: 'Decline All',
+		});
+		this.page = page;
+	}
 }
