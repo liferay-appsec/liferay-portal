@@ -78,6 +78,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.SystemEventConstants;
@@ -99,6 +100,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.language.override.service.PLOEntryLocalService;
 
 import java.io.Serializable;
 
@@ -936,6 +938,8 @@ public class ObjectFieldLocalServiceImpl
 				ObjectDefinitionResourcePermissionUtil.populateResourceActions(
 					null, null, objectDefinition, objectFieldLocalService,
 					_portletLocalService, _resourceActions, null);
+
+				_addOrUpdateObjectFieldResourceActionPLOEntries(objectField);
 			}
 			catch (Exception exception) {
 				ReflectionUtil.throwException(exception);
@@ -1001,6 +1005,21 @@ public class ObjectFieldLocalServiceImpl
 					dbTableName, objectField.getBusinessType(),
 					objectField.getSortableDBColumnName(),
 					ObjectFieldConstants.DB_TYPE_LONG));
+		}
+	}
+
+	private void _addOrUpdateObjectFieldResourceActionPLOEntries(
+			ObjectField objectField)
+		throws PortalException {
+
+		for (Locale locale : _language.getAvailableLocales()) {
+			String languageId = LocaleUtil.toLanguageId(locale);
+
+			_ploEntryLocalService.addOrUpdatePLOEntry(
+				objectField.getCompanyId(), objectField.getUserId(),
+				"action.objectField." + objectField.getName(), languageId,
+				LanguageUtil.format(
+					locale, "download-x", objectField.getLabel(locale)));
 		}
 	}
 
@@ -1191,6 +1210,10 @@ public class ObjectFieldLocalServiceImpl
 			if (objectDefinition.isApproved()) {
 				_resourceActions.removeModelResource(
 					objectDefinition.getClassName(), objectField.getName());
+
+				_ploEntryLocalService.deletePLOEntries(
+					objectField.getCompanyId(),
+					"action.objectField." + objectField.getName());
 			}
 
 			ObjectFieldSetting objectFieldSetting =
@@ -1552,6 +1575,12 @@ public class ObjectFieldLocalServiceImpl
 			_addOrUpdateObjectFieldSettings(
 				newObjectField, objectDefinition, objectFieldBusinessType,
 				objectFieldSettings, oldObjectField);
+
+			if (businessType.equals(
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+				_addOrUpdateObjectFieldResourceActionPLOEntries(newObjectField);
+			}
 
 			return newObjectField;
 		}
@@ -2094,6 +2123,9 @@ public class ObjectFieldLocalServiceImpl
 
 	@Reference
 	private ObjectViewLocalService _objectViewLocalService;
+
+	@Reference
+	private PLOEntryLocalService _ploEntryLocalService;
 
 	@Reference
 	private PortletLocalService _portletLocalService;
