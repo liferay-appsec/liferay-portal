@@ -695,7 +695,7 @@ public class ObjectDefinitionLocalServiceImpl
 
 				ObjectDefinitionResourcePermissionUtil.removeResourceActions(
 					_objectActionLocalService, objectDefinition,
-					_resourceActions);
+					_objectFieldLocalService, _resourceActions);
 			}
 			catch (Exception exception) {
 				throw new PortalException(exception);
