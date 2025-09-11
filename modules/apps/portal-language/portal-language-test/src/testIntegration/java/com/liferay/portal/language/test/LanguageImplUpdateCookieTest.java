@@ -6,8 +6,11 @@
 package com.liferay.portal.language.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.cookies.configuration.CookiesConfigurationProvider;
+import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -52,6 +55,17 @@ public class LanguageImplUpdateCookieTest {
 
 	@Test
 	public void testUpdateCookieOnlyAddsCookieOnLocaleUpdate() {
+		try {
+			_cookiesConfigurationProvider
+				.resetCookiesPreferenceHandlingConfiguration(
+					ExtendedObjectClassDefinition.Scope.SYSTEM, 0
+				);
+		}
+		catch (
+			ConfigurationException e) {
+			throw new RuntimeException(e);
+		}
+
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
@@ -95,5 +109,8 @@ public class LanguageImplUpdateCookieTest {
 
 	@Inject
 	private static Language _language;
+
+	@Inject
+	private CookiesConfigurationProvider _cookiesConfigurationProvider;
 
 }

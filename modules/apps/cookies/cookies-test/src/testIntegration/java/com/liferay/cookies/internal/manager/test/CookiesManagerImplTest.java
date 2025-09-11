@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -48,6 +49,12 @@ public class CookiesManagerImplTest {
 	@Rule
 	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
 		new LiferayIntegrationTestRule();
+
+	@After
+	public void tearDown() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(
+			CookiesPreferenceHandlingConfiguration.class.getName());
+	}
 
 	@Before
 	public void setUp() throws Exception {
