@@ -795,8 +795,8 @@ public class BatchEngineBrokerTest {
 		String template = StreamUtil.toString(_getInputStream(templateName));
 
 		Link link = LinkUtil.toLink(
-			_dlAppService, dlFileEntry, _dlURLHelper, groupId,
-			objectDefinitionERC, objectEntryERC, _portal);
+			_dlAppService, dlFileEntry, _dlURLHelper, groupId, true,
+			objectDefinitionERC, objectEntryERC, null, _portal);
 
 		template = StringUtil.replace(
 			template,
@@ -925,8 +925,8 @@ public class BatchEngineBrokerTest {
 
 		Link link = LinkUtil.toLink(
 			_dlAppService, dlFileEntry, _dlURLHelper,
-			GetterUtil.getLong(groupId), objectDefinitionERC, objectEntryERC,
-			_portal);
+			GetterUtil.getLong(groupId), true, objectDefinitionERC,
+			objectEntryERC, null, _portal);
 
 		String scopeKey = null;
 
@@ -1175,7 +1175,7 @@ public class BatchEngineBrokerTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				user.getUserId(), 0, null, false, true, false, true, false,
+				user.getUserId(), 0, null, false, true, false, true, true,
 				false, false, false, false, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				name, null, null,
