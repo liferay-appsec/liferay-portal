@@ -24,7 +24,8 @@ public class LinkUtil {
 		DLAppService dlAppService, DLFileEntry dlFileEntry,
 		DLURLHelper dlURLHelper, long groupId,
 		String objectDefinitionExternalReferenceCode,
-		String objectEntryExternalReferenceCode, Portal portal) {
+		String objectEntryExternalReferenceCode, Portal portal,
+		String objectFieldName) {
 
 		return new Link() {
 			{
@@ -36,7 +37,8 @@ public class LinkUtil {
 								dlAppService.getFileEntry(
 									dlFileEntry.getFileEntryId()),
 								groupId, objectDefinitionExternalReferenceCode,
-								objectEntryExternalReferenceCode, null);
+								objectEntryExternalReferenceCode, null,
+								objectFieldName);
 						}
 						catch (Exception exception) {
 							if (_log.isWarnEnabled()) {

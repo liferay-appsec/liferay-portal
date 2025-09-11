@@ -804,7 +804,8 @@ public class ObjectEntryDTOConverter
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
 				objectDefinition.getExternalReferenceCode(),
-				objectEntry.getExternalReferenceCode(), _portal));
+				objectEntry.getExternalReferenceCode(), _portal,
+				objectFieldName));
 		fileEntry.setMimeType(dlFileEntry::getMimeType);
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setPreviewURL(
