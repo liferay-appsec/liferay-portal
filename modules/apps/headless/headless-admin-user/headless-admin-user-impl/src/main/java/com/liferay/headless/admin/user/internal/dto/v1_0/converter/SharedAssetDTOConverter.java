@@ -175,7 +175,7 @@ public class SharedAssetDTOConverter
 
 	private FileEntry _getFileEntry(
 		ObjectDefinition objectDefinition, ObjectEntry objectEntry,
-		long fileEntryId) {
+		long fileEntryId, String objectFieldName) {
 
 		FileEntry fileEntry = new FileEntry();
 
@@ -196,7 +196,8 @@ public class SharedAssetDTOConverter
 					_dlAppService, dlFileEntry, _dlURLHelper,
 					objectEntry.getGroupId(),
 					objectDefinition.getExternalReferenceCode(),
-					objectEntry.getExternalReferenceCode(), _portal)));
+					objectEntry.getExternalReferenceCode(), _portal,
+					objectFieldName)));
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setThumbnailURL(
 			() -> {
@@ -260,7 +261,7 @@ public class SharedAssetDTOConverter
 				if (serializable instanceof Long) {
 					return _getFileEntry(
 						objectDefinition, objectEntry,
-						GetterUtil.getLong(serializable));
+						GetterUtil.getLong(serializable), objectFieldName);
 				}
 			}
 		}
