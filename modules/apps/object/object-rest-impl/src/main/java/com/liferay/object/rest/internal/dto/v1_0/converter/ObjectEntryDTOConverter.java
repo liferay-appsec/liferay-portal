@@ -838,7 +838,8 @@ public class ObjectEntryDTOConverter
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
 				objectDefinition.getExternalReferenceCode(),
-				objectEntry.getExternalReferenceCode(), _portal));
+				objectEntry.getExternalReferenceCode(), objectFieldName,
+				_portal));
 		fileEntry.setMetadata(
 			() -> NestedFieldsSupplier.supply(
 				objectFieldName + ".metadata",
