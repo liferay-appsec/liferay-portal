@@ -14,6 +14,7 @@ import com.liferay.notification.handler.NotificationHandler;
 import com.liferay.notification.term.evaluator.NotificationTermEvaluator;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectDefinitionSettingConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.definition.security.permission.resource.util.ObjectDefinitionResourcePermissionUtil;
 import com.liferay.object.definition.tree.util.ObjectDefinitionTreeUtil;
 import com.liferay.object.deployer.ObjectDefinitionDeployer;
@@ -42,6 +43,7 @@ import com.liferay.object.internal.workflow.ObjectEntryWorkflowHandler;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectLayout;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsPredicateProvider;
@@ -237,6 +239,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			serviceRegistrationsMap.put(
 				DBPartitionUtil.getPartitionKey(objectDefinitionId),
 				_deploy(
+					_objectFieldLocalService.getObjectFieldsByBusinessType(
+						objectDefinitionId,
+						ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT),
 					objectDefinition,
 					objectLayoutsMap.getOrDefault(
 						objectDefinitionId, Collections.emptyList()),
@@ -252,7 +257,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	public List<ServiceRegistration<?>> deploy(
 		ObjectDefinition objectDefinition) {
 
-		return _deploy(objectDefinition, null, null, null);
+		return _deploy(null, objectDefinition, null, null, null);
 	}
 
 	@Override
@@ -270,6 +275,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 	}
 
 	private List<ServiceRegistration<?>> _deploy(
+		List<ObjectField> attachmentObjectFields,
 		ObjectDefinition objectDefinition, List<ObjectLayout> objectLayouts,
 		Map<Long, List<ObjectRelationship>> objectRelationshipsMap,
 		List<ObjectAction> standaloneObjectActions) {
@@ -280,7 +286,8 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		try {
 			ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-				_objectActionLocalService, objectDefinition,
+				attachmentObjectFields, _objectActionLocalService,
+				objectDefinition, _objectFieldLocalService,
 				_portletLocalService, _resourceActions,
 				standaloneObjectActions);
 		}
