@@ -81,7 +81,7 @@ public class ProductAnalyticsBottomJSPDynamicInclude
 		catch (Exception exception) {
 			_log.error(exception);
 		}
-
+		System.out.println("Running product analytics dynamic include");
 		super.include(httpServletRequest, httpServletResponse, key);
 	}
 

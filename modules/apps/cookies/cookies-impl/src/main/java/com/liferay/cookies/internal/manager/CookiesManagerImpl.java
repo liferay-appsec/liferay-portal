@@ -145,12 +145,14 @@ public class CookiesManagerImpl implements CookiesManager {
 				cookiesPreferenceHandlingConfiguration =
 					_getCookiesPreferenceHandlingConfiguration(
 						httpServletRequest);
-
+			System.out.println("LPD-60006");
 			if (!cookiesPreferenceHandlingConfiguration.enabled()) {
+				System.out.println("Not enabled");
 				_deleteCookieConsentCookies(
 					httpServletRequest, httpServletResponse);
 			}
 			else if (!hasConsentType(consentType, httpServletRequest)) {
+				System.out.println("Returning False");
 				return false;
 			}
 		}
