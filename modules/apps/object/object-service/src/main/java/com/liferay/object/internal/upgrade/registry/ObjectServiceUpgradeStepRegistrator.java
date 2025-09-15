@@ -15,6 +15,7 @@ import com.liferay.object.internal.upgrade.v10_1_1.ObjectDefinitionStaleUserIdUp
 import com.liferay.object.internal.upgrade.v10_1_1.ObjectFieldStaleUserIdUpgradeProcess;
 import com.liferay.object.internal.upgrade.v10_1_1.ObjectRelationshipStaleUserIdUpgradeProcess;
 import com.liferay.object.internal.upgrade.v10_23_0.ObjectEntryFolderPermissionUpgradeProcess;
+import com.liferay.object.internal.upgrade.v10_25_0.ObjectDefinitionClassNameResourcePermissionUpgradeProcess;
 import com.liferay.object.internal.upgrade.v10_4_0.util.ObjectEntryFolderTable;
 import com.liferay.object.internal.upgrade.v10_5_0.ObjectEntryDefaultLanguageIdUpgradeProcess;
 import com.liferay.object.internal.upgrade.v10_8_0.util.ObjectDefinitionSettingTable;
@@ -663,6 +664,11 @@ public class ObjectServiceUpgradeStepRegistrator
 			"10.23.0", "10.24.0",
 			new com.liferay.object.internal.upgrade.v10_24_0.
 				ObjectDefinitionUpgradeProcess());
+
+		registry.register(
+			"10.24.0", "10.25.0",
+			new ObjectDefinitionClassNameResourcePermissionUpgradeProcess(
+				_resourceActionLocalService, _resourcePermissionLocalService));
 	}
 
 	@Reference
