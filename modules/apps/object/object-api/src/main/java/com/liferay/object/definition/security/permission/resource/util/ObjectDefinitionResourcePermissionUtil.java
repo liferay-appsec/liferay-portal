@@ -137,7 +137,8 @@ public class ObjectDefinitionResourcePermissionUtil {
 
 		for (ObjectField objectField : attachmentObjectFields) {
 			objectFieldPermissionKeys = StringBundler.concat(
-				objectFieldPermissionKeys, "<action-key>objectField.",
+				objectFieldPermissionKeys, "<action-key>",
+				ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
 				objectField.getName(), "</action-key>");
 		}
 

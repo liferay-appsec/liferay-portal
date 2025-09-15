@@ -1017,7 +1017,12 @@ public class ObjectFieldLocalServiceImpl
 
 			_ploEntryLocalService.addOrUpdatePLOEntry(
 				objectField.getCompanyId(), objectField.getUserId(),
-				"action.objectField." + objectField.getName(), languageId,
+				StringBundler.concat(
+					"action.",
+					ObjectFieldConstants.
+						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
+					objectField.getName()),
+				languageId,
 				LanguageUtil.format(
 					locale, "download-x", objectField.getLabel(locale)));
 		}
@@ -1213,7 +1218,11 @@ public class ObjectFieldLocalServiceImpl
 
 				_ploEntryLocalService.deletePLOEntries(
 					objectField.getCompanyId(),
-					"action.objectField." + objectField.getName());
+					StringBundler.concat(
+						"action.",
+						ObjectFieldConstants.
+							ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
+						objectField.getName()));
 			}
 
 			ObjectFieldSetting objectFieldSetting =
