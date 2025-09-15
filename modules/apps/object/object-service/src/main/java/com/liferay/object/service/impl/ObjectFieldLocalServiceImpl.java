@@ -334,6 +334,18 @@ public class ObjectFieldLocalServiceImpl
 					ObjectFieldUtil.getCounterName(objectField));
 			}
 
+			if (objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+				_ploEntryLocalService.deletePLOEntries(
+					objectField.getCompanyId(),
+					StringBundler.concat(
+						"action.",
+						ObjectFieldConstants.
+							ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
+						objectField.getName()));
+			}
+
 			_objectFieldSettingLocalService.deleteObjectFieldObjectFieldSetting(
 				objectField);
 		}
@@ -936,10 +948,9 @@ public class ObjectFieldLocalServiceImpl
 
 			try {
 				ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-					null, null, objectDefinition, objectFieldLocalService,
+					null, _language, null, objectDefinition,
+					objectFieldLocalService, _ploEntryLocalService,
 					_portletLocalService, _resourceActions, null);
-
-				_addOrUpdateObjectFieldResourceActionPLOEntries(objectField);
 			}
 			catch (Exception exception) {
 				ReflectionUtil.throwException(exception);
@@ -1214,7 +1225,10 @@ public class ObjectFieldLocalServiceImpl
 
 			if (objectDefinition.isApproved()) {
 				_resourceActions.removeModelResource(
-					objectDefinition.getClassName(), objectField.getName());
+					objectDefinition.getClassName(),
+					ObjectFieldConstants.
+						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+							objectField.getName());
 
 				_ploEntryLocalService.deletePLOEntries(
 					objectField.getCompanyId(),

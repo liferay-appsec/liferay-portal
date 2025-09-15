@@ -71,6 +71,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionLogic;
@@ -137,7 +138,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			dynamicQueryBatchIndexingActionableFactory,
 		GroupLocalService groupLocalService,
 		KaleoDefinitionLocalService kaleoDefinitionLocalService,
-		ListTypeLocalService listTypeLocalService,
+		Language language, ListTypeLocalService listTypeLocalService,
 		ObjectActionLocalService objectActionLocalService,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectDefinitionSettingLocalService objectDefinitionSettingLocalService,
@@ -174,6 +175,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			dynamicQueryBatchIndexingActionableFactory;
 		_groupLocalService = groupLocalService;
 		_kaleoDefinitionLocalService = kaleoDefinitionLocalService;
+		_language = language;
 		_listTypeLocalService = listTypeLocalService;
 		_objectActionLocalService = objectActionLocalService;
 		_objectDefinitionLocalService = objectDefinitionLocalService;
@@ -291,9 +293,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		try {
 			ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-				attachmentObjectFields, _objectActionLocalService,
+				attachmentObjectFields, _language, _objectActionLocalService,
 				objectDefinition, _objectFieldLocalService,
-				_portletLocalService, _resourceActions,
+				_ploEntryLocalService, _portletLocalService, _resourceActions,
 				standaloneObjectActions);
 		}
 		catch (Exception exception) {
@@ -652,6 +654,7 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		_dynamicQueryBatchIndexingActionableFactory;
 	private final GroupLocalService _groupLocalService;
 	private final KaleoDefinitionLocalService _kaleoDefinitionLocalService;
+	private final Language _language;
 	private final ListTypeLocalService _listTypeLocalService;
 	private final ObjectActionLocalService _objectActionLocalService;
 	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
