@@ -523,7 +523,8 @@ public class ObjectDefinitionServiceTest {
 					"Able", null, null, false,
 					LocalizedMapUtil.getLocalizedMap("Ables"),
 					objectDefinition.getScope(), objectDefinition.getStatus(),
-					Collections.emptyList(), Collections.emptyList());
+					Collections.emptyList(), Collections.emptyList(),
+					Collections.emptyList());
 		}
 		finally {
 			if (objectDefinition != null) {
@@ -545,7 +546,8 @@ public class ObjectDefinitionServiceTest {
 					RandomTestUtil.randomString(),
 					objectDefinition.getObjectDefinitionId(), objectFolderId,
 					objectDefinition.getTitleObjectFieldId(),
-					Collections.emptyList(), Collections.emptyList());
+					Collections.emptyList(), Collections.emptyList(),
+					Collections.emptyList());
 		}
 		finally {
 			if (objectDefinition != null) {
