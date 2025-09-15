@@ -10,6 +10,9 @@ package com.liferay.object.constants;
  */
 public class ObjectFieldConstants {
 
+	public static final String ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX =
+		"download_";
+
 	public static final String BUSINESS_TYPE_AGGREGATION = "Aggregation";
 
 	public static final String BUSINESS_TYPE_ASSIGNEE = "Assignee";
