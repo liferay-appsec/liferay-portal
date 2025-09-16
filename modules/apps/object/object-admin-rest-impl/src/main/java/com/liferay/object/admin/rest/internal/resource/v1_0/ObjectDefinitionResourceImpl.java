@@ -266,13 +266,16 @@ public class ObjectDefinitionResourceImpl
 					_objectFieldLocalService, _objectFieldSettingLocalService,
 					_objectFilterLocalService));
 
-		ObjectDefinitionValidationThreadLocal.
-			setObjectDefinitionValidationContext(
-				accumulateOnValidation,
-				new ObjectDefinitionValidationContext(
-					objectDefinition.getExternalReferenceCode(),
-					new ArrayList<>()));
+		if (FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-51345")) {
 
+			ObjectDefinitionValidationThreadLocal.
+				setObjectDefinitionValidationContext(
+					accumulateOnValidation,
+					new ObjectDefinitionValidationContext(
+						objectDefinition.getExternalReferenceCode(),
+						new ArrayList<>()));
+		}
 
 		try {
 			if (GetterUtil.getBoolean(objectDefinition.getSystem())) {
@@ -405,10 +408,14 @@ public class ObjectDefinitionResourceImpl
 			throw exception;
 		}
 		finally {
-			ObjectDefinitionValidationThreadLocal.
-				setObjectDefinitionValidationContext(
-					false,
-					new ObjectDefinitionValidationContext(null, null));
+			if (FeatureFlagManagerUtil.isEnabled(
+					contextCompany.getCompanyId(), "LPD-51345")) {
+
+				ObjectDefinitionValidationThreadLocal.
+					setObjectDefinitionValidationContext(
+						false,
+						new ObjectDefinitionValidationContext(null, null));
+			}
 		}
 
 		if (!Validator.isBlank(objectDefinition.getExternalReferenceCode())) {
@@ -995,12 +1002,16 @@ public class ObjectDefinitionResourceImpl
 		objectDefinition.setExternalReferenceCode(() -> externalReferenceCode);
 
 		if (serviceBuilderObjectDefinition != null) {
-			ObjectDefinitionValidationThreadLocal.
-				setObjectDefinitionValidationContext(
-					accumulateOnValidation,
-					new ObjectDefinitionValidationContext(
-						objectDefinition.getExternalReferenceCode(),
-						new ArrayList<>()));
+			if (FeatureFlagManagerUtil.isEnabled(
+					contextCompany.getCompanyId(), "LPD-51345")) {
+
+				ObjectDefinitionValidationThreadLocal.
+					setObjectDefinitionValidationContext(
+						accumulateOnValidation,
+						new ObjectDefinitionValidationContext(
+							objectDefinition.getExternalReferenceCode(),
+							new ArrayList<>()));
+			}
 
 			return putObjectDefinition(
 				serviceBuilderObjectDefinition.getObjectDefinitionId(),
