@@ -12,6 +12,7 @@ import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.login.AuthLoginGroupSettingsUtil;
@@ -49,6 +50,15 @@ import org.osgi.service.component.annotations.Reference;
 	service = Filter.class
 )
 public class AttachmentObjectFieldDownloadFilter extends BaseFilter {
+
+	@Override
+	public boolean isFilterEnabled(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		return FeatureFlagManagerUtil.isEnabled(
+			PortalUtil.getCompanyId(httpServletRequest), "LPD-17564");
+	}
 
 	@Override
 	protected Log getLog() {

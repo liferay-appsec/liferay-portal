@@ -339,7 +339,9 @@ public class ObjectFieldLocalServiceImpl
 					ObjectFieldUtil.getCounterName(objectField));
 			}
 
-			if (objectField.compareBusinessType(
+			if (FeatureFlagManagerUtil.isEnabled(
+					objectField.getCompanyId(), "LPD-17564") &&
+				objectField.compareBusinessType(
 					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
 				_ploEntryLocalService.deletePLOEntries(
@@ -933,7 +935,9 @@ public class ObjectFieldLocalServiceImpl
 			objectField, objectDefinition, objectFieldBusinessType,
 			objectFieldSettings, null);
 
-		if (objectDefinition.isApproved() &&
+		if (FeatureFlagManagerUtil.isEnabled(
+				objectField.getCompanyId(), "LPD-17564") &&
+			objectDefinition.isApproved() &&
 			Objects.equals(
 				objectField.getBusinessType(),
 				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
@@ -1208,7 +1212,10 @@ public class ObjectFieldLocalServiceImpl
 				objectField.getBusinessType(),
 				ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
-			if (objectDefinition.isApproved()) {
+			if (FeatureFlagManagerUtil.isEnabled(
+					objectField.getCompanyId(), "LPD-17564") &&
+				objectDefinition.isApproved()) {
+
 				_resourceActions.removeModelResource(
 					objectDefinition.getClassName(),
 					ObjectFieldConstants.
@@ -1566,7 +1573,9 @@ public class ObjectFieldLocalServiceImpl
 				newObjectField, objectDefinition, objectFieldBusinessType,
 				objectFieldSettings, oldObjectField);
 
-			if (businessType.equals(
+			if (FeatureFlagManagerUtil.isEnabled(
+					newObjectField.getCompanyId(), "LPD-17564") &&
+				businessType.equals(
 					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
 				_addOrUpdateObjectFieldResourceActionPLOEntries(newObjectField);

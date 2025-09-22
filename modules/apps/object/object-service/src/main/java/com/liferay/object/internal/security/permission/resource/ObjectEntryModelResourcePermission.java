@@ -143,7 +143,8 @@ public class ObjectEntryModelResourcePermission
 			!_isObjectActionName(
 				actionId, objectEntry.getObjectDefinitionId()) &&
 			!_isObjectFieldName(
-				actionId, objectEntry.getObjectDefinitionId())) {
+				actionId, objectEntry.getCompanyId(),
+				objectEntry.getObjectDefinitionId())) {
 
 			ObjectEntry rootObjectEntry =
 				_objectEntryLocalService.fetchObjectEntry(
@@ -388,7 +389,11 @@ public class ObjectEntryModelResourcePermission
 	}
 
 	private boolean _isObjectFieldName(
-		String actionId, long objectDefinitionId) {
+		String actionId, long companyId, long objectDefinitionId) {
+
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
+			return false;
+		}
 
 		for (ObjectField objectField :
 				_objectFieldLocalService.getObjectFieldsByBusinessType(
