@@ -23,6 +23,7 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -133,7 +134,8 @@ public class ObjectEntryModelResourcePermission
 			!_isObjectActionName(
 				actionId, objectEntry.getObjectDefinitionId()) &&
 			!_isObjectFieldName(
-				actionId, objectEntry.getObjectDefinitionId())) {
+				actionId, objectEntry.getCompanyId(),
+				objectEntry.getObjectDefinitionId())) {
 
 			ObjectEntry rootObjectEntry =
 				_objectEntryLocalService.fetchObjectEntry(
@@ -305,7 +307,11 @@ public class ObjectEntryModelResourcePermission
 	}
 
 	private boolean _isObjectFieldName(
-		String actionId, long objectDefinitionId) {
+		String actionId, long companyId, long objectDefinitionId) {
+
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-17564")) {
+			return false;
+		}
 
 		for (ObjectField objectField :
 				_objectFieldLocalService.getObjectFieldsByBusinessType(

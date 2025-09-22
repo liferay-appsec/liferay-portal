@@ -25,6 +25,7 @@ import com.liferay.object.service.ObjectFieldLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -213,7 +214,10 @@ public class ObjectFieldUtil {
 			downloadURL, "objectEntryExternalReferenceCode",
 			objectEntryExternalReferenceCode);
 
-		if (Validator.isNotNull(objectFieldName)) {
+		if (Validator.isNotNull(objectFieldName) &&
+			FeatureFlagManagerUtil.isEnabled(
+				fileEntry.getCompanyId(), "LPD-17564")) {
+
 			downloadURL = HttpComponentsUtil.addParameter(
 				downloadURL, "objectFieldActionId",
 				ObjectFieldConstants.
