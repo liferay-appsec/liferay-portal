@@ -11,6 +11,7 @@ import com.liferay.account.model.AccountEntryOrganizationRel;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryOrganizationRelLocalService;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -130,6 +131,8 @@ public class ObjectEntryModelResourcePermission
 
 		if ((objectEntry.getRootObjectEntryId() != 0) &&
 			!_isObjectActionName(
+				actionId, objectEntry.getObjectDefinitionId()) &&
+			!_isObjectFieldName(
 				actionId, objectEntry.getObjectDefinitionId())) {
 
 			ObjectEntry rootObjectEntry =
@@ -294,6 +297,27 @@ public class ObjectEntryModelResourcePermission
 					ObjectActionTriggerConstants.KEY_STANDALONE)) {
 
 			if (Objects.equals(objectAction.getName(), actionId)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _isObjectFieldName(
+		String actionId, long objectDefinitionId) {
+
+		for (ObjectField objectField :
+				_objectFieldLocalService.getObjectFieldsByBusinessType(
+					objectDefinitionId,
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
+
+			if (Objects.equals(
+					ObjectFieldConstants.
+						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+							objectField.getName(),
+					actionId)) {
+
 				return true;
 			}
 		}
