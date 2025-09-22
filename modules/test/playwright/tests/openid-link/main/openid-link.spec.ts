@@ -6,7 +6,6 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
-import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {liferayConfig} from '../../../liferay.config';
 import {OpenIdInstanceSettingsPage} from '../../../pages/portal-settings-authentication-openid-connect-web/OpenIdInstanceSettingsPage';
@@ -22,9 +21,6 @@ let site: Site;
 const test = mergeTests(
 	dataApiHelpersTest,
 	openIdSettingsPagesTest,
-	featureFlagsTest({
-		'LPD-6378': {enabled: true},
-	}),
 	loginTest(),
 	utilityPagesPage
 );
