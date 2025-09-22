@@ -236,10 +236,16 @@ public class ObjectDefinitionResourcePermissionUtil {
 			objectActionLocalService, objectDefinition.getObjectDefinitionId(),
 			standaloneObjectActions);
 
-		String objectFieldPermissionKeys = _getObjectFieldPermissionKeys(
-			attachmentObjectFields, language,
-			objectDefinition.getObjectDefinitionId(), objectFieldLocalService,
-			ploEntryLocalService);
+		String objectFieldPermissionKeys = StringPool.BLANK;
+
+		if (FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-17564")) {
+
+			objectFieldPermissionKeys = _getObjectFieldPermissionKeys(
+				attachmentObjectFields, language,
+				objectDefinition.getObjectDefinitionId(),
+				objectFieldLocalService, ploEntryLocalService);
+		}
 
 		String resourceActionsFileName =
 			"resource-actions/resource-actions.xml.tpl";
