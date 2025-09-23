@@ -37,14 +37,6 @@ public class FunctionCaptchaImplFactory {
 	protected void activate(
 		ComponentContext componentContext, Map<String, Object> properties) {
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				ConfigurationFactoryUtil.getCompanyId(
-					_companyLocalService, properties),
-				"LPD-36464")) {
-
-			return;
-		}
-
 		_componentInstance = _componentFactory.newInstance(
 			HashMapDictionaryBuilder.<String, Object>put(
 				"captcha.engine.impl",
