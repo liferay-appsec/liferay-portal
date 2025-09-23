@@ -78,6 +78,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -93,7 +94,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.language.override.service.PLOEntryLocalService;
 import com.liferay.portal.test.rule.FeatureFlag;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
@@ -143,7 +146,11 @@ public class ObjectFieldLocalServiceTest {
 					ListTypeEntryUtil.createListTypeEntry(_listTypeEntryKey)));
 	}
 
-	@FeatureFlag("LPD-32050")
+	@FeatureFlags(
+		featureFlags = {
+			@FeatureFlag(value = "LPD-6233"), @FeatureFlag(value = "LPD-32050")
+		}
+	)
 	@Test
 	public void testAddCustomObjectField() throws Exception {
 		AssertUtils.assertFailure(
@@ -793,6 +800,7 @@ public class ObjectFieldLocalServiceTest {
 		_testAddCustomObjectFieldReadOnly();
 	}
 
+	@FeatureFlag("LPD-6233")
 	@Test
 	public void testAddOrUpdateCustomObjectField() throws Exception {
 		ObjectFieldBuilder objectFieldBuilder =
@@ -1420,6 +1428,7 @@ public class ObjectFieldLocalServiceTest {
 			modifiableSystemObjectDefinition);
 	}
 
+	@FeatureFlag("LPD-17564")
 	@Test
 	public void testDeleteObjectField() throws Exception {
 
@@ -1561,6 +1570,21 @@ public class ObjectFieldLocalServiceTest {
 					).build())
 			).build());
 
+		String actionId =
+			ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+				attachmentObjectField.getName();
+
+		ObjectDefinition objectDefinition =
+			attachmentObjectField.getObjectDefinition();
+
+		Assert.assertNotNull(
+			_resourceActionLocalService.fetchResourceAction(
+				objectDefinition.getClassName(), actionId));
+		Assert.assertNotNull(
+			_ploEntryLocalService.fetchPLOEntry(
+				objectDefinition.getCompanyId(), "action." + actionId,
+				attachmentObjectField.getDefaultLanguageId()));
+
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 			0, TestPropsValues.getUserId(),
 			customObjectDefinition.getObjectDefinitionId(),
@@ -1597,6 +1621,13 @@ public class ObjectFieldLocalServiceTest {
 				"No FileEntry exists with the key {fileEntryId=",
 				persistedFileEntryId, "}"),
 			() -> _dlAppLocalService.getFileEntry(persistedFileEntryId));
+		Assert.assertNull(
+			_resourceActionLocalService.fetchResourceAction(
+				objectDefinition.getClassName(), actionId));
+		Assert.assertNull(
+			_ploEntryLocalService.fetchPLOEntry(
+				objectDefinition.getCompanyId(), "action." + actionId,
+				attachmentObjectField.getDefaultLanguageId()));
 
 		// Delete object field business type auto increment
 
@@ -2999,6 +3030,9 @@ public class ObjectFieldLocalServiceTest {
 	@Inject
 	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
+	@Inject
+	private PLOEntryLocalService _ploEntryLocalService;
+
 	private final Map<String, String> _readOnlyObjectFieldDBTypes =
 		HashMapBuilder.put(
 			"createDate", ObjectFieldConstants.DB_TYPE_DATE
@@ -3011,5 +3045,8 @@ public class ObjectFieldLocalServiceTest {
 		).put(
 			"status", ObjectFieldConstants.DB_TYPE_INTEGER
 		).build();
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
 
 }
