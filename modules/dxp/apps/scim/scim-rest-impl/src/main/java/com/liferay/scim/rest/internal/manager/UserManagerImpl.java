@@ -75,14 +75,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.search.document.Document;
-import com.liferay.portal.search.hits.SearchHits;
-import com.liferay.portal.search.query.BooleanQuery;
-import com.liferay.portal.search.query.Queries;
-import com.liferay.portal.search.query.Query;
-import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
-import com.liferay.portal.search.searcher.SearchResponse;
-import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.portal.service.permission.UserGroupPermissionUtil;
 import com.liferay.scim.rest.internal.configuration.ScimClientOAuth2ApplicationConfiguration;
 import com.liferay.scim.rest.internal.model.ScimUser;
@@ -133,9 +125,8 @@ public class UserManagerImpl implements UserManager {
 		ExpandoTableLocalService expandoTableLocalService,
 		ExpandoValueLocalService expandoValueLocalService,
 		ListTypeLocalService listTypeLocalService,
-		PhoneLocalService phoneLocalService, Queries queries,
-		RegionLocalService regionLocalService, Searcher searcher,
-		SearchRequestBuilderFactory searchRequestBuilderFactory,
+		PhoneLocalService phoneLocalService,
+		RegionLocalService regionLocalService,
 		UserGroupLocalService userGroupLocalService,
 		UserGroupService userGroupService, UserLocalService userLocalService,
 		UserService userService, WebsiteLocalService websiteLocalService) {
@@ -153,10 +144,7 @@ public class UserManagerImpl implements UserManager {
 		_expandoValueLocalService = expandoValueLocalService;
 		_listTypeLocalService = listTypeLocalService;
 		_phoneLocalService = phoneLocalService;
-		_queries = queries;
 		_regionLocalService = regionLocalService;
-		_searcher = searcher;
-		_searchRequestBuilderFactory = searchRequestBuilderFactory;
 		_userGroupLocalService = userGroupLocalService;
 		_userGroupService = userGroupService;
 		_userLocalService = userLocalService;
@@ -1325,10 +1313,7 @@ public class UserManagerImpl implements UserManager {
 	private final ExpandoValueLocalService _expandoValueLocalService;
 	private final ListTypeLocalService _listTypeLocalService;
 	private final PhoneLocalService _phoneLocalService;
-	private final Queries _queries;
 	private final RegionLocalService _regionLocalService;
-	private final Searcher _searcher;
-	private final SearchRequestBuilderFactory _searchRequestBuilderFactory;
 	private final UserGroupLocalService _userGroupLocalService;
 	private final UserGroupService _userGroupService;
 	private final UserLocalService _userLocalService;

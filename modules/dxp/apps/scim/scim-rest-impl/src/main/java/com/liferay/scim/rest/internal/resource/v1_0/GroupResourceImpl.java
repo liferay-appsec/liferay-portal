@@ -122,8 +122,7 @@ public class GroupResourceImpl extends BaseGroupResourceImpl {
 			_countryLocalService, _emailAddressLocalService,
 			_expandoColumnLocalService, _expandoTableLocalService,
 			_expandoValueLocalService, _listTypeLocalService,
-			_phoneLocalService, _queries, _regionLocalService, _searcher,
-			_searchRequestBuilderFactory, _userGroupLocalService,
+			_phoneLocalService, _regionLocalService, _userGroupLocalService,
 			_userGroupService, _userLocalService, _userService,
 			_websiteLocalService);
 	}
