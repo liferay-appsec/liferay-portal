@@ -76,6 +76,16 @@ public class GroupResourceImpl extends BaseGroupResourceImpl {
 			Filter filter)
 		throws Exception {
 
+		if ((startIndex == null) || (startIndex < 0)) {
+			startIndex = 1;
+		}
+
+		if (count < 0) {
+			count = 0;
+		}
+
+		startIndex--;
+
 		return ScimUtil.buildResponse(
 			_groupResourceManager.listWithGET(
 				_userManager,

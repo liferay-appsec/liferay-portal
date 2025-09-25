@@ -71,6 +71,16 @@ public class UserResourceImpl extends BaseUserResourceImpl {
 	public Object getV2Users(Integer count, Integer startIndex, Filter filter)
 		throws Exception {
 
+		if ((startIndex == null) || (startIndex < 0)) {
+			startIndex = 1;
+		}
+
+		if (count < 0) {
+			count = 0;
+		}
+
+		startIndex--;
+
 		return ScimUtil.buildResponse(
 			_userResourceManager.listWithGET(
 				_userManager,
