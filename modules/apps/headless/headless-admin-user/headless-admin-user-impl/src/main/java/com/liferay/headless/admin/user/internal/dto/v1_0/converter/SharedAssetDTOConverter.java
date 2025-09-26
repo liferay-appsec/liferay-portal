@@ -23,12 +23,17 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.rest.dto.v1_0.util.LinkUtil;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -195,6 +200,9 @@ public class SharedAssetDTOConverter
 				LinkUtil.toLink(
 					_dlAppService, dlFileEntry, _dlURLHelper,
 					objectEntry.getGroupId(),
+					_hasDownloadPermission(
+						fileEntryId, objectDefinition, objectEntry,
+						objectFieldName),
 					objectDefinition.getExternalReferenceCode(),
 					objectEntry.getExternalReferenceCode(), objectFieldName,
 					_portal)));
@@ -341,6 +349,36 @@ public class SharedAssetDTOConverter
 		return fileEntry.getMimeType();
 	}
 
+	private boolean _hasDownloadPermission(
+			long fileEntryId, ObjectDefinition objectDefinition,
+			ObjectEntry objectEntry, String objectFieldName)
+		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-17564")) {
+
+			return true;
+		}
+
+		PermissionChecker permissionChecker =
+			GuestOrUserUtil.getPermissionChecker();
+
+		if (permissionChecker.hasPermission(
+				objectEntry.getGroupId(), DLFileEntry.class.getName(),
+				fileEntryId, ActionKeys.DOWNLOAD) &&
+			_objectEntryService.hasModelResourcePermission(
+				objectDefinition.getObjectDefinitionId(),
+				objectEntry.getObjectEntryId(),
+				ObjectFieldConstants.
+					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
+						objectFieldName)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		SharedAssetDTOConverter.class);
 
@@ -367,6 +405,9 @@ public class SharedAssetDTOConverter
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectEntryService _objectEntryService;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
