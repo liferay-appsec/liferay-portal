@@ -23,6 +23,7 @@ export interface AttachmentProps
 	extends AttachmentBaseProps<string | LocalizedValue<string>> {
 	contentURL?: string;
 	deleteURL?: string;
+	downloadPermission?: string;
 	fieldName: string;
 	fileEntryProperties: AttachmentFile | LocalizedValue<AttachmentFile>;
 	localizedObjectField: boolean;
@@ -33,6 +34,7 @@ export interface AttachmentProps
 export default function Attachment({
 	contentURL,
 	deleteURL,
+	downloadPermission,
 	fileEntryProperties,
 	localizedObjectField,
 	onChange,
@@ -51,8 +53,8 @@ export default function Attachment({
 		if (Liferay.FeatureFlags['LPD-32050']) {
 			return fileEntryProperties;
 		}
-		else if (contentURL && title) {
-			return {contentURL, title};
+		else if (contentURL && downloadPermission && title) {
+			return {contentURL, downloadPermission, title};
 		}
 
 		return null;
