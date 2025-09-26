@@ -22,27 +22,30 @@ public class LinkUtil {
 
 	public static Link toLink(
 		DLAppService dlAppService, DLFileEntry dlFileEntry,
-		DLURLHelper dlURLHelper, long groupId,
+		DLURLHelper dlURLHelper, long groupId, boolean hasDownloadPermission,
 		String objectDefinitionExternalReferenceCode,
-		String objectEntryExternalReferenceCode, Portal portal,
-		String objectFieldName) {
+		String objectEntryExternalReferenceCode, String objectFieldName,
+		Portal portal) {
 
 		return new Link() {
 			{
 				setHref(
 					() -> {
-						try {
-							return ObjectFieldUtil.getAttachmentDownloadURL(
-								dlURLHelper,
-								dlAppService.getFileEntry(
-									dlFileEntry.getFileEntryId()),
-								groupId, objectDefinitionExternalReferenceCode,
-								objectEntryExternalReferenceCode, null,
-								objectFieldName);
-						}
-						catch (Exception exception) {
-							if (_log.isWarnEnabled()) {
-								_log.warn(exception);
+						if (hasDownloadPermission) {
+							try {
+								return ObjectFieldUtil.getAttachmentDownloadURL(
+									dlURLHelper,
+									dlAppService.getFileEntry(
+										dlFileEntry.getFileEntryId()),
+									groupId,
+									objectDefinitionExternalReferenceCode,
+									objectEntryExternalReferenceCode, null,
+									objectFieldName);
+							}
+							catch (Exception exception) {
+								if (_log.isWarnEnabled()) {
+									_log.warn(exception);
+								}
 							}
 						}
 
