@@ -21,6 +21,7 @@ import type {LocalizedValue} from 'dynamic-data-mapping-form-field-type';
 
 export type AttachmentFile = {
 	contentURL: string;
+	downloadPermission: string;
 	fileEntryId: string;
 	title: string;
 };
@@ -91,6 +92,7 @@ export default function AttachmentBase({
 			onAttachmentChange(
 				{
 					contentURL: selectedItemValue.url,
+					downloadPermission: 'true',
 					fileEntryId: selectedItemValue.fileEntryId,
 					title: selectedItemValue.title,
 				},
@@ -137,6 +139,7 @@ export default function AttachmentBase({
 					onAttachmentChange(
 						{
 							contentURL: file.contentURL,
+							downloadPermission: 'true',
 							fileEntryId: file.fileEntryId,
 							title: file.title,
 						},
