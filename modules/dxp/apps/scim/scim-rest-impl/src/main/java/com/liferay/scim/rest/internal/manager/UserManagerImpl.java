@@ -382,7 +382,9 @@ public class UserManagerImpl implements UserManager {
 			).query(
 				_createBooleanQuery(
 					node,
-					_queries.term("status", WorkflowConstants.STATUS_APPROVED))
+					_queries.termsSet("status", List.of(
+							WorkflowConstants.STATUS_APPROVED,
+							WorkflowConstants.STATUS_INACTIVE)))
 			).size(
 				count
 			).withSearchContext(
