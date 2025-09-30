@@ -480,7 +480,29 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 				}
 			}
 			else {
-				_addOAuthClientEntry(properties, guestUserId);
+				OAuthClientEntry oAuthClientEntry =
+					_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+						companyId,
+						_getPropertyAsString("discoveryEndpoint", properties),
+						_getPropertyAsString(
+							"openIdConnectClientId", properties));
+
+				if (oAuthClientEntry != null) {
+					_oAuthClientEntryLocalService.updateOAuthClientEntry(
+						oAuthClientEntry.getOAuthClientEntryId(),
+						_generateAuthRequestParametersJSON(properties),
+						_updateOAuthClientASLocalMetadata(
+							guestUserId, properties),
+						_generateCustomClaimsJSON(properties),
+						_generateInfoJSON(properties),
+						GetterUtil.getLong(
+							properties.get("discoveryEndpointCacheInMillis")),
+						oAuthClientEntry.getOIDCUserInfoMapperJSON(),
+						_generateTokenRequestParametersJSON(properties));
+				}
+				else {
+					_addOAuthClientEntry(properties, guestUserId);
+				}
 			}
 
 			OpenIdConnectProviderUtil.removeOAuthClientEntryIdsByCompanyId(
