@@ -22,7 +22,9 @@ import org.osgi.annotation.versioning.ProviderType;
  *
  * @author Thuong Dinh
  */
-@ExtendedObjectClassDefinition(category = "sso")
+@ExtendedObjectClassDefinition(
+	category = "sso", scope = ExtendedObjectClassDefinition.Scope.COMPANY
+)
 @Meta.OCD(
 	id = "com.liferay.portal.security.sso.openid.connect.configuration.OpenIdConnectConfiguration",
 	localization = "content/Language",
