@@ -8,12 +8,14 @@ package com.liferay.login.web.internal.portlet.action;
 import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -108,12 +111,19 @@ public class LoginConfigurationActionImpl extends DefaultConfigurationAction {
 			ActionResponse actionResponse)
 		throws Exception {
 
-		validateEmailFrom(actionRequest);
+		if (!FeatureFlagManagerUtil.isEnabled(
+				_portal.getCompanyId(actionRequest), "LPD-6378")) {
+
+			validateEmailFrom(actionRequest);
+		}
 
 		super.processAction(portletConfig, actionRequest, actionResponse);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		LoginConfigurationActionImpl.class);
+
+	@Reference
+	private Portal _portal;
 
 }
