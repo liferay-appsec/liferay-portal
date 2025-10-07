@@ -46,6 +46,16 @@ export class UtilityPagesPage {
 		await this.page.getByRole('button', {name: 'Delete'}).click();
 	}
 
+	async editDraft(title: string, pageType: string) {
+		await this.newButton.click();
+
+		await this.page.getByRole('menuitem', {name: pageType}).click();
+		await this.page.getByRole('button', {name: 'Blank'}).click();
+		await this.page.getByPlaceholder('Name').fill(title);
+
+		await this.page.getByRole('button', {name: 'Save'}).click();
+	}
+
 	async markAsDefault(title: string) {
 		const actionsPath = '//p[@title="' + title + '"]/../..';
 

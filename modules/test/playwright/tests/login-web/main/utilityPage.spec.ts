@@ -6,15 +6,18 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
+import {pageEditorPagesTest} from '../../../fixtures/pageEditorPagesTest';
 import {liferayConfig} from '../../../liferay.config';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import performLogin, {performLogout} from '../../../utils/performLogin';
+import {waitForAlert} from '../../../utils/waitForAlert';
 import {utilityPagesPage} from './fixtures/utilityPageTest';
 
 export const test = mergeTests(
 	featureFlagsTest({
 		'LPD-6378': {enabled: true},
 	}),
+	pageEditorPagesTest,
 	utilityPagesPage
 );
 
@@ -154,4 +157,56 @@ test('LPD-6871 Render the original "Forgot Password" view if no default utility 
 	await page.getByRole('button', {name: 'Sign In'}).click();
 	await page.getByText('Forgot Password').click();
 	await expect(page).toHaveTitle('Home - Liferay DXP');
+});
+
+test('LPD-32084 Change authentication type', async ({
+	page,
+	pageEditorPage,
+	utilityPagesPage,
+}) => {
+	await performLogin(page, 'test');
+
+	await utilityPagesPage.goto();
+
+	const title = getRandomTitle();
+
+	await utilityPagesPage.editDraft(title, 'Sign in');
+
+	await expect(page.getByText(title)).toBeVisible();
+
+	await pageEditorPage.addWidget('Tools', 'Sign In');
+
+	await page
+		.locator('#wrapper')
+		.getByRole('button', {name: 'Options'})
+		.click();
+
+	await page
+		.getByRole('menuitem', {name: 'Configuration', exact: true})
+		.click();
+
+	const configurationIFrame = page.frameLocator(
+		'iframe[title*="Configuration"]'
+	);
+
+	await page
+		.frameLocator('iframe[title="Configuration"]')
+		.getByLabel('Authentication Type')
+		.selectOption('emailAddress');
+
+	await page
+		.frameLocator('iframe[title="Configuration"]')
+		.getByRole('button', {name: 'Save'})
+		.click();
+
+	await waitForAlert(
+		configurationIFrame,
+		'Success:You have successfully updated the setup.'
+	);
+
+	await utilityPagesPage.goto();
+
+	await utilityPagesPage.deletePage(title);
+
+	await performLogout(page);
 });
