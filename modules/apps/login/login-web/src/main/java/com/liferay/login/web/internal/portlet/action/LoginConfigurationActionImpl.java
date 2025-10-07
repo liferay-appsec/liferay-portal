@@ -8,6 +8,7 @@ package com.liferay.login.web.internal.portlet.action;
 import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
@@ -108,7 +109,9 @@ public class LoginConfigurationActionImpl extends DefaultConfigurationAction {
 			ActionResponse actionResponse)
 		throws Exception {
 
-		validateEmailFrom(actionRequest);
+		if (!FeatureFlagManagerUtil.isEnabled("LPD-6378")) {
+			validateEmailFrom(actionRequest);
+		}
 
 		super.processAction(portletConfig, actionRequest, actionResponse);
 	}
