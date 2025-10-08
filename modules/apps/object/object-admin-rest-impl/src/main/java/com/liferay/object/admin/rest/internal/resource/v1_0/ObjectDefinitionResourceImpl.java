@@ -293,7 +293,7 @@ public class ObjectDefinitionResourceImpl
 
 				ObjectDefinitionValidationThreadLocal.
 					setObjectDefinitionValidationContext(
-						false, new ObjectDefinitionValidationContext(null));
+						false, null);
 			}
 		}
 
@@ -535,7 +535,7 @@ public class ObjectDefinitionResourceImpl
 		finally {
 			ObjectDefinitionValidationThreadLocal.
 				setObjectDefinitionValidationContext(
-					false, new ObjectDefinitionValidationContext(null));
+					false, null);
 		}
 
 		List<ObjectAction> objectActions = ListUtil.fromArray(
