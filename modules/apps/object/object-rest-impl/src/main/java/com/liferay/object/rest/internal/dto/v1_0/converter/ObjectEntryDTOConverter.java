@@ -836,16 +836,18 @@ public class ObjectEntryDTOConverter
 				}));
 
 		fileEntry.setId(dlFileEntry::getFileEntryId);
+
+		String actionId = objectField.getAttachmentDownloadActionKey();
+
 		fileEntry.setLink(
 			() -> LinkUtil.toLink(
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
 				_hasDownloadPermission(
-					fileEntryId, objectDefinition, objectEntry,
-					objectFieldName),
+					actionId, fileEntryId, objectDefinition, objectEntry),
 				objectDefinition.getExternalReferenceCode(),
-				objectEntry.getExternalReferenceCode(), objectFieldName,
-				_portal));
+				objectEntry.getExternalReferenceCode(), actionId, _portal));
+
 		fileEntry.setMetadata(
 			() -> NestedFieldsSupplier.supply(
 				objectFieldName + ".metadata",
@@ -1256,9 +1258,9 @@ public class ObjectEntryDTOConverter
 	}
 
 	private boolean _hasDownloadPermission(
-			long fileEntryId, ObjectDefinition objectDefinition,
-			com.liferay.object.model.ObjectEntry objectEntry,
-			String objectFieldName)
+			String actionId, long fileEntryId,
+			ObjectDefinition objectDefinition,
+			com.liferay.object.model.ObjectEntry objectEntry)
 		throws PortalException {
 
 		if (!FeatureFlagManagerUtil.isEnabled(
@@ -1275,10 +1277,7 @@ public class ObjectEntryDTOConverter
 				fileEntryId, ActionKeys.DOWNLOAD) &&
 			_objectEntryService.hasModelResourcePermission(
 				objectDefinition.getObjectDefinitionId(),
-				objectEntry.getObjectEntryId(),
-				ObjectFieldConstants.
-					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-						objectFieldName)) {
+				objectEntry.getObjectEntryId(), actionId)) {
 
 			return true;
 		}

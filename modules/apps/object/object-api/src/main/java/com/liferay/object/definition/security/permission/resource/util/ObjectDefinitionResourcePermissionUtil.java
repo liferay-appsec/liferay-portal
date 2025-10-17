@@ -112,14 +112,11 @@ public class ObjectDefinitionResourcePermissionUtil {
 		for (Locale locale : language.getAvailableLocales()) {
 			String languageId = LocaleUtil.toLanguageId(locale);
 
+			String actionId = objectField.getAttachmentDownloadActionKey();
+
 			ploEntryLocalService.addOrUpdatePLOEntry(
 				objectField.getCompanyId(), objectField.getUserId(),
-				StringBundler.concat(
-					"action.",
-					ObjectFieldConstants.
-						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
-					objectField.getName()),
-				languageId,
+				"action." + actionId, languageId,
 				LanguageUtil.format(
 					locale, "download-x", objectField.getLabel(locale)));
 		}
@@ -176,8 +173,7 @@ public class ObjectDefinitionResourcePermissionUtil {
 
 			objectFieldPermissionKeys = StringBundler.concat(
 				objectFieldPermissionKeys, "<action-key>",
-				ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
-				objectField.getName(), "</action-key>");
+				objectField.getAttachmentDownloadActionKey(), "</action-key>");
 		}
 
 		return objectFieldPermissionKeys;

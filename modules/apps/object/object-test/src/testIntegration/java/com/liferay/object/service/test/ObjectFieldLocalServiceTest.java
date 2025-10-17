@@ -1571,8 +1571,7 @@ public class ObjectFieldLocalServiceTest {
 			).build());
 
 		String actionId =
-			ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-				attachmentObjectField.getName();
+			attachmentObjectField.getAttachmentDownloadActionKey();
 
 		ObjectDefinition objectDefinition =
 			attachmentObjectField.getObjectDefinition();

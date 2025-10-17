@@ -180,7 +180,7 @@ public class SharedAssetDTOConverter
 
 	private FileEntry _getFileEntry(
 		long fileEntryId, ObjectDefinition objectDefinition,
-		ObjectEntry objectEntry, String objectFieldName) {
+		ObjectEntry objectEntry, ObjectField objectField) {
 
 		FileEntry fileEntry = new FileEntry();
 
@@ -195,17 +195,20 @@ public class SharedAssetDTOConverter
 			dlFileEntry::getExternalReferenceCode);
 
 		fileEntry.setId(dlFileEntry::getFileEntryId);
+
+		String actionId = objectField.getAttachmentDownloadActionKey();
+
 		fileEntry.setLink(
 			() -> toLink(
 				LinkUtil.toLink(
 					_dlAppService, dlFileEntry, _dlURLHelper,
 					objectEntry.getGroupId(),
 					_hasDownloadPermission(
-						fileEntryId, objectDefinition, objectEntry,
-						objectFieldName),
+						actionId, fileEntryId, objectDefinition, objectEntry),
 					objectDefinition.getExternalReferenceCode(),
-					objectEntry.getExternalReferenceCode(), objectFieldName,
+					objectEntry.getExternalReferenceCode(), actionId,
 					_portal)));
+
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setThumbnailURL(
 			() -> {
@@ -269,7 +272,7 @@ public class SharedAssetDTOConverter
 				if (serializable instanceof Long) {
 					return _getFileEntry(
 						GetterUtil.getLong(serializable), objectDefinition,
-						objectEntry, objectFieldName);
+						objectEntry, objectField);
 				}
 			}
 		}
@@ -350,8 +353,8 @@ public class SharedAssetDTOConverter
 	}
 
 	private boolean _hasDownloadPermission(
-			long fileEntryId, ObjectDefinition objectDefinition,
-			ObjectEntry objectEntry, String objectFieldName)
+			String actionId, long fileEntryId,
+			ObjectDefinition objectDefinition, ObjectEntry objectEntry)
 		throws PortalException {
 
 		if (!FeatureFlagManagerUtil.isEnabled(
@@ -368,10 +371,7 @@ public class SharedAssetDTOConverter
 				fileEntryId, ActionKeys.DOWNLOAD) &&
 			_objectEntryService.hasModelResourcePermission(
 				objectDefinition.getObjectDefinitionId(),
-				objectEntry.getObjectEntryId(),
-				ObjectFieldConstants.
-					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-						objectFieldName)) {
+				objectEntry.getObjectEntryId(), actionId)) {
 
 			return true;
 		}

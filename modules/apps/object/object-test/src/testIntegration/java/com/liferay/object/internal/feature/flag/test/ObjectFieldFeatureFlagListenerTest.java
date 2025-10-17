@@ -129,9 +129,7 @@ public class ObjectFieldFeatureFlagListenerTest {
 		FeatureFlagTestUtil.invokeFeatureFlagListeners(
 			companyId, false, "LPD-17564");
 
-		String actionId =
-			ObjectFieldConstants.ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-				objectField.getName();
+		String actionId = objectField.getAttachmentDownloadActionKey();
 
 		Assert.assertNull(
 			_resourceActionLocalService.fetchResourceAction(name, actionId));

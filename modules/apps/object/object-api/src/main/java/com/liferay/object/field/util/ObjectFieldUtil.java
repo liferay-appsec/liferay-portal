@@ -187,7 +187,7 @@ public class ObjectFieldUtil {
 	public static String getAttachmentDownloadURL(
 			DLURLHelper dlURLHelper, FileEntry fileEntry, long groupId,
 			String objectDefinitionExternalReferenceCode,
-			String objectEntryExternalReferenceCode, String objectFieldName,
+			String objectEntryExternalReferenceCode, String actionId,
 			ThemeDisplay themeDisplay)
 		throws PortalException {
 
@@ -214,15 +214,11 @@ public class ObjectFieldUtil {
 			downloadURL, "objectEntryExternalReferenceCode",
 			objectEntryExternalReferenceCode);
 
-		if (Validator.isNotNull(objectFieldName) &&
-			FeatureFlagManagerUtil.isEnabled(
+		if (FeatureFlagManagerUtil.isEnabled(
 				fileEntry.getCompanyId(), "LPD-17564")) {
 
 			downloadURL = HttpComponentsUtil.addParameter(
-				downloadURL, "objectFieldActionId",
-				ObjectFieldConstants.
-					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-						objectFieldName);
+				downloadURL, "actionId", actionId);
 		}
 
 		return downloadURL;

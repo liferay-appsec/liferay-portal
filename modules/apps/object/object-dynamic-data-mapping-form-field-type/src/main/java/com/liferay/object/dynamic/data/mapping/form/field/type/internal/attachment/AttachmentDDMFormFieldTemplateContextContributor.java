@@ -17,15 +17,16 @@ import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.criteria.FileEntryItemSelectorReturnType;
 import com.liferay.item.selector.criteria.file.criterion.FileItemSelectorCriterion;
 import com.liferay.object.configuration.ObjectConfiguration;
-import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.dynamic.data.mapping.form.field.type.constants.ObjectDDMFormFieldTypeConstants;
 import com.liferay.object.field.attachment.AttachmentManager;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -222,6 +223,11 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 			long groupId = GetterUtil.getLong(
 				ddmFormField.getProperty("groupId"));
 
+			ObjectField objectField = _objectFieldLocalService.getObjectField(
+				GetterUtil.getLong(ddmFormField.getProperty("objectFieldId")));
+
+			String actionId = objectField.getAttachmentDownloadActionKey();
+
 			return HashMapBuilder.put(
 				"contentURL",
 				() -> {
@@ -234,7 +240,7 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 
 					return ObjectFieldUtil.getAttachmentDownloadURL(
 						_dlURLHelper, fileEntry, groupId, objectDefinitionERC,
-						objectEntryERC, ddmFormField.getName(), themeDisplay);
+						objectEntryERC, actionId, themeDisplay);
 				}
 			).put(
 				"downloadPermission",
@@ -246,9 +252,8 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 					}
 
 					return _hasAttachmentDownloadPermission(
-						fileEntry, groupId, objectDefinitionERC, objectEntryERC,
-						ddmFormField.getName(),
-						_getPermissionChecker(themeDisplay));
+						actionId, fileEntry, groupId, objectDefinitionERC,
+						objectEntryERC, _getPermissionChecker(themeDisplay));
 				}
 			).put(
 				"title", fileEntry.getFileName()
@@ -366,8 +371,8 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 	}
 
 	private String _hasAttachmentDownloadPermission(
-		FileEntry fileEntry, long groupId, String objectDefinitionERC,
-		String objectEntryERC, String objectFieldName,
+		String actionId, FileEntry fileEntry, long groupId,
+		String objectDefinitionERC, String objectEntryERC,
 		PermissionChecker permissionChecker) {
 
 		if (!FeatureFlagManagerUtil.isEnabled(
@@ -389,10 +394,7 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 					permissionChecker, ActionKeys.DOWNLOAD) &&
 				permissionChecker.hasPermission(
 					groupId, objectDefinition.getClassName(),
-					objectEntry.getObjectEntryId(),
-					ObjectFieldConstants.
-						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-							objectFieldName)) {
+					objectEntry.getObjectEntryId(), actionId)) {
 
 				return Boolean.TRUE.toString();
 			}
@@ -437,6 +439,9 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectFieldLocalService _objectFieldLocalService;
 
 	@Reference
 	private UploadServletRequestConfigurationProvider

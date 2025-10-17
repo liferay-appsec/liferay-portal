@@ -11,7 +11,6 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
 import com.liferay.portal.kernel.language.Language;
@@ -62,9 +61,7 @@ public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
 
 				for (ObjectField objectField : objectFields) {
 					String actionId =
-						ObjectFieldConstants.
-							ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-								objectField.getName();
+						objectField.getAttachmentDownloadActionKey();
 
 					if (enabled) {
 						ResourceAction resourceAction =
@@ -88,7 +85,7 @@ public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
 								objectField);
 
 							_updateResourcePermissions(
-								objectDefinition, objectField);
+								actionId, objectDefinition);
 						}
 						catch (Exception exception) {
 							_log.error(exception);
@@ -113,21 +110,18 @@ public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
 		for (Locale locale : _language.getAvailableLocales()) {
 			String languageId = LocaleUtil.toLanguageId(locale);
 
+			String actionId = objectField.getAttachmentDownloadActionKey();
+
 			_ploEntryLocalService.addOrUpdatePLOEntry(
 				objectField.getCompanyId(), objectField.getUserId(),
-				StringBundler.concat(
-					"action.",
-					ObjectFieldConstants.
-						ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX,
-					objectField.getName()),
-				languageId,
+				"action." + actionId, languageId,
 				LanguageUtil.format(
 					locale, "download-x", objectField.getLabel(locale)));
 		}
 	}
 
 	private void _updateResourcePermissions(
-			ObjectDefinition objectDefinition, ObjectField objectField)
+			String actionId, ObjectDefinition objectDefinition)
 		throws PortalException {
 
 		List<ResourcePermission> resourcePermissions =
@@ -137,15 +131,10 @@ public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
 				ResourceConstants.SCOPE_INDIVIDUAL);
 
 		for (ResourcePermission resourcePermission : resourcePermissions) {
-			String objectFieldActionId =
-				ObjectFieldConstants.
-					ATTACHMENT_FIELD_DOWNLOAD_ACTION_ID_PREFIX +
-						objectField.getName();
-
-			if (!resourcePermission.hasActionId(objectFieldActionId) &&
+			if (!resourcePermission.hasActionId(actionId) &&
 				resourcePermission.isViewActionId()) {
 
-				resourcePermission.addResourceAction(objectFieldActionId);
+				resourcePermission.addResourceAction(actionId);
 
 				_resourcePermissionLocalService.updateResourcePermission(
 					resourcePermission);
