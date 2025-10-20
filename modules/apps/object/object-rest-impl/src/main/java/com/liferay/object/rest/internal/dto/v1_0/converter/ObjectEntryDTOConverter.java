@@ -836,17 +836,16 @@ public class ObjectEntryDTOConverter
 				}));
 
 		fileEntry.setId(dlFileEntry::getFileEntryId);
-
-		String actionId = objectField.getAttachmentDownloadActionKey();
-
 		fileEntry.setLink(
 			() -> LinkUtil.toLink(
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
 				_hasDownloadPermission(
-					actionId, fileEntryId, objectDefinition, objectEntry),
+					objectField.getAttachmentDownloadActionKey(), fileEntryId,
+					objectDefinition, objectEntry),
 				objectDefinition.getExternalReferenceCode(),
-				objectEntry.getExternalReferenceCode(), actionId, _portal));
+				objectEntry.getExternalReferenceCode(),
+				objectField.getExternalReferenceCode(), _portal));
 
 		fileEntry.setMetadata(
 			() -> NestedFieldsSupplier.supply(

@@ -187,8 +187,8 @@ public class ObjectFieldUtil {
 	public static String getAttachmentDownloadURL(
 			DLURLHelper dlURLHelper, FileEntry fileEntry, long groupId,
 			String objectDefinitionExternalReferenceCode,
-			String objectEntryExternalReferenceCode, String actionId,
-			ThemeDisplay themeDisplay)
+			String objectEntryExternalReferenceCode,
+			String objectFieldExternalReferenceCode, ThemeDisplay themeDisplay)
 		throws PortalException {
 
 		String downloadURL = dlURLHelper.getDownloadURL(
@@ -218,7 +218,8 @@ public class ObjectFieldUtil {
 				fileEntry.getCompanyId(), "LPD-17564")) {
 
 			downloadURL = HttpComponentsUtil.addParameter(
-				downloadURL, "actionId", actionId);
+				downloadURL, "objectFieldExternalReferenceCode",
+				objectFieldExternalReferenceCode);
 		}
 
 		return downloadURL;

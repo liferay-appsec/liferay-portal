@@ -226,8 +226,6 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 			ObjectField objectField = _objectFieldLocalService.getObjectField(
 				GetterUtil.getLong(ddmFormField.getProperty("objectFieldId")));
 
-			String actionId = objectField.getAttachmentDownloadActionKey();
-
 			return HashMapBuilder.put(
 				"contentURL",
 				() -> {
@@ -240,7 +238,8 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 
 					return ObjectFieldUtil.getAttachmentDownloadURL(
 						_dlURLHelper, fileEntry, groupId, objectDefinitionERC,
-						objectEntryERC, actionId, themeDisplay);
+						objectEntryERC, objectField.getExternalReferenceCode(),
+						themeDisplay);
 				}
 			).put(
 				"downloadPermission",
@@ -252,8 +251,9 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 					}
 
 					return _hasAttachmentDownloadPermission(
-						actionId, fileEntry, groupId, objectDefinitionERC,
-						objectEntryERC, _getPermissionChecker(themeDisplay));
+						objectField.getAttachmentDownloadActionKey(), fileEntry,
+						groupId, objectDefinitionERC, objectEntryERC,
+						_getPermissionChecker(themeDisplay));
 				}
 			).put(
 				"title", fileEntry.getFileName()
