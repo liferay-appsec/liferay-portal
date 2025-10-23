@@ -63,6 +63,13 @@ public interface OpenIdConnectProviderConfiguration {
 	)
 	public long discoveryEndpointCacheInMillis();
 
+	@ExtendedAttributeDefinition(featureFlagKey = "LPD-20879")
+	@Meta.AD(
+		deflt = "email", description = "fallback-matcher-help",
+		name = "fallback-matcher"
+	)
+	public String fallbackMatcher();
+
 	@Meta.AD(
 		deflt = "RS256", description = "id-token-signing-alg-values-help",
 		name = "id-token-signing-alg-values", required = false

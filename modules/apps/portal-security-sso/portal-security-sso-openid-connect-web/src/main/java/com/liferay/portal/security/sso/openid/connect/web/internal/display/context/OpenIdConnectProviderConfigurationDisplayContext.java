@@ -77,6 +77,8 @@ public class OpenIdConnectProviderConfigurationDisplayContext {
 				"discoveryEndpointCacheInMillis",
 				OAuthClientEntryConstants.METADATA_CACHE_TIME_DEFAULT
 			).put(
+				"fallbackMatcher", "email"
+			).put(
 				"idTokenSigningAlgValues", new String[] {"RS256"}
 			).put(
 				"scopes", "openid email profile"
@@ -165,6 +167,10 @@ public class OpenIdConnectProviderConfigurationDisplayContext {
 	public List<ExpandoColumn> getExpandoColumns() {
 		return _expandoColumnLocalService.getDefaultTableColumns(
 			CompanyThreadLocal.getCompanyId(), User.class.getName());
+	}
+
+	public String getFallbackMatcher() {
+		return GetterUtil.getString(_properties.get("fallbackMatcher"));
 	}
 
 	public String[] getIdTokenSigningAlgValues() {

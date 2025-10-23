@@ -194,6 +194,18 @@ OpenIdConnectProviderConfigurationDisplayContext openIdConnectProviderConfigurat
 	</aui:script>
 </c:if>
 
+<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-20879") %>'>
+
+	<%
+	String fallbackMatcher = openIdConnectProviderConfigurationDisplayContext.getFallbackMatcher();
+	%>
+
+	<aui:select helpMessage="fallback-matcher-help" label="fallback-matcher" name="fallbackMatcher" required="<%= true %>" type="text">
+		<aui:option label="email" selected='<%= Objects.equals(fallbackMatcher, "email") %>' value="email" />
+		<aui:option label="screen-name" selected='<%= Objects.equals(fallbackMatcher, "screenName") %>' value="screenName" />
+	</aui:select>
+</c:if>
+
 <aui:script use="liferay-auto-fields">
 	new Liferay.AutoFields({
 		contentBox:

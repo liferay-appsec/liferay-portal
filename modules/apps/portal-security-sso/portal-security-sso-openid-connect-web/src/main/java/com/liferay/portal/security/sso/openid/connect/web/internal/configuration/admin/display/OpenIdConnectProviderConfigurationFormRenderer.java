@@ -68,6 +68,9 @@ public class OpenIdConnectProviderConfigurationFormRenderer
 			ParamUtil.getLong(
 				httpServletRequest, "discoveryEndpointCacheInMillis")
 		).put(
+			"fallbackMatcher",
+			ParamUtil.getString(httpServletRequest, "fallbackMatcher")
+		).put(
 			"idTokenSigningAlgValues",
 			_getStringValues(
 				httpServletRequest, false, "idTokenSigningAlgValues")
