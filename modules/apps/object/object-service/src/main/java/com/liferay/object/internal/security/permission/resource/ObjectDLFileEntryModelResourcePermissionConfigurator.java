@@ -13,6 +13,8 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -58,8 +60,16 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 				ServiceContext serviceContext =
 					ServiceContextThreadLocal.getServiceContext();
 
+				if (serviceContext == null) {
+					return _handleInvalidContext(dlFileEntry);
+				}
+
 				HttpServletRequest httpServletRequest =
 					serviceContext.getRequest();
+
+				if (httpServletRequest == null) {
+					return _handleInvalidContext(dlFileEntry);
+				}
 
 				boolean download = ParamUtil.getBoolean(
 					httpServletRequest, "download");
@@ -84,7 +94,7 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 								companyId);
 
 					if (objectDefinition == null) {
-						return null;
+						return _handleInvalidContext(dlFileEntry);
 					}
 
 					long groupId = ObjectDefinitionConstants.GROUP_ID_DEFAULT;
@@ -111,7 +121,7 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 							groupId, objectDefinitionId);
 
 					if (objectEntry == null) {
-						return null;
+						return _handleInvalidContext(dlFileEntry);
 					}
 
 					ObjectField objectField =
@@ -120,7 +130,7 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 							objectDefinitionId);
 
 					if (objectField == null) {
-						return null;
+						return _handleInvalidContext(dlFileEntry);
 					}
 
 					ModelResourcePermission<?>
@@ -143,9 +153,24 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 					return false;
 				}
 
-				return null;
+				return _handleInvalidContext(dlFileEntry);
 			});
 	}
+
+	private Boolean _handleInvalidContext(DLFileEntry dlFileEntry) {
+		String className = dlFileEntry.getClassName();
+
+		if (!className.contains("com.liferay.object.model.ObjectDefinition#")) {
+			return null;
+		}
+
+		_log.error("Unable to verify download permission for " + className);
+
+		return false;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ObjectDLFileEntryModelResourcePermissionConfigurator.class);
 
 	@Reference
 	private GroupLocalService _groupLocalService;
