@@ -42,62 +42,62 @@ import org.osgi.service.component.annotations.Reference;
 @Component(
 	property = "feature.flag.key=LPD-17564", service = FeatureFlagListener.class
 )
-public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
+public class AttachmentObjectFieldDownloadActionFeatureFlagListener
+	implements FeatureFlagListener {
 
 	@Override
 	public void onValue(
 		long companyId, String featureFlagKey, boolean enabled) {
 
-		if (Objects.equals(featureFlagKey, "LPD-17564")) {
-			List<ObjectDefinition> objectDefinitions =
-				_objectDefinitionLocalService.getObjectDefinitions(
-					companyId, WorkflowConstants.STATUS_APPROVED);
+		if (!Objects.equals(featureFlagKey, "LPD-17564")) {
+			return;
+		}
 
-			for (ObjectDefinition objectDefinition : objectDefinitions) {
-				List<ObjectField> objectFields =
-					_objectFieldLocalService.getObjectFieldsByBusinessType(
-						objectDefinition.getObjectDefinitionId(),
-						ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT);
+		List<ObjectDefinition> objectDefinitions =
+			_objectDefinitionLocalService.getObjectDefinitions(
+				companyId, WorkflowConstants.STATUS_APPROVED);
 
-				for (ObjectField objectField : objectFields) {
-					String actionId =
-						objectField.getAttachmentDownloadActionKey();
+		for (ObjectDefinition objectDefinition : objectDefinitions) {
+			List<ObjectField> objectFields =
+				_objectFieldLocalService.getObjectFieldsByBusinessType(
+					objectDefinition.getObjectDefinitionId(),
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT);
 
-					if (enabled) {
-						ResourceAction resourceAction =
-							_resourceActionLocalService.fetchResourceAction(
-								objectDefinition.getClassName(), actionId);
+			for (ObjectField objectField : objectFields) {
+				String actionId = objectField.getAttachmentDownloadActionKey();
 
-						if (resourceAction != null) {
-							continue;
-						}
-
-						try {
-							ObjectDefinitionResourcePermissionUtil.
-								populateResourceActions(
-									Collections.singletonList(objectField),
-									_language, null, objectDefinition,
-									_objectFieldLocalService,
-									_ploEntryLocalService, _portletLocalService,
-									_resourceActions, null);
-
-							_addOrUpdateObjectFieldResourceActionPLOEntries(
-								objectField);
-
-							_updateResourcePermissions(
-								actionId, objectDefinition);
-						}
-						catch (Exception exception) {
-							_log.error(exception);
-						}
-					}
-					else {
-						_resourceActions.removeModelResource(
+				if (enabled) {
+					ResourceAction resourceAction =
+						_resourceActionLocalService.fetchResourceAction(
 							objectDefinition.getClassName(), actionId);
 
-						_ploEntryLocalService.deletePLOEntries(
-							objectField.getCompanyId(), "action." + actionId);
+					if (resourceAction != null) {
+						continue;
 					}
+
+					try {
+						ObjectDefinitionResourcePermissionUtil.
+							populateResourceActions(
+								Collections.singletonList(objectField),
+								_language, null, objectDefinition,
+								_objectFieldLocalService, _ploEntryLocalService,
+								_portletLocalService, _resourceActions, null);
+
+						_addOrUpdateObjectFieldResourceActionPLOEntries(
+							objectField);
+
+						_updateResourcePermissions(actionId, objectDefinition);
+					}
+					catch (Exception exception) {
+						_log.error(exception);
+					}
+				}
+				else {
+					_resourceActions.removeModelResource(
+						objectDefinition.getClassName(), actionId);
+
+					_ploEntryLocalService.deletePLOEntries(
+						objectField.getCompanyId(), "action." + actionId);
 				}
 			}
 		}
@@ -143,7 +143,7 @@ public class ObjectFieldFeatureFlagListener implements FeatureFlagListener {
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		ObjectFieldFeatureFlagListener.class);
+		AttachmentObjectFieldDownloadActionFeatureFlagListener.class);
 
 	@Reference
 	private Language _language;
