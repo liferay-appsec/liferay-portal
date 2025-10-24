@@ -15,6 +15,8 @@ import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.oauth.client.persistence.constants.OAuthClientEntryConstants;
+import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
+import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -258,15 +260,25 @@ public class OIDCUserInfoProcessorTest {
 			"website", "www.test.com"
 		);
 
+		OAuthClientEntry oAuthClientEntry =
+			_oAuthClientEntryLocalService.createOAuthClientEntry(
+				_oAuthClientEntryId);
+
+		oAuthClientEntry.setAuthServerWellKnownURI(
+			RandomTestUtil.randomString());
+		oAuthClientEntry.setClientId(RandomTestUtil.randomString());
+		oAuthClientEntry.setCustomClaimsJSON(customClaimsJSON);
+		oAuthClientEntry.setOIDCUserInfoMapperJSON(userInfoMapperJSON);
+
 		long userId = ReflectionTestUtil.invoke(
 			_oidcUserInfoProcessor, "processUserInfo",
 			new Class<?>[] {
-				long.class, String.class, String.class, ServiceContext.class,
-				String.class, String.class
+				long.class, String.class, OAuthClientEntry.class,
+				ServiceContext.class, String.class, String.class
 			},
-			TestPropsValues.getCompanyId(), customClaimsJSON,
-			StringUtil.randomString(), _serviceContext,
-			userInfoJSONObject.toString(), userInfoMapperJSON);
+			TestPropsValues.getCompanyId(), RandomTestUtil.randomString(),
+			oAuthClientEntry, _serviceContext, RandomTestUtil.randomString(),
+			userInfoJSONObject.toString());
 
 		User user = _userLocalService.fetchUserByEmailAddress(
 			TestPropsValues.getCompanyId(), _emailAddress);
@@ -340,6 +352,9 @@ public class OIDCUserInfoProcessorTest {
 	private JSONFactory _jsonFactory;
 
 	private long _oAuthClientEntryId;
+
+	@Inject
+	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
 
 	@Inject(
 		filter = "component.name=com.liferay.portal.security.sso.openid.connect.internal.OIDCUserInfoProcessor",
