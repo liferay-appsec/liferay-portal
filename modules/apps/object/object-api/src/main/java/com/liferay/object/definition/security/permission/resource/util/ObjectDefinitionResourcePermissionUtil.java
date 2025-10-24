@@ -18,21 +18,16 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
-import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.PortletLocalService;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.language.override.service.PLOEntryLocalService;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,20 +37,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ObjectDefinitionResourcePermissionUtil {
 
 	public static void populateResourceActions(
-			List<ObjectField> attachmentObjectFields, Language language,
+			List<ObjectField> attachmentObjectFields,
 			ObjectActionLocalService objectActionLocalService,
 			ObjectDefinition objectDefinition,
 			ObjectFieldLocalService objectFieldLocalService,
-			PLOEntryLocalService ploEntryLocalService,
 			PortletLocalService portletLocalService,
 			ResourceActions resourceActions,
 			List<ObjectAction> standaloneObjectActions)
 		throws Exception {
 
 		Document document = _readDocument(
-			attachmentObjectFields, language, objectActionLocalService,
-			objectDefinition, objectFieldLocalService, ploEntryLocalService,
-			standaloneObjectActions);
+			attachmentObjectFields, objectActionLocalService, objectDefinition,
+			objectFieldLocalService, standaloneObjectActions);
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
 				objectDefinition.getCompanyId())) {
@@ -91,35 +84,13 @@ public class ObjectDefinitionResourcePermissionUtil {
 
 		if (document == null) {
 			document = _readDocument(
-				null, null, objectActionLocalService, objectDefinition,
-				objectFieldLocalService, null, null);
+				null, objectActionLocalService, objectDefinition,
+				objectFieldLocalService, null);
 		}
 
 		resourceActions.removeModelResources(document);
 
 		resourceActions.removePortletResources(document);
-	}
-
-	private static void _addOrUpdateObjectFieldResourceActionPLOEntries(
-			Language language, ObjectField objectField,
-			PLOEntryLocalService ploEntryLocalService)
-		throws Exception {
-
-		if ((language == null) || (ploEntryLocalService == null)) {
-			return;
-		}
-
-		for (Locale locale : language.getAvailableLocales()) {
-			String languageId = LocaleUtil.toLanguageId(locale);
-
-			String actionId = objectField.getAttachmentDownloadActionKey();
-
-			ploEntryLocalService.addOrUpdatePLOEntry(
-				objectField.getCompanyId(), objectField.getUserId(),
-				"action." + actionId, languageId,
-				LanguageUtil.format(
-					locale, "download-x", objectField.getLabel(locale)));
-		}
 	}
 
 	private static String _getObjectActionPermissionKeys(
@@ -148,17 +119,15 @@ public class ObjectDefinitionResourcePermissionUtil {
 	}
 
 	private static String _getObjectFieldPermissionKeys(
-			List<ObjectField> attachmentObjectFields, Language language,
-			long objectDefinitionId,
-			ObjectFieldLocalService objectFieldLocalService,
-			PLOEntryLocalService ploEntryLocalService)
+			List<ObjectField> attachmentObjectFields, long objectDefinitionId,
+			ObjectFieldLocalService objectFieldLocalService)
 		throws Exception {
 
-		if (attachmentObjectFields == null) {
-			if (objectFieldLocalService == null) {
-				return null;
-			}
+		if (objectFieldLocalService == null) {
+			return null;
+		}
 
+		if (attachmentObjectFields == null) {
 			attachmentObjectFields =
 				objectFieldLocalService.getObjectFieldsByBusinessType(
 					objectDefinitionId,
@@ -168,8 +137,8 @@ public class ObjectDefinitionResourcePermissionUtil {
 		String objectFieldPermissionKeys = StringPool.BLANK;
 
 		for (ObjectField objectField : attachmentObjectFields) {
-			_addOrUpdateObjectFieldResourceActionPLOEntries(
-				language, objectField, ploEntryLocalService);
+			objectFieldLocalService.
+				addOrUpdateObjectFieldResourceActionPLOEntries(objectField);
 
 			objectFieldPermissionKeys = StringBundler.concat(
 				objectFieldPermissionKeys, "<action-key>",
@@ -220,11 +189,10 @@ public class ObjectDefinitionResourcePermissionUtil {
 	}
 
 	private static Document _readDocument(
-			List<ObjectField> attachmentObjectFields, Language language,
+			List<ObjectField> attachmentObjectFields,
 			ObjectActionLocalService objectActionLocalService,
 			ObjectDefinition objectDefinition,
 			ObjectFieldLocalService objectFieldLocalService,
-			PLOEntryLocalService ploEntryLocalService,
 			List<ObjectAction> standaloneObjectActions)
 		throws Exception {
 
@@ -238,9 +206,9 @@ public class ObjectDefinitionResourcePermissionUtil {
 				objectDefinition.getCompanyId(), "LPD-17564")) {
 
 			objectFieldPermissionKeys = _getObjectFieldPermissionKeys(
-				attachmentObjectFields, language,
+				attachmentObjectFields,
 				objectDefinition.getObjectDefinitionId(),
-				objectFieldLocalService, ploEntryLocalService);
+				objectFieldLocalService);
 		}
 
 		String resourceActionsFileName =

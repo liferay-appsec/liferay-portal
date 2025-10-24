@@ -13,8 +13,6 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagListener;
-import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceAction;
@@ -24,13 +22,11 @@ import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.language.override.service.PLOEntryLocalService;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
@@ -78,13 +74,13 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListener
 					try {
 						ObjectDefinitionResourcePermissionUtil.
 							populateResourceActions(
-								Collections.singletonList(objectField),
-								_language, null, objectDefinition,
-								_objectFieldLocalService, _ploEntryLocalService,
+								Collections.singletonList(objectField), null,
+								objectDefinition, _objectFieldLocalService,
 								_portletLocalService, _resourceActions, null);
 
-						_addOrUpdateObjectFieldResourceActionPLOEntries(
-							objectField);
+						_objectFieldLocalService.
+							addOrUpdateObjectFieldResourceActionPLOEntries(
+								objectField);
 
 						_updateResourcePermissions(actionId, objectDefinition);
 					}
@@ -100,23 +96,6 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListener
 						objectField.getCompanyId(), "action." + actionId);
 				}
 			}
-		}
-	}
-
-	private void _addOrUpdateObjectFieldResourceActionPLOEntries(
-			ObjectField objectField)
-		throws PortalException {
-
-		for (Locale locale : _language.getAvailableLocales()) {
-			String languageId = LocaleUtil.toLanguageId(locale);
-
-			String actionId = objectField.getAttachmentDownloadActionKey();
-
-			_ploEntryLocalService.addOrUpdatePLOEntry(
-				objectField.getCompanyId(), objectField.getUserId(),
-				"action." + actionId, languageId,
-				LanguageUtil.format(
-					locale, "download-x", objectField.getLabel(locale)));
 		}
 	}
 
@@ -144,9 +123,6 @@ public class AttachmentObjectFieldDownloadActionFeatureFlagListener
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AttachmentObjectFieldDownloadActionFeatureFlagListener.class);
-
-	@Reference
-	private Language _language;
 
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;

@@ -294,9 +294,9 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 
 		try {
 			ObjectDefinitionResourcePermissionUtil.populateResourceActions(
-				attachmentObjectFields, _language, _objectActionLocalService,
+				attachmentObjectFields, _objectActionLocalService,
 				objectDefinition, _objectFieldLocalService,
-				_ploEntryLocalService, _portletLocalService, _resourceActions,
+				_portletLocalService, _resourceActions,
 				standaloneObjectActions);
 		}
 		catch (Exception exception) {
