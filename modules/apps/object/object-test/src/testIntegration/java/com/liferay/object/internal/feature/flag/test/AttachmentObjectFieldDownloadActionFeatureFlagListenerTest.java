@@ -59,7 +59,7 @@ import org.junit.runner.RunWith;
  */
 @FeatureFlag("LPD-17564")
 @RunWith(Arquillian.class)
-public class ObjectFieldFeatureFlagListenerTest {
+public class AttachmentObjectFieldDownloadActionFeatureFlagListenerTest {
 
 	@ClassRule
 	@Rule
