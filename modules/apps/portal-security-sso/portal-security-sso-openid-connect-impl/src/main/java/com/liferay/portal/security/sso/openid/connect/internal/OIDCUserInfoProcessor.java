@@ -13,6 +13,8 @@ import com.liferay.expando.kernel.model.ExpandoValue;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
+import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
@@ -50,14 +52,18 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.internal.exception.StrangersNotAllowedException;
+import com.liferay.portal.security.sso.openid.connect.internal.util.OAuthClientEntryUtil;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -68,17 +74,24 @@ import org.osgi.service.component.annotations.Reference;
 public class OIDCUserInfoProcessor {
 
 	public long processUserInfo(
-			long companyId, String customClaimsJSON, String issuer,
-			ServiceContext serviceContext, String userInfoJSON,
-			String userInfoMapperJSON)
+			long companyId, String issuer, OAuthClientEntry oAuthClientEntry,
+			ServiceContext serviceContext, String tokenEndpoint,
+			String userInfoJSON)
 		throws Exception {
 
+		String fallbackMatcher = _getFallbackMatcher(
+			oAuthClientEntry.getAuthServerWellKnownURI(),
+			oAuthClientEntry.getClientId(), companyId, issuer, tokenEndpoint);
+
 		User user = _addOrUpdateUser(
-			companyId, customClaimsJSON, issuer, serviceContext, userInfoJSON,
-			userInfoMapperJSON);
+			companyId, oAuthClientEntry.getCustomClaimsJSON(), fallbackMatcher,
+			issuer, serviceContext, userInfoJSON,
+			oAuthClientEntry.getOIDCUserInfoMapperJSON());
 
 		try {
-			_addAddress(serviceContext, user, userInfoJSON, userInfoMapperJSON);
+			_addAddress(
+				serviceContext, user, userInfoJSON,
+				oAuthClientEntry.getOIDCUserInfoMapperJSON());
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -87,7 +100,9 @@ public class OIDCUserInfoProcessor {
 		}
 
 		try {
-			_addPhone(serviceContext, user, userInfoJSON, userInfoMapperJSON);
+			_addPhone(
+				serviceContext, user, userInfoJSON,
+				oAuthClientEntry.getOIDCUserInfoMapperJSON());
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -196,8 +211,8 @@ public class OIDCUserInfoProcessor {
 	}
 
 	private User _addOrUpdateUser(
-			long companyId, String customClaimsJSON, String issuer,
-			ServiceContext serviceContext, String userInfoJSON,
+			long companyId, String customClaimsJSON, String fallbackMatcher,
+			String issuer, ServiceContext serviceContext, String userInfoJSON,
 			String userInfoMapperJSON)
 		throws Exception {
 
@@ -222,7 +237,14 @@ public class OIDCUserInfoProcessor {
 		User user = _userLocalService.fetchUserByEmailAddress(
 			companyId, emailAddress);
 
-		_validate(companyId, emailAddress, firstName, lastName, user);
+		if ((user == null) && fallbackMatcher.equals("screenName")) {
+			user = _userLocalService.fetchUserByScreenName(
+				companyId, screenName);
+		}
+
+		_validate(
+			companyId, emailAddress, fallbackMatcher, firstName, lastName,
+			user);
 
 		JSONObject contactMapperJSONObject =
 			userInfoMapperJSONObject.getJSONObject("contact");
@@ -482,6 +504,46 @@ public class OIDCUserInfoProcessor {
 		return (String)claimObject;
 	}
 
+	private String _getFallbackMatcher(
+			String authServerWellKnownURI, String clientId, long companyId,
+			String issuer, String tokenEndpoint)
+		throws Exception {
+
+		String generatedLocalWellKnownURI =
+			OAuthClientEntryUtil.generateLocalWellKnownURI(
+				issuer, tokenEndpoint);
+
+		String filterString = null;
+
+		if (authServerWellKnownURI.equals(generatedLocalWellKnownURI)) {
+			filterString = StringBundler.concat(
+				"(&(companyId=", companyId, ")(tokenEndpoint=", tokenEndpoint,
+				")(issuerURL=", issuer, ")(openIdConnectClientId=", clientId,
+				"))");
+		}
+		else {
+			filterString = StringBundler.concat(
+				"(&(companyId=", companyId, ")(discoveryEndpoint=",
+				authServerWellKnownURI, ")(openIdConnectClientId=", clientId,
+				"))");
+		}
+
+		Configuration[] configurations = _configurationAdmin.listConfigurations(
+			filterString);
+
+		String fallbackMatcher = "email";
+
+		if (configurations != null) {
+			Dictionary<String, Object> properties =
+				configurations[0].getProperties();
+
+			fallbackMatcher = GetterUtil.getString(
+				properties.get("fallbackMatcher"));
+		}
+
+		return fallbackMatcher;
+	}
+
 	private Locale _getLocale(
 			long companyId, JSONObject userInfoJSONObject,
 			JSONObject userMapperJSONObject)
@@ -718,11 +780,11 @@ public class OIDCUserInfoProcessor {
 	}
 
 	private void _validate(
-			long companyId, String emailAddress, String firstName,
-			String lastName, User user)
+			long companyId, String emailAddress, String fallbackMatcher,
+			String firstName, String lastName, User user)
 		throws Exception {
 
-		if (Validator.isNull(emailAddress)) {
+		if (Validator.isNull(emailAddress) && fallbackMatcher.equals("email")) {
 			throw new OpenIdConnectServiceException.UserMappingException(
 				"Email address is null");
 		}
@@ -762,6 +824,9 @@ public class OIDCUserInfoProcessor {
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
+
+	@Reference
+	private ConfigurationAdmin _configurationAdmin;
 
 	@Reference
 	private CountryLocalService _countryLocalService;
