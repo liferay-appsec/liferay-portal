@@ -220,10 +220,6 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 		Map<String, List<ServiceRegistration<?>>> serviceRegistrationsMap =
 			new ConcurrentHashMap<>();
 
-		Map<Long, List<ObjectAction>> objectActionsMap =
-			_objectActionLocalService.getObjectActionsMap(
-				companyId, true, ObjectActionTriggerConstants.KEY_STANDALONE);
-
 		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-34594")) {
 			ObjectDefinitionTreeUtil.populateRootObjectDefinitionIds(
 				objectDefinitions,
@@ -234,6 +230,12 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 							NAME_ROOT_OBJECT_DEFINITION_IDS));
 		}
 
+		Map<Long, List<ObjectAction>> objectActionsMap =
+			_objectActionLocalService.getObjectActionsMap(
+				companyId, true, ObjectActionTriggerConstants.KEY_STANDALONE);
+		Map<Long, List<ObjectField>> objectFieldsMap =
+			_objectFieldLocalService.getObjectFieldsMap(
+				companyId, ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT);
 		Map<Long, List<ObjectLayout>> objectLayoutsMap =
 			_objectLayoutLocalService.getObjectLayoutsMap(companyId);
 		Map<Long, List<ObjectRelationship>> objectRelationshipsMap =
@@ -246,9 +248,8 @@ public class ObjectDefinitionDeployerImpl implements ObjectDefinitionDeployer {
 			serviceRegistrationsMap.put(
 				DBPartitionUtil.getPartitionKey(objectDefinitionId),
 				_deploy(
-					_objectFieldLocalService.getObjectFieldsByBusinessType(
-						objectDefinitionId,
-						ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT),
+					objectFieldsMap.getOrDefault(
+						objectDefinitionId, Collections.emptyList()),
 					objectDefinition,
 					objectLayoutsMap.getOrDefault(
 						objectDefinitionId, Collections.emptyList()),
