@@ -16,6 +16,7 @@ export class OpenIdInstanceSettingsPage {
 	readonly customClaimField: Locator;
 	readonly discoveryEndpointField: Locator;
 	readonly enabledCheckbox: Locator;
+	readonly fallbackMatcherField: Locator;
 	readonly instanceSettingsPage: InstanceSettingsPage;
 	readonly openIDConnectClientIDField: Locator;
 	readonly openIDConnectClientSecret: Locator;
@@ -33,6 +34,7 @@ export class OpenIdInstanceSettingsPage {
 			'Discovery Endpoint Set the'
 		);
 		this.enabledCheckbox = page.getByText(' Enabled ');
+		this.fallbackMatcherField = page.getByLabel('Fallback Matcher');
 		this.instanceSettingsPage = new InstanceSettingsPage(page);
 		this.openIDConnectClientIDField = page.getByLabel(
 			'OpenID Connect Client ID'
@@ -56,7 +58,8 @@ export class OpenIdInstanceSettingsPage {
 	async addOpenIDConnectProviderConnectionConfiguration(
 		providerName: string,
 		openIdProvider: string,
-		customClaim?: CustomClaim
+		customClaim?: CustomClaim,
+		fallbackMatcher?: string
 	) {
 		await this.clickOpenIDConnectProviderConnectionMenuItem();
 		await this.addButton.click();
@@ -72,6 +75,10 @@ export class OpenIdInstanceSettingsPage {
 			await this.customClaimField.fill(
 				customClaim.oidcProviderCustomClaim
 			);
+		}
+
+		if (fallbackMatcher) {
+			await this.fallbackMatcherField.selectOption(fallbackMatcher);
 		}
 
 		await this.saveButton.click();
