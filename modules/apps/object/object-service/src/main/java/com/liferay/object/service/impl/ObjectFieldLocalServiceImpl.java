@@ -78,7 +78,6 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -209,6 +208,22 @@ public class ObjectFieldLocalServiceImpl
 			indexedAsKeyword, indexedLanguageId, labelMap, localized, name,
 			readOnly, readOnlyConditionExpression, required, state,
 			objectFieldSettings);
+	}
+
+	@Override
+	public void addOrUpdateObjectFieldResourceActionPLOEntries(
+			ObjectField objectField)
+		throws PortalException {
+
+		for (Locale locale : _language.getAvailableLocales()) {
+			String actionId = objectField.getAttachmentDownloadActionKey();
+
+			_ploEntryLocalService.addOrUpdatePLOEntry(
+				objectField.getCompanyId(), objectField.getUserId(),
+				"action." + actionId, LocaleUtil.toLanguageId(locale),
+				_language.format(
+					locale, "download-x", objectField.getLabel(locale)));
+		}
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -1049,23 +1064,6 @@ public class ObjectFieldLocalServiceImpl
 		}
 	}
 
-	private void _addOrUpdateObjectFieldResourceActionPLOEntries(
-			ObjectField objectField)
-		throws PortalException {
-
-		for (Locale locale : _language.getAvailableLocales()) {
-			String languageId = LocaleUtil.toLanguageId(locale);
-
-			String actionId = objectField.getAttachmentDownloadActionKey();
-
-			_ploEntryLocalService.addOrUpdatePLOEntry(
-				objectField.getCompanyId(), objectField.getUserId(),
-				"action." + actionId, languageId,
-				LanguageUtil.format(
-					locale, "download-x", objectField.getLabel(locale)));
-		}
-	}
-
 	private void _addOrUpdateObjectFieldSettings(
 			ObjectField newObjectField, ObjectDefinition objectDefinition,
 			ObjectFieldBusinessType objectFieldBusinessType,
@@ -1628,7 +1626,7 @@ public class ObjectFieldLocalServiceImpl
 				businessType.equals(
 					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT)) {
 
-				_addOrUpdateObjectFieldResourceActionPLOEntries(newObjectField);
+				addOrUpdateObjectFieldResourceActionPLOEntries(newObjectField);
 			}
 
 			return newObjectField;
