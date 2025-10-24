@@ -592,6 +592,15 @@ public class ObjectFieldLocalServiceWrapper
 		return _objectFieldLocalService.getObjectFieldsMap(companyId);
 	}
 
+	@Override
+	public java.util.Map
+		<Long, java.util.List<com.liferay.object.model.ObjectField>>
+			getObjectFieldsMap(long companyId, String businessType) {
+
+		return _objectFieldLocalService.getObjectFieldsMap(
+			companyId, businessType);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *

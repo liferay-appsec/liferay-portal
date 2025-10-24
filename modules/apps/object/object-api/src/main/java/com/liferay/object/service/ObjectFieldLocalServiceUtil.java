@@ -511,6 +511,12 @@ public class ObjectFieldLocalServiceUtil {
 		return getService().getObjectFieldsMap(companyId);
 	}
 
+	public static Map<Long, List<ObjectField>> getObjectFieldsMap(
+		long companyId, String businessType) {
+
+		return getService().getObjectFieldsMap(companyId, businessType);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
