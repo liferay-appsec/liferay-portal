@@ -18,6 +18,7 @@ import {utilityPagesPage} from '../../login-web/main/fixtures/utilityPageTest';
 import {openIdConfig} from './config';
 import {openIdSettingsPagesTest} from './fixtures/openIdSettingsPagesTest';
 import {CustomClaim} from './helpers/CustomClaimHelper';
+import { pagesPagesTest } from '../../layout-admin-web/main/fixtures/pagesPagesTest';
 
 let providerName: string;
 let site: Site;
@@ -30,7 +31,8 @@ const test = mergeTests(
 	}),
 	loginTest(),
 	utilityPagesPage,
-	customFieldsPagesTest
+	customFieldsPagesTest,
+	pagesPagesTest
 );
 
 async function setupOpenIdConnection(
@@ -56,12 +58,17 @@ test.afterEach(
 		loginInstanceSettingsPage,
 		openIDInstanceSettingsPage,
 		page,
+		utilityPagesPage
 	}) => {
 		await page.goto(liferayConfig.environment.baseUrl);
 
 		if (page.getByRole('button', {name: 'Sign In'}).isVisible) {
 			await performLoginViaApi({page, screenName: 'test'});
 		}
+
+		await utilityPagesPage.goto();
+
+		await utilityPagesPage.markAsDefault('Sign In');
 
 		if (providerName) {
 			await openIDInstanceSettingsPage.goto();
@@ -90,6 +97,14 @@ test.afterEach(
 		}
 	}
 );
+
+test.beforeEach(async ({
+	utilityPagesPage
+}) => {
+	await utilityPagesPage.goto();
+
+	await utilityPagesPage.unmarkAsDefault('Sign In');
+});
 
 test.describe('OpenID connect link', () => {
 	test('is visible on sign-in page when OpenID connection is enabled on NOT an utility page', async ({

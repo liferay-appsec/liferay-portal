@@ -388,6 +388,12 @@ definition {
 				domain = "www.able.com",
 				portalInstanceId = "www.able.com",
 				virtualHost = "www.able.com");
+
+			JSONLayoututilitypage.unsetDefaultLayoutUtilityPage(
+				groupName = "Guest",
+				layoutUtilityPageName = "Sign In",
+				portalInstanceName = "www.able.com",
+				portalURL = "http://www.able.com:8080");
 		}
 
 		task ("Add OAuth Clients") {
@@ -665,6 +671,12 @@ definition {
 				domain = "www.able.com",
 				portalInstanceId = "www.able.com",
 				virtualHost = "www.able.com");
+
+			JSONLayoututilitypage.unsetDefaultLayoutUtilityPage(
+				groupName = "Guest",
+				layoutUtilityPageName = "Sign In",
+				portalInstanceName = "www.able.com",
+				portalURL = "http://www.able.com:8080");
 		}
 
 		task ("Login at able.com and enable OpenId connect CP") {
@@ -1074,6 +1086,12 @@ definition {
 				domain = "www.able.com",
 				portalInstanceId = "www.able.com",
 				virtualHost = "www.able.com");
+
+			JSONLayoututilitypage.unsetDefaultLayoutUtilityPage(
+				groupName = "Guest",
+				layoutUtilityPageName = "Sign In",
+				portalInstanceName = "www.able.com",
+				portalURL = "http://www.able.com:8080");
 		}
 
 		task ("When: User adds OIDC connection on able.com") {
