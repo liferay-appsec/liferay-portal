@@ -18,6 +18,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -237,7 +238,10 @@ public class OIDCUserInfoProcessor {
 		User user = _userLocalService.fetchUserByEmailAddress(
 			companyId, emailAddress);
 
-		if ((user == null) && fallbackMatcher.equals("screenName")) {
+		if ((user == null) &&
+			FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879") &&
+			fallbackMatcher.equals("screenName")) {
+
 			user = _userLocalService.fetchUserByScreenName(
 				companyId, screenName);
 		}
@@ -508,6 +512,10 @@ public class OIDCUserInfoProcessor {
 			String authServerWellKnownURI, String clientId, long companyId,
 			String issuer, String tokenEndpoint)
 		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879")) {
+			return StringPool.BLANK;
+		}
 
 		String generatedLocalWellKnownURI =
 			OAuthClientEntryUtil.generateLocalWellKnownURI(
