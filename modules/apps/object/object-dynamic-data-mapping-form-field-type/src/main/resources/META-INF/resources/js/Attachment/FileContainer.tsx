@@ -34,7 +34,7 @@ export default function FileContainer({
 					<ClayButton
 						displayType="unstyled"
 						onClick={() => {
-							if (attachment.downloadPermission === 'true') {
+							if (attachment.contentURL) {
 								window.open(attachment.contentURL, '_blank');
 							}
 						}}
@@ -43,7 +43,7 @@ export default function FileContainer({
 					</ClayButton>
 
 					{Liferay.ThemeDisplay.isSignedIn() &&
-						attachment.downloadPermission === 'true' && (
+						attachment.contentURL && (
 							<div className="lfr-objects__attachment-download">
 								<ClayButtonWithIcon
 									aria-label={Liferay.Language.get(
