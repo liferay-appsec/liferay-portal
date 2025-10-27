@@ -13,6 +13,7 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -53,7 +54,10 @@ public class ObjectDLFileEntryModelResourcePermissionConfigurator
 
 		consumer.accept(
 			(permissionChecker, name, dlFileEntry, actionId) -> {
-				if (!actionId.equals(ActionKeys.DOWNLOAD)) {
+				if (!actionId.equals(ActionKeys.DOWNLOAD) &&
+					FeatureFlagManagerUtil.isEnabled(
+						dlFileEntry.getCompanyId(), "LPD-17564")) {
+
 					return null;
 				}
 
