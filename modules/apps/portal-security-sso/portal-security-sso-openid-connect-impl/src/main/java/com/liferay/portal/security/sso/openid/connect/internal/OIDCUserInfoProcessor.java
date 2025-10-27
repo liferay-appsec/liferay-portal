@@ -50,6 +50,8 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.internal.exception.StrangersNotAllowedException;
+import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectUser;
+import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectUserLocalService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -219,8 +221,9 @@ public class OIDCUserInfoProcessor {
 		String screenName = _getClaimString(
 			"screenName", userMapperJSONObject, userInfoJSONObject);
 
-		User user = _userLocalService.fetchUserByEmailAddress(
-			companyId, emailAddress);
+		User user = _fetchUser(
+			companyId, emailAddress, issuer,
+			userInfoJSONObject.getString("sub"));
 
 		_validate(companyId, emailAddress, firstName, lastName, user);
 
@@ -285,7 +288,7 @@ public class OIDCUserInfoProcessor {
 		_addOrUpdateUserCustomClaims(
 			customClaimsJSON, user, userInfoJSONObject);
 
-		return _userLocalService.updateUser(
+		user = _userLocalService.updateUser(
 			user.getUserId(), StringPool.BLANK, StringPool.BLANK,
 			StringPool.BLANK, false, user.getReminderQueryQuestion(),
 			user.getReminderQueryAnswer(),
@@ -309,6 +312,11 @@ public class OIDCUserInfoProcessor {
 			user.getUserGroupRoles(),
 			_getUserGroupIds(companyId, oAuthClientEntryId, user, userGroupIds),
 			serviceContext);
+
+		_saveOpenIdConnectUser(
+			issuer, userInfoJSONObject.getString("sub"), user);
+
+		return user;
 	}
 
 	private void _addOrUpdateUserCustomClaims(
@@ -396,6 +404,21 @@ public class OIDCUserInfoProcessor {
 			null, user.getUserId(), Contact.class.getName(),
 			user.getContactId(), phoneClaimString, null,
 			listType.getListTypeId(), false, serviceContext);
+	}
+
+	private User _fetchUser(
+		long companyId, String emailAddress, String issuer, String subject) {
+
+		OpenIdConnectUser openIdConnectUser =
+			_openIdConnectUserLocalService.fetchOpenIdConnectUser(
+				companyId, issuer, subject);
+
+		if (openIdConnectUser != null) {
+			return _userLocalService.fetchUser(openIdConnectUser.getUserId());
+		}
+
+		return _userLocalService.fetchUserByEmailAddress(
+			companyId, emailAddress);
 	}
 
 	private int[] _getBirthday(
@@ -717,6 +740,22 @@ public class OIDCUserInfoProcessor {
 		return false;
 	}
 
+	private void _saveOpenIdConnectUser(
+			String issuer, String subject, User user)
+		throws Exception {
+
+		OpenIdConnectUser openIdConnectUser =
+			_openIdConnectUserLocalService.fetchOpenIdConnectUser(
+				user.getCompanyId(), issuer, subject);
+
+		if (openIdConnectUser != null) {
+			return;
+		}
+
+		_openIdConnectUserLocalService.addOpenIdConnectUser(
+			user.getCompanyId(), user.getUserId(), issuer, subject);
+	}
+
 	private void _validate(
 			long companyId, String emailAddress, String firstName,
 			String lastName, User user)
@@ -780,6 +819,9 @@ public class OIDCUserInfoProcessor {
 
 	@Reference
 	private ListTypeLocalService _listTypeLocalService;
+
+	@Reference
+	private OpenIdConnectUserLocalService _openIdConnectUserLocalService;
 
 	@Reference
 	private PhoneLocalService _phoneLocalService;
