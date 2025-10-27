@@ -830,7 +830,7 @@ public class OIDCUserInfoProcessor {
 		}
 
 		_openIdConnectUserLocalService.addOpenIdConnectUser(
-			user.getCompanyId(), user.getUserId(), issuer, subject);
+			user.getUserId(), issuer, subject);
 	}
 
 	private void _validate(
