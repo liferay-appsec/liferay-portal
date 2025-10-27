@@ -47,6 +47,8 @@ import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -54,6 +56,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.internal.exception.StrangersNotAllowedException;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OAuthClientEntryUtil;
+import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectUser;
+import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectUserLocalService;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -235,15 +239,31 @@ public class OIDCUserInfoProcessor {
 		String screenName = _getClaimString(
 			"screenName", userMapperJSONObject, userInfoJSONObject);
 
-		User user = _userLocalService.fetchUserByEmailAddress(
-			companyId, emailAddress);
+		String sub = userInfoJSONObject.getString("sub");
 
-		if ((user == null) &&
-			FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879") &&
-			fallbackMatcher.equals("screenName")) {
+		User user = null;
 
-			user = _userLocalService.fetchUserByScreenName(
-				companyId, screenName);
+		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879")) {
+			OpenIdConnectUser openIdConnectUser =
+				_openIdConnectUserLocalService.fetchOpenIdConnectUser(
+					companyId, issuer, sub);
+
+			if (openIdConnectUser != null) {
+				user = _userLocalService.fetchUser(
+					openIdConnectUser.getUserId());
+			}
+			else if (fallbackMatcher.equals("screenName")) {
+				user = _userLocalService.fetchUserByScreenName(
+					companyId, screenName);
+			}
+			else if (fallbackMatcher.equals("email")) {
+				user = _userLocalService.fetchUserByEmailAddress(
+					companyId, emailAddress);
+			}
+		}
+		else {
+			user = _userLocalService.fetchUserByEmailAddress(
+				companyId, emailAddress);
 		}
 
 		_validate(
@@ -289,6 +309,8 @@ public class OIDCUserInfoProcessor {
 					null,
 				false, serviceContext);
 
+			_saveOpenIdConnectUser(companyId, issuer, sub, user);
+
 			ExpandoColumn expandoColumn = _getOrAddExpandoColumn(
 				User.class.getName(), companyId);
 
@@ -311,7 +333,7 @@ public class OIDCUserInfoProcessor {
 		_addOrUpdateUserCustomClaims(
 			customClaimsJSON, user, userInfoJSONObject);
 
-		return _userLocalService.updateUser(
+		user = _userLocalService.updateUser(
 			user.getUserId(), StringPool.BLANK, StringPool.BLANK,
 			StringPool.BLANK, false, user.getReminderQueryQuestion(),
 			user.getReminderQueryAnswer(),
@@ -335,6 +357,10 @@ public class OIDCUserInfoProcessor {
 			user.getUserGroupRoles(),
 			_getUserGroupIds(companyId, oAuthClientEntryId, user, userGroupIds),
 			serviceContext);
+
+		_saveOpenIdConnectUser(companyId, issuer, sub, user);
+
+		return user;
 	}
 
 	private void _addOrUpdateUserCustomClaims(
@@ -514,7 +540,7 @@ public class OIDCUserInfoProcessor {
 		throws Exception {
 
 		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879")) {
-			return StringPool.BLANK;
+			return "email";
 		}
 
 		String generatedLocalWellKnownURI =
@@ -787,12 +813,36 @@ public class OIDCUserInfoProcessor {
 		return false;
 	}
 
+	private void _saveOpenIdConnectUser(
+			long companyId, String issuer, String subject, User user)
+		throws Exception {
+
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-20879")) {
+			return;
+		}
+
+		OpenIdConnectUser openIdConnectUser =
+			_openIdConnectUserLocalService.fetchOpenIdConnectUser(
+				user.getCompanyId(), issuer, subject);
+
+		if (openIdConnectUser != null) {
+			return;
+		}
+
+		_openIdConnectUserLocalService.addOpenIdConnectUser(
+			user.getCompanyId(), user.getUserId(), issuer, subject);
+	}
+
 	private void _validate(
 			long companyId, String emailAddress, String fallbackMatcher,
 			String firstName, String lastName, User user)
 		throws Exception {
 
-		if (Validator.isNull(emailAddress) && fallbackMatcher.equals("email")) {
+		if (Validator.isNull(emailAddress) &&
+			(fallbackMatcher.equals("email") ||
+			 PrefsPropsUtil.getBoolean(
+				 companyId, PropsKeys.USERS_EMAIL_ADDRESS_REQUIRED))) {
+
 			throw new OpenIdConnectServiceException.UserMappingException(
 				"Email address is null");
 		}
@@ -853,6 +903,9 @@ public class OIDCUserInfoProcessor {
 
 	@Reference
 	private ListTypeLocalService _listTypeLocalService;
+
+	@Reference
+	private OpenIdConnectUserLocalService _openIdConnectUserLocalService;
 
 	@Reference
 	private PhoneLocalService _phoneLocalService;
