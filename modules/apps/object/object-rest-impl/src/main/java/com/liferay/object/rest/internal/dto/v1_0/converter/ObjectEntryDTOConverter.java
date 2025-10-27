@@ -82,8 +82,6 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PermissionService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -840,12 +838,9 @@ public class ObjectEntryDTOConverter
 			() -> LinkUtil.toLink(
 				_dlAppService, dlFileEntry, _dlURLHelper,
 				objectEntry.getGroupId(),
-				_hasDownloadPermission(
-					objectField.getAttachmentDownloadActionKey(), fileEntryId,
-					objectDefinition, objectEntry),
-				objectDefinition.getExternalReferenceCode(),
-				objectEntry.getExternalReferenceCode(),
-				objectField.getExternalReferenceCode(), _portal));
+				objectDefinition.getExternalReferenceCode(), objectEntry,
+				_objectEntryService, objectField,
+				GuestOrUserUtil.getPermissionChecker(), _portal));
 
 		fileEntry.setMetadata(
 			() -> NestedFieldsSupplier.supply(
@@ -1254,34 +1249,6 @@ public class ObjectEntryDTOConverter
 		}
 
 		return serializable;
-	}
-
-	private boolean _hasDownloadPermission(
-			String actionId, long fileEntryId,
-			ObjectDefinition objectDefinition,
-			com.liferay.object.model.ObjectEntry objectEntry)
-		throws PortalException {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				objectDefinition.getCompanyId(), "LPD-17564")) {
-
-			return true;
-		}
-
-		PermissionChecker permissionChecker =
-			GuestOrUserUtil.getPermissionChecker();
-
-		if (permissionChecker.hasPermission(
-				objectEntry.getGroupId(), DLFileEntry.class.getName(),
-				fileEntryId, ActionKeys.DOWNLOAD) &&
-			_objectEntryService.hasModelResourcePermission(
-				objectDefinition.getObjectDefinitionId(),
-				objectEntry.getObjectEntryId(), actionId)) {
-
-			return true;
-		}
-
-		return false;
 	}
 
 	private boolean _hasRootModelHierarchyNestedField() {

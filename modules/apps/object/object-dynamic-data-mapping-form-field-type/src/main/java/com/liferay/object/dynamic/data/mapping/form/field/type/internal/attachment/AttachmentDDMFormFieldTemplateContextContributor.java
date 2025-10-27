@@ -26,6 +26,7 @@ import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -40,7 +41,6 @@ import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -213,19 +213,6 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 		try {
 			FileEntry fileEntry = _dlAppLocalService.getFileEntry(value);
 
-			String objectDefinitionERC = GetterUtil.getString(
-				ddmFormField.getProperty(
-					"objectDefinitionExternalReferenceCode"));
-
-			String objectEntryERC = GetterUtil.getString(
-				ddmFormField.getProperty("objectEntryExternalReferenceCode"));
-
-			long groupId = GetterUtil.getLong(
-				ddmFormField.getProperty("groupId"));
-
-			ObjectField objectField = _objectFieldLocalService.getObjectField(
-				GetterUtil.getLong(ddmFormField.getProperty("objectFieldId")));
-
 			return HashMapBuilder.put(
 				"contentURL",
 				() -> {
@@ -236,24 +223,36 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 						return url;
 					}
 
+					String objectDefinitionERC = GetterUtil.getString(
+						ddmFormField.getProperty(
+							"objectDefinitionExternalReferenceCode"));
+
+					String objectEntryERC = GetterUtil.getString(
+						ddmFormField.getProperty(
+							"objectEntryExternalReferenceCode"));
+
+					long groupId = GetterUtil.getLong(
+						ddmFormField.getProperty("groupId"));
+
+					ObjectDefinition objectDefinition =
+						_objectDefinitionLocalService.
+							fetchObjectDefinitionByExternalReferenceCode(
+								objectDefinitionERC, fileEntry.getCompanyId());
+
+					ObjectEntry objectEntry =
+						_objectEntryLocalService.fetchObjectEntry(
+							objectEntryERC, groupId,
+							objectDefinition.getObjectDefinitionId());
+
+					ObjectField objectField =
+						_objectFieldLocalService.fetchObjectField(
+							GetterUtil.getLong(
+								ddmFormField.getProperty("objectFieldId")));
+
 					return ObjectFieldUtil.getAttachmentDownloadURL(
 						_dlURLHelper, fileEntry, groupId, objectDefinitionERC,
-						objectEntryERC, objectField.getExternalReferenceCode(),
-						themeDisplay);
-				}
-			).put(
-				"downloadPermission",
-				() -> {
-					if (Validator.isNull(objectDefinitionERC) ||
-						Validator.isNull(objectEntryERC)) {
-
-						return Boolean.FALSE.toString();
-					}
-
-					return _hasAttachmentDownloadPermission(
-						objectField.getAttachmentDownloadActionKey(), fileEntry,
-						groupId, objectDefinitionERC, objectEntryERC,
-						_getPermissionChecker(themeDisplay));
+						objectEntry, _objectEntryService, objectField,
+						_getPermissionChecker(themeDisplay), themeDisplay);
 				}
 			).put(
 				"title", fileEntry.getFileName()
@@ -370,44 +369,6 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 		return ddmFormFieldRenderingContext.getValue();
 	}
 
-	private String _hasAttachmentDownloadPermission(
-		String actionId, FileEntry fileEntry, long groupId,
-		String objectDefinitionERC, String objectEntryERC,
-		PermissionChecker permissionChecker) {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				fileEntry.getCompanyId(), "LPD-17564")) {
-
-			return Boolean.TRUE.toString();
-		}
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.
-				fetchObjectDefinitionByExternalReferenceCode(
-					objectDefinitionERC, fileEntry.getCompanyId());
-
-		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
-			objectEntryERC, groupId, objectDefinition.getObjectDefinitionId());
-
-		try {
-			if (fileEntry.containsPermission(
-					permissionChecker, ActionKeys.DOWNLOAD) &&
-				permissionChecker.hasPermission(
-					groupId, objectDefinition.getClassName(),
-					objectEntry.getObjectEntryId(), actionId)) {
-
-				return Boolean.TRUE.toString();
-			}
-		}
-		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
-			}
-		}
-
-		return Boolean.FALSE.toString();
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		AttachmentDDMFormFieldTemplateContextContributor.class);
 
@@ -439,6 +400,9 @@ public class AttachmentDDMFormFieldTemplateContextContributor
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectEntryService _objectEntryService;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;

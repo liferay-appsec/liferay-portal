@@ -27,13 +27,10 @@ import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -193,20 +190,15 @@ public class SharedAssetDTOConverter
 
 		fileEntry.setExternalReferenceCode(
 			dlFileEntry::getExternalReferenceCode);
-
 		fileEntry.setId(dlFileEntry::getFileEntryId);
 		fileEntry.setLink(
 			() -> toLink(
 				LinkUtil.toLink(
 					_dlAppService, dlFileEntry, _dlURLHelper,
 					objectEntry.getGroupId(),
-					_hasDownloadPermission(
-						objectField.getAttachmentDownloadActionKey(),
-						fileEntryId, objectDefinition, objectEntry),
-					objectDefinition.getExternalReferenceCode(),
-					objectEntry.getExternalReferenceCode(),
-					objectField.getExternalReferenceCode(), _portal)));
-
+					objectDefinition.getExternalReferenceCode(), objectEntry,
+					_objectEntryService, objectField,
+					GuestOrUserUtil.getPermissionChecker(), _portal)));
 		fileEntry.setName(dlFileEntry::getFileName);
 		fileEntry.setThumbnailURL(
 			() -> {
@@ -348,33 +340,6 @@ public class SharedAssetDTOConverter
 		}
 
 		return fileEntry.getMimeType();
-	}
-
-	private boolean _hasDownloadPermission(
-			String actionId, long fileEntryId,
-			ObjectDefinition objectDefinition, ObjectEntry objectEntry)
-		throws PortalException {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				objectDefinition.getCompanyId(), "LPD-17564")) {
-
-			return true;
-		}
-
-		PermissionChecker permissionChecker =
-			GuestOrUserUtil.getPermissionChecker();
-
-		if (permissionChecker.hasPermission(
-				objectEntry.getGroupId(), DLFileEntry.class.getName(),
-				fileEntryId, ActionKeys.DOWNLOAD) &&
-			_objectEntryService.hasModelResourcePermission(
-				objectDefinition.getObjectDefinitionId(),
-				objectEntry.getObjectEntryId(), actionId)) {
-
-			return true;
-		}
-
-		return false;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
