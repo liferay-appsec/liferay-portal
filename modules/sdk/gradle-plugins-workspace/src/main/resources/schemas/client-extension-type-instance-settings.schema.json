@@ -3925,6 +3925,12 @@
 					"title": "Discovery Endpoint Cache in Milliseconds",
 					"type": "number"
 				},
+				"fallbackMatcher": {
+					"default": "email",
+					"description": "The sub claim is the default user matcher, if matching fails the fallback matcher is used.",
+					"title": "Fallback Matcher",
+					"type": "string"
+				},
 				"idTokenSigningAlgValues": {
 					"default": "RS256",
 					"description": "Set the supported ID token signing algorithms for the OpenID Connect Provider. If the discovery endpoint is not specified, these algorithms are used. In this case, the algorithm RS256 must be included and must be the first algorithm in the list. If the discovery endpoint is specified, no algorithms should be specified here since the supported signing algorithms for the identity token are obtained from the discovery endpoint.",
@@ -4010,6 +4016,7 @@
 			},
 			"required": [
 				"pid",
+				"fallbackMatcher",
 				"openIdConnectClientId",
 				"openIdConnectClientSecret",
 				"providerName",
