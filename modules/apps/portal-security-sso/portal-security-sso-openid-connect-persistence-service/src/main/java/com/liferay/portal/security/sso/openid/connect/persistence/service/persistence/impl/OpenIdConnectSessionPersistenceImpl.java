@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.sso.openid.connect.persistence.exception.NoSuchSessionException;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSessionTable;
@@ -41,6 +42,7 @@ import java.lang.reflect.InvocationHandler;
 
 import java.sql.Timestamp;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -1149,6 +1151,201 @@ public class OpenIdConnectSessionPersistenceImpl
 		_FINDER_COLUMN_LTACCESSTOKENEXPIRATIONDATE_ACCESSTOKENEXPIRATIONDATE_2 =
 			"openIdConnectSession.accessTokenExpirationDate < ?";
 
+	private FinderPath _finderPathFetchBySid;
+
+	/**
+	 * Returns the open ID connect session where sid = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param sid the sid
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession findBySid(String sid)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = fetchBySid(sid);
+
+		if (openIdConnectSession == null) {
+			StringBundler sb = new StringBundler(4);
+
+			sb.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+			sb.append("sid=");
+			sb.append(sid);
+
+			sb.append("}");
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(sb.toString());
+			}
+
+			throw new NoSuchSessionException(sb.toString());
+		}
+
+		return openIdConnectSession;
+	}
+
+	/**
+	 * Returns the open ID connect session where sid = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param sid the sid
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchBySid(String sid) {
+		return fetchBySid(sid, true);
+	}
+
+	/**
+	 * Returns the open ID connect session where sid = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param sid the sid
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	@Override
+	public OpenIdConnectSession fetchBySid(String sid, boolean useFinderCache) {
+		sid = Objects.toString(sid, "");
+
+		Object[] finderArgs = null;
+
+		if (useFinderCache) {
+			finderArgs = new Object[] {sid};
+		}
+
+		Object result = null;
+
+		if (useFinderCache) {
+			result = finderCache.getResult(
+				_finderPathFetchBySid, finderArgs, this);
+		}
+
+		if (result instanceof OpenIdConnectSession) {
+			OpenIdConnectSession openIdConnectSession =
+				(OpenIdConnectSession)result;
+
+			if (!Objects.equals(sid, openIdConnectSession.getSid())) {
+				result = null;
+			}
+		}
+
+		if (result == null) {
+			StringBundler sb = new StringBundler(3);
+
+			sb.append(_SQL_SELECT_OPENIDCONNECTSESSION_WHERE);
+
+			boolean bindSid = false;
+
+			if (sid.isEmpty()) {
+				sb.append(_FINDER_COLUMN_SID_SID_3);
+			}
+			else {
+				bindSid = true;
+
+				sb.append(_FINDER_COLUMN_SID_SID_2);
+			}
+
+			String sql = sb.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query query = session.createQuery(sql);
+
+				QueryPos queryPos = QueryPos.getInstance(query);
+
+				if (bindSid) {
+					queryPos.add(sid);
+				}
+
+				List<OpenIdConnectSession> list = query.list();
+
+				if (list.isEmpty()) {
+					if (useFinderCache) {
+						finderCache.putResult(
+							_finderPathFetchBySid, finderArgs, list);
+					}
+				}
+				else {
+					if (list.size() > 1) {
+						Collections.sort(list, Collections.reverseOrder());
+
+						if (_log.isWarnEnabled()) {
+							if (!useFinderCache) {
+								finderArgs = new Object[] {sid};
+							}
+
+							_log.warn(
+								"OpenIdConnectSessionPersistenceImpl.fetchBySid(String, boolean) with parameters (" +
+									StringUtil.merge(finderArgs) +
+										") yields a result set with more than 1 result. This violates the logical unique restriction. There is no order guarantee on which result is returned by this finder.");
+						}
+					}
+
+					OpenIdConnectSession openIdConnectSession = list.get(0);
+
+					result = openIdConnectSession;
+
+					cacheResult(openIdConnectSession);
+				}
+			}
+			catch (Exception exception) {
+				throw processException(exception);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
+		else {
+			return (OpenIdConnectSession)result;
+		}
+	}
+
+	/**
+	 * Removes the open ID connect session where sid = &#63; from the database.
+	 *
+	 * @param sid the sid
+	 * @return the open ID connect session that was removed
+	 */
+	@Override
+	public OpenIdConnectSession removeBySid(String sid)
+		throws NoSuchSessionException {
+
+		OpenIdConnectSession openIdConnectSession = findBySid(sid);
+
+		return remove(openIdConnectSession);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where sid = &#63;.
+	 *
+	 * @param sid the sid
+	 * @return the number of matching open ID connect sessions
+	 */
+	@Override
+	public int countBySid(String sid) {
+		OpenIdConnectSession openIdConnectSession = fetchBySid(sid);
+
+		if (openIdConnectSession == null) {
+			return 0;
+		}
+
+		return 1;
+	}
+
+	private static final String _FINDER_COLUMN_SID_SID_2 =
+		"openIdConnectSession.sid = ?";
+
+	private static final String _FINDER_COLUMN_SID_SID_3 =
+		"(openIdConnectSession.sid IS NULL OR openIdConnectSession.sid = '')";
+
 	private FinderPath _finderPathWithPaginationFindByC_A_C;
 	private FinderPath _finderPathWithoutPaginationFindByC_A_C;
 	private FinderPath _finderPathCountByC_A_C;
@@ -2091,6 +2288,10 @@ public class OpenIdConnectSessionPersistenceImpl
 			openIdConnectSession.getPrimaryKey(), openIdConnectSession);
 
 		finderCache.putResult(
+			_finderPathFetchBySid, new Object[] {openIdConnectSession.getSid()},
+			openIdConnectSession);
+
+		finderCache.putResult(
 			_finderPathFetchByU_A_C,
 			new Object[] {
 				openIdConnectSession.getUserId(),
@@ -2179,7 +2380,12 @@ public class OpenIdConnectSessionPersistenceImpl
 	protected void cacheUniqueFindersCache(
 		OpenIdConnectSessionModelImpl openIdConnectSessionModelImpl) {
 
-		Object[] args = new Object[] {
+		Object[] args = new Object[] {openIdConnectSessionModelImpl.getSid()};
+
+		finderCache.putResult(
+			_finderPathFetchBySid, args, openIdConnectSessionModelImpl);
+
+		args = new Object[] {
 			openIdConnectSessionModelImpl.getUserId(),
 			openIdConnectSessionModelImpl.getAuthServerWellKnownURI(),
 			openIdConnectSessionModelImpl.getClientId()
@@ -2679,6 +2885,10 @@ public class OpenIdConnectSessionPersistenceImpl
 				"countByLtAccessTokenExpirationDate",
 				new String[] {Date.class.getName()},
 				new String[] {"accessTokenExpirationDate"}, false);
+
+		_finderPathFetchBySid = new FinderPath(
+			FINDER_CLASS_NAME_ENTITY, "fetchBySid",
+			new String[] {String.class.getName()}, new String[] {"sid"}, true);
 
 		_finderPathWithPaginationFindByC_A_C = new FinderPath(
 			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A_C",
