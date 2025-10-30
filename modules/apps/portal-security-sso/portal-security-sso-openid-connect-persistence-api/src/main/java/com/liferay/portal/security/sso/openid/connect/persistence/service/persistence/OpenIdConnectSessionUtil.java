@@ -476,6 +476,66 @@ public class OpenIdConnectSessionUtil {
 	}
 
 	/**
+	 * Returns the open ID connect session where sid = &#63; or throws a <code>NoSuchSessionException</code> if it could not be found.
+	 *
+	 * @param sid the sid
+	 * @return the matching open ID connect session
+	 * @throws NoSuchSessionException if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession findBySid(String sid)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().findBySid(sid);
+	}
+
+	/**
+	 * Returns the open ID connect session where sid = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param sid the sid
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchBySid(String sid) {
+		return getPersistence().fetchBySid(sid);
+	}
+
+	/**
+	 * Returns the open ID connect session where sid = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param sid the sid
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching open ID connect session, or <code>null</code> if a matching open ID connect session could not be found
+	 */
+	public static OpenIdConnectSession fetchBySid(
+		String sid, boolean useFinderCache) {
+
+		return getPersistence().fetchBySid(sid, useFinderCache);
+	}
+
+	/**
+	 * Removes the open ID connect session where sid = &#63; from the database.
+	 *
+	 * @param sid the sid
+	 * @return the open ID connect session that was removed
+	 */
+	public static OpenIdConnectSession removeBySid(String sid)
+		throws com.liferay.portal.security.sso.openid.connect.persistence.
+			exception.NoSuchSessionException {
+
+		return getPersistence().removeBySid(sid);
+	}
+
+	/**
+	 * Returns the number of open ID connect sessions where sid = &#63;.
+	 *
+	 * @param sid the sid
+	 * @return the number of matching open ID connect sessions
+	 */
+	public static int countBySid(String sid) {
+		return getPersistence().countBySid(sid);
+	}
+
+	/**
 	 * Returns all the open ID connect sessions where companyId = &#63; and authServerWellKnownURI = &#63; and clientId = &#63;.
 	 *
 	 * @param companyId the company ID
