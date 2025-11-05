@@ -334,6 +334,10 @@ public class OAuthClientEntryLocalServiceImpl
 			HTTPRequest httpRequest = new HTTPRequest(
 				HTTPRequest.Method.GET, new URL(authServerWellKnownURI));
 
+			httpRequest.setConnectTimeout(5000);
+
+			httpRequest.setReadTimeout(5000);
+
 			HTTPResponse httpResponse = httpRequest.send();
 
 			if (httpResponse.getStatusCode() != HTTPResponse.SC_OK) {
