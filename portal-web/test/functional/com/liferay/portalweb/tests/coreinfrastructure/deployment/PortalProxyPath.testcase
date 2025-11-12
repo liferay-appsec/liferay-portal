@@ -7,7 +7,7 @@ definition {
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property skip.clean-app-server-deploy-dir = "true";
-	property testray.main.component.name = "Deployment";
+	property testray.main.component.name = "Multi Factor Authentication";
 
 	setUp {
 		SignIn.signInTestSetup();
