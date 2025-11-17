@@ -229,6 +229,20 @@ public abstract class BaseUserResourceTestCase {
 	}
 
 	@Test
+	public void testPatchV2UserChangeScreenNameWithEmailAddressMatcher()
+		throws Exception {
+
+		Assert.assertTrue(false);
+	}
+
+	@Test
+	public void testPatchV2UserChangeScreenNameWithUserNameMatcher()
+		throws Exception {
+
+		Assert.assertTrue(false);
+	}
+
+	@Test
 	public void testPostV2User() throws Exception {
 		Assert.assertTrue(false);
 	}

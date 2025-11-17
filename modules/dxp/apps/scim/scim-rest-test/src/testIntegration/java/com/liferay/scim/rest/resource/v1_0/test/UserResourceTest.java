@@ -312,6 +312,87 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 
 	@Override
 	@Test
+	public void testPatchV2UserChangeScreenNameWithEmailAddressMatcher()
+		throws Exception {
+
+		String email = "test_user@liferay.com";
+		String field = "emails[type eq \"work\" and primary eq \"true\"].value";
+		User user = testDeleteV2User_addUser();
+
+		User patchUser = _testPatchV2UserChangeScreenName(field, user, email);
+
+		String patchUserEmail = String.valueOf(patchUser.getEmails()[0]);
+
+		JSONObject patchUserEmaillJSONObject = _jsonFactory.createJSONObject(
+			patchUserEmail);
+
+		Assert.assertNotEquals(
+			email, patchUserEmaillJSONObject.getString("value"));
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
+
+		_pid = ConfigurationTestUtil.createFactoryConfiguration(
+			"com.liferay.scim.rest.internal.configuration." +
+				"ScimClientOAuth2ApplicationConfiguration",
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companyId", TestPropsValues.getCompanyId()
+			).put(
+				"matcherField", "userName"
+			).put(
+				"oAuth2ApplicationName", "scim-client-test"
+			).put(
+				"userId", TestPropsValues.getUserId()
+			).build());
+
+		patchUser = _testPatchV2UserChangeScreenName(field, user, email);
+
+		patchUserEmail = String.valueOf(patchUser.getEmails()[0]);
+
+		patchUserEmaillJSONObject = _jsonFactory.createJSONObject(
+			patchUserEmail);
+
+		Assert.assertEquals(
+			email, patchUserEmaillJSONObject.getString("value"));
+	}
+
+	@Override
+	@Test
+	public void testPatchV2UserChangeScreenNameWithUserNameMatcher()
+		throws Exception {
+
+		User user = testDeleteV2User_addUser();
+		String userName = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		User patchUser = _testPatchV2UserChangeScreenName(
+			"userName", user, userName);
+
+		Assert.assertEquals(patchUser.getUserName(), userName);
+
+		ConfigurationTestUtil.deleteConfiguration(_pid);
+
+		_pid = ConfigurationTestUtil.createFactoryConfiguration(
+			"com.liferay.scim.rest.internal.configuration." +
+				"ScimClientOAuth2ApplicationConfiguration",
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companyId", TestPropsValues.getCompanyId()
+			).put(
+				"matcherField", "userName"
+			).put(
+				"oAuth2ApplicationName", "scim-client-test"
+			).put(
+				"userId", TestPropsValues.getUserId()
+			).build());
+
+		userName = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		patchUser = _testPatchV2UserChangeScreenName(
+			"userName", user, userName);
+
+		Assert.assertNotEquals(patchUser.getUserName(), userName);
+	}
+
+	@Override
+	@Test
 	public void testPostV2User() throws Exception {
 		User postUser1 = randomUser();
 
@@ -612,6 +693,32 @@ public class UserResourceTest extends BaseUserResourceTestCase {
 		Object userObject = userResource.getV2UserById(userId);
 
 		return User.toDTO(userObject.toString());
+	}
+
+	private User _testPatchV2UserChangeScreenName(
+			String field, User user, String userName)
+		throws Exception {
+
+		PatchOp patchOp = new PatchOp();
+
+		patchOp.setOperations(
+			new Operation[] {
+				new Operation() {
+					{
+						setOp("replace");
+						setPath(field);
+						setValue(userName);
+					}
+				}
+			});
+
+		patchOp.setSchemas(
+			new String[] {"\"urn:ietf:params:scim:api:messages:2.0:PatchOp\""});
+
+		HttpInvoker.HttpResponse httpResponse =
+			userResource.patchV2UserHttpResponse(user.getId(), patchOp);
+
+		return User.toDTO(httpResponse.getContent());
 	}
 
 	private static final String _PREFIX = StringUtil.toLowerCase(
