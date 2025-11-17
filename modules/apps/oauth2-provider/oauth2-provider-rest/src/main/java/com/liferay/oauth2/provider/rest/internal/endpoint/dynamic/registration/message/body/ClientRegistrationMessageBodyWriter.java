@@ -5,13 +5,14 @@
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.message.body;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.message.body.BaseMessageBodyWriter;
-import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
@@ -30,6 +31,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.cxf.rs.security.oauth2.services.ClientRegistration;
+import org.apache.cxf.rs.security.oauth2.services.ClientRegistrationResponse;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -54,7 +56,8 @@ public class ClientRegistrationMessageBodyWriter
 		Class<?> aClass, Type type, Annotation[] annotations,
 		MediaType mediaType) {
 
-		if (aClass.isAssignableFrom(ClientRegistration.class) &&
+		if (ClientRegistration.class.isAssignableFrom(aClass) &&
+			!ClientRegistrationResponse.class.isAssignableFrom(aClass) &&
 			StringUtil.equalsIgnoreCase(mediaType.getType(), "application") &&
 			StringUtil.equalsIgnoreCase(mediaType.getSubtype(), "json")) {
 
@@ -72,24 +75,12 @@ public class ClientRegistrationMessageBodyWriter
 			OutputStream outputStream)
 		throws WebApplicationException {
 
-		JSONObject clientRegistrationJSONObject = JSONUtil.put(
-			"application_type", clientRegistration.getApplicationType()
-		).put(
-			"client_name", clientRegistration.getClientName()
-		).put(
-			"grant_types", clientRegistration.getGrantTypes()
-		).put(
-			"redirect_uris", clientRegistration.getRedirectUris()
-		);
-
-		if (Validator.isNotNull(clientRegistration.getScope())) {
-			clientRegistrationJSONObject.put(
-				"scopes", clientRegistration.getScope());
-		}
+		ObjectMapper objectMapper = ObjectMapperHolder._objectMapper;
 
 		try {
 			outputStream.write(
-				clientRegistrationJSONObject.toString(
+				objectMapper.writeValueAsString(
+					clientRegistration
 				).getBytes(
 					StandardCharsets.UTF_8
 				));
@@ -115,5 +106,17 @@ public class ClientRegistrationMessageBodyWriter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ClientRegistrationMessageBodyWriter.class);
+
+	private static class ObjectMapperHolder {
+
+		private static final ObjectMapper _objectMapper = new ObjectMapper() {
+			{
+				configure(
+					DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+				configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+			}
+		};
+
+	}
 
 }

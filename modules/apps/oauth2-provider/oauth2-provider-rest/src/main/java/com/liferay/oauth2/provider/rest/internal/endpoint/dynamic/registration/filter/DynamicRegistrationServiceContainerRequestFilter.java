@@ -9,7 +9,6 @@ import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.petra.reflect.ReflectionUtil;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.log.Log;
@@ -86,14 +85,14 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			JwtToken token = _getToken(httpServletRequest);
 
 			long currentTime = System.currentTimeMillis() / Time.SECOND;
-			long expirationTime = (long)token.getClaim("exp");
+			long expirationTime = GetterUtil.getLong(token.getClaim("exp"));
 
 			if (currentTime > expirationTime) {
 				throw ExceptionUtils.toNotAuthorizedException(
 					(Throwable)null, (Response)null);
 			}
 
-			String clientId = (String)token.getClaim("client_id");
+			String clientId = GetterUtil.getString(token.getClaim("client_id"));
 
 			long userId = GetterUtil.getLong(token.getClaim("sub"));
 
@@ -192,7 +191,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 
 		return new JwsJwtCompactConsumer(
-			authorizationHeader.split(StringPool.SPACE)[1]
+			authorizationHeader.substring("Bearer ".length())
 		).getJwtToken();
 	}
 

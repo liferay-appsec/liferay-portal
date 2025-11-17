@@ -6,6 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration;
 
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistration;
+import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -24,13 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cxf.common.util.StringUtils;
 import org.apache.cxf.jaxrs.utils.ExceptionUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthError;
 import org.apache.cxf.rs.security.oauth2.services.ClientRegistration;
-import org.apache.cxf.rs.security.oauth2.services.ClientRegistrationResponse;
 import org.apache.cxf.rs.security.oauth2.services.DynamicRegistrationService;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
@@ -55,6 +54,8 @@ public class LiferayDynamicRegistrationService
 
 	protected void fromClientRegistrationToClient(
 		ClientRegistration request, Client client) {
+
+		client.setApplicationName(request.getClientName());
 
 		List<String> grantTypes = client.getAllowedGrantTypes();
 
@@ -95,7 +96,7 @@ public class LiferayDynamicRegistrationService
 
 		String scope = request.getScope();
 
-		if (!StringUtils.isEmpty(scope)) {
+		if (!Validator.isBlank(scope)) {
 			client.setRegisteredScopes(OAuthUtils.parseScope(scope));
 		}
 
@@ -107,7 +108,7 @@ public class LiferayDynamicRegistrationService
 
 		String clientLogoUri = request.getLogoUri();
 
-		if (clientLogoUri != null) {
+		if (Validator.isNotNull(clientLogoUri)) {
 			client.setApplicationLogoUri(clientLogoUri);
 		}
 
@@ -131,18 +132,23 @@ public class LiferayDynamicRegistrationService
 			properties.put("software_id", softwareId);
 		}
 
-		client.setProperties(properties);
+		String tosUri = request.getTosUri();
+
+		if (Validator.isNotNull(tosUri)) {
+			properties.put("tos_uri", tosUri);
+		}
 	}
 
-	protected ClientRegistrationResponse fromClientToRegistrationResponse(
-		Client client) {
+	protected LiferayClientRegistrationResponse
+		fromClientToRegistrationResponse(Client client) {
 
-		ClientRegistrationResponse response = new ClientRegistrationResponse();
+		LiferayClientRegistrationResponse response =
+			new LiferayClientRegistrationResponse();
 
 		response.setClientId(client.getClientId());
 
 		if (Validator.isNotNull(client.getApplicationName())) {
-			response.setProperty("client_name", client.getApplicationName());
+			response.setClientName(client.getApplicationName());
 		}
 
 		if (client.getClientSecret() != null) {
@@ -152,6 +158,9 @@ public class LiferayDynamicRegistrationService
 
 		response.setClientIdIssuedAt(client.getRegisteredAt());
 		response.setGrantTypes(client.getAllowedGrantTypes());
+
+		response.setLogoUri(client.getApplicationLogoUri());
+		response.setRedirectUris(client.getRedirectUris());
 
 		UriBuilder uriBuilder = getMessageContext(
 		).getUriInfo(
@@ -173,19 +182,25 @@ public class LiferayDynamicRegistrationService
 		if (!client.getRegisteredScopes(
 			).isEmpty()) {
 
-			response.setProperty("scope", client.getRegisteredScopes());
+			response.setScope(client.getRegisteredScopes());
 		}
 
 		Map<String, String> properties = client.getProperties();
 
-		for (String propertyName :
-				new String[] {"jwks", "jwks_uri", "software_id"}) {
+		if (properties.get("jwks") != null) {
+			response.setJwks(properties.get("jwks"));
+		}
 
-			String propertyValue = properties.get(propertyName);
+		if (properties.get("jwks_uri") != null) {
+			response.setJwksUri(properties.get("jwks_uri"));
+		}
 
-			if (propertyValue != null) {
-				response.setProperty(propertyName, propertyValue);
-			}
+		if (properties.get("software_id") != null) {
+			response.setSoftwareId(properties.get("software_id"));
+		}
+
+		if (properties.get("tos_uri") != null) {
+			response.setTosUri(properties.get("tos_uri"));
 		}
 
 		return response;

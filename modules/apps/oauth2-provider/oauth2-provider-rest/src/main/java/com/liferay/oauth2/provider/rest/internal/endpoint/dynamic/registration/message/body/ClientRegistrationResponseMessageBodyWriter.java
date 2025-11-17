@@ -5,13 +5,17 @@
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.message.body;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.message.body.BaseMessageBodyWriter;
-import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
@@ -29,8 +33,6 @@ import java.lang.reflect.Type;
 
 import java.nio.charset.StandardCharsets;
 
-import org.apache.cxf.rs.security.oauth2.services.ClientRegistrationResponse;
-
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -47,14 +49,14 @@ import org.osgi.service.component.annotations.Component;
 @Produces("application/json")
 @Provider
 public class ClientRegistrationResponseMessageBodyWriter
-	extends BaseMessageBodyWriter<ClientRegistrationResponse> {
+	extends BaseMessageBodyWriter<LiferayClientRegistrationResponse> {
 
 	@Override
 	public boolean isWriteable(
 		Class<?> aClass, Type type, Annotation[] annotations,
 		MediaType mediaType) {
 
-		if (aClass.isAssignableFrom(ClientRegistrationResponse.class) &&
+		if (LiferayClientRegistrationResponse.class.isAssignableFrom(aClass) &&
 			StringUtil.equalsIgnoreCase(mediaType.getType(), "application") &&
 			StringUtil.equalsIgnoreCase(mediaType.getSubtype(), "json")) {
 
@@ -66,95 +68,18 @@ public class ClientRegistrationResponseMessageBodyWriter
 
 	@Override
 	public void writeTo(
-			ClientRegistrationResponse clientRegistrationResponse,
+			LiferayClientRegistrationResponse clientRegistrationResponse,
 			Class<?> aClass, Type type, Annotation[] annotations,
 			MediaType mediaType, MultivaluedMap<String, Object> multivaluedMap,
 			OutputStream outputStream)
 		throws WebApplicationException {
 
-		JSONObject clientRegistrationResponseJSONObject = JSONUtil.put(
-			"client_id", clientRegistrationResponse.getClientId());
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getStringProperty("client_name"))) {
-
-			clientRegistrationResponseJSONObject.put(
-				"client_name",
-				clientRegistrationResponse.getStringProperty("client_name"));
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getClientIdIssuedAt())) {
-
-			clientRegistrationResponseJSONObject.put(
-				"client_id_issued_at",
-				clientRegistrationResponse.getClientIdIssuedAt());
-		}
-
-		clientRegistrationResponseJSONObject.put(
-			"client_secret", clientRegistrationResponse.getClientSecret());
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getClientSecretExpiresAt())) {
-
-			clientRegistrationResponseJSONObject.put(
-				"client_secret_expires_at",
-				clientRegistrationResponse.getClientSecretExpiresAt());
-		}
-
-		clientRegistrationResponseJSONObject.put(
-			"grant_types", clientRegistrationResponse.getGrantTypes());
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getStringProperty("jwks"))) {
-
-			clientRegistrationResponseJSONObject.put(
-				"jwks", clientRegistrationResponse.getStringProperty("jwks"));
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getStringProperty("jwks_uri"))) {
-
-			clientRegistrationResponseJSONObject.put(
-				"jwks_uri",
-				clientRegistrationResponse.getStringProperty("jwks_uri"));
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getRegistrationAccessToken())) {
-
-			clientRegistrationResponseJSONObject.put(
-				"registration_access_token",
-				clientRegistrationResponse.getRegistrationAccessToken());
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getRegistrationClientUri())) {
-
-			clientRegistrationResponseJSONObject.put(
-				"registration_client_uri",
-				clientRegistrationResponse.getRegistrationClientUri());
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getListStringProperty("scope"))) {
-
-			clientRegistrationResponseJSONObject.put(
-				"scope",
-				clientRegistrationResponse.getListStringProperty("scope"));
-		}
-
-		if (Validator.isNotNull(
-				clientRegistrationResponse.getStringProperty("software_id"))) {
-
-			clientRegistrationResponseJSONObject.put(
-				"software_id",
-				clientRegistrationResponse.getStringProperty("software_id"));
-		}
+		ObjectMapper objectMapper = ObjectMapperHolder._objectMapper;
 
 		try {
 			outputStream.write(
-				clientRegistrationResponseJSONObject.toString(
+				objectMapper.writeValueAsString(
+					clientRegistrationResponse
 				).getBytes(
 					StandardCharsets.UTF_8
 				));
@@ -173,7 +98,7 @@ public class ClientRegistrationResponseMessageBodyWriter
 
 	@Override
 	protected String writeTo(
-		ClientRegistrationResponse clientRegistrationResponse,
+		LiferayClientRegistrationResponse clientRegistrationResponse,
 		String authorizeScreenURL) {
 
 		return null;
@@ -181,5 +106,20 @@ public class ClientRegistrationResponseMessageBodyWriter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ClientRegistrationResponseMessageBodyWriter.class);
+
+	private static class ObjectMapperHolder {
+
+		private static final ObjectMapper _objectMapper = new ObjectMapper() {
+			{
+				configure(
+					DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+				configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+				setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+				setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+				setSerializationInclusion(JsonInclude.Include.NON_NULL);
+			}
+		};
+
+	}
 
 }

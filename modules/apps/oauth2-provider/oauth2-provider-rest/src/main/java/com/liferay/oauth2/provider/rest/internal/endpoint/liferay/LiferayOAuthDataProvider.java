@@ -32,7 +32,7 @@ import com.liferay.portal.configuration.module.configuration.ConfigurationProvid
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -48,7 +48,6 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -60,6 +59,8 @@ import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.io.IOException;
 
 import java.net.HttpURLConnection;
 
@@ -740,9 +741,9 @@ public class LiferayOAuthDataProvider
 					client.getTokenEndpointAuthMethod(), user.getUserId(),
 					client.getClientId(), 0, client.getClientSecret(), null,
 					null, client.getApplicationWebUri(), 0, jwks,
-					client.getApplicationName(), null, client.getRedirectUris(),
-					false, client.getRegisteredScopes(), false,
-					new ServiceContext());
+					client.getApplicationName(), properties.get("tos_uri"),
+					client.getRedirectUris(), false,
+					client.getRegisteredScopes(), false, new ServiceContext());
 			}
 			catch (PortalException portalException) {
 				if (_log.isDebugEnabled()) {
@@ -759,9 +760,16 @@ public class LiferayOAuthDataProvider
 			}
 		}
 		else {
+			OAuthError oAuthError = new OAuthError(
+				"invalid_client_id", "Client identifier already exists.");
+
 			throw new WebApplicationException(
 				Response.status(
-					Response.Status.BAD_REQUEST
+					Response.Status.CONFLICT
+				).entity(
+					oAuthError
+				).type(
+					MediaType.APPLICATION_JSON_TYPE
 				).build());
 		}
 	}
@@ -1134,13 +1142,54 @@ public class LiferayOAuthDataProvider
 			return null;
 		}
 
+		if (!jwksUri.toLowerCase(
+			).startsWith(
+				"https://"
+			)) {
+
+			OAuthError error = new OAuthError(
+				"invalid_request", "jwks_uri must use the https scheme");
+
+			Response.ResponseBuilder responseBuilder =
+				JAXRSUtils.toResponseBuilder(400);
+
+			responseBuilder.type(MediaType.APPLICATION_JSON);
+
+			throw ExceptionUtils.toBadRequestException(
+				(Throwable)null,
+				responseBuilder.entity(
+					error
+				).build());
+		}
+
 		Http.Options options = new Http.Options();
 
 		options.setLocation(jwksUri);
 
-		options.setTimeout(5000);
+		String responseJSON = null;
 
-		String responseJSON = _httpUtil.URLtoString(options);
+		try {
+			responseJSON = _http.URLtoString(options);
+		}
+		catch (IOException ioException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(ioException);
+			}
+
+			OAuthError error = new OAuthError(
+				"invalid_request", "Jwks uri is unreachable");
+
+			Response.ResponseBuilder responseBuilder =
+				JAXRSUtils.toResponseBuilder(400);
+
+			responseBuilder.type(MediaType.APPLICATION_JSON);
+
+			throw ExceptionUtils.toBadRequestException(
+				(Throwable)null,
+				responseBuilder.entity(
+					error
+				).build());
+		}
 
 		Http.Response response = options.getResponse();
 
@@ -1160,7 +1209,7 @@ public class LiferayOAuthDataProvider
 				).build());
 		}
 
-		return _jsonFactoryUtil.createJSONObject(
+		return _jsonFactory.createJSONObject(
 			responseJSON
 		).toString();
 	}
@@ -1176,32 +1225,29 @@ public class LiferayOAuthDataProvider
 
 				grantTypes.add(GrantType.AUTHORIZATION_CODE);
 			}
-
-			if (OAuthConstants.CLIENT_CREDENTIALS_GRANT.equalsIgnoreCase(
-					givenGrantType)) {
+			else if (OAuthConstants.CLIENT_CREDENTIALS_GRANT.equalsIgnoreCase(
+						givenGrantType)) {
 
 				grantTypes.add(GrantType.CLIENT_CREDENTIALS);
 			}
+			else if (Constants.JWT_BEARER_GRANT.equalsIgnoreCase(
+						givenGrantType)) {
 
-			if (Constants.JWT_BEARER_GRANT.equalsIgnoreCase(givenGrantType)) {
 				grantTypes.add(GrantType.JWT_BEARER);
 			}
-
-			if (OAuth2ProviderRESTEndpointConstants.
-					AUTHORIZATION_CODE_PKCE_GRANT.equalsIgnoreCase(
-						givenGrantType)) {
+			else if (OAuth2ProviderRESTEndpointConstants.
+						AUTHORIZATION_CODE_PKCE_GRANT.equalsIgnoreCase(
+							givenGrantType)) {
 
 				grantTypes.add(GrantType.AUTHORIZATION_CODE_PKCE);
 			}
-
-			if (OAuthConstants.RESOURCE_OWNER_GRANT.equalsIgnoreCase(
-					givenGrantType)) {
+			else if (OAuthConstants.RESOURCE_OWNER_GRANT.equalsIgnoreCase(
+						givenGrantType)) {
 
 				grantTypes.add(GrantType.RESOURCE_OWNER_PASSWORD);
 			}
-
-			if (OAuthConstants.REFRESH_TOKEN_GRANT.equalsIgnoreCase(
-					givenGrantType)) {
+			else if (OAuthConstants.REFRESH_TOKEN_GRANT.equalsIgnoreCase(
+						givenGrantType)) {
 
 				grantTypes.add(GrantType.REFRESH_TOKEN);
 			}
@@ -1636,10 +1682,10 @@ public class LiferayOAuthDataProvider
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
-	private HttpUtil _httpUtil;
+	private Http _http;
 
 	@Reference
-	private JSONFactoryUtil _jsonFactoryUtil;
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;

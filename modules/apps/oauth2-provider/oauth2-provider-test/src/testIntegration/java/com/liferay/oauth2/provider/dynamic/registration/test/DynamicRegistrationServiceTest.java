@@ -110,8 +110,6 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		).put(
 			"grant_types", new String[] {"client_credentials"}
 		).put(
-			"jwks_uri", RandomTestUtil.randomString()
-		).put(
 			"logo_uri", RandomTestUtil.randomString()
 		).put(
 			"redirect_uris",
