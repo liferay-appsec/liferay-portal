@@ -354,6 +354,10 @@ public interface Http {
 			return _response;
 		}
 
+		public int getSocketTimeout() {
+			return _socketTimeout;
+		}
+
 		public int getTimeout() {
 			return _timeout;
 		}
@@ -538,6 +542,10 @@ public interface Http {
 			_response = response;
 		}
 
+		public void setSocketTimeout(int socketTimeout) {
+			_socketTimeout = socketTimeout;
+		}
+
 		public void setTimeout(int timeout) {
 			_timeout = timeout;
 		}
@@ -555,6 +563,7 @@ public interface Http {
 		private boolean _normalizeURI = true;
 		private Map<String, String> _parts;
 		private Response _response = new Response();
+		private int _socketTimeout;
 		private int _timeout;
 
 	}

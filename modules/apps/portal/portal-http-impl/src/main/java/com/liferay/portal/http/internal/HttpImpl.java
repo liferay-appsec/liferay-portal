@@ -167,7 +167,8 @@ public class HttpImpl implements Http {
 			options.getBody(), options.getFileParts(),
 			options.getInputStreamParts(), options.getParts(),
 			options.getResponse(), options.isFollowRedirects(),
-			options.isNormalizeURI(), options.getTimeout());
+			options.isNormalizeURI(), options.getTimeout(),
+			options.getSocketTimeout());
 	}
 
 	@Override
@@ -201,7 +202,8 @@ public class HttpImpl implements Http {
 			options.getBody(), options.getFileParts(),
 			options.getInputStreamParts(), options.getParts(),
 			options.getResponse(), options.isFollowRedirects(),
-			options.isNormalizeURI(), options.getTimeout());
+			options.isNormalizeURI(), options.getTimeout(),
+			options.getSocketTimeout());
 	}
 
 	@Override
@@ -566,13 +568,14 @@ public class HttpImpl implements Http {
 			Http.Body body, List<Http.FilePart> fileParts,
 			List<Http.InputStreamPart> inputStreamParts,
 			Map<String, String> parts, Http.Response response,
-			boolean followRedirects, boolean normalizeURI, int timeout)
+			boolean followRedirects, boolean normalizeURI, int timeout,
+			int socketTimeout)
 		throws IOException {
 
 		try (InputStream inputStream = URLtoInputStream(
 				location, method, headers, cookieSpec, cookies, auth, body,
 				fileParts, inputStreamParts, parts, response, followRedirects,
-				normalizeURI, timeout)) {
+				normalizeURI, timeout, socketTimeout)) {
 
 			if (inputStream == null) {
 				return null;
@@ -598,7 +601,8 @@ public class HttpImpl implements Http {
 			Http.Body body, List<Http.FilePart> fileParts,
 			List<Http.InputStreamPart> inputStreamParts,
 			Map<String, String> parts, Http.Response response,
-			boolean followRedirects, boolean normalizeURI, int timeout)
+			boolean followRedirects, boolean normalizeURI, int timeout,
+			int socketTimeout)
 		throws IOException {
 
 		URI uri = null;
@@ -633,7 +637,7 @@ public class HttpImpl implements Http {
 				uri.getHost(), uri.getPort(), uri.getScheme());
 
 			RequestConfig.Builder requestConfigBuilder =
-				_getRequestConfigBuilder(uri, timeout);
+				_getRequestConfigBuilder(socketTimeout, uri, timeout);
 
 			int maxConnectionsPerHost = GetterUtil.getInteger(
 				PropsUtil.get(
@@ -837,7 +841,7 @@ public class HttpImpl implements Http {
 							locationHeaderValue, Http.Method.GET, headers,
 							cookieSpec, cookies, auth, body, fileParts,
 							inputStreamParts, parts, response, followRedirects,
-							normalizeURI, timeout);
+							normalizeURI, timeout, socketTimeout);
 					}
 
 					response.setRedirect(locationHeaderValue);
@@ -1058,7 +1062,7 @@ public class HttpImpl implements Http {
 	}
 
 	private RequestConfig.Builder _getRequestConfigBuilder(
-		URI uri, int timeout) {
+		int socketTimeout, URI uri, int timeout) {
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Location is " + uri.toString());
@@ -1090,6 +1094,11 @@ public class HttpImpl implements Http {
 
 			requestConfigBuilder =
 				requestConfigBuilder.setConnectionRequestTimeout(timeout);
+
+			if (socketTimeout > 0) {
+				requestConfigBuilder = requestConfigBuilder.setSocketTimeout(
+					socketTimeout);
+			}
 		}
 
 		return requestConfigBuilder;
