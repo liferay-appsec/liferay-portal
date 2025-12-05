@@ -43,6 +43,13 @@ public interface OAuthClientASLocalMetadataService extends BaseService {
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.oauth.client.persistence.service.impl.OAuthClientASLocalMetadataServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the o auth client as local metadata remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link OAuthClientASLocalMetadataServiceUtil} if injection and service tracking are not available.
 	 */
 	public OAuthClientASLocalMetadata addOAuthClientASLocalMetadata(
+			long userId, String authorizationEndpoint, Boolean enabled,
+			String issuerString, String jwksUri, String[] supportedGrantTypes,
+			String[] supportedScopes, String[] supportedSubjectTypes,
+			String tokenEndpointString, String userinfoEndpoint)
+		throws PortalException;
+
+	public OAuthClientASLocalMetadata addOAuthClientASLocalMetadata(
 			long userId, String metadataJSON, String wellKnownURISuffix)
 		throws PortalException;
 
@@ -82,6 +89,14 @@ public interface OAuthClientASLocalMetadataService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<OAuthClientASLocalMetadata> getUserOAuthClientASLocalMetadata(
 		long userId, int start, int end);
+
+	public OAuthClientASLocalMetadata updateOAuthClientASLocalMetadata(
+			long oAuthClientASLocalMetadataId, String authorizationEndpoint,
+			Boolean enabled, String issuerString, String jwksUri,
+			String[] supportedGrantTypes, String[] supportedScopes,
+			String[] supportedSubjectTypes, String tokenEndpointString,
+			String userinfoEndpoint)
+		throws PortalException;
 
 	public OAuthClientASLocalMetadata updateOAuthClientASLocalMetadata(
 			long oAuthClientASLocalMetadataId, String metadataJSON,
