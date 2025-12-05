@@ -9,12 +9,16 @@
 		<field name="userName" type="String" />
 		<field name="createDate" type="Date" />
 		<field name="modifiedDate" type="Date" />
+		<field name="issuer" type="String" />
+		<field name="localWellKnownEnabled" type="boolean" />
 		<field name="localWellKnownURI" type="String">
 			<hint name="max-length">256</hint>
 		</field>
 		<field name="metadataJSON" type="String">
 			<hint-collection name="CLOB" />
 		</field>
+		<field name="oAuthASLocalWellKnownURI" type="String" />
+		<field name="oAuthASMetadataJSON" type="String" />
 	</model>
 	<model name="com.liferay.oauth.client.persistence.model.OAuthClientEntry">
 		<field name="mvccVersion" type="long" />

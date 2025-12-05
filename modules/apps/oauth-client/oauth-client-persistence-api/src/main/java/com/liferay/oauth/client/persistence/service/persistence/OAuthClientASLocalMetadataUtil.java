@@ -628,6 +628,66 @@ public class OAuthClientASLocalMetadataUtil {
 	}
 
 	/**
+	 * Returns the o auth client as local metadata where issuer = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
+	 *
+	 * @param issuer the issuer
+	 * @return the matching o auth client as local metadata
+	 * @throws NoSuchOAuthClientASLocalMetadataException if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata findByIssuer(String issuer)
+		throws com.liferay.oauth.client.persistence.exception.
+			NoSuchOAuthClientASLocalMetadataException {
+
+		return getPersistence().findByIssuer(issuer);
+	}
+
+	/**
+	 * Returns the o auth client as local metadata where issuer = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata fetchByIssuer(String issuer) {
+		return getPersistence().fetchByIssuer(issuer);
+	}
+
+	/**
+	 * Returns the o auth client as local metadata where issuer = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param issuer the issuer
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata fetchByIssuer(
+		String issuer, boolean useFinderCache) {
+
+		return getPersistence().fetchByIssuer(issuer, useFinderCache);
+	}
+
+	/**
+	 * Removes the o auth client as local metadata where issuer = &#63; from the database.
+	 *
+	 * @param issuer the issuer
+	 * @return the o auth client as local metadata that was removed
+	 */
+	public static OAuthClientASLocalMetadata removeByIssuer(String issuer)
+		throws com.liferay.oauth.client.persistence.exception.
+			NoSuchOAuthClientASLocalMetadataException {
+
+		return getPersistence().removeByIssuer(issuer);
+	}
+
+	/**
+	 * Returns the number of o auth client as local metadatas where issuer = &#63;.
+	 *
+	 * @param issuer the issuer
+	 * @return the number of matching o auth client as local metadatas
+	 */
+	public static int countByIssuer(String issuer) {
+		return getPersistence().countByIssuer(issuer);
+	}
+
+	/**
 	 * Returns the o auth client as local metadata where localWellKnownURI = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
 	 *
 	 * @param localWellKnownURI the local well known uri
@@ -690,6 +750,77 @@ public class OAuthClientASLocalMetadataUtil {
 	 */
 	public static int countByLocalWellKnownURI(String localWellKnownURI) {
 		return getPersistence().countByLocalWellKnownURI(localWellKnownURI);
+	}
+
+	/**
+	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
+	 *
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the matching o auth client as local metadata
+	 * @throws NoSuchOAuthClientASLocalMetadataException if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata findByOAuthASLocalWellKnownURI(
+			String oAuthASLocalWellKnownURI)
+		throws com.liferay.oauth.client.persistence.exception.
+			NoSuchOAuthClientASLocalMetadataException {
+
+		return getPersistence().findByOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI);
+	}
+
+	/**
+	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata fetchByOAuthASLocalWellKnownURI(
+		String oAuthASLocalWellKnownURI) {
+
+		return getPersistence().fetchByOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI);
+	}
+
+	/**
+	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public static OAuthClientASLocalMetadata fetchByOAuthASLocalWellKnownURI(
+		String oAuthASLocalWellKnownURI, boolean useFinderCache) {
+
+		return getPersistence().fetchByOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI, useFinderCache);
+	}
+
+	/**
+	 * Removes the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; from the database.
+	 *
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the o auth client as local metadata that was removed
+	 */
+	public static OAuthClientASLocalMetadata removeByOAuthASLocalWellKnownURI(
+			String oAuthASLocalWellKnownURI)
+		throws com.liferay.oauth.client.persistence.exception.
+			NoSuchOAuthClientASLocalMetadataException {
+
+		return getPersistence().removeByOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI);
+	}
+
+	/**
+	 * Returns the number of o auth client as local metadatas where oAuthASLocalWellKnownURI = &#63;.
+	 *
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the number of matching o auth client as local metadatas
+	 */
+	public static int countByOAuthASLocalWellKnownURI(
+		String oAuthASLocalWellKnownURI) {
+
+		return getPersistence().countByOAuthASLocalWellKnownURI(
+			oAuthASLocalWellKnownURI);
 	}
 
 	/**
