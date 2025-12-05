@@ -27,6 +27,9 @@ definition {
 	@priority = 5
 	test AssertCaptchaEnabled {
 		property captcha.enabled = "true";
+		property captcha.enforce.disabled = "false";
+		property osgi.module.configuration.file.names = "com.liferay.captcha.configuration.CaptchaConfiguration.config";
+		property osgi.module.configurations = "createAccountCaptchaEnabled=B\"true\"${line.separator}maxChallenges=I\"1\"${line.separator}sendPasswordCaptchaEnabled=B\"true\"";
 		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
