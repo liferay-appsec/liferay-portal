@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.service.BaseService;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.List;
 
@@ -62,6 +63,16 @@ public interface OAuthClientASLocalMetadataService extends BaseService {
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata fetchByOAuthClientASLocalMetadataId(
+			long oAuthClientASLocalMetadataId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata fetchIssuerOAuthClientASLocalMetadata(
+			long companyId, String issuer)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<OAuthClientASLocalMetadata>
 		getCompanyOAuthClientASLocalMetadata(long companyId);
 
@@ -71,8 +82,20 @@ public interface OAuthClientASLocalMetadataService extends BaseService {
 			long companyId, int start, int end);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata getIssuerAuthClientASLocalMetadata(
+			long companyId, String issuer)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public OAuthClientASLocalMetadata getOAuthClientASLocalMetadata(
 			String localWellKnownURI)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata
+			getOAuthClientASLocalMetadataByCompanyEnabled(
+				long companyId, boolean enabled,
+				OrderByComparator<OAuthClientASLocalMetadata> orderByComparator)
 		throws PortalException;
 
 	/**

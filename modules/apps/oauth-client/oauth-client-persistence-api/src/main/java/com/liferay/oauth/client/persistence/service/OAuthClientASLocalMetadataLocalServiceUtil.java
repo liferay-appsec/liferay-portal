@@ -237,6 +237,24 @@ public class OAuthClientASLocalMetadataLocalServiceUtil {
 		return getService().dynamicQueryCount(dynamicQuery, projection);
 	}
 
+	public static OAuthClientASLocalMetadata
+			fetchByOAuthClientASLocalMetadataId(
+				long oAuthClientASLocalMetadataId)
+		throws PortalException {
+
+		return getService().fetchByOAuthClientASLocalMetadataId(
+			oAuthClientASLocalMetadataId);
+	}
+
+	public static OAuthClientASLocalMetadata
+			fetchIssuerByCompanyAuthClientASLocalMetadata(
+				long companyId, String issuer)
+		throws PortalException {
+
+		return getService().fetchIssuerByCompanyAuthClientASLocalMetadata(
+			companyId, issuer);
+	}
+
 	public static OAuthClientASLocalMetadata fetchOAuthClientASLocalMetadata(
 		long oAuthClientASLocalMetadataId) {
 
@@ -248,6 +266,15 @@ public class OAuthClientASLocalMetadataLocalServiceUtil {
 		String localWellKnownURI) {
 
 		return getService().fetchOAuthClientASLocalMetadata(localWellKnownURI);
+	}
+
+	public static OAuthClientASLocalMetadata
+		fetchOAuthClientASLocalMetadataByCompanyEnabled(
+			long companyId, boolean enabled,
+			OrderByComparator<OAuthClientASLocalMetadata> orderByComparator) {
+
+		return getService().fetchOAuthClientASLocalMetadataByCompanyEnabled(
+			companyId, enabled, orderByComparator);
 	}
 
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery

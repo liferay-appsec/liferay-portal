@@ -11,7 +11,7 @@ create table OAuthClientASLocalMetadata (
 	localWellKnownURI VARCHAR(256) null,
 	metadataJSON TEXT null,
 	oAuthASLocalWellKnownURI VARCHAR(75) null,
-	oAuthASMetadataJSON VARCHAR(75) null
+	oAuthASMetadataJSON TEXT null
 );
 
 create table OAuthClientEntry (

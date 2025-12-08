@@ -8,6 +8,7 @@ package com.liferay.oauth.client.persistence.service;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.List;
 
@@ -66,6 +67,23 @@ public class OAuthClientASLocalMetadataServiceUtil {
 		return getService().deleteOAuthClientASLocalMetadata(localWellKnownURI);
 	}
 
+	public static OAuthClientASLocalMetadata
+			fetchByOAuthClientASLocalMetadataId(
+				long oAuthClientASLocalMetadataId)
+		throws PortalException {
+
+		return getService().fetchByOAuthClientASLocalMetadataId(
+			oAuthClientASLocalMetadataId);
+	}
+
+	public static OAuthClientASLocalMetadata
+			fetchIssuerOAuthClientASLocalMetadata(long companyId, String issuer)
+		throws PortalException {
+
+		return getService().fetchIssuerOAuthClientASLocalMetadata(
+			companyId, issuer);
+	}
+
 	public static List<OAuthClientASLocalMetadata>
 		getCompanyOAuthClientASLocalMetadata(long companyId) {
 
@@ -80,11 +98,29 @@ public class OAuthClientASLocalMetadataServiceUtil {
 			companyId, start, end);
 	}
 
+	public static OAuthClientASLocalMetadata getIssuerAuthClientASLocalMetadata(
+			long companyId, String issuer)
+		throws PortalException {
+
+		return getService().getIssuerAuthClientASLocalMetadata(
+			companyId, issuer);
+	}
+
 	public static OAuthClientASLocalMetadata getOAuthClientASLocalMetadata(
 			String localWellKnownURI)
 		throws PortalException {
 
 		return getService().getOAuthClientASLocalMetadata(localWellKnownURI);
+	}
+
+	public static OAuthClientASLocalMetadata
+			getOAuthClientASLocalMetadataByCompanyEnabled(
+				long companyId, boolean enabled,
+				OrderByComparator<OAuthClientASLocalMetadata> orderByComparator)
+		throws PortalException {
+
+		return getService().getOAuthClientASLocalMetadataByCompanyEnabled(
+			companyId, enabled, orderByComparator);
 	}
 
 	/**

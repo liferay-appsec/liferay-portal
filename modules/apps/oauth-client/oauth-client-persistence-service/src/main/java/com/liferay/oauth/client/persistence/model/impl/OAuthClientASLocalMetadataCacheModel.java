@@ -204,7 +204,7 @@ public class OAuthClientASLocalMetadataCacheModel
 		localWellKnownURI = objectInput.readUTF();
 		metadataJSON = (String)objectInput.readObject();
 		oAuthASLocalWellKnownURI = objectInput.readUTF();
-		oAuthASMetadataJSON = objectInput.readUTF();
+		oAuthASMetadataJSON = (String)objectInput.readObject();
 	}
 
 	@Override
@@ -258,10 +258,10 @@ public class OAuthClientASLocalMetadataCacheModel
 		}
 
 		if (oAuthASMetadataJSON == null) {
-			objectOutput.writeUTF("");
+			objectOutput.writeObject("");
 		}
 		else {
-			objectOutput.writeUTF(oAuthASMetadataJSON);
+			objectOutput.writeObject(oAuthASMetadataJSON);
 		}
 	}
 

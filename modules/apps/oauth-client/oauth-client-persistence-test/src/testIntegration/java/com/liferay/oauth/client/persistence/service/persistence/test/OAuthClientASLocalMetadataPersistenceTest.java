@@ -206,6 +206,14 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 	}
 
 	@Test
+	public void testCountByOAuthClientASLocalMetadataId() throws Exception {
+		_persistence.countByOAuthClientASLocalMetadataId(
+			RandomTestUtil.nextLong());
+
+		_persistence.countByOAuthClientASLocalMetadataId(0L);
+	}
+
+	@Test
 	public void testCountByCompanyId() throws Exception {
 		_persistence.countByCompanyId(RandomTestUtil.nextLong());
 
@@ -288,8 +296,7 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 			"oAuthClientASLocalMetadataId", true, "companyId", true, "userId",
 			true, "userName", true, "createDate", true, "modifiedDate", true,
 			"issuer", true, "localWellKnownEnabled", true, "localWellKnownURI",
-			true, "oAuthASLocalWellKnownURI", true, "oAuthASMetadataJSON",
-			true);
+			true, "oAuthASLocalWellKnownURI", true);
 	}
 
 	@Test
@@ -594,6 +601,13 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 
 	private void _assertOriginalValues(
 		OAuthClientASLocalMetadata oAuthClientASLocalMetadata) {
+
+		Assert.assertEquals(
+			Long.valueOf(
+				oAuthClientASLocalMetadata.getOAuthClientASLocalMetadataId()),
+			ReflectionTestUtil.<Long>invoke(
+				oAuthClientASLocalMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "oAuthClientASLocalMetadataId"));
 
 		Assert.assertEquals(
 			oAuthClientASLocalMetadata.getLocalWellKnownURI(),

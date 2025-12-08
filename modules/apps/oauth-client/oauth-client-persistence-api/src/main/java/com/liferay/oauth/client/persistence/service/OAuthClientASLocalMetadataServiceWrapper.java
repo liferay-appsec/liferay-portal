@@ -73,6 +73,25 @@ public class OAuthClientASLocalMetadataServiceWrapper
 	}
 
 	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			fetchByOAuthClientASLocalMetadataId(
+				long oAuthClientASLocalMetadataId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataService.
+			fetchByOAuthClientASLocalMetadataId(oAuthClientASLocalMetadataId);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			fetchIssuerOAuthClientASLocalMetadata(long companyId, String issuer)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataService.
+			fetchIssuerOAuthClientASLocalMetadata(companyId, issuer);
+	}
+
+	@Override
 	public java.util.List
 		<com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata>
 			getCompanyOAuthClientASLocalMetadata(long companyId) {
@@ -93,11 +112,34 @@ public class OAuthClientASLocalMetadataServiceWrapper
 
 	@Override
 	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			getIssuerAuthClientASLocalMetadata(long companyId, String issuer)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataService.
+			getIssuerAuthClientASLocalMetadata(companyId, issuer);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
 			getOAuthClientASLocalMetadata(String localWellKnownURI)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _oAuthClientASLocalMetadataService.getOAuthClientASLocalMetadata(
 			localWellKnownURI);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			getOAuthClientASLocalMetadataByCompanyEnabled(
+				long companyId, boolean enabled,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.oauth.client.persistence.model.
+						OAuthClientASLocalMetadata> orderByComparator)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataService.
+			getOAuthClientASLocalMetadataByCompanyEnabled(
+				companyId, enabled, orderByComparator);
 	}
 
 	/**

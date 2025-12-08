@@ -71,7 +71,7 @@ public class OAuthClientASLocalMetadataModelImpl
 		{"localWellKnownEnabled", Types.BOOLEAN},
 		{"localWellKnownURI", Types.VARCHAR}, {"metadataJSON", Types.CLOB},
 		{"oAuthASLocalWellKnownURI", Types.VARCHAR},
-		{"oAuthASMetadataJSON", Types.VARCHAR}
+		{"oAuthASMetadataJSON", Types.CLOB}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -90,11 +90,11 @@ public class OAuthClientASLocalMetadataModelImpl
 		TABLE_COLUMNS_MAP.put("localWellKnownURI", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("metadataJSON", Types.CLOB);
 		TABLE_COLUMNS_MAP.put("oAuthASLocalWellKnownURI", Types.VARCHAR);
-		TABLE_COLUMNS_MAP.put("oAuthASMetadataJSON", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("oAuthASMetadataJSON", Types.CLOB);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table OAuthClientASLocalMetadata (mvccVersion LONG default 0 not null,oAuthClientASLocalMetadataId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,issuer VARCHAR(75) null,localWellKnownEnabled BOOLEAN,localWellKnownURI VARCHAR(256) null,metadataJSON TEXT null,oAuthASLocalWellKnownURI VARCHAR(75) null,oAuthASMetadataJSON VARCHAR(75) null)";
+		"create table OAuthClientASLocalMetadata (mvccVersion LONG default 0 not null,oAuthClientASLocalMetadataId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,issuer VARCHAR(75) null,localWellKnownEnabled BOOLEAN,localWellKnownURI VARCHAR(256) null,metadataJSON TEXT null,oAuthASLocalWellKnownURI VARCHAR(75) null,oAuthASMetadataJSON TEXT null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table OAuthClientASLocalMetadata";
@@ -148,14 +148,13 @@ public class OAuthClientASLocalMetadataModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long USERID_COLUMN_BITMASK = 32L;
+	public static final long OAUTHCLIENTASLOCALMETADATAID_COLUMN_BITMASK = 32L;
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *		#getColumnBitmask(String)}
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long OAUTHCLIENTASLOCALMETADATAID_COLUMN_BITMASK = 64L;
+	public static final long USERID_COLUMN_BITMASK = 64L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -411,6 +410,16 @@ public class OAuthClientASLocalMetadataModelImpl
 		}
 
 		_oAuthClientASLocalMetadataId = oAuthClientASLocalMetadataId;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public long getOriginalOAuthClientASLocalMetadataId() {
+		return GetterUtil.getLong(
+			this.<Long>getColumnOriginalValue("oAuthClientASLocalMetadataId"));
 	}
 
 	@JSON

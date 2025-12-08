@@ -209,12 +209,29 @@ public interface OAuthClientASLocalMetadataLocalService
 		DynamicQuery dynamicQuery, Projection projection);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata fetchByOAuthClientASLocalMetadataId(
+			long oAuthClientASLocalMetadataId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata
+			fetchIssuerByCompanyAuthClientASLocalMetadata(
+				long companyId, String issuer)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public OAuthClientASLocalMetadata fetchOAuthClientASLocalMetadata(
 		long oAuthClientASLocalMetadataId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public OAuthClientASLocalMetadata fetchOAuthClientASLocalMetadata(
 		String localWellKnownURI);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public OAuthClientASLocalMetadata
+		fetchOAuthClientASLocalMetadataByCompanyEnabled(
+			long companyId, boolean enabled,
+			OrderByComparator<OAuthClientASLocalMetadata> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();

@@ -275,6 +275,26 @@ public class OAuthClientASLocalMetadataLocalServiceWrapper
 
 	@Override
 	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			fetchByOAuthClientASLocalMetadataId(
+				long oAuthClientASLocalMetadataId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataLocalService.
+			fetchByOAuthClientASLocalMetadataId(oAuthClientASLocalMetadataId);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+			fetchIssuerByCompanyAuthClientASLocalMetadata(
+				long companyId, String issuer)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _oAuthClientASLocalMetadataLocalService.
+			fetchIssuerByCompanyAuthClientASLocalMetadata(companyId, issuer);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
 		fetchOAuthClientASLocalMetadata(long oAuthClientASLocalMetadataId) {
 
 		return _oAuthClientASLocalMetadataLocalService.
@@ -287,6 +307,19 @@ public class OAuthClientASLocalMetadataLocalServiceWrapper
 
 		return _oAuthClientASLocalMetadataLocalService.
 			fetchOAuthClientASLocalMetadata(localWellKnownURI);
+	}
+
+	@Override
+	public com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata
+		fetchOAuthClientASLocalMetadataByCompanyEnabled(
+			long companyId, boolean enabled,
+			com.liferay.portal.kernel.util.OrderByComparator
+				<com.liferay.oauth.client.persistence.model.
+					OAuthClientASLocalMetadata> orderByComparator) {
+
+		return _oAuthClientASLocalMetadataLocalService.
+			fetchOAuthClientASLocalMetadataByCompanyEnabled(
+				companyId, enabled, orderByComparator);
 	}
 
 	@Override

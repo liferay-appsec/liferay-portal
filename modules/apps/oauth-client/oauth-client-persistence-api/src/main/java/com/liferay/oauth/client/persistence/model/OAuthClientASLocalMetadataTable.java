@@ -65,10 +65,9 @@ public class OAuthClientASLocalMetadataTable
 		oAuthASLocalWellKnownURI = createColumn(
 			"oAuthASLocalWellKnownURI", String.class, Types.VARCHAR,
 			Column.FLAG_DEFAULT);
-	public final Column<OAuthClientASLocalMetadataTable, String>
+	public final Column<OAuthClientASLocalMetadataTable, Clob>
 		oAuthASMetadataJSON = createColumn(
-			"oAuthASMetadataJSON", String.class, Types.VARCHAR,
-			Column.FLAG_DEFAULT);
+			"oAuthASMetadataJSON", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
 
 	private OAuthClientASLocalMetadataTable() {
 		super(
