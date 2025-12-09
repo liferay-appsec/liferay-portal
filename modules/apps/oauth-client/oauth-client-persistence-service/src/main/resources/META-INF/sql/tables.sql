@@ -10,7 +10,7 @@ create table OAuthClientASLocalMetadata (
 	localWellKnownEnabled BOOLEAN,
 	localWellKnownURI VARCHAR(256) null,
 	metadataJSON TEXT null,
-	oAuthASLocalWellKnownURI VARCHAR(75) null,
+	oAuthASLocalWellKnownURI VARCHAR(256) null,
 	oAuthASMetadataJSON TEXT null
 );
 
