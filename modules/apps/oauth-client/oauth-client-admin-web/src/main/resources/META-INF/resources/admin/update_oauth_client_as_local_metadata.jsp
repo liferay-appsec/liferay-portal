@@ -24,6 +24,16 @@ portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
 
 renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(request, "new-oauth-client-as-local-metadata") : LanguageUtil.get(request, "edit-oauth-client-as-local-metadata"));
+
+JSONObject metadataJSONObject = JSONUtil.put(
+	"authorization_endpoint", ""
+).put(
+	"issuer", ""
+).put(
+	"jwks_uri", ""
+).put(
+	"token_endpoint", ""
+);
 %>
 
 <portlet:actionURL name="/oauth_client_admin/update_oauth_client_as_local_metadata" var="updateOAuthClientASLocalMetadataURL">
@@ -73,26 +83,7 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 
 					<aui:input helpMessage="oauth-client-as-local-well-known-uri-oauth-authorization-server-help" label="oauth-client-as-local-well-known-uri-oauth-authorization-server" name="oAuthASLocalWellKnownURI" readonly="true" type="text" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() : \"\" %>" />
 
-					<aui:input
-						helpMessage="oauth-client-as-local-metadata-json-oauth-authorization-server-help"
-						label="oauth-client-as-local-metadata-json-oauth-authorization-server"
-						name="oAuthASMetadataJSON"
-						readonly="true"
-						style="min-height: 600px;"
-						type="textarea"
-						value='<%=
-							(oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASMetadataJSON() :
-								JSONUtil.put(
-									"authorization_endpoint", ""
-								).put(
-									"issuer", ""
-								).put(
-									"jwks_uri", ""
-								).put(
-									"token_endpoint", ""
-								)
-						%>'
-					/>
+					<aui:input helpMessage="oauth-client-as-local-metadata-json-oauth-authorization-server-help" label="oauth-client-as-local-metadata-json-oauth-authorization-server" name="oAuthASMetadataJSON" readonly="true" style="min-height: 600px;" type="textarea" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASMetadataJSON() : metadataJSONObject.toString() %>" />
 				</aui:fieldset>
 
 				<aui:fieldset label="oauth-client-as-local--openid-configuration">
