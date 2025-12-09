@@ -36,7 +36,7 @@
 			<liferay-ui:search-container-column-text
 				href="<%= editURL %>"
 				name="oauth-client-as-local-well-known-uri"
-				property="oAuthASLocalWellKnownURI"
+				value="<%= oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() %>"
 			/>
 
 			<liferay-ui:search-container-column-jsp
