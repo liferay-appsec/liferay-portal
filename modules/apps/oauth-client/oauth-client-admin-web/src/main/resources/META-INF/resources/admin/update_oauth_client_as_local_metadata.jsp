@@ -45,9 +45,11 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 
 				<liferay-ui:error exception="<%= DuplicateOAuthClientASIssuerException.class %>" message="oauth-client-as-local-metadata-duplicate-as-issuer" />
 
-				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerException.class %>" message="oauth-client-as-local-metadata-invalid-issuer-uri" />
-
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
+
+				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerException.class %>">
+					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataIssuerException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-issuer-uri-x" />
+				</liferay-ui:error>
 
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataJSONException.class %>">
 					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataJSONException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-metadata-json-x" />
@@ -78,16 +80,17 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 						readonly="true"
 						style="min-height: 600px;"
 						type="textarea"
-						value='<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASMetadataJSON() :
-							JSONUtil.put(
-								"authorization_endpoint", ""
-							).put(
-								"issuer", ""
-							).put(
-								"jwks_uri", ""
-							).put(
-								"token_endpoint", ""
-							)
+						value='<%=
+							(oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASMetadataJSON() :
+								JSONUtil.put(
+									"authorization_endpoint", ""
+								).put(
+									"issuer", ""
+								).put(
+									"jwks_uri", ""
+								).put(
+									"token_endpoint", ""
+								)
 						%>'
 					/>
 				</aui:fieldset>

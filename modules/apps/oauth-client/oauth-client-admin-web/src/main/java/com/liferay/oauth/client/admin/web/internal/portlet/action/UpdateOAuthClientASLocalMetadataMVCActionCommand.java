@@ -57,11 +57,16 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 			String authorizationEndpoint = ParamUtil.getString(
 				actionRequest, "authorization_endpoint");
 
+			_validateOptionalHttps(authorizationEndpoint);
+
 			String issuer = ParamUtil.getString(actionRequest, "issuer");
 
-			_validateHttpsUrl(issuer);
+			_validateRequiredHttps(issuer);
 
 			String jwksUri = ParamUtil.getString(actionRequest, "jwks_uri");
+
+			_validateOptionalHttps(jwksUri);
+
 			String supportedScopes = ParamUtil.getString(
 				actionRequest, "supported-scopes");
 
@@ -69,10 +74,16 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 				actionRequest, "supported-grant-types");
 			String supportedSubjectTypes = ParamUtil.getString(
 				actionRequest, "supported_subject_types");
+
 			String tokenEndpoint = ParamUtil.getString(
 				actionRequest, "token_endpoint");
+
+			_validateOptionalHttps(tokenEndpoint);
+
 			String userInfoEndpoint = ParamUtil.getString(
 				actionRequest, "userinfo_endpoint");
+
+			_validateOptionalHttps(userInfoEndpoint);
 
 			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 				_oAuthClientASLocalMetadataService.
@@ -125,10 +136,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 
 	private void _validateHttpsUrl(String url) throws PortalException {
 		try {
-			if (Validator.isNull(url)) {
-				throw new OAuthClientASLocalMetadataIssuerException();
-			}
-
 			URL parsed = new URL(url);
 
 			if (!Http.HTTPS.equalsIgnoreCase(parsed.getProtocol())) {
@@ -138,8 +145,22 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 		catch (Exception exception) {
 			_log.error("Invalid URL", exception);
 
-			throw new OAuthClientASLocalMetadataIssuerException(exception);
+			throw new OAuthClientASLocalMetadataIssuerException(url, exception);
 		}
+	}
+
+	private void _validateOptionalHttps(String url) throws PortalException {
+		if (Validator.isNotNull(url)) {
+			_validateHttpsUrl(url);
+		}
+	}
+
+	private void _validateRequiredHttps(String url) throws PortalException {
+		if (Validator.isNull(url)) {
+			throw new OAuthClientASLocalMetadataIssuerException();
+		}
+
+		_validateHttpsUrl(url);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
