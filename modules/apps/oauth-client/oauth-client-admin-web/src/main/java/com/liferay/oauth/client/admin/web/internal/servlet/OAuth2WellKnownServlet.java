@@ -6,13 +6,14 @@
 package com.liferay.oauth.client.admin.web.internal.servlet;
 
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
-import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataService;
+import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.servlet.Servlet;
@@ -58,24 +59,40 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 			httpServletRequest.getAttribute(WebKeys.COMPANY_ID));
 
 		if (issuer == null) {
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadataByCompanyEnabled(
+						companyId, true, null);
 
-			// Default value
+			if (oAuthClientASLocalMetadata == null) {
+				httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			}
+			else {
+				httpServletResponse.setContentType(
+					ContentTypes.APPLICATION_JSON);
+				httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
+				ServletResponseUtil.write(
+					httpServletResponse,
+					oAuthClientASLocalMetadata.getOAuthASMetadataJSON());
+			}
 		}
 		else {
 			try {
-				OAuthClientASLocalMetadata meta =
-					_oAuthClientASLocalMetadataService.
-						getIssuerAuthClientASLocalMetadata(
-							companyId, "https://" + issuer);
+				OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+					_oAuthClientASLocalMetadataLocalService.
+						fetchIssuerByCompanyAuthClientASLocalMetadata(
+							companyId, Http.HTTPS + issuer);
 
-				if (meta.isLocalWellKnownEnabled()) {
+				if (oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
 					httpServletResponse.setContentType(
 						ContentTypes.APPLICATION_JSON);
 					httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 					ServletResponseUtil.write(
-						httpServletResponse, meta.getMetadataJSONOAS());
+						httpServletResponse,
+						oAuthClientASLocalMetadata.
+							getOAuthASLocalWellKnownURI());
 				}
 				else {
 					httpServletResponse.setStatus(
@@ -122,7 +139,7 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 		OAuth2WellKnownServlet.class);
 
 	@Reference
-	private OAuthClientASLocalMetadataService
-		_oAuthClientASLocalMetadataService;
+	private OAuthClientASLocalMetadataLocalService
+		_oAuthClientASLocalMetadataLocalService;
 
 }
