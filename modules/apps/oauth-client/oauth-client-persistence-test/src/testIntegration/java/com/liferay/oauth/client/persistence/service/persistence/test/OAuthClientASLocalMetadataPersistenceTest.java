@@ -237,15 +237,6 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 	}
 
 	@Test
-	public void testCountByOAuthASLocalWellKnownURI() throws Exception {
-		_persistence.countByOAuthASLocalWellKnownURI("");
-
-		_persistence.countByOAuthASLocalWellKnownURI("null");
-
-		_persistence.countByOAuthASLocalWellKnownURI((String)null);
-	}
-
-	@Test
 	public void testCountByC_I() throws Exception {
 		_persistence.countByC_I(RandomTestUtil.nextLong(), "");
 
@@ -260,6 +251,15 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean());
 
 		_persistence.countByC_L(0L, RandomTestUtil.randomBoolean());
+	}
+
+	@Test
+	public void testCountByC_O() throws Exception {
+		_persistence.countByC_O(RandomTestUtil.nextLong(), "");
+
+		_persistence.countByC_O(0L, "null");
+
+		_persistence.countByC_O(0L, (String)null);
 	}
 
 	@Test
@@ -616,12 +616,6 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 				new Class<?>[] {String.class}, "localWellKnownURI"));
 
 		Assert.assertEquals(
-			oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI(),
-			ReflectionTestUtil.invoke(
-				oAuthClientASLocalMetadata, "getColumnOriginalValue",
-				new Class<?>[] {String.class}, "oAuthASLocalWellKnownURI"));
-
-		Assert.assertEquals(
 			Long.valueOf(oAuthClientASLocalMetadata.getCompanyId()),
 			ReflectionTestUtil.<Long>invoke(
 				oAuthClientASLocalMetadata, "getColumnOriginalValue",
@@ -631,6 +625,17 @@ public class OAuthClientASLocalMetadataPersistenceTest {
 			ReflectionTestUtil.invoke(
 				oAuthClientASLocalMetadata, "getColumnOriginalValue",
 				new Class<?>[] {String.class}, "issuer"));
+
+		Assert.assertEquals(
+			Long.valueOf(oAuthClientASLocalMetadata.getCompanyId()),
+			ReflectionTestUtil.<Long>invoke(
+				oAuthClientASLocalMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "companyId"));
+		Assert.assertEquals(
+			oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI(),
+			ReflectionTestUtil.invoke(
+				oAuthClientASLocalMetadata, "getColumnOriginalValue",
+				new Class<?>[] {String.class}, "oAuthASLocalWellKnownURI"));
 	}
 
 	protected OAuthClientASLocalMetadata addOAuthClientASLocalMetadata()

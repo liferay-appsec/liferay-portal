@@ -547,54 +547,6 @@ public interface OAuthClientASLocalMetadataPersistence
 	public int countByLocalWellKnownURI(String localWellKnownURI);
 
 	/**
-	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
-	 *
-	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
-	 * @return the matching o auth client as local metadata
-	 * @throws NoSuchOAuthClientASLocalMetadataException if a matching o auth client as local metadata could not be found
-	 */
-	public OAuthClientASLocalMetadata findByOAuthASLocalWellKnownURI(
-			String oAuthASLocalWellKnownURI)
-		throws NoSuchOAuthClientASLocalMetadataException;
-
-	/**
-	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
-	 *
-	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
-	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
-	 */
-	public OAuthClientASLocalMetadata fetchByOAuthASLocalWellKnownURI(
-		String oAuthASLocalWellKnownURI);
-
-	/**
-	 * Returns the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
-	 *
-	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
-	 */
-	public OAuthClientASLocalMetadata fetchByOAuthASLocalWellKnownURI(
-		String oAuthASLocalWellKnownURI, boolean useFinderCache);
-
-	/**
-	 * Removes the o auth client as local metadata where oAuthASLocalWellKnownURI = &#63; from the database.
-	 *
-	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
-	 * @return the o auth client as local metadata that was removed
-	 */
-	public OAuthClientASLocalMetadata removeByOAuthASLocalWellKnownURI(
-			String oAuthASLocalWellKnownURI)
-		throws NoSuchOAuthClientASLocalMetadataException;
-
-	/**
-	 * Returns the number of o auth client as local metadatas where oAuthASLocalWellKnownURI = &#63;.
-	 *
-	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
-	 * @return the number of matching o auth client as local metadatas
-	 */
-	public int countByOAuthASLocalWellKnownURI(String oAuthASLocalWellKnownURI);
-
-	/**
 	 * Returns the o auth client as local metadata where companyId = &#63; and issuer = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
 	 *
 	 * @param companyId the company ID
@@ -870,6 +822,60 @@ public interface OAuthClientASLocalMetadataPersistence
 	 * @return the number of matching o auth client as local metadatas that the user has permission to view
 	 */
 	public int filterCountByC_L(long companyId, boolean localWellKnownEnabled);
+
+	/**
+	 * Returns the o auth client as local metadata where companyId = &#63; and oAuthASLocalWellKnownURI = &#63; or throws a <code>NoSuchOAuthClientASLocalMetadataException</code> if it could not be found.
+	 *
+	 * @param companyId the company ID
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the matching o auth client as local metadata
+	 * @throws NoSuchOAuthClientASLocalMetadataException if a matching o auth client as local metadata could not be found
+	 */
+	public OAuthClientASLocalMetadata findByC_O(
+			long companyId, String oAuthASLocalWellKnownURI)
+		throws NoSuchOAuthClientASLocalMetadataException;
+
+	/**
+	 * Returns the o auth client as local metadata where companyId = &#63; and oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param companyId the company ID
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public OAuthClientASLocalMetadata fetchByC_O(
+		long companyId, String oAuthASLocalWellKnownURI);
+
+	/**
+	 * Returns the o auth client as local metadata where companyId = &#63; and oAuthASLocalWellKnownURI = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param companyId the company ID
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching o auth client as local metadata, or <code>null</code> if a matching o auth client as local metadata could not be found
+	 */
+	public OAuthClientASLocalMetadata fetchByC_O(
+		long companyId, String oAuthASLocalWellKnownURI,
+		boolean useFinderCache);
+
+	/**
+	 * Removes the o auth client as local metadata where companyId = &#63; and oAuthASLocalWellKnownURI = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the o auth client as local metadata that was removed
+	 */
+	public OAuthClientASLocalMetadata removeByC_O(
+			long companyId, String oAuthASLocalWellKnownURI)
+		throws NoSuchOAuthClientASLocalMetadataException;
+
+	/**
+	 * Returns the number of o auth client as local metadatas where companyId = &#63; and oAuthASLocalWellKnownURI = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param oAuthASLocalWellKnownURI the o auth as local well known uri
+	 * @return the number of matching o auth client as local metadatas
+	 */
+	public int countByC_O(long companyId, String oAuthASLocalWellKnownURI);
 
 	/**
 	 * Caches the o auth client as local metadata in the entity cache if it is enabled.
