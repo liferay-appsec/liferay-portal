@@ -7,6 +7,7 @@ package com.liferay.oauth.client.persistence.service.impl;
 
 import com.liferay.oauth.client.persistence.exception.DuplicateOAuthClientASIssuerException;
 import com.liferay.oauth.client.persistence.exception.DuplicateOAuthClientASLocalMetadataException;
+import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerException;
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataJSONException;
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataLocalWellKnownURIException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
@@ -21,9 +22,10 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
-
+import com.liferay.portal.kernel.util.Validator;
 import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.as.AuthorizationServerMetadata;
@@ -32,6 +34,7 @@ import com.nimbusds.openid.connect.sdk.SubjectType;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
 import java.net.URI;
+import java.net.URL;
 
 import java.security.MessageDigest;
 
@@ -59,6 +62,8 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			String[] supportedScopes, String[] supportedSubjectTypes,
 			String tokenEndpointString, String userinfoEndpoint)
 		throws PortalException {
+
+		_validateUrl(issuerString);
 
 		User user = _userLocalService.getUser(userId);
 
@@ -280,6 +285,8 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			String userinfoEndpoint)
 		throws PortalException {
 
+		_validateUrl(issuerString);
+
 		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 			oAuthClientASLocalMetadataLocalService.
 				getOAuthClientASLocalMetadata(oAuthClientASLocalMetadataId);
@@ -483,6 +490,26 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 		catch (Exception exception) {
 			throw new OAuthClientASLocalMetadataJSONException(
 				exception.getMessage(), exception);
+		}
+	}
+
+	private void _validateUrl(String url) throws PortalException {
+		if (!Validator.isUrl(url)) {
+			throw new OAuthClientASLocalMetadataIssuerException();
+		}
+
+		try {
+			URL parsed = new URL(url);
+
+			if (Validator.isNull(parsed.getProtocol()) &&
+				!Http.HTTPS.equalsIgnoreCase(parsed.getProtocol())) {
+
+				throw new OAuthClientASLocalMetadataIssuerException();
+			}
+		}
+		catch (Exception exception) {
+			throw new OAuthClientASLocalMetadataIssuerException(
+				exception.getMessage());
 		}
 	}
 
