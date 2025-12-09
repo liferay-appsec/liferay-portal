@@ -6,6 +6,7 @@
 package com.liferay.oauth.client.admin.web.internal.portlet.action;
 
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
+import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataService;
 import com.liferay.petra.string.StringPool;
@@ -15,12 +16,16 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
+
+import java.net.URL;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -53,6 +58,8 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 				actionRequest, "authorization_endpoint");
 
 			String issuer = ParamUtil.getString(actionRequest, "issuer");
+
+			_validateHttpsUrl(issuer);
 
 			String jwksUri = ParamUtil.getString(actionRequest, "jwks_uri");
 			String supportedScopes = ParamUtil.getString(
@@ -113,6 +120,25 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 			SessionErrors.add(actionRequest, clazz.getName(), portalException);
 
 			return false;
+		}
+	}
+
+	private void _validateHttpsUrl(String url) throws PortalException {
+		try {
+			if (Validator.isNull(url)) {
+				throw new OAuthClientASLocalMetadataIssuerException();
+			}
+
+			URL parsed = new URL(url);
+
+			if (!Http.HTTPS.equalsIgnoreCase(parsed.getProtocol())) {
+				throw new OAuthClientASLocalMetadataIssuerException();
+			}
+		}
+		catch (Exception exception) {
+			_log.error("Invalid URL", exception);
+
+			throw new OAuthClientASLocalMetadataIssuerException(exception);
 		}
 	}
 

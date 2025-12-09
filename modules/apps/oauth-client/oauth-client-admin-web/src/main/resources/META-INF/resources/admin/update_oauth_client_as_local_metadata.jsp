@@ -32,7 +32,7 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 
 <aui:form action="<%= updateOAuthClientASLocalMetadataURL %>" id="oauth-client-as-fm" method="post" name="oauth-client-as-fm" onSubmit="event.preventDefault();">
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
-	<aui:input name="oAuthClientASLocalMetadataId" type="hidden" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthClientASLocalMetadataId() : \"\"  %>" />
+	<aui:input name="oAuthClientASLocalMetadataId" type="hidden" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthClientASLocalMetadataId() : StringPool.BLANK %>" />
 
 	<aui:model-context bean="<%= oAuthClientASLocalMetadata %>" model="<%= OAuthClientASLocalMetadata.class %>" />
 
@@ -43,7 +43,9 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 			<aui:fieldset>
 				<liferay-ui:error exception="<%= DuplicateOAuthClientASLocalMetadataException.class %>" message="oauth-client-as-local-metadata-duplicate-as-local-metadata" />
 
-				<liferay-ui:error exception="<%= DuplicateOAuthClientASIssuerException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
+				<liferay-ui:error exception="<%= DuplicateOAuthClientASIssuerException.class %>" message="oauth-client-as-local-metadata-duplicate-as-issuer" />
+
+				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerException.class %>" message="oauth-client-as-local-metadata-invalid-issuer-uri" />
 
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
 
@@ -67,7 +69,7 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 				<aui:fieldset label="oauth-client-as-local-oauth-authorization-server">
 					<aui:input checked="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getLocalWellKnownEnabled() : false %>" label="enable" name="enabled" type="checkbox" />
 
-					<aui:input helpMessage="oauth-client-as-local-well-known-uri-oauth-authorization-server-help" label="oauth-client-as-local-well-known-uri-oauth-authorization-server" name="oAuthASLocalWellKnownURI" readonly="true" type="text"  value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() : \"\"  %>"/>
+					<aui:input helpMessage="oauth-client-as-local-well-known-uri-oauth-authorization-server-help" label="oauth-client-as-local-well-known-uri-oauth-authorization-server" name="oAuthASLocalWellKnownURI" readonly="true" type="text" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() : \"\" %>" />
 
 					<aui:input
 						helpMessage="oauth-client-as-local-metadata-json-oauth-authorization-server-help"
@@ -91,7 +93,7 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 				</aui:fieldset>
 
 				<aui:fieldset label="oauth-client-as-local--openid-configuration">
-					<aui:input label="oauth-client-as-local-metadata-subject_types_supported" name="supported_subject_types" type="text" value="<%= (oAuthClientASLocalMetadata != null) ? supportedSubjectTypes : \"public\" %>" />
+					<aui:input label="oauth-client-as-local-metadata-subject_types_supported" name="supported_subject_types" type="text" value='<%= (oAuthClientASLocalMetadata != null) ? supportedSubjectTypes : "public" %>' />
 
 					<aui:input label="oauth-client-as-local-metadata-userinfo_endpoint" name="userinfo_endpoint" type="text" value="<%= userinfoEndpoint %>" />
 
@@ -144,7 +146,11 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 		).value;
 
 		try {
-			oAuthASMetadataJSON = JSON.stringify(JSON.parse(oAuthASMetadataJSON), null, 0);
+			oAuthASMetadataJSON = JSON.stringify(
+				JSON.parse(oAuthASMetadataJSON),
+				null,
+				0
+			);
 		}
 		catch (e) {
 			alert('Ill-formatted Metadata JSON');
