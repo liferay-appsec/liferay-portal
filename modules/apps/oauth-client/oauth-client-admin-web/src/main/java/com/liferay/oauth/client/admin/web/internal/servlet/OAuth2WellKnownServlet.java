@@ -82,17 +82,18 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 				OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 					_oAuthClientASLocalMetadataLocalService.
 						fetchIssuerByCompanyAuthClientASLocalMetadata(
-							companyId, Http.HTTPS + issuer);
+							companyId, Http.HTTPS_WITH_SLASH + issuer);
 
-				if (oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
+				if ((oAuthClientASLocalMetadata != null) &&
+					oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
+
 					httpServletResponse.setContentType(
 						ContentTypes.APPLICATION_JSON);
 					httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 					ServletResponseUtil.write(
 						httpServletResponse,
-						oAuthClientASLocalMetadata.
-							getOAuthASLocalWellKnownURI());
+						oAuthClientASLocalMetadata.getOAuthASMetadataJSON());
 				}
 				else {
 					httpServletResponse.setStatus(
