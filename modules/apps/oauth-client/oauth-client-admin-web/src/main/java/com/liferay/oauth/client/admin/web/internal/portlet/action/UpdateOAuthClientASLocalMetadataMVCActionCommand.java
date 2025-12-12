@@ -143,8 +143,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 			}
 		}
 		catch (Exception exception) {
-			_log.error("Invalid URL", exception);
-
 			throw new OAuthClientASLocalMetadataIssuerException(url, exception);
 		}
 	}
