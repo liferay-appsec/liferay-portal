@@ -16,6 +16,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.User;
@@ -64,16 +65,25 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			String tokenEndpointString, String userinfoEndpoint)
 		throws PortalException {
 
-		_validateUrl(issuerString);
-
 		User user = _userLocalService.getUser(userId);
 
-		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+		if (FeatureFlagManagerUtil.isEnabled(
+				user.getCompanyId(), "LPD-63415")) {
+
+			_validateUrl(issuerString);
+		}
+
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata = null;
+
+		if (FeatureFlagManagerUtil.isEnabled(
+				user.getCompanyId(), "LPD-63415")) {
+
 			oAuthClientASLocalMetadataPersistence.fetchByC_I(
 				user.getCompanyId(), issuerString);
 
-		if (oAuthClientASLocalMetadata != null) {
-			throw new DuplicateOAuthClientASIssuerException();
+			if (oAuthClientASLocalMetadata != null) {
+				throw new DuplicateOAuthClientASIssuerException();
+			}
 		}
 
 		String localWellKnownURIOIC = _generateLocalWellKnownURI(
