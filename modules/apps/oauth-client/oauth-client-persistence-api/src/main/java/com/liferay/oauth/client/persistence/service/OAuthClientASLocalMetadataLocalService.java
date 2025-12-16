@@ -280,6 +280,9 @@ public interface OAuthClientASLocalMetadataLocalService
 	public List<OAuthClientASLocalMetadata> getOAuthClientASLocalMetadatas(
 		int start, int end);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getOAuthClientASLocalMetadatasByCompanyIdCount(long companyId);
+
 	/**
 	 * Returns the number of o auth client as local metadatas.
 	 *

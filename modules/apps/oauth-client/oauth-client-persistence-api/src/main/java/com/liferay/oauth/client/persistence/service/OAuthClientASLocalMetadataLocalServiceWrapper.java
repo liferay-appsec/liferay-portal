@@ -402,6 +402,12 @@ public class OAuthClientASLocalMetadataLocalServiceWrapper
 			getOAuthClientASLocalMetadatas(start, end);
 	}
 
+	@Override
+	public int getOAuthClientASLocalMetadatasByCompanyIdCount(long companyId) {
+		return _oAuthClientASLocalMetadataLocalService.
+			getOAuthClientASLocalMetadatasByCompanyIdCount(companyId);
+	}
+
 	/**
 	 * Returns the number of o auth client as local metadatas.
 	 *

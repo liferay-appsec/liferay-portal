@@ -343,6 +343,13 @@ public class OAuthClientASLocalMetadataLocalServiceUtil {
 		return getService().getOAuthClientASLocalMetadatas(start, end);
 	}
 
+	public static int getOAuthClientASLocalMetadatasByCompanyIdCount(
+		long companyId) {
+
+		return getService().getOAuthClientASLocalMetadatasByCompanyIdCount(
+			companyId);
+	}
+
 	/**
 	 * Returns the number of o auth client as local metadatas.
 	 *
