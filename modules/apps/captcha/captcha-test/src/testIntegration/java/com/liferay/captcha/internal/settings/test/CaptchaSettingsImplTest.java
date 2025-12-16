@@ -65,7 +65,7 @@ public class CaptchaSettingsImplTest {
 						CaptchaConfiguration.class.getName(),
 						new HashMapDictionaryBuilder(
 						).<String, Object>put(
-							"createAccountCaptchaEnabled", false
+							"createAccountCaptchaEnabled", true
 						).put(
 							"maxChallenges", 1
 						).put(
@@ -74,7 +74,7 @@ public class CaptchaSettingsImplTest {
 
 			PropsUtil.set("captcha.enforce.disabled", "false");
 			Assert.assertEquals(testCompanyId, CompanyThreadLocal.getCompanyId().longValue());
-			Assert.assertFalse(
+			Assert.assertTrue(
 				_captchaSettings.isCreateAccountCaptchaEnabled());
 
 			try (SafeCloseable safeCloseable =
