@@ -9,6 +9,20 @@
 
 <%
 ProductAnalyticsConsentPanelDisplayContext productAnalyticsConsentPanelDisplayContext = (ProductAnalyticsConsentPanelDisplayContext)request.getAttribute(ProductAnalyticsWebKeys.PRODUCT_ANALYTICS_CONSENT_PANEL_DISPLAY_CONTEXT);
+
+if (!portletName.equals(UsersAdminPortletKeys.MY_ACCOUNT)) {
+	PortletURL viewURL = renderResponse.createRenderURL();
+
+	String backURL = ParamUtil.getString(request, "backURL", viewURL.toString());
+
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(backURL);
+	portletDisplay.setURLBackTitle(portletDisplay.getPortletDisplayName());
+
+	User selUser = PortalUtil.getSelectedUser(request);
+
+	renderResponse.setTitle((selUser == null) ? LanguageUtil.get(request, "add-user") : LanguageUtil.format(request, "edit-user-x", selUser.getFullName(), false));
+}
 %>
 
 <clay:container-fluid
