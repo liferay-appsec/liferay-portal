@@ -5,6 +5,7 @@
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration;
 
+import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
@@ -34,6 +35,7 @@ import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.OAuthError;
 import org.apache.cxf.rs.security.oauth2.services.ClientRegistration;
 import org.apache.cxf.rs.security.oauth2.services.DynamicRegistrationService;
+import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
 /**
@@ -108,7 +110,8 @@ public class LiferayDynamicRegistrationService
 			 allowedGrantTypes.contains("implicit"))) {
 
 			OAuthError oAuthError = new OAuthError(
-				"invalid_request", "A Redirection URI is required");
+				OAuthConstants.INVALID_REQUEST,
+				"A Redirection URI is required");
 
 			_reportInvalidRequestError(oAuthError);
 		}
@@ -270,7 +273,8 @@ public class LiferayDynamicRegistrationService
 			!allowedResponseTypeList.isEmpty()) {
 
 			OAuthError oAuthError = new OAuthError(
-				"invalid_client_metadata",
+				OAuth2ProviderRESTEndpointConstants.
+					ERROR_KEY_INVALID_CLIENT_METADATA,
 				"A response type '" + allowedResponseTypeList.get(0) +
 					"' is needed to match provided grant types");
 
@@ -281,7 +285,8 @@ public class LiferayDynamicRegistrationService
 			for (String responseType : responseTypes) {
 				if (!allowedResponseTypeList.contains(responseType)) {
 					OAuthError oAuthError = new OAuthError(
-						"invalid_client_metadata",
+						OAuth2ProviderRESTEndpointConstants.
+							ERROR_KEY_INVALID_CLIENT_METADATA,
 						"Invalid response type '" + responseType +
 							"' by provided grant types");
 
