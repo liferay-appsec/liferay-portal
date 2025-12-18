@@ -56,7 +56,8 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 		}
 
 		httpServletResponse.setCharacterEncoding("UTF-8");
-		httpServletResponse.setContentType("application/json");
+		httpServletResponse.setContentType(ContentTypes.APPLICATION_JSON);
+		httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
 
 		long companyId = GetterUtil.getLong(
 			httpServletRequest.getAttribute(WebKeys.COMPANY_ID));
@@ -67,12 +68,7 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 				_oAuthClientASLocalMetadataLocalService.
 					fetchOAuthClientASLocalMetadata(companyId, true, null);
 
-			if (oAuthClientASLocalMetadata == null) {
-				httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			}
-			else {
-				httpServletResponse.setContentType(
-					ContentTypes.APPLICATION_JSON);
+			if (oAuthClientASLocalMetadata != null) {
 				httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 				ServletResponseUtil.write(
@@ -89,16 +85,11 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 			if ((oAuthClientASLocalMetadata != null) &&
 				oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
 
-				httpServletResponse.setContentType(
-					ContentTypes.APPLICATION_JSON);
 				httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
 				ServletResponseUtil.write(
 					httpServletResponse,
 					oAuthClientASLocalMetadata.getOAuthASMetadataJSON());
-			}
-			else {
-				httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			}
 		}
 	}
