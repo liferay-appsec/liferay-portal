@@ -6,7 +6,7 @@
 package com.liferay.oauth.client.admin.web.internal.portlet.action;
 
 import com.liferay.oauth.client.admin.web.internal.constants.OAuthClientAdminPortletKeys;
-import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerException;
+import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerURIException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataService;
 import com.liferay.petra.string.StringPool;
@@ -87,7 +87,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 
 			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 				_oAuthClientASLocalMetadataService.
-					fetchByOAuthClientASLocalMetadataId(
+					fetchOAuthClientASLocalMetadata(
 						oAuthClientASLocalMetadataId);
 
 			if (oAuthClientASLocalMetadata == null) {
@@ -139,11 +139,12 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 			URL parsed = new URL(url);
 
 			if (!Http.HTTPS.equalsIgnoreCase(parsed.getProtocol())) {
-				throw new OAuthClientASLocalMetadataIssuerException();
+				throw new OAuthClientASLocalMetadataIssuerURIException();
 			}
 		}
 		catch (Exception exception) {
-			throw new OAuthClientASLocalMetadataIssuerException(url, exception);
+			throw new OAuthClientASLocalMetadataIssuerURIException(
+				url, exception);
 		}
 	}
 
@@ -155,7 +156,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 
 	private void _validateRequiredHttps(String url) throws PortalException {
 		if (Validator.isNull(url)) {
-			throw new OAuthClientASLocalMetadataIssuerException();
+			throw new OAuthClientASLocalMetadataIssuerURIException();
 		}
 
 		_validateHttpsUrl(url);

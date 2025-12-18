@@ -15,7 +15,7 @@
 		id="oAuthClientASLocalMetadataSearchContainer"
 		iteratorURL="<%= currentURLObj %>"
 		rowChecker="<%= new EmptyOnClickRowChecker(renderResponse) %>"
-		total="<%= OAuthClientASLocalMetadataLocalServiceUtil.getOAuthClientASLocalMetadatasByCompanyIdCount(themeDisplay.getCompanyId()) %>"
+		total="<%= OAuthClientASLocalMetadataLocalServiceUtil.getOAuthClientASLocalMetadatasCount(themeDisplay.getCompanyId()) %>"
 	>
 		<liferay-ui:search-container-results
 			results="<%= OAuthClientASLocalMetadataServiceUtil.getCompanyOAuthClientASLocalMetadata(themeDisplay.getCompanyId(), searchContainer.getStart(), searchContainer.getEnd()) %>"

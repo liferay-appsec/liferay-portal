@@ -7,9 +7,6 @@ package com.liferay.oauth.client.admin.web.internal.servlet;
 
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -61,8 +58,7 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 		if (issuer == null) {
 			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 				_oAuthClientASLocalMetadataLocalService.
-					fetchOAuthClientASLocalMetadataByCompanyEnabled(
-						companyId, true, null);
+					fetchOAuthClientASLocalMetadata(companyId, true, null);
 
 			if (oAuthClientASLocalMetadata == null) {
 				httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -78,33 +74,24 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 			}
 		}
 		else {
-			try {
-				OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
-					_oAuthClientASLocalMetadataLocalService.
-						fetchIssuerByCompanyAuthClientASLocalMetadata(
-							companyId, Http.HTTPS_WITH_SLASH + issuer);
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						companyId, Http.HTTPS_WITH_SLASH + issuer);
 
-				if ((oAuthClientASLocalMetadata != null) &&
-					oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
+			if ((oAuthClientASLocalMetadata != null) &&
+				oAuthClientASLocalMetadata.isLocalWellKnownEnabled()) {
 
-					httpServletResponse.setContentType(
-						ContentTypes.APPLICATION_JSON);
-					httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+				httpServletResponse.setContentType(
+					ContentTypes.APPLICATION_JSON);
+				httpServletResponse.setStatus(HttpServletResponse.SC_OK);
 
-					ServletResponseUtil.write(
-						httpServletResponse,
-						oAuthClientASLocalMetadata.getOAuthASMetadataJSON());
-				}
-				else {
-					httpServletResponse.setStatus(
-						HttpServletResponse.SC_NOT_FOUND);
-				}
+				ServletResponseUtil.write(
+					httpServletResponse,
+					oAuthClientASLocalMetadata.getOAuthASMetadataJSON());
 			}
-			catch (PortalException portalException) {
-				_log.error(portalException);
-
-				httpServletResponse.setStatus(
-					HttpServletResponse.SC_BAD_REQUEST);
+			else {
+				httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			}
 		}
 	}
@@ -135,9 +122,6 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 
 		return URLDecoder.decode(extra, StandardCharsets.UTF_8);
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		OAuth2WellKnownServlet.class);
 
 	@Reference
 	private OAuthClientASLocalMetadataLocalService

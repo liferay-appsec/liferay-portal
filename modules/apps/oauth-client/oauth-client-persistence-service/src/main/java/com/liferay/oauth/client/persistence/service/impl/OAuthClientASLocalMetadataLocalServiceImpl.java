@@ -7,7 +7,7 @@ package com.liferay.oauth.client.persistence.service.impl;
 
 import com.liferay.oauth.client.persistence.exception.DuplicateOAuthClientASIssuerException;
 import com.liferay.oauth.client.persistence.exception.DuplicateOAuthClientASLocalMetadataException;
-import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerException;
+import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerURIException;
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataJSONException;
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataLocalWellKnownURIException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
@@ -496,7 +496,7 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 
 	private void _validateUrl(String url) throws PortalException {
 		if (!Validator.isUrl(url)) {
-			throw new OAuthClientASLocalMetadataIssuerException();
+			throw new OAuthClientASLocalMetadataIssuerURIException();
 		}
 
 		try {
@@ -505,11 +505,11 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			if (Validator.isNull(parsed.getProtocol()) &&
 				!Http.HTTPS.equalsIgnoreCase(parsed.getProtocol())) {
 
-				throw new OAuthClientASLocalMetadataIssuerException();
+				throw new OAuthClientASLocalMetadataIssuerURIException();
 			}
 		}
 		catch (Exception exception) {
-			throw new OAuthClientASLocalMetadataIssuerException(
+			throw new OAuthClientASLocalMetadataIssuerURIException(
 				exception.getMessage());
 		}
 	}

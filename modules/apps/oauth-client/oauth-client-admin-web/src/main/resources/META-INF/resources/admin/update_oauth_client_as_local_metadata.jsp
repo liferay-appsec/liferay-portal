@@ -57,8 +57,8 @@ JSONObject metadataJSONObject = JSONUtil.put(
 
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
 
-				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerException.class %>">
-					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataIssuerException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-issuer-uri-x" />
+				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerURIException.class %>">
+					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataIssuerURIException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-issuer-uri-x" />
 				</liferay-ui:error>
 
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataJSONException.class %>">

@@ -6,7 +6,7 @@
 package com.liferay.oauth.client.admin.web.internal.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerException;
+import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataIssuerURIException;
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataJSONException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
@@ -98,7 +98,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		mockLiferayPortletActionRequest = _getMockLiferayPortletActionRequest(
 			HashMapBuilder.put(
@@ -113,7 +113,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		mockLiferayPortletActionRequest = _getMockLiferayPortletActionRequest(
 			HashMapBuilder.put(
@@ -128,7 +128,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		mockLiferayPortletActionRequest = _getMockLiferayPortletActionRequest(
 			HashMapBuilder.put(
@@ -143,7 +143,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		mockLiferayPortletActionRequest = _getMockLiferayPortletActionRequest(
 			HashMapBuilder.put(
@@ -159,7 +159,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		String issuer =
 			Http.HTTPS_WITH_SLASH + RandomTestUtil.randomString() + ".com";
@@ -228,7 +228,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
-				OAuthClientASLocalMetadataIssuerException.class));
+				OAuthClientASLocalMetadataIssuerURIException.class));
 
 		oAuthClientASLocalMetadata =
 			_oAuthClientASLocalMetadataLocalService.

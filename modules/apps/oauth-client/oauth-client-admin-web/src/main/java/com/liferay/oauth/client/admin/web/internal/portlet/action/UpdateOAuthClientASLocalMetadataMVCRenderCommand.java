@@ -49,7 +49,7 @@ public class UpdateOAuthClientASLocalMetadataMVCRenderCommand
 			if (Validator.isNotNull(oAuthClientASLocalMetadataId)) {
 				OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 					_oAuthClientASLocalMetadataService.
-						fetchByOAuthClientASLocalMetadataId(
+						fetchOAuthClientASLocalMetadata(
 							oAuthClientASLocalMetadataId);
 
 				OIDCProviderMetadata authorizationServerMetadata =
