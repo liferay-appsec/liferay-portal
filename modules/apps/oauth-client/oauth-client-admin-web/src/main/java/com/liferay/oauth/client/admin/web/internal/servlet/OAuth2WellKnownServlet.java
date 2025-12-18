@@ -55,7 +55,7 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 			return;
 		}
 
-		httpServletResponse.setCharacterEncoding("UTF-8");
+		httpServletResponse.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		httpServletResponse.setContentType(ContentTypes.APPLICATION_JSON);
 		httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
 
