@@ -78,8 +78,9 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 		if (FeatureFlagManagerUtil.isEnabled(
 				user.getCompanyId(), "LPD-63415")) {
 
-			oAuthClientASLocalMetadataPersistence.fetchByC_I(
-				user.getCompanyId(), issuerString);
+			oAuthClientASLocalMetadata =
+				oAuthClientASLocalMetadataPersistence.fetchByC_I(
+					user.getCompanyId(), issuerString);
 
 			if (oAuthClientASLocalMetadata != null) {
 				throw new DuplicateOAuthClientASIssuerException();
