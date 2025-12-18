@@ -65,18 +65,14 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			String tokenEndpointString, String userinfoEndpoint)
 		throws PortalException {
 
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata = null;
+
 		User user = _userLocalService.getUser(userId);
 
 		if (FeatureFlagManagerUtil.isEnabled(
 				user.getCompanyId(), "LPD-63415")) {
 
 			_validateUrl(issuerString);
-		}
-
-		OAuthClientASLocalMetadata oAuthClientASLocalMetadata = null;
-
-		if (FeatureFlagManagerUtil.isEnabled(
-				user.getCompanyId(), "LPD-63415")) {
 
 			oAuthClientASLocalMetadata =
 				oAuthClientASLocalMetadataPersistence.fetchByC_I(
