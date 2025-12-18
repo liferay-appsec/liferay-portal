@@ -8,7 +8,6 @@ package com.liferay.oauth.client.admin.web.internal.servlet.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -46,7 +45,6 @@ public class OAuth2WellKnownServletTest {
 
 	@Test
 	public void testNoMetadataEntriesReturns404() throws Exception {
-		User user = TestPropsValues.getUser();
 
 		// I make the request without any entries created. It returns 404.
 
@@ -61,7 +59,8 @@ public class OAuth2WellKnownServletTest {
 
 		List<OAuthClientASLocalMetadata> oAuthClientASLocalMetadatas =
 			_oAuthClientASLocalMetadataLocalService.
-				getCompanyOAuthClientASLocalMetadata(user.getCompanyId());
+				getCompanyOAuthClientASLocalMetadata(
+					TestPropsValues.getCompanyId());
 
 		Assert.assertTrue(oAuthClientASLocalMetadatas.isEmpty());
 
@@ -81,13 +80,14 @@ public class OAuth2WellKnownServletTest {
 		OAuthClientASLocalMetadata oAuthClientASLocalMetadata1 =
 			_oAuthClientASLocalMetadataLocalService.
 				addOAuthClientASLocalMetadata(
-					user.getUserId(), okURL1, false, okURL1, okURL1,
+					TestPropsValues.getUserId(), okURL1, false, okURL1, okURL1,
 					new String[] {supported1}, new String[] {supported1},
 					new String[] {"public"}, okURL1, okURL1);
 
 		oAuthClientASLocalMetadatas =
 			_oAuthClientASLocalMetadataLocalService.
-				getCompanyOAuthClientASLocalMetadata(user.getCompanyId());
+				getCompanyOAuthClientASLocalMetadata(
+					TestPropsValues.getCompanyId());
 
 		Assert.assertFalse(oAuthClientASLocalMetadatas.isEmpty());
 
@@ -138,7 +138,7 @@ public class OAuth2WellKnownServletTest {
 		OAuthClientASLocalMetadata oAuthClientASLocalMetadata2 =
 			_oAuthClientASLocalMetadataLocalService.
 				addOAuthClientASLocalMetadata(
-					user.getUserId(), okURL2, true, okURL2, okURL2,
+					TestPropsValues.getUserId(), okURL2, true, okURL2, okURL2,
 					new String[] {supported2}, new String[] {supported2},
 					new String[] {"public"}, okURL2, okURL2);
 
