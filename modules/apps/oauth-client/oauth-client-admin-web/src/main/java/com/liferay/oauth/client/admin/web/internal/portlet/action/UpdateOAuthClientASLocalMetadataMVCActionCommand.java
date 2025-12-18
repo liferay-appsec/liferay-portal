@@ -56,12 +56,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 				_processActionNoOauthAuthorizationServer(actionRequest);
 			}
 			else {
-				Long oAuthClientASLocalMetadataId = ParamUtil.getLong(
-					actionRequest, "oAuthClientASLocalMetadataId");
-
-				Boolean enabledLocalWellKnown = ParamUtil.getBoolean(
-					actionRequest, "enabled");
-
 				String authorizationEndpoint = ParamUtil.getString(
 					actionRequest, "authorization_endpoint");
 
@@ -75,14 +69,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 
 				_validateOptionalHttps(jwksUri);
 
-				String supportedScopes = ParamUtil.getString(
-					actionRequest, "supported-scopes");
-
-				String supportedGrantTypes = ParamUtil.getString(
-					actionRequest, "supported-grant-types");
-				String supportedSubjectTypes = ParamUtil.getString(
-					actionRequest, "supported_subject_types");
-
 				String tokenEndpoint = ParamUtil.getString(
 					actionRequest, "token_endpoint");
 
@@ -92,6 +78,17 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommand
 					actionRequest, "userinfo_endpoint");
 
 				_validateOptionalHttps(userInfoEndpoint);
+
+				Boolean enabledLocalWellKnown = ParamUtil.getBoolean(
+					actionRequest, "enabled");
+				Long oAuthClientASLocalMetadataId = ParamUtil.getLong(
+					actionRequest, "oAuthClientASLocalMetadataId");
+				String supportedGrantTypes = ParamUtil.getString(
+					actionRequest, "supported-grant-types");
+				String supportedScopes = ParamUtil.getString(
+					actionRequest, "supported-scopes");
+				String supportedSubjectTypes = ParamUtil.getString(
+					actionRequest, "supported_subject_types");
 
 				OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 					_oAuthClientASLocalMetadataService.

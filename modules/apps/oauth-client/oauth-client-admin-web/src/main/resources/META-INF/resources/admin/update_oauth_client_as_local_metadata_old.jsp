@@ -10,10 +10,10 @@
 <%
 String redirect = ParamUtil.getString(request, "redirect");
 
-OAuthClientASLocalMetadata oAuthClientASLocalMetadata = (OAuthClientASLocalMetadata)request.getAttribute(OAuthClientASLocalMetadata.class.getName());
-
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
+
+OAuthClientASLocalMetadata oAuthClientASLocalMetadata = (OAuthClientASLocalMetadata)request.getAttribute(OAuthClientASLocalMetadata.class.getName());
 
 renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(request, "new-oauth-client-as-local-metadata") : LanguageUtil.get(request, "edit-oauth-client-as-local-metadata"));
 %>
@@ -34,14 +34,13 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 			<aui:fieldset>
 				<liferay-ui:error exception="<%= DuplicateOAuthClientASLocalMetadataException.class %>" message="oauth-client-as-local-metadata-duplicate-as-local-metadata" />
 
-				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
-
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataJSONException.class %>">
 					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataJSONException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-metadata-json-x" />
 				</liferay-ui:error>
 
-				<aui:input helpMessage="oauth-client-as-local-well-known-uri-help" label="oauth-client-as-local-well-known-uri" name="localWellKnownURI" readonly="true" type="text" />
+				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
 
+				<aui:input helpMessage="oauth-client-as-local-well-known-uri-help" label="oauth-client-as-local-well-known-uri" name="localWellKnownURI" readonly="true" type="text" />
 				<aui:input helpMessage='<%= LanguageUtil.format(request, "oauth-client-as-local-well-known-uri-suffix-help", "openid-configuration", false) %>' label="oauth-client-as-local-well-known-uri-suffix" name="oAuthClientASLocalWellKnowURISuffix" readonly="true" type="text" value="openid-configuration" />
 
 				<aui:input
@@ -80,10 +79,6 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 	<portlet:namespace />init();
 
 	function <portlet:namespace />doSubmit() {
-		var form = document.getElementById(
-			'<portlet:namespace />oauth-client-as-fm'
-		);
-
 		var metadataJSON = document.getElementById(
 			'<portlet:namespace />metadataJSON'
 		).value;
@@ -98,6 +93,10 @@ renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(
 
 		document.getElementById('<portlet:namespace />metadataJSON').value =
 			metadataJSON;
+
+		var form = document.getElementById(
+			'<portlet:namespace />oauth-client-as-fm'
+		);
 
 		submitForm(form);
 	}

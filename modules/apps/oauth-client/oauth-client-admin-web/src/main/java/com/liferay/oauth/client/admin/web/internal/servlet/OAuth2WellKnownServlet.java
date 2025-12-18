@@ -55,13 +55,12 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 			return;
 		}
 
-		httpServletResponse.setContentType("application/json");
 		httpServletResponse.setCharacterEncoding("UTF-8");
-
-		String issuer = _extractIssuerFromRequest(httpServletRequest);
+		httpServletResponse.setContentType("application/json");
 
 		long companyId = GetterUtil.getLong(
 			httpServletRequest.getAttribute(WebKeys.COMPANY_ID));
+		String issuer = _extractIssuerFromRequest(httpServletRequest);
 
 		if (issuer == null) {
 			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
@@ -107,12 +106,12 @@ public class OAuth2WellKnownServlet extends HttpServlet {
 	private String _extractIssuerFromRequest(
 		HttpServletRequest httpServletRequest) {
 
-		String requestURI = httpServletRequest.getRequestURI();
-
 		String contextPath = httpServletRequest.getContextPath();
 
 		String basePath =
 			contextPath + "/.well-known/oauth-authorization-server";
+
+		String requestURI = httpServletRequest.getRequestURI();
 
 		if (requestURI.length() == basePath.length()) {
 			return null;

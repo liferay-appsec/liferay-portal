@@ -96,7 +96,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -111,7 +110,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -126,7 +124,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -141,7 +138,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -157,7 +153,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -175,7 +170,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -226,7 +220,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 			_editMVCActionCommand.processAction(
 				mockLiferayPortletActionRequest,
 				new MockLiferayPortletActionResponse()));
-
 		Assert.assertTrue(
 			SessionErrors.contains(
 				mockLiferayPortletActionRequest,
@@ -240,7 +233,6 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 
 		String okURL =
 			Http.HTTPS_WITH_SLASH + RandomTestUtil.randomString() + ".com";
-
 		String supported = RandomTestUtil.randomString();
 
 		Assert.assertTrue(
@@ -277,9 +269,7 @@ public class UpdateOAuthClientASLocalMetadataMVCActionCommandTest {
 				getOAuthClientASLocalMetadata(oAuthClientASLocalMetadataId);
 
 		Assert.assertEquals(okURL, oAuthClientASLocalMetadata.getIssuer());
-
 		Assert.assertTrue(oAuthClientASLocalMetadata.isLocalWellKnownEnabled());
-
 		Assert.assertEquals(
 			okURL + "/o/.well-known/oauth-authorization-server",
 			oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI());

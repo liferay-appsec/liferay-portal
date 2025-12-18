@@ -52,21 +52,20 @@ public class OAuth2WellKnownServletTest {
 
 		String urlString =
 			"http://localhost:8080/o/.well-known/oauth-authorization-server";
-
 		Http.Options options = new Http.Options();
 
-		options.setLocation(urlString);
 		options.setFollowRedirects(false);
+		options.setLocation(urlString);
 
 		HttpUtil.URLtoString(options);
-
-		Http.Response response = options.getResponse();
 
 		List<OAuthClientASLocalMetadata> oAuthClientASLocalMetadatas =
 			_oAuthClientASLocalMetadataLocalService.
 				getCompanyOAuthClientASLocalMetadata(user.getCompanyId());
 
 		Assert.assertTrue(oAuthClientASLocalMetadatas.isEmpty());
+
+		Http.Response response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_NOT_FOUND, response.getResponseCode());
@@ -86,18 +85,18 @@ public class OAuth2WellKnownServletTest {
 					new String[] {supported1}, new String[] {supported1},
 					new String[] {"public"}, okURL1, okURL1);
 
-		options.setLocation(urlString);
-		options.setFollowRedirects(false);
-
-		HttpUtil.URLtoString(options);
-
-		response = options.getResponse();
-
 		oAuthClientASLocalMetadatas =
 			_oAuthClientASLocalMetadataLocalService.
 				getCompanyOAuthClientASLocalMetadata(user.getCompanyId());
 
 		Assert.assertFalse(oAuthClientASLocalMetadatas.isEmpty());
+
+		options.setFollowRedirects(false);
+		options.setLocation(urlString);
+
+		HttpUtil.URLtoString(options);
+
+		response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_NOT_FOUND, response.getResponseCode());
@@ -114,15 +113,15 @@ public class OAuth2WellKnownServletTest {
 					new String[] {supported1}, new String[] {"public"}, okURL1,
 					okURL1);
 
-		options.setLocation(urlString);
 		options.setFollowRedirects(false);
-
-		String responseBody = HttpUtil.URLtoString(options);
+		options.setLocation(urlString);
 
 		response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
+
+		String responseBody = HttpUtil.URLtoString(options);
 
 		Assert.assertEquals(
 			responseBody, oAuthClientASLocalMetadata1.getOAuthASMetadataJSON());
@@ -143,12 +142,12 @@ public class OAuth2WellKnownServletTest {
 					new String[] {supported2}, new String[] {supported2},
 					new String[] {"public"}, okURL2, okURL2);
 
-		responseBody = HttpUtil.URLtoString(options);
-
 		response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
+
+		responseBody = HttpUtil.URLtoString(options);
 
 		Assert.assertEquals(
 			responseBody, oAuthClientASLocalMetadata1.getOAuthASMetadataJSON());
@@ -163,12 +162,12 @@ public class OAuth2WellKnownServletTest {
 				new String[] {supported1}, new String[] {"public"}, okURL1,
 				okURL1);
 
-		responseBody = HttpUtil.URLtoString(options);
-
 		response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
+
+		responseBody = HttpUtil.URLtoString(options);
 
 		Assert.assertEquals(
 			responseBody, oAuthClientASLocalMetadata2.getOAuthASMetadataJSON());
@@ -181,9 +180,8 @@ public class OAuth2WellKnownServletTest {
 			"http://localhost:8080/o/.well-known/oauth-authorization-server/" +
 				urlStringR;
 
-		options.setLocation(urlString);
-
 		options.setFollowRedirects(false);
+		options.setLocation(urlString);
 
 		HttpUtil.URLtoString(options);
 
@@ -218,12 +216,12 @@ public class OAuth2WellKnownServletTest {
 
 		options.setLocation(urlString);
 
-		responseBody = HttpUtil.URLtoString(options);
-
 		response = options.getResponse();
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
+
+		responseBody = HttpUtil.URLtoString(options);
 
 		Assert.assertEquals(
 			responseBody, oAuthClientASLocalMetadata2.getOAuthASMetadataJSON());

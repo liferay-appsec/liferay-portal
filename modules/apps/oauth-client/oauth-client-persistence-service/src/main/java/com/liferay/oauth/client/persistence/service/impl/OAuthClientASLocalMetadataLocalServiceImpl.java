@@ -97,14 +97,13 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 			throw new DuplicateOAuthClientASLocalMetadataException();
 		}
 
+		String metadataJSONOAS = _buildAuthorizationServerJSON(
+			authorizationEndpoint, issuerString, jwksUri, supportedScopes,
+			supportedGrantTypes, tokenEndpointString);
 		String metadataJSONOIC = _buildOpenIdConfigurationJSON(
 			authorizationEndpoint, issuerString, jwksUri, supportedGrantTypes,
 			supportedScopes, supportedSubjectTypes, tokenEndpointString,
 			userinfoEndpoint);
-
-		String metadataJSONOAS = _buildAuthorizationServerJSON(
-			authorizationEndpoint, issuerString, jwksUri, supportedScopes,
-			supportedGrantTypes, tokenEndpointString);
 
 		oAuthClientASLocalMetadata =
 			oAuthClientASLocalMetadataPersistence.create(
@@ -309,14 +308,13 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 				String.valueOf(oAuthClientASLocalMetadata.getIssuer())) ||
 			currentLocalWellKnownURIOIC.contains("openid-configuration")) {
 
+			String metadataJSONOAS = _buildAuthorizationServerJSON(
+				authorizationEndpoint, issuerString, jwksUri, supportedScopes,
+				supportedGrantTypes, tokenEndpointString);
 			String metadataJSONOIC = _buildOpenIdConfigurationJSON(
 				authorizationEndpoint, issuerString, jwksUri,
 				supportedGrantTypes, supportedScopes, supportedSubjectTypes,
 				tokenEndpointString, userinfoEndpoint);
-
-			String metadataJSONOAS = _buildAuthorizationServerJSON(
-				authorizationEndpoint, issuerString, jwksUri, supportedScopes,
-				supportedGrantTypes, tokenEndpointString);
 
 			oAuthClientASLocalMetadata.setIssuer(issuerString);
 			oAuthClientASLocalMetadata.setLocalWellKnownEnabled(enabled);

@@ -54,13 +54,13 @@ public class UpdateOAuthClientASLocalMetadataMVCRenderCommand
 						fetchOAuthClientASLocalMetadata(
 							oAuthClientASLocalMetadataId);
 
-				OIDCProviderMetadata authorizationServerMetadata =
-					OIDCProviderMetadata.parse(
-						oAuthClientASLocalMetadata.getMetadataJSON());
-
 				renderRequest.setAttribute(
 					OAuthClientASLocalMetadata.class.getName(),
 					oAuthClientASLocalMetadata);
+
+				OIDCProviderMetadata authorizationServerMetadata =
+					OIDCProviderMetadata.parse(
+						oAuthClientASLocalMetadata.getMetadataJSON());
 
 				if (authorizationServerMetadata.getAuthorizationEndpointURI() !=
 						null) {
@@ -71,18 +71,18 @@ public class UpdateOAuthClientASLocalMetadataMVCRenderCommand
 						).toString());
 				}
 
-				if (authorizationServerMetadata.getJWKSetURI() != null) {
-					renderRequest.setAttribute(
-						"jwks_uri",
-						authorizationServerMetadata.getJWKSetURI(
-						).toString());
-				}
-
 				if (authorizationServerMetadata.getGrantTypes() != null) {
 					renderRequest.setAttribute(
 						"supported-grant-types",
 						StringUtil.merge(
 							authorizationServerMetadata.getGrantTypes()));
+				}
+
+				if (authorizationServerMetadata.getJWKSetURI() != null) {
+					renderRequest.setAttribute(
+						"jwks_uri",
+						authorizationServerMetadata.getJWKSetURI(
+						).toString());
 				}
 
 				if (authorizationServerMetadata.getScopes() != null) {
@@ -116,13 +116,13 @@ public class UpdateOAuthClientASLocalMetadataMVCRenderCommand
 				}
 			}
 		}
+		catch (ParseException parseException) {
+			throw new RuntimeException(parseException);
+		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(portalException);
 			}
-		}
-		catch (ParseException parseException) {
-			throw new RuntimeException(parseException);
 		}
 
 		if (!FeatureFlagManagerUtil.isEnabled(

@@ -8,20 +8,19 @@
 <%@ include file="/init.jsp" %>
 
 <%
-String redirect = ParamUtil.getString(request, "redirect");
-
-OAuthClientASLocalMetadata oAuthClientASLocalMetadata = (OAuthClientASLocalMetadata)request.getAttribute(OAuthClientASLocalMetadata.class.getName());
-
 String authorizationEndpoint = (String)request.getAttribute("authorization_endpoint");
 String jwksUri = (String)request.getAttribute("jwks_uri");
 String supportedGrantTypes = (String)request.getAttribute("supported-grant-types");
 String supportedScopes = (String)request.getAttribute("supported-scopes");
 String supportedSubjectTypes = (String)request.getAttribute("supported_subject_types");
+String redirect = ParamUtil.getString(request, "redirect");
 String tokenEndpoint = (String)request.getAttribute("token_endpoint");
 String userinfoEndpoint = (String)request.getAttribute("userinfo_endpoint");
 
 portletDisplay.setShowBackIcon(true);
 portletDisplay.setURLBack(redirect);
+
+OAuthClientASLocalMetadata oAuthClientASLocalMetadata = (OAuthClientASLocalMetadata)request.getAttribute(OAuthClientASLocalMetadata.class.getName());
 
 renderResponse.setTitle((oAuthClientASLocalMetadata == null) ? LanguageUtil.get(request, "new-oauth-client-as-local-metadata") : LanguageUtil.get(request, "edit-oauth-client-as-local-metadata"));
 
@@ -51,11 +50,8 @@ JSONObject metadataJSONObject = JSONUtil.put(
 	>
 		<div class="sheet">
 			<aui:fieldset>
-				<liferay-ui:error exception="<%= DuplicateOAuthClientASLocalMetadataException.class %>" message="oauth-client-as-local-metadata-duplicate-as-local-metadata" />
-
 				<liferay-ui:error exception="<%= DuplicateOAuthClientASIssuerException.class %>" message="oauth-client-as-local-metadata-duplicate-as-issuer" />
-
-				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
+				<liferay-ui:error exception="<%= DuplicateOAuthClientASLocalMetadataException.class %>" message="oauth-client-as-local-metadata-duplicate-as-local-metadata" />
 
 				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataIssuerURIException.class %>">
 					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataIssuerURIException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-issuer-uri-x" />
@@ -65,32 +61,26 @@ JSONObject metadataJSONObject = JSONUtil.put(
 					<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuthClientASLocalMetadataJSONException)errorException).getMessage()) %>" key="oauth-client-as-local-metadata-invalid-metadata-json-x" />
 				</liferay-ui:error>
 
+				<liferay-ui:error exception="<%= OAuthClientASLocalMetadataLocalWellKnownURIException.class %>" message="oauth-client-as-local-metadata-invalid-local-well-known-uri" />
+
 				<aui:fieldset label="general">
 					<aui:input helpMessage="oauth-client-as-local-metadata-issuer-help" label="oauth-client-as-local-metadata-issuer" name="issuer" required="<%= true %>" type="text" />
 					<aui:input helpMessage="oauth-client-as-local-metadata-allowed-scopes-help" label="oauth-client-as-local-metadata-allowed-scopes" name="supported-scopes" type="text" value="<%= supportedScopes %>" />
-
 					<aui:input helpMessage="oauth-client-as-local-metadata-allowed-grant-types-help" label="oauth-client-as-local-metadata-allowed-grant-types" name="supported-grant-types" type="text" value="<%= supportedGrantTypes %>" />
-
 					<aui:input label="oauth-client-as-local-metadata-authorization_endpoint" name="authorization_endpoint" type="text" value="<%= authorizationEndpoint %>" />
-
 					<aui:input label="oauth-client-as-local-metadata-jwks_uri" name="jwks_uri" type="text" value="<%= jwksUri %>" />
-
 					<aui:input label="oauth-client-as-local-metadata-token_endpoint" name="token_endpoint" type="text" value="<%= tokenEndpoint %>" />
 				</aui:fieldset>
 
 				<aui:fieldset label="oauth-client-as-local-oauth-authorization-server">
 					<aui:input checked="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getLocalWellKnownEnabled() : false %>" label="enable" name="enabled" type="checkbox" />
-
 					<aui:input helpMessage="oauth-client-as-local-well-known-uri-oauth-authorization-server-help" label="oauth-client-as-local-well-known-uri-oauth-authorization-server" name="oAuthASLocalWellKnownURI" readonly="true" type="text" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() : \"\" %>" />
-
 					<aui:input helpMessage="oauth-client-as-local-metadata-json-oauth-authorization-server-help" label="oauth-client-as-local-metadata-json-oauth-authorization-server" name="oAuthASMetadataJSON" readonly="true" style="min-height: 600px;" type="textarea" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASMetadataJSON() : metadataJSONObject.toString() %>" />
 				</aui:fieldset>
 
 				<aui:fieldset label="oauth-client-as-local--openid-configuration">
 					<aui:input label="oauth-client-as-local-metadata-subject_types_supported" name="supported_subject_types" type="text" value='<%= (oAuthClientASLocalMetadata != null) ? supportedSubjectTypes : "public" %>' />
-
 					<aui:input label="oauth-client-as-local-metadata-userinfo_endpoint" name="userinfo_endpoint" type="text" value="<%= userinfoEndpoint %>" />
-
 					<aui:input helpMessage="oauth-client-as-local-well-known-uri-openid-configuration-help" label="oauth-client-as-local-well-known-uri-openid-configuration" name="localWellKnownURI" readonly="true" type="text" />
 
 					<aui:input
@@ -131,10 +121,6 @@ JSONObject metadataJSONObject = JSONUtil.put(
 	<portlet:namespace />init();
 
 	function <portlet:namespace />doSubmit() {
-		var form = document.getElementById(
-			'<portlet:namespace />oauth-client-as-fm'
-		);
-
 		var oAuthASMetadataJSON = document.getElementById(
 			'<portlet:namespace />oAuthASMetadataJSON'
 		).value;
@@ -169,26 +155,29 @@ JSONObject metadataJSONObject = JSONUtil.put(
 		document.getElementById('<portlet:namespace />metadataJSON').value =
 			metadataJSON;
 
+		var form = document.getElementById(
+			'<portlet:namespace />oauth-client-as-fm'
+		);
+
 		submitForm(form);
 	}
 
 	function <portlet:namespace />init() {
-		var oAuthASMetadataJSON = document.getElementById(
-			'<portlet:namespace />oAuthASMetadataJSON'
-		);
-
-		oAuthASMetadataJSON.value = JSON.stringify(
-			JSON.parse(oAuthASMetadataJSON.value),
-			null,
-			4
-		);
-
 		var metadataJSON = document.getElementById(
 			'<portlet:namespace />metadataJSON'
 		);
 
 		metadataJSON.value = JSON.stringify(
 			JSON.parse(metadataJSON.value),
+			null,
+			4
+		);
+		var oAuthASMetadataJSON = document.getElementById(
+			'<portlet:namespace />oAuthASMetadataJSON'
+		);
+
+		oAuthASMetadataJSON.value = JSON.stringify(
+			JSON.parse(oAuthASMetadataJSON.value),
 			null,
 			4
 		);
