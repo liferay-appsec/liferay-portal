@@ -118,6 +118,8 @@ public class OAuth2WellKnownServletTest {
 
 		response = options.getResponse();
 
+		HttpUtil.URLtoString(options);
+
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
 
@@ -217,6 +219,8 @@ public class OAuth2WellKnownServletTest {
 		options.setLocation(urlString);
 
 		response = options.getResponse();
+
+		HttpUtil.URLtoString(options);
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_OK, response.getResponseCode());
