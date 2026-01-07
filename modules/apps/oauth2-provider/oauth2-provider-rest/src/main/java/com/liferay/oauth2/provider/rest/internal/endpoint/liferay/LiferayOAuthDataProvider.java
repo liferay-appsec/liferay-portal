@@ -7,6 +7,7 @@ package com.liferay.oauth2.provider.rest.internal.endpoint.liferay;
 
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.constants.GrantType;
+import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.constants.OAuth2AuthorizationConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
@@ -52,6 +53,7 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -81,6 +83,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.jaxrs.utils.ExceptionUtils;
 import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.rs.security.jose.common.JoseConstants;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
@@ -101,6 +104,7 @@ import org.apache.cxf.rs.security.oauth2.provider.OAuthJoseJwtProducer;
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.tokens.bearer.BearerAccessToken;
 import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
+import org.apache.cxf.rs.security.oauth2.utils.AuthorizationUtils;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
@@ -344,7 +348,36 @@ public class LiferayOAuthDataProvider
 			Client client, UserSubject subject)
 		throws OAuthServiceException {
 
-		throw new UnsupportedOperationException();
+		OAuth2Application oAuth2Application = resolveOAuth2Application(client);
+
+		List<OAuth2Authorization> oAuth2Authorizations =
+			_oAuth2AuthorizationLocalService.getOAuth2Authorizations(
+				oAuth2Application.getOAuth2ApplicationId(), QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null);
+
+		List<ServerAccessToken> serverAccessTokens = new ArrayList<>();
+
+		if (ListUtil.isNotEmpty(oAuth2Authorizations)) {
+			for (OAuth2Authorization oAuth2Authorization :
+					oAuth2Authorizations) {
+
+				try {
+					serverAccessTokens.add(
+						_populateAccessToken(oAuth2Authorization));
+				}
+				catch (PortalException portalException) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(
+							"Error when retrieving accessToken",
+							portalException);
+					}
+
+					throw new OAuthServiceException(portalException);
+				}
+			}
+		}
+
+		return serverAccessTokens;
 	}
 
 	public BearerTokenProvider getBearerTokenProvider(
@@ -672,6 +705,28 @@ public class LiferayOAuthDataProvider
 		accessToken.setRefreshToken(newRefreshToken.getTokenKey());
 
 		return accessToken;
+	}
+
+	@Override
+	public Client removeClient(String clientId) {
+		Client client = doGetClient(clientId);
+
+		OAuth2Application oAuth2Application = resolveOAuth2Application(client);
+
+		if (!_isAllowedToDelete(oAuth2Application)) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Operation not allowed for client: " +
+						client.getClientId());
+			}
+
+			throw ExceptionUtils.toForbiddenException(null, null);
+		}
+
+		removeClientTokens(client);
+		doRemoveClient(client);
+
+		return client;
 	}
 
 	@Override
@@ -1317,6 +1372,35 @@ public class LiferayOAuthDataProvider
 			});
 	}
 
+	private boolean _isAllowedToDelete(OAuth2Application oAuth2Application) {
+		OAuth2Authorization oAuth2Authorization =
+			_oAuth2AuthorizationLocalService.
+				fetchOAuth2AuthorizationByAccessTokenContent(
+					AuthorizationUtils.getAuthorizationParts(
+						getMessageContext(), Collections.singleton("Bearer"))
+						[1]);
+
+		if (oAuth2Authorization != null) {
+			OAuth2Application accessTokenOAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					oAuth2Authorization.getOAuth2ApplicationId());
+
+			if (!_nondeletableOAuth2ApplicationNames.contains(
+					oAuth2Application.getName()) &&
+				(StringUtil.equals(
+					accessTokenOAuth2Application.getClientId(),
+					oAuth2Application.getClientId()) ||
+				 StringUtil.equals(
+					 accessTokenOAuth2Application.getName(),
+					 OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR))) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private ServerAccessToken _populateAccessToken(
 			OAuth2Authorization oAuth2Authorization)
 		throws PortalException {
@@ -1624,6 +1708,11 @@ public class LiferayOAuthDataProvider
 	private static final Log _log = LogFactoryUtil.getLog(
 		LiferayOAuthDataProvider.class);
 
+	private static final Set<String> _nondeletableOAuth2ApplicationNames =
+		SetUtil.fromArray(
+			new String[] {
+				"Dynamic Registrator", "Fragment Renderer", "Analytics Cloud"
+			});
 	private static final Set<String> _refreshTokenIncompatibleGrants =
 		new HashSet<>();
 
