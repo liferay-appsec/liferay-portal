@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -793,7 +794,7 @@ public class OIDCUserInfoProcessor {
 			List<Long> userGroupIds)
 		throws Exception {
 
-		if (userGroupIds == null) {
+		if ((userGroupIds == null) || ListUtil.isEmpty(userGroupIds)) {
 			userGroupIds = new ArrayList<>();
 		}
 
