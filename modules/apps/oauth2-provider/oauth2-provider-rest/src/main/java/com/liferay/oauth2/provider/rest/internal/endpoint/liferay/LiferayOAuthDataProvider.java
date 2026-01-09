@@ -6,6 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.liferay;
 
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
+import com.liferay.oauth2.provider.constants.ClientProfile;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.constants.OAuth2AuthorizationConstants;
@@ -48,6 +49,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -55,6 +57,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -713,6 +716,10 @@ public class LiferayOAuthDataProvider
 
 		OAuth2Application oAuth2Application = resolveOAuth2Application(client);
 
+		if (oAuth2Application == null) {
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
 		if (!_isAllowedToDelete(oAuth2Application)) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
@@ -771,18 +778,27 @@ public class LiferayOAuthDataProvider
 	public void setClient(Client client) {
 		MessageContext messageContext = getMessageContext();
 
-		long companyId = _portal.getCompanyId(
-			messageContext.getHttpServletRequest());
-
 		OAuth2Application oAuth2Application =
 			_oAuth2ApplicationLocalService.fetchOAuth2Application(
-				companyId, client.getClientId());
+				_portal.getCompanyId(messageContext.getHttpServletRequest()),
+				client.getClientId());
+
+		String clientId;
+		String clientSecret;
+		String externalReferenceCode;
+
+		Map<String, String> properties = client.getProperties();
 
 		if (oAuth2Application != null) {
-			OAuth2ErrorUtil.reportInvalidRequestError(
-				"OAuth 2 Application with client ID: " + client.getClientId() +
-					" already exists.",
-				OAuthConstants.INVALID_CLIENT, Response.Status.CONFLICT);
+			clientId = oAuth2Application.getClientId();
+			clientSecret = oAuth2Application.getClientSecret();
+			externalReferenceCode =
+				oAuth2Application.getExternalReferenceCode();
+		}
+		else {
+			clientId = client.getClientId();
+			clientSecret = client.getClientSecret();
+			externalReferenceCode = properties.get("software_id");
 		}
 
 		try {
@@ -794,24 +810,57 @@ public class LiferayOAuthDataProvider
 			User user = _userLocalService.fetchUser(
 				GetterUtil.getLong(userPrincipal.getName()));
 
-			Map<String, String> properties = client.getProperties();
-
 			String jwks = properties.get("jwks");
 
 			if (jwks == null) {
 				jwks = _extractJwksFromJwksUri(properties.get("jwks_uri"));
 			}
 
-			_oAuth2ApplicationLocalService.addOAuth2Application(
-				companyId, user.getUserId(),
-				user.getScreenName() + "_dynamic_registered",
-				_getAllowedGrantTypes(client.getAllowedGrantTypes()),
-				client.getTokenEndpointAuthMethod(), user.getUserId(),
-				client.getClientId(), 0, client.getClientSecret(), null, null,
-				client.getApplicationWebUri(), 0, jwks,
-				client.getApplicationName(), properties.get("tos_uri"),
-				client.getRedirectUris(), false, client.getRegisteredScopes(),
-				false, new ServiceContext());
+			oAuth2Application =
+				_oAuth2ApplicationLocalService.addOrUpdateOAuth2Application(
+					externalReferenceCode, user.getUserId(),
+					user.getScreenName() + "_dynamic_registered",
+					_getAllowedGrantTypes(client.getAllowedGrantTypes()),
+					client.getTokenEndpointAuthMethod(), user.getUserId(),
+					clientId, ClientProfile.WEB_APPLICATION.id(), clientSecret,
+					null, null, client.getApplicationWebUri(), 0, jwks,
+					client.getApplicationName(), properties.get("tos_uri"),
+					client.getRedirectUris(), false,
+					client.getRegisteredScopes(), false, new ServiceContext());
+
+			String tokenKey = properties.get("registration_access_token");
+
+			if (!Validator.isBlank(tokenKey)) {
+				OAuth2Authorization oAuth2Authorization =
+					_oAuth2AuthorizationLocalService.
+						fetchOAuth2AuthorizationByAccessTokenContent(tokenKey);
+
+				if (oAuth2Authorization == null) {
+					String remoteAddr = properties.get(
+						OAuth2ProviderRESTEndpointConstants.
+							PROPERTY_KEY_CLIENT_REMOTE_ADDR);
+
+					String remoteHost = properties.get(
+						OAuth2ProviderRESTEndpointConstants.
+							PROPERTY_KEY_CLIENT_REMOTE_HOST);
+
+					_oAuth2AuthorizationLocalService.addOAuth2Authorization(
+						oAuth2Application.getCompanyId(), user.getUserId(),
+						user.getScreenName(),
+						oAuth2Application.getOAuth2ApplicationId(),
+						oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
+						tokenKey, DateUtil.newDate(),
+						DateUtil.newDate(
+							System.currentTimeMillis() + Time.YEAR),
+						remoteHost, remoteAddr, null, null, null);
+				}
+			}
+
+			if (Validator.isBlank(properties.get("software_id"))) {
+				properties.put(
+					"software_id",
+					oAuth2Application.getExternalReferenceCode());
+			}
 		}
 		catch (PortalException portalException) {
 			_log.error(
@@ -1035,7 +1084,21 @@ public class LiferayOAuthDataProvider
 
 	@Override
 	protected void doRemoveClient(Client client) {
-		throw new UnsupportedOperationException();
+		OAuth2Application oAuth2Application = resolveOAuth2Application(client);
+
+		try {
+			_oAuth2ApplicationLocalService.deleteOAuth2Application(
+				oAuth2Application);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Error deleting oauth2 application", portalException);
+			}
+
+			throw ExceptionUtils.toInternalServerErrorException(
+				portalException, (Response)null);
+		}
 	}
 
 	@Override

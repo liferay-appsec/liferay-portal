@@ -8,8 +8,11 @@ package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONException;
@@ -24,6 +27,7 @@ import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.annotation.Priority;
 
@@ -47,6 +51,7 @@ import org.apache.cxf.jaxrs.utils.ExceptionUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.jose.jws.JwsJwtCompactConsumer;
+import org.apache.cxf.rs.security.jose.jwt.JwtClaims;
 import org.apache.cxf.rs.security.jose.jwt.JwtToken;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
 
@@ -109,16 +114,29 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 			user = _getUser(GetterUtil.getLong(jwtToken.getClaim("sub")));
 
-			OAuth2Application oAuth2Application =
-				_oAuth2ApplicationLocalService.fetchOAuth2Application(
-					user.getCompanyId(),
-					GetterUtil.getString(jwtToken.getClaim("client_id")));
+			OAuth2Application oAuth2Application;
+
+			if (!Validator.isBlank(
+					GetterUtil.getString(jwtToken.getClaim("client_id")))) {
+
+				oAuth2Application =
+					_oAuth2ApplicationLocalService.fetchOAuth2Application(
+						user.getCompanyId(),
+						GetterUtil.getString(jwtToken.getClaim("client_id")));
+			}
+			else {
+				oAuth2Application =
+					_oAuth2ApplicationLocalService.fetchOAuth2Application(
+						GetterUtil.getLong(
+							jwtToken.getClaim("application_id")));
+			}
+
+			String requestedOAuth2ApplicationId = _extractIdFromRequest(
+				httpServletRequest);
 
 			if ((oAuth2Application == null) ||
-				((StringUtil.equalsIgnoreCase(
-					httpServletRequest.getMethod(), "POST") ||
-				  StringUtil.equalsIgnoreCase(
-					  httpServletRequest.getMethod(), "GET")) &&
+				(StringUtil.equalsIgnoreCase(
+					httpServletRequest.getMethod(), "POST") &&
 				 !StringUtil.equalsIgnoreCase(
 					 OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR,
 					 oAuth2Application.getName())) ||
@@ -127,7 +145,18 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				(StringUtil.equalsIgnoreCase(
 					httpServletRequest.getMethod(), "DELETE") &&
 				 !_containsOAuth2DeleteApplicationPermission(
-					 oAuth2Application, user))) {
+					 oAuth2Application, user)) ||
+				(StringUtil.equalsIgnoreCase(
+					httpServletRequest.getMethod(), "PUT") &&
+				 !_containsOAuth2UpdateApplicationPermission(
+					 oAuth2Application, user)) ||
+				(Validator.isNotNull(requestedOAuth2ApplicationId) &&
+				 !StringUtil.equalsIgnoreCase(
+					 requestedOAuth2ApplicationId,
+					 oAuth2Application.getClientId()) &&
+				 !StringUtil.equalsIgnoreCase(
+					 OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR,
+					 oAuth2Application.getName()))) {
 
 				throw ExceptionUtils.toNotAuthorizedException(null, null);
 			}
@@ -203,6 +232,34 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			OAuth2ProviderActionKeys.REGISTER_APPLICATION);
 	}
 
+	private boolean _containsOAuth2UpdateApplicationPermission(
+			OAuth2Application oAuth2Application, User user)
+		throws Exception {
+
+		if (oAuth2Application == null) {
+			return false;
+		}
+
+		return _oAuth2ApplicationModelResourcePermission.contains(
+			_permissionCheckerFactory.create(user), oAuth2Application,
+			ActionKeys.UPDATE);
+	}
+
+	private String _extractIdFromRequest(
+		HttpServletRequest httpServletRequest) {
+
+		String requestURI = httpServletRequest.getRequestURI();
+
+		String extractedId = requestURI.substring(
+			requestURI.lastIndexOf(StringPool.SLASH) + 1);
+
+		if (extractedId.startsWith("id-")) {
+			return extractedId;
+		}
+
+		return null;
+	}
+
 	private JwtToken _getJwtToken(HttpServletRequest httpServletRequest)
 		throws JSONException, WebApplicationException {
 
@@ -213,8 +270,29 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
 
+		String accessTokenContent = authorizationHeader.substring(
+			"Bearer ".length());
+
+		OAuth2Authorization oAuth2Authorization =
+			_oAuth2AuthorizationLocalService.
+				fetchOAuth2AuthorizationByAccessTokenContent(
+					accessTokenContent);
+
+		if (oAuth2Authorization != null) {
+			JwtClaims jwtClaims = new JwtClaims();
+
+			jwtClaims.setClaim("sub", oAuth2Authorization.getUserId());
+			jwtClaims.setClaim(
+				"application_id", oAuth2Authorization.getOAuth2ApplicationId());
+			jwtClaims.setExpiryTime(
+				oAuth2Authorization.getAccessTokenExpirationDate(
+				).getTime());
+
+			return new JwtToken(jwtClaims);
+		}
+
 		return new JwsJwtCompactConsumer(
-			authorizationHeader.substring("Bearer ".length())
+			accessTokenContent
 		).getJwtToken();
 	}
 
@@ -238,6 +316,9 @@ public class DynamicRegistrationServiceContainerRequestFilter
 	)
 	private ModelResourcePermission<OAuth2Application>
 		_oAuth2ApplicationModelResourcePermission;
+
+	@Reference
+	private OAuth2AuthorizationLocalService _oAuth2AuthorizationLocalService;
 
 	@Reference
 	private PermissionCheckerFactory _permissionCheckerFactory;
