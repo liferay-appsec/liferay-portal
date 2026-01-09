@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.model.change.tracking.CTModel;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
@@ -44,6 +45,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectUser;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectUserLocalService;
@@ -53,6 +55,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -124,6 +127,8 @@ public class OIDCUserInfoProcessorTest {
 			)
 		).put(
 			"users_roles", JSONUtil.put("roles", "")
+		).put(
+			"users_groups", JSONUtil.put("groups", "group")
 		).toString();
 	}
 
@@ -186,14 +191,17 @@ public class OIDCUserInfoProcessorTest {
 				true)) {
 
 			_testProcessUserInfo(
-				new String[0], "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				new String[] {"group1"}, "screenName", new String[] {"group1"},
+				_customOIDCUserInfoMapperJSON, true);
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				_customOIDCUserInfoMapperJSON, false);
+			_testProcessUserInfo(
+				new String[0], "email", new String[0],
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 			_testProcessUserInfo(
 				new String[] {"group1"}, "email", new String[] {"group1"},
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 
 			UserGroup userGroup = _userGroupLocalService.addUserGroup(
 				StringPool.BLANK, TestPropsValues.getUserId(),
@@ -209,27 +217,27 @@ public class OIDCUserInfoProcessorTest {
 			_testProcessUserInfo(
 				new String[] {"group1", "group2", "group3"}, "email",
 				new String[] {"group1", "group3"},
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 			_testProcessUserInfo(
 				new String[] {"group1", "group2"}, "email",
 				new String[] {"group1"},
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 			_testProcessUserInfo(
 				new String[] {"group2"}, "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				_customOIDCUserInfoMapperJSON, false);
 
 			_userGroupLocalService.deleteUserUserGroup(
 				user.getUserId(), userGroup.getUserGroupId());
 
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				_customOIDCUserInfoMapperJSON, false);
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 			_testProcessUserInfo(
 				new String[] {"group1"}, "email", new String[] {"group1"},
-				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+				OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 
 			_emailAddress = null;
 
@@ -259,11 +267,11 @@ public class OIDCUserInfoProcessorTest {
 
 				_testProcessUserInfo(
 					new String[0], "screenName", new String[0],
-					_customOIDCUserInfoMapperJSON);
+					_customOIDCUserInfoMapperJSON, false);
 				_testProcessUserInfo(
 					new String[] {"group1"}, "screenName",
 					new String[] {"group1"},
-					OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON);
+					OAuthClientEntryConstants.OIDC_USER_INFO_MAPPER_JSON, false);
 			}
 		}
 	}
@@ -278,7 +286,7 @@ public class OIDCUserInfoProcessorTest {
 
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				_customOIDCUserInfoMapperJSON, false);
 		}
 
 		try (SafeCloseable safeCloseable = _updateSecurityWithSafeCloseable(
@@ -286,7 +294,7 @@ public class OIDCUserInfoProcessorTest {
 
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				_customOIDCUserInfoMapperJSON, false);
 		}
 	}
 
@@ -300,7 +308,7 @@ public class OIDCUserInfoProcessorTest {
 
 			_testProcessUserInfo(
 				new String[0], "email", new String[0],
-				_customOIDCUserInfoMapperJSON);
+				_customOIDCUserInfoMapperJSON, false);
 
 			Assert.fail();
 		}
@@ -365,7 +373,8 @@ public class OIDCUserInfoProcessorTest {
 
 	private void _testProcessUserInfo(
 			String[] expectedUserGroupNames, String matcherField,
-			String[] userGroupNames, String userInfoMapperJSON)
+			String[] userGroupNames, String userInfoMapperJSON,
+			boolean createGroup)
 		throws Exception {
 
 		User existingUser = _fetchUser(matcherField);
@@ -409,6 +418,29 @@ public class OIDCUserInfoProcessorTest {
 			"website", "www.test.com"
 		);
 
+		if (createGroup) {
+			existingUser = _userLocalService.addUser(
+				0, TestPropsValues.getCompanyId(), true, null, null, Validator.isNull(_screenName),
+				_screenName, _emailAddress,
+				Locale.US,
+				StringUtil.randomString(),
+				StringUtil.randomString(),
+				StringUtil.randomString(), 0, 0,
+				true,
+				0, 1, 0,
+				StringUtil.randomString(),
+				UserConstants.TYPE_REGULAR, null, null, null,
+				null,
+				false, _serviceContext);
+
+			UserGroup userGroup = _userGroupLocalService.addUserGroup(
+				StringPool.BLANK, TestPropsValues.getUserId(),
+				TestPropsValues.getCompanyId(), "group1", StringPool.BLANK,
+				_serviceContext);
+
+			_userGroupLocalService.addUserUserGroup(existingUser.getUserId(), userGroup.getUserGroupId());
+		}
+
 		long userId = 0;
 
 		try (SafeCloseable safeCloseable =
@@ -451,6 +483,16 @@ public class OIDCUserInfoProcessorTest {
 			Assert.assertTrue(
 				ArrayUtil.contains(
 					expectedUserGroupNames, userUserGroup.getName()));
+		}
+
+		if (createGroup) {
+			_userLocalService.deleteUser(existingUser);
+
+			UserGroup userGroup = _userGroupLocalService.getUserGroup(TestPropsValues.getCompanyId(), "group1");
+
+			_userGroupLocalService.deleteUserGroup(userGroup);
+
+			return;
 		}
 
 		for (String userGroupName : newUserGroupNames) {
