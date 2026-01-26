@@ -7,7 +7,6 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {customFieldsPagesTest} from '../../../fixtures/customFieldsPagesTest';
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
-import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {TCustomField} from '../../../helpers/CustomFieldTypesHelper';
 import {liferayConfig} from '../../../liferay.config';
@@ -26,9 +25,6 @@ let site: Site;
 const test = mergeTests(
 	dataApiHelpersTest,
 	openIdSettingsPagesTest,
-	featureFlagsTest({
-		'LPD-57332': {enabled: true},
-	}),
 	loginTest(),
 	utilityPagesPage,
 	customFieldsPagesTest,
