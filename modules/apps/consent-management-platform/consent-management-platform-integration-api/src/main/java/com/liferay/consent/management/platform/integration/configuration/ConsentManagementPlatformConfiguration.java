@@ -37,4 +37,7 @@ public interface ConsentManagementPlatformConfiguration {
 	)
 	public String scriptTag();
 
+	@Meta.AD(deflt = "false", name = "store-consent", required = false)
+	public boolean storeConsent();
+
 }
