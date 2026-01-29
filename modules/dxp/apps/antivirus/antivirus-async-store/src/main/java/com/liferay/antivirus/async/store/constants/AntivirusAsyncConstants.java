@@ -10,6 +10,9 @@ package com.liferay.antivirus.async.store.constants;
  */
 public class AntivirusAsyncConstants {
 
+	public static final String ANTIVIRUS_ASYNC_NOTIFICATION_PORTLET =
+		"com_liferay_antivirus_async_store_portlet_AntivirusAsyncNotifyPortlet";
+
 	public static final long REPOSITORY_ID_QUARANTINE = 999999999999999999L;
 
 	public static final String SCHEDULER_GROUP_NAME_ANTIVIRUS = "Antivirus";

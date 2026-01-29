@@ -169,7 +169,37 @@ public class AntivirusScannerHelper {
 							additionalInfoJSONObject);
 
 						_auditRouter.route(auditMessage);
-						
+
+						JSONObject payloadJSONObject =
+							_jsonFactory.createJSONObject();
+
+						payloadJSONObject.put(
+							"companyId", companyId
+						).put(
+							"fileName", sourceFileName
+						).put(
+							"repositoryId", repositoryId
+						).put(
+							"versionLabel", versionLabel
+						).put(
+							"virusName",
+							antivirusVirusFoundException.getVirusName()
+						);
+
+						ServiceContext serviceContext = new ServiceContext();
+
+						serviceContext.setCompanyId(companyId);
+						serviceContext.setUuid(dlFileEntry.getUuid());
+
+						_userNotificationEventLocalService.
+							addUserNotificationEvent(
+								userId,
+								AntivirusAsyncConstants.
+									ANTIVIRUS_ASYNC_NOTIFICATION_PORTLET,
+								System.currentTimeMillis(),
+								UserNotificationDeliveryConstants.TYPE_WEBSITE,
+								0, payloadJSONObject.toString(), false,
+								serviceContext);
 					}
 
 					_antivirusAsyncEventListenerManager.onVirusFound(
