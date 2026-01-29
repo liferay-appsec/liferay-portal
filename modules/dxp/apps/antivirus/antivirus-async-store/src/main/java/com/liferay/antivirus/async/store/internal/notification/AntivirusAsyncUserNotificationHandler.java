@@ -14,13 +14,12 @@ import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.notifications.BaseUserNotificationHandler;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.service.ServiceContext;
-//import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import jakarta.portlet.PortletRequest;
+//import jakarta.portlet.PortletRequest;
 
-import java.util.Locale;
+//import java.util.Locale;
 
 /**
  * @author Alvaro Saugar

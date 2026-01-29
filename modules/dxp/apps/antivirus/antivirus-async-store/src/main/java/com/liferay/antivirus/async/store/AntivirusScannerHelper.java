@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.Message;
@@ -55,7 +56,7 @@ public class AntivirusScannerHelper {
 			long classPK = message.getLong("classPK");
 
 			if (classPK > 0) {
-				repositoryId = _getRepositoryFile(
+				repositoryId = _getRepositoryId(
 					companyId, repositoryId, fileName, versionLabel);
 			}
 
@@ -97,10 +98,6 @@ public class AntivirusScannerHelper {
 				if (antivirusScannerException instanceof
 						AntivirusVirusFoundException) {
 
-					if (_log.isDebugEnabled()) {
-						_log.debug("Virus found");
-					}
-
 					AntivirusVirusFoundException antivirusVirusFoundException =
 						(AntivirusVirusFoundException)antivirusScannerException;
 
@@ -110,8 +107,10 @@ public class AntivirusScannerHelper {
 					if (classPK <= 0) {
 						if (_log.isDebugEnabled()) {
 							_log.debug(
-								"File with the name " + fileName +
-									"from store message");
+								StringBundler.concat(
+									"Antivirus scan has detected a virus in ",
+									"the file with the name ", fileName,
+									"from store message"));
 						}
 
 						// Quarantine original file
@@ -132,8 +131,10 @@ public class AntivirusScannerHelper {
 					else {
 						if (_log.isDebugEnabled()) {
 							_log.debug(
-								"File with the fileName " + sourceFileName +
-									" from upload message");
+								StringBundler.concat(
+									"Antivirus scan has detected a virus in ",
+									"the file with the fileName ",
+									sourceFileName, "from upload message"));
 						}
 
 						DLFileEntry dlFileEntry =
@@ -144,10 +145,7 @@ public class AntivirusScannerHelper {
 
 						User user = _userLocalService.getUser(userId);
 
-						JSONObject additionalInfoJSONObject =
-							_jsonFactory.createJSONObject();
-
-						additionalInfoJSONObject.put(
+						JSONObject additionalInfoJSONObject = JSONUtil.put(
 							"fileEntryId", classPK
 						).put(
 							"fileName", sourceFileName
@@ -158,14 +156,14 @@ public class AntivirusScannerHelper {
 						).put(
 							"userName", user.getFullName()
 						).put(
-							"Virus detected",
+							"virusName",
 							antivirusVirusFoundException.getVirusName()
 						);
 
 						AuditMessage auditMessage = new AuditMessage(
 							EventTypes.DELETE, companyId, 0, StringPool.BLANK,
 							DLFileEntry.class.getName(),
-							String.valueOf(classPK), "Virus detected",
+							String.valueOf(classPK), null,
 							additionalInfoJSONObject);
 
 						_auditRouter.route(auditMessage);
@@ -223,7 +221,7 @@ public class AntivirusScannerHelper {
 		}
 	}
 
-	private long _getRepositoryFile(
+	private long _getRepositoryId(
 		long companyId, long repositoryId, String fileName,
 		String versionLabel) {
 
