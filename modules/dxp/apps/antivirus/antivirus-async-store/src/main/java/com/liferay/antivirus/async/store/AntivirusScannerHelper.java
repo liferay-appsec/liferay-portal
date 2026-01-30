@@ -143,18 +143,26 @@ public class AntivirusScannerHelper {
 						_store.deleteFile(
 							companyId, repositoryId, fileName, versionLabel);
 
-						User user = _userLocalService.getUser(userId);
+						String userEmailAddress = StringPool.BLANK;
+						String userName = StringPool.BLANK;
+
+						if (userId != 0) {
+							User user = _userLocalService.getUser(userId);
+
+							userEmailAddress = user.getEmailAddress();
+							userName = user.getFullName();
+						}
 
 						JSONObject additionalInfoJSONObject = JSONUtil.put(
 							"fileEntryId", classPK
 						).put(
 							"fileName", sourceFileName
 						).put(
-							"userEmailAddress", user.getEmailAddress()
+							"userEmailAddress", userEmailAddress
 						).put(
 							"userId", userId
 						).put(
-							"userName", user.getFullName()
+							"userName", userName
 						).put(
 							"virusName",
 							antivirusVirusFoundException.getVirusName()

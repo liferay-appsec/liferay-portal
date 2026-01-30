@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.model.MembershipRequestConstants;
 import com.liferay.portal.kernel.model.UserNotificationDeliveryConstants;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
 import com.liferay.portal.kernel.notifications.UserNotificationDeliveryType;
+
 import org.osgi.service.component.annotations.Component;
 
 /**
