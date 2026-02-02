@@ -85,7 +85,7 @@ public class AntivirusAsyncFileStoreSchedulerJobConfiguration
 			return () -> scan((String)file.getAbsolutePath());
 		}
 
-		return this::scanDLFileEntries;
+		return this::_scanDLFileEntries;
 	}
 
 	@Override
@@ -99,39 +99,6 @@ public class AntivirusAsyncFileStoreSchedulerJobConfiguration
 		}
 		catch (IOException ioException) {
 			ReflectionUtil.throwException(ioException);
-		}
-	}
-
-	public void scanDLFileEntries() {
-		try {
-			ActionableDynamicQuery actionableDynamicQuery =
-				_dlFileEntryLocalService.getActionableDynamicQuery();
-
-			actionableDynamicQuery.setCompanyId(
-				CompanyThreadLocal.getCompanyId());
-
-			actionableDynamicQuery.setPerformActionMethod(
-				(DLFileEntry dlFileEntry) -> {
-					DLFileVersion dlFileVersion = dlFileEntry.getFileVersion();
-
-					_scheduleAntivirusScan(
-						dlFileEntry.getModelClassName(),
-						dlFileEntry.getFileEntryId(),
-						dlFileEntry.getCompanyId(), dlFileEntry.getExtension(),
-						dlFileEntry.getName(),
-						AntivirusAsyncUtil.getJobName(
-							dlFileEntry.getCompanyId(),
-							dlFileEntry.getRepositoryId(),
-							dlFileEntry.getFileName(),
-							dlFileVersion.getStoreFileName()),
-						dlFileEntry.getRepositoryId(), dlFileEntry.getSize(),
-						dlFileVersion.getStoreFileName());
-				});
-
-			actionableDynamicQuery.performActions();
-		}
-		catch (PortalException portalException) {
-			ReflectionUtil.throwException(portalException);
 		}
 	}
 
@@ -186,6 +153,39 @@ public class AntivirusAsyncFileStoreSchedulerJobConfiguration
 				}
 
 			});
+	}
+
+	private void _scanDLFileEntries() {
+		try {
+			ActionableDynamicQuery actionableDynamicQuery =
+				_dlFileEntryLocalService.getActionableDynamicQuery();
+
+			actionableDynamicQuery.setCompanyId(
+				CompanyThreadLocal.getCompanyId());
+
+			actionableDynamicQuery.setPerformActionMethod(
+				(DLFileEntry dlFileEntry) -> {
+					DLFileVersion dlFileVersion = dlFileEntry.getFileVersion();
+
+					_scheduleAntivirusScan(
+						dlFileEntry.getModelClassName(),
+						dlFileEntry.getFileEntryId(),
+						dlFileEntry.getCompanyId(), dlFileEntry.getExtension(),
+						dlFileEntry.getName(),
+						AntivirusAsyncUtil.getJobName(
+							dlFileEntry.getCompanyId(),
+							dlFileEntry.getRepositoryId(),
+							dlFileEntry.getFileName(),
+							dlFileVersion.getStoreFileName()),
+						dlFileEntry.getRepositoryId(), dlFileEntry.getSize(),
+						dlFileVersion.getStoreFileName());
+				});
+
+			actionableDynamicQuery.performActions();
+		}
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
+		}
 	}
 
 	private void _scheduleAntivirusScan(Path rootPath, Path filePath) {
