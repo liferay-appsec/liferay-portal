@@ -274,11 +274,11 @@ function setBannerVisibility(lastModified, productAnalyticsBanner) {
 		productAnalyticsBanner.style.display = 'none';
 
 		if (cookieBanner) {
-			const cookieManager = document.getElementById(
+			const consentManager = document.getElementById(
 				'_com_liferay_my_account_web_portlet_MyAccountPortlet_cookiesBannerConfigurationForm'
 			);
 
-			if (cookieManager || getCookie(userConfigCookieName)) {
+			if (consentManager || getCookie(userConfigCookieName)) {
 				cookieBanner.style.display = 'none';
 			}
 			else {

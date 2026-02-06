@@ -23,7 +23,7 @@
 	var analyticsExternalReferenceCode =
 		'<%= (String)request.getAttribute(AnalyticsWebKeys.ANALYTICS_EXTERNAL_REFERENCE_CODE) %>';
 
-	var cookieManagers = {
+	var consentManagers = {
 		'cookie.onetrust': {
 			checkConsent: () => {
 				var OptanonActiveGroups = window.OptanonActiveGroups;
@@ -119,13 +119,13 @@
 </aui:script>
 
 <aui:script id="liferayAnalyticsScript" senna="permanent" type="text/javascript">
-	var allPromises = Object.keys(cookieManagers).map((key) =>
-		cookieManagers[key].enabled()
+	var allPromises = Object.keys(consentManagers).map((key) =>
+		consentManagers[key].enabled()
 	);
 
 	Promise.all(allPromises).then((result) => {
 		var selectedIndex = result.findIndex((enabled) => enabled);
-		var selectedCookieManager = Object.values(cookieManagers)[selectedIndex];
+		var selectedConsentManager = Object.values(consentManagers)[selectedIndex];
 
 		function <portlet:namespace />initializeAnalyticsSDK() {
 			(function (u, c, a, m, o, l) {
@@ -169,8 +169,8 @@
 
 				<c:if test="<%= FrontendSPAUtil.isEnabled(company.getCompanyId()) %>">
 					Liferay.on('endNavigate', (event) => {
-						var allPromises = Object.keys(cookieManagers).map((key) =>
-							cookieManagers[key].enabled()
+						var allPromises = Object.keys(consentManagers).map((key) =>
+							consentManagers[key].enabled()
 						);
 
 						Promise.all(allPromises).then((result) => {
@@ -207,13 +207,13 @@
 							}
 
 							var selectedIndex = result.findIndex((enabled) => enabled);
-							var selectedCookieManager =
-								Object.values(cookieManagers)[selectedIndex];
+							var selectedConsentManager =
+								Object.values(consentManagers)[selectedIndex];
 
-							if (selectedCookieManager) {
-								selectedCookieManager.onConsentChange(() => {
+							if (selectedConsentManager) {
+								selectedConsentManager.onConsentChange(() => {
 									if (
-										selectedCookieManager.checkConsent({
+										selectedConsentManager.checkConsent({
 											navigation: 'spa',
 										})
 									) {
@@ -224,7 +224,7 @@
 								});
 
 								if (
-									selectedCookieManager.checkConsent({
+									selectedConsentManager.checkConsent({
 										navigation: 'spa',
 									})
 								) {
@@ -244,14 +244,14 @@
 			});
 		}
 
-		if (selectedCookieManager) {
-			selectedCookieManager.onConsentChange(() => {
-				if (selectedCookieManager.checkConsent({navigation: 'normal'})) {
+		if (selectedConsentManager) {
+			selectedConsentManager.onConsentChange(() => {
+				if (selectedConsentManager.checkConsent({navigation: 'normal'})) {
 					<portlet:namespace />initializeAnalyticsSDK();
 				}
 			});
 
-			if (selectedCookieManager.checkConsent({navigation: 'normal'})) {
+			if (selectedConsentManager.checkConsent({navigation: 'normal'})) {
 				<portlet:namespace />initializeAnalyticsSDK();
 			}
 		}
