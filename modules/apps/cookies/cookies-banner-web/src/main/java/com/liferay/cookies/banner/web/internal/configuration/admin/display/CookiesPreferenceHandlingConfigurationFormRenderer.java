@@ -58,6 +58,19 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 		).put(
 			"enabled", ParamUtil.getBoolean(httpServletRequest, "enabled")
 		).put(
+			"enableFloatingIcon",
+			() -> {
+				if (FeatureFlagManagerUtil.isEnabled(
+						_portal.getCompanyId(httpServletRequest),
+						"LPD-75027")) {
+
+					return ParamUtil.getBoolean(
+						httpServletRequest, "enableFloatingIcon");
+				}
+
+				return true;
+			}
+		).put(
 			"explicitConsentMode",
 			ParamUtil.getBoolean(httpServletRequest, "explicitConsentMode")
 		).put(
