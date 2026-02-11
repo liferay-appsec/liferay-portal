@@ -31,6 +31,7 @@ export const test = mergeTests(
 	accountSettingsPagesTest,
 	featureFlagsTest({
 		'LPD-51356': {enabled: true},
+		'LPD-75027': {enabled: true},
 		'LPD-75032': {enabled: true},
 	}),
 	loginTest(),
@@ -75,6 +76,41 @@ test.beforeEach(async ({systemSettingsPage}) => {
 		await expect(enabledButton).toBeChecked();
 	});
 });
+
+test(
+	'Verify enable floating icon is visible and can be disabled',
+	{tag: '@LPD-78592'},
+	async ({systemSettingsPage}) => {
+		await systemSettingsPage.goToSystemSetting(
+			'Privacy',
+			'Consent Manager'
+		);
+
+		const floatingIconButton = systemSettingsPage.page.getByLabel(
+			'Enable Floating Icon'
+		);
+
+		await floatingIconButton.waitFor({state: 'visible'});
+
+		await expect(floatingIconButton).toBeChecked();
+
+		const acceptAllButton = systemSettingsPage.page.getByRole('button', {
+			name: 'Accept All',
+		});
+
+		await acceptAllButton.click();
+
+		await expect(acceptAllButton).not.toBeVisible();
+
+		await floatingIconButton.uncheck();
+
+		await systemSettingsPage.page
+			.getByRole('button', {name: 'Update'})
+			.click();
+
+		await expect(floatingIconButton).not.toBeChecked();
+	}
+);
 
 test(
 	'Verify Cookie Banner Consent Panel buttons',
