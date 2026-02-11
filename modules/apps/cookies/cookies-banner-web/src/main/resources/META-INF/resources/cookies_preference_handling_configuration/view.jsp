@@ -84,6 +84,25 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 	</div>
 </c:if>
 
+<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-75027") %>'>
+	<div class="row">
+		<div class="col-sm-12 form-group">
+			<div class="form-group__inner">
+				<clay:checkbox
+					checked="<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnableFloatingIcon() %>"
+					id='<%= liferayPortletResponse.getNamespace() + "enableFloatingIcon" %>'
+					label="enable-floating-icon"
+					name='<%= liferayPortletResponse.getNamespace() + "enableFloatingIcon" %>'
+				/>
+
+				<div aria-hidden="true" class="form-feedback-group">
+					<div class="form-text text-weight-normal"><liferay-ui:message key="enable-floating-icon-help" /></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</c:if>
+
 <liferay-frontend:component
 	module="{ConfigurationFormEventHandler} from cookies-banner-web"
 />

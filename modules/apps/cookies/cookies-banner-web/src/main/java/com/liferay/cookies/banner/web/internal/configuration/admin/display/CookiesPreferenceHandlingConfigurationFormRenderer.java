@@ -58,6 +58,9 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 		).put(
 			"enabled", ParamUtil.getBoolean(httpServletRequest, "enabled")
 		).put(
+			"enableFloatingIcon",
+			ParamUtil.getBoolean(httpServletRequest, "enableFloatingIcon")
+		).put(
 			"explicitConsentMode",
 			ParamUtil.getBoolean(httpServletRequest, "explicitConsentMode")
 		).put(
