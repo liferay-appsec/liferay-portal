@@ -7,4 +7,5 @@
 
 <%@ taglib uri="http://liferay.com/tld/portlet" prefix="liferay-portlet" %>
 
-<%@ page import="com.liferay.cookies.banner.web.internal.constants.CookiesBannerPortletKeys" %>
+<%@ page import="com.liferay.cookies.banner.web.internal.constants.CookiesBannerPortletKeys" %><%@
+page import="com.liferay.cookies.banner.web.internal.constants.FloatingIconPortletKeys" %>

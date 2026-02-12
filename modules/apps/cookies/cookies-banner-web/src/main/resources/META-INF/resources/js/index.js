@@ -13,6 +13,8 @@ export {
 
 export {default as CookiesBannerConfiguration} from '../cookies_banner_configuration/js/CookiesBannerConfiguration';
 
+export {default as FloatingIcon} from '../floating_icon/js/FloatingIcon';
+
 export {default as ConfigurationFormEventHandler} from './ConfigurationFormEventHandler';
 
 export {
