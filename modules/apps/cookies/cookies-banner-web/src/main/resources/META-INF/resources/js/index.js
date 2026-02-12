@@ -15,6 +15,9 @@ export {default as CookiesBannerConfiguration} from '../cookies_banner_configura
 
 export {default as ConfigurationFormEventHandler} from './ConfigurationFormEventHandler';
 
+
+export {default as FloatingIcon} from '../floating_icon/js/FloatingIcon';
+
 export {
 	default as toggleThirdPartyCookies,
 	runThirdPartyCookiesInterval,
