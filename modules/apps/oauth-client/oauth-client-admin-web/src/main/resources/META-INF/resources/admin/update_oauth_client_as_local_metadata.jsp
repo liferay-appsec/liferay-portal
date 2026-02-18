@@ -11,6 +11,7 @@
 String authorizationEndpoint = (String)request.getAttribute("authorizationEndpoint");
 String jwksURI = (String)request.getAttribute("jwksURI");
 String redirect = ParamUtil.getString(request, "redirect");
+String registrationEndpoint = (String)request.getAttribute("registrationEndpoint");
 String supportedGrantTypes = (String)request.getAttribute("supportedGrantTypes");
 String supportedScopes = (String)request.getAttribute("supportedScopes");
 String supportedSubjectTypes = (String)request.getAttribute("supportedSubjectTypes");
@@ -79,6 +80,8 @@ JSONObject metadataJSONObject = JSONUtil.put(
 
 				<aui:fieldset label="oauth-client-as-local-oauth-authorization-server">
 					<aui:input checked="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getLocalWellKnownEnabled() : false %>" label="enable" name="enabledLocalWellKnown" type="checkbox" />
+
+					<aui:input label="oauth-client-as-local-metadata-registration-endpoint" name="registrationEndpoint" type="text" value="<%= registrationEndpoint %>" />
 
 					<aui:input helpMessage="oauth-client-as-local-well-known-uri-oauth-authorization-server-help" label="oauth-client-as-local-well-known-uri-oauth-authorization-server" name="oAuthASLocalWellKnownURI" readonly="true" type="text" value="<%= (oAuthClientASLocalMetadata != null) ? oAuthClientASLocalMetadata.getOAuthASLocalWellKnownURI() : \"\" %>" />
 
