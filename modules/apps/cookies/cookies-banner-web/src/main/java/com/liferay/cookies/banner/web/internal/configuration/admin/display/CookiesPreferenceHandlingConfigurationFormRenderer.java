@@ -11,9 +11,16 @@ import com.liferay.cookies.banner.web.internal.constants.CookiesBannerWebKeys;
 import com.liferay.cookies.banner.web.internal.display.context.CookiesPreferenceHandlingConfigurationDisplayContext;
 import com.liferay.cookies.configuration.CookiesConfigurationProvider;
 import com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration;
+import com.liferay.counter.kernel.service.CounterLocalService;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.model.Image;
+import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -52,6 +59,42 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 	public Map<String, Object> getRequestParameters(
 		HttpServletRequest httpServletRequest) {
 
+		Image image = null;
+
+		long companyId = _portal.getCompanyId(httpServletRequest);
+
+		long currentImageId =
+			_cookiesConfigurationProvider.
+				getCookiesPreferenceHandlingFloatingIconImageId(
+					_scope, companyId);
+
+		long fileEntryId = ParamUtil.getLong(httpServletRequest, "fileEntryId");
+
+		if ((fileEntryId > 0) &&
+			FeatureFlagManagerUtil.isEnabled(companyId, "LPD-75027")) {
+
+			FileEntry fileEntry = null;
+
+			byte[] bytes = null;
+
+			try {
+				fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+
+				bytes = FileUtil.getBytes(fileEntry.getContentStream());
+
+				if (currentImageId > 0) {
+					image = _imageLocalService.moveImage(currentImageId, bytes);
+				}
+				else {
+					image = _imageLocalService.updateImage(
+						companyId, _counterLocalService.increment(), bytes);
+				}
+			}
+			catch (IOException | PortalException exception) {
+				throw new RuntimeException(exception);
+			}
+		}
+
 		return HashMapBuilder.<String, Object>put(
 			"consentRenewalPeriod",
 			ParamUtil.getInteger(httpServletRequest, "consentRenewalPeriod", 12)
@@ -64,6 +107,9 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 			"explicitConsentMode",
 			ParamUtil.getBoolean(httpServletRequest, "explicitConsentMode")
 		).put(
+			"floatingIconImageId",
+			(image == null) ? currentImageId : image.getImageId()
+		).put(
 			"modifiedDate",
 			() -> {
 				Date now = new Date();
@@ -74,10 +120,7 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 		).put(
 			"storeConsent",
 			() -> {
-				if (FeatureFlagManagerUtil.isEnabled(
-						_portal.getCompanyId(httpServletRequest),
-						"LPD-75032")) {
-
+				if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-75032")) {
 					return ParamUtil.getBoolean(
 						httpServletRequest, "storeConsent");
 				}
@@ -122,32 +165,35 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 				JavaConstants.JAKARTA_PORTLET_REQUEST));
 
 		if (portletId.equals(ConfigurationAdminPortletKeys.INSTANCE_SETTINGS)) {
-			httpServletRequest.setAttribute(
-				CookiesBannerWebKeys.
-					COOKIES_PREFERENCE_HANDLING_CONFIGURATION_DISPLAY_CONTEXT,
-				new CookiesPreferenceHandlingConfigurationDisplayContext(
-					_cookiesConfigurationProvider,
-					ExtendedObjectClassDefinition.Scope.COMPANY,
-					themeDisplay.getCompanyId()));
-		}
-		else if (portletId.equals(
-					ConfigurationAdminPortletKeys.SITE_SETTINGS)) {
+			_scope = ExtendedObjectClassDefinition.Scope.COMPANY;
 
 			httpServletRequest.setAttribute(
 				CookiesBannerWebKeys.
 					COOKIES_PREFERENCE_HANDLING_CONFIGURATION_DISPLAY_CONTEXT,
 				new CookiesPreferenceHandlingConfigurationDisplayContext(
-					_cookiesConfigurationProvider,
-					ExtendedObjectClassDefinition.Scope.GROUP,
-					themeDisplay.getScopeGroupId()));
+					_cookiesConfigurationProvider, _scope,
+					themeDisplay.getCompanyId()));
 		}
-		else {
+		else if (portletId.equals(
+					ConfigurationAdminPortletKeys.SITE_SETTINGS)) {
+
+			_scope = ExtendedObjectClassDefinition.Scope.GROUP;
+
 			httpServletRequest.setAttribute(
 				CookiesBannerWebKeys.
 					COOKIES_PREFERENCE_HANDLING_CONFIGURATION_DISPLAY_CONTEXT,
 				new CookiesPreferenceHandlingConfigurationDisplayContext(
-					_cookiesConfigurationProvider,
-					ExtendedObjectClassDefinition.Scope.SYSTEM, 0L));
+					_cookiesConfigurationProvider, _scope,
+					themeDisplay.getScopeGroupId()));
+		}
+		else {
+			_scope = ExtendedObjectClassDefinition.Scope.SYSTEM;
+
+			httpServletRequest.setAttribute(
+				CookiesBannerWebKeys.
+					COOKIES_PREFERENCE_HANDLING_CONFIGURATION_DISPLAY_CONTEXT,
+				new CookiesPreferenceHandlingConfigurationDisplayContext(
+					_cookiesConfigurationProvider, _scope, 0L));
 		}
 
 		requestDispatcher.include(httpServletRequest, httpServletResponse);
@@ -157,7 +203,18 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 	private CookiesConfigurationProvider _cookiesConfigurationProvider;
 
 	@Reference
+	private CounterLocalService _counterLocalService;
+
+	@Reference
+	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private ImageLocalService _imageLocalService;
+
+	@Reference
 	private Portal _portal;
+
+	private ExtendedObjectClassDefinition.Scope _scope;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.cookies.banner.web)"

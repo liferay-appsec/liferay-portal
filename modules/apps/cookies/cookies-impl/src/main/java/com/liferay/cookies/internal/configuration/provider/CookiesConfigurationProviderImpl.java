@@ -141,6 +141,16 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	@Override
+	public long getCookiesPreferenceHandlingFloatingIconImageId(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
+
+		return _getScopeConfigurationAttribute(
+			scope, scopePK, this::_getCompanyFloatingIconImageId,
+			this::_getGroupFloatingIconImageId,
+			this::_getSystemFloatingIconImageId);
+	}
+
+	@Override
 	public String getGroupConfigurationURL(
 			HttpServletRequest httpServletRequest)
 		throws PortalException {
@@ -379,6 +389,17 @@ public class CookiesConfigurationProviderImpl
 			getCompanyConsentRenewalPeriod(companyId);
 	}
 
+	private long _getCompanyFloatingIconImageId(long companyId) {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getCompanyFloatingIconImageId(companyId);
+	}
+
 	private <T> T _getCookiesConfiguration(
 			Class<T> clazz, ThemeDisplay themeDisplay)
 		throws Exception {
@@ -456,6 +477,17 @@ public class CookiesConfigurationProviderImpl
 			getGroupConsentRenewalPeriod(groupId);
 	}
 
+	private long _getGroupFloatingIconImageId(long companyId) {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getGroupFloatingIconImageId(companyId);
+	}
+
 	private <T> T _getScopeConfigurationAttribute(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK,
 		Function<Long, T> companyFunction, Function<Long, T> groupFunction,
@@ -500,6 +532,17 @@ public class CookiesConfigurationProviderImpl
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemConsentRenewalPeriod();
+	}
+
+	private long _getSystemFloatingIconImageId() {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getSystemFloatingIconImageId();
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingEnabled(long companyId) {

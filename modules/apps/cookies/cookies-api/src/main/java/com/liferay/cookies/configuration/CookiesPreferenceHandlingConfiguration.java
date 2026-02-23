@@ -49,6 +49,9 @@ public interface CookiesPreferenceHandlingConfiguration {
 	)
 	public boolean explicitConsentMode();
 
+	@Meta.AD(required = false)
+	public long floatingIconImageId();
+
 	@Meta.AD(deflt = "0", name = "modified-date", required = false)
 	public long modifiedDate();
 

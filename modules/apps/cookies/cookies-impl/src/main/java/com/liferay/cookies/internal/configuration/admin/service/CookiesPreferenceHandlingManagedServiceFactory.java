@@ -75,6 +75,14 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.explicitConsentMode();
 	}
 
+	public long getCompanyFloatingIconImageId(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.floatingIconImageId();
+	}
+
 	public boolean getCompanyStoreConsent(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
@@ -115,6 +123,14 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.explicitConsentMode();
 	}
 
+	public long getGroupFloatingIconImageId(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getGroupCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.floatingIconImageId();
+	}
+
 	public boolean getGroupStoreConsent(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
@@ -146,6 +162,11 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 	public boolean getSystemExplicitConsentMode() {
 		return _systemCookiesPreferenceHandlingConfiguration.
 			explicitConsentMode();
+	}
+
+	public long getSystemFloatingIconImageId() {
+		return _systemCookiesPreferenceHandlingConfiguration.
+			floatingIconImageId();
 	}
 
 	public boolean getSystemStoreConsent() {

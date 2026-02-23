@@ -85,6 +85,8 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 </c:if>
 
 <c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-75027") %>'>
+	<h3 class="sheet-subtitle"><liferay-ui:message key="floating-icon" /></h3>
+
 	<div class="row">
 		<div class="col-sm-12 form-group">
 			<div class="form-group__inner">
@@ -100,6 +102,16 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				</div>
 			</div>
 		</div>
+	</div>
+
+	<h5><liferay-ui:message key="floating-icon-logo" /></h5>
+
+	<div>
+		<liferay-frontend:logo-selector
+			currentLogoURL='<%= themeDisplay.getPathImage() + "/floating_icon?img_id=" + cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingFloatingIconImageId() %>'
+			defaultLogoURL='<%= themeDisplay.getPathImage() + "/floating_icon?img_id=0" %>'
+			type="floating_icon"
+		/>
 	</div>
 </c:if>
 
