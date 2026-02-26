@@ -140,6 +140,26 @@ test(
 );
 
 test(
+	'Verify Consent Renewal Period can be changed immediately after checking Enabled',
+	{tag: '@LPD-79710'},
+	async ({page}) => {
+		const enabledButton = await page.getByLabel('Enabled');
+
+		await enabledButton.setChecked(false);
+
+		let consentRenewalPeriod = await page.getByLabel('Consent Renewal Period');
+
+		await expect(consentRenewalPeriod).not.toBeEnabled();
+
+		await enabledButton.setChecked(true);
+
+		consentRenewalPeriod = await page.getByLabel('Consent Renewal Period');
+
+		await expect(consentRenewalPeriod).toBeEnabled();	
+	}
+);
+
+test(
 	'Verify Consent Renewal Period correctly sets cookie expiration',
 	{tag: '@LPD-68505'},
 	async ({page}) => {
