@@ -91,6 +91,14 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 <aui:script>
 	var form = document.<portlet:namespace />fm;
 
+	var consentRenewalPeriodInput = document.getElementById(
+		'<portlet:namespace />consentRenewalPeriod'
+	);
+
+	var originalConsentRenewalPeriod = consentRenewalPeriodInput
+		? consentRenewalPeriodInput.value
+		: null;
+
 	if (form) {
 		form.addEventListener('submit', (event) => {
 			var consentRenewalPeriod = document.getElementById(
@@ -106,7 +114,9 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 			var enabled = document.getElementById('<portlet:namespace />enabled');
 
 			if (
+				consentRenewalPeriod.value !== originalConsentRenewalPeriod &&
 				enabled.checked &&
+				originalConsentRenewalPeriod !== null &&
 				<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() %>
 			) {
 				event.preventDefault();
