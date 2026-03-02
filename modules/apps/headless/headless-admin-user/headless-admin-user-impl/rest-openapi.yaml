@@ -366,6 +366,41 @@ components:
                         The asset library's name.
                     readOnly: true
                     type: string
+        ConsentPreference:
+            description:
+                Stored value of a user's consent preference cookie.
+            properties:
+                domain:
+                    description:
+                        The domain of the consent preference cookie.
+                    readOnly: true
+                    type: string
+                expirationDate:
+                    format: date-time
+                    readOnly: true
+                    type: string
+                id:
+                    description:
+                        The consent preference ID.
+                    format: int64
+                    readOnly: true
+                    type: integer
+                name:
+                    description:
+                        The name of the consent preference cookie.
+                    readOnly: true
+                    type: string
+                userId:
+                    description:
+                        The user's ID.
+                    format: int64
+                    type: integer
+                value:
+                    description:
+                        The value of the consent preference cookie.
+                    readOnly: true
+                    type: string
+            type: object
         Creator:
             description:
                 Represents the user who created/authored the content. Properties follow the
@@ -4157,6 +4192,109 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/UserAccount"
             tags: ["UserAccount"]
+    "/my-user-account/consent-preferences":
+        delete:
+            description:
+                Deletes consent preferences of the user who made the request.
+            operationId: deleteConsentPreferences
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["ConsentPreference"]
+        get:
+            description:
+                Retrieves the consent preferences of the user who made the request.
+            operationId: getConsentPreferences
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/ConsentPreference"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/ConsentPreference"
+                                type: array
+            tags: ["ConsentPreference"]
+        patch:
+            description:
+                Updates the consent preference with information sent in the request body. Only the provided fields are
+                updated.
+            operationId: patchConsentPreference
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                    description:
+                        "Consent Preference successfully updated"
+            tags: ["ConsentPreference"]
+        post:
+            description:
+                Creates a new consent preference.
+            operationId: postConsentPreference
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+            responses:
+                201:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                    description:
+                        "Consent Preference successfully created"
+            tags: ["ConsentPreference"]
+        put:
+            description:
+                Replaces the consent preference with information sent in the request body. Any missing fields are
+                deleted unless they are required.
+            operationId: putConsentPreference
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/ConsentPreference"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                    description:
+                        "Consent Preference successfully replaced"
+            tags: ["ConsentPreference"]
     "/my-user-account/shared-assets/shared-by-me":
         get:
             operationId: getMyUserAccountSharedAssetsSharedByMePage
