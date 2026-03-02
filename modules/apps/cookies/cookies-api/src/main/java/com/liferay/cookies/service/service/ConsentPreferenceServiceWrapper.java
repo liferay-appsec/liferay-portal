@@ -28,6 +28,18 @@ public class ConsentPreferenceServiceWrapper
 		_consentPreferenceService = consentPreferenceService;
 	}
 
+	@Override
+	public void deleteConsentPreferences(long userId, String domain) {
+		_consentPreferenceService.deleteConsentPreferences(userId, domain);
+	}
+
+	@Override
+	public java.util.List<com.liferay.cookies.service.model.ConsentPreference>
+		getConsentPreferences(long userId, String domain) {
+
+		return _consentPreferenceService.getConsentPreferences(userId, domain);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -36,6 +48,16 @@ public class ConsentPreferenceServiceWrapper
 	@Override
 	public String getOSGiServiceIdentifier() {
 		return _consentPreferenceService.getOSGiServiceIdentifier();
+	}
+
+	@Override
+	public com.liferay.cookies.service.model.ConsentPreference
+		updateConsentPreference(
+			com.liferay.cookies.service.model.ConsentPreference
+				consentPreference) {
+
+		return _consentPreferenceService.updateConsentPreference(
+			consentPreference);
 	}
 
 	@Override
