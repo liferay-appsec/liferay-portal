@@ -8,6 +8,7 @@ package com.liferay.headless.admin.user.internal.graphql.mutation.v1_0;
 import com.liferay.headless.admin.user.dto.v1_0.Account;
 import com.liferay.headless.admin.user.dto.v1_0.AccountGroup;
 import com.liferay.headless.admin.user.dto.v1_0.AccountRole;
+import com.liferay.headless.admin.user.dto.v1_0.ConsentPreference;
 import com.liferay.headless.admin.user.dto.v1_0.EmailAddress;
 import com.liferay.headless.admin.user.dto.v1_0.Organization;
 import com.liferay.headless.admin.user.dto.v1_0.Phone;
@@ -19,6 +20,7 @@ import com.liferay.headless.admin.user.dto.v1_0.WebUrl;
 import com.liferay.headless.admin.user.resource.v1_0.AccountGroupResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountRoleResource;
+import com.liferay.headless.admin.user.resource.v1_0.ConsentPreferenceResource;
 import com.liferay.headless.admin.user.resource.v1_0.EmailAddressResource;
 import com.liferay.headless.admin.user.resource.v1_0.OrganizationResource;
 import com.liferay.headless.admin.user.resource.v1_0.PhoneResource;
@@ -84,6 +86,14 @@ public class Mutation {
 
 		_accountRoleResourceComponentServiceObjects =
 			accountRoleResourceComponentServiceObjects;
+	}
+
+	public static void setConsentPreferenceResourceComponentServiceObjects(
+		ComponentServiceObjects<ConsentPreferenceResource>
+			consentPreferenceResourceComponentServiceObjects) {
+
+		_consentPreferenceResourceComponentServiceObjects =
+			consentPreferenceResourceComponentServiceObjects;
 	}
 
 	public static void setEmailAddressResourceComponentServiceObjects(
@@ -1049,6 +1059,79 @@ public class Mutation {
 						externalReferenceCode));
 
 		return true;
+	}
+
+	@GraphQLField(
+		description = "Deletes consent preferences of the user who made the request."
+	)
+	public boolean deleteConsentPreferences() throws Exception {
+		_applyVoidComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource ->
+				consentPreferenceResource.deleteConsentPreferences());
+
+		return true;
+	}
+
+	@GraphQLField(
+		description = "Updates the consent preference with information sent in the request body. Only the provided fields are updated."
+	)
+	public ConsentPreference patchConsentPreference(
+			@GraphQLName("consentPreference") ConsentPreference
+				consentPreference)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource ->
+				consentPreferenceResource.patchConsentPreference(
+					consentPreference));
+	}
+
+	@GraphQLField(description = "Creates a new consent preference.")
+	public ConsentPreference createConsentPreference(
+			@GraphQLName("consentPreference") ConsentPreference
+				consentPreference)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource ->
+				consentPreferenceResource.postConsentPreference(
+					consentPreference));
+	}
+
+	@GraphQLField(
+		description = "Replaces the consent preference with information sent in the request body. Any missing fields are deleted unless they are required."
+	)
+	public ConsentPreference updateConsentPreference(
+			@GraphQLName("consentPreference") ConsentPreference
+				consentPreference)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource ->
+				consentPreferenceResource.putConsentPreference(
+					consentPreference));
+	}
+
+	@GraphQLField
+	public Response updateConsentPreferenceBatch(
+			@GraphQLName("callbackURL") String callbackURL,
+			@GraphQLName("object") Object object)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource ->
+				consentPreferenceResource.putConsentPreferenceBatch(
+					callbackURL, object));
 	}
 
 	@GraphQLField(description = "Deletes an email address.")
@@ -3280,6 +3363,28 @@ public class Mutation {
 	}
 
 	private void _populateResourceContext(
+			ConsentPreferenceResource consentPreferenceResource)
+		throws Exception {
+
+		consentPreferenceResource.setContextAcceptLanguage(_acceptLanguage);
+		consentPreferenceResource.setContextCompany(_company);
+		consentPreferenceResource.setContextHttpServletRequest(
+			_httpServletRequest);
+		consentPreferenceResource.setContextHttpServletResponse(
+			_httpServletResponse);
+		consentPreferenceResource.setContextUriInfo(_uriInfo);
+		consentPreferenceResource.setContextUser(_user);
+		consentPreferenceResource.setGroupLocalService(_groupLocalService);
+		consentPreferenceResource.setRoleLocalService(_roleLocalService);
+
+		consentPreferenceResource.setVulcanBatchEngineExportTaskResource(
+			_vulcanBatchEngineExportTaskResource);
+
+		consentPreferenceResource.setVulcanBatchEngineImportTaskResource(
+			_vulcanBatchEngineImportTaskResource);
+	}
+
+	private void _populateResourceContext(
 			EmailAddressResource emailAddressResource)
 		throws Exception {
 
@@ -3484,6 +3589,8 @@ public class Mutation {
 		_accountGroupResourceComponentServiceObjects;
 	private static ComponentServiceObjects<AccountRoleResource>
 		_accountRoleResourceComponentServiceObjects;
+	private static ComponentServiceObjects<ConsentPreferenceResource>
+		_consentPreferenceResourceComponentServiceObjects;
 	private static ComponentServiceObjects<EmailAddressResource>
 		_emailAddressResourceComponentServiceObjects;
 	private static ComponentServiceObjects<OrganizationResource>

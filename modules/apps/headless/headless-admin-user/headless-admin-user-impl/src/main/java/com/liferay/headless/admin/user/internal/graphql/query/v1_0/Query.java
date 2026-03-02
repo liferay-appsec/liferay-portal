@@ -8,6 +8,7 @@ package com.liferay.headless.admin.user.internal.graphql.query.v1_0;
 import com.liferay.headless.admin.user.dto.v1_0.Account;
 import com.liferay.headless.admin.user.dto.v1_0.AccountGroup;
 import com.liferay.headless.admin.user.dto.v1_0.AccountRole;
+import com.liferay.headless.admin.user.dto.v1_0.ConsentPreference;
 import com.liferay.headless.admin.user.dto.v1_0.EmailAddress;
 import com.liferay.headless.admin.user.dto.v1_0.Organization;
 import com.liferay.headless.admin.user.dto.v1_0.Phone;
@@ -27,6 +28,7 @@ import com.liferay.headless.admin.user.dto.v1_0.WebUrl;
 import com.liferay.headless.admin.user.resource.v1_0.AccountGroupResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountRoleResource;
+import com.liferay.headless.admin.user.resource.v1_0.ConsentPreferenceResource;
 import com.liferay.headless.admin.user.resource.v1_0.EmailAddressResource;
 import com.liferay.headless.admin.user.resource.v1_0.OrganizationResource;
 import com.liferay.headless.admin.user.resource.v1_0.PhoneResource;
@@ -101,6 +103,14 @@ public class Query {
 
 		_accountRoleResourceComponentServiceObjects =
 			accountRoleResourceComponentServiceObjects;
+	}
+
+	public static void setConsentPreferenceResourceComponentServiceObjects(
+		ComponentServiceObjects<ConsentPreferenceResource>
+			consentPreferenceResourceComponentServiceObjects) {
+
+		_consentPreferenceResourceComponentServiceObjects =
+			consentPreferenceResourceComponentServiceObjects;
 	}
 
 	public static void setEmailAddressResourceComponentServiceObjects(
@@ -639,6 +649,22 @@ public class Query {
 				accountRoleResource.
 					getAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage(
 						accountExternalReferenceCode, externalReferenceCode)));
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {consentPreferences{items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 */
+	@GraphQLField(
+		description = "Retrieves the consent preferences of the user who made the request."
+	)
+	public ConsentPreferencePage consentPreferences() throws Exception {
+		return _applyComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			consentPreferenceResource -> new ConsentPreferencePage(
+				consentPreferenceResource.getConsentPreferences()));
 	}
 
 	/**
@@ -4094,6 +4120,44 @@ public class Query {
 
 	}
 
+	@GraphQLName("ConsentPreferencePage")
+	public class ConsentPreferencePage {
+
+		public ConsentPreferencePage(Page consentPreferencePage) {
+			actions = consentPreferencePage.getActions();
+
+			facets = consentPreferencePage.getFacets();
+
+			items = consentPreferencePage.getItems();
+			lastPage = consentPreferencePage.getLastPage();
+			page = consentPreferencePage.getPage();
+			pageSize = consentPreferencePage.getPageSize();
+			totalCount = consentPreferencePage.getTotalCount();
+		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
+
+		@GraphQLField
+		protected List<Facet> facets;
+
+		@GraphQLField
+		protected java.util.Collection<ConsentPreference> items;
+
+		@GraphQLField
+		protected long lastPage;
+
+		@GraphQLField
+		protected long page;
+
+		@GraphQLField
+		protected long pageSize;
+
+		@GraphQLField
+		protected long totalCount;
+
+	}
+
 	@GraphQLName("EmailAddressPage")
 	public class EmailAddressPage {
 
@@ -4787,6 +4851,26 @@ public class Query {
 	}
 
 	private void _populateResourceContext(
+			ConsentPreferenceResource consentPreferenceResource)
+		throws Exception {
+
+		consentPreferenceResource.setContextAcceptLanguage(_acceptLanguage);
+		consentPreferenceResource.setContextCompany(_company);
+		consentPreferenceResource.setContextHttpServletRequest(
+			_httpServletRequest);
+		consentPreferenceResource.setContextHttpServletResponse(
+			_httpServletResponse);
+		consentPreferenceResource.setContextUriInfo(_uriInfo);
+		consentPreferenceResource.setContextUser(_user);
+		consentPreferenceResource.setGroupLocalService(_groupLocalService);
+		consentPreferenceResource.setResourceActionLocalService(
+			_resourceActionLocalService);
+		consentPreferenceResource.setResourcePermissionLocalService(
+			_resourcePermissionLocalService);
+		consentPreferenceResource.setRoleLocalService(_roleLocalService);
+	}
+
+	private void _populateResourceContext(
 			EmailAddressResource emailAddressResource)
 		throws Exception {
 
@@ -5063,6 +5147,8 @@ public class Query {
 		_accountGroupResourceComponentServiceObjects;
 	private static ComponentServiceObjects<AccountRoleResource>
 		_accountRoleResourceComponentServiceObjects;
+	private static ComponentServiceObjects<ConsentPreferenceResource>
+		_consentPreferenceResourceComponentServiceObjects;
 	private static ComponentServiceObjects<EmailAddressResource>
 		_emailAddressResourceComponentServiceObjects;
 	private static ComponentServiceObjects<OrganizationResource>

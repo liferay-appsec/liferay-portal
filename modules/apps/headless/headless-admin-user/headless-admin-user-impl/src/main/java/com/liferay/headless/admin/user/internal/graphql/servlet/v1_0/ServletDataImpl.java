@@ -10,6 +10,7 @@ import com.liferay.headless.admin.user.internal.graphql.query.v1_0.Query;
 import com.liferay.headless.admin.user.internal.resource.v1_0.AccountGroupResourceImpl;
 import com.liferay.headless.admin.user.internal.resource.v1_0.AccountResourceImpl;
 import com.liferay.headless.admin.user.internal.resource.v1_0.AccountRoleResourceImpl;
+import com.liferay.headless.admin.user.internal.resource.v1_0.ConsentPreferenceResourceImpl;
 import com.liferay.headless.admin.user.internal.resource.v1_0.EmailAddressResourceImpl;
 import com.liferay.headless.admin.user.internal.resource.v1_0.OrganizationResourceImpl;
 import com.liferay.headless.admin.user.internal.resource.v1_0.PhoneResourceImpl;
@@ -28,6 +29,7 @@ import com.liferay.headless.admin.user.internal.resource.v1_0.WebUrlResourceImpl
 import com.liferay.headless.admin.user.resource.v1_0.AccountGroupResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountResource;
 import com.liferay.headless.admin.user.resource.v1_0.AccountRoleResource;
+import com.liferay.headless.admin.user.resource.v1_0.ConsentPreferenceResource;
 import com.liferay.headless.admin.user.resource.v1_0.EmailAddressResource;
 import com.liferay.headless.admin.user.resource.v1_0.OrganizationResource;
 import com.liferay.headless.admin.user.resource.v1_0.PhoneResource;
@@ -74,6 +76,8 @@ public class ServletDataImpl implements ServletData {
 			_accountGroupResourceComponentServiceObjects);
 		Mutation.setAccountRoleResourceComponentServiceObjects(
 			_accountRoleResourceComponentServiceObjects);
+		Mutation.setConsentPreferenceResourceComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects);
 		Mutation.setEmailAddressResourceComponentServiceObjects(
 			_emailAddressResourceComponentServiceObjects);
 		Mutation.setOrganizationResourceComponentServiceObjects(
@@ -101,6 +105,8 @@ public class ServletDataImpl implements ServletData {
 			_accountGroupResourceComponentServiceObjects);
 		Query.setAccountRoleResourceComponentServiceObjects(
 			_accountRoleResourceComponentServiceObjects);
+		Query.setConsentPreferenceResourceComponentServiceObjects(
+			_consentPreferenceResourceComponentServiceObjects);
 		Query.setEmailAddressResourceComponentServiceObjects(
 			_emailAddressResourceComponentServiceObjects);
 		Query.setOrganizationResourceComponentServiceObjects(
@@ -414,6 +420,31 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							AccountRoleResourceImpl.class,
 							"postAccountByExternalReferenceCodeAccountRoleUserAccountByExternalReferenceCode"));
+					put(
+						"mutation#deleteConsentPreferences",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"deleteConsentPreferences"));
+					put(
+						"mutation#patchConsentPreference",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"patchConsentPreference"));
+					put(
+						"mutation#createConsentPreference",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"postConsentPreference"));
+					put(
+						"mutation#updateConsentPreference",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"putConsentPreference"));
+					put(
+						"mutation#updateConsentPreferenceBatch",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"putConsentPreferenceBatch"));
 					put(
 						"mutation#deleteEmailAddress",
 						new ObjectValuePair<>(
@@ -1134,6 +1165,11 @@ public class ServletDataImpl implements ServletData {
 							AccountRoleResourceImpl.class,
 							"getAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeAccountRolesPage"));
 					put(
+						"query#consentPreferences",
+						new ObjectValuePair<>(
+							ConsentPreferenceResourceImpl.class,
+							"getConsentPreferences"));
+					put(
 						"query#accountByExternalReferenceCodeEmailAddresses",
 						new ObjectValuePair<>(
 							EmailAddressResourceImpl.class,
@@ -1840,6 +1876,10 @@ public class ServletDataImpl implements ServletData {
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
 	private ComponentServiceObjects<AccountRoleResource>
 		_accountRoleResourceComponentServiceObjects;
+
+	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
+	private ComponentServiceObjects<ConsentPreferenceResource>
+		_consentPreferenceResourceComponentServiceObjects;
 
 	@Reference(scope = ReferenceScope.PROTOTYPE_REQUIRED)
 	private ComponentServiceObjects<EmailAddressResource>
