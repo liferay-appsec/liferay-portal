@@ -5,13 +5,17 @@
 
 package com.liferay.cookies.service.service.impl;
 
+import com.liferay.cookies.service.model.ConsentPreference;
 import com.liferay.cookies.service.service.base.ConsentPreferenceServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
+
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Christopher Kian
  */
 @Component(
 	property = {
@@ -22,4 +26,21 @@ import org.osgi.service.component.annotations.Component;
 )
 public class ConsentPreferenceServiceImpl
 	extends ConsentPreferenceServiceBaseImpl {
+
+	public void deleteConsentPreferences(long userId, String domain) {
+		consentPreferencePersistence.removeByU_D(userId, domain);
+	}
+
+	public List<ConsentPreference> getConsentPreferences(
+		long userId, String domain) {
+
+		return consentPreferencePersistence.findByU_D(userId, domain);
+	}
+
+	public ConsentPreference updateConsentPreference(
+		ConsentPreference consentPreference) {
+
+		return consentPreferencePersistence.updateImpl(consentPreference);
+	}
+
 }
