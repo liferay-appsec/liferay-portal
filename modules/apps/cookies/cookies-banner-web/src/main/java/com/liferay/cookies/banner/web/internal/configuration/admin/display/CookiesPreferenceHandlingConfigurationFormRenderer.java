@@ -64,6 +64,8 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 			"explicitConsentMode",
 			ParamUtil.getBoolean(httpServletRequest, "explicitConsentMode")
 		).put(
+			"icon", ParamUtil.getString(httpServletRequest, "icon")
+		).put(
 			"modifiedDate",
 			() -> {
 				Date now = new Date();
