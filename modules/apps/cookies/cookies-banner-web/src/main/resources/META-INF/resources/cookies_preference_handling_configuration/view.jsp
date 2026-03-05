@@ -9,7 +9,13 @@
 
 <%
 CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingConfigurationDisplayContext = (CookiesPreferenceHandlingConfigurationDisplayContext)request.getAttribute(CookiesBannerWebKeys.COOKIES_PREFERENCE_HANDLING_CONFIGURATION_DISPLAY_CONTEXT);
+
+String icon = cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingIcon();
 %>
+
+<liferay-util:html-top>
+	<aui:link hashedFile="<%= true %>" href="cookies-banner-web/cookies_preference_handling_configuration/css/main.css" rel="stylesheet" type="text/css" />
+</liferay-util:html-top>
 
 <div class="c-mt-5 row">
 	<div class="col-sm-12 form-group">
@@ -85,6 +91,8 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 </c:if>
 
 <c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-75027") %>'>
+	<h3 class="sheet-subtitle"><liferay-ui:message key="floating-icon" /></h3>
+
 	<div class="row">
 		<div class="col-sm-12 form-group">
 			<div class="form-group__inner">
@@ -98,6 +106,38 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				<div aria-hidden="true" class="form-feedback-group">
 					<div class="form-text text-weight-normal"><liferay-ui:message key="enable-floating-icon-help" /></div>
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-sm-12 form-group">
+			<h4><liferay-ui:message key="icon" /></h4>
+
+			<div class="floating-icon-selector">
+
+				<%
+				String[] icons = CookiesPreferenceHandlingWebKeys.FLOATING_ICON_OPTIONS;
+
+				for (String currentIcon : icons) {
+				%>
+
+					<aui:input checked="<%= Objects.equals(icon, currentIcon) %>" id="<%= currentIcon %>" label="" name="icon" type="radio" value="<%= currentIcon %>" />
+
+					<label for="<portlet:namespace /><%= currentIcon %>">
+						<clay:icon
+							symbol="<%= currentIcon %>"
+						/>
+					</label>
+
+				<%
+				}
+				%>
+
+			</div>
+
+			<div aria-hidden="true" class="form-feedback-group">
+				<div class="form-text text-weight-normal"><liferay-ui:message key="floating-icon-help" /></div>
 			</div>
 		</div>
 	</div>

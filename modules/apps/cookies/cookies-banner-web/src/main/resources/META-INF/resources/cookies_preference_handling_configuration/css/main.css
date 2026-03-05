@@ -1,0 +1,27 @@
+.floating-icon-selector {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.floating-icon-selector label {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-color: var(--gray-400);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    transition: background-color 0.2s ease;
+}
+
+.floating-icon-selector label .lexicon-icon {
+    width: 30px;
+    height: 30px;
+    color: var(--white);
+}
+
+.floating-icon-selector label:hover {
+    background-color: var(--gray-700);
+}
