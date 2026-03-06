@@ -41,13 +41,50 @@ import com.liferay.portal.kernel.util.MethodKey;
  */
 public class ConsentPreferenceServiceHttp {
 
+	public static com.liferay.cookies.service.model.ConsentPreference
+		addOrUpdateConsentPreference(
+			HttpPrincipal httpPrincipal,
+			com.liferay.cookies.service.model.ConsentPreference
+				consentPreference) {
+
+		try {
+			MethodKey methodKey = new MethodKey(
+				ConsentPreferenceServiceUtil.class,
+				"addOrUpdateConsentPreference",
+				_addOrUpdateConsentPreferenceParameterTypes0);
+
+			MethodHandler methodHandler = new MethodHandler(
+				methodKey, consentPreference);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception exception) {
+				throw new com.liferay.portal.kernel.exception.SystemException(
+					exception);
+			}
+
+			return (com.liferay.cookies.service.model.ConsentPreference)
+				returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException
+					systemException) {
+
+			_log.error(systemException, systemException);
+
+			throw systemException;
+		}
+	}
+
 	public static void deleteConsentPreferences(
 		HttpPrincipal httpPrincipal, long userId, String domain) {
 
 		try {
 			MethodKey methodKey = new MethodKey(
 				ConsentPreferenceServiceUtil.class, "deleteConsentPreferences",
-				_deleteConsentPreferencesParameterTypes0);
+				_deleteConsentPreferencesParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, userId, domain);
@@ -77,7 +114,7 @@ public class ConsentPreferenceServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				ConsentPreferenceServiceUtil.class, "getConsentPreferences",
-				_getConsentPreferencesParameterTypes1);
+				_getConsentPreferencesParameterTypes2);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, userId, domain);
@@ -113,7 +150,7 @@ public class ConsentPreferenceServiceHttp {
 		try {
 			MethodKey methodKey = new MethodKey(
 				ConsentPreferenceServiceUtil.class, "updateConsentPreference",
-				_updateConsentPreferenceParameterTypes2);
+				_updateConsentPreferenceParameterTypes3);
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, consentPreference);
@@ -143,11 +180,15 @@ public class ConsentPreferenceServiceHttp {
 	private static Log _log = LogFactoryUtil.getLog(
 		ConsentPreferenceServiceHttp.class);
 
-	private static final Class<?>[] _deleteConsentPreferencesParameterTypes0 =
+	private static final Class<?>[]
+		_addOrUpdateConsentPreferenceParameterTypes0 = new Class[] {
+			com.liferay.cookies.service.model.ConsentPreference.class
+		};
+	private static final Class<?>[] _deleteConsentPreferencesParameterTypes1 =
 		new Class[] {long.class, String.class};
-	private static final Class<?>[] _getConsentPreferencesParameterTypes1 =
+	private static final Class<?>[] _getConsentPreferencesParameterTypes2 =
 		new Class[] {long.class, String.class};
-	private static final Class<?>[] _updateConsentPreferenceParameterTypes2 =
+	private static final Class<?>[] _updateConsentPreferenceParameterTypes3 =
 		new Class[] {com.liferay.cookies.service.model.ConsentPreference.class};
 
 }

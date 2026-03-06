@@ -29,6 +29,12 @@ public class ConsentPreferenceServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.cookies.service.service.impl.ConsentPreferenceServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
+	public static ConsentPreference addOrUpdateConsentPreference(
+		ConsentPreference consentPreference) {
+
+		return getService().addOrUpdateConsentPreference(consentPreference);
+	}
+
 	public static void deleteConsentPreferences(long userId, String domain) {
 		getService().deleteConsentPreferences(userId, domain);
 	}

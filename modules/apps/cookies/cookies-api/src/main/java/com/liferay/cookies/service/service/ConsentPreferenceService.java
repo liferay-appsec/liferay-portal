@@ -42,6 +42,9 @@ public interface ConsentPreferenceService extends BaseService {
 	 *
 	 * Never modify this interface directly. Add custom service methods to <code>com.liferay.cookies.service.service.impl.ConsentPreferenceServiceImpl</code> and rerun ServiceBuilder to automatically copy the method declarations to this interface. Consume the consent preference remote service via injection or a <code>org.osgi.util.tracker.ServiceTracker</code>. Use {@link ConsentPreferenceServiceUtil} if injection and service tracking are not available.
 	 */
+	public ConsentPreference addOrUpdateConsentPreference(
+		ConsentPreference consentPreference);
+
 	public void deleteConsentPreferences(long userId, String domain);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

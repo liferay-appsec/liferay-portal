@@ -29,6 +29,16 @@ public class ConsentPreferenceServiceWrapper
 	}
 
 	@Override
+	public com.liferay.cookies.service.model.ConsentPreference
+		addOrUpdateConsentPreference(
+			com.liferay.cookies.service.model.ConsentPreference
+				consentPreference) {
+
+		return _consentPreferenceService.addOrUpdateConsentPreference(
+			consentPreference);
+	}
+
+	@Override
 	public void deleteConsentPreferences(long userId, String domain) {
 		_consentPreferenceService.deleteConsentPreferences(userId, domain);
 	}
