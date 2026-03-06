@@ -27,6 +27,31 @@ import org.osgi.service.component.annotations.Component;
 public class ConsentPreferenceServiceImpl
 	extends ConsentPreferenceServiceBaseImpl {
 
+	public ConsentPreference addOrUpdateConsentPreference(
+		ConsentPreference consentPreference) {
+
+		ConsentPreference existingConsentPreference =
+			consentPreferencePersistence.fetchByU_D_N(
+				consentPreference.getUserId(),
+				consentPreference.getDomain(), consentPreference.getName());
+
+		if (existingConsentPreference != null) {
+			existingConsentPreference.setExpirationDate(
+				consentPreference.getExpirationDate());
+			existingConsentPreference.setValue(
+				consentPreference.getValue());
+
+			return consentPreferencePersistence.updateImpl(
+				existingConsentPreference);
+		}
+		else {
+			//need to populate other attributes in consentPreference
+			// do I though?
+		}
+
+		return this.updateConsentPreference(consentPreference);
+	}
+
 	public void deleteConsentPreferences(long userId, String domain) {
 		consentPreferencePersistence.removeByU_D(userId, domain);
 	}
