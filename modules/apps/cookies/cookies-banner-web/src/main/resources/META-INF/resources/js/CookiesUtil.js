@@ -62,31 +62,29 @@ export function removeAllCookies(
 }
 
 export function setCookie(consentRenewalPeriod, name, value) {
-    const expirationDate = 60 * 60 * 24 * 365 * (consentRenewalPeriod / 12);
+	const expirationDate = 60 * 60 * 24 * 365 * (consentRenewalPeriod / 12);
 
 	setCookieUtil(name, value, COOKIE_TYPES.NECESSARY, {
 		'max-age': expiration,
 		'path': themeDisplay.getPathContext() || '/',
 	});
 
-    const data = {
-        domain: themeDisplay.getPortalURL(),
-        expirationDate,
-        name,
-        userId: themeDisplay.getUserId(),
-        value,
-    };
+	const data = {
+		domain: themeDisplay.getPortalURL(),
+		expirationDate,
+		name,
+		userId: themeDisplay.getUserId(),
+		value,
+	};
 
-    Liferay.Util.fetch(
-        themeDisplay.getPortalURL() +
-            'o/headless-admin-user/v1.0/my-user-account/consent-preferences',
-        {
-            body: Liferay.Util.objectToFormData(
-                data
-            ),
-            method: 'PUT',
-        }
-    );
+	Liferay.Util.fetch(
+		themeDisplay.getPortalURL() +
+			'o/headless-admin-user/v1.0/my-user-account/consent-preferences',
+		{
+			body: Liferay.Util.objectToFormData(data),
+			method: 'PUT',
+		}
+	);
 }
 
 export function setUserConfigCookie(consentRenewalPeriod) {
