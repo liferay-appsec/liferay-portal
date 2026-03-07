@@ -19,4 +19,32 @@ import org.osgi.service.component.annotations.ServiceScope;
 )
 public class ConsentPreferenceResourceImpl
 	extends BaseConsentPreferenceResourceImpl {
+
+	public void deleteConsentPreferences() throws Exception {
+		PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
+
+		_consentPreferenceService.deleteConsentPreferences(
+				permissionChecker.getUserId(), contextUriInfo.getBaseUri().toString());
+	}
+
+	public Page<ConsentPreference> getConsentPreferences() throws Exception {
+		PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
+
+		return Page.of(
+				transform(
+						_consentPreferenceService.getConsentPreferences(
+								permissionChecker.getUserId(), contextUriInfo.getBaseUri().toString()),
+						ConsentPreferenceUtil::toConsentPreference));
+	}
+
+	public ConsentPreference putConsentPreference(
+			ConsentPreference consentPreference) {
+
+		return null;
+//		return _consentPreferenceService.addOrUpdateConsentPreference(
+//				transform(consentPreference,
+//					ConsentPreferenceUtil::toConsentPreference));
+	}
 }
