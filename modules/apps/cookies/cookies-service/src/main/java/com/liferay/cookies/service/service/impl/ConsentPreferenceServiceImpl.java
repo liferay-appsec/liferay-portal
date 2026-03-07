@@ -32,22 +32,20 @@ public class ConsentPreferenceServiceImpl
 
 		ConsentPreference existingConsentPreference =
 			consentPreferencePersistence.fetchByU_D_N(
-				consentPreference.getUserId(),
-				consentPreference.getDomain(), consentPreference.getName());
+				consentPreference.getUserId(), consentPreference.getDomain(),
+				consentPreference.getName());
 
 		if (existingConsentPreference != null) {
 			existingConsentPreference.setExpirationDate(
 				consentPreference.getExpirationDate());
-			existingConsentPreference.setValue(
-				consentPreference.getValue());
+			existingConsentPreference.setValue(consentPreference.getValue());
 
 			return consentPreferencePersistence.updateImpl(
 				existingConsentPreference);
 		}
-		else {
-			//need to populate other attributes in consentPreference
-			// do I though?
-		}
+
+		// need to populate other attributes in consentPreference
+		// do I though?
 
 		return this.updateConsentPreference(consentPreference);
 	}
