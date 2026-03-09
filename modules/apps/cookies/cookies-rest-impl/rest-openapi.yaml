@@ -89,7 +89,7 @@ paths:
         delete:
             description:
                 Deletes consent preferences of the user who made the request.
-            operationId: deleteConsentPreference
+            operationId: deleteConsentPreferences
             responses:
                 204:
                     content:
