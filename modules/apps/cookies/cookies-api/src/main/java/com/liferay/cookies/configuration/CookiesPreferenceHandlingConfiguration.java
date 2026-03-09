@@ -31,6 +31,12 @@ public interface CookiesPreferenceHandlingConfiguration {
 	public int consentRenewalPeriod();
 
 	@Meta.AD(
+		deflt = "12", max = "12", min = "1",
+		name = "cookie-consent-renewal-period", required = false
+	)
+	public int consentRenewalPeriodForDissident();
+
+	@Meta.AD(
 		deflt = "false", description = "cookie-enabled-help", name = "enabled",
 		required = false
 	)

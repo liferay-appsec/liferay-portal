@@ -141,6 +141,17 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	@Override
+	public int getCookiesPreferenceHandlingConsentRenewalPeriodForDissident(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
+
+		return _getScopeConfigurationAttribute(
+			scope, scopePK,
+			this::_getCompanyCookiesPreferenceHandlingConsentRenewalPeriodForDissident,
+			this::_getGroupCookiesPreferenceHandlingConsentRenewalPeriodForDissident,
+			this::_getSystemCookiesPreferenceHandlingConsentRenewalPeriodForDissident);
+	}
+
+	@Override
 	public String getGroupConfigurationURL(
 			HttpServletRequest httpServletRequest)
 		throws PortalException {
@@ -369,6 +380,19 @@ public class CookiesConfigurationProviderImpl
 			getCompanyConsentRenewalPeriod(companyId);
 	}
 
+	private int _getCompanyCookiesPreferenceHandlingConsentRenewalPeriodForDissident(
+		long companyId) {
+
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getCompanyConsentRenewalPeriodForDissident(companyId);
+	}
+
 	private <T> T _getCookiesConfiguration(
 			Class<T> clazz, ThemeDisplay themeDisplay)
 		throws Exception {
@@ -446,6 +470,19 @@ public class CookiesConfigurationProviderImpl
 			getGroupConsentRenewalPeriod(groupId);
 	}
 
+	private int _getGroupCookiesPreferenceHandlingConsentRenewalPeriodForDissident(
+		long groupId) {
+
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getGroupConsentRenewalPeriodForDissident(groupId);
+	}
+
 	private <T> T _getScopeConfigurationAttribute(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK,
 		Function<Long, T> companyFunction, Function<Long, T> groupFunction,
@@ -490,6 +527,17 @@ public class CookiesConfigurationProviderImpl
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemConsentRenewalPeriod();
+	}
+
+	private int _getSystemCookiesPreferenceHandlingConsentRenewalPeriodForDissident() {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getSystemConsentRenewalPeriodForDissident();
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingEnabled(long companyId) {

@@ -62,6 +62,14 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 	</div>
 </div>
 
+<div class="row">
+	<div class="col-sm-12 form-group">
+		<div class="form-group__inner">
+			<aui:input disabled="<%= !cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() %>" id='<%= liferayPortletResponse.getNamespace() + "consentRenewalPeriodForDissident" %>' label="cookie-consent-renewal-period-for-dissident" max="12" min="1" name='<%= liferayPortletResponse.getNamespace() + "consentRenewalPeriodForDissident" %>' required="<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() %>" type="number" useNamespace="<%= false %>" value="<%= (cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriodForDissident() == 0) ? 12 : cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriodForDissident() %>" />
+		</div>
+	</div>
+</div>
+
 <aui:input name="modifiedDate" type="hidden" />
 
 <c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-75032") %>'>
@@ -105,11 +113,26 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				return;
 			}
 
+			var consentRenewalPeriodForDissident = document.getElementById(
+				'<portlet:namespace />consentRenewalPeriodForDissident'
+			);
+
+			if (
+				!consentRenewalPeriodForDissident.value ||
+				isNaN(consentRenewalPeriodForDissident.value)
+			) {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+				return;
+			}
+
 			var enabled = document.getElementById('<portlet:namespace />enabled');
 
 			if (
-				consentRenewalPeriod.value !==
-					'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriod() %>' &&
+				(consentRenewalPeriod.value !==
+					'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriod() %>' ||
+					consentRenewalPeriodForDissident.value !==
+						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriodForDissident() %>') &&
 				enabled.checked &&
 				<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() %>
 			) {

@@ -19,6 +19,15 @@ export default function ({namespace}) {
 				`label[for='${namespace}consentRenewalPeriod']`
 			);
 
+			const consentRenewalPeriodForDissident = document.querySelector(
+				`input[type='number'][name='${namespace}consentRenewalPeriodForDissident']`
+			);
+
+			const consentRenewalPeriodForDissidentLabel =
+				document.querySelector(
+					`label[for='${namespace}consentRenewalPeriodForDissident']`
+				);
+
 			const explicitConsentMode = document.querySelector(
 				`input[type='checkbox'][name='${namespace}explicitConsentMode']`
 			);
@@ -33,6 +42,16 @@ export default function ({namespace}) {
 					consentRenewalPeriod.removeAttribute('disabled');
 					consentRenewalPeriod.required = true;
 					consentRenewalPeriodLabel?.classList.remove('disabled');
+					consentRenewalPeriodForDissident.classList.remove(
+						'disabled'
+					);
+					consentRenewalPeriodForDissident.removeAttribute(
+						'disabled'
+					);
+					consentRenewalPeriodForDissident.required = true;
+					consentRenewalPeriodForDissidentLabel?.classList.remove(
+						'disabled'
+					);
 					explicitConsentMode.removeAttribute('disabled');
 
 					if (Liferay.FeatureFlags['LPD-75032']) {
@@ -44,6 +63,15 @@ export default function ({namespace}) {
 					consentRenewalPeriod.required = false;
 					consentRenewalPeriod.setAttribute('disabled', '');
 					consentRenewalPeriodLabel?.classList.add('disabled');
+					consentRenewalPeriodForDissident.classList.add('disabled');
+					consentRenewalPeriodForDissident.required = false;
+					consentRenewalPeriodForDissident.setAttribute(
+						'disabled',
+						''
+					);
+					consentRenewalPeriodForDissidentLabel?.classList.add(
+						'disabled'
+					);
 					explicitConsentMode.setAttribute('disabled', '');
 
 					if (Liferay.FeatureFlags['LPD-75032']) {

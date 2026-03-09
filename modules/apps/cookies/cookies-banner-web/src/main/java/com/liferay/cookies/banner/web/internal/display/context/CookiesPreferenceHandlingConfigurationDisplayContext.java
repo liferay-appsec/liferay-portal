@@ -27,6 +27,12 @@ public class CookiesPreferenceHandlingConfigurationDisplayContext {
 			getCookiesPreferenceHandlingConsentRenewalPeriod(_scope, _scopePK);
 	}
 
+	public int getCookiesPreferenceHandlingConsentRenewalPeriodForDissident() {
+		return _cookiesConfigurationProvider.
+			getCookiesPreferenceHandlingConsentRenewalPeriodForDissident(
+				_scope, _scopePK);
+	}
+
 	public boolean getCookiesPreferenceHandlingEnabled() {
 		return _cookiesConfigurationProvider.isCookiesPreferenceHandlingEnabled(
 			_scope, _scopePK);

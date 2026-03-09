@@ -51,6 +51,14 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
 	}
 
+	public int getCompanyConsentRenewalPeriodForDissident(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriodForDissident();
+	}
+
 	public boolean getCompanyEnabled(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
@@ -81,6 +89,14 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 				_getGroupCookiesPreferenceHandlingConfiguration(companyId);
 
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
+	}
+
+	public int getGroupConsentRenewalPeriodForDissident(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getGroupCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriodForDissident();
 	}
 
 	public boolean getGroupEnabled(long companyId) {
@@ -116,6 +132,11 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 	public int getSystemConsentRenewalPeriod() {
 		return _systemCookiesPreferenceHandlingConfiguration.
 			consentRenewalPeriod();
+	}
+
+	public int getSystemConsentRenewalPeriodForDissident() {
+		return _systemCookiesPreferenceHandlingConfiguration.
+			consentRenewalPeriodForDissident();
 	}
 
 	public boolean getSystemEnabled() {
