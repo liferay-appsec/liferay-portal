@@ -81,6 +81,13 @@ export default function ({
 			}
 		);
 
+		requiredConsentCookieTypeNames.forEach(
+			(requiredConsentCookieTypeName) => {
+				cookiePreferences[requiredConsentCookieTypeName] =
+					getCookie(requiredConsentCookieTypeName) || 'true';
+			}
+		);
+
 		Liferay.on('cookiePreferenceUpdate', (event) => {
 			cookiePreferences[event.key] = event.value;
 		});
