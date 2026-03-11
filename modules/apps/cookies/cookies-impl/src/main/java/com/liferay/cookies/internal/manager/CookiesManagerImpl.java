@@ -19,6 +19,9 @@ import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.UnsupportedCookieException;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -34,6 +37,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,15 +99,15 @@ public class CookiesManagerImpl implements CookiesManager {
 		if (_log.isWarnEnabled()) {
 			_log.warn(
 				"The following cookie is trying to be added without consent " +
-					"type: " + cookie.getName());
+				"type: " + cookie.getName());
 		}
 
 		if (_knownCookies.get(cookie.getName()) != null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"The cookie will be added with the consent type used " +
-						"previously. Use the API with explicitly declared " +
-							"consent type.");
+					"previously. Use the API with explicitly declared " +
+					"consent type.");
 			}
 
 			return addCookie(
@@ -113,7 +118,7 @@ public class CookiesManagerImpl implements CookiesManager {
 		if (_log.isWarnEnabled()) {
 			_log.warn(
 				"The cookie will be deleted. Use the API with explicitly " +
-					"declared consent type.");
+				"declared consent type.");
 		}
 
 		return deleteCookies(
@@ -143,8 +148,8 @@ public class CookiesManagerImpl implements CookiesManager {
 		if (cookie.getMaxAge() != 0) {
 			CookiesPreferenceHandlingConfiguration
 				cookiesPreferenceHandlingConfiguration =
-					_getCookiesPreferenceHandlingConfiguration(
-						httpServletRequest);
+				_getCookiesPreferenceHandlingConfiguration(
+					httpServletRequest);
 
 			if (!cookiesPreferenceHandlingConfiguration.enabled()) {
 				_deleteCookieConsentCookies(
@@ -377,6 +382,10 @@ public class CookiesManagerImpl implements CookiesManager {
 				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION;
 		}
 
+		if (_hasConsent(httpServletRequest, consentCookieName)) {
+			return true;
+		}
+
 		String consentCookieValue = getCookieValue(
 			consentCookieName, httpServletRequest);
 
@@ -386,10 +395,65 @@ public class CookiesManagerImpl implements CookiesManager {
 
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
-				_getCookiesPreferenceHandlingConfiguration(httpServletRequest);
+			_getCookiesPreferenceHandlingConfiguration(httpServletRequest);
 
 		return !cookiesPreferenceHandlingConfiguration.explicitConsentMode();
 	}
+
+
+	private boolean _hasConsent(HttpServletRequest request, String category) {
+
+		if ("essential".equalsIgnoreCase(category)) {
+			return true;
+		}
+
+		if (category == CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL) {
+			category = category + CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE;
+		}
+
+
+		String cookieValue = _getTermlyCookieValue(request);
+
+		if (Validator.isNull(cookieValue)) {
+			return false;
+		}
+
+		try {
+			String decodedJson = URLDecoder.decode(cookieValue, StandardCharsets.UTF_8.name());
+
+			JSONObject consentData = JSONFactoryUtil.createJSONObject(decodedJson);
+
+			JSONArray categories = consentData.getJSONArray("categories");
+
+			if (categories != null) {
+				for (int i = 0; i < categories.length(); i++) {
+					String consentedCategory = categories.getString(i).toUpperCase();
+
+					if (category.contains(consentedCategory)) {
+						return true;
+					}
+				}
+			}
+		} catch (Exception e) {
+			// in case the json is not correct (wrong build in case is done by users or manipulated)
+			return false;
+		}
+
+		return false;
+	}
+
+	private String _getTermlyCookieValue(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (TERMLY_COOKIE_NAME.equals(cookie.getName())) {
+					return cookie.getValue();
+				}
+			}
+		}
+		return null;
+	}
+	private static final String TERMLY_COOKIE_NAME = "termly_consent";
 
 	@Override
 	public boolean hasSessionId(HttpServletRequest httpServletRequest) {
@@ -448,7 +512,7 @@ public class CookiesManagerImpl implements CookiesManager {
 		}
 
 		for (String name :
-				_getProperty(properties, "cookies.personalization")) {
+			_getProperty(properties, "cookies.personalization")) {
 
 			_internalCookies.put(
 				name, CookiesConstants.CONSENT_TYPE_PERSONALIZATION);
@@ -544,8 +608,8 @@ public class CookiesManagerImpl implements CookiesManager {
 	}
 
 	private CookiesPreferenceHandlingConfiguration
-		_getCookiesPreferenceHandlingConfiguration(
-			HttpServletRequest httpServletRequest) {
+	_getCookiesPreferenceHandlingConfiguration(
+		HttpServletRequest httpServletRequest) {
 
 		try {
 			if (httpServletRequest != null) {
