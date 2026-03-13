@@ -21,6 +21,24 @@ export default function ({
 	requiredConsentCookieTypeNames,
 	showButtons,
 }) {
+	const storeConsentCheckbox = document.getElementById(
+		`${namespace}storeConsent`
+	);
+
+	if (storeConsentCheckbox !== null) {
+		const notifyStoreConsentPreferenceUpdate = () =>
+			getOpener().Liferay.fire('storeConsentPreferenceUpdate', {
+				value: storeConsentCheckbox.checked,
+			});
+
+		storeConsentCheckbox.addEventListener(
+			'click',
+			notifyStoreConsentPreferenceUpdate
+		);
+
+		storeConsentCheckbox.removeAttribute('disabled');
+	}
+
 	const toggleSwitches = Array.from(
 		document.querySelectorAll(
 			`#${namespace}cookiesBannerConfigurationForm [data-cookie-key]`
@@ -68,10 +86,14 @@ export default function ({
 			acceptAllCookies(
 				consentRenewalPeriod,
 				optionalConsentCookieTypeNames,
-				requiredConsentCookieTypeNames
+				requiredConsentCookieTypeNames,
+				storeConsentCheckbox?.checked
 			);
 
-			setUserConfigCookie(consentRenewalPeriod);
+			setUserConfigCookie(
+				consentRenewalPeriod,
+				storeConsentCheckbox?.checked
+			);
 
 			window.location.reload();
 		});
@@ -81,6 +103,7 @@ export default function ({
 				setCookie(
 					consentRenewalPeriod,
 					toggleSwitch.dataset.cookieKey,
+					storeConsentCheckbox?.checked,
 					toggleSwitch.checked ? 'true' : 'false'
 				);
 			});
@@ -90,12 +113,16 @@ export default function ({
 					setCookie(
 						consentRenewalPeriod,
 						requiredConsentCookieTypeName,
+						storeConsentCheckbox?.checked,
 						'true'
 					);
 				}
 			);
 
-			setUserConfigCookie(consentRenewalPeriod);
+			setUserConfigCookie(
+				consentRenewalPeriod,
+				storeConsentCheckbox?.checked
+			);
 
 			window.location.reload();
 		});
@@ -104,10 +131,14 @@ export default function ({
 			declineAllCookies(
 				consentRenewalPeriod,
 				optionalConsentCookieTypeNames,
-				requiredConsentCookieTypeNames
+				requiredConsentCookieTypeNames,
+				storeConsentCheckbox?.checked
 			);
 
-			setUserConfigCookie(consentRenewalPeriod);
+			setUserConfigCookie(
+				consentRenewalPeriod,
+				storeConsentCheckbox?.checked
+			);
 
 			window.location.reload();
 		});
