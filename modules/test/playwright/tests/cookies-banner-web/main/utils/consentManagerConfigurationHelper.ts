@@ -98,18 +98,25 @@ export async function updateConsentManagerConfiguration(
 		);
 	}
 
+	const consentRenewalPeriodField = page.getByLabel('Consent Renewal Period');
 	const enabledCheckbox = page.getByLabel('Enabled', {exact: true});
 
 	await enabledCheckbox.waitFor({state: 'visible'});
 
-	let dialog = await enabledCheckbox.isChecked();
+	let dialog = false;
 
 	if (enabled === true) {
+		if (
+			enabledCheckbox.isChecked() &&
+			consentRenewalPeriod &&
+			consentRenewalPeriod !==
+				consentRenewalPeriodField.getAttribute('value')
+		) {
+			dialog = true;
+		}
 		await enabledCheckbox.setChecked(true);
 	}
 	else if (enabled === false) {
-		dialog = false;
-
 		await enabledCheckbox.setChecked(false);
 	}
 
@@ -129,9 +136,7 @@ export async function updateConsentManagerConfiguration(
 		}
 
 		if (consentRenewalPeriod) {
-			await page
-				.getByLabel('Consent Renewal Period')
-				.fill(consentRenewalPeriod);
+			await consentRenewalPeriodField.fill(consentRenewalPeriod);
 		}
 
 		if (storeConsent !== undefined) {
