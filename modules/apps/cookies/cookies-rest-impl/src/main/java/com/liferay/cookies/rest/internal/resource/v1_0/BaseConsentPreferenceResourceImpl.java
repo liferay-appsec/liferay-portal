@@ -182,102 +182,6 @@ public abstract class BaseConsentPreferenceResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/cookies/v1.0/consent-preferences' -d $'{"domain": ___, "expirationDate": ___, "name": ___, "userId": ___, "value": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Operation(
-		description = "Updates the consent preference with information sent in the request body. Only the provided fields are updated."
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "ConsentPreference")
-		}
-	)
-	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
-	@jakarta.ws.rs.PATCH
-	@jakarta.ws.rs.Path("/consent-preferences")
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public ConsentPreference patchConsentPreference(
-			ConsentPreference consentPreference)
-		throws Exception {
-
-		return new ConsentPreference();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/cookies/v1.0/consent-preferences' -d $'{"domain": ___, "expirationDate": ___, "name": ___, "userId": ___, "value": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Operation(
-		description = "Creates a new consent preference."
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "ConsentPreference")
-		}
-	)
-	@jakarta.ws.rs.Consumes({"application/json", "application/xml"})
-	@jakarta.ws.rs.Path("/consent-preferences")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public ConsentPreference postConsentPreference(
-			ConsentPreference consentPreference)
-		throws Exception {
-
-		return new ConsentPreference();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/cookies/v1.0/consent-preferences/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "ConsentPreference")
-		}
-	)
-	@jakarta.ws.rs.Consumes("application/json")
-	@jakarta.ws.rs.Path("/consent-preferences/batch")
-	@jakarta.ws.rs.POST
-	@jakarta.ws.rs.Produces("application/json")
-	@Override
-	public Response postConsentPreferenceBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.postImportTask(
-				ConsentPreference.class.getName(), callbackURL, null, object)
-		).build();
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
 	 * curl -X 'POST' 'http://localhost:8080/o/cookies/v1.0/consent-preferences/export-batch'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -416,36 +320,8 @@ public abstract class BaseConsentPreferenceResourceImpl
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		UnsafeFunction<ConsentPreference, ConsentPreference, Exception>
-			consentPreferenceUnsafeFunction = null;
-
-		String createStrategy = (String)parameters.getOrDefault(
-			"createStrategy", "INSERT");
-
-		if (StringUtil.equalsIgnoreCase(createStrategy, "INSERT")) {
-			consentPreferenceUnsafeFunction =
-				consentPreference -> postConsentPreference(consentPreference);
-		}
-
-		if (consentPreferenceUnsafeFunction == null) {
-			throw new NotSupportedException(
-				"Create strategy \"" + createStrategy +
-					"\" is not supported for ConsentPreference");
-		}
-
-		if (contextBatchUnsafeBiConsumer != null) {
-			contextBatchUnsafeBiConsumer.accept(
-				consentPreferences, consentPreferenceUnsafeFunction);
-		}
-		else if (contextBatchUnsafeConsumer != null) {
-			contextBatchUnsafeConsumer.accept(
-				consentPreferences, consentPreferenceUnsafeFunction::apply);
-		}
-		else {
-			for (ConsentPreference consentPreference : consentPreferences) {
-				consentPreferenceUnsafeFunction.apply(consentPreference);
-			}
-		}
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Override
@@ -459,11 +335,11 @@ public abstract class BaseConsentPreferenceResourceImpl
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray("INSERT");
+		return SetUtil.fromArray();
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray("PARTIAL_UPDATE", "UPDATE");
+		return SetUtil.fromArray("UPDATE");
 	}
 
 	@Override
@@ -526,11 +402,6 @@ public abstract class BaseConsentPreferenceResourceImpl
 
 		String updateStrategy = (String)parameters.getOrDefault(
 			"updateStrategy", "UPDATE");
-
-		if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
-			consentPreferenceUnsafeFunction =
-				consentPreference -> patchConsentPreference(consentPreference);
-		}
 
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 			consentPreferenceUnsafeFunction =

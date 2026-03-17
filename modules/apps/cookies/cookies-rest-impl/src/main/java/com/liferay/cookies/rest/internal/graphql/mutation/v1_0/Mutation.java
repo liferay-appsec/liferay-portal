@@ -73,50 +73,6 @@ public class Mutation {
 		return true;
 	}
 
-	@GraphQLField(
-		description = "Updates the consent preference with information sent in the request body. Only the provided fields are updated."
-	)
-	public ConsentPreference patchConsentPreference(
-			@GraphQLName("consentPreference") ConsentPreference
-				consentPreference)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_consentPreferenceResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			consentPreferenceResource ->
-				consentPreferenceResource.patchConsentPreference(
-					consentPreference));
-	}
-
-	@GraphQLField(description = "Creates a new consent preference.")
-	public ConsentPreference createConsentPreference(
-			@GraphQLName("consentPreference") ConsentPreference
-				consentPreference)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_consentPreferenceResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			consentPreferenceResource ->
-				consentPreferenceResource.postConsentPreference(
-					consentPreference));
-	}
-
-	@GraphQLField
-	public Response createConsentPreferenceBatch(
-			@GraphQLName("callbackURL") String callbackURL,
-			@GraphQLName("object") Object object)
-		throws Exception {
-
-		return _applyComponentServiceObjects(
-			_consentPreferenceResourceComponentServiceObjects,
-			this::_populateResourceContext,
-			consentPreferenceResource ->
-				consentPreferenceResource.postConsentPreferenceBatch(
-					callbackURL, object));
-	}
-
 	@GraphQLField
 	public Response createConsentPreferencesPageExportBatch(
 			@GraphQLName("callbackURL") String callbackURL,
