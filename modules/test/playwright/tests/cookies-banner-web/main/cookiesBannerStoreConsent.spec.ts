@@ -86,7 +86,7 @@ test(
 	'Store Consent configuration field validation',
 	{tag: '@LPD-78076'},
 	async ({page}) => {
-		const storeConsentField = page.getByLabel('Store Consent');
+		const storeConsentField = page.getByLabel('Store Consent').first();
 
 		await test.step('Validate Store Consent field is not enabled by default', async () => {
 			await expect(storeConsentField).not.toBeChecked();
