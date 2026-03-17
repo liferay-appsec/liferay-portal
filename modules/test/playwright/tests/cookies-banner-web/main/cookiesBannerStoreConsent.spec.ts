@@ -282,13 +282,7 @@ test(
 test(
 	'Verify when the user does Store Consent, their consent preferences can be anonymized via Personal Data Erasure AC3/TC1',
 	{tag: '@LPD-76011'},
-	async ({
-		apiHelpers,
-		browser,
-		page,
-		personalDataErasurePage,
-		usersAndOrganizationsPage,
-	}) => {
+	async ({apiHelpers, browser, page, usersAndOrganizationsPage}) => {
 		await test.step('Enabled Store Consent', async () => {
 			await updateConsentManagerConfiguration(page, {
 				enabled: true,
