@@ -22,13 +22,13 @@ export class CookiesApiHelper {
 
 	async deleteConsentPreferencesByName(name: string) {
 		return this.apiHelpers.delete(
-			`${this.apiHelpers.baseUrl}${this.basePath}consent-preference/by-name/{name}`
+			`${this.apiHelpers.baseUrl}${this.basePath}consent-preference/by-name/${name}`
 		);
 	}
 
 	async getConsentPreferencesByName(name: string) {
 		return this.apiHelpers.get(
-			`${this.apiHelpers.baseUrl}${this.basePath}consent-preference/by-name/{name}`
+			`${this.apiHelpers.baseUrl}${this.basePath}consent-preference/by-name/${name}`
 		);
 	}
 
