@@ -86,21 +86,6 @@ public class ServletDataImpl implements ServletData {
 							ConsentPreferenceResourceImpl.class,
 							"deleteConsentPreferences"));
 					put(
-						"mutation#patchConsentPreference",
-						new ObjectValuePair<>(
-							ConsentPreferenceResourceImpl.class,
-							"patchConsentPreference"));
-					put(
-						"mutation#createConsentPreference",
-						new ObjectValuePair<>(
-							ConsentPreferenceResourceImpl.class,
-							"postConsentPreference"));
-					put(
-						"mutation#createConsentPreferenceBatch",
-						new ObjectValuePair<>(
-							ConsentPreferenceResourceImpl.class,
-							"postConsentPreferenceBatch"));
-					put(
 						"mutation#createConsentPreferencesPageExportBatch",
 						new ObjectValuePair<>(
 							ConsentPreferenceResourceImpl.class,

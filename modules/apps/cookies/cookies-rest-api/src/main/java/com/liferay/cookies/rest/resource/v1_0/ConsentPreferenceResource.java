@@ -54,18 +54,6 @@ public interface ConsentPreferenceResource {
 
 	public Page<ConsentPreference> getConsentPreferencesPage() throws Exception;
 
-	public ConsentPreference patchConsentPreference(
-			ConsentPreference consentPreference)
-		throws Exception;
-
-	public ConsentPreference postConsentPreference(
-			ConsentPreference consentPreference)
-		throws Exception;
-
-	public Response postConsentPreferenceBatch(
-			String callbackURL, Object object)
-		throws Exception;
-
 	public Response postConsentPreferencesPageExportBatch(
 			String callbackURL, String contentType, String fieldNames)
 		throws Exception;
