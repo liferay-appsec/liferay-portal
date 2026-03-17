@@ -196,7 +196,7 @@ export class ApiHelpers {
 		this.baseUrl = baseUrl
 			? baseUrl + '/o/'
 			: liferayConfig.environment.baseUrl + '/o/';
-        this.cookies = new CookiesApiHelper(this);
+		this.cookies = new CookiesApiHelper(this);
 		this.featureFlag = new FeatureFlagApiHelper(page);
 		this.dataEngine = new DataEngineApiHelper(this);
 		this.dynamicDataMapping = new DynamicDataMappingApiHelper(this);
