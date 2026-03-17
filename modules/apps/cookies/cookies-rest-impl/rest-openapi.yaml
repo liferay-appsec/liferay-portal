@@ -114,55 +114,6 @@ paths:
                                     $ref: "#/components/schemas/ConsentPreference"
                                 type: array
             tags: ["ConsentPreference"]
-        patch:
-            description:
-                Updates the consent preference with information sent in the request body. Only the provided fields are
-                updated.
-            operationId: patchConsentPreference
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/ConsentPreference"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/ConsentPreference"
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-                    description:
-                        "Consent Preference successfully updated"
-            tags: ["ConsentPreference"]
-        post:
-            description:
-                Creates a new consent preference.
-            operationId: postConsentPreference
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: "#/components/schemas/ConsentPreference"
-                    application/xml:
-                        schema:
-                            $ref: "#/components/schemas/ConsentPreference"
-            responses:
-                201:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-                    description:
-                        "Consent Preference successfully created"
-            tags: ["ConsentPreference"]
         put:
             description:
                 Replaces the consent preference with information sent in the request body. Any missing fields are
