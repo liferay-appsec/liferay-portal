@@ -48,43 +48,6 @@ info:
     version: v1.0
 openapi: 3.0.1
 paths:
-    "/consent-preference/by-name/{name}":
-        delete:
-            description:
-                Deletes the specified consent preference of the user who made the request.
-            operationId: deleteConsentPreferenceByName
-            parameters:
-                -   in: path
-                    name: name
-                    required: true
-                    schema:
-                        type: string
-            responses:
-                204:
-                    content:
-                        application/json: {}
-                        application/xml: {}
-            tags: ["ConsentPreference"]
-        get:
-            description:
-                Retrieves the specified consent preference of the user who made the request.
-            operationId: getConsentPreferenceByName
-            parameters:
-                -   in: path
-                    name: name
-                    required: true
-                    schema:
-                        type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-                        application/xml:
-                            schema:
-                                $ref: "#/components/schemas/ConsentPreference"
-            tags: ["ConsentPreference"]
     "/consent-preferences":
         delete:
             description:
@@ -138,4 +101,41 @@ paths:
                                 $ref: "#/components/schemas/ConsentPreference"
                     description:
                         "Consent Preference successfully replaced"
+            tags: ["ConsentPreference"]
+    "/consent-preferences/by-name/{name}":
+        delete:
+            description:
+                Deletes the specified consent preference of the user who made the request.
+            operationId: deleteConsentPreferenceByName
+            parameters:
+                -   in: path
+                    name: name
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["ConsentPreference"]
+        get:
+            description:
+                Retrieves the specified consent preference of the user who made the request.
+            operationId: getConsentPreferenceByName
+            parameters:
+                -   in: path
+                    name: name
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/ConsentPreference"
             tags: ["ConsentPreference"]
