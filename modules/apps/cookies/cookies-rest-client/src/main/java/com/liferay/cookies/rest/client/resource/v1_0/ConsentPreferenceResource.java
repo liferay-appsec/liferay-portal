@@ -282,7 +282,7 @@ public interface ConsentPreferenceResource {
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
-						"/o/cookies/v1.0/consent-preference/by-name/{name}");
+						"/o/cookies/v1.0/consent-preferences/by-name/{name}");
 
 			httpInvoker.path("name", name);
 
@@ -487,7 +487,7 @@ public interface ConsentPreferenceResource {
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
-						"/o/cookies/v1.0/consent-preference/by-name/{name}");
+						"/o/cookies/v1.0/consent-preferences/by-name/{name}");
 
 			httpInvoker.path("name", name);
 

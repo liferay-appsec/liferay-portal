@@ -71,7 +71,7 @@ public abstract class BaseConsentPreferenceResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'DELETE' 'http://localhost:8080/o/cookies/v1.0/consent-preference/by-name/{name}'  -u 'test@liferay.com:test'
+	 * curl -X 'DELETE' 'http://localhost:8080/o/cookies/v1.0/consent-preferences/by-name/{name}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Deletes the specified consent preference of the user who made the request."
@@ -90,7 +90,7 @@ public abstract class BaseConsentPreferenceResourceImpl
 		}
 	)
 	@jakarta.ws.rs.DELETE
-	@jakarta.ws.rs.Path("/consent-preference/by-name/{name}")
+	@jakarta.ws.rs.Path("/consent-preferences/by-name/{name}")
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public void deleteConsentPreferenceByName(
@@ -124,7 +124,7 @@ public abstract class BaseConsentPreferenceResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/cookies/v1.0/consent-preference/by-name/{name}'  -u 'test@liferay.com:test'
+	 * curl -X 'GET' 'http://localhost:8080/o/cookies/v1.0/consent-preferences/by-name/{name}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Retrieves the specified consent preference of the user who made the request."
@@ -143,7 +143,7 @@ public abstract class BaseConsentPreferenceResourceImpl
 		}
 	)
 	@jakarta.ws.rs.GET
-	@jakarta.ws.rs.Path("/consent-preference/by-name/{name}")
+	@jakarta.ws.rs.Path("/consent-preferences/by-name/{name}")
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public ConsentPreference getConsentPreferenceByName(
