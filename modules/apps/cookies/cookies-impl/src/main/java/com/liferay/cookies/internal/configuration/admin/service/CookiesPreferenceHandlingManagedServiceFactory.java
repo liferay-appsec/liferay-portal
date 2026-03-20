@@ -47,6 +47,15 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
 	}
 
+	public long getCompanyCustomFloatingIconImageId(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.
+			customFloatingIconImageId();
+	}
+
 	public boolean getCompanyEnabled(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
@@ -94,6 +103,18 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 					companyId, groupId);
 
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
+	}
+
+	public long getGroupCustomFloatingIconImageId(
+		long companyId, long groupId) {
+
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getGroupCookiesPreferenceHandlingConfiguration(
+					companyId, groupId);
+
+		return cookiesPreferenceHandlingConfiguration.
+			customFloatingIconImageId();
 	}
 
 	public boolean getGroupEnabled(long companyId, long groupId) {
@@ -150,6 +171,11 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 	public int getSystemConsentRenewalPeriod() {
 		return _systemCookiesPreferenceHandlingConfiguration.
 			consentRenewalPeriod();
+	}
+
+	public long getSystemCustomFloatingIconImageId() {
+		return _systemCookiesPreferenceHandlingConfiguration.
+			customFloatingIconImageId();
 	}
 
 	public boolean getSystemEnabled() {

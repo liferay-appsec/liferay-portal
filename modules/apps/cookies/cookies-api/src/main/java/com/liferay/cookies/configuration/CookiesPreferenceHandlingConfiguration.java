@@ -30,6 +30,9 @@ public interface CookiesPreferenceHandlingConfiguration {
 	)
 	public int consentRenewalPeriod();
 
+	@Meta.AD(deflt = "0", required = false)
+	public long customFloatingIconImageId();
+
 	@Meta.AD(
 		deflt = "false", description = "cookie-enabled-help", name = "enabled",
 		required = false
