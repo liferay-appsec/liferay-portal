@@ -156,6 +156,7 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				%>
 
 				<liferay-frontend:logo-selector
+					aspectRatio="<%= 1 %>"
 					currentLogoURL='<%= (imageId == 0) ? themeDisplay.getPathThemeImages() + "/spacer.png" : themeDisplay.getPathImage() + "/floating_icon?img_id=" + imageId %>'
 					defaultLogoURL='<%= themeDisplay.getPathThemeImages() + "/spacer.png" %>'
 					label='<%= LanguageUtil.get(request, "custom-icon") %>'
