@@ -73,7 +73,32 @@ public class ConsentManagementPlatformTopHeadDynamicInclude
 
 		PrintWriter printWriter = httpServletResponse.getWriter();
 
-		printWriter.println(consentManagementPlatformConfiguration.scriptTag());
+		//printWriter.println(consentManagementPlatformConfiguration.scriptTag());
+
+		String scriptUrl = consentManagementPlatformConfiguration.scriptTag();
+		String safeScriptString = scriptUrl
+			.replace("'", "\\'")
+			.replace("</script>", "<\\/script>");
+
+		printWriter.println("<script>");
+		printWriter.println("    function injectRawTermlyScript() {");
+
+		printWriter.println("        var rawScriptString = '" + safeScriptString + "';");
+
+		printWriter.println("        if (!document.querySelector('script[src*=\"app.termly.io\"]')) {");
+		printWriter.println("            var fragment = document.createRange().createContextualFragment(rawScriptString);");
+		printWriter.println("            document.head.appendChild(fragment);");
+		printWriter.println("        } else if (window.Termly && typeof window.Termly.initialize === 'function') {");
+		printWriter.println("            window.Termly.initialize();");
+		printWriter.println("        }");
+		printWriter.println("    }");
+
+		printWriter.println("    document.addEventListener('DOMContentLoaded', injectRawTermlyScript);");
+		printWriter.println("    if (window.Liferay) {");
+		printWriter.println("        Liferay.on('endNavigate', injectRawTermlyScript);");
+		printWriter.println("    }");
+		printWriter.println("</script>");
+
 	}
 
 	@Override
