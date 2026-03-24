@@ -123,13 +123,13 @@ public class PortalInstances {
 		}
 
 		if (companyId <= 0) {
-			long cookieCompanyId = GetterUtil.getLong(
-				CookiesManagerUtil.getCookieValue(
-					CookiesConstants.NAME_COMPANY_ID, httpServletRequest,
-					false));
+			try {
+				long cookieCompanyId = GetterUtil.getLong(
+					CookiesManagerUtil.getCookieValue(
+						CookiesConstants.NAME_COMPANY_ID, httpServletRequest,
+						false));
 
-			if (cookieCompanyId > 0) {
-				try {
+				if (cookieCompanyId > 0) {
 					Company cookieCompany =
 						CompanyLocalServiceUtil.fetchCompanyById(
 							cookieCompanyId);
@@ -149,8 +149,13 @@ public class PortalInstances {
 						}
 					}
 				}
-				catch (Exception exception) {
+			}
+			catch (Exception exception) {
+				if (!(exception instanceof NullPointerException)) {
 					_log.error(exception);
+				}
+				else if (_log.isWarnEnabled()) {
+					_log.warn(exception);
 				}
 			}
 		}
