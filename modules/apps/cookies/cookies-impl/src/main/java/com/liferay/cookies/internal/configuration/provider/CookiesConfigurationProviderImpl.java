@@ -162,6 +162,20 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	@Override
+	public String getCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
+
+		return _getScopeConfigurationAttribute(
+			scope, scopePK,
+			this::
+				_getCompanyCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit,
+			this::
+				_getGroupCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit,
+			this::
+				_getSystemCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit);
+	}
+
+	@Override
 	public String getCookiesPreferenceHandlingFloatingIcon(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
 
@@ -435,6 +449,20 @@ public class CookiesConfigurationProviderImpl
 			getCompanyDissentRenewalPeriod(companyId);
 	}
 
+	private String
+		_getCompanyCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
+			long companyId) {
+
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getCompanyDissentRenewalPeriodTimeUnit(companyId);
+	}
+
 	private String _getCompanyFloatingIcon(long companyId) {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
@@ -561,6 +589,21 @@ public class CookiesConfigurationProviderImpl
 			getGroupDissentRenewalPeriod(_getCompanyId(groupId), groupId);
 	}
 
+	private String
+		_getGroupCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
+			long groupId) {
+
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getGroupDissentRenewalPeriodTimeUnit(
+				_getCompanyId(groupId), groupId);
+	}
+
 	private String _getGroupFloatingIcon(long groupId) {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
@@ -640,6 +683,19 @@ public class CookiesConfigurationProviderImpl
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemDissentRenewalPeriod();
+	}
+
+	private String
+		_getSystemCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit() {
+
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getSystemDissentRenewalPeriodTimeUnit();
 	}
 
 	private String _getSystemFloatingIcon() {

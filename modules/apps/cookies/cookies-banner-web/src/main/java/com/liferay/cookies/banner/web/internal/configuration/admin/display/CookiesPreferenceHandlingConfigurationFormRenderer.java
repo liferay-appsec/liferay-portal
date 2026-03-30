@@ -114,6 +114,10 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 			"dissentRenewalPeriod",
 			ParamUtil.getInteger(httpServletRequest, "dissentRenewalPeriod", 12)
 		).put(
+			"dissentRenewalPeriodTimeUnit",
+			ParamUtil.getString(
+				httpServletRequest, "dissentRenewalPeriodTimeUnit", "months")
+		).put(
 			"enabled", true
 		).put(
 			"explicitConsentMode",

@@ -115,6 +115,11 @@ public class BaseCookiesBannerDisplayContext {
 		return cookiesPreferenceHandlingConfiguration.dissentRenewalPeriod();
 	}
 
+	protected String getDissentRenewalPeriodTimeUnit() {
+		return cookiesPreferenceHandlingConfiguration.
+			dissentRenewalPeriodTimeUnit();
+	}
+
 	protected long getModifiedDate() {
 		return cookiesPreferenceHandlingConfiguration.modifiedDate();
 	}

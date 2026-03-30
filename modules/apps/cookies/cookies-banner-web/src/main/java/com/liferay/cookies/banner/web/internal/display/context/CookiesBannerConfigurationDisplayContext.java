@@ -47,6 +47,8 @@ public class CookiesBannerConfigurationDisplayContext
 		).put(
 			"dissentRenewalPeriod", getDissentRenewalPeriod()
 		).put(
+			"dissentRenewalPeriodTimeUnit", getDissentRenewalPeriodTimeUnit()
+		).put(
 			"modifiedDate", getModifiedDate()
 		).put(
 			"optionalConsentCookieTypeNames",

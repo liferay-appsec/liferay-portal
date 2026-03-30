@@ -43,6 +43,12 @@ public interface CookiesPreferenceHandlingConfiguration {
 	public int dissentRenewalPeriod();
 
 	@Meta.AD(
+		deflt = "months", optionLabels = {"days", "weeks", "months"},
+		optionValues = {"days", "weeks", "months"}, required = false
+	)
+	public String dissentRenewalPeriodTimeUnit();
+
+	@Meta.AD(
 		deflt = "false", description = "cookie-enabled-help", name = "enabled",
 		required = false
 	)

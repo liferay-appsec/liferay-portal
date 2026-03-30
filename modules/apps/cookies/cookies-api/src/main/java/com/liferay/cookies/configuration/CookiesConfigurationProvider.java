@@ -47,6 +47,9 @@ public interface CookiesConfigurationProvider {
 	public int getCookiesPreferenceHandlingDissentRenewalPeriod(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK);
 
+	public String getCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK);
+
 	public String getCookiesPreferenceHandlingFloatingIcon(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK);
 

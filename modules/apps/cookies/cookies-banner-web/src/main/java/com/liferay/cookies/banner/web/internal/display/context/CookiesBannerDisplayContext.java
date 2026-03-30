@@ -78,6 +78,8 @@ public class CookiesBannerDisplayContext
 		).put(
 			"dissentRenewalPeriod", getDissentRenewalPeriod()
 		).put(
+			"dissentRenewalPeriodTimeUnit", getDissentRenewalPeriodTimeUnit()
+		).put(
 			"includeDeclineAllButton", isIncludeDeclineAllButton()
 		).put(
 			"modifiedDate", getModifiedDate()
