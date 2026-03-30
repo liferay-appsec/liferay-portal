@@ -23,8 +23,12 @@ export default function ({namespace}) {
 				`input[type='number'][name='${namespace}dissentRenewalPeriod']`
 			);
 
-			const dissentRenewalPeriodLabel = document.querySelector(
-				`label[for='${namespace}dissentRenewalPeriod']`
+			const dissentRenewalPeriodLabel = document.getElementById(
+				`${namespace}dissentRenewalPeriodLabel`
+			);
+
+			const dissentRenewalPeriodTimeUnit = document.querySelector(
+				`select[name='${namespace}dissentRenewalPeriodTimeUnit']`
 			);
 
 			const explicitConsentMode = document.querySelector(
@@ -57,6 +61,8 @@ export default function ({namespace}) {
 					dissentRenewalPeriod.removeAttribute('disabled');
 					dissentRenewalPeriod.required = true;
 					dissentRenewalPeriodLabel?.classList.remove('disabled');
+					dissentRenewalPeriodTimeUnit.classList.remove('disabled');
+					dissentRenewalPeriodTimeUnit.removeAttribute('disabled');
 					explicitConsentMode.removeAttribute('disabled');
 
 					if (Liferay.FeatureFlags['LPD-75027']) {
@@ -96,6 +102,8 @@ export default function ({namespace}) {
 					dissentRenewalPeriod.required = false;
 					dissentRenewalPeriod.setAttribute('disabled', '');
 					dissentRenewalPeriodLabel?.classList.add('disabled');
+					dissentRenewalPeriodTimeUnit.classList.add('disabled');
+					dissentRenewalPeriodTimeUnit.setAttribute('disabled', '');
 					explicitConsentMode.setAttribute('disabled', '');
 
 					if (Liferay.FeatureFlags['LPD-75027']) {

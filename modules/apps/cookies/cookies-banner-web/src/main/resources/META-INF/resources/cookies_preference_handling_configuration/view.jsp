@@ -66,7 +66,7 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 
 <div class="row">
 	<div class="col-sm-12 form-group">
-		<label class="c-mb-1 c-mt-2 disabled font-weight-semi-bold" id="<portlet:namespace />dissentRenewalPeriodLabel" name="<portlet:namespace />dissentRenewalPeriodLabel">
+		<label class="c-mb-1 c-mt-2 font-weight-semi-bold <%= !cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() ? "disabled" : "" %>" id="<portlet:namespace />dissentRenewalPeriodLabel" name="<portlet:namespace />dissentRenewalPeriodLabel">
 			<liferay-ui:message key="cookie-dissent-renewal-period" />
 		</label>
 
@@ -253,13 +253,19 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				return;
 			}
 
+			var dissentRenewalPeriodTimeUnit = document.getElementById(
+				'<portlet:namespace />dissentRenewalPeriodTimeUnit'
+			);
+
 			var enabled = document.getElementById('<portlet:namespace />enabled');
 
 			if (
 				(consentRenewalPeriod.value !==
 					'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriod() %>' ||
 					dissentRenewalPeriod.value !==
-						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingDissentRenewalPeriod() %>') &&
+						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingDissentRenewalPeriod() %>' ||
+					dissentRenewalPeriodTimeUnit.value !==
+						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit() %>') &&
 				enabled.checked &&
 				<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() %>
 			) {
