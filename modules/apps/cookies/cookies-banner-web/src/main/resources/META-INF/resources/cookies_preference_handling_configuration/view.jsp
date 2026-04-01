@@ -267,6 +267,10 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				return;
 			}
 
+			var consentRenewalPeriodTimeUnit = document.getElementById(
+				'<portlet:namespace />consentRenewalPeriodTimeUnit'
+			);
+
 			var dissentRenewalPeriodTimeUnit = document.getElementById(
 				'<portlet:namespace />dissentRenewalPeriodTimeUnit'
 			);
@@ -276,6 +280,8 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 			if (
 				(consentRenewalPeriod.value !==
 					'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriod() %>' ||
+					consentRenewalPeriodTimeUnit.value !==
+						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit() %>' ||
 					dissentRenewalPeriod.value !==
 						'<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingDissentRenewalPeriod() %>' ||
 					dissentRenewalPeriodTimeUnit.value !==

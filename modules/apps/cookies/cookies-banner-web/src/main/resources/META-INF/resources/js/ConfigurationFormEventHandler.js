@@ -11,24 +11,28 @@ export default function ({namespace}) {
 		'change',
 		'input[type="checkbox"]',
 		(event) => {
-			const consentRenewalPeriod = document.querySelector(
-				`input[type='number'][name='${namespace}consentRenewalPeriod']`
+			const consentRenewalPeriod = document.getElementById(
+				`${namespace}consentRenewalPeriod`
 			);
 
-			const consentRenewalPeriodLabel = document.querySelector(
-				`label[for='${namespace}consentRenewalPeriod']`
+			const consentRenewalPeriodLabel = document.getElementById(
+				`${namespace}consentRenewalPeriodLabel`
 			);
 
-			const dissentRenewalPeriod = document.querySelector(
-				`input[type='number'][name='${namespace}dissentRenewalPeriod']`
+			const consentRenewalPeriodTimeUnit = document.getElementById(
+				`${namespace}consentRenewalPeriodTimeUnit`
+			);
+
+			const dissentRenewalPeriod = document.getElementById(
+				`${namespace}dissentRenewalPeriod`
 			);
 
 			const dissentRenewalPeriodLabel = document.getElementById(
 				`${namespace}dissentRenewalPeriodLabel`
 			);
 
-			const dissentRenewalPeriodTimeUnit = document.querySelector(
-				`select[name='${namespace}dissentRenewalPeriodTimeUnit']`
+			const dissentRenewalPeriodTimeUnit = document.getElementById(
+				`${namespace}dissentRenewalPeriodTimeUnit`
 			);
 
 			const explicitConsentMode = document.querySelector(
@@ -52,85 +56,87 @@ export default function ({namespace}) {
 			);
 
 			if (event.delegateTarget.id === `${namespace}enabled`) {
-				if (event.delegateTarget.checked) {
-					consentRenewalPeriod.classList.remove('disabled');
-					consentRenewalPeriod.removeAttribute('disabled');
-					consentRenewalPeriod.required = true;
+				const isChecked = event.delegateTarget.checked;
+
+				const toggleElement = (element, disabled) => {
+					if (!element) {
+						return;
+					}
+					if (disabled) {
+						element.classList.add('disabled');
+						element.setAttribute('disabled', '');
+					}
+					else {
+						element.classList.remove('disabled');
+						element.removeAttribute('disabled');
+					}
+				};
+
+				toggleElement(consentRenewalPeriod, !isChecked);
+				toggleElement(consentRenewalPeriodTimeUnit, !isChecked);
+				toggleElement(dissentRenewalPeriod, !isChecked);
+				toggleElement(dissentRenewalPeriodTimeUnit, !isChecked);
+
+				if (consentRenewalPeriod) {
+					consentRenewalPeriod.required = isChecked;
+				}
+
+				if (dissentRenewalPeriod) {
+					dissentRenewalPeriod.required = isChecked;
+				}
+
+				if (isChecked) {
 					consentRenewalPeriodLabel?.classList.remove('disabled');
-					dissentRenewalPeriod.classList.remove('disabled');
-					dissentRenewalPeriod.removeAttribute('disabled');
-					dissentRenewalPeriod.required = true;
 					dissentRenewalPeriodLabel?.classList.remove('disabled');
-					dissentRenewalPeriodTimeUnit.classList.remove('disabled');
-					dissentRenewalPeriodTimeUnit.removeAttribute('disabled');
-					explicitConsentMode.removeAttribute('disabled');
-
-					if (Liferay.FeatureFlags['LPD-75027']) {
-						floatingIconEnabled.removeAttribute('disabled');
-
-						floatingIcons.forEach((iconInput) => {
-							iconInput.removeAttribute('disabled');
-
-							const label = document.querySelector(
-								`label[for='${iconInput.id}']`
-							);
-							if (label) {
-								label.classList.remove('disabled');
-							}
-						});
-
-						if (logoSelectorContainer) {
-							logoSelectorContainer.classList.remove('disabled');
-							logoSelectorContainer
-								.querySelectorAll('input, button')
-								.forEach((element) => {
-									element.removeAttribute('disabled');
-								});
-						}
-					}
-
-					if (Liferay.FeatureFlags['LPD-75032']) {
-						storeConsent.removeAttribute('disabled');
-					}
+					explicitConsentMode?.removeAttribute('disabled');
 				}
 				else {
-					consentRenewalPeriod.classList.add('disabled');
-					consentRenewalPeriod.required = false;
-					consentRenewalPeriod.setAttribute('disabled', '');
 					consentRenewalPeriodLabel?.classList.add('disabled');
-					dissentRenewalPeriod.classList.add('disabled');
-					dissentRenewalPeriod.required = false;
-					dissentRenewalPeriod.setAttribute('disabled', '');
 					dissentRenewalPeriodLabel?.classList.add('disabled');
-					dissentRenewalPeriodTimeUnit.classList.add('disabled');
-					dissentRenewalPeriodTimeUnit.setAttribute('disabled', '');
-					explicitConsentMode.setAttribute('disabled', '');
+					explicitConsentMode?.setAttribute('disabled', '');
+				}
 
-					if (Liferay.FeatureFlags['LPD-75027']) {
-						floatingIconEnabled.setAttribute('disabled', '');
-
-						floatingIcons.forEach((iconInput) => {
-							iconInput.setAttribute('disabled', '');
-
-							const label = document.querySelector(
-								`label[for='${iconInput.id}']`
-							);
-							if (label) {
-								label.classList.add('disabled');
-							}
-						});
-
-						if (logoSelectorContainer) {
-							logoSelectorContainer.classList.add('disabled');
-							logoSelectorContainer
-								.querySelectorAll('input, button')
-								.forEach((element) => {
-									element.setAttribute('disabled', '');
-								});
-						}
+				if (Liferay.FeatureFlags['LPD-75027']) {
+					if (isChecked) {
+						floatingIconEnabled?.removeAttribute('disabled');
+						logoSelectorContainer?.classList.remove('disabled');
+					}
+					else {
+						floatingIconEnabled?.setAttribute('disabled', '');
+						logoSelectorContainer?.classList.add('disabled');
 					}
 
-					if (Liferay.FeatureFlags['LPD-75032']) {
+					floatingIcons.forEach((iconInput) => {
+						if (isChecked) {
+							iconInput.removeAttribute('disabled');
+						}
+						else {
+							iconInput.setAttribute('disabled', '');
+						}
+						const label = document.querySelector(
+							`label[for='${iconInput.id}']`
+						);
+
+						label?.classList.toggle('disabled', !isChecked);
+					});
+
+					logoSelectorContainer
+						?.querySelectorAll('input, button')
+						.forEach((element) => {
+							if (isChecked) {
+								element.removeAttribute('disabled');
+							}
+							else {
+								element.setAttribute('disabled', '');
+							}
+						});
+				}
+
+				if (Liferay.FeatureFlags['LPD-75032'] && storeConsent) {
+					if (isChecked) {
+						storeConsent.removeAttribute('disabled');
+					}
+					else {
 						storeConsent.checked = false;
 						storeConsent.setAttribute('disabled', '');
 					}
