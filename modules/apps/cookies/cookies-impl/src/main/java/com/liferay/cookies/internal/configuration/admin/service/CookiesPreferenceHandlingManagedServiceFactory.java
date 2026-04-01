@@ -47,6 +47,15 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
 	}
 
+	public String getCompanyConsentRenewalPeriodTimeUnit(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+			_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.
+			consentRenewalPeriodTimeUnit();
+	}
+
 	public long getCompanyCustomFloatingIconImageId(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
@@ -120,6 +129,18 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 					companyId, groupId);
 
 		return cookiesPreferenceHandlingConfiguration.consentRenewalPeriod();
+	}
+
+	public String getGroupConsentRenewalPeriodTimeUnit(
+		long companyId, long groupId) {
+
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+			_getGroupCookiesPreferenceHandlingConfiguration(
+				companyId, groupId);
+
+		return cookiesPreferenceHandlingConfiguration.
+			consentRenewalPeriodTimeUnit();
 	}
 
 	public long getGroupCustomFloatingIconImageId(
@@ -209,6 +230,11 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 	public int getSystemConsentRenewalPeriod() {
 		return _systemCookiesPreferenceHandlingConfiguration.
 			consentRenewalPeriod();
+	}
+
+	public String getSystemConsentRenewalPeriodTimeUnit() {
+		return _systemCookiesPreferenceHandlingConfiguration.
+			consentRenewalPeriodTimeUnit();
 	}
 
 	public long getSystemCustomFloatingIconImageId() {

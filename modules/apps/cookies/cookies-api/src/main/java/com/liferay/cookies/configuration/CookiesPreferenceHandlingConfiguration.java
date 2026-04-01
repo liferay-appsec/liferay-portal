@@ -31,6 +31,12 @@ public interface CookiesPreferenceHandlingConfiguration {
 	public int consentRenewalPeriod();
 
 	@Meta.AD(
+		deflt = "months", optionLabels = {"days", "weeks", "months"},
+		optionValues = {"days", "weeks", "months"}, required = false
+	)
+	public String consentRenewalPeriodTimeUnit();
+
+	@Meta.AD(
 		deflt = "0", name = "custom-floating-icon-image-id", required = false
 	)
 	public long customFloatingIconImageId();

@@ -27,6 +27,12 @@ public class CookiesPreferenceHandlingConfigurationDisplayContext {
 			getCookiesPreferenceHandlingConsentRenewalPeriod(_scope, _scopePK);
 	}
 
+	public String getCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit() {
+		return _cookiesConfigurationProvider.
+			getCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit(
+				_scope, _scopePK);
+	}
+
 	public long getCookiesPreferenceHandlingCustomFloatingIconImageId() {
 		return _cookiesConfigurationProvider.
 			getCookiesPreferenceHandlingCustomFloatingIconImageId(
