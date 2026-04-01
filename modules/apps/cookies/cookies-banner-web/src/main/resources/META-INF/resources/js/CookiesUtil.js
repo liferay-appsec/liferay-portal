@@ -17,28 +17,50 @@ export const userConfigDateCookieName = 'USER_CONSENT_CONFIGURED_DATE';
 export function acceptAllCookies(
 	consentRenewalPeriod,
 	optionalConsentCookieTypeNames,
-	requiredConsentCookieTypeNames
+	requiredConsentCookieTypeNames,
+	timeUnit = 'months'
 ) {
 	optionalConsentCookieTypeNames.forEach((optionalConsentCookieTypeName) => {
-		setCookie(consentRenewalPeriod, optionalConsentCookieTypeName, 'true');
+		setCookie(
+			consentRenewalPeriod,
+			optionalConsentCookieTypeName,
+			timeUnit,
+			'true'
+		);
 	});
 
 	requiredConsentCookieTypeNames.forEach((requiredConsentCookieTypeName) => {
-		setCookie(consentRenewalPeriod, requiredConsentCookieTypeName, 'true');
+		setCookie(
+			consentRenewalPeriod,
+			requiredConsentCookieTypeName,
+			timeUnit,
+			'true'
+		);
 	});
 }
 
 export function declineAllCookies(
 	consentRenewalPeriod,
 	optionalConsentCookieTypeNames,
-	requiredConsentCookieTypeNames
+	requiredConsentCookieTypeNames,
+	timeUnit = 'months'
 ) {
 	optionalConsentCookieTypeNames.forEach((optionalConsentCookieTypeName) => {
-		setCookie(consentRenewalPeriod, optionalConsentCookieTypeName, 'false');
+		setCookie(
+			consentRenewalPeriod,
+			optionalConsentCookieTypeName,
+			timeUnit,
+			'false'
+		);
 	});
 
 	requiredConsentCookieTypeNames.forEach((requiredConsentCookieTypeName) => {
-		setCookie(consentRenewalPeriod, requiredConsentCookieTypeName, 'true');
+		setCookie(
+			consentRenewalPeriod,
+			requiredConsentCookieTypeName,
+			timeUnit,
+			'true'
+		);
 	});
 }
 
@@ -61,19 +83,35 @@ export function removeAllCookies(
 	removeCookieUtil(userConfigDateCookieName);
 }
 
-export function setCookie(consentRenewalPeriod, name, value) {
+export function setCookie(consentRenewalPeriod, name, timeUnit, value) {
+	const secondsInDay = 60 * 60 * 24;
+	let maxAge = 0;
+
+	const timeUnitLowerCase = (timeUnit || 'months').toLowerCase();
+
+	if (timeUnitLowerCase === 'days') {
+		maxAge = secondsInDay * consentRenewalPeriod;
+	}
+	else if (timeUnitLowerCase === 'weeks') {
+		maxAge = secondsInDay * 7 * consentRenewalPeriod;
+	}
+	else {
+		maxAge = secondsInDay * 365 * (consentRenewalPeriod / 12);
+	}
+
 	setCookieUtil(name, value, COOKIE_TYPES.NECESSARY, {
-		'max-age': 60 * 60 * 24 * 365 * (consentRenewalPeriod / 12),
+		'max-age': Math.floor(maxAge),
 		'path': themeDisplay.getPathContext() || '/',
 	});
 }
 
-export function setUserConfigCookie(consentRenewalPeriod) {
-	setCookie(consentRenewalPeriod, userConfigCookieName, 'true');
+export function setUserConfigCookie(consentRenewalPeriod, timeUnit = 'months') {
+	setCookie(consentRenewalPeriod, userConfigCookieName, timeUnit, 'true');
 
 	setCookie(
 		consentRenewalPeriod,
 		userConfigDateCookieName,
+		timeUnit,
 		new Date().getTime()
 	);
 
