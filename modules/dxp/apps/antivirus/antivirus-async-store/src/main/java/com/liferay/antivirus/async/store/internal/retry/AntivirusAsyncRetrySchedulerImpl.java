@@ -52,17 +52,30 @@ public class AntivirusAsyncRetrySchedulerImpl
 			}
 		}
 
-		_componentInstances.computeIfAbsent(
-			message.getString("jobName"),
-			key -> _componentFactory.newInstance(
-				HashMapDictionaryBuilder.<String, Object>put(
-					"jobName", key
-				).put(
-					"message", message
-				).put(
-					"retryCronExpression",
-					_antivirusAsyncConfiguration.retryCronExpression()
-				).build()));
+		String jobName = message.getString("jobName");
+
+		ComponentInstance<?> componentInstance = _componentInstances.get(
+			jobName);
+
+		if (componentInstance == null) {
+			ComponentInstance<?> newComponentInstance =
+				_componentFactory.newInstance(
+					HashMapDictionaryBuilder.<String, Object>put(
+						"jobName", jobName
+					).put(
+						"message", message
+					).put(
+						"retryCronExpression",
+						_antivirusAsyncConfiguration.retryCronExpression()
+					).build());
+
+			ComponentInstance<?> existingComponentInstance =
+				_componentInstances.putIfAbsent(jobName, newComponentInstance);
+
+			if (existingComponentInstance != null) {
+				newComponentInstance.dispose();
+			}
+		}
 	}
 
 	@Override
