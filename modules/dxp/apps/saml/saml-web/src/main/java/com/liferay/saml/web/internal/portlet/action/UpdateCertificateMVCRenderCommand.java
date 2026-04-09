@@ -40,15 +40,18 @@ public class UpdateCertificateMVCRenderCommand implements MVCRenderCommand {
 
 		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
 			renderRequest.setAttribute(
-				"certificateKeyAlgorithms", _FIPS_KEY_ALGORITHMS);
+				SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
+				_FIPS_KEY_ALGORITHMS);
 			renderRequest.setAttribute(
-				"certificateKeySizes", _FIPS_KEY_SIZES);
+				SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES, _FIPS_KEY_SIZES);
 		}
 		else {
 			renderRequest.setAttribute(
-				"certificateKeyAlgorithms", _DEFAULT_KEY_ALGORITHMS);
+				SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
+				_DEFAULT_KEY_ALGORITHMS);
 			renderRequest.setAttribute(
-				"certificateKeySizes", _DEFAULT_KEY_SIZES);
+				SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
+				_DEFAULT_KEY_SIZES);
 		}
 
 		return "/admin/update_certificate.jsp";

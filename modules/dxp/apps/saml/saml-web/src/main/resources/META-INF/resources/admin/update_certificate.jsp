@@ -103,8 +103,8 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
 						<%
-						String[] keyAlgorithms = (String[])request.getAttribute("certificateKeyAlgorithms");
-						String[] keySizes = (String[])request.getAttribute("certificateKeySizes");
+						String[] keyAlgorithms = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
+						String[] keySizes = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
 						%>
 
 						<c:choose>
