@@ -103,14 +103,24 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
 						<%
-						boolean fipsModeEnabled = com.liferay.portal.kernel.util.PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
+						String[] keyAlgorithms = (String[])request.getAttribute("certificateKeyAlgorithms");
+						String[] keySizes = (String[])request.getAttribute("certificateKeySizes");
 						%>
 
 						<c:choose>
-							<c:when test="<%= !fipsModeEnabled && (certificateUsage == LocalEntityManager.CertificateUsage.SIGNING) %>">
+							<c:when test="<%= (keyAlgorithms.length > 1) && (certificateUsage == LocalEntityManager.CertificateUsage.SIGNING) %>">
 								<aui:select label="key-algorithm" name="certificateKeyAlgorithm" required="<%= true %>">
-									<aui:option label="rsa" selected='<%= certificateKeyAlgorithm.equals("RSA") %>' value="RSA" />
-									<aui:option label="dsa" selected='<%= certificateKeyAlgorithm.equals("DSA") %>' value="DSA" />
+
+									<%
+									for (String algorithm : keyAlgorithms) {
+									%>
+
+										<aui:option label="<%= algorithm.toLowerCase() %>" selected="<%= certificateKeyAlgorithm.equals(algorithm) %>" value="<%= algorithm %>" />
+
+									<%
+									}
+									%>
+
 								</aui:select>
 							</c:when>
 							<c:otherwise>
@@ -120,15 +130,17 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 						</c:choose>
 
 						<aui:select label="key-length-bits" name="certificateKeyLength" required="<%= true %>">
-							<aui:option label="4096" selected='<%= certificateKeyLength.equals("4096") %>' value="4096" />
-							<c:if test="<%= fipsModeEnabled %>">
-								<aui:option label="3072" selected='<%= certificateKeyLength.equals("3072") %>' value="3072" />
-							</c:if>
-							<aui:option label="2048" selected='<%= certificateKeyLength.equals("2048") %>' value="2048" />
-							<c:if test="<%= !fipsModeEnabled %>">
-								<aui:option label="1024" selected='<%= certificateKeyLength.equals("1024") %>' value="1024" />
-								<aui:option label="512" selected='<%= certificateKeyLength.equals("512") %>' value="512" />
-							</c:if>
+
+							<%
+							for (String keySize : keySizes) {
+							%>
+
+								<aui:option label="<%= keySize %>" selected="<%= certificateKeyLength.equals(keySize) %>" value="<%= keySize %>" />
+
+							<%
+							}
+							%>
+
 						</aui:select>
 					</c:when>
 				</c:choose>

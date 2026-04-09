@@ -6,6 +6,7 @@
 package com.liferay.saml.web.internal.portlet.action;
 
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.saml.constants.SamlPortletKeys;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.runtime.certificate.CertificateTool;
@@ -37,8 +38,31 @@ public class UpdateCertificateMVCRenderCommand implements MVCRenderCommand {
 		renderRequest.setAttribute(
 			SamlWebKeys.SAML_CERTIFICATE_TOOL, _certificateTool);
 
+		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+			renderRequest.setAttribute(
+				"certificateKeyAlgorithms", _FIPS_KEY_ALGORITHMS);
+			renderRequest.setAttribute(
+				"certificateKeySizes", _FIPS_KEY_SIZES);
+		}
+		else {
+			renderRequest.setAttribute(
+				"certificateKeyAlgorithms", _DEFAULT_KEY_ALGORITHMS);
+			renderRequest.setAttribute(
+				"certificateKeySizes", _DEFAULT_KEY_SIZES);
+		}
+
 		return "/admin/update_certificate.jsp";
 	}
+
+	private static final String[] _DEFAULT_KEY_ALGORITHMS = {"RSA", "DSA"};
+
+	private static final String[] _DEFAULT_KEY_SIZES =
+		{"4096", "2048", "1024", "512"};
+
+	private static final String[] _FIPS_KEY_ALGORITHMS = {"RSA"};
+
+	private static final String[] _FIPS_KEY_SIZES =
+		{"4096", "3072", "2048"};
 
 	@Reference
 	private CertificateTool _certificateTool;
