@@ -5,6 +5,7 @@
 
 package com.liferay.saml.internal.upgrade.registry;
 
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.PrefsProps;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -12,6 +13,7 @@ import com.liferay.saml.internal.upgrade.v1_0_0.SamlConfigurationPreferencesUpgr
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlIdpSsoSessionMaxAgePropertyUpgradeProcess;
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlKeyStorePropertiesUpgradeProcess;
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlProviderConfigurationPreferencesUpgradeProcess;
+import com.liferay.saml.internal.upgrade.v2_0_0.SamlKeyStoreTypeUpgradeProcess;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -48,6 +50,11 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 			"0.0.2", "1.0.0",
 			new SamlIdpSsoSessionMaxAgePropertyUpgradeProcess(
 				_configurationAdmin));
+
+		registry.register(
+			"1.0.0", "2.0.0",
+			new SamlKeyStoreTypeUpgradeProcess(
+				_companyLocalService, _configurationAdmin, _store));
 	}
 
 	@Reference
@@ -61,5 +68,8 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
+
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 }
