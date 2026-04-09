@@ -15,24 +15,30 @@ import java.io.ByteArrayInputStream;
 
 import java.math.BigInteger;
 
+import java.security.InvalidParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
@@ -67,19 +73,30 @@ public class CertificateToolImpl implements CertificateTool {
 			X500Name subjectX500Name = _createX500Name(
 				subjectCertificateEntityId);
 
-			X509v1CertificateBuilder x509v1CertificateBuilder =
-				new X509v1CertificateBuilder(
-					issuerX500Name,
-					BigInteger.valueOf(System.currentTimeMillis()), startDate,
-					endDate, subjectX500Name,
+			BigInteger serialNumber = new BigInteger(
+				_SERIAL_NUMBER_BIT_LENGTH, new SecureRandom());
+
+			X509v3CertificateBuilder x509v3CertificateBuilder =
+				new X509v3CertificateBuilder(
+					issuerX500Name, serialNumber, startDate, endDate,
+					subjectX500Name,
 					new SubjectPublicKeyInfo(
 						(ASN1Sequence)asn1InputStream.readObject()));
+
+			x509v3CertificateBuilder.addExtension(
+				Extension.basicConstraints, true,
+				new BasicConstraints(false));
+
+			x509v3CertificateBuilder.addExtension(
+				Extension.keyUsage, true,
+				new KeyUsage(
+					KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
 
 			JcaContentSignerBuilder jcaContentSignerBuilder =
 				new JcaContentSignerBuilder(signatureAlgorithm);
 
 			return jcaX509CertificateConverter.getCertificate(
-				x509v1CertificateBuilder.build(
+				x509v3CertificateBuilder.build(
 					jcaContentSignerBuilder.build(keyPair.getPrivate())));
 		}
 		catch (Exception exception) {
@@ -90,6 +107,20 @@ public class CertificateToolImpl implements CertificateTool {
 	@Override
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
+
+		if (!_ALLOWED_KEY_ALGORITHMS.contains(algorithm)) {
+			throw new InvalidParameterException(
+				"Algorithm " + algorithm +
+					" is not allowed. Only RSA is supported for SAML " +
+						"certificates");
+		}
+
+		if (!_ALLOWED_RSA_KEY_SIZES.contains(keySize)) {
+			throw new InvalidParameterException(
+				"Key size " + keySize +
+					" is not allowed. Minimum 2048 bits required for FIPS " +
+						"140-3 compliance");
+		}
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
 			algorithm);
@@ -154,6 +185,13 @@ public class CertificateToolImpl implements CertificateTool {
 
 		return null;
 	}
+
+	private static final Set<String> _ALLOWED_KEY_ALGORITHMS = Set.of("RSA");
+
+	private static final Set<Integer> _ALLOWED_RSA_KEY_SIZES = Set.of(
+		2048, 3072, 4096);
+
+	private static final int _SERIAL_NUMBER_BIT_LENGTH = 160;
 
 	private X500Name _createX500Name(CertificateEntityId certificateEntityId) {
 		X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
