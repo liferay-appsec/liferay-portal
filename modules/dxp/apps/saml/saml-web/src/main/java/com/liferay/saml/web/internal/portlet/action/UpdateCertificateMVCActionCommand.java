@@ -18,10 +18,9 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -214,8 +213,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	private boolean _isFIPSModeEnabled() {
-		return GetterUtil.getBoolean(
-			PropsUtil.get("portal.security.fips.mode.enabled"));
+		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 	}
 
 	private String _getCertificateUsagePropertyKey(

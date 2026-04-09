@@ -2083,6 +2083,9 @@ public interface PropsKeys {
 		PORTAL_SECURITY_MANAGER_PRELOAD_CLASSLOADER_CLASSES =
 			"portal.security.manager.preload.classloader.classes";
 
+	public static final String PORTAL_SECURITY_FIPS_MODE_ENABLED =
+		"portal.security.fips.mode.enabled";
+
 	public static final String PORTAL_SECURITY_MANAGER_STRATEGY =
 		"portal.security.manager.strategy";
 

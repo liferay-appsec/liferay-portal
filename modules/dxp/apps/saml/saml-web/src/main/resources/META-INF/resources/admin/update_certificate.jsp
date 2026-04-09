@@ -103,7 +103,7 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
 						<%
-						boolean fipsModeEnabled = GetterUtil.getBoolean(com.liferay.portal.kernel.util.PropsUtil.get("portal.security.fips.mode.enabled"));
+						boolean fipsModeEnabled = com.liferay.portal.kernel.util.PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 						%>
 
 						<c:choose>

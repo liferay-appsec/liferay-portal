@@ -1772,6 +1772,10 @@ public class PropsValues {
 			PropsUtil.getArray(
 				PropsKeys.PORTAL_SECURITY_MANAGER_PRELOAD_CLASSLOADER_CLASSES);
 
+	public static final boolean PORTAL_SECURITY_FIPS_MODE_ENABLED =
+		GetterUtil.getBoolean(
+			PropsUtil.get(PropsKeys.PORTAL_SECURITY_FIPS_MODE_ENABLED));
+
 	public static final String PORTAL_SECURITY_MANAGER_STRATEGY = PropsUtil.get(
 		PropsKeys.PORTAL_SECURITY_MANAGER_STRATEGY);
 

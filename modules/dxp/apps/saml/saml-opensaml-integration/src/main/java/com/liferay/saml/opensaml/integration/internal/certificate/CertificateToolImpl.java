@@ -7,8 +7,7 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 import com.liferay.saml.runtime.certificate.CertificateTool;
@@ -191,8 +190,7 @@ public class CertificateToolImpl implements CertificateTool {
 	}
 
 	private static boolean _isFIPSModeEnabled() {
-		return GetterUtil.getBoolean(
-			PropsUtil.get("portal.security.fips.mode.enabled"));
+		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 	}
 
 	private static final Set<String> _ALLOWED_KEY_ALGORITHMS = Set.of("RSA");
