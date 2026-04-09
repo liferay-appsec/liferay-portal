@@ -102,13 +102,33 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
-						<aui:input disabled="<%= true %>" label="key-algorithm" name="certificateKeyAlgorithm" value="RSA" />
-						<aui:input label="key-algorithm" name="certificateKeyAlgorithm" type="hidden" value="RSA" />
+						<%
+						boolean fipsModeEnabled = GetterUtil.getBoolean(com.liferay.portal.kernel.util.PropsUtil.get("portal.security.fips.mode.enabled"));
+						%>
+
+						<c:choose>
+							<c:when test="<%= !fipsModeEnabled && (certificateUsage == LocalEntityManager.CertificateUsage.SIGNING) %>">
+								<aui:select label="key-algorithm" name="certificateKeyAlgorithm" required="<%= true %>">
+									<aui:option label="rsa" selected='<%= certificateKeyAlgorithm.equals("RSA") %>' value="RSA" />
+									<aui:option label="dsa" selected='<%= certificateKeyAlgorithm.equals("DSA") %>' value="DSA" />
+								</aui:select>
+							</c:when>
+							<c:otherwise>
+								<aui:input disabled="<%= true %>" label="key-algorithm" name="certificateKeyAlgorithm" value="RSA" />
+								<aui:input label="key-algorithm" name="certificateKeyAlgorithm" type="hidden" value="RSA" />
+							</c:otherwise>
+						</c:choose>
 
 						<aui:select label="key-length-bits" name="certificateKeyLength" required="<%= true %>">
 							<aui:option label="4096" selected='<%= certificateKeyLength.equals("4096") %>' value="4096" />
-							<aui:option label="3072" selected='<%= certificateKeyLength.equals("3072") %>' value="3072" />
+							<c:if test="<%= fipsModeEnabled %>">
+								<aui:option label="3072" selected='<%= certificateKeyLength.equals("3072") %>' value="3072" />
+							</c:if>
 							<aui:option label="2048" selected='<%= certificateKeyLength.equals("2048") %>' value="2048" />
+							<c:if test="<%= !fipsModeEnabled %>">
+								<aui:option label="1024" selected='<%= certificateKeyLength.equals("1024") %>' value="1024" />
+								<aui:option label="512" selected='<%= certificateKeyLength.equals("512") %>' value="512" />
+							</c:if>
 						</aui:select>
 					</c:when>
 				</c:choose>

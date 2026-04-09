@@ -18,8 +18,10 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -149,7 +151,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 				ParamUtil.getString(actionRequest, "certificateUsage")));
 	}
 
-	private boolean _isCompliantCertificate(X509Certificate x509Certificate) {
+	private boolean _isFIPSCompliantCertificate(X509Certificate x509Certificate) {
 		java.security.PublicKey publicKey = x509Certificate.getPublicKey();
 
 		if (publicKey instanceof DSAKey) {
@@ -209,6 +211,11 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		return false;
+	}
+
+	private boolean _isFIPSModeEnabled() {
+		return GetterUtil.getBoolean(
+			PropsUtil.get("portal.security.fips.mode.enabled"));
 	}
 
 	private String _getCertificateUsagePropertyKey(
@@ -319,7 +326,9 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
 
-		if (!_isCompliantCertificate(x509Certificate)) {
+		if (_isFIPSModeEnabled() &&
+			!_isFIPSCompliantCertificate(x509Certificate)) {
+
 			SessionErrors.add(actionRequest, "weakCertificateAlgorithm");
 
 			return;

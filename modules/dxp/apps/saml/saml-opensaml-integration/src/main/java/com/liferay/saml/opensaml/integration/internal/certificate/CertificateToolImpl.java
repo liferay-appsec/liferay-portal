@@ -7,6 +7,8 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 import com.liferay.saml.runtime.certificate.CertificateTool;
@@ -108,18 +110,20 @@ public class CertificateToolImpl implements CertificateTool {
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
 
-		if (!_ALLOWED_KEY_ALGORITHMS.contains(algorithm)) {
-			throw new InvalidParameterException(
-				"Algorithm " + algorithm +
-					" is not allowed. Only RSA is supported for SAML " +
-						"certificates");
-		}
+		if (_isFIPSModeEnabled()) {
+			if (!_ALLOWED_KEY_ALGORITHMS.contains(algorithm)) {
+				throw new InvalidParameterException(
+					"Algorithm " + algorithm +
+						" is not allowed in FIPS mode. Only RSA is " +
+							"supported for SAML certificates");
+			}
 
-		if (!_ALLOWED_RSA_KEY_SIZES.contains(keySize)) {
-			throw new InvalidParameterException(
-				"Key size " + keySize +
-					" is not allowed. Minimum 2048 bits required for FIPS " +
-						"140-3 compliance");
+			if (!_ALLOWED_RSA_KEY_SIZES.contains(keySize)) {
+				throw new InvalidParameterException(
+					"Key size " + keySize +
+						" is not allowed in FIPS mode. Minimum 2048 bits " +
+							"required for FIPS 140-3 compliance");
+			}
 		}
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
@@ -184,6 +188,11 @@ public class CertificateToolImpl implements CertificateTool {
 		}
 
 		return null;
+	}
+
+	private static boolean _isFIPSModeEnabled() {
+		return GetterUtil.getBoolean(
+			PropsUtil.get("portal.security.fips.mode.enabled"));
 	}
 
 	private static final Set<String> _ALLOWED_KEY_ALGORITHMS = Set.of("RSA");
