@@ -14,6 +14,7 @@ import com.liferay.saml.internal.upgrade.v1_0_0.SamlIdpSsoSessionMaxAgePropertyU
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlKeyStorePropertiesUpgradeProcess;
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlProviderConfigurationPreferencesUpgradeProcess;
 import com.liferay.saml.internal.upgrade.v2_0_0.SamlKeyStoreTypeUpgradeProcess;
+import com.liferay.saml.runtime.certificate.CertificateTool;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
 
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -54,8 +55,12 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 		registry.register(
 			"1.0.0", "2.0.0",
 			new SamlKeyStoreTypeUpgradeProcess(
-				_companyLocalService, _configurationAdmin, _store));
+				_certificateTool, _companyLocalService, _configurationAdmin,
+				_store));
 	}
+
+	@Reference
+	private CertificateTool _certificateTool;
 
 	@Reference
 	private CompanyLocalService _companyLocalService;

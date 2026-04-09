@@ -17,18 +17,28 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.saml.runtime.certificate.CertificateEntityId;
+import com.liferay.saml.runtime.certificate.CertificateTool;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.DSAKey;
+import java.security.interfaces.RSAKey;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Enumeration;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -44,9 +54,11 @@ import org.osgi.service.cm.ConfigurationAdmin;
 public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	public SamlKeyStoreTypeUpgradeProcess(
+		CertificateTool certificateTool,
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin, Store store) {
 
+		_certificateTool = certificateTool;
 		_companyLocalService = companyLocalService;
 		_configurationAdmin = configurationAdmin;
 		_store = store;
@@ -58,6 +70,11 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			_upgradeConfiguration();
 			_upgradeDLKeystores();
 			_upgradeFileSystemKeystore();
+
+			if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+				_upgradeDLCertificates();
+				_upgradeFileSystemCertificates();
+			}
 		}
 	}
 
@@ -89,6 +106,10 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				pkcs12KeyStore.setCertificateEntry(
 					alias, jksKeyStore.getCertificate(alias));
 			}
+		}
+
+		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+			_upgradeCertificates(pkcs12KeyStore, password);
 		}
 
 		return pkcs12KeyStore;
@@ -159,6 +180,75 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 						"from JKS to PKCS12");
 			}
 		}
+	}
+
+	private void _upgradeDLCertificates() {
+		String password = _getKeystorePassword();
+
+		_companyLocalService.forEachCompanyId(
+			companyId -> {
+				char[] passwordChars = password.toCharArray();
+
+				try {
+					if (!_store.hasFile(
+							companyId, CompanyConstants.SYSTEM,
+							_NEW_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
+
+						return;
+					}
+
+					KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+					try (InputStream inputStream = _store.getFileAsStream(
+							companyId, CompanyConstants.SYSTEM,
+							_NEW_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
+
+						keyStore.load(inputStream, passwordChars);
+					}
+
+					if (!_hasNonCompliantCertificates(keyStore)) {
+						return;
+					}
+
+					_upgradeCertificates(keyStore, passwordChars);
+
+					File tempFile = File.createTempFile("saml-ks", ".p12");
+
+					try {
+						try (FileOutputStream fileOutputStream =
+								new FileOutputStream(tempFile)) {
+
+							keyStore.store(fileOutputStream, passwordChars);
+						}
+
+						_store.deleteDirectory(
+							companyId, CompanyConstants.SYSTEM,
+							_NEW_DL_KEYSTORE_PATH);
+
+						try (FileInputStream fileInputStream =
+								new FileInputStream(tempFile)) {
+
+							_store.addFile(
+								companyId, CompanyConstants.SYSTEM,
+								_NEW_DL_KEYSTORE_PATH,
+								Store.VERSION_DEFAULT, fileInputStream);
+						}
+					}
+					finally {
+						tempFile.delete();
+					}
+				}
+				catch (Exception exception) {
+					_log.error(
+						"Failed to upgrade DL SAML certificates for " +
+							"company " + companyId + ": " +
+								exception.getMessage(),
+						exception);
+				}
+				finally {
+					Arrays.fill(passwordChars, '\0');
+				}
+			});
 	}
 
 	private void _upgradeDLKeystores() {
@@ -251,6 +341,51 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			});
 	}
 
+	private void _upgradeFileSystemCertificates() {
+		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
+
+		File keystoreFile = new File(liferayHome + "/data/keystore.p12");
+
+		if (!keystoreFile.exists()) {
+			return;
+		}
+
+		String password = _getKeystorePassword();
+
+		char[] passwordChars = password.toCharArray();
+
+		try {
+			KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+			try (FileInputStream fileInputStream =
+					new FileInputStream(keystoreFile)) {
+
+				keyStore.load(fileInputStream, passwordChars);
+			}
+
+			if (!_hasNonCompliantCertificates(keyStore)) {
+				return;
+			}
+
+			_upgradeCertificates(keyStore, passwordChars);
+
+			try (FileOutputStream fileOutputStream =
+					new FileOutputStream(keystoreFile)) {
+
+				keyStore.store(fileOutputStream, passwordChars);
+			}
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Failed to upgrade filesystem SAML certificates: " +
+					exception.getMessage(),
+				exception);
+		}
+		finally {
+			Arrays.fill(passwordChars, '\0');
+		}
+	}
+
 	private void _upgradeFileSystemKeystore() {
 		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
 
@@ -313,6 +448,157 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 	}
 
+	private boolean _hasNonCompliantCertificates(KeyStore keyStore)
+		throws Exception {
+
+		Enumeration<String> aliases = keyStore.aliases();
+
+		while (aliases.hasMoreElements()) {
+			String alias = aliases.nextElement();
+
+			if (!keyStore.isKeyEntry(alias)) {
+				continue;
+			}
+
+			X509Certificate certificate =
+				(X509Certificate)keyStore.getCertificate(alias);
+
+			if ((certificate != null) && !_isFIPSCompliant(certificate)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _isFIPSCompliant(X509Certificate x509Certificate) {
+		java.security.PublicKey publicKey = x509Certificate.getPublicKey();
+
+		if (publicKey instanceof DSAKey) {
+			return false;
+		}
+
+		if (publicKey instanceof RSAKey) {
+			return ((RSAKey)publicKey).getModulus().bitLength() >=
+				_MINIMUM_RSA_KEY_SIZE;
+		}
+
+		return true;
+	}
+
+	private CertificateEntityId _toCertificateEntityId(
+		X500Principal principal) {
+
+		String name = principal.getName(X500Principal.RFC2253);
+
+		String cn = _x500Attribute(name, "CN");
+		String o = _x500Attribute(name, "O");
+		String ou = _x500Attribute(name, "OU");
+		String l = _x500Attribute(name, "L");
+		String st = _x500Attribute(name, "ST");
+		String c = _x500Attribute(name, "C");
+
+		return new CertificateEntityId(cn, o, ou, l, st, c);
+	}
+
+	private void _upgradeCertificates(KeyStore keyStore, char[] password) {
+		try {
+			Enumeration<String> aliases = keyStore.aliases();
+
+			while (aliases.hasMoreElements()) {
+				String alias = aliases.nextElement();
+
+				if (!keyStore.isKeyEntry(alias)) {
+					continue;
+				}
+
+				X509Certificate certificate =
+					(X509Certificate)keyStore.getCertificate(alias);
+
+				if (certificate == null) {
+					continue;
+				}
+
+				if (_isFIPSCompliant(certificate)) {
+					continue;
+				}
+
+				String algorithm =
+					certificate.getPublicKey().getAlgorithm();
+				int keySize = -1;
+
+				if (certificate.getPublicKey() instanceof RSAKey) {
+					keySize =
+						((RSAKey)certificate.getPublicKey()
+						).getModulus().bitLength();
+				}
+
+				_log.warn(
+					"SAML certificate for alias \"" + alias +
+						"\" uses non-FIPS-compliant " + algorithm +
+							(keySize > 0 ? " " + keySize + "-bit" : "") +
+								" key. Regenerating with RSA " +
+									_DEFAULT_RSA_KEY_SIZE + "-bit key");
+
+				KeyPair keyPair = _certificateTool.generateKeyPair(
+					"RSA", _DEFAULT_RSA_KEY_SIZE);
+
+				CertificateEntityId subjectEntityId =
+					_toCertificateEntityId(
+						certificate.getSubjectX500Principal());
+
+				Calendar startDate = Calendar.getInstance();
+
+				Calendar endDate = (Calendar)startDate.clone();
+
+				endDate.add(
+					Calendar.DAY_OF_YEAR, _DEFAULT_VALIDITY_DAYS);
+
+				X509Certificate newCertificate =
+					_certificateTool.generateCertificate(
+						keyPair, subjectEntityId, subjectEntityId,
+						startDate.getTime(), endDate.getTime(),
+						"SHA256withRSA");
+
+				keyStore.setKeyEntry(
+					alias, keyPair.getPrivate(), password,
+					new X509Certificate[] {newCertificate});
+
+				_log.warn(
+					"Regenerated SAML certificate for alias \"" + alias +
+						"\" with RSA " + _DEFAULT_RSA_KEY_SIZE +
+							"-bit key. SAML metadata must be " +
+								"re-exchanged with federation partners");
+			}
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Failed to upgrade non-compliant SAML certificates: " +
+					exception.getMessage(),
+				exception);
+		}
+	}
+
+	private String _x500Attribute(String dn, String attribute) {
+		String prefix = attribute + "=";
+
+		for (String part : dn.split(",")) {
+			String trimmed = part.trim();
+
+			if (trimmed.startsWith(prefix)) {
+				return trimmed.substring(prefix.length());
+			}
+		}
+
+		return null;
+	}
+
+	private static final int _DEFAULT_RSA_KEY_SIZE = 2048;
+
+	private static final int _DEFAULT_VALIDITY_DAYS = 356;
+
+	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
+
 	private static final String _NEW_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
 	private static final String _OLD_DL_KEYSTORE_PATH = "saml/keystore.jks";
@@ -323,6 +609,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlKeyStoreTypeUpgradeProcess.class);
 
+	private final CertificateTool _certificateTool;
 	private final CompanyLocalService _companyLocalService;
 	private final ConfigurationAdmin _configurationAdmin;
 	private final Store _store;
