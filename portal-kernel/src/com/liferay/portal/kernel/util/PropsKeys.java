@@ -486,6 +486,15 @@ public interface PropsKeys {
 	public static final String COMPANY_ENCRYPTION_KEY_SIZE =
 		"company.encryption.key.size";
 
+	public static final String COMPANY_ENCRYPTION_KEYSTORE_PASSWORD =
+		"company.encryption.keystore.password";
+
+	public static final String COMPANY_ENCRYPTION_KEYSTORE_PATH =
+		"company.encryption.keystore.path";
+
+	public static final String COMPANY_ENCRYPTION_KEYSTORE_TYPE =
+		"company.encryption.keystore.type";
+
 	public static final String COMPANY_LOG_ENABLED = "company.log.enabled";
 
 	public static final String COMPANY_LOGIN_PREPOPULATE_DOMAIN =
