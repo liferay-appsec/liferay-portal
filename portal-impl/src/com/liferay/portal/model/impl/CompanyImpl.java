@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.model.cache.CacheField;
+import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
 import com.liferay.portal.kernel.service.CompanyInfoLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
@@ -158,7 +159,12 @@ public class CompanyImpl extends CompanyBaseImpl {
 			String key = getKey();
 
 			if (Validator.isNotNull(key)) {
-				_keyObj = EncryptorUtil.deserializeKey(key);
+				if (CompanyKeyStoreUtil.isKeyStoreAlias(key)) {
+					_keyObj = CompanyKeyStoreUtil.getKey(key);
+				}
+				else {
+					_keyObj = EncryptorUtil.deserializeKey(key);
+				}
 			}
 		}
 

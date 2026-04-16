@@ -82,6 +82,7 @@ import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcherMa
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -277,9 +278,13 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					// Company info
 
 					try {
-						updatedCompany.setKey(
-							EncryptorUtil.serializeKey(
-								EncryptorUtil.generateKey()));
+						String alias = CompanyKeyStoreUtil.generateAlias(
+							updatedCompany.getCompanyId());
+
+						CompanyKeyStoreUtil.setKey(
+							alias, EncryptorUtil.generateKey());
+
+						updatedCompany.setKey(alias);
 					}
 					catch (EncryptorException encryptorException) {
 						throw new SystemException(encryptorException);
@@ -585,8 +590,11 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 
 		try {
-			company.setKey(
-				EncryptorUtil.serializeKey(EncryptorUtil.generateKey()));
+			String alias = CompanyKeyStoreUtil.generateAlias(companyId);
+
+			CompanyKeyStoreUtil.setKey(alias, EncryptorUtil.generateKey());
+
+			company.setKey(alias);
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
