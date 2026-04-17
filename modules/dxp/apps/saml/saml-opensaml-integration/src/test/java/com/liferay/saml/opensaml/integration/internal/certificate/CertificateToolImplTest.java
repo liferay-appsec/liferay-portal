@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -97,7 +97,8 @@ public class CertificateToolImplTest {
 				keyPair, certificateEntityId, certificateEntityId,
 				startDate.getTime(), endDate.getTime(), "SHA256withRSA");
 
-		String subjectDN = x509Certificate.getSubjectX500Principal().getName();
+		String subjectDN = x509Certificate.getSubjectX500Principal(
+		).getName();
 
 		Assert.assertTrue(subjectDN.contains("CN=Test CN"));
 		Assert.assertTrue(subjectDN.contains("O=Test Org"));
@@ -112,7 +113,10 @@ public class CertificateToolImplTest {
 		KeyPair keyPair = _certificateToolImpl.generateKeyPair("DSA", 2048);
 
 		Assert.assertNotNull(keyPair);
-		Assert.assertEquals("DSA", keyPair.getPublic().getAlgorithm());
+		Assert.assertEquals(
+			"DSA",
+			keyPair.getPublic(
+			).getAlgorithm());
 	}
 
 	@Test(expected = InvalidParameterException.class)
@@ -120,6 +124,20 @@ public class CertificateToolImplTest {
 		_enableFIPSMode();
 
 		_certificateToolImpl.generateKeyPair("DSA", 2048);
+	}
+
+	@Test(expected = InvalidParameterException.class)
+	public void testGenerateKeyPairFIPSModeRSA512() throws Exception {
+		_enableFIPSMode();
+
+		_certificateToolImpl.generateKeyPair("RSA", 512);
+	}
+
+	@Test(expected = InvalidParameterException.class)
+	public void testGenerateKeyPairFIPSModeRSA1024() throws Exception {
+		_enableFIPSMode();
+
+		_certificateToolImpl.generateKeyPair("RSA", 1024);
 	}
 
 	@Test
@@ -149,31 +167,6 @@ public class CertificateToolImplTest {
 		Assert.assertNotNull(keyPair);
 	}
 
-	@Test(expected = InvalidParameterException.class)
-	public void testGenerateKeyPairFIPSModeRSA512() throws Exception {
-		_enableFIPSMode();
-
-		_certificateToolImpl.generateKeyPair("RSA", 512);
-	}
-
-	@Test(expected = InvalidParameterException.class)
-	public void testGenerateKeyPairFIPSModeRSA1024() throws Exception {
-		_enableFIPSMode();
-
-		_certificateToolImpl.generateKeyPair("RSA", 1024);
-	}
-
-	@Test
-	public void testGenerateKeyPairRSA2048() throws Exception {
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
-
-		Assert.assertNotNull(keyPair);
-		Assert.assertEquals("RSA", keyPair.getPublic().getAlgorithm());
-		Assert.assertEquals(
-			2048,
-			((RSAPublicKey)keyPair.getPublic()).getModulus().bitLength());
-	}
-
 	@Test
 	public void testGenerateKeyPairRSA512() throws Exception {
 		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 512);
@@ -181,10 +174,27 @@ public class CertificateToolImplTest {
 		Assert.assertNotNull(keyPair);
 	}
 
+	@Test
+	public void testGenerateKeyPairRSA2048() throws Exception {
+		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
+
+		Assert.assertNotNull(keyPair);
+		Assert.assertEquals(
+			"RSA",
+			keyPair.getPublic(
+			).getAlgorithm());
+
+		RSAPublicKey rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
+
+		Assert.assertEquals(
+			2048,
+			rsaPublicKey.getModulus(
+			).bitLength());
+	}
+
 	private void _enableFIPSMode() {
-		_autoCloseable =
-			ReflectionTestUtil.setFieldValueWithAutoCloseable(
-				PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
 	}
 
 	private X509Certificate _generateTestCertificate() throws Exception {

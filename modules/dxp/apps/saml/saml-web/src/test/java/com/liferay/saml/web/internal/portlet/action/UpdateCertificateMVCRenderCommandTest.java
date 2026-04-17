@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -87,12 +87,11 @@ public class UpdateCertificateMVCRenderCommandTest {
 
 		String[] sizes = sizesCaptor.getValue();
 
-		Assert.assertArrayEquals(
-			new String[] {"4096", "3072", "2048"}, sizes);
+		Assert.assertArrayEquals(new String[] {"4096", "3072", "2048"}, sizes);
 	}
 
 	@Test
-	public void testRenderNonFIPSModeAlgorithmsAndKeySizes() throws Exception {
+	public void testRenderNonfipsModeAlgorithmsAndKeySizes() throws Exception {
 		_renderCommand.render(_renderRequest, _renderResponse);
 
 		ArgumentCaptor<String[]> algorithmsCaptor = ArgumentCaptor.forClass(
@@ -133,9 +132,8 @@ public class UpdateCertificateMVCRenderCommandTest {
 	}
 
 	private void _enableFIPSMode() {
-		_autoCloseable =
-			ReflectionTestUtil.setFieldValueWithAutoCloseable(
-				PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
 	}
 
 	private AutoCloseable _autoCloseable;

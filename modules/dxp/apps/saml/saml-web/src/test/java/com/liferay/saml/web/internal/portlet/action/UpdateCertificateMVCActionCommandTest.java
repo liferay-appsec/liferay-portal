@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -11,6 +11,7 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.math.BigInteger;
 
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.ECPublicKey;
@@ -96,8 +97,7 @@ public class UpdateCertificateMVCActionCommandTest {
 	public void testIsFIPSCompliantCertificateWithUnknownAlgorithm() {
 		X509Certificate certificate = Mockito.mock(X509Certificate.class);
 
-		java.security.PublicKey publicKey = Mockito.mock(
-			java.security.PublicKey.class);
+		PublicKey publicKey = Mockito.mock(PublicKey.class);
 
 		Mockito.when(
 			publicKey.getAlgorithm()
@@ -133,9 +133,8 @@ public class UpdateCertificateMVCActionCommandTest {
 	}
 
 	private void _enableFIPSMode() {
-		_autoCloseable =
-			ReflectionTestUtil.setFieldValueWithAutoCloseable(
-				PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
 	}
 
 	private boolean _invokeFIPSCompliantCheck(X509Certificate certificate) {

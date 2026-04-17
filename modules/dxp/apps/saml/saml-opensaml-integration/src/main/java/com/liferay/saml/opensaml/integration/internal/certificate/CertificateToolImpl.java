@@ -7,6 +7,7 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.security.SecureRandom;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
@@ -23,7 +24,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
@@ -85,8 +85,7 @@ public class CertificateToolImpl implements CertificateTool {
 						(ASN1Sequence)asn1InputStream.readObject()));
 
 			x509v3CertificateBuilder.addExtension(
-				Extension.basicConstraints, true,
-				new BasicConstraints(false));
+				Extension.basicConstraints, true, new BasicConstraints(false));
 
 			x509v3CertificateBuilder.addExtension(
 				Extension.keyUsage, true,
@@ -110,18 +109,20 @@ public class CertificateToolImpl implements CertificateTool {
 		throws NoSuchAlgorithmException {
 
 		if (_isFIPSModeEnabled()) {
-			if (!_ALLOWED_KEY_ALGORITHMS.contains(algorithm)) {
+			if (!_allowedKeyAlgorithms.contains(algorithm)) {
 				throw new InvalidParameterException(
-					"Algorithm " + algorithm +
-						" is not allowed in FIPS mode. Only RSA is " +
-							"supported for SAML certificates");
+					StringBundler.concat(
+						"Algorithm ", algorithm,
+						" is not allowed in FIPS mode. Only RSA is supported ",
+						"for SAML certificates"));
 			}
 
-			if (!_ALLOWED_RSA_KEY_SIZES.contains(keySize)) {
+			if (!_allowedRSAKeySizes.contains(keySize)) {
 				throw new InvalidParameterException(
-					"Key size " + keySize +
-						" is not allowed in FIPS mode. Minimum 2048 bits " +
-							"required for FIPS 140-3 compliance");
+					StringBundler.concat(
+						"Key size ", keySize,
+						" is not allowed in FIPS mode. Minimum 2048 bits ",
+						"required for FIPS 140-3 compliance"));
 			}
 		}
 
@@ -189,17 +190,6 @@ public class CertificateToolImpl implements CertificateTool {
 		return null;
 	}
 
-	private static boolean _isFIPSModeEnabled() {
-		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
-	}
-
-	private static final Set<String> _ALLOWED_KEY_ALGORITHMS = Set.of("RSA");
-
-	private static final Set<Integer> _ALLOWED_RSA_KEY_SIZES = Set.of(
-		2048, 3072, 4096);
-
-	private static final int _SERIAL_NUMBER_BIT_LENGTH = 160;
-
 	private X500Name _createX500Name(CertificateEntityId certificateEntityId) {
 		X500NameBuilder x500NameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
 
@@ -233,5 +223,15 @@ public class CertificateToolImpl implements CertificateTool {
 
 		return x500NameBuilder.build();
 	}
+
+	private boolean _isFIPSModeEnabled() {
+		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
+	}
+
+	private static final int _SERIAL_NUMBER_BIT_LENGTH = 160;
+
+	private static final Set<String> _allowedKeyAlgorithms = Set.of("RSA");
+	private static final Set<Integer> _allowedRSAKeySizes = Set.of(
+		2048, 3072, 4096);
 
 }

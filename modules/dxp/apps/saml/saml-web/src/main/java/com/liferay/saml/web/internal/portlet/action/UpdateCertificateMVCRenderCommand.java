@@ -50,8 +50,7 @@ public class UpdateCertificateMVCRenderCommand implements MVCRenderCommand {
 				SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
 				_DEFAULT_KEY_ALGORITHMS);
 			renderRequest.setAttribute(
-				SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
-				_DEFAULT_KEY_SIZES);
+				SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES, _DEFAULT_KEY_SIZES);
 		}
 
 		return "/admin/update_certificate.jsp";
@@ -59,13 +58,13 @@ public class UpdateCertificateMVCRenderCommand implements MVCRenderCommand {
 
 	private static final String[] _DEFAULT_KEY_ALGORITHMS = {"RSA", "DSA"};
 
-	private static final String[] _DEFAULT_KEY_SIZES =
-		{"4096", "2048", "1024", "512"};
+	private static final String[] _DEFAULT_KEY_SIZES = {
+		"4096", "2048", "1024", "512"
+	};
 
 	private static final String[] _FIPS_KEY_ALGORITHMS = {"RSA"};
 
-	private static final String[] _FIPS_KEY_SIZES =
-		{"4096", "3072", "2048"};
+	private static final String[] _FIPS_KEY_SIZES = {"4096", "3072", "2048"};
 
 	@Reference
 	private CertificateTool _certificateTool;

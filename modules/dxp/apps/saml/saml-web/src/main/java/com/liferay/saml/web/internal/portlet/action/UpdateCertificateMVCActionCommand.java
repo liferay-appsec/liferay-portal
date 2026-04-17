@@ -5,6 +5,7 @@
 
 package com.liferay.saml.web.internal.portlet.action;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -45,6 +46,7 @@ import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
@@ -148,72 +150,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		_localEntityManager.deleteLocalEntityCertificate(
 			LocalEntityManager.CertificateUsage.valueOf(
 				ParamUtil.getString(actionRequest, "certificateUsage")));
-	}
-
-	private boolean _isFIPSCompliantCertificate(X509Certificate x509Certificate) {
-		java.security.PublicKey publicKey = x509Certificate.getPublicKey();
-
-		if (publicKey instanceof DSAKey) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"DSA certificates are not FIPS 140-3 compliant for " +
-						"SAML and cannot be imported");
-			}
-
-			return false;
-		}
-
-		if (publicKey instanceof RSAKey) {
-			int bitLength = ((RSAKey)publicKey).getModulus().bitLength();
-
-			if (bitLength < _MINIMUM_RSA_KEY_SIZE) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"RSA key size " + bitLength +
-							" bits is below the minimum " +
-								_MINIMUM_RSA_KEY_SIZE +
-									" bits required for FIPS 140-3 " +
-										"compliance");
-				}
-
-				return false;
-			}
-
-			return true;
-		}
-
-		if (publicKey instanceof ECKey) {
-			int fieldSize =
-				((ECKey)publicKey).getParams().getOrder().bitLength();
-
-			if (fieldSize < _MINIMUM_EC_KEY_SIZE) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"EC key size " + fieldSize +
-							" bits is below the minimum " +
-								_MINIMUM_EC_KEY_SIZE +
-									" bits required for FIPS 140-3 " +
-										"compliance");
-				}
-
-				return false;
-			}
-
-			return true;
-		}
-
-		if (_log.isWarnEnabled()) {
-			_log.warn(
-				"Unrecognized key algorithm " +
-					publicKey.getAlgorithm() +
-						" cannot be validated for FIPS 140-3 compliance");
-		}
-
-		return false;
-	}
-
-	private boolean _isFIPSModeEnabled() {
-		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 	}
 
 	private String _getCertificateUsagePropertyKey(
@@ -350,6 +286,78 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 		actionRequest.setAttribute(
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
+	}
+
+	private boolean _isFIPSCompliantCertificate(
+		X509Certificate x509Certificate) {
+
+		PublicKey publicKey = x509Certificate.getPublicKey();
+
+		if (publicKey instanceof DSAKey) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"DSA certificates are not FIPS 140-3 compliant for SAML " +
+						"and cannot be imported");
+			}
+
+			return false;
+		}
+
+		if (publicKey instanceof RSAKey) {
+			RSAKey rsaKey = (RSAKey)publicKey;
+
+			int bitLength = rsaKey.getModulus(
+			).bitLength();
+
+			if (bitLength < _MINIMUM_RSA_KEY_SIZE) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"RSA key size ", bitLength,
+							" bits is below the minimum ",
+							_MINIMUM_RSA_KEY_SIZE,
+							" bits required for FIPS 140-3 compliance"));
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		if (publicKey instanceof ECKey) {
+			ECKey ecKey = (ECKey)publicKey;
+
+			int fieldSize = ecKey.getParams(
+			).getOrder(
+			).bitLength();
+
+			if (fieldSize < _MINIMUM_EC_KEY_SIZE) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"EC key size ", fieldSize,
+							" bits is below the minimum ", _MINIMUM_EC_KEY_SIZE,
+							" bits required for FIPS 140-3 compliance"));
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Unrecognized key algorithm " + publicKey.getAlgorithm() +
+					" cannot be validated for FIPS 140-3 compliance");
+		}
+
+		return false;
+	}
+
+	private boolean _isFIPSModeEnabled() {
+		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 	}
 
 	private void _replaceCertificate(
