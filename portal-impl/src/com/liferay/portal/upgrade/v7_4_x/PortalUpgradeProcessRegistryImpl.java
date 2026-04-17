@@ -758,6 +758,8 @@ public class PortalUpgradeProcessRegistryImpl
 
 		upgradeVersionTreeMap.put(
 			new Version(38, 3, 1), new UpgradeAssetEntryPublishDate());
+
+		upgradeVersionTreeMap.put(new Version(38, 4, 0), new UpgradeCompanyInfo());
 	}
 
 }
