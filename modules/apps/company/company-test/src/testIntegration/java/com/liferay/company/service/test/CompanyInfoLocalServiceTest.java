@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
 import com.liferay.portal.kernel.service.CompanyInfoLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -63,9 +64,14 @@ public class CompanyInfoLocalServiceTest {
 
 		long companyId = company.getCompanyId();
 
+		CompanyInfo companyInfo = _companyInfoLocalService.fetchCompany(
+			companyId);
+
 		_companyLocalService.deleteCompany(companyId);
 
 		Assert.assertNull(_companyInfoLocalService.fetchCompany(companyId));
+
+		Assert.assertNull(CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
 	}
 
 	@Test
@@ -82,7 +88,7 @@ public class CompanyInfoLocalServiceTest {
 			_company.getCompanyId());
 
 		Assert.assertEquals(
-			_encryptor.deserializeKey(companyInfo.getKey()),
+			CompanyKeyStoreUtil.getKey(companyInfo.getKey()),
 			_company.getKeyObj());
 	}
 
