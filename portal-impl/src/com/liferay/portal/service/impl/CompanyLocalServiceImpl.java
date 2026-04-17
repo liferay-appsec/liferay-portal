@@ -51,6 +51,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.async.Async;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.model.Contact;
 import com.liferay.portal.kernel.model.ContactConstants;
 import com.liferay.portal.kernel.model.Group;
@@ -1680,7 +1681,11 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		companyPersistence.remove(company);
 
-		_companyInfoPersistence.remove(company.getCompanyInfo());
+		CompanyInfo companyInfo = company.getCompanyInfo();
+
+		CompanyKeyStoreUtil.removeKey(companyInfo.getKey());
+
+		_companyInfoPersistence.remove(companyInfo);
 
 		// Expando
 
