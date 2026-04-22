@@ -123,6 +123,14 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 			globalPrivacyControlEnabled();
 	}
 
+	public long getCompanyModifiedDate(long companyId) {
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
+
+		return cookiesPreferenceHandlingConfiguration.modifiedDate();
+	}
+
 	public boolean getCompanyStoreConsent(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =

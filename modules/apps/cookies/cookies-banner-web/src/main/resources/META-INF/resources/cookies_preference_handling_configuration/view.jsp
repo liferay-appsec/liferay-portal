@@ -364,6 +364,12 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 				return;
 			}
 
+			var modifiedDate = document.getElementById(
+				'<portlet:namespace />modifiedDate'
+			);
+
+			modifiedDate.value = new Date().getTime();
+
 			var dissentRenewalPeriod = document.getElementById(
 				'<portlet:namespace />dissentRenewalPeriod'
 			);
