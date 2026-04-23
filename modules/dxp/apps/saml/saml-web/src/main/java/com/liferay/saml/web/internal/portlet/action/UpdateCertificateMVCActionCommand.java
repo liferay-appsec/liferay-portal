@@ -42,6 +42,8 @@ import jakarta.portlet.ActionResponse;
 
 import java.io.IOException;
 
+import java.math.BigInteger;
+
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -54,6 +56,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAKey;
 import java.security.interfaces.ECKey;
 import java.security.interfaces.RSAKey;
+import java.security.spec.ECParameterSpec;
 
 import java.util.Calendar;
 
@@ -260,7 +263,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
 
-		if (_isFIPSModeEnabled() &&
+		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED &&
 			!_isFIPSCompliantCertificate(x509Certificate)) {
 
 			SessionErrors.add(actionRequest, "weakCertificateAlgorithm");
@@ -306,8 +309,9 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		if (publicKey instanceof RSAKey) {
 			RSAKey rsaKey = (RSAKey)publicKey;
 
-			int bitLength = rsaKey.getModulus(
-			).bitLength();
+			BigInteger modulus = rsaKey.getModulus();
+
+			int bitLength = modulus.bitLength();
 
 			if (bitLength < _MINIMUM_RSA_KEY_SIZE) {
 				if (_log.isWarnEnabled()) {
@@ -328,15 +332,17 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		if (publicKey instanceof ECKey) {
 			ECKey ecKey = (ECKey)publicKey;
 
-			int fieldSize = ecKey.getParams(
-			).getOrder(
-			).bitLength();
+			ECParameterSpec ecParameterSpec = ecKey.getParams();
 
-			if (fieldSize < _MINIMUM_EC_KEY_SIZE) {
+			BigInteger order = ecParameterSpec.getOrder();
+
+			int orderBitLength = order.bitLength();
+
+			if (orderBitLength < _MINIMUM_EC_KEY_SIZE) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
-							"EC key size ", fieldSize,
+							"EC key size ", orderBitLength,
 							" bits is below the minimum ", _MINIMUM_EC_KEY_SIZE,
 							" bits required for FIPS 140-3 compliance"));
 				}
@@ -354,10 +360,6 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		}
 
 		return false;
-	}
-
-	private boolean _isFIPSModeEnabled() {
-		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
 	}
 
 	private void _replaceCertificate(

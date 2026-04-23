@@ -56,72 +56,28 @@ public class UpdateCertificateMVCRenderCommandTest {
 	}
 
 	@Test
-	public void testRenderFIPSModeAlgorithmsAndKeySizes() throws Exception {
-		_enableFIPSMode();
+	public void testRenderAlgorithmsAndKeySizes() throws Exception {
+		_renderCommand.render(_renderRequest, _renderResponse);
+
+		_assertRequestAttribute(
+			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS,
+			new String[] {"RSA", "DSA"});
+		_assertRequestAttribute(
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
+			new String[] {"4096", "2048", "1024", "512"});
+
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+
+		_renderRequest = Mockito.mock(RenderRequest.class);
 
 		_renderCommand.render(_renderRequest, _renderResponse);
 
-		ArgumentCaptor<String[]> algorithmsCaptor = ArgumentCaptor.forClass(
-			String[].class);
-
-		Mockito.verify(
-			_renderRequest
-		).setAttribute(
-			Mockito.eq(SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS),
-			algorithmsCaptor.capture()
-		);
-
-		String[] algorithms = algorithmsCaptor.getValue();
-
-		Assert.assertArrayEquals(new String[] {"RSA"}, algorithms);
-
-		ArgumentCaptor<String[]> sizesCaptor = ArgumentCaptor.forClass(
-			String[].class);
-
-		Mockito.verify(
-			_renderRequest
-		).setAttribute(
-			Mockito.eq(SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES),
-			sizesCaptor.capture()
-		);
-
-		String[] sizes = sizesCaptor.getValue();
-
-		Assert.assertArrayEquals(new String[] {"4096", "3072", "2048"}, sizes);
-	}
-
-	@Test
-	public void testRenderNonfipsModeAlgorithmsAndKeySizes() throws Exception {
-		_renderCommand.render(_renderRequest, _renderResponse);
-
-		ArgumentCaptor<String[]> algorithmsCaptor = ArgumentCaptor.forClass(
-			String[].class);
-
-		Mockito.verify(
-			_renderRequest
-		).setAttribute(
-			Mockito.eq(SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS),
-			algorithmsCaptor.capture()
-		);
-
-		String[] algorithms = algorithmsCaptor.getValue();
-
-		Assert.assertArrayEquals(new String[] {"RSA", "DSA"}, algorithms);
-
-		ArgumentCaptor<String[]> sizesCaptor = ArgumentCaptor.forClass(
-			String[].class);
-
-		Mockito.verify(
-			_renderRequest
-		).setAttribute(
-			Mockito.eq(SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES),
-			sizesCaptor.capture()
-		);
-
-		String[] sizes = sizesCaptor.getValue();
-
-		Assert.assertArrayEquals(
-			new String[] {"4096", "2048", "1024", "512"}, sizes);
+		_assertRequestAttribute(
+			SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS, new String[] {"RSA"});
+		_assertRequestAttribute(
+			SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES,
+			new String[] {"4096", "3072", "2048"});
 	}
 
 	@Test
@@ -131,9 +87,17 @@ public class UpdateCertificateMVCRenderCommandTest {
 		Assert.assertEquals("/admin/update_certificate.jsp", path);
 	}
 
-	private void _enableFIPSMode() {
-		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
-			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
+	private void _assertRequestAttribute(String key, String[] expectedValue) {
+		ArgumentCaptor<String[]> argumentCaptor = ArgumentCaptor.forClass(
+			String[].class);
+
+		Mockito.verify(
+			_renderRequest
+		).setAttribute(
+			Mockito.eq(key), argumentCaptor.capture()
+		);
+
+		Assert.assertArrayEquals(expectedValue, argumentCaptor.getValue());
 	}
 
 	private AutoCloseable _autoCloseable;

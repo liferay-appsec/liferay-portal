@@ -6,7 +6,6 @@
 package com.liferay.saml.web.internal.portlet.action;
 
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.math.BigInteger;
@@ -18,7 +17,6 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECParameterSpec;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -42,59 +40,21 @@ public class UpdateCertificateMVCActionCommandTest {
 		_actionCommand = new UpdateCertificateMVCActionCommand();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		if (_autoCloseable != null) {
-			_autoCloseable.close();
-
-			_autoCloseable = null;
-		}
-	}
-
 	@Test
-	public void testIsFIPSCompliantCertificateWithDSAKey() {
-		X509Certificate certificate = _mockCertificateWithDSAKey();
+	public void testIsFIPSCompliantCertificate() {
+		Assert.assertFalse(
+			_invokeFIPSCompliantCheck(_mockCertificateWithDSAKey()));
+		Assert.assertFalse(
+			_invokeFIPSCompliantCheck(_mockCertificateWithECKey(192)));
+		Assert.assertTrue(
+			_invokeFIPSCompliantCheck(_mockCertificateWithECKey(256)));
+		Assert.assertFalse(
+			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(1024)));
+		Assert.assertTrue(
+			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(2048)));
+		Assert.assertTrue(
+			_invokeFIPSCompliantCheck(_mockCertificateWithRSAKey(4096)));
 
-		Assert.assertFalse(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithECP192Key() {
-		X509Certificate certificate = _mockCertificateWithECKey(192);
-
-		Assert.assertFalse(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithECP256Key() {
-		X509Certificate certificate = _mockCertificateWithECKey(256);
-
-		Assert.assertTrue(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithRSA1024Key() {
-		X509Certificate certificate = _mockCertificateWithRSAKey(1024);
-
-		Assert.assertFalse(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithRSA2048Key() {
-		X509Certificate certificate = _mockCertificateWithRSAKey(2048);
-
-		Assert.assertTrue(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithRSA4096Key() {
-		X509Certificate certificate = _mockCertificateWithRSAKey(4096);
-
-		Assert.assertTrue(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSCompliantCertificateWithUnknownAlgorithm() {
 		X509Certificate certificate = Mockito.mock(X509Certificate.class);
 
 		PublicKey publicKey = Mockito.mock(PublicKey.class);
@@ -112,29 +72,6 @@ public class UpdateCertificateMVCActionCommandTest {
 		);
 
 		Assert.assertFalse(_invokeFIPSCompliantCheck(certificate));
-	}
-
-	@Test
-	public void testIsFIPSModeDisabled() {
-		boolean result = ReflectionTestUtil.invoke(
-			_actionCommand, "_isFIPSModeEnabled", new Class<?>[0]);
-
-		Assert.assertFalse(result);
-	}
-
-	@Test
-	public void testIsFIPSModeEnabled() {
-		_enableFIPSMode();
-
-		boolean result = ReflectionTestUtil.invoke(
-			_actionCommand, "_isFIPSModeEnabled", new Class<?>[0]);
-
-		Assert.assertTrue(result);
-	}
-
-	private void _enableFIPSMode() {
-		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
-			PropsValues.class, "PORTAL_SECURITY_FIPS_MODE_ENABLED", true);
 	}
 
 	private boolean _invokeFIPSCompliantCheck(X509Certificate certificate) {
@@ -206,6 +143,5 @@ public class UpdateCertificateMVCActionCommandTest {
 	}
 
 	private UpdateCertificateMVCActionCommand _actionCommand;
-	private AutoCloseable _autoCloseable;
 
 }

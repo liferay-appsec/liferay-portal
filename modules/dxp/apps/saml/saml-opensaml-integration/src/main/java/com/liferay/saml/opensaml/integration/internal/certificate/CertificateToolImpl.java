@@ -108,8 +108,8 @@ public class CertificateToolImpl implements CertificateTool {
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
 
-		if (_isFIPSModeEnabled()) {
-			if (!_allowedKeyAlgorithms.contains(algorithm)) {
+		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+			if (!_ALLOWED_KEY_ALGORITHMS.contains(algorithm)) {
 				throw new InvalidParameterException(
 					StringBundler.concat(
 						"Algorithm ", algorithm,
@@ -117,7 +117,7 @@ public class CertificateToolImpl implements CertificateTool {
 						"for SAML certificates"));
 			}
 
-			if (!_allowedRSAKeySizes.contains(keySize)) {
+			if (!_ALLOWED_RSA_KEY_SIZES.contains(keySize)) {
 				throw new InvalidParameterException(
 					StringBundler.concat(
 						"Key size ", keySize,
@@ -224,14 +224,11 @@ public class CertificateToolImpl implements CertificateTool {
 		return x500NameBuilder.build();
 	}
 
-	private boolean _isFIPSModeEnabled() {
-		return PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED;
-	}
+	private static final Set<String> _ALLOWED_KEY_ALGORITHMS = Set.of("RSA");
+
+	private static final Set<Integer> _ALLOWED_RSA_KEY_SIZES = Set.of(
+		2048, 3072, 4096);
 
 	private static final int _SERIAL_NUMBER_BIT_LENGTH = 160;
-
-	private static final Set<String> _allowedKeyAlgorithms = Set.of("RSA");
-	private static final Set<Integer> _allowedRSAKeySizes = Set.of(
-		2048, 3072, 4096);
 
 }

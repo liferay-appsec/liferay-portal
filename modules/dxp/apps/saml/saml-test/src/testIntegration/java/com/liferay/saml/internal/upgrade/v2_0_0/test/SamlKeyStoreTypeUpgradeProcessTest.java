@@ -8,6 +8,8 @@ package com.liferay.saml.internal.upgrade.v2_0_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -30,15 +32,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import java.math.BigInteger;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
 import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -97,13 +104,13 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		jksKeyStore.load(null, null);
 
-		KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DSA");
 
-		kpg.initialize(2048);
+		keyPairGenerator.initialize(2048);
 
-		KeyPair keyPair = kpg.generateKeyPair();
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-		CertificateEntityId entityId = new CertificateEntityId(
+		CertificateEntityId certificateEntityId = new CertificateEntityId(
 			"Test CN", "Test Org", "Test OU", "Test City", "CA", "US");
 
 		Calendar startDate = Calendar.getInstance();
@@ -112,13 +119,13 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		endDate.add(Calendar.DAY_OF_YEAR, 365);
 
-		X509Certificate dsaCert = _certificateTool.generateCertificate(
-			keyPair, entityId, entityId, startDate.getTime(), endDate.getTime(),
-			"SHA256withDSA");
+		X509Certificate x509Certificate = _certificateTool.generateCertificate(
+			keyPair, certificateEntityId, certificateEntityId,
+			startDate.getTime(), endDate.getTime(), "SHA256withDSA");
 
 		jksKeyStore.setKeyEntry(
 			"test-alias", keyPair.getPrivate(), password,
-			new X509Certificate[] {dsaCert});
+			new X509Certificate[] {x509Certificate});
 
 		ByteArrayOutputStream byteArrayOutputStream =
 			new ByteArrayOutputStream();
@@ -126,7 +133,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		jksKeyStore.store(byteArrayOutputStream, password);
 
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT,
 			new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
 
@@ -135,30 +142,30 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		_upgradeProcess.upgrade();
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
 
 			pkcs12KeyStore.load(inputStream, password);
 
-			X509Certificate newCert =
+			X509Certificate upgradedX509Certificate =
 				(X509Certificate)pkcs12KeyStore.getCertificate("test-alias");
 
-			Assert.assertEquals(
-				"RSA",
-				newCert.getPublicKey(
-				).getAlgorithm());
+			PublicKey publicKey = upgradedX509Certificate.getPublicKey();
 
-			RSAPublicKey rsaPublicKey = (RSAPublicKey)newCert.getPublicKey();
+			Assert.assertEquals("RSA", publicKey.getAlgorithm());
 
-			Assert.assertEquals(
-				2048,
-				rsaPublicKey.getModulus(
-				).bitLength());
+			RSAPublicKey rsaPublicKey = (RSAPublicKey)publicKey;
 
-			String subjectDN = newCert.getSubjectX500Principal(
-			).getName();
+			BigInteger modulus = rsaPublicKey.getModulus();
+
+			Assert.assertEquals(2048, modulus.bitLength());
+
+			X500Principal subjectX500Principal =
+				upgradedX509Certificate.getSubjectX500Principal();
+
+			String subjectDN = subjectX500Principal.getName();
 
 			Assert.assertTrue(subjectDN.contains("CN=Test CN"));
 			Assert.assertTrue(subjectDN.contains("O=Test Org"));
@@ -205,7 +212,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		byte[] jksBytes = _createJKSKeystoreBytes("RSA", 2048, password);
 
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
 		_setSamlConfiguration("jks", null);
@@ -213,28 +220,25 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		_upgradeProcess.upgrade();
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
 
 			pkcs12KeyStore.load(inputStream, password);
 
-			X509Certificate certificate =
+			X509Certificate x509Certificate =
 				(X509Certificate)pkcs12KeyStore.getCertificate("test-alias");
 
-			Assert.assertEquals(
-				"RSA",
-				certificate.getPublicKey(
-				).getAlgorithm());
+			PublicKey publicKey = x509Certificate.getPublicKey();
 
-			RSAPublicKey rsaPublicKey =
-				(RSAPublicKey)certificate.getPublicKey();
+			Assert.assertEquals("RSA", publicKey.getAlgorithm());
 
-			Assert.assertEquals(
-				2048,
-				rsaPublicKey.getModulus(
-				).bitLength());
+			RSAPublicKey rsaPublicKey = (RSAPublicKey)publicKey;
+
+			BigInteger modulus = rsaPublicKey.getModulus();
+
+			Assert.assertEquals(2048, modulus.bitLength());
 		}
 	}
 
@@ -247,7 +251,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		byte[] jksBytes = _createJKSKeystoreBytes("DSA", 2048, password);
 
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
 		_setSamlConfiguration("jks", null);
@@ -255,20 +259,19 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		_upgradeProcess.upgrade();
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
 
 			pkcs12KeyStore.load(inputStream, password);
 
-			X509Certificate certificate =
+			X509Certificate x509Certificate =
 				(X509Certificate)pkcs12KeyStore.getCertificate("test-alias");
 
-			Assert.assertEquals(
-				"RSA",
-				certificate.getPublicKey(
-				).getAlgorithm());
+			PublicKey publicKey = x509Certificate.getPublicKey();
+
+			Assert.assertEquals("RSA", publicKey.getAlgorithm());
 		}
 	}
 
@@ -283,7 +286,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		byte[] jksBytes = _createJKSKeystoreBytes("RSA", 1024, password);
 
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
 		_setSamlConfiguration("jks", null);
@@ -291,28 +294,25 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		_upgradeProcess.upgrade();
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
 
 			pkcs12KeyStore.load(inputStream, password);
 
-			X509Certificate certificate =
+			X509Certificate x509Certificate =
 				(X509Certificate)pkcs12KeyStore.getCertificate("test-alias");
 
-			Assert.assertEquals(
-				"RSA",
-				certificate.getPublicKey(
-				).getAlgorithm());
+			PublicKey publicKey = x509Certificate.getPublicKey();
 
-			RSAPublicKey rsaPublicKey =
-				(RSAPublicKey)certificate.getPublicKey();
+			Assert.assertEquals("RSA", publicKey.getAlgorithm());
 
-			int bitLength = rsaPublicKey.getModulus(
-			).bitLength();
+			RSAPublicKey rsaPublicKey = (RSAPublicKey)publicKey;
 
-			Assert.assertTrue(bitLength >= 2048);
+			BigInteger modulus = rsaPublicKey.getModulus();
+
+			Assert.assertTrue(modulus.bitLength() >= 2048);
 		}
 	}
 
@@ -323,7 +323,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		byte[] jksBytes = _createJKSKeystoreBytes("RSA", 2048, password);
 
 		_store.addFile(
-			_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+			_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 			Store.VERSION_DEFAULT, new ByteArrayInputStream(jksBytes));
 
 		_setSamlConfiguration("jks", null);
@@ -332,11 +332,11 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		Assert.assertTrue(
 			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT));
 
 		try (InputStream inputStream = _store.getFileAsStream(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT)) {
 
 			KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
@@ -348,7 +348,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		Assert.assertFalse(
 			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT));
 	}
 
@@ -360,7 +360,7 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		Assert.assertFalse(
 			_store.hasFile(
-				_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
+				_companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
 				Store.VERSION_DEFAULT));
 	}
 
@@ -404,26 +404,33 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 	private void _cleanUpDLKeystores() {
 		try {
 			if (_store.hasFile(
-					_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH,
+					_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
 					Store.VERSION_DEFAULT)) {
 
 				_store.deleteDirectory(
-					_companyId, CompanyConstants.SYSTEM, _OLD_DL_KEYSTORE_PATH);
+					_companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH);
 			}
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		try {
 			if (_store.hasFile(
-					_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH,
-					Store.VERSION_DEFAULT)) {
+					_companyId, CompanyConstants.SYSTEM,
+					_PKCS12_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
 
 				_store.deleteDirectory(
-					_companyId, CompanyConstants.SYSTEM, _NEW_DL_KEYSTORE_PATH);
+					_companyId, CompanyConstants.SYSTEM,
+					_PKCS12_DL_KEYSTORE_PATH);
 			}
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 	}
 
@@ -453,13 +460,14 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		jksKeyStore.load(null, null);
 
-		KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
+			algorithm);
 
-		kpg.initialize(keySize);
+		keyPairGenerator.initialize(keySize);
 
-		KeyPair keyPair = kpg.generateKeyPair();
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-		CertificateEntityId entityId = new CertificateEntityId(
+		CertificateEntityId certificateEntityId = new CertificateEntityId(
 			"Test", null, null, null, null, null);
 
 		Calendar startDate = Calendar.getInstance();
@@ -468,13 +476,13 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 
 		endDate.add(Calendar.DAY_OF_YEAR, 365);
 
-		X509Certificate certificate = _certificateTool.generateCertificate(
-			keyPair, entityId, entityId, startDate.getTime(), endDate.getTime(),
-			"SHA256with" + algorithm);
+		X509Certificate x509Certificate = _certificateTool.generateCertificate(
+			keyPair, certificateEntityId, certificateEntityId,
+			startDate.getTime(), endDate.getTime(), "SHA256with" + algorithm);
 
 		jksKeyStore.setKeyEntry(
 			"test-alias", keyPair.getPrivate(), password,
-			new X509Certificate[] {certificate});
+			new X509Certificate[] {x509Certificate});
 
 		ByteArrayOutputStream byteArrayOutputStream =
 			new ByteArrayOutputStream();
@@ -500,12 +508,15 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 			}
 		}
 		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
 		}
 
 		_originalSamlProperties = null;
 	}
 
-	private void _setSamlConfiguration(String keystoreType, String keystorePath)
+	private void _setSamlConfiguration(String keyStoreType, String keyStorePath)
 		throws Exception {
 
 		Configuration configuration = _configurationAdmin.getConfiguration(
@@ -516,21 +527,24 @@ public class SamlKeyStoreTypeUpgradeProcessTest {
 		Dictionary<String, Object> properties = new Hashtable<>();
 
 		properties.put("saml.keystore.password", "liferay");
-		properties.put("saml.keystore.type", keystoreType);
+		properties.put("saml.keystore.type", keyStoreType);
 
-		if (keystorePath != null) {
-			properties.put("saml.keystore.path", keystorePath);
+		if (keyStorePath != null) {
+			properties.put("saml.keystore.path", keyStorePath);
 		}
 
 		configuration.update(properties);
 	}
 
-	private static final String _NEW_DL_KEYSTORE_PATH = "saml/keystore.p12";
+	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
 
-	private static final String _OLD_DL_KEYSTORE_PATH = "saml/keystore.jks";
+	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
 	private static final String _SAML_CONFIGURATION_PID =
 		"com.liferay.saml.runtime.configuration.SamlConfiguration";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SamlKeyStoreTypeUpgradeProcessTest.class);
 
 	private static UpgradeProcess _upgradeProcess;
 

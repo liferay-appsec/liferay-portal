@@ -14,11 +14,12 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 import com.liferay.saml.runtime.certificate.CertificateTool;
 
@@ -26,6 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+
+import java.math.BigInteger;
 
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -45,12 +48,6 @@ import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
- * Migrates SAML keystores from JKS format to PKCS12 format for FIPS 140-3
- * compliance. Handles both Document Library-based and filesystem-based
- * keystores. Updates the OSGi configuration to set the keystore type to
- * PKCS12. When FIPS mode is enabled, also regenerates certificates that use
- * non-compliant algorithms or key sizes.
- *
  * @author Rafael Praxedes
  */
 public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
@@ -149,10 +146,9 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		if (publicKey instanceof RSAKey) {
 			RSAKey rsaKey = (RSAKey)publicKey;
 
-			int bitLength = rsaKey.getModulus(
-			).bitLength();
+			BigInteger modulus = rsaKey.getModulus();
 
-			if (bitLength >= _MINIMUM_RSA_KEY_SIZE) {
+			if (modulus.bitLength() >= _MINIMUM_RSA_KEY_SIZE) {
 				return true;
 			}
 
@@ -241,13 +237,16 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 					continue;
 				}
 
+				PublicKey certificatePublicKey = certificate.getPublicKey();
+
 				int keySize = -1;
 
-				if (certificate.getPublicKey() instanceof RSAKey) {
-					RSAKey rsaKey = (RSAKey)certificate.getPublicKey();
+				if (certificatePublicKey instanceof RSAKey) {
+					RSAKey rsaKey = (RSAKey)certificatePublicKey;
 
-					keySize = rsaKey.getModulus(
-					).bitLength();
+					BigInteger modulus = rsaKey.getModulus();
+
+					keySize = modulus.bitLength();
 				}
 
 				if (_log.isWarnEnabled()) {
@@ -258,9 +257,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 						StringBundler.concat(
 							"SAML certificate for alias \"", alias,
 							"\" uses non-FIPS-compliant ",
-							certificate.getPublicKey(
-							).getAlgorithm(),
-							keySizeString, " key. Regenerating with RSA ",
+							certificatePublicKey.getAlgorithm(), keySizeString,
+							" key. Regenerating with RSA ",
 							_DEFAULT_RSA_KEY_SIZE, "-bit key"));
 				}
 
@@ -300,9 +298,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		}
 		catch (Exception exception) {
 			_log.error(
-				"Failed to upgrade non-compliant SAML certificates: " +
-					exception.getMessage(),
-				exception);
+				"Unable to upgrade non-compliant SAML certificates", exception);
 		}
 
 		return modified;
@@ -315,30 +311,22 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 		Dictionary<String, Object> properties = configuration.getProperties();
 
 		if (properties == null) {
-			properties = new HashMapDictionary<>();
+			return;
 		}
 
-		Object keystoreType = properties.get("saml.keystore.type");
+		String keyStoreType = GetterUtil.getString(
+			properties.get("saml.keystore.type"));
 
-		if ((keystoreType != null) &&
-			"jks".equalsIgnoreCase(keystoreType.toString())) {
-
+		if (StringUtil.equalsIgnoreCase(keyStoreType, "jks")) {
 			properties.put("saml.keystore.type", "PKCS12");
 
-			Object keystorePath = properties.get("saml.keystore.path");
+			String keyStorePath = GetterUtil.getString(
+				properties.get("saml.keystore.path"));
 
-			if ((keystorePath != null) &&
-				keystorePath.toString(
-				).endsWith(
-					".jks"
-				)) {
-
-				String newPath = keystorePath.toString(
-				).replaceAll(
-					"\\.jks$", ".p12"
-				);
-
-				properties.put("saml.keystore.path", newPath);
+			if (keyStorePath.endsWith(".jks")) {
+				properties.put(
+					"saml.keystore.path",
+					keyStorePath.replaceAll("\\.jks$", ".p12"));
 			}
 
 			configuration.update(properties);
@@ -359,30 +347,30 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				char[] passwordChars = password.toCharArray();
 
 				try {
-					boolean hasOldKeystore = _store.hasFile(
+					boolean hasJKSKeystore = _store.hasFile(
 						companyId, CompanyConstants.SYSTEM,
-						_OLD_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
+						_JKS_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
 
-					boolean hasNewKeystore = _store.hasFile(
+					boolean hasPKCS12Keystore = _store.hasFile(
 						companyId, CompanyConstants.SYSTEM,
-						_NEW_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
+						_PKCS12_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT);
 
-					if (hasOldKeystore && !hasNewKeystore) {
+					if (hasJKSKeystore && !hasPKCS12Keystore) {
 						try (InputStream inputStream = _store.getFileAsStream(
 								companyId, CompanyConstants.SYSTEM,
-								_OLD_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
+								_JKS_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
 
 							KeyStore pkcs12KeyStore = _convertJKSToPKCS12(
 								inputStream, passwordChars);
 
 							_saveDLKeyStore(
-								companyId, _NEW_DL_KEYSTORE_PATH,
+								companyId, _PKCS12_DL_KEYSTORE_PATH,
 								pkcs12KeyStore, passwordChars);
 						}
 
 						_store.deleteDirectory(
 							companyId, CompanyConstants.SYSTEM,
-							_OLD_DL_KEYSTORE_PATH);
+							_JKS_DL_KEYSTORE_PATH);
 
 						if (_log.isInfoEnabled()) {
 							_log.info(
@@ -390,20 +378,21 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 									"PKCS12 for company " + companyId);
 						}
 					}
-					else if (hasNewKeystore &&
+					else if (hasPKCS12Keystore &&
 							 PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
 
 						try (InputStream inputStream = _store.getFileAsStream(
 								companyId, CompanyConstants.SYSTEM,
-								_NEW_DL_KEYSTORE_PATH, Store.VERSION_DEFAULT)) {
+								_PKCS12_DL_KEYSTORE_PATH,
+								Store.VERSION_DEFAULT)) {
 
 							KeyStore keyStore = _loadKeyStore(
 								inputStream, passwordChars);
 
 							if (_upgradeCertificates(keyStore, passwordChars)) {
 								_saveDLKeyStore(
-									companyId, _NEW_DL_KEYSTORE_PATH, keyStore,
-									passwordChars);
+									companyId, _PKCS12_DL_KEYSTORE_PATH,
+									keyStore, passwordChars);
 							}
 						}
 					}
@@ -419,9 +408,8 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 				}
 				catch (Exception exception) {
 					_log.error(
-						StringBundler.concat(
-							"Failed to migrate DL SAML keystore for company ",
-							companyId, ": ", exception.getMessage()),
+						"Unable to migrate DL SAML keystore for company " +
+							companyId,
 						exception);
 				}
 				finally {
@@ -491,10 +479,7 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 			}
 		}
 		catch (Exception exception) {
-			_log.error(
-				"Failed to migrate filesystem SAML keystore: " +
-					exception.getMessage(),
-				exception);
+			_log.error("Unable to migrate filesystem SAML keystore", exception);
 		}
 		finally {
 			Arrays.fill(passwordChars, '\0');
@@ -517,13 +502,13 @@ public class SamlKeyStoreTypeUpgradeProcess extends UpgradeProcess {
 
 	private static final int _DEFAULT_RSA_KEY_SIZE = 2048;
 
-	private static final int _DEFAULT_VALIDITY_DAYS = 356;
+	private static final int _DEFAULT_VALIDITY_DAYS = 365;
+
+	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
 
 	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
 
-	private static final String _NEW_DL_KEYSTORE_PATH = "saml/keystore.p12";
-
-	private static final String _OLD_DL_KEYSTORE_PATH = "saml/keystore.jks";
+	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
 
 	private static final String _SAML_CONFIGURATION_PID =
 		"com.liferay.saml.runtime.configuration.SamlConfiguration";

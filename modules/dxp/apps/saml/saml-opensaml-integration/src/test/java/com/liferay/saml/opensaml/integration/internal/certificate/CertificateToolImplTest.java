@@ -10,13 +10,18 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 
+import java.math.BigInteger;
+
 import java.security.InvalidParameterException;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
 import java.util.Calendar;
 import java.util.Date;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -44,39 +49,22 @@ public class CertificateToolImplTest {
 	}
 
 	@Test
-	public void testGenerateCertificateHasBasicConstraints() throws Exception {
-		X509Certificate x509Certificate = _generateTestCertificate();
+	public void testGenerateCertificate() throws Exception {
+		X509Certificate x509Certificate1 = _generateTestCertificate();
+		X509Certificate x509Certificate2 = _generateTestCertificate();
 
-		Assert.assertEquals(-1, x509Certificate.getBasicConstraints());
-	}
+		Assert.assertEquals(3, x509Certificate1.getVersion());
+		Assert.assertEquals(-1, x509Certificate1.getBasicConstraints());
 
-	@Test
-	public void testGenerateCertificateHasKeyUsage() throws Exception {
-		X509Certificate x509Certificate = _generateTestCertificate();
-
-		boolean[] keyUsage = x509Certificate.getKeyUsage();
+		boolean[] keyUsage = x509Certificate1.getKeyUsage();
 
 		Assert.assertNotNull(keyUsage);
 		Assert.assertTrue(keyUsage[0]);
 		Assert.assertTrue(keyUsage[2]);
-	}
-
-	@Test
-	public void testGenerateCertificateHasRandomSerialNumber()
-		throws Exception {
-
-		X509Certificate certificate1 = _generateTestCertificate();
-		X509Certificate certificate2 = _generateTestCertificate();
 
 		Assert.assertNotEquals(
-			certificate1.getSerialNumber(), certificate2.getSerialNumber());
-	}
-
-	@Test
-	public void testGenerateCertificateIsX509v3() throws Exception {
-		X509Certificate x509Certificate = _generateTestCertificate();
-
-		Assert.assertEquals(3, x509Certificate.getVersion());
+			x509Certificate1.getSerialNumber(),
+			x509Certificate2.getSerialNumber());
 	}
 
 	@Test
@@ -97,8 +85,10 @@ public class CertificateToolImplTest {
 				keyPair, certificateEntityId, certificateEntityId,
 				startDate.getTime(), endDate.getTime(), "SHA256withRSA");
 
-		String subjectDN = x509Certificate.getSubjectX500Principal(
-		).getName();
+		X500Principal subjectX500Principal =
+			x509Certificate.getSubjectX500Principal();
+
+		String subjectDN = subjectX500Principal.getName();
 
 		Assert.assertTrue(subjectDN.contains("CN=Test CN"));
 		Assert.assertTrue(subjectDN.contains("O=Test Org"));
@@ -109,87 +99,61 @@ public class CertificateToolImplTest {
 	}
 
 	@Test
-	public void testGenerateKeyPairDSA2048() throws Exception {
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("DSA", 2048);
+	public void testGenerateKeyPairDefaultMode() throws Exception {
+		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 512), 512);
+		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 2048), 2048);
 
-		Assert.assertNotNull(keyPair);
-		Assert.assertEquals(
-			"DSA",
-			keyPair.getPublic(
-			).getAlgorithm());
-	}
+		KeyPair dsaKeyPair = _certificateToolImpl.generateKeyPair("DSA", 2048);
 
-	@Test(expected = InvalidParameterException.class)
-	public void testGenerateKeyPairFIPSModeDSA() throws Exception {
-		_enableFIPSMode();
+		Assert.assertNotNull(dsaKeyPair);
 
-		_certificateToolImpl.generateKeyPair("DSA", 2048);
-	}
+		PublicKey dsaPublicKey = dsaKeyPair.getPublic();
 
-	@Test(expected = InvalidParameterException.class)
-	public void testGenerateKeyPairFIPSModeRSA512() throws Exception {
-		_enableFIPSMode();
-
-		_certificateToolImpl.generateKeyPair("RSA", 512);
-	}
-
-	@Test(expected = InvalidParameterException.class)
-	public void testGenerateKeyPairFIPSModeRSA1024() throws Exception {
-		_enableFIPSMode();
-
-		_certificateToolImpl.generateKeyPair("RSA", 1024);
+		Assert.assertEquals("DSA", dsaPublicKey.getAlgorithm());
 	}
 
 	@Test
-	public void testGenerateKeyPairFIPSModeRSA2048() throws Exception {
+	public void testGenerateKeyPairFIPSMode() throws Exception {
 		_enableFIPSMode();
 
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
+		_assertRejected("DSA", 2048);
+		_assertRejected("RSA", 512);
+		_assertRejected("RSA", 1024);
 
-		Assert.assertNotNull(keyPair);
+		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 2048), 2048);
+		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 3072), 3072);
+		_assertKeyPair(_certificateToolImpl.generateKeyPair("RSA", 4096), 4096);
 	}
 
-	@Test
-	public void testGenerateKeyPairFIPSModeRSA3072() throws Exception {
-		_enableFIPSMode();
-
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 3072);
-
+	private void _assertKeyPair(KeyPair keyPair, int expectedBitLength) {
 		Assert.assertNotNull(keyPair);
+
+		PublicKey publicKey = keyPair.getPublic();
+
+		Assert.assertEquals("RSA", publicKey.getAlgorithm());
+
+		RSAPublicKey rsaPublicKey = (RSAPublicKey)publicKey;
+
+		BigInteger modulus = rsaPublicKey.getModulus();
+
+		Assert.assertEquals(expectedBitLength, modulus.bitLength());
 	}
 
-	@Test
-	public void testGenerateKeyPairFIPSModeRSA4096() throws Exception {
-		_enableFIPSMode();
+	private void _assertRejected(String algorithm, int keySize) {
+		try {
+			_certificateToolImpl.generateKeyPair(algorithm, keySize);
 
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 4096);
-
-		Assert.assertNotNull(keyPair);
-	}
-
-	@Test
-	public void testGenerateKeyPairRSA512() throws Exception {
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 512);
-
-		Assert.assertNotNull(keyPair);
-	}
-
-	@Test
-	public void testGenerateKeyPairRSA2048() throws Exception {
-		KeyPair keyPair = _certificateToolImpl.generateKeyPair("RSA", 2048);
-
-		Assert.assertNotNull(keyPair);
-		Assert.assertEquals(
-			"RSA",
-			keyPair.getPublic(
-			).getAlgorithm());
-
-		RSAPublicKey rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
-
-		Assert.assertEquals(
-			2048,
-			rsaPublicKey.getModulus(
-			).bitLength());
+			Assert.fail(
+				"Expected InvalidParameterException for " + algorithm + " " +
+					keySize);
+		}
+		catch (InvalidParameterException invalidParameterException) {
+		}
+		catch (Exception exception) {
+			Assert.fail(
+				"Expected InvalidParameterException but got " +
+					exception.getClass());
+		}
 	}
 
 	private void _enableFIPSMode() {
