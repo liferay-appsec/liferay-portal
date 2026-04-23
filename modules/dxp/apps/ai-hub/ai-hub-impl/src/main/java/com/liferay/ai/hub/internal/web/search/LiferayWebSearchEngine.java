@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.rest.dto.v1_0.SearchResult;
 
@@ -29,6 +30,7 @@ import dev.langchain4j.web.search.WebSearchRequest;
 import dev.langchain4j.web.search.WebSearchResults;
 
 import java.net.URI;
+import java.net.URL;
 import java.net.URLEncoder;
 
 import java.util.ArrayList;
@@ -71,9 +73,6 @@ public class LiferayWebSearchEngine implements WebSearchEngine {
 			throw new IllegalArgumentException();
 		}
 
-		List<WebSearchOrganicResult> webSearchOrganicResults =
-			new ArrayList<>();
-
 		Http.Options options = new Http.Options();
 
 		options.addHeader(
@@ -89,8 +88,20 @@ public class LiferayWebSearchEngine implements WebSearchEngine {
 			OAuth2ApplicationLocalServiceUtil.getOAuth2Application(
 				oAuth2Authorization.getOAuth2ApplicationId());
 
-		String location =
-			oAuth2Application.getHomePageURL() + "/o/search/v1.0/search";
+		String homePageURL = oAuth2Application.getHomePageURL();
+
+		URL url = new URL(homePageURL);
+
+		if (InetAddressUtil.isLocalInetAddress(
+				InetAddressUtil.getInetAddressByName(url.getHost()))) {
+
+			throw new SecurityException("Local links are not allowed: " + url);
+		}
+
+		List<WebSearchOrganicResult> webSearchOrganicResults =
+			new ArrayList<>();
+
+		String location = homePageURL + "/o/search/v1.0/search";
 
 		if (!Validator.isBlank(_blueprintExternalReferenceCode)) {
 			location = HttpComponentsUtil.addParameter(
@@ -124,16 +135,16 @@ public class LiferayWebSearchEngine implements WebSearchEngine {
 				continue;
 			}
 
-			String url = oAuth2Application.getHomePageURL();
+			String itemURL = homePageURL;
 
 			if (searchResult.getItemURL() != null) {
-				url = searchResult.getItemURL();
+				itemURL = searchResult.getItemURL();
 			}
 
 			webSearchOrganicResults.add(
 				WebSearchOrganicResult.from(
 					searchResult.getTitle(),
-					URI.create(URLEncoder.encode(url, "UTF-8")), null,
+					URI.create(URLEncoder.encode(itemURL, "UTF-8")), null,
 					searchResult.getDescription(),
 					Map.of("score", String.valueOf(score))));
 		}
