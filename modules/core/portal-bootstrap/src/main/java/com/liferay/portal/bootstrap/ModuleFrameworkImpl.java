@@ -14,6 +14,8 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.bootstrap.fips.FIPSComplianceChecker;
+import com.liferay.portal.bootstrap.fips.FIPSCryptoChecker;
 import com.liferay.portal.bootstrap.log.BundleStartStopLogger;
 import com.liferay.portal.bootstrap.log.PortalSynchronousLogListener;
 import com.liferay.portal.kernel.concurrent.SystemExecutorServiceUtil;
@@ -205,6 +207,11 @@ public class ModuleFrameworkImpl implements ModuleFramework {
 
 	@Override
 	public void initFramework() throws Exception {
+		if (PropsValues.PORTAL_SECURITY_FIPS_MODE_ENABLED) {
+			FIPSComplianceChecker.run();
+			FIPSCryptoChecker.run();
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("Initializing the new OSGi framework instance");
 		}
