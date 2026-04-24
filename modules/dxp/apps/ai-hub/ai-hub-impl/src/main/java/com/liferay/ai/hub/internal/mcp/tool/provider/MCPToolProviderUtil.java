@@ -20,6 +20,8 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserServiceUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -114,12 +116,21 @@ public class MCPToolProviderUtil {
 	private static McpTransport _createMcpTransport(
 		Map<String, Object> properties) {
 
+		String url = GetterUtil.getString(properties.get("url"));
+
+		if (!GetterUtil.getBoolean(
+				System.getProperty("mcp.server.allow.local.network")) &&
+			_isLocalNetworkURL(url)) {
+
+			throw new IllegalArgumentException();
+		}
+
 		return new StreamableHttpMcpTransport.Builder(
 		).customHeaders(
 			_createCustomHeaders(
 				GetterUtil.getString(properties.get("authArguments")))
 		).url(
-			GetterUtil.getString(properties.get("url"))
+			url
 		).build();
 	}
 
@@ -177,6 +188,21 @@ public class MCPToolProviderUtil {
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
 		}
+	}
+
+	private static boolean _isLocalNetworkURL(String url) {
+		try {
+			return InetAddressUtil.isLocalInetAddress(
+				InetAddressUtil.getInetAddressByName(
+					HttpComponentsUtil.getDomain(url)));
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return true;
 	}
 
 	private static String _parseBasicAuthorization(String authArguments) {
