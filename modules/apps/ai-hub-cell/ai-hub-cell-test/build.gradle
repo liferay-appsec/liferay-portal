@@ -1,0 +1,6 @@
+dependencies {
+	testIntegrationImplementation group: "com.liferay", name: "jakarta.ws.rs", version: "3.1.0.LIFERAY-PATCHED-1"
+	testIntegrationImplementation group: "jakarta.annotation", name: "jakarta.annotation-api", version: "2.1.1"
+	testIntegrationImplementation project(":apps:ai-hub-cell:ai-hub-cell-api")
+	testIntegrationImplementation project(":test:arquillian-extension-junit-bridge")
+}
