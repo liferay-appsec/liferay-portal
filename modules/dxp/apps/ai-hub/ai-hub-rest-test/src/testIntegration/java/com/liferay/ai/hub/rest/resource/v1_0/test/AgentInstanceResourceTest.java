@@ -144,6 +144,8 @@ public class AgentInstanceResourceTest
 				"serviceURL", "http://localhost:8080"
 			).build());
 
+		System.setProperty("mcp.server.allow.local.network", "true");
+
 		PrincipalThreadLocal.setName(TestPropsValues.getUserId());
 
 		ServiceContextThreadLocal.pushServiceContext(
@@ -254,6 +256,8 @@ public class AgentInstanceResourceTest
 			_mcpServerObjectDefinition.getObjectDefinitionId());
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			_objectDefinition.getObjectDefinitionId());
+
+		System.clearProperty("mcp.server.allow.local.network");
 
 		PrincipalThreadLocal.setName(_originalName);
 	}
