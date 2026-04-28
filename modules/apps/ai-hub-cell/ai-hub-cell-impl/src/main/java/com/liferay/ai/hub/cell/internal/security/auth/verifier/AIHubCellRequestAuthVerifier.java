@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rafael Praxedes
@@ -56,7 +58,8 @@ public class AIHubCellRequestAuthVerifier implements AuthVerifier {
 				return new AuthVerifierResult();
 			}
 
-			long userId = JWTTokenUtil.getUserId(token);
+			long userId = _jwtTokenUtil.getUserId(
+				PortalUtil.getCompanyId(httpServletRequest), token);
 
 			if (userId == 0) {
 				AuthVerifierResult authVerifierResult =
@@ -95,5 +98,8 @@ public class AIHubCellRequestAuthVerifier implements AuthVerifier {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIHubCellRequestAuthVerifier.class);
+
+	@Reference
+	private JWTTokenUtil _jwtTokenUtil;
 
 }

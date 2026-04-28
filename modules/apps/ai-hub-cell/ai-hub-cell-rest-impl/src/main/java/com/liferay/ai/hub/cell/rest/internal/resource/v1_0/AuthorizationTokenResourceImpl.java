@@ -62,7 +62,8 @@ public class AuthorizationTokenResourceImpl
 				setScope(() -> jsonObject.getString("scope"));
 				setServiceURL(aiHubCellConfiguration::serviceURL);
 				setUserToken(
-					() -> JWTTokenUtil.generateToken(
+					() -> _jwtTokenUtil.generateToken(
+						contextCompany.getCompanyId(),
 						TimeUnit.MINUTES.toMillis(10),
 						contextCompany.getVirtualHostname(),
 						contextUser.getUserId()));
@@ -78,5 +79,8 @@ public class AuthorizationTokenResourceImpl
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private JWTTokenUtil _jwtTokenUtil;
 
 }
