@@ -35,6 +35,8 @@ public class LDAPSettingsConstants {
 
 	public static final String NONE = "NONE";
 
+	public static final String PBKDF2 = "PBKDF2";
+
 	public static final String SHA = "SHA";
 
 	public static final String SHA_256 = "SHA-256";
