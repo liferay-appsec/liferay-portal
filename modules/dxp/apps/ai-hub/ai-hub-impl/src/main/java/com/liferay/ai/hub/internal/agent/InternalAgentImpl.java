@@ -7,6 +7,9 @@ package com.liferay.ai.hub.internal.agent;
 
 import com.liferay.ai.hub.agent.AgentContext;
 import com.liferay.ai.hub.internal.agent.util.AgentUtil;
+import com.liferay.portal.kernel.encryptor.Encryptor;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
@@ -36,11 +39,14 @@ import java.util.Map;
 public class InternalAgentImpl implements InternalAgent, InvocationHandler {
 
 	public InternalAgentImpl(
-		AgentContext agentContext,
+		AgentContext agentContext, CompanyLocalService companyLocalService,
+		Encryptor encryptor,
 		WorkflowDefinitionManager workflowDefinitionManager,
 		WorkflowInstanceManager workflowInstanceManager) {
 
 		_agentContext = agentContext;
+		_companyLocalService = companyLocalService;
+		_encryptor = encryptor;
 		_workflowDefinitionManager = workflowDefinitionManager;
 		_workflowInstanceManager = workflowInstanceManager;
 	}
@@ -84,12 +90,17 @@ public class InternalAgentImpl implements InternalAgent, InvocationHandler {
 		}
 
 		try {
+			Company company = _companyLocalService.getCompany(
+				_agentContext.getCompanyId());
+
 			Map<String, Serializable> workflowContext =
 				HashMapBuilder.<String, Serializable>put(
 					WorkflowConstants.CONTEXT_SERVICE_CONTEXT,
 					_agentContext.getServiceContext()
 				).put(
-					"accessToken", _agentContext.getAccessToken()
+					"accessToken",
+					_encryptor.encrypt(
+						company.getKeyObj(), _agentContext.getAccessToken())
 				).put(
 					"agentDefinitionExternalReferenceCode", _name
 				).put(
@@ -100,7 +111,9 @@ public class InternalAgentImpl implements InternalAgent, InvocationHandler {
 				).put(
 					"sseEventSinkKey", _agentContext.getSseEventSinkKey()
 				).put(
-					"userToken", _agentContext.getUserToken()
+					"userToken",
+					_encryptor.encrypt(
+						company.getKeyObj(), _agentContext.getUserToken())
 				).build();
 
 			for (AgentArgument agentArgument : arguments()) {
@@ -196,7 +209,9 @@ public class InternalAgentImpl implements InternalAgent, InvocationHandler {
 	private List<AgentArgument> _agentArguments;
 	private final AgentContext _agentContext;
 	private AgentInstance _agentInstance;
+	private final CompanyLocalService _companyLocalService;
 	private String _description;
+	private final Encryptor _encryptor;
 	private String _name;
 	private String _outputKey;
 	private final WorkflowDefinitionManager _workflowDefinitionManager;
