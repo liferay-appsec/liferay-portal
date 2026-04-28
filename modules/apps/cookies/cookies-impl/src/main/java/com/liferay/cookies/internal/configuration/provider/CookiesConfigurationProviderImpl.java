@@ -18,14 +18,12 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -124,8 +122,17 @@ public class CookiesConfigurationProviderImpl
 			getCookiesPreferenceHandlingConfiguration(ThemeDisplay themeDisplay)
 		throws Exception {
 
-		return _getCookiesConfiguration(
-			CookiesPreferenceHandlingConfiguration.class, themeDisplay);
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		Group scopeGroup = themeDisplay.getScopeGroup();
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getGroupConfigurationCookiesPreferenceHandlingConfiguration(
+				scopeGroup.getCompanyId(), scopeGroup.getGroupId());
 	}
 
 	@Override
@@ -279,6 +286,16 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	@Override
+	public boolean isCookiesPreferenceHandlingActived(
+		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
+
+		return _getScopeConfigurationAttribute(
+			scope, scopePK, this::_isCompanyCookiesPreferenceHandlingActived,
+			this::_isGroupCookiesPreferenceHandlingActived,
+			this::_isSystemCookiesPreferenceHandlingActived);
+	}
+
+	@Override
 	public boolean isCookiesPreferenceHandlingConfigurationDefined(
 			ExtendedObjectClassDefinition.Scope scope, long scopePK)
 		throws Exception {
@@ -384,14 +401,15 @@ public class CookiesConfigurationProviderImpl
 
 	@Override
 	public void updateCookiesPreferenceHandlingConfiguration(
-			int consentRenewalPeriod, boolean enabled,
+			boolean actived, int consentRenewalPeriod, boolean enabled,
 			boolean explicitConsentMode,
 			ExtendedObjectClassDefinition.Scope scope, long scopePK,
 			boolean storeConsent)
 		throws Exception {
 
 		Dictionary<String, Object> dictionary = _createDictionary(
-			consentRenewalPeriod, enabled, explicitConsentMode, storeConsent);
+			actived, consentRenewalPeriod, enabled, explicitConsentMode,
+			storeConsent);
 
 		if (scope == ExtendedObjectClassDefinition.Scope.COMPANY) {
 			_configurationProvider.saveCompanyConfiguration(
@@ -415,10 +433,12 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	private HashMapDictionary<String, Object> _createDictionary(
-		int consentRenewalPeriod, boolean enabled, boolean explicitConsentMode,
-		boolean storeConsent) {
+		boolean actived, int consentRenewalPeriod, boolean enabled,
+		boolean explicitConsentMode, boolean storeConsent) {
 
 		return HashMapDictionaryBuilder.<String, Object>put(
+			"actived", actived
+		).put(
 			"consentRenewalPeriod", consentRenewalPeriod
 		).put(
 			"enabled", enabled
@@ -538,18 +558,10 @@ public class CookiesConfigurationProviderImpl
 			Class<T> clazz, ThemeDisplay themeDisplay)
 		throws Exception {
 
-		LayoutSet layoutSet = _layoutSetLocalService.fetchLayoutSet(
-			themeDisplay.getServerName());
+		Group scopeGroup = themeDisplay.getScopeGroup();
 
-		if (layoutSet != null) {
-			Group group = layoutSet.getGroup();
-
-			return _configurationProvider.getGroupConfiguration(
-				clazz, group.getCompanyId(), group.getGroupId());
-		}
-
-		return _configurationProvider.getCompanyConfiguration(
-			clazz, themeDisplay.getCompanyId());
+		return _configurationProvider.getGroupConfiguration(
+			clazz, scopeGroup.getCompanyId(), scopeGroup.getGroupId());
 	}
 
 	private Configuration _getCookiesPreferenceHandlingCompanyConfiguration(
@@ -807,6 +819,17 @@ public class CookiesConfigurationProviderImpl
 			getSystemModifiedDate();
 	}
 
+	private boolean _isCompanyCookiesPreferenceHandlingActived(long companyId) {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getCompanyActived(companyId);
+	}
+
 	private boolean _isCompanyCookiesPreferenceHandlingEnabled(long companyId) {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
@@ -864,6 +887,17 @@ public class CookiesConfigurationProviderImpl
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyGlobalPrivacyControlEnabled(companyId);
+	}
+
+	private boolean _isGroupCookiesPreferenceHandlingActived(long groupId) {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.getGroupActived(
+			_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isGroupCookiesPreferenceHandlingEnabled(long groupId) {
@@ -924,6 +958,17 @@ public class CookiesConfigurationProviderImpl
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupGlobalPrivacyControlEnabled(
 				_getCompanyId(groupId), groupId);
+	}
+
+	private boolean _isSystemCookiesPreferenceHandlingActived() {
+		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
+			_cookiesPreferenceHandlingManagedServiceFactory =
+				(CookiesPreferenceHandlingManagedServiceFactory)
+					_managedServiceFactory;
+		}
+
+		return _cookiesPreferenceHandlingManagedServiceFactory.
+			getSystemActived();
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingEnabled() {
@@ -995,9 +1040,6 @@ public class CookiesConfigurationProviderImpl
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private LayoutSetLocalService _layoutSetLocalService;
 
 	@Reference(
 		target = "(component.name=com.liferay.cookies.internal.configuration.admin.service.CookiesPreferenceHandlingManagedServiceFactory)"
