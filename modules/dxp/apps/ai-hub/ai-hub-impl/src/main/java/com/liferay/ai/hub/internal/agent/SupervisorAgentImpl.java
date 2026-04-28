@@ -17,11 +17,13 @@ import com.liferay.petra.concurrent.NoticeableExecutorService;
 import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -128,8 +130,8 @@ public class SupervisorAgentImpl implements SupervisorAgent {
 
 			InternalAgentFactory internalAgentFactory =
 				new InternalAgentFactory(
-					agentContext, _workflowDefinitionManager,
-					_workflowInstanceManager);
+					agentContext, _companyLocalService, _encryptor,
+					_workflowDefinitionManager, _workflowInstanceManager);
 
 			return TransformUtil.transformToArray(
 				page.getItems(), internalAgentFactory::create,
@@ -218,7 +220,13 @@ public class SupervisorAgentImpl implements SupervisorAgent {
 		SupervisorAgentImpl.class);
 
 	@Reference
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private Encryptor _encryptor;
 
 	private NoticeableExecutorService _noticeableExecutorService;
 

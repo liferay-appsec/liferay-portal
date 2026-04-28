@@ -8,6 +8,8 @@ package com.liferay.ai.hub.internal.agent;
 import com.liferay.ai.hub.agent.AgentContext;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.encryptor.Encryptor;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -25,19 +27,22 @@ import dev.langchain4j.agentic.planner.AgentArgument;
 public class InternalAgentFactory {
 
 	public InternalAgentFactory(
-		AgentContext agentContext,
+		AgentContext agentContext, CompanyLocalService companyLocalService,
+		Encryptor encryptor,
 		WorkflowDefinitionManager workflowDefinitionManager,
 		WorkflowInstanceManager workflowInstanceManager) {
 
 		_agentContext = agentContext;
+		_companyLocalService = companyLocalService;
+		_encryptor = encryptor;
 		_workflowDefinitionManager = workflowDefinitionManager;
 		_workflowInstanceManager = workflowInstanceManager;
 	}
 
 	public InternalAgent create(ObjectEntry objectEntry) {
 		InternalAgentImpl internalAgentImpl = new InternalAgentImpl(
-			_agentContext, _workflowDefinitionManager,
-			_workflowInstanceManager);
+			_agentContext, _companyLocalService, _encryptor,
+			_workflowDefinitionManager, _workflowInstanceManager);
 
 		internalAgentImpl.setAgentArguments(
 			TransformUtil.transformToList(
@@ -68,6 +73,8 @@ public class InternalAgentFactory {
 	}
 
 	private final AgentContext _agentContext;
+	private final CompanyLocalService _companyLocalService;
+	private final Encryptor _encryptor;
 	private final WorkflowDefinitionManager _workflowDefinitionManager;
 	private final WorkflowInstanceManager _workflowInstanceManager;
 

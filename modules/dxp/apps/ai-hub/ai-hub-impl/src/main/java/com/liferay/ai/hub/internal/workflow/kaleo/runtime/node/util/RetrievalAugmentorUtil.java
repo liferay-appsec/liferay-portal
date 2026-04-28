@@ -10,11 +10,13 @@ import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
-import com.liferay.portal.kernel.json.JSONException;
+import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -59,7 +61,8 @@ import java.util.Objects;
 public class RetrievalAugmentorUtil {
 
 	public static RetrievalAugmentor createRetrievalAugmentor(
-		long companyId, DTOConverterRegistry dtoConverterRegistry,
+		long companyId, CompanyLocalService companyLocalService,
+		DTOConverterRegistry dtoConverterRegistry, Encryptor encryptor,
 		FieldConfigBuilderFactory fieldConfigBuilderFactory,
 		HighlightBuilderFactory highlightBuilderFactory,
 		Map<String, String> kaleoNodeSettingValues, Locale locale,
@@ -80,7 +83,8 @@ public class RetrievalAugmentorUtil {
 		}
 
 		contentRetriever = _createLiferayWebSearchContentRetriever(
-			companyId, kaleoNodeSettingValues, workflowContext);
+			companyId, companyLocalService, encryptor, kaleoNodeSettingValues,
+			workflowContext);
 
 		if (contentRetriever != null) {
 			contentRetrievers.add(contentRetriever);
@@ -163,7 +167,8 @@ public class RetrievalAugmentorUtil {
 	}
 
 	private static ContentRetriever _createLiferayWebSearchContentRetriever(
-		long companyId, Map<String, String> kaleoNodeSettingValues,
+		long companyId, CompanyLocalService companyLocalService,
+		Encryptor encryptor, Map<String, String> kaleoNodeSettingValues,
 		Map<String, Serializable> workflowContext) {
 
 		if (kaleoNodeSettingValues.get("rag") == null) {
@@ -180,21 +185,28 @@ public class RetrievalAugmentorUtil {
 			if (Objects.equals(
 					contentRetrieverJSONObject.getString("key"), "liferay")) {
 
+				Company company = companyLocalService.getCompany(companyId);
+
+				String accessToken = encryptor.decrypt(
+					company.getKeyObj(),
+					(String)workflowContext.get("accessToken"));
+				String userToken = encryptor.decrypt(
+					company.getKeyObj(),
+					(String)workflowContext.get("userToken"));
+
 				return WebSearchContentRetriever.builder(
 				).webSearchEngine(
 					new LiferayWebSearchEngine(
-						GetterUtil.getString(
-							workflowContext.get("accessToken")),
+						accessToken,
 						contentRetrieverJSONObject.getString(
 							"blueprintExternalReferenceCode"),
-						companyId,
-						GetterUtil.getString(workflowContext.get("userToken")))
+						companyId, userToken)
 				).build();
 			}
 		}
-		catch (JSONException jsonException) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(jsonException);
+				_log.debug(exception);
 			}
 		}
 
