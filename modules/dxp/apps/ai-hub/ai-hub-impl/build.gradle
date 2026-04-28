@@ -60,4 +60,5 @@ dependencies {
 	compileOnly project(":core:petra:petra-string")
 	compileOnly project(":dxp:apps:ai-hub:ai-hub-api")
 	compileOnly project(":dxp:apps:ai-hub:ai-hub-rest-api")
+	testImplementation group: "com.nimbusds", name: "nimbus-jose-jwt", version: "10.4"
 }
