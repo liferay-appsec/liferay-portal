@@ -876,6 +876,12 @@ public class PropsValues {
 					PropsKeys.
 						FIELD_ENABLE_COM_LIFERAY_PORTAL_KERNEL_MODEL_ORGANIZATION_STATUS));
 
+	public static final String[] FIPS_APPROVED_PROVIDERS = PropsUtil.getArray(
+		PropsKeys.FIPS_SECURITY_PROVIDERS);
+
+	public static final boolean FIPS_ENABLED = GetterUtil.getBoolean(
+		PropsUtil.get(PropsKeys.FIPS_ENABLED));
+
 	public static final String[] GLOBAL_SHUTDOWN_EVENTS = PropsUtil.getArray(
 		PropsKeys.GLOBAL_SHUTDOWN_EVENTS);
 
