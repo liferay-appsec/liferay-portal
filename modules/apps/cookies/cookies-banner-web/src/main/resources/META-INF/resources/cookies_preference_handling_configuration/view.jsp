@@ -13,6 +13,16 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 
 <aui:link hashedFile="<%= true %>" href="cookies-banner-web/cookies_preference_handling_configuration/css/main.css" rel="stylesheet" type="text/css" />
 
+<div class="alert <%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() ? "alert-success" : "alert-warning" %> d-flex align-items-center justify-content-between">
+	<span>
+		<liferay-ui:message key='<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() ? "this-experience-is-live-and-visible-to-site-visitors" : "this-experience-is-in-draft-mode-and-not-visible-to-site-visitors" %>' />
+	</span>
+
+	<button class="btn <%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() ? "btn-secondary" : "btn-warning" %> <%= !cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingEnabled() ? "disabled" : "" %>" id="<portlet:namespace />toggleActivedButton" type="button">
+		<liferay-ui:message key='<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() ? "deactivate" : "activate" %>' />
+	</button>
+</div>
+
 <div class="c-mt-5 row">
 	<div class="col-sm-12 form-group">
 		<div class="form-group__inner">
@@ -119,6 +129,8 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 		</div>
 	</div>
 </div>
+
+<aui:input name="actived" type="hidden" value="<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() %>" />
 
 <aui:input name="modifiedDate" type="hidden" />
 
@@ -353,6 +365,24 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 			});
 		}
 
+		var activedInput = document.getElementById('<portlet:namespace />actived');
+		var toggleActivedButton = document.getElementById(
+			'<portlet:namespace />toggleActivedButton'
+		);
+
+		if (activedInput && toggleActivedButton) {
+			toggleActivedButton.addEventListener('click', function (event) {
+				form.reset();
+
+				activedInput.value =
+					activedInput.value === 'true' ? 'false' : 'true';
+
+				form.dataset.skipActivedWarning = 'true';
+
+				form.submit();
+			});
+		}
+
 		form.addEventListener('submit', (event) => {
 			var consentRenewalPeriod = document.getElementById(
 				'<portlet:namespace />consentRenewalPeriod'
@@ -405,6 +435,61 @@ CookiesPreferenceHandlingConfigurationDisplayContext cookiesPreferenceHandlingCo
 							form.submit();
 						}
 					},
+				});
+
+				return;
+			}
+
+			if (
+				form.dataset.skipActivedWarning !== 'true' &&
+				enabled.checked &&
+				<%= cookiesPreferenceHandlingConfigurationDisplayContext.getCookiesPreferenceHandlingActived() %>
+			) {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+
+				var checkboxId = '<portlet:namespace />forceReconsentCheckbox';
+
+				Liferay.Util.openModal({
+					bodyHTML:
+						'<p><liferay-ui:message key="these-changes-will-take-effect-immediately-do-you-want-to-continue" /></p>' +
+						'<div class="custom-control custom-checkbox">' +
+						'<input class="custom-control-input" id="' +
+						checkboxId +
+						'" type="checkbox" />' +
+						'<label class="custom-control-label" for="' +
+						checkboxId +
+						'"><liferay-ui:message key="check-if-you-want-to-force-re-consent-to-the-users" /></label>' +
+						'</div>',
+					buttons: [
+						{
+							displayType: 'secondary',
+							label: Liferay.Language.get('cancel'),
+							type: 'cancel',
+						},
+						{
+							autoFocus: true,
+							displayType: 'primary',
+							label: Liferay.Language.get('ok'),
+							onClick: ({processClose}) => {
+								var forceReconsent =
+									document.getElementById(checkboxId)?.checked;
+
+								processClose();
+
+								form.dataset.skipActivedWarning = 'true';
+
+								if (forceReconsent) {
+									modifiedDate.value = new Date().getTime();
+								}
+
+								form.submit();
+							},
+						},
+					],
+					footerCssClass: 'border-0',
+					headerCssClass: 'border-0',
+					role: 'alertdialog',
 				});
 			}
 		});

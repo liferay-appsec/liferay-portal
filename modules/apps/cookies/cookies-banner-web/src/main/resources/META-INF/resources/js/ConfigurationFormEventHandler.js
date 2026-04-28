@@ -63,6 +63,10 @@ export default function ({namespace}) {
 				`input[type='checkbox'][name='${namespace}storeConsent']`
 			);
 
+			const toggleActivedButton = document.getElementById(
+				`${namespace}toggleActivedButton`
+			);
+
 			if (event.delegateTarget.id === `${namespace}enabled`) {
 				if (event.delegateTarget.checked) {
 					consentRenewalPeriod.classList.remove('disabled');
@@ -82,6 +86,11 @@ export default function ({namespace}) {
 					forcedReconsentButton.removeAttribute('disabled');
 					forcedReconsentButton.classList.remove('disabled');
 					storeConsent.removeAttribute('disabled');
+
+					if (toggleActivedButton) {
+						toggleActivedButton.classList.remove('disabled');
+						toggleActivedButton.removeAttribute('disabled');
+					}
 
 					floatingIcons.forEach((iconInput) => {
 						iconInput.removeAttribute('disabled');
@@ -126,6 +135,11 @@ export default function ({namespace}) {
 					forcedReconsentButton.setAttribute('disabled', '');
 					storeConsent.checked = false;
 					storeConsent.setAttribute('disabled', '');
+
+					if (toggleActivedButton) {
+						toggleActivedButton.classList.add('disabled');
+						toggleActivedButton.setAttribute('disabled', '');
+					}
 
 					floatingIcons.forEach((iconInput) => {
 						iconInput.setAttribute('disabled', '');
