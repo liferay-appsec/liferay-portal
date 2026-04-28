@@ -8,6 +8,7 @@ package com.liferay.ai.hub.rest.internal.resource.v1_0;
 import com.liferay.account.model.AccountEntryUserRel;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.ai.hub.agent.AgentContext;
+import com.liferay.ai.hub.agent.OnBehalfOfTokenValidator;
 import com.liferay.ai.hub.agent.SupervisorAgent;
 import com.liferay.ai.hub.rest.dto.v1_0.Message;
 import com.liferay.ai.hub.rest.resource.v1_0.MessageResource;
@@ -82,8 +83,7 @@ public class MessageResourceImpl extends BaseMessageResourceImpl {
 			).userId(
 				user.getUserId()
 			).userToken(
-				contextHttpServletRequest.getHeader(
-					"Liferay-AI-Hub-Cell-On-Behalf-Of")
+				_onBehalfOfTokenValidator.validate(contextHttpServletRequest)
 			).build());
 
 		return message;
@@ -139,6 +139,9 @@ public class MessageResourceImpl extends BaseMessageResourceImpl {
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private OnBehalfOfTokenValidator _onBehalfOfTokenValidator;
 
 	@Reference
 	private SupervisorAgent _supervisorAgent;
