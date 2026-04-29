@@ -144,18 +144,6 @@ public class CookiesPreferenceHandlingConfigurationFormRenderer
 				return false;
 			}
 		).put(
-			"modifiedDate",
-			() -> {
-				long modifiedDate = ParamUtil.getLong(
-					httpServletRequest, "modifiedDate");
-
-				if (modifiedDate <= 0) {
-					return null;
-				}
-
-				return modifiedDate;
-			}
-		).put(
 			"storeConsent",
 			ParamUtil.getBoolean(httpServletRequest, "storeConsent")
 		).build();
