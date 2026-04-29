@@ -41,9 +41,8 @@ public class RetrievalAugmentorUtilTest {
 	}
 
 	@Test
-	public void testCreateRetrievalAugmentorDecryptsTokens() throws Exception {
-		String encryptedAccessToken = RandomTestUtil.randomString();
-		String encryptedUserToken = RandomTestUtil.randomString();
+	public void testCreateRetrievalAugmentorDecryptsTokensFromWorkflowContext()
+		throws Exception {
 
 		long companyId = RandomTestUtil.randomLong();
 
@@ -51,6 +50,9 @@ public class RetrievalAugmentorUtilTest {
 
 		CompanyLocalService companyLocalService = _mockCompanyLocalService(
 			company, companyId);
+
+		String encryptedAccessToken = RandomTestUtil.randomString();
+		String encryptedUserToken = RandomTestUtil.randomString();
 
 		Encryptor encryptor = _mockEncryptor(
 			company, encryptedAccessToken, encryptedUserToken);
