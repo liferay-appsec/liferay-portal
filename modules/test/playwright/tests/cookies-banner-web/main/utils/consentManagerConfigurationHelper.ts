@@ -15,6 +15,7 @@ interface ConsentManagerConfiguration {
 	consentRenewalPeriod?: string;
 	enabled?: boolean;
 	explicitCookieConsentMode?: boolean;
+	floatingIconEnabled?: boolean;
 	forceReload?: boolean;
 	globalPrivacyControlEnabled?: boolean;
 	storeConsent?: boolean;
@@ -136,6 +137,7 @@ export async function updateConsentManagerConfiguration(
 		consentRenewalPeriod,
 		enabled,
 		explicitCookieConsentMode,
+		floatingIconEnabled,
 		forceReload,
 		globalPrivacyControlEnabled,
 		storeConsent,
@@ -199,6 +201,12 @@ export async function updateConsentManagerConfiguration(
 		if (storeConsent !== undefined) {
 			await consentManagerConfigurationPage.storeConsentCheckbox.setChecked(
 				storeConsent
+			);
+		}
+
+		if (floatingIconEnabled !== undefined) {
+			await consentManagerConfigurationPage.floatingIconEnabledCheckbox.setChecked(
+				floatingIconEnabled
 			);
 		}
 
