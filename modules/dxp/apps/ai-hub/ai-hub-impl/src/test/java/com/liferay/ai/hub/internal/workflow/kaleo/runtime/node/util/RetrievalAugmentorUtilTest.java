@@ -14,11 +14,8 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import dev.langchain4j.rag.RetrievalAugmentor;
-
 import java.io.Serializable;
 
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -52,6 +49,43 @@ public class RetrievalAugmentorUtilTest {
 
 		Company company = Mockito.mock(Company.class);
 
+		CompanyLocalService companyLocalService = _mockCompanyLocalService(
+			company, companyId);
+
+		Encryptor encryptor = _mockEncryptor(
+			company, encryptedAccessToken, encryptedUserToken);
+
+		RetrievalAugmentorUtil.createRetrievalAugmentor(
+			companyId, companyLocalService, null, encryptor, null, null,
+			HashMapBuilder.put(
+				"rag",
+				"{\"contentRetriever\":{\"blueprintExternalReferenceCode\":" +
+					"\"test-bp\",\"key\":\"liferay\"}}"
+			).build(),
+			null, null, null, 0L,
+			HashMapBuilder.<String, Serializable>put(
+				"accessToken", encryptedAccessToken
+			).put(
+				"userToken", encryptedUserToken
+			).build());
+
+		Mockito.verify(
+			encryptor
+		).decrypt(
+			company.getKeyObj(), encryptedAccessToken
+		);
+
+		Mockito.verify(
+			encryptor
+		).decrypt(
+			company.getKeyObj(), encryptedUserToken
+		);
+	}
+
+	private CompanyLocalService _mockCompanyLocalService(
+			Company company, long companyId)
+		throws Exception {
+
 		CompanyLocalService companyLocalService = Mockito.mock(
 			CompanyLocalService.class);
 
@@ -60,6 +94,14 @@ public class RetrievalAugmentorUtilTest {
 		).thenReturn(
 			company
 		);
+
+		return companyLocalService;
+	}
+
+	private Encryptor _mockEncryptor(
+			Company company, String encryptedAccessToken,
+			String encryptedUserToken)
+		throws Exception {
 
 		Encryptor encryptor = Mockito.mock(Encryptor.class);
 
@@ -75,35 +117,7 @@ public class RetrievalAugmentorUtilTest {
 			RandomTestUtil.randomString()
 		);
 
-		RetrievalAugmentor retrievalAugmentor =
-			RetrievalAugmentorUtil.createRetrievalAugmentor(
-				companyId, companyLocalService, null, encryptor, null, null,
-				HashMapBuilder.put(
-					"rag",
-					"{\"contentRetriever\":" +
-						"{\"blueprintExternalReferenceCode\":" +
-							"\"test-bp\",\"key\":\"liferay\"}}"
-				).build(),
-				null, null, null, 0L,
-				HashMapBuilder.<String, Serializable>put(
-					"accessToken", encryptedAccessToken
-				).put(
-					"userToken", encryptedUserToken
-				).build());
-
-		Assert.assertNotNull(retrievalAugmentor);
-
-		Mockito.verify(
-			encryptor
-		).decrypt(
-			company.getKeyObj(), encryptedAccessToken
-		);
-
-		Mockito.verify(
-			encryptor
-		).decrypt(
-			company.getKeyObj(), encryptedUserToken
-		);
+		return encryptor;
 	}
 
 }

@@ -44,16 +44,87 @@ public class InternalAgentImplTest {
 
 	@Test
 	public void testInvokeEncryptsTokensInWorkflowContext() throws Throwable {
-		AgentContext agentContext = Mockito.mock(AgentContext.class);
 		String plainTextAccessToken = RandomTestUtil.randomString();
+		String plainTextUserToken = RandomTestUtil.randomString();
+
+		long companyId = RandomTestUtil.randomLong();
+
+		AgentContext agentContext = _mockAgentContext(
+			companyId, plainTextAccessToken, plainTextUserToken);
+
+		String workflowDefinitionName = RandomTestUtil.randomString();
+
+		WorkflowDefinitionManager workflowDefinitionManager =
+			_mockWorkflowDefinitionManager(companyId, workflowDefinitionName);
+
+		WorkflowInstance workflowInstance = Mockito.mock(
+			WorkflowInstance.class);
+
+		WorkflowInstanceManager workflowInstanceManager =
+			_mockWorkflowInstanceManager(workflowInstance);
+
+		Company company = Mockito.mock(Company.class);
+
+		CompanyLocalService companyLocalService = _mockCompanyLocalService(
+			company, companyId);
+
+		String encryptedAccessToken = RandomTestUtil.randomString();
+		String encryptedUserToken = RandomTestUtil.randomString();
+
+		Encryptor encryptor = _mockEncryptor(
+			company, encryptedAccessToken, encryptedUserToken,
+			plainTextAccessToken, plainTextUserToken);
+
+		InternalAgentImpl internalAgentImpl = new InternalAgentImpl(
+			agentContext, companyLocalService, encryptor,
+			workflowDefinitionManager, workflowInstanceManager);
+
+		internalAgentImpl.setAgentArguments(Collections.emptyList());
+		internalAgentImpl.setWorkflowDefinitionName(workflowDefinitionName);
+
+		try (MockedStatic<AgentUtil> agentUtilMockedStatic = Mockito.mockStatic(
+				AgentUtil.class)) {
+
+			agentUtilMockedStatic.when(
+				() -> AgentUtil.getOutput(workflowInstance)
+			).thenReturn(
+				"output"
+			);
+
+			internalAgentImpl.invoke(
+				null, Object.class.getMethod("toString"), null);
+		}
+
+		ArgumentCaptor<Map<String, Serializable>> argumentCaptor =
+			ArgumentCaptor.forClass(Map.class);
+
+		Mockito.verify(
+			workflowInstanceManager
+		).startWorkflowInstance(
+			Mockito.anyLong(), Mockito.anyLong(), Mockito.anyLong(),
+			Mockito.any(), Mockito.any(), Mockito.any(),
+			argumentCaptor.capture()
+		);
+
+		Map<String, Serializable> workflowContext = argumentCaptor.getValue();
+
+		Assert.assertEquals(
+			encryptedAccessToken, workflowContext.get("accessToken"));
+		Assert.assertEquals(
+			encryptedUserToken, workflowContext.get("userToken"));
+	}
+
+	private AgentContext _mockAgentContext(
+		long companyId, String plainTextAccessToken,
+		String plainTextUserToken) {
+
+		AgentContext agentContext = Mockito.mock(AgentContext.class);
 
 		Mockito.when(
 			agentContext.getAccessToken()
 		).thenReturn(
 			plainTextAccessToken
 		);
-
-		long companyId = RandomTestUtil.randomLong();
 
 		Mockito.when(
 			agentContext.getCompanyId()
@@ -73,69 +144,38 @@ public class InternalAgentImplTest {
 			RandomTestUtil.randomString()
 		);
 
-		String plainTextUserToken = RandomTestUtil.randomString();
-
 		Mockito.when(
 			agentContext.getUserToken()
 		).thenReturn(
 			plainTextUserToken
 		);
 
-		WorkflowDefinitionManager workflowDefinitionManager = Mockito.mock(
-			WorkflowDefinitionManager.class);
+		return agentContext;
+	}
 
-		WorkflowDefinition workflowDefinition = Mockito.mock(
-			WorkflowDefinition.class);
-
-		Mockito.when(
-			workflowDefinition.getVersion()
-		).thenReturn(
-			1
-		);
-
-		String workflowDefinitionName = RandomTestUtil.randomString();
-
-		Mockito.when(
-			workflowDefinitionManager.liberalGetLatestWorkflowDefinition(
-				companyId, workflowDefinitionName)
-		).thenReturn(
-			workflowDefinition
-		);
-
-		WorkflowInstance workflowInstance = Mockito.mock(
-			WorkflowInstance.class);
-		WorkflowInstanceManager workflowInstanceManager = Mockito.mock(
-			WorkflowInstanceManager.class);
-
-		Mockito.when(
-			workflowInstanceManager.startWorkflowInstance(
-				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyLong(),
-				Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())
-		).thenReturn(
-			workflowInstance
-		);
+	private CompanyLocalService _mockCompanyLocalService(
+			Company company, long companyId)
+		throws Exception {
 
 		CompanyLocalService companyLocalService = Mockito.mock(
 			CompanyLocalService.class);
-		Encryptor encryptor = Mockito.mock(Encryptor.class);
-
-		InternalAgentImpl internalAgentImpl = new InternalAgentImpl(
-			agentContext, companyLocalService, encryptor,
-			workflowDefinitionManager, workflowInstanceManager);
-
-		internalAgentImpl.setAgentArguments(Collections.emptyList());
-		internalAgentImpl.setWorkflowDefinitionName(workflowDefinitionName);
-
-		String encryptedAccessToken = RandomTestUtil.randomString();
-		String encryptedUserToken = RandomTestUtil.randomString();
-
-		Company company = Mockito.mock(Company.class);
 
 		Mockito.when(
 			companyLocalService.getCompany(companyId)
 		).thenReturn(
 			company
 		);
+
+		return companyLocalService;
+	}
+
+	private Encryptor _mockEncryptor(
+			Company company, String encryptedAccessToken,
+			String encryptedUserToken, String plainTextAccessToken,
+			String plainTextUserToken)
+		throws Exception {
+
+		Encryptor encryptor = Mockito.mock(Encryptor.class);
 
 		Mockito.when(
 			encryptor.encrypt(company.getKeyObj(), plainTextAccessToken)
@@ -149,33 +189,51 @@ public class InternalAgentImplTest {
 			encryptedUserToken
 		);
 
-		try (MockedStatic<AgentUtil> agentUtilMockedStatic = Mockito.mockStatic(
-				AgentUtil.class)) {
+		return encryptor;
+	}
 
-			agentUtilMockedStatic.when(
-				() -> AgentUtil.getOutput(workflowInstance)
-			).thenReturn(
-				"output"
-			);
+	private WorkflowDefinitionManager _mockWorkflowDefinitionManager(
+			long companyId, String workflowDefinitionName)
+		throws Exception {
 
-			internalAgentImpl.invoke(
-				null, Object.class.getMethod("toString"), null);
-		}
+		WorkflowDefinition workflowDefinition = Mockito.mock(
+			WorkflowDefinition.class);
 
-		ArgumentCaptor<Map<String, Serializable>> contextCaptor =
-			ArgumentCaptor.forClass(Map.class);
-
-		Mockito.verify(
-			workflowInstanceManager
-		).startWorkflowInstance(
-			Mockito.anyLong(), Mockito.anyLong(), Mockito.anyLong(),
-			Mockito.any(), Mockito.any(), Mockito.any(), contextCaptor.capture()
+		Mockito.when(
+			workflowDefinition.getVersion()
+		).thenReturn(
+			1
 		);
 
-		Map<String, Serializable> context = contextCaptor.getValue();
+		WorkflowDefinitionManager workflowDefinitionManager = Mockito.mock(
+			WorkflowDefinitionManager.class);
 
-		Assert.assertEquals(encryptedAccessToken, context.get("accessToken"));
-		Assert.assertEquals(encryptedUserToken, context.get("userToken"));
+		Mockito.when(
+			workflowDefinitionManager.liberalGetLatestWorkflowDefinition(
+				companyId, workflowDefinitionName)
+		).thenReturn(
+			workflowDefinition
+		);
+
+		return workflowDefinitionManager;
+	}
+
+	private WorkflowInstanceManager _mockWorkflowInstanceManager(
+			WorkflowInstance workflowInstance)
+		throws Exception {
+
+		WorkflowInstanceManager workflowInstanceManager = Mockito.mock(
+			WorkflowInstanceManager.class);
+
+		Mockito.when(
+			workflowInstanceManager.startWorkflowInstance(
+				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyLong(),
+				Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())
+		).thenReturn(
+			workflowInstance
+		);
+
+		return workflowInstanceManager;
 	}
 
 }
