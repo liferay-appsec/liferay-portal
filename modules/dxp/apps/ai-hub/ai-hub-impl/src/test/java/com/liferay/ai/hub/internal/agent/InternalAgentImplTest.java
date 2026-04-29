@@ -44,10 +44,9 @@ public class InternalAgentImplTest {
 
 	@Test
 	public void testInvokeEncryptsTokensInWorkflowContext() throws Throwable {
+		long companyId = RandomTestUtil.randomLong();
 		String plainTextAccessToken = RandomTestUtil.randomString();
 		String plainTextUserToken = RandomTestUtil.randomString();
-
-		long companyId = RandomTestUtil.randomLong();
 
 		AgentContext agentContext = _mockAgentContext(
 			companyId, plainTextAccessToken, plainTextUserToken);
@@ -196,6 +195,9 @@ public class InternalAgentImplTest {
 			long companyId, String workflowDefinitionName)
 		throws Exception {
 
+		WorkflowDefinitionManager workflowDefinitionManager = Mockito.mock(
+			WorkflowDefinitionManager.class);
+
 		WorkflowDefinition workflowDefinition = Mockito.mock(
 			WorkflowDefinition.class);
 
@@ -204,9 +206,6 @@ public class InternalAgentImplTest {
 		).thenReturn(
 			1
 		);
-
-		WorkflowDefinitionManager workflowDefinitionManager = Mockito.mock(
-			WorkflowDefinitionManager.class);
 
 		Mockito.when(
 			workflowDefinitionManager.liberalGetLatestWorkflowDefinition(
