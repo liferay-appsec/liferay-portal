@@ -316,13 +316,13 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	@Override
-	public boolean isCookiesPreferenceHandlingActived(
+	public boolean isCookiesPreferenceHandlingActive(
 		ExtendedObjectClassDefinition.Scope scope, long scopePK) {
 
 		return _getScopeConfigurationAttribute(
-			scope, scopePK, this::_isCompanyCookiesPreferenceHandlingActived,
-			this::_isGroupCookiesPreferenceHandlingActived,
-			this::_isSystemCookiesPreferenceHandlingActived);
+			scope, scopePK, this::_isCompanyCookiesPreferenceHandlingActive,
+			this::_isGroupCookiesPreferenceHandlingActive,
+			this::_isSystemCookiesPreferenceHandlingActive);
 	}
 
 	@Override
@@ -431,14 +431,14 @@ public class CookiesConfigurationProviderImpl
 
 	@Override
 	public void updateCookiesPreferenceHandlingConfiguration(
-			boolean actived, int consentRenewalPeriod, boolean enabled,
+			boolean active, int consentRenewalPeriod, boolean enabled,
 			boolean explicitConsentMode,
 			ExtendedObjectClassDefinition.Scope scope, long scopePK,
 			boolean storeConsent)
 		throws Exception {
 
 		Dictionary<String, Object> dictionary = _createDictionary(
-			actived, consentRenewalPeriod, enabled, explicitConsentMode,
+			active, consentRenewalPeriod, enabled, explicitConsentMode,
 			storeConsent);
 
 		if (scope == ExtendedObjectClassDefinition.Scope.COMPANY) {
@@ -463,11 +463,11 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	private HashMapDictionary<String, Object> _createDictionary(
-		boolean actived, int consentRenewalPeriod, boolean enabled,
+		boolean active, int consentRenewalPeriod, boolean enabled,
 		boolean explicitConsentMode, boolean storeConsent) {
 
 		return HashMapDictionaryBuilder.<String, Object>put(
-			"actived", actived
+			"active", active
 		).put(
 			"consentRenewalPeriod", consentRenewalPeriod
 		).put(
@@ -849,15 +849,15 @@ public class CookiesConfigurationProviderImpl
 			getSystemModifiedDate();
 	}
 
-	private boolean _isCompanyCookiesPreferenceHandlingActived(long companyId) {
+	private boolean _isCompanyCookiesPreferenceHandlingActive(long companyId) {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
 				(CookiesPreferenceHandlingManagedServiceFactory)
 					_managedServiceFactory;
 		}
 
-		return _cookiesPreferenceHandlingManagedServiceFactory.
-			getCompanyActived(companyId);
+		return _cookiesPreferenceHandlingManagedServiceFactory.getCompanyActive(
+			companyId);
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingEnabled(long companyId) {
@@ -919,14 +919,14 @@ public class CookiesConfigurationProviderImpl
 			getCompanyGlobalPrivacyControlEnabled(companyId);
 	}
 
-	private boolean _isGroupCookiesPreferenceHandlingActived(long groupId) {
+	private boolean _isGroupCookiesPreferenceHandlingActive(long groupId) {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
 				(CookiesPreferenceHandlingManagedServiceFactory)
 					_managedServiceFactory;
 		}
 
-		return _cookiesPreferenceHandlingManagedServiceFactory.getGroupActived(
+		return _cookiesPreferenceHandlingManagedServiceFactory.getGroupActive(
 			_getCompanyId(groupId), groupId);
 	}
 
@@ -990,7 +990,7 @@ public class CookiesConfigurationProviderImpl
 				_getCompanyId(groupId), groupId);
 	}
 
-	private boolean _isSystemCookiesPreferenceHandlingActived() {
+	private boolean _isSystemCookiesPreferenceHandlingActive() {
 		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
 			_cookiesPreferenceHandlingManagedServiceFactory =
 				(CookiesPreferenceHandlingManagedServiceFactory)
@@ -998,7 +998,7 @@ public class CookiesConfigurationProviderImpl
 		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
-			getSystemActived();
+			getSystemActive();
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingEnabled() {

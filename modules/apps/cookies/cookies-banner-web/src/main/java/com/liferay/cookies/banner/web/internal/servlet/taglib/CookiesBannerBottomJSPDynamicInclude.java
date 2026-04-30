@@ -65,7 +65,7 @@ public class CookiesBannerBottomJSPDynamicInclude
 						getCookiesPreferenceHandlingConfiguration(themeDisplay);
 
 			if (!cookiesPreferenceHandlingConfiguration.enabled() ||
-				!cookiesPreferenceHandlingConfiguration.actived()) {
+				!cookiesPreferenceHandlingConfiguration.active()) {
 
 				return;
 			}

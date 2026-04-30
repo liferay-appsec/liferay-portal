@@ -39,12 +39,12 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		_unmapPid(pid);
 	}
 
-	public boolean getCompanyActived(long companyId) {
+	public boolean getCompanyActive(long companyId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
 				_getCompanyCookiesPreferenceHandlingConfiguration(companyId);
 
-		return cookiesPreferenceHandlingConfiguration.actived();
+		return cookiesPreferenceHandlingConfiguration.active();
 	}
 
 	public int getCompanyConsentRenewalPeriod(long companyId) {
@@ -147,13 +147,13 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 		return cookiesPreferenceHandlingConfiguration.storeConsent();
 	}
 
-	public boolean getGroupActived(long companyId, long groupId) {
+	public boolean getGroupActive(long companyId, long groupId) {
 		CookiesPreferenceHandlingConfiguration
 			cookiesPreferenceHandlingConfiguration =
 				_getGroupCookiesPreferenceHandlingConfiguration(
 					companyId, groupId);
 
-		return cookiesPreferenceHandlingConfiguration.actived();
+		return cookiesPreferenceHandlingConfiguration.active();
 	}
 
 	public CookiesPreferenceHandlingConfiguration
@@ -290,8 +290,8 @@ public class CookiesPreferenceHandlingManagedServiceFactory
 			"CookiesPreferenceHandlingConfiguration.scoped";
 	}
 
-	public boolean getSystemActived() {
-		return _systemCookiesPreferenceHandlingConfiguration.actived();
+	public boolean getSystemActive() {
+		return _systemCookiesPreferenceHandlingConfiguration.active();
 	}
 
 	public int getSystemConsentRenewalPeriod() {
