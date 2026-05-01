@@ -31,11 +31,11 @@ public class CookiesScopeUtil {
 	public static ExtendedObjectClassDefinition.Scope getScopeFromName(
 		String scopeName) {
 
-		if ("COMPANY".equals(scopeName)) {
+		if (scopeName.equals("COMPANY")) {
 			return ExtendedObjectClassDefinition.Scope.COMPANY;
 		}
 
-		if ("GROUP".equals(scopeName)) {
+		if (scopeName.equals("GROUP")) {
 			return ExtendedObjectClassDefinition.Scope.GROUP;
 		}
 

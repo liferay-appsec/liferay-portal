@@ -57,12 +57,6 @@ import org.osgi.service.component.annotations.Reference;
 public class CookiesConfigurationProviderImpl
 	implements CookiesConfigurationProvider {
 
-	@Activate
-	protected void activate() {
-		_cookiesPreferenceHandlingManagedServiceFactory =
-			(CookiesPreferenceHandlingManagedServiceFactory)_managedServiceFactory;
-	}
-
 	@Override
 	public void forceCookiesPreferenceHandlingReconsent(
 			ExtendedObjectClassDefinition.Scope scope, long scopePK)
@@ -461,6 +455,13 @@ public class CookiesConfigurationProviderImpl
 		else {
 			throw new IllegalArgumentException("Unsupported scope: " + scope);
 		}
+	}
+
+	@Activate
+	protected void activate() {
+		_cookiesPreferenceHandlingManagedServiceFactory =
+			(CookiesPreferenceHandlingManagedServiceFactory)
+				_managedServiceFactory;
 	}
 
 	private HashMapDictionary<String, Object> _createDictionary(

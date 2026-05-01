@@ -52,7 +52,9 @@ public class CookiesConfigurationPreviewJSPDynamicInclude
 	private static final Log _log = LogFactoryUtil.getLog(
 		CookiesConfigurationPreviewJSPDynamicInclude.class);
 
-	@Reference(target = "(osgi.web.symbolicname=com.liferay.cookies.banner.web)")
+	@Reference(
+		target = "(osgi.web.symbolicname=com.liferay.cookies.banner.web)"
+	)
 	private ServletContext _servletContext;
 
 }

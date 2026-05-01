@@ -17,10 +17,10 @@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
 <%@ page import="com.liferay.cookies.banner.web.internal.constants.CookiesBannerWebKeys" %><%@
-page import="com.liferay.cookies.banner.web.internal.util.CookiesScopeUtil" %><%@
 page import="com.liferay.cookies.banner.web.internal.display.context.CookiesBannerConfigurationDisplayContext" %><%@
 page import="com.liferay.cookies.banner.web.internal.display.context.CookiesBannerDisplayContext" %><%@
 page import="com.liferay.cookies.banner.web.internal.display.context.CookiesPreferenceHandlingConfigurationDisplayContext" %><%@
+page import="com.liferay.cookies.banner.web.internal.util.CookiesScopeUtil" %><%@
 page import="com.liferay.petra.string.StringPool" %><%@
 page import="com.liferay.portal.kernel.cookies.ConsentCookieType" %><%@
 page import="com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil" %><%@
