@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.servlet.taglib.BaseJSPDynamicInclude;
 import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.servlet.ServletContext;
@@ -58,18 +59,24 @@ public class CookiesBannerBottomJSPDynamicInclude
 			return;
 		}
 
+		boolean previewMode = ParamUtil.getBoolean(
+			httpServletRequest, CookiesBannerWebKeys.COOKIES_PREVIEW);
+
 		try {
 			CookiesPreferenceHandlingConfiguration
 				cookiesPreferenceHandlingConfiguration =
 					_cookiesConfigurationProvider.
 						getCookiesPreferenceHandlingConfiguration(themeDisplay);
 
-			if (!cookiesPreferenceHandlingConfiguration.enabled() ||
-				!cookiesPreferenceHandlingConfiguration.active()) {
+			if (!previewMode &&
+				(!cookiesPreferenceHandlingConfiguration.enabled() ||
+				 !cookiesPreferenceHandlingConfiguration.active())) {
 
 				return;
 			}
 
+			httpServletRequest.setAttribute(
+				CookiesBannerWebKeys.COOKIES_PREVIEW, previewMode);
 			httpServletRequest.setAttribute(
 				CookiesBannerWebKeys.CUSTOM_FLOATING_ICON_IMAGE_ID,
 				cookiesPreferenceHandlingConfiguration.
