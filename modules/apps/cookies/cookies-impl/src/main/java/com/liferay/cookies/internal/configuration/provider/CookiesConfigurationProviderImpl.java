@@ -46,6 +46,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ManagedServiceFactory;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -55,6 +56,12 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = CookiesConfigurationProvider.class)
 public class CookiesConfigurationProviderImpl
 	implements CookiesConfigurationProvider {
+
+	@Activate
+	protected void activate() {
+		_cookiesPreferenceHandlingManagedServiceFactory =
+			(CookiesPreferenceHandlingManagedServiceFactory)_managedServiceFactory;
+	}
 
 	@Override
 	public void forceCookiesPreferenceHandlingReconsent(
@@ -151,12 +158,6 @@ public class CookiesConfigurationProviderImpl
 	public CookiesPreferenceHandlingConfiguration
 			getCookiesPreferenceHandlingConfiguration(ThemeDisplay themeDisplay)
 		throws Exception {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		Group scopeGroup = themeDisplay.getScopeGroup();
 
@@ -486,12 +487,6 @@ public class CookiesConfigurationProviderImpl
 	private int _getCompanyCookiesPreferenceHandlingConsentRenewalPeriod(
 		long companyId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyConsentRenewalPeriod(companyId);
 	}
@@ -500,12 +495,6 @@ public class CookiesConfigurationProviderImpl
 		_getCompanyCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit(
 			long companyId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyConsentRenewalPeriodTimeUnit(companyId);
 	}
@@ -513,24 +502,12 @@ public class CookiesConfigurationProviderImpl
 	private long _getCompanyCookiesPreferenceHandlingCustomFloatingIconImageId(
 		long companyId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyCustomFloatingIconImageId(companyId);
 	}
 
 	private int _getCompanyCookiesPreferenceHandlingDissentRenewalPeriod(
 		long companyId) {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyDissentRenewalPeriod(companyId);
@@ -540,23 +517,11 @@ public class CookiesConfigurationProviderImpl
 		_getCompanyCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
 			long companyId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyDissentRenewalPeriodTimeUnit(companyId);
 	}
 
 	private String _getCompanyFloatingIcon(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyFloatingIcon(companyId);
 	}
@@ -574,12 +539,6 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	private long _getCompanyModifiedDate(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyModifiedDate(companyId);
 	}
@@ -643,12 +602,6 @@ public class CookiesConfigurationProviderImpl
 	private int _getGroupCookiesPreferenceHandlingConsentRenewalPeriod(
 		long groupId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupConsentRenewalPeriod(_getCompanyId(groupId), groupId);
 	}
@@ -656,12 +609,6 @@ public class CookiesConfigurationProviderImpl
 	private String
 		_getGroupCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit(
 			long groupId) {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupConsentRenewalPeriodTimeUnit(
@@ -671,24 +618,12 @@ public class CookiesConfigurationProviderImpl
 	private long _getGroupCookiesPreferenceHandlingCustomFloatingIconImageId(
 		long groupId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupCustomFloatingIconImageId(_getCompanyId(groupId), groupId);
 	}
 
 	private int _getGroupCookiesPreferenceHandlingDissentRenewalPeriod(
 		long groupId) {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupDissentRenewalPeriod(_getCompanyId(groupId), groupId);
@@ -698,35 +633,17 @@ public class CookiesConfigurationProviderImpl
 		_getGroupCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit(
 			long groupId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupDissentRenewalPeriodTimeUnit(
 				_getCompanyId(groupId), groupId);
 	}
 
 	private String _getGroupFloatingIcon(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupFloatingIcon(_getCompanyId(groupId), groupId);
 	}
 
 	private long _getGroupModifiedDate(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupModifiedDate(_getCompanyId(groupId), groupId);
 	}
@@ -767,24 +684,12 @@ public class CookiesConfigurationProviderImpl
 	}
 
 	private int _getSystemCookiesPreferenceHandlingConsentRenewalPeriod() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemConsentRenewalPeriod();
 	}
 
 	private String
 		_getSystemCookiesPreferenceHandlingConsentRenewalPeriodTimeUnit() {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemConsentRenewalPeriodTimeUnit();
@@ -793,23 +698,11 @@ public class CookiesConfigurationProviderImpl
 	private long
 		_getSystemCookiesPreferenceHandlingCustomFloatingIconImageId() {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemCustomFloatingIconImageId();
 	}
 
 	private int _getSystemCookiesPreferenceHandlingDissentRenewalPeriod() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemDissentRenewalPeriod();
 	}
@@ -817,68 +710,32 @@ public class CookiesConfigurationProviderImpl
 	private String
 		_getSystemCookiesPreferenceHandlingDissentRenewalPeriodTimeUnit() {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemDissentRenewalPeriodTimeUnit();
 	}
 
 	private String _getSystemFloatingIcon() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemFloatingIcon();
 	}
 
 	private long _getSystemModifiedDate() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemModifiedDate();
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingActive(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.getCompanyActive(
 			companyId);
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingEnabled(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyEnabled(companyId);
 	}
 
 	private boolean _isCompanyCookiesPreferenceHandlingExplicitConsentMode(
 		long companyId) {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyExplicitConsentMode(companyId);
@@ -887,68 +744,32 @@ public class CookiesConfigurationProviderImpl
 	private boolean _isCompanyCookiesPreferenceHandlingStoreConsent(
 		long companyId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyStoreConsent(companyId);
 	}
 
 	private boolean _isCompanyFloatingIconEnabled(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyFloatingIconEnabled(companyId);
 	}
 
 	private boolean _isCompanyGlobalPrivacyControlEnabled(long companyId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getCompanyGlobalPrivacyControlEnabled(companyId);
 	}
 
 	private boolean _isGroupCookiesPreferenceHandlingActive(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.getGroupActive(
 			_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isGroupCookiesPreferenceHandlingEnabled(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.getGroupEnabled(
 			_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isGroupCookiesPreferenceHandlingExplicitConsentMode(
 		long groupId) {
-
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
 
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupExplicitConsentMode(_getCompanyId(groupId), groupId);
@@ -957,101 +778,47 @@ public class CookiesConfigurationProviderImpl
 	private boolean _isGroupCookiesPreferenceHandlingStoreConsent(
 		long groupId) {
 
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupStoreConsent(_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isGroupFloatingIconEnabled(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupFloatingIconEnabled(_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isGroupGlobalPrivacyControlEnabled(long groupId) {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getGroupGlobalPrivacyControlEnabled(
 				_getCompanyId(groupId), groupId);
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingActive() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemActive();
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingEnabled() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemEnabled();
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingExplicitConsentMode() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemExplicitConsentMode();
 	}
 
 	private boolean _isSystemCookiesPreferenceHandlingStoreConsent() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemStoreConsent();
 	}
 
 	private boolean _isSystemFloatingIconEnabled() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemFloatingIconEnabled();
 	}
 
 	private boolean _isSystemGlobalPrivacyControlEnabled() {
-		if (_cookiesPreferenceHandlingManagedServiceFactory == null) {
-			_cookiesPreferenceHandlingManagedServiceFactory =
-				(CookiesPreferenceHandlingManagedServiceFactory)
-					_managedServiceFactory;
-		}
-
 		return _cookiesPreferenceHandlingManagedServiceFactory.
 			getSystemGlobalPrivacyControlEnabled();
 	}
