@@ -6,6 +6,7 @@
 package com.liferay.cookies.banner.web.internal.portlet.action;
 
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
+import com.liferay.cookies.banner.web.internal.util.CookiesScopeUtil;
 import com.liferay.cookies.configuration.CookiesConfigurationProvider;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
@@ -44,24 +45,11 @@ public class ForceReconsentMVCResourceCommand extends BaseMVCResourceCommand {
 		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		String scopeName = ParamUtil.getString(
-			resourceRequest, "scope", "SYSTEM");
+		ExtendedObjectClassDefinition.Scope scope =
+			CookiesScopeUtil.getScopeFromName(
+				ParamUtil.getString(resourceRequest, "scope", "SYSTEM"));
 
-		ExtendedObjectClassDefinition.Scope scope;
-		long scopePK;
-
-		if (scopeName.equals("COMPANY")) {
-			scope = ExtendedObjectClassDefinition.Scope.COMPANY;
-			scopePK = themeDisplay.getCompanyId();
-		}
-		else if (scopeName.equals("GROUP")) {
-			scope = ExtendedObjectClassDefinition.Scope.GROUP;
-			scopePK = themeDisplay.getScopeGroupId();
-		}
-		else {
-			scope = ExtendedObjectClassDefinition.Scope.SYSTEM;
-			scopePK = 0L;
-		}
+		long scopePK = CookiesScopeUtil.getScopePK(scope, themeDisplay);
 
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();

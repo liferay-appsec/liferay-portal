@@ -5,7 +5,7 @@
 
 package com.liferay.cookies.banner.web.internal.servlet.taglib;
 
-import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
+import com.liferay.cookies.banner.web.internal.util.CookiesScopeUtil;
 import com.liferay.cookies.configuration.CookiesConfigurationProvider;
 import com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration;
 import com.liferay.cookies.configuration.banner.CookiesBannerConfiguration;
@@ -50,25 +50,10 @@ public class CookiesConfigurationConfirmJSPDynamicInclude
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		String portletId = _portal.getPortletId(httpServletRequest);
+		ExtendedObjectClassDefinition.Scope scope = CookiesScopeUtil.getScope(
+			_portal.getPortletId(httpServletRequest));
 
-		ExtendedObjectClassDefinition.Scope scope;
-		long scopePK;
-
-		if (ConfigurationAdminPortletKeys.INSTANCE_SETTINGS.equals(portletId)) {
-			scope = ExtendedObjectClassDefinition.Scope.COMPANY;
-			scopePK = themeDisplay.getCompanyId();
-		}
-		else if (ConfigurationAdminPortletKeys.SITE_SETTINGS.equals(
-					portletId)) {
-
-			scope = ExtendedObjectClassDefinition.Scope.GROUP;
-			scopePK = themeDisplay.getScopeGroupId();
-		}
-		else {
-			scope = ExtendedObjectClassDefinition.Scope.SYSTEM;
-			scopePK = 0L;
-		}
+		long scopePK = CookiesScopeUtil.getScopePK(scope, themeDisplay);
 
 		if (!_cookiesConfigurationProvider.isCookiesPreferenceHandlingActive(
 				scope, scopePK)) {
