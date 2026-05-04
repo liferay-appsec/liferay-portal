@@ -8,14 +8,12 @@ package com.liferay.ai.hub.cell.rest.internal.resource.v1_0;
 import com.liferay.ai.hub.cell.configuration.AIHubCellConfiguration;
 import com.liferay.ai.hub.cell.rest.dto.v1_0.AuthorizationToken;
 import com.liferay.ai.hub.cell.rest.resource.v1_0.AuthorizationTokenResource;
-import com.liferay.ai.hub.cell.security.JWTTokenUtil;
+import com.liferay.ai.hub.cell.security.JWTTokenProvider;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.Http;
-
-import java.util.concurrent.TimeUnit;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -61,11 +59,7 @@ public class AuthorizationTokenResourceImpl
 				setAccessToken(() -> jsonObject.getString("access_token"));
 				setScope(() -> jsonObject.getString("scope"));
 				setServiceURL(aiHubCellConfiguration::serviceURL);
-				setUserToken(
-					() -> JWTTokenUtil.generateToken(
-						TimeUnit.MINUTES.toMillis(10),
-						contextCompany.getVirtualHostname(),
-						contextUser.getUserId()));
+				setUserToken(_jwtTokenProvider::generateToken);
 			}
 		};
 	}
@@ -78,5 +72,8 @@ public class AuthorizationTokenResourceImpl
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private JWTTokenProvider _jwtTokenProvider;
 
 }

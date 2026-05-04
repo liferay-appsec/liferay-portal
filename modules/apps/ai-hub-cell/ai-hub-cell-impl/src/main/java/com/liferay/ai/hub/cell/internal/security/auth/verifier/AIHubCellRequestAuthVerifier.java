@@ -5,7 +5,7 @@
 
 package com.liferay.ai.hub.cell.internal.security.auth.verifier;
 
-import com.liferay.ai.hub.cell.security.JWTTokenUtil;
+import com.liferay.ai.hub.cell.security.JWTTokenProvider;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Rafael Praxedes
@@ -56,7 +57,7 @@ public class AIHubCellRequestAuthVerifier implements AuthVerifier {
 				return new AuthVerifierResult();
 			}
 
-			long userId = JWTTokenUtil.getUserId(token);
+			long userId = _jwtTokenProvider.getUserId(token);
 
 			if (userId == 0) {
 				AuthVerifierResult authVerifierResult =
@@ -95,5 +96,8 @@ public class AIHubCellRequestAuthVerifier implements AuthVerifier {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIHubCellRequestAuthVerifier.class);
+
+	@Reference
+	private JWTTokenProvider _jwtTokenProvider;
 
 }
