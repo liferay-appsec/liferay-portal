@@ -13,9 +13,16 @@ import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -52,29 +59,68 @@ public class FileSystemKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 
 		samlKeyStoreFile = samlKeyStoreFile.getAbsoluteFile();
 
+		File parentDir = samlKeyStoreFile.getParentFile();
+
+		if (!parentDir.exists()) {
+			parentDir.mkdirs();
+		}
+
 		if (!samlKeyStoreFile.exists()) {
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"Creating a new SAML keystore at " + samlKeyStoreFile);
 			}
-
-			File parentDir = samlKeyStoreFile.getParentFile();
-
-			if (!parentDir.exists()) {
-				parentDir.mkdirs();
-			}
 		}
-
-		_monitorFile(samlKeyStoreFile);
 
 		String samlKeyStorePassword = getSamlKeyStorePassword();
 
-		try (FileOutputStream fileOutputStream = new FileOutputStream(
-				samlKeyStoreFile)) {
+		Path tempPath = Files.createTempFile(
+			parentDir.toPath(), "saml-keystore", ".tmp");
 
-			_keyStore.store(
-				fileOutputStream, samlKeyStorePassword.toCharArray());
+		try {
+			try (FileOutputStream fileOutputStream = new FileOutputStream(
+					tempPath.toFile())) {
+
+				_keyStore.store(
+					fileOutputStream, samlKeyStorePassword.toCharArray());
+
+				FileDescriptor fileDescriptor = fileOutputStream.getFD();
+
+				fileDescriptor.sync();
+			}
+
+			try {
+				Files.move(
+					tempPath, samlKeyStoreFile.toPath(),
+					StandardCopyOption.ATOMIC_MOVE,
+					StandardCopyOption.REPLACE_EXISTING);
+			}
+			catch (AtomicMoveNotSupportedException
+						atomicMoveNotSupportedException) {
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Atomic move not supported, falling back to " +
+							"non-atomic replace for " + samlKeyStoreFile);
+				}
+
+				Files.move(
+					tempPath, samlKeyStoreFile.toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
+		catch (Exception exception) {
+			try {
+				Files.deleteIfExists(tempPath);
+			}
+			catch (IOException ioException) {
+				exception.addSuppressed(ioException);
+			}
+
+			throw exception;
+		}
+
+		_monitorFile(samlKeyStoreFile);
 	}
 
 	@Activate

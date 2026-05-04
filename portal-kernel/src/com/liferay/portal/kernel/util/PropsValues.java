@@ -1770,6 +1770,10 @@ public class PropsValues {
 	public static final String PORTAL_PROXY_PATH = PropsUtil.get(
 		PropsKeys.PORTAL_PROXY_PATH);
 
+	public static final boolean PORTAL_SECURITY_FIPS_MODE_ENABLED =
+		GetterUtil.getBoolean(
+			PropsUtil.get(PropsKeys.PORTAL_SECURITY_FIPS_MODE_ENABLED));
+
 	public static final String[]
 		PORTAL_SECURITY_MANAGER_PRELOAD_CLASSLOADER_CLASSES =
 			PropsUtil.getArray(

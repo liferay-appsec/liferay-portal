@@ -102,24 +102,45 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 
 						<aui:input label="validity-days" name="certificateValidityDays" value='<%= ParamUtil.getString(request, "certificateValidityDays", "356") %>' />
 
+						<%
+						String[] keyAlgorithms = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_ALGORITHMS);
+						String[] keySizes = (String[])request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_KEY_SIZES);
+						%>
+
 						<c:choose>
-							<c:when test="<%= certificateUsage == LocalEntityManager.CertificateUsage.SIGNING %>">
+							<c:when test="<%= (keyAlgorithms.length > 1) && (certificateUsage == LocalEntityManager.CertificateUsage.SIGNING) %>">
 								<aui:select label="key-algorithm" name="certificateKeyAlgorithm" required="<%= true %>">
-									<aui:option label="rsa" selected='<%= certificateKeyAlgorithm.equals("RSA") %>' value="RSA" />
-									<aui:option label="dsa" selected='<%= certificateKeyAlgorithm.equals("DSA") %>' value="DSA" />
+
+									<%
+									for (String algorithm : keyAlgorithms) {
+									%>
+
+										<aui:option label="<%= algorithm.toLowerCase() %>" selected="<%= certificateKeyAlgorithm.equals(algorithm) %>" value="<%= algorithm %>" />
+
+									<%
+									}
+									%>
+
 								</aui:select>
 							</c:when>
-							<c:when test="<%= certificateUsage == LocalEntityManager.CertificateUsage.ENCRYPTION %>">
+							<c:otherwise>
 								<aui:input disabled="<%= true %>" label="key-algorithm" name="certificateKeyAlgorithm" value="RSA" />
 								<aui:input label="key-algorithm" name="certificateKeyAlgorithm" type="hidden" value="RSA" />
-							</c:when>
+							</c:otherwise>
 						</c:choose>
 
 						<aui:select label="key-length-bits" name="certificateKeyLength" required="<%= true %>">
-							<aui:option label="4096" selected='<%= certificateKeyLength.equals("4096") %>' value="4096" />
-							<aui:option label="2048" selected='<%= certificateKeyLength.equals("2048") %>' value="2048" />
-							<aui:option label="1024" selected='<%= certificateKeyLength.equals("1024") %>' value="1024" />
-							<aui:option label="512" selected='<%= certificateKeyLength.equals("512") %>' value="512" />
+
+							<%
+							for (String keySize : keySizes) {
+							%>
+
+								<aui:option label="<%= keySize %>" selected="<%= certificateKeyLength.equals(keySize) %>" value="<%= keySize %>" />
+
+							<%
+							}
+							%>
+
 						</aui:select>
 					</c:when>
 				</c:choose>

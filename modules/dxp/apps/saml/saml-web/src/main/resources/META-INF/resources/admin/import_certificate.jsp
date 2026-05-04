@@ -133,6 +133,7 @@ if (Validator.isNotNull(tempFileName)) {
 		<div class="container-fluid lfr-form-content">
 			<liferay-ui:error key="incorrectKeyPassword" message="incorrect-key-password" />
 			<liferay-ui:error key="keyEncryptionAlgorithmNotSupported" message="the-private-key-associated-with-the-alias-is-encrypted-with-an-unsupported-algorithm" />
+			<liferay-ui:error key="weakCertificateAlgorithm" message="the-certificate-does-not-meet-fips-140-3-requirements-only-rsa-keys-with-2048-bits-or-more-are-allowed" />
 
 			<div class="row">
 				<div class="col-lg-12">

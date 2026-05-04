@@ -1,4 +1,12 @@
 dependencies {
+	// FIPS MODE: When portal.security.fips.mode.enabled=true, the operator
+	// Required BC-FIPS artifacts:
+	// deployment configuration change, not a build-time dependency swap.
+	// in the JVM"s ext/lib or the app server"s classpath. This is a
+	// must replace the standard Bouncy Castle JARs below with BC-FIPS JARs
+	// org.bouncycastle: bc-fips: 2.0.1
+	// org.bouncycastle: bcpkix-fips: 2.0.8
+	// org.bouncycastle: bcutil-fips-2.0.5
 	compileInclude group: "com.liferay", name: "net.shibboleth.utilities.java.support", version: "7.3.0.JAKARTA-LIFERAY-PATCHED-1"
 	compileInclude group: "com.liferay", name: "org.apache.velocity", version: "1.6.4.LIFERAY-PATCHED-3"
 	compileInclude group: "commons-lang", name: "commons-lang", version: "2.6"
@@ -19,11 +27,11 @@ dependencies {
 	compileOnly group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly group: "commons-codec", name: "commons-codec", version: "1.15"
-	compileOnly group: "commons-collections", name: "commons-collections", version: "3.2.2"
 	compileOnly group: "jakarta.annotation", name: "jakarta.annotation-api", version: "2.1.1"
 	compileOnly group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
 	compileOnly group: "javax.xml.stream", name: "stax-api", version: "1.0-2"
 	compileOnly group: "joda-time", name: "joda-time", version: "2.12.1"
+	compileOnly group: "org.apache.commons", name: "commons-collections4", version: "4.5.0"
 	compileOnly group: "org.apache.httpcomponents", name: "httpclient", version: "4.5.13"
 	compileOnly group: "org.apache.httpcomponents", name: "httpcore", version: "4.4.14"
 	compileOnly group: "org.apache.httpcomponents", name: "httpmime", version: "4.5.13"

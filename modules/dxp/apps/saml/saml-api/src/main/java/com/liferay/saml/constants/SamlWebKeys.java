@@ -21,6 +21,12 @@ public interface SamlWebKeys {
 	public static final String SAML_ASSERTION_LIFETIME =
 		"SAML_ASSERTION_LIFETIME";
 
+	public static final String SAML_CERTIFICATE_KEY_ALGORITHMS =
+		"SAML_CERTIFICATE_KEY_ALGORITHMS";
+
+	public static final String SAML_CERTIFICATE_KEY_SIZES =
+		"SAML_CERTIFICATE_KEY_SIZES";
+
 	public static final String SAML_CERTIFICATE_TOOL = "SAML_CERTIFICATE_TOOL";
 
 	public static final String SAML_CLOCK_SKEW = "SAML_CLOCK_SKEW";

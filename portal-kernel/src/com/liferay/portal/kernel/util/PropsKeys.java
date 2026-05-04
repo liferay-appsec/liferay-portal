@@ -2077,6 +2077,9 @@ public interface PropsKeys {
 
 	public static final String PORTAL_PROXY_PATH = "portal.proxy.path";
 
+	public static final String PORTAL_SECURITY_FIPS_MODE_ENABLED =
+		"portal.security.fips.mode.enabled";
+
 	public static final String
 		PORTAL_SECURITY_MANAGER_FILE_CHECKER_DEFAULT_READ_PATHS =
 			"portal.security.manager.file.checker.default.read.paths";
