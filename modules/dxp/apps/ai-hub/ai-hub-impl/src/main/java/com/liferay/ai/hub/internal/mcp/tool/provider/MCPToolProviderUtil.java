@@ -8,6 +8,7 @@ package com.liferay.ai.hub.internal.mcp.tool.provider;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
+import com.liferay.object.service.ObjectEntryLocalServiceUtil;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -38,6 +39,8 @@ import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.model.chat.request.json.JsonAnyOfSchema;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
+
+import java.io.Serializable;
 
 import java.net.UnknownHostException;
 
@@ -87,7 +90,7 @@ public class MCPToolProviderUtil {
 				mcpServerExternalReferenceCodes, objectEntryManager, userId),
 			objectEntry -> {
 				McpTransport mcpTransport = _createMcpTransport(
-					objectEntry.getProperties());
+					ObjectEntryLocalServiceUtil.getValues(objectEntry.getId()));
 
 				return new DefaultMcpClient.Builder(
 				).transport(
@@ -117,10 +120,10 @@ public class MCPToolProviderUtil {
 	}
 
 	private static McpTransport _createMcpTransport(
-			Map<String, Object> properties)
+			Map<String, Serializable> values)
 		throws UnknownHostException {
 
-		String url = GetterUtil.getString(properties.get("url"));
+		String url = GetterUtil.getString(values.get("url"));
 
 		if (!PortalRunMode.isTestMode() &&
 			InetAddressUtil.isLocalInetAddress(
@@ -133,7 +136,7 @@ public class MCPToolProviderUtil {
 		return new StreamableHttpMcpTransport.Builder(
 		).customHeaders(
 			_createCustomHeaders(
-				GetterUtil.getString(properties.get("authArguments")))
+				GetterUtil.getString(values.get("authArguments")))
 		).url(
 			url
 		).build();
