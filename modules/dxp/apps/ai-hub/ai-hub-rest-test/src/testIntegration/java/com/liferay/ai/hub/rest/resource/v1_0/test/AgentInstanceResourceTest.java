@@ -23,6 +23,7 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
@@ -45,11 +46,13 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.HTTPTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -85,6 +88,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -144,11 +150,38 @@ public class AgentInstanceResourceTest
 				"serviceURL", "http://localhost:8080"
 			).build());
 
+		_mcpServerConfigurationPid =
+			ConfigurationTestUtil.createFactoryConfiguration(
+				"com.liferay.mcp.server.internal.configuration." +
+					"MCPServerConfiguration.scoped",
+				HashMapDictionaryBuilder.<String, Object>put(
+					"companyId", TestPropsValues.getCompanyId()
+				).put(
+					"enabled", true
+				).build());
+
 		PrincipalThreadLocal.setName(TestPropsValues.getUserId());
 
 		ServiceContextThreadLocal.pushServiceContext(
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), TestPropsValues.getUserId()));
+
+		_objectEncryptionAlgorithmSafeCloseable =
+			PropsValuesTestUtil.swapWithSafeCloseable(
+				"OBJECT_ENCRYPTION_ALGORITHM", "AES");
+		_objectEncryptionEnabledSafeCloseable =
+			PropsValuesTestUtil.swapWithSafeCloseable(
+				"OBJECT_ENCRYPTION_ENABLED", true);
+
+		KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+
+		keyGenerator.init(128);
+
+		SecretKey secretKey = keyGenerator.generateKey();
+
+		_objectEncryptionKeySafeCloseable =
+			PropsValuesTestUtil.swapWithSafeCloseable(
+				"OBJECT_ENCRYPTION_KEY", Base64.encode(secretKey.getEncoded()));
 
 		SiteInitializer siteInitializer =
 			_siteInitializerRegistry.getSiteInitializer(
@@ -248,12 +281,17 @@ public class AgentInstanceResourceTest
 
 	@AfterClass
 	public static void tearDownClass() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(_mcpServerConfigurationPid);
+
 		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
 
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			_mcpServerObjectDefinition.getObjectDefinitionId());
 		_objectDefinitionLocalService.deleteObjectDefinition(
 			_objectDefinition.getObjectDefinitionId());
+		_objectEncryptionAlgorithmSafeCloseable.close();
+		_objectEncryptionEnabledSafeCloseable.close();
+		_objectEncryptionKeySafeCloseable.close();
 
 		PrincipalThreadLocal.setName(_originalName);
 	}
@@ -1059,11 +1097,16 @@ public class AgentInstanceResourceTest
 
 	private static ObjectDefinition _contentRetrieverObjectDefinition;
 	private static ObjectDefinition _instructionObjectDefinition;
+	private static String _mcpServerConfigurationPid;
 	private static ObjectDefinition _mcpServerObjectDefinition;
 	private static ObjectDefinition _objectDefinition;
 
 	@Inject
 	private static ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	private static SafeCloseable _objectEncryptionAlgorithmSafeCloseable;
+	private static SafeCloseable _objectEncryptionEnabledSafeCloseable;
+	private static SafeCloseable _objectEncryptionKeySafeCloseable;
 
 	@Inject
 	private static ObjectEntryLocalService _objectEntryLocalService;
