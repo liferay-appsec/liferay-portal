@@ -15,9 +15,11 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
 import com.liferay.portal.kernel.service.CompanyInfoLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -64,14 +66,32 @@ public class CompanyInfoLocalServiceTest {
 
 		long companyId = company.getCompanyId();
 
-		CompanyInfo companyInfo = _companyInfoLocalService.fetchCompany(
-			companyId);
-
 		_companyLocalService.deleteCompany(companyId);
 
 		Assert.assertNull(_companyInfoLocalService.fetchCompany(companyId));
+	}
 
-		Assert.assertNull(CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
+	@Test
+	public void testDeleteCompanyInfoFIPSEnabled() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", Boolean.TRUE)) {
+
+			Company company = CompanyTestUtil.addCompany();
+
+			long companyId = company.getCompanyId();
+
+			CompanyInfo companyInfo = _companyInfoLocalService.fetchCompany(
+				companyId);
+
+			String alias = companyInfo.getKey();
+
+			_companyLocalService.deleteCompany(companyId);
+
+			Assert.assertTrue(CompanyKeyStoreUtil.isKeyStoreAlias(alias));
+			Assert.assertNull(_companyInfoLocalService.fetchCompany(companyId));
+			Assert.assertNull(CompanyKeyStoreUtil.getKey(alias));
+		}
 	}
 
 	@Test
@@ -88,8 +108,34 @@ public class CompanyInfoLocalServiceTest {
 			_company.getCompanyId());
 
 		Assert.assertEquals(
-			CompanyKeyStoreUtil.getKey(companyInfo.getKey()),
+			_encryptor.deserializeKey(companyInfo.getKey()),
 			_company.getKeyObj());
+	}
+
+	@Test
+	public void testGetCompanyInfoKeyObjFIPSEnabled() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", Boolean.TRUE)) {
+
+			Company company = CompanyTestUtil.addCompany();
+
+			try {
+				CompanyInfo companyInfo = _companyInfoLocalService.fetchCompany(
+					company.getCompanyId());
+
+				Assert.assertTrue(
+					CompanyKeyStoreUtil.isKeyStoreAlias(companyInfo.getKey()));
+				Assert.assertNotNull(
+					CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
+				Assert.assertEquals(
+					CompanyKeyStoreUtil.getKey(companyInfo.getKey()),
+					company.getKeyObj());
+			}
+			finally {
+				_companyLocalService.deleteCompany(company.getCompanyId());
+			}
+		}
 	}
 
 	@Test

@@ -11,16 +11,15 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.v7_4_x.UpgradeCompanyInfo;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,43 +36,36 @@ public class UpgradeCompanyInfoTest {
 	public static final LiferayIntegrationTestRule liferayIntegrationTestRule =
 		new LiferayIntegrationTestRule();
 
-	@Before
-	public void setUp() throws Exception {
-		_company = CompanyTestUtil.addCompany();
-
-		CompanyInfo companyInfo = _company.getCompanyInfo();
-
-		CompanyKeyStoreUtil.removeKey(companyInfo.getKey());
-
-		_company.setKey(RandomTestUtil.randomString());
-
-		_company = _companyLocalService.updateCompany(_company);
-	}
-
 	@Test
 	public void testUpgradeProcess() throws Exception {
-		UpgradeProcess upgradeProcess = new UpgradeCompanyInfo();
+		Company company = CompanyTestUtil.addCompany();
 
-		upgradeProcess.upgrade();
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", Boolean.TRUE)) {
 
-		CacheRegistryUtil.clear();
+			UpgradeProcess upgradeProcess = new UpgradeCompanyInfo();
 
-		_company = _companyLocalService.fetchCompany(_company.getCompanyId());
+			upgradeProcess.upgrade();
 
-		CompanyInfo companyInfo = _company.getCompanyInfo();
+			CacheRegistryUtil.clear();
 
-		Assert.assertEquals(
-			companyInfo.getKey(),
-			CompanyKeyStoreUtil.generateAlias(_company.getCompanyId()));
+			company = _companyLocalService.fetchCompany(company.getCompanyId());
 
-		Assert.assertNotNull(CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
+			CompanyInfo companyInfo = company.getCompanyInfo();
 
-		Assert.assertTrue(
-			CompanyKeyStoreUtil.isKeyStoreAlias(companyInfo.getKey()));
+			Assert.assertEquals(
+				companyInfo.getKey(),
+				CompanyKeyStoreUtil.generateAlias(company.getCompanyId()));
+			Assert.assertNotNull(
+				CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
+			Assert.assertTrue(
+				CompanyKeyStoreUtil.isKeyStoreAlias(companyInfo.getKey()));
+		}
+		finally {
+			_companyLocalService.deleteCompany(company);
+		}
 	}
-
-	@DeleteAfterTestRun
-	private Company _company;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
