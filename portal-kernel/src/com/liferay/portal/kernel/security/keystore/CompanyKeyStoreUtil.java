@@ -5,6 +5,8 @@
 
 package com.liferay.portal.kernel.security.keystore;
 
+import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -114,52 +116,49 @@ public class CompanyKeyStoreUtil {
 		}
 	}
 
-	private static KeyStore _getKeyStore() throws Exception {
-		if (_keyStore != null) {
-			return _keyStore;
-		}
+	private static KeyStore _getKeyStore() {
+		return _keyStoreDCLSingleton.getSingleton(
+			() -> {
+				try {
+					String keyStoreType = GetterUtil.getString(
+						PropsUtil.get(
+							PropsKeys.COMPANY_ENCRYPTION_KEYSTORE_TYPE),
+						KeyStore.getDefaultType());
 
-		synchronized (CompanyKeyStoreUtil.class) {
-			if (_keyStore != null) {
-				return _keyStore;
-			}
+					KeyStore keyStore = KeyStore.getInstance(keyStoreType);
 
-			String keyStoreType = GetterUtil.getString(
-				PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEYSTORE_TYPE),
-				KeyStore.getDefaultType());
+					File keyStoreFile = _getKeyStoreFile();
 
-			KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+					if (keyStoreFile.exists()) {
+						char[] password = _getKeyStorePassword();
 
-			File keyStoreFile = _getKeyStoreFile();
+						try (FileInputStream fileInputStream =
+								new FileInputStream(keyStoreFile)) {
 
-			if (keyStoreFile.exists()) {
-				char[] password = _getKeyStorePassword();
+							keyStore.load(fileInputStream, password);
+						}
+						finally {
+							Arrays.fill(password, '\0');
+						}
+					}
+					else {
+						keyStore.load(null, null);
 
-				try (FileInputStream fileInputStream = new FileInputStream(
-						keyStoreFile)) {
+						_saveKeyStore(keyStore);
 
-					keyStore.load(fileInputStream, password);
+						if (_log.isInfoEnabled()) {
+							_log.info(
+								"Created new company KeyStore at: " +
+									keyStoreFile.getAbsolutePath());
+						}
+					}
+
+					return keyStore;
 				}
-				finally {
-					Arrays.fill(password, '\0');
+				catch (Exception exception) {
+					return ReflectionUtil.throwException(exception);
 				}
-			}
-			else {
-				keyStore.load(null, null);
-
-				_saveKeyStore(keyStore);
-
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"Created new company KeyStore at: " +
-							keyStoreFile.getAbsolutePath());
-				}
-			}
-
-			_keyStore = keyStore;
-
-			return _keyStore;
-		}
+			});
 	}
 
 	private static File _getKeyStoreFile() {
@@ -219,9 +218,9 @@ public class CompanyKeyStoreUtil {
 
 	private static final String _DEFAULT_KEYSTORE_PASSWORD = "liferay";
 
+	private static final DCLSingleton<KeyStore> _keyStoreDCLSingleton =
+		new DCLSingleton<>();
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		CompanyKeyStoreUtil.class);
-
-	private static volatile KeyStore _keyStore;
-
 }
