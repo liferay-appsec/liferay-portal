@@ -7,9 +7,11 @@ package com.liferay.saml.web.internal.portlet.action.test;
 
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -23,6 +25,7 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
+import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -31,6 +34,7 @@ import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
@@ -42,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockMultipartHttpServletRequest;
@@ -53,6 +58,8 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 
 	@Test
 	public void testProcessAction() throws Exception {
+		Assume.assumeFalse(PropsValues.DATABASE_PARTITION_ENABLED);
+
 		T baseModel = addBaseModel();
 
 		try (SafeCloseable safeCloseable =
@@ -75,6 +82,52 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 				baseModel, company, UserTestUtil.addUser(company)));
 
 		_processAction(baseModel, company, TestPropsValues.getUser());
+
+		assertProcessAction(
+			fetchBaseModel(GetterUtil.getLong(baseModel.getPrimaryKeyObj())));
+	}
+
+	@Test
+	public void testProcessActionDBPartitionEnabled() throws Exception {
+		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
+
+		Layout layout = _layoutLocalService.getLayout(
+			TestPropsValues.getPlid());
+
+		LayoutSet layoutSet = layout.getLayoutSet();
+
+		User user = TestPropsValues.getUser();
+
+		Company crossTenantCompany = CompanyTestUtil.addCompany(true);
+
+		try {
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						crossTenantCompany.getCompanyId())) {
+
+				_assertException(
+					() -> _processAction(
+						addBaseModel(),
+						_companyLocalService.getCompanyById(
+							PortalInstancePool.getDefaultCompanyId()),
+						user, layout, layoutSet));
+			}
+		}
+		finally {
+			_companyLocalService.deleteCompany(crossTenantCompany);
+		}
+
+		Company company = _companyLocalService.getCompanyById(
+			TestPropsValues.getCompanyId());
+
+		T baseModel = addBaseModel();
+
+		_assertException(
+			() -> _processAction(
+				baseModel, company, UserTestUtil.addUser(company), layout,
+				layoutSet));
+
+		_processAction(baseModel, company, user, layout, layoutSet);
 
 		assertProcessAction(
 			fetchBaseModel(GetterUtil.getLong(baseModel.getPrimaryKeyObj())));
@@ -128,6 +181,17 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 	private void _processAction(T baseModel, Company company, User user)
 		throws Exception {
 
+		Layout layout = _layoutLocalService.getLayout(
+			TestPropsValues.getPlid());
+
+		_processAction(baseModel, company, user, layout, layout.getLayoutSet());
+	}
+
+	private void _processAction(
+			T baseModel, Company company, User user, Layout layout,
+			LayoutSet layoutSet)
+		throws Exception {
+
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			new MockLiferayPortletActionRequest();
 
@@ -149,14 +213,9 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setCompany(company);
-
-		Layout layout = _layoutLocalService.getLayout(
-			TestPropsValues.getPlid());
-
 		themeDisplay.setLayout(layout);
-		themeDisplay.setLayoutSet(layout.getLayoutSet());
+		themeDisplay.setLayoutSet(layoutSet);
 		themeDisplay.setSiteGroupId(layout.getGroupId());
-
 		themeDisplay.setUser(user);
 
 		mockLiferayPortletActionRequest.setAttribute(
