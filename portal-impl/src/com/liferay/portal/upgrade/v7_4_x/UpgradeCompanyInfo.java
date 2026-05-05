@@ -84,9 +84,8 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 
 					Arrays.fill(keyBytes, (byte)0);
 
-					String alias = CompanyKeyStoreUtil.generateAlias(companyId);
-
-					CompanyKeyStoreUtil.setKey(alias, secretKeySpec);
+					String alias = CompanyKeyStoreUtil.storeKey(
+						companyId, secretKeySpec);
 
 					try (PreparedStatement updatePreparedStatement =
 							connection.prepareStatement(

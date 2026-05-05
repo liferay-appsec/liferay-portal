@@ -284,12 +284,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 						Key generatedKey = EncryptorUtil.generateKey();
 
 						if (PropsValues.FIPS_ENABLED) {
-							String alias = CompanyKeyStoreUtil.generateAlias(
-								updatedCompany.getCompanyId());
-
-							CompanyKeyStoreUtil.setKey(alias, generatedKey);
-
-							updatedCompany.setKey(alias);
+							updatedCompany.setKey(
+								CompanyKeyStoreUtil.storeKey(
+									updatedCompany.getCompanyId(),
+									generatedKey));
 						}
 						else {
 							updatedCompany.setKey(
@@ -603,11 +601,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			Key generatedKey = EncryptorUtil.generateKey();
 
 			if (PropsValues.FIPS_ENABLED) {
-				String alias = CompanyKeyStoreUtil.generateAlias(companyId);
-
-				CompanyKeyStoreUtil.setKey(alias, generatedKey);
-
-				company.setKey(alias);
+				company.setKey(
+					CompanyKeyStoreUtil.storeKey(companyId, generatedKey));
 			}
 			else {
 				company.setKey(EncryptorUtil.serializeKey(generatedKey));

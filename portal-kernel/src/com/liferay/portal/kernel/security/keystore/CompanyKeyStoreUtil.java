@@ -29,10 +29,6 @@ import java.util.Arrays;
  */
 public class CompanyKeyStoreUtil {
 
-	public static String generateAlias(long companyId) {
-		return _ALIAS_PREFIX + companyId;
-	}
-
 	public static Key getKey(String alias) {
 		char[] password = null;
 
@@ -86,7 +82,9 @@ public class CompanyKeyStoreUtil {
 		}
 	}
 
-	public static void setKey(String alias, Key key) {
+	public static String storeKey(long companyId, Key key) {
+		String alias = _ALIAS_PREFIX + companyId;
+
 		char[] password = null;
 
 		try {
@@ -103,6 +101,8 @@ public class CompanyKeyStoreUtil {
 					"Stored company encryption key in KeyStore with alias: " +
 						alias);
 			}
+
+			return alias;
 		}
 		catch (Exception exception) {
 			throw new RuntimeException(
@@ -218,9 +218,10 @@ public class CompanyKeyStoreUtil {
 
 	private static final String _DEFAULT_KEYSTORE_PASSWORD = "liferay";
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		CompanyKeyStoreUtil.class);
+
 	private static final DCLSingleton<KeyStore> _keyStoreDCLSingleton =
 		new DCLSingleton<>();
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		CompanyKeyStoreUtil.class);
 }

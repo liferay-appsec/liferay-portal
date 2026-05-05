@@ -54,9 +54,6 @@ public class UpgradeCompanyInfoTest {
 
 			CompanyInfo companyInfo = company.getCompanyInfo();
 
-			Assert.assertEquals(
-				companyInfo.getKey(),
-				CompanyKeyStoreUtil.generateAlias(company.getCompanyId()));
 			Assert.assertNotNull(
 				CompanyKeyStoreUtil.getKey(companyInfo.getKey()));
 			Assert.assertTrue(
