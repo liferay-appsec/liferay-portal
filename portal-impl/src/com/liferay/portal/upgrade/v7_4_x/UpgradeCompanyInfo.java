@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.PreparedStatement;
@@ -30,6 +31,16 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
+		if (!PropsValues.FIPS_ENABLED) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"FIPS mode is not enabled. Skipping company key " +
+						"migration to KeyStore.");
+			}
+
+			return;
+		}
+
 		String keyAlgorithm = StringUtil.toUpperCase(
 			GetterUtil.getString(
 				PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM)));
@@ -40,9 +51,9 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-			"SELECT companyInfoId, companyId, key_ FROM CompanyInfo");
+				"SELECT companyInfoId, companyId, key_ FROM CompanyInfo");
 
-			 ResultSet resultSet = preparedStatement.executeQuery()) {
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
 				String keyValue = resultSet.getString("key_");

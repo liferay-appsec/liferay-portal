@@ -150,6 +150,8 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import java.security.Key;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -279,13 +281,20 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					// Company info
 
 					try {
-						String alias = CompanyKeyStoreUtil.generateAlias(
-							updatedCompany.getCompanyId());
+						Key generatedKey = EncryptorUtil.generateKey();
 
-						CompanyKeyStoreUtil.setKey(
-							alias, EncryptorUtil.generateKey());
+						if (PropsValues.FIPS_ENABLED) {
+							String alias = CompanyKeyStoreUtil.generateAlias(
+								updatedCompany.getCompanyId());
 
-						updatedCompany.setKey(alias);
+							CompanyKeyStoreUtil.setKey(alias, generatedKey);
+
+							updatedCompany.setKey(alias);
+						}
+						else {
+							updatedCompany.setKey(
+								EncryptorUtil.serializeKey(generatedKey));
+						}
 					}
 					catch (EncryptorException encryptorException) {
 						throw new SystemException(encryptorException);
@@ -591,11 +600,18 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		}
 
 		try {
-			String alias = CompanyKeyStoreUtil.generateAlias(companyId);
+			Key generatedKey = EncryptorUtil.generateKey();
 
-			CompanyKeyStoreUtil.setKey(alias, EncryptorUtil.generateKey());
+			if (PropsValues.FIPS_ENABLED) {
+				String alias = CompanyKeyStoreUtil.generateAlias(companyId);
 
-			company.setKey(alias);
+				CompanyKeyStoreUtil.setKey(alias, generatedKey);
+
+				company.setKey(alias);
+			}
+			else {
+				company.setKey(EncryptorUtil.serializeKey(generatedKey));
+			}
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
@@ -1683,7 +1699,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		CompanyInfo companyInfo = company.getCompanyInfo();
 
-		CompanyKeyStoreUtil.removeKey(companyInfo.getKey());
+		if (CompanyKeyStoreUtil.isKeyStoreAlias(companyInfo.getKey())) {
+			CompanyKeyStoreUtil.removeKey(companyInfo.getKey());
+		}
 
 		_companyInfoPersistence.remove(companyInfo);
 
