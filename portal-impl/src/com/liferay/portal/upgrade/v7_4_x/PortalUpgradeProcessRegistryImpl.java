@@ -755,11 +755,12 @@ public class PortalUpgradeProcessRegistryImpl
 			new Version(38, 3, 0),
 			UpgradeProcessFactory.addColumns("UserGroup", "status INTEGER"),
 			UpgradeProcessFactory.runSQL("update UserGroup set status = 0"));
-
+	
 		upgradeVersionTreeMap.put(
 			new Version(38, 3, 1), new UpgradeAssetEntryPublishDate());
 
-		upgradeVersionTreeMap.put(new Version(38, 4, 0), new UpgradeCompanyInfo());
+		upgradeVersionTreeMap.put(
+			new Version(38, 4, 0), new UpgradeCompanyInfo());
 	}
 
 }

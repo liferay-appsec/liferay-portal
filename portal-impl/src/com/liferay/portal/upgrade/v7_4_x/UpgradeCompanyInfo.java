@@ -6,6 +6,7 @@
 package com.liferay.portal.upgrade.v7_4_x;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.keystore.CompanyKeyStoreUtil;
@@ -50,10 +51,17 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 				"Migrating company encryption keys from database to KeyStore");
 		}
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"SELECT companyInfoId, companyId, key_ FROM CompanyInfo");
+		try (PreparedStatement selectPreparedStatement =
+				connection.prepareStatement(
+					"SELECT companyInfoId, companyId, key_ FROM CompanyInfo");
 
-			ResultSet resultSet = preparedStatement.executeQuery()) {
+			ResultSet resultSet = selectPreparedStatement.executeQuery();
+
+			PreparedStatement updatePreparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					"UPDATE CompanyInfo SET key_ = ? WHERE companyInfoId = " +
+						"?")) {
 
 			while (resultSet.next()) {
 				String keyValue = resultSet.getString("key_");
@@ -87,17 +95,12 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 					String alias = CompanyKeyStoreUtil.saveKey(
 						companyId, secretKeySpec);
 
-					try (PreparedStatement updatePreparedStatement =
-							connection.prepareStatement(
-								"UPDATE CompanyInfo SET key_ = ? WHERE " +
-									"companyInfoId = ?")) {
+					updatePreparedStatement.setString(1, alias);
 
-						updatePreparedStatement.setString(1, alias);
-						updatePreparedStatement.setLong(
-							2, resultSet.getLong("companyInfoId"));
+					updatePreparedStatement.setLong(
+						2, resultSet.getLong("companyInfoId"));
 
-						updatePreparedStatement.executeUpdate();
-					}
+					updatePreparedStatement.addBatch();
 
 					if (_log.isInfoEnabled()) {
 						_log.info(
@@ -113,6 +116,8 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 						exception);
 				}
 			}
+
+			updatePreparedStatement.executeBatch();
 		}
 	}
 
