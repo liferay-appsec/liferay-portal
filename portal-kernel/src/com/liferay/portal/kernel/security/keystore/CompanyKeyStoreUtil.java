@@ -122,7 +122,7 @@ public class CompanyKeyStoreUtil {
 				try {
 					String keyStoreType = GetterUtil.getString(
 						PropsUtil.get(
-							PropsKeys.COMPANY_ENCRYPTION_KEYSTORE_TYPE),
+							PropsKeys.COMPANY_ENCRYPTION_KEY_KEYSTORE_TYPE),
 						KeyStore.getDefaultType());
 
 					KeyStore keyStore = KeyStore.getInstance(keyStoreType);
@@ -163,7 +163,7 @@ public class CompanyKeyStoreUtil {
 
 	private static File _getKeyStoreFile() {
 		String path = GetterUtil.getString(
-			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEYSTORE_PATH));
+			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEY_KEYSTORE_PATH));
 
 		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
 
@@ -177,7 +177,7 @@ public class CompanyKeyStoreUtil {
 
 	private static char[] _getKeyStorePassword() {
 		String password = GetterUtil.getString(
-			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEYSTORE_PASSWORD));
+			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEY_KEYSTORE_PASSWORD));
 
 		if (Validator.isNull(password) ||
 			password.equals(_DEFAULT_KEYSTORE_PASSWORD)) {
