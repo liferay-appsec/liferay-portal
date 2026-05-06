@@ -483,9 +483,6 @@ public interface PropsKeys {
 	public static final String COMPANY_ENCRYPTION_ALGORITHM =
 		"company.encryption.algorithm";
 
-	public static final String COMPANY_ENCRYPTION_KEY_SIZE =
-		"company.encryption.key.size";
-
 	public static final String COMPANY_ENCRYPTION_KEY_KEYSTORE_PASSWORD =
 		"company.encryption.key.keystore.password";
 
@@ -494,6 +491,9 @@ public interface PropsKeys {
 
 	public static final String COMPANY_ENCRYPTION_KEY_KEYSTORE_TYPE =
 		"company.encryption.key.keystore.type";
+
+	public static final String COMPANY_ENCRYPTION_KEY_SIZE =
+		"company.encryption.key.size";
 
 	public static final String COMPANY_LOG_ENABLED = "company.log.enabled";
 
