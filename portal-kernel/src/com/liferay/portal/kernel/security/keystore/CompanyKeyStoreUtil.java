@@ -82,7 +82,7 @@ public class CompanyKeyStoreUtil {
 		}
 	}
 
-	public static String storeKey(long companyId, Key key) {
+	public static String saveKey(long companyId, Key key) {
 		String alias = _ALIAS_PREFIX + companyId;
 
 		char[] password = null;

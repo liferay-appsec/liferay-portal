@@ -84,7 +84,7 @@ public class UpgradeCompanyInfo extends UpgradeProcess {
 
 					Arrays.fill(keyBytes, (byte)0);
 
-					String alias = CompanyKeyStoreUtil.storeKey(
+					String alias = CompanyKeyStoreUtil.saveKey(
 						companyId, secretKeySpec);
 
 					try (PreparedStatement updatePreparedStatement =

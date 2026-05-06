@@ -285,7 +285,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 						if (PropsValues.FIPS_ENABLED) {
 							updatedCompany.setKey(
-								CompanyKeyStoreUtil.storeKey(
+								CompanyKeyStoreUtil.saveKey(
 									updatedCompany.getCompanyId(),
 									generatedKey));
 						}
@@ -602,7 +602,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			if (PropsValues.FIPS_ENABLED) {
 				company.setKey(
-					CompanyKeyStoreUtil.storeKey(companyId, generatedKey));
+					CompanyKeyStoreUtil.saveKey(companyId, generatedKey));
 			}
 			else {
 				company.setKey(EncryptorUtil.serializeKey(generatedKey));
