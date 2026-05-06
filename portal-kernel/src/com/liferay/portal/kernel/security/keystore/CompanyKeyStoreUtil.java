@@ -120,40 +120,7 @@ public class CompanyKeyStoreUtil {
 		return _keyStoreDCLSingleton.getSingleton(
 			() -> {
 				try {
-					String keyStoreType = GetterUtil.getString(
-						PropsUtil.get(
-							PropsKeys.COMPANY_ENCRYPTION_KEY_KEYSTORE_TYPE),
-						KeyStore.getDefaultType());
-
-					KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-
-					File keyStoreFile = _getKeyStoreFile();
-
-					if (keyStoreFile.exists()) {
-						char[] password = _getKeyStorePassword();
-
-						try (FileInputStream fileInputStream =
-								new FileInputStream(keyStoreFile)) {
-
-							keyStore.load(fileInputStream, password);
-						}
-						finally {
-							Arrays.fill(password, '\0');
-						}
-					}
-					else {
-						keyStore.load(null, null);
-
-						_saveKeyStore(keyStore);
-
-						if (_log.isInfoEnabled()) {
-							_log.info(
-								"Created new company KeyStore at: " +
-									keyStoreFile.getAbsolutePath());
-						}
-					}
-
-					return keyStore;
+					return _loadKeyStore();
 				}
 				catch (Exception exception) {
 					return ReflectionUtil.throwException(exception);
@@ -186,6 +153,42 @@ public class CompanyKeyStoreUtil {
 		}
 
 		return password.toCharArray();
+	}
+
+	private static KeyStore _loadKeyStore() throws Exception {
+		String keyStoreType = GetterUtil.getString(
+			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_KEY_KEYSTORE_TYPE),
+			KeyStore.getDefaultType());
+
+		KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+
+		File keyStoreFile = _getKeyStoreFile();
+
+		if (keyStoreFile.exists()) {
+			char[] password = _getKeyStorePassword();
+
+			try (FileInputStream fileInputStream = new FileInputStream(
+					keyStoreFile)) {
+
+				keyStore.load(fileInputStream, password);
+			}
+			finally {
+				Arrays.fill(password, '\0');
+			}
+		}
+		else {
+			keyStore.load(null, null);
+
+			_saveKeyStore(keyStore);
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Created new company KeyStore at: " +
+						keyStoreFile.getAbsolutePath());
+			}
+		}
+
+		return keyStore;
 	}
 
 	private static void _saveKeyStore(KeyStore keyStore) throws Exception {
