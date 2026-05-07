@@ -11,10 +11,14 @@ import com.liferay.ai.hub.rest.manager.v1_0.AgentDefinitionManager;
 import com.liferay.ai.hub.rest.resource.v1_0.AgentInstanceResource;
 import com.liferay.ai.hub.rest.resource.v1_0.util.SseUtil;
 import com.liferay.ai.hub.util.AccountEntryUtil;
+import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
@@ -80,13 +84,18 @@ public class AgentInstanceResourceImpl extends BaseAgentInstanceResourceImpl {
 				contextCompany.getCompanyId(),
 				agentDefinition.getWorkflowDefinitionName());
 
+		Company company = _companyLocalService.getCompany(
+			contextCompany.getCompanyId());
+
 		Map<String, Serializable> workflowContext =
 			HashMapBuilder.<String, Serializable>put(
 				WorkflowConstants.CONTEXT_SERVICE_CONTEXT,
 				ServiceContextFactory.getInstance(contextHttpServletRequest)
 			).put(
 				"accessToken",
-				contextHttpServletRequest.getHeader("Authorization")
+				_encryptor.encrypt(
+					company.getKeyObj(),
+					contextHttpServletRequest.getHeader("Authorization"))
 			).put(
 				"agentDefinitionExternalReferenceCode",
 				agentDefinition.getExternalReferenceCode()
@@ -99,8 +108,10 @@ public class AgentInstanceResourceImpl extends BaseAgentInstanceResourceImpl {
 				"sseEventSinkKey", agentInstance.getSseEventSinkKey()
 			).put(
 				"userToken",
-				contextHttpServletRequest.getHeader(
-					"Liferay-AI-Hub-Cell-On-Behalf-Of")
+				_encryptor.encrypt(
+					company.getKeyObj(),
+					contextHttpServletRequest.getHeader(
+						"Liferay-AI-Hub-Cell-On-Behalf-Of"))
 			).build();
 
 		MapUtil.isNotEmptyForEach(
@@ -136,7 +147,13 @@ public class AgentInstanceResourceImpl extends BaseAgentInstanceResourceImpl {
 	private AgentDefinitionManager _agentDefinitionManager;
 
 	@Reference
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private Encryptor _encryptor;
 
 	@Context
 	private Sse _sse;
