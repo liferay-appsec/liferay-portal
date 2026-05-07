@@ -454,15 +454,9 @@ public class AgentInstanceResourceTest
 	}
 
 	private void _testPostAgentInstance() throws Exception {
-		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
-			JSONUtil.put(
-				"agentDefinitionExternalReferenceCode", "L_WORKFLOW_DEFINITION"
-			).put(
-				"context", JSONUtil.put("text", RandomTestUtil.randomString())
-			).put(
-				"sseEventSinkKey", RandomTestUtil.randomString()
-			).toString(),
-			"ai-hub/v1.0/agent-instances", Http.Method.POST);
+		JSONObject jsonObject = _postAgentInstance(
+			"L_WORKFLOW_DEFINITION", RandomTestUtil.randomString(), "text",
+			RandomTestUtil.randomString());
 
 		WorkflowInstance workflowInstance =
 			_workflowInstanceManager.getWorkflowInstance(
@@ -482,15 +476,9 @@ public class AgentInstanceResourceTest
 			WorkflowDefinitionConstants.SCOPE_AI, StringUtil.randomId(),
 			TestPropsValues.getUserId());
 
-		jsonObject = HTTPTestUtil.invokeToJSONObject(
-			JSONUtil.put(
-				"agentDefinitionExternalReferenceCode", "L_WORKFLOW_DEFINITION"
-			).put(
-				"context", JSONUtil.put("text", RandomTestUtil.randomString())
-			).put(
-				"sseEventSinkKey", RandomTestUtil.randomString()
-			).toString(),
-			"ai-hub/v1.0/agent-instances", Http.Method.POST);
+		jsonObject = _postAgentInstance(
+			"L_WORKFLOW_DEFINITION", RandomTestUtil.randomString(), "text",
+			RandomTestUtil.randomString());
 
 		workflowInstance = _workflowInstanceManager.getWorkflowInstance(
 			TestPropsValues.getCompanyId(),
