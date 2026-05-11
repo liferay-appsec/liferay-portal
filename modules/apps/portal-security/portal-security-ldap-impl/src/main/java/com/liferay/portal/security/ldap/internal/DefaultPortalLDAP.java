@@ -29,7 +29,7 @@ import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
 import com.liferay.portal.security.ldap.LDAPCredentialCipher;
-import com.liferay.portal.security.ldap.internal.ssl.FIPSLDAPSSLSocketFactory;
+import com.liferay.portal.security.ldap.internal.ssl.LDAPSSLSocketFactory;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
 
@@ -180,13 +180,12 @@ public class DefaultPortalLDAP implements PortalLDAP {
 			environmentProperties.put(Context.SECURITY_PROTOCOL, "ssl");
 			environmentProperties.put(
 				"java.naming.ldap.factory.socket",
-				FIPSLDAPSSLSocketFactory.class.getName());
+				LDAPSSLSocketFactory.class.getName());
 
 			fipsCipherSuites = systemLDAPConfiguration.fipsCipherSuites();
 
 			if ((fipsCipherSuites != null) && (fipsCipherSuites.length > 0)) {
-				FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(
-					fipsCipherSuites);
+				LDAPSSLSocketFactory.setCipherSuitesOverride(fipsCipherSuites);
 			}
 		}
 
@@ -210,7 +209,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 			if (fipsEnabled && (fipsCipherSuites != null) &&
 				(fipsCipherSuites.length > 0)) {
 
-				FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(null);
+				LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 			}
 		}
 

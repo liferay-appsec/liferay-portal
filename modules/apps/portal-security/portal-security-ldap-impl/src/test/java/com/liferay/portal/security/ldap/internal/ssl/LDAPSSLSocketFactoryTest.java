@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * @author Jorge García Jiménez
  */
-public class FIPSLDAPSSLSocketFactoryTest {
+public class LDAPSSLSocketFactoryTest {
 
 	@ClassRule
 	@Rule
@@ -32,14 +32,14 @@ public class FIPSLDAPSSLSocketFactoryTest {
 
 	@After
 	public void tearDown() {
-		FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(null);
+		LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 	}
 
 	@Test
 	public void testAllowlistIsOnlyAEADSuites() {
 		for (String suite :
 				(String[])ReflectionTestUtil.getFieldValue(
-					FIPSLDAPSSLSocketFactory.class,
+					LDAPSSLSocketFactory.class,
 					"_FIPS_CIPHER_SUITES_ALLOWLIST")) {
 
 			Assert.assertTrue(
@@ -53,7 +53,7 @@ public class FIPSLDAPSSLSocketFactoryTest {
 		Set<String> protocols = new HashSet<>(
 			Arrays.asList(
 				(String[])ReflectionTestUtil.getFieldValue(
-					FIPSLDAPSSLSocketFactory.class, "_ENABLED_PROTOCOLS")));
+					LDAPSSLSocketFactory.class, "_ENABLED_PROTOCOLS")));
 
 		Assert.assertEquals(protocols.toString(), 2, protocols.size());
 		Assert.assertTrue(protocols.contains("TLSv1.2"));
@@ -62,8 +62,8 @@ public class FIPSLDAPSSLSocketFactoryTest {
 
 	@Test
 	public void testGetDefaultReturnsSameSingleton() {
-		SocketFactory first = FIPSLDAPSSLSocketFactory.getDefault();
-		SocketFactory second = FIPSLDAPSSLSocketFactory.getDefault();
+		SocketFactory first = LDAPSSLSocketFactory.getDefault();
+		SocketFactory second = LDAPSSLSocketFactory.getDefault();
 
 		Assert.assertSame(first, second);
 	}
@@ -74,7 +74,7 @@ public class FIPSLDAPSSLSocketFactoryTest {
 		String[] supported = {"B", "D", "A"};
 
 		String[] intersection = ReflectionTestUtil.invoke(
-			FIPSLDAPSSLSocketFactory.getDefault(), "_intersect",
+			LDAPSSLSocketFactory.getDefault(), "_intersect",
 			new Class<?>[] {String[].class, String[].class}, desired,
 			supported);
 
@@ -87,7 +87,7 @@ public class FIPSLDAPSSLSocketFactoryTest {
 		String[] supported = {"A", "B", "C"};
 
 		String[] intersection = ReflectionTestUtil.invoke(
-			FIPSLDAPSSLSocketFactory.getDefault(), "_intersect",
+			LDAPSSLSocketFactory.getDefault(), "_intersect",
 			new Class<?>[] {String[].class, String[].class}, desired,
 			supported);
 
@@ -100,7 +100,7 @@ public class FIPSLDAPSSLSocketFactoryTest {
 		String[] supported = {"X", "Y"};
 
 		String[] intersection = ReflectionTestUtil.invoke(
-			FIPSLDAPSSLSocketFactory.getDefault(), "_intersect",
+			LDAPSSLSocketFactory.getDefault(), "_intersect",
 			new Class<?>[] {String[].class, String[].class}, desired,
 			supported);
 
@@ -112,11 +112,11 @@ public class FIPSLDAPSSLSocketFactoryTest {
 	public void testSetCipherSuitesOverrideClearsOnNullOrEmpty() {
 		String[] override = {"TLS_AES_256_GCM_SHA384"};
 
-		FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(override);
+		LDAPSSLSocketFactory.setCipherSuitesOverride(override);
 
-		FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(null);
+		LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 
-		FIPSLDAPSSLSocketFactory.setCipherSuitesOverride(new String[0]);
+		LDAPSSLSocketFactory.setCipherSuitesOverride(new String[0]);
 	}
 
 }

@@ -26,7 +26,7 @@ import javax.net.ssl.SSLSocketFactory;
 /**
  * @author Jorge García Jiménez
  */
-public class FIPSLDAPSSLSocketFactory extends SocketFactory {
+public class LDAPSSLSocketFactory extends SocketFactory {
 
 	public static SocketFactory getDefault() {
 		return _INSTANCE;
@@ -81,7 +81,7 @@ public class FIPSLDAPSSLSocketFactory extends SocketFactory {
 				host, port, localAddress, localPort));
 	}
 
-	private FIPSLDAPSSLSocketFactory() {
+	private LDAPSSLSocketFactory() {
 		try {
 			SSLContext sslContext = SSLContext.getInstance("TLS");
 
@@ -91,7 +91,7 @@ public class FIPSLDAPSSLSocketFactory extends SocketFactory {
 		}
 		catch (GeneralSecurityException generalSecurityException) {
 			throw new IllegalStateException(
-				"Unable to initialize FIPS LDAP SSL context",
+				"Unable to initialize LDAP SSL context",
 				generalSecurityException);
 		}
 	}
@@ -146,8 +146,8 @@ public class FIPSLDAPSSLSocketFactory extends SocketFactory {
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
 	};
 
-	private static final FIPSLDAPSSLSocketFactory _INSTANCE =
-		new FIPSLDAPSSLSocketFactory();
+	private static final LDAPSSLSocketFactory _INSTANCE =
+		new LDAPSSLSocketFactory();
 
 	private static final ThreadLocal<String[]> _cipherSuitesOverride =
 		new ThreadLocal<>();
