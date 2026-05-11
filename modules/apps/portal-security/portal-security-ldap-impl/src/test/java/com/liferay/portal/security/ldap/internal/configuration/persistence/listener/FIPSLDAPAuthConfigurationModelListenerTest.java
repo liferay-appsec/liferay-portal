@@ -5,7 +5,6 @@
 
 package com.liferay.portal.security.ldap.internal.configuration.persistence.listener;
 
-import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
 import com.liferay.portal.kernel.security.fips.FIPSModeUtil;
 import com.liferay.portal.security.ldap.LocalizedLDAPConfigurationModelListenerException;
 import com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration;
@@ -84,92 +83,35 @@ public class FIPSLDAPAuthConfigurationModelListenerTest {
 	}
 
 	@Test
-	public void testRejectionCarriesLocalizedMessage() throws Exception {
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
-
-			try {
-				_listener.onBeforeSave(
-					_PID, _properties("password-compare", "MD5"));
-
-				Assert.fail();
-			}
-			catch (LocalizedLDAPConfigurationModelListenerException
-						localizedLDAPConfigurationModelListenerException) {
-
-				Assert.assertEquals(
-					"fips-mode-does-not-permit-ldap-password-encryption-" +
-						"algorithm-x",
-					localizedLDAPConfigurationModelListenerException.
-						getMessageKey());
-				Assert.assertArrayEquals(
-					new Object[] {"MD5"},
-					localizedLDAPConfigurationModelListenerException.
-						getMessageArguments());
-			}
-		}
-	}
-
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsBcryptWhenFIPSOnAndPasswordCompare()
+	public void testRejectsUnapprovedAlgorithmsWhenFIPSOnAndPasswordCompare()
 		throws Exception {
 
 		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
 				true)) {
 
-			_listener.onBeforeSave(
-				_PID, _properties("password-compare", "BCRYPT"));
-		}
-	}
+			for (String algorithm :
+					new String[] {"", "BCRYPT", "MD5", "NONE", "SHA", "SSHA"}) {
 
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsEmptyAlgorithmWhenFIPSOnAndPasswordCompare()
-		throws Exception {
+				try {
+					_listener.onBeforeSave(
+						_PID, _properties("password-compare", algorithm));
 
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
+					Assert.fail();
+				}
+				catch (LocalizedLDAPConfigurationModelListenerException
+							localizedLDAPConfigurationModelListenerException) {
 
-			_listener.onBeforeSave(_PID, _properties("password-compare", ""));
-		}
-	}
-
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsMD5WhenFIPSOnAndPasswordCompare() throws Exception {
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
-
-			_listener.onBeforeSave(
-				_PID, _properties("password-compare", "MD5"));
-		}
-	}
-
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsNoneWhenFIPSOnAndPasswordCompare() throws Exception {
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
-
-			_listener.onBeforeSave(
-				_PID, _properties("password-compare", "NONE"));
-		}
-	}
-
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsSha1WhenFIPSOnAndPasswordCompare() throws Exception {
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
-
-			_listener.onBeforeSave(
-				_PID, _properties("password-compare", "SHA"));
-		}
-	}
-
-	@Test(expected = ConfigurationModelListenerException.class)
-	public void testRejectsSshaWhenFIPSOnAndPasswordCompare() throws Exception {
-		try (MockedStatic<FIPSModeUtil> fipsModeUtilMockedStatic = _mockFIPS(
-				true)) {
-
-			_listener.onBeforeSave(
-				_PID, _properties("password-compare", "SSHA"));
+					Assert.assertEquals(
+						"fips-mode-does-not-permit-ldap-password-encryption-" +
+							"algorithm-x",
+						localizedLDAPConfigurationModelListenerException.
+							getMessageKey());
+					Assert.assertArrayEquals(
+						new Object[] {algorithm},
+						localizedLDAPConfigurationModelListenerException.
+							getMessageArguments());
+				}
+			}
 		}
 	}
 
