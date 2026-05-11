@@ -110,7 +110,7 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 			desired, sslSocket.getSupportedCipherSuites());
 
 		if (enabled.length == 0) {
-			throw new IllegalStateException(
+			throw new SecurityException(
 				"No FIPS-approved cipher suites are supported by the " +
 					"installed JSSE provider; check the FIPS JCE/JSSE " +
 						"configuration");
