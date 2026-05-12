@@ -17,7 +17,17 @@ long ldapServerId = ParamUtil.getLong(request, "ldapServerId");
 LDAPServerConfiguration ldapServerConfiguration = ldapServerConfigurationProvider.getConfiguration(ActionUtil.getCompanyId(request), ldapServerId);
 
 String ldapServerName = ldapServerConfiguration.serverName();
+
 String ldapBaseProviderUrl = ldapServerConfiguration.baseProviderURL();
+
+if (FIPSModeUtil.isEnabled()) {
+	ldapBaseProviderUrl = StringUtil.replace(ldapBaseProviderUrl, "ldap://", "ldaps://");
+
+	if (ldapServerId == 0) {
+		ldapBaseProviderUrl = ldapBaseProviderUrl.replaceAll(":\\d+$", ":636");
+	}
+}
+
 String ldapBaseDN = ldapServerConfiguration.baseDN();
 String ldapSecurityPrincipal = ldapServerConfiguration.securityPrincipal();
 
@@ -358,6 +368,28 @@ renderResponse.setTitle((ldapServerId == 0) ? LanguageUtil.get(resourceBundle, "
 			groupMappingFieldValues
 		);
 
+		<%
+		if (FIPSModeUtil.isEnabled()) {
+		%>
+
+			var baseProviderURL =
+				form[
+					'<portlet:namespace />ldap--<%= LDAPConstants.BASE_PROVIDER_URL %>--'
+				].value;
+
+			if (!baseProviderURL.startsWith('ldaps://')) {
+				Liferay.Util.openAlertModal({
+					message:
+						'<liferay-ui:message key="fips-mode-requires-the-ldaps-scheme-for-ldap-connections" />',
+				});
+
+				return;
+			}
+
+		<%
+		}
+		%>
+
 		Liferay.Util.postForm(form, {
 			data: {
 				'<%= Constants.CMD %>':
@@ -479,6 +511,17 @@ renderResponse.setTitle((ldapServerId == 0) ? LanguageUtil.get(resourceBundle, "
 			userMappingPassword = 'userPassword';
 			userMappingScreenName = 'cn';
 		}
+
+		<%
+		if (FIPSModeUtil.isEnabled()) {
+		%>
+
+			baseProviderURL = baseProviderURL.replace('ldap://', 'ldaps://');
+			baseProviderURL = baseProviderURL.replace(/:\d+$/, ':636');
+
+		<%
+		}
+		%>
 
 		Liferay.Util.setFormValues(document.<portlet:namespace />fm, {
 			'ldap--<%= LDAPConstants.BASE_PROVIDER_URL %>--': baseProviderURL,
