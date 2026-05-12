@@ -5,7 +5,7 @@
 
 package com.liferay.portal.security.ldap.internal.configuration.persistence.listener;
 
-import com.liferay.portal.kernel.security.fips.FIPSModeUtil;
+import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.LocalizedLDAPConfigurationModelListenerException;
 import com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;

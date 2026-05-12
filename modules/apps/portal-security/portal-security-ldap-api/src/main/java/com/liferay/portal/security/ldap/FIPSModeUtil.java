@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.portal.kernel.security.fips;
+package com.liferay.portal.security.ldap;
 
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -19,10 +19,12 @@ public class FIPSModeUtil {
 			return false;
 		}
 
-		String normalized = StringUtil.toUpperCase(algorithm);
+		String normalizedString = StringUtil.toUpperCase(algorithm);
 
-		if (normalized.startsWith("PBKDF2") || normalized.equals("SHA-256") ||
-			normalized.equals("SHA-384") || normalized.equals("SHA-512")) {
+		if (normalizedString.startsWith("PBKDF2") ||
+			normalizedString.equals("SHA-256") ||
+			normalizedString.equals("SHA-384") ||
+			normalizedString.equals("SHA-512")) {
 
 			return true;
 		}
