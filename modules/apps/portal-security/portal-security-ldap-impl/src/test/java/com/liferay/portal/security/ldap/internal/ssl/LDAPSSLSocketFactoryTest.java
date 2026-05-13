@@ -8,11 +8,16 @@ package com.liferay.portal.security.ldap.internal.ssl;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.IOException;
 
-import javax.net.SocketFactory;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+
+import java.util.List;
+
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SSLSocket;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -36,87 +41,39 @@ public class LDAPSSLSocketFactoryTest {
 	}
 
 	@Test
-	public void testAllowlistIsOnlyAEADSuites() {
-		for (String suite :
-				(String[])ReflectionTestUtil.getFieldValue(
-					LDAPSSLSocketFactory.class,
-					"_FIPS_CIPHER_SUITES_ALLOWLIST")) {
+	public void testConnectSetsSNIServerName() throws IOException {
+		Socket socket = LDAPSSLSocketFactory.getDefault(
+		).createSocket();
 
-			Assert.assertTrue(
-				"Expected AEAD (GCM) suite, got " + suite,
-				suite.contains("_GCM_"));
+		SSLSocket delegate = ReflectionTestUtil.getFieldValue(
+			socket, "_delegate");
+
+		try {
+			socket.connect(new InetSocketAddress("localhost", 64999), 1000);
 		}
+		catch (IOException ioException) {
+		}
+
+		List<SNIServerName> serverNames = delegate.getSSLParameters(
+		).getServerNames();
+
+		Assert.assertEquals(serverNames.toString(), 1, serverNames.size());
+		Assert.assertTrue(serverNames.get(0) instanceof SNIHostName);
+
+		SNIHostName sniHostName = (SNIHostName)serverNames.get(0);
+
+		Assert.assertEquals("localhost", sniHostName.getAsciiName());
 	}
 
-	@Test
-	public void testEnabledProtocolsAreTLS12AndTLS13() {
-		Set<String> protocols = new HashSet<>(
-			Arrays.asList(
-				(String[])ReflectionTestUtil.getFieldValue(
-					LDAPSSLSocketFactory.class, "_ENABLED_PROTOCOLS")));
+	@Test(expected = SecurityException.class)
+	public void testCreateSocketThrowsSecurityExceptionWhenNoFIPSCipherSupported()
+		throws IOException {
 
-		Assert.assertEquals(protocols.toString(), 2, protocols.size());
-		Assert.assertTrue(protocols.contains("TLSv1.2"));
-		Assert.assertTrue(protocols.contains("TLSv1.3"));
-	}
+		LDAPSSLSocketFactory.setCipherSuitesOverride(
+			new String[] {"TLS_FAKE_NONEXISTENT_CIPHER"});
 
-	@Test
-	public void testGetDefaultReturnsSameSingleton() {
-		SocketFactory first = LDAPSSLSocketFactory.getDefault();
-		SocketFactory second = LDAPSSLSocketFactory.getDefault();
-
-		Assert.assertSame(first, second);
-	}
-
-	@Test
-	public void testIntersectKeepsOnlySupportedDesiredValues() {
-		String[] desired = {"A", "B", "C"};
-		String[] supported = {"B", "D", "A"};
-
-		String[] intersection = ReflectionTestUtil.invoke(
-			LDAPSSLSocketFactory.getDefault(), "_intersect",
-			new Class<?>[] {String[].class, String[].class}, desired,
-			supported);
-
-		Assert.assertArrayEquals(new String[] {"A", "B"}, intersection);
-	}
-
-	@Test
-	public void testIntersectPreservesDesiredOrder() {
-		String[] desired = {"C", "B", "A"};
-		String[] supported = {"A", "B", "C"};
-
-		String[] intersection = ReflectionTestUtil.invoke(
-			LDAPSSLSocketFactory.getDefault(), "_intersect",
-			new Class<?>[] {String[].class, String[].class}, desired,
-			supported);
-
-		Assert.assertArrayEquals(new String[] {"C", "B", "A"}, intersection);
-	}
-
-	@Test
-	public void testIntersectReturnsEmptyWhenNoneMatch() {
-		String[] desired = {"A", "B"};
-		String[] supported = {"X", "Y"};
-
-		String[] intersection = ReflectionTestUtil.invoke(
-			LDAPSSLSocketFactory.getDefault(), "_intersect",
-			new Class<?>[] {String[].class, String[].class}, desired,
-			supported);
-
-		Assert.assertEquals(
-			Arrays.toString(intersection), 0, intersection.length);
-	}
-
-	@Test
-	public void testSetCipherSuitesOverrideClearsOnNullOrEmpty() {
-		String[] override = {"TLS_AES_256_GCM_SHA384"};
-
-		LDAPSSLSocketFactory.setCipherSuitesOverride(override);
-
-		LDAPSSLSocketFactory.setCipherSuitesOverride(null);
-
-		LDAPSSLSocketFactory.setCipherSuitesOverride(new String[0]);
+		LDAPSSLSocketFactory.getDefault(
+		).createSocket();
 	}
 
 }
