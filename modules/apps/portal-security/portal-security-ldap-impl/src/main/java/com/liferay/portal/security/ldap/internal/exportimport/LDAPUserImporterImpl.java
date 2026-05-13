@@ -622,6 +622,10 @@ public class LDAPUserImporterImpl implements LDAPUserImporter {
 			PropsUtil.get(PropsKeys.COMPANY_SECURITY_AUTH_TYPE));
 		_portalCache = (PortalCache<String, Long>)_singleVMPool.getPortalCache(
 			UserImporter.class.getName());
+
+		_companyLocalService.forEachCompanyId(
+			companyId -> _lockManager.unlock(
+				UserImporter.class.getName(), companyId));
 	}
 
 	protected User addUser(long companyId, LDAPUser ldapUser, String password)

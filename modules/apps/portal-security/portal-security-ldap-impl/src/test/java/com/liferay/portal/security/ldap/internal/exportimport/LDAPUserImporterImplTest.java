@@ -5,13 +5,18 @@
 
 package com.liferay.portal.security.ldap.internal.exportimport;
 
+import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.portal.kernel.cache.SingleVMPool;
+import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.security.exportimport.UserImporter;
 import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.exportimport.LDAPUser;
@@ -24,6 +29,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -134,6 +140,40 @@ public class LDAPUserImporterImplTest {
 					Mockito.eq(modifiedDateString), Mockito.eq(LocaleUtil.US)),
 				Mockito.times(1));
 		}
+	}
+
+	@Test
+	public void testActivateClearsOrphanedLocks() throws Exception {
+		CompanyLocalService companyLocalService = Mockito.mock(
+			CompanyLocalService.class);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_companyLocalService", companyLocalService);
+
+		LockManager lockManager = Mockito.mock(LockManager.class);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_lockManager", lockManager);
+
+		ReflectionTestUtil.setFieldValue(
+			_ldapUserImporterImpl, "_singleVMPool",
+			Mockito.mock(SingleVMPool.class));
+
+		ReflectionTestUtil.invoke(
+			_ldapUserImporterImpl, "activate", new Class<?>[0]);
+
+		ArgumentCaptor<UnsafeConsumer<Long, Exception>> consumerCaptor =
+			ArgumentCaptor.forClass(UnsafeConsumer.class);
+
+		Mockito.verify(companyLocalService).forEachCompanyId(
+			consumerCaptor.capture());
+
+		long companyId = RandomTestUtil.randomLong();
+
+		consumerCaptor.getValue().accept(companyId);
+
+		Mockito.verify(lockManager).unlock(
+			UserImporter.class.getName(), companyId);
 	}
 
 	private static final LDAPUserImporterImpl _ldapUserImporterImpl =
