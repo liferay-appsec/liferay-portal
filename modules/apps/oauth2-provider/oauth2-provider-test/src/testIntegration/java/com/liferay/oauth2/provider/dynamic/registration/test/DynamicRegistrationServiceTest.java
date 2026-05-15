@@ -11,16 +11,19 @@ import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -187,6 +190,199 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	@FeatureFlag("LPD-63416")
 	@Test
+	public void testPostAnonymousAcceptedWhenOpen() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+		String clientName = RandomTestUtil.randomString();
+
+		String body = JSONUtil.put(
+			"client_name", clientName
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _relaxIATSwap(
+					companyId)) {
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(201, response.getStatus());
+
+			JSONObject responseJSONObject = parseJSONObject(response);
+
+			Assert.assertEquals(
+				clientName, responseJSONObject.getString("client_name"));
+
+			String clientId = responseJSONObject.getString(
+				OAuthConstants.CLIENT_ID);
+
+			OAuth2Application oAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					companyId, clientId);
+
+			Assert.assertNotNull(oAuth2Application);
+
+			User serviceAccountUser = _userLocalService.getUserByScreenName(
+				companyId, "default-service-account");
+
+			Assert.assertEquals(
+				serviceAccountUser.getUserId(), oAuth2Application.getUserId());
+
+			Assert.assertFalse(oAuth2Application.isTrustedApplication());
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRejectedWhenStrict() throws Exception {
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+		Response response = invocationBuilder.method(
+			"post",
+			Entity.json(
+				JSONUtil.put(
+					"client_name", RandomTestUtil.randomString()
+				).toString()));
+
+		Assert.assertEquals(401, response.getStatus());
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRejectsDisallowedRedirectURI()
+		throws Exception {
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris", new String[] {"https://attacker.test/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.allowed.redirect." +
+								"uri.patterns",
+							new String[] {"https://*.example.org/*"}
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(400, response.getStatus());
+			Assert.assertEquals("invalid_redirect_uri", parseError(response));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRejectsDisallowedScope() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.CLIENT_CREDENTIALS_GRANT}
+		).put(
+			"scope", "Liferay.Headless.Admin.Site.everything"
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.allowed.scopes",
+							new String[] {
+								"Liferay.Headless.Delivery.everything"
+							}
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(400, response.getStatus());
+			Assert.assertEquals(
+				OAuthConstants.INVALID_SCOPE, parseError(response));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostWithBearerInOpenMode() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _relaxIATSwap(
+					companyId)) {
+
+			Invocation.Builder invocationBuilder = authorize(
+				registerWebTarget.request(),
+				_getToken(_getDynamicRegistratorOAuth2Application()));
+
+			Response response = invocationBuilder.method(
+				"post",
+				Entity.json(
+					JSONUtil.put(
+						"client_name", RandomTestUtil.randomString()
+					).put(
+						"grant_types",
+						new String[] {OAuthConstants.CLIENT_CREDENTIALS_GRANT}
+					).put(
+						"redirect_uris",
+						new String[] {"https://client.example.org/callback"}
+					).toString()));
+
+			Assert.assertEquals(201, response.getStatus());
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
 	public void testPut() throws Exception {
 		OAuth2Application oAuth2Application =
 			_oAuth2ApplicationLocalService.fetchOAuth2Application(
@@ -290,8 +486,23 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		return tokenString;
 	}
 
+	private CompanyConfigurationTemporarySwapper _relaxIATSwap(long companyId)
+		throws Exception {
+
+		return new CompanyConfigurationTemporarySwapper(
+			companyId,
+			"com.liferay.oauth2.provider.rest.internal.configuration." +
+				"DynamicRegistrationConfiguration",
+			HashMapDictionaryBuilder.<String, Object>put(
+				"dynamic.registration.require.initial.access.token", false
+			).build());
+	}
+
 	@Inject
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 	private class DynamicRegistrationServiceTestPreparatorBundleActivator
 		extends BaseTestPreparatorBundleActivator {

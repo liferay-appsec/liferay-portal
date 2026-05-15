@@ -42,7 +42,13 @@ public class OAuth2ProviderRESTEndpointConstants {
 
 	public static final String PROPERTY_KEY_COMPANY_ID = "company.id";
 
+	public static final String PROPERTY_KEY_DYNAMIC_REGISTRATION_MODE =
+		"dynamic.registration.mode";
+
 	public static final String PROPERTY_KEY_REMEMBER_DEVICE =
 		"oauth2.remember.device";
+
+	public static final String
+		PROPERTY_VALUE_DYNAMIC_REGISTRATION_MODE_ANONYMOUS = "anonymous";
 
 }

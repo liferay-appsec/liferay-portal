@@ -5,12 +5,20 @@
 
 package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration;
 
+import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
+import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
+import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.container.request.filter.DynamicRegistrationServiceContainerRequestFilter;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
 import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.ws.rs.Consumes;
@@ -30,6 +38,8 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
@@ -41,6 +51,7 @@ import org.apache.cxf.rs.security.oauth2.utils.OAuthUtils;
 
 /**
  * @author Jorge García Jiménez
+ * @author Rafael Praxedes
  */
 @Path("/register")
 public class LiferayDynamicRegistrationService
@@ -87,6 +98,16 @@ public class LiferayDynamicRegistrationService
 		return super.register(liferayClientRegistration);
 	}
 
+	public void setConfigurationProvider(
+		ConfigurationProvider configurationProvider) {
+
+		_configurationProvider = configurationProvider;
+	}
+
+	public void setPortal(Portal portal) {
+		_portal = portal;
+	}
+
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("{clientId}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -119,6 +140,22 @@ public class LiferayDynamicRegistrationService
 	@Override
 	protected void fromClientRegistrationToClient(
 		ClientRegistration clientRegistration, Client client) {
+
+		MessageContext messageContext = getMessageContext();
+
+		Object anonymous = messageContext.get(
+			DynamicRegistrationServiceContainerRequestFilter.
+				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION);
+
+		if (Boolean.TRUE.equals(anonymous)) {
+			Map<String, String> clientProperties = client.getProperties();
+
+			clientProperties.put(
+				OAuth2ProviderRESTEndpointConstants.
+					PROPERTY_KEY_DYNAMIC_REGISTRATION_MODE,
+				OAuth2ProviderRESTEndpointConstants.
+					PROPERTY_VALUE_DYNAMIC_REGISTRATION_MODE_ANONYMOUS);
+		}
 
 		_validate(client, clientRegistration);
 
@@ -283,6 +320,50 @@ public class LiferayDynamicRegistrationService
 		return applicationType;
 	}
 
+	private DynamicRegistrationConfiguration
+			_getDynamicRegistrationConfiguration(long companyId)
+		throws ConfigurationException {
+
+		return _configurationProvider.getConfiguration(
+			DynamicRegistrationConfiguration.class,
+			new CompanyServiceSettingsLocator(
+				companyId, DynamicRegistrationConfiguration.class.getName()));
+	}
+
+	private Pattern _globToPattern(String glob) {
+		StringBuilder sb = new StringBuilder("^");
+
+		for (int i = 0; i < glob.length(); i++) {
+			char c = glob.charAt(i);
+
+			if (c == '*') {
+				sb.append(".*");
+			}
+			else if ("\\.+?()[]{}^$|".indexOf(c) >= 0) {
+				sb.append('\\');
+				sb.append(c);
+			}
+			else {
+				sb.append(c);
+			}
+		}
+
+		sb.append('$');
+
+		return Pattern.compile(sb.toString());
+	}
+
+	private boolean _isAnonymousRegistration(Client client) {
+		Map<String, String> clientProperties = client.getProperties();
+
+		String mode = clientProperties.get(
+			OAuth2ProviderRESTEndpointConstants.
+				PROPERTY_KEY_DYNAMIC_REGISTRATION_MODE);
+
+		return OAuth2ProviderRESTEndpointConstants.
+			PROPERTY_VALUE_DYNAMIC_REGISTRATION_MODE_ANONYMOUS.equals(mode);
+	}
+
 	private void _validate(
 		Client client, ClientRegistration clientRegistration) {
 
@@ -342,6 +423,119 @@ public class LiferayDynamicRegistrationService
 				}
 			}
 		}
+
+		if (_isAnonymousRegistration(client)) {
+			_validateAnonymousPolicy(clientRegistration);
+		}
+	}
+
+	private void _validateAnonymousPolicy(
+		ClientRegistration clientRegistration) {
+
+		MessageContext messageContext = getMessageContext();
+
+		long companyId = _portal.getCompanyId(
+			messageContext.getHttpServletRequest());
+
+		DynamicRegistrationConfiguration dynamicRegistrationConfiguration;
+
+		try {
+			dynamicRegistrationConfiguration =
+				_getDynamicRegistrationConfiguration(companyId);
+		}
+		catch (ConfigurationException configurationException) {
+			OAuth2ErrorUtil.reportInvalidRequestError(
+				"Unable to load dynamic registration configuration: " +
+					configurationException.getMessage(),
+				OAuthConstants.SERVER_ERROR,
+				Response.Status.INTERNAL_SERVER_ERROR);
+
+			return;
+		}
+
+		_validateAnonymousScopes(
+			clientRegistration,
+			dynamicRegistrationConfiguration.anonymousAllowedScopes());
+
+		_validateAnonymousRedirectURIs(
+			clientRegistration,
+			dynamicRegistrationConfiguration.
+				anonymousAllowedRedirectURIPatterns());
+	}
+
+	private void _validateAnonymousRedirectURIs(
+		ClientRegistration clientRegistration, String[] allowedPatterns) {
+
+		if (ArrayUtil.isEmpty(allowedPatterns)) {
+			return;
+		}
+
+		List<String> redirectUris = clientRegistration.getRedirectUris();
+
+		if (ListUtil.isEmpty(redirectUris)) {
+			return;
+		}
+
+		List<Pattern> compiledPatterns = new ArrayList<>(
+			allowedPatterns.length);
+
+		for (String allowedPattern : allowedPatterns) {
+			if (Validator.isBlank(allowedPattern)) {
+				continue;
+			}
+
+			compiledPatterns.add(_globToPattern(allowedPattern));
+		}
+
+		if (compiledPatterns.isEmpty()) {
+			return;
+		}
+
+		for (String redirectUri : redirectUris) {
+			boolean matched = false;
+
+			for (Pattern compiledPattern : compiledPatterns) {
+				Matcher matcher = compiledPattern.matcher(redirectUri);
+
+				if (matcher.matches()) {
+					matched = true;
+
+					break;
+				}
+			}
+
+			if (!matched) {
+				OAuth2ErrorUtil.reportInvalidRequestError(
+					"Redirect URI " + redirectUri +
+						" is not permitted for anonymous registration",
+					"invalid_redirect_uri", Response.Status.BAD_REQUEST);
+			}
+		}
+	}
+
+	private void _validateAnonymousScopes(
+		ClientRegistration clientRegistration, String[] allowedScopes) {
+
+		if (ArrayUtil.isEmpty(allowedScopes)) {
+			return;
+		}
+
+		String scope = clientRegistration.getScope();
+
+		if (Validator.isBlank(scope)) {
+			return;
+		}
+
+		List<String> requestedScopes = OAuthUtils.parseScope(scope);
+
+		for (String requestedScope : requestedScopes) {
+			if (!ArrayUtil.contains(allowedScopes, requestedScope)) {
+				OAuth2ErrorUtil.reportInvalidRequestError(
+					"Scope " + requestedScope +
+						" is not permitted for anonymous registration",
+					OAuthConstants.INVALID_SCOPE, Response.Status.BAD_REQUEST);
+			}
+		}
 	}
 
 	private static final Map<String, String> _allowedResponseTypes =
@@ -350,5 +544,8 @@ public class LiferayDynamicRegistrationService
 		).put(
 			"implicit", "token"
 		).build();
+
+	private ConfigurationProvider _configurationProvider;
+	private Portal _portal;
 
 }
