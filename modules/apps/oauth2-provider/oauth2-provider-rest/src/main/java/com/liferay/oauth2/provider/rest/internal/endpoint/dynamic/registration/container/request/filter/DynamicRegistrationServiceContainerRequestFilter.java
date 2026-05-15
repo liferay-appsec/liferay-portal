@@ -9,19 +9,24 @@ import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
+import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -59,6 +64,7 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Jorge García Jiménez
+ * @author Rafael Praxedes
  */
 @Component(
 	property = {
@@ -74,6 +80,9 @@ import org.osgi.service.component.annotations.Reference;
 public class DynamicRegistrationServiceContainerRequestFilter
 	implements ContainerRequestFilter {
 
+	public static final String REQUEST_PROPERTY_ANONYMOUS_REGISTRATION =
+		"com.liferay.oauth2.dynamic.registration.anonymous";
+
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		UriInfo uriInfo = containerRequestContext.getUriInfo();
@@ -87,9 +96,9 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		HttpServletRequest httpServletRequest = (HttpServletRequest)message.get(
 			AbstractHTTPDestination.HTTP_REQUEST);
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				_portal.getCompanyId(httpServletRequest), "LPD-63416")) {
+		long companyId = _portal.getCompanyId(httpServletRequest);
 
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-63416")) {
 			containerRequestContext.abortWith(
 				Response.status(
 					Response.Status.NOT_FOUND
@@ -98,83 +107,47 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			return;
 		}
 
-		User user = null;
+		String method = httpServletRequest.getMethod();
+
+		boolean post = StringUtil.equalsIgnoreCase(method, "POST");
+
+		String authorization = httpServletRequest.getHeader("Authorization");
+
+		boolean hasBearer = StringUtil.startsWith(authorization, "Bearer ");
+
+		User user;
+		boolean anonymous = false;
 
 		try {
-			JwtToken jwtToken = _getJwtToken(httpServletRequest);
+			if (post && !hasBearer) {
 
-			long currentTime = TimeUnit.SECONDS.convert(
-				System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-			long expirationTime = GetterUtil.getLong(jwtToken.getClaim("exp"));
+				// TODO Add rate limiting once OAUTH2-33 lands. Anonymous
+				// registrations are otherwise unbounded by IP or company.
 
-			if (currentTime > expirationTime) {
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
-			}
+				DynamicRegistrationConfiguration
+					dynamicRegistrationConfiguration =
+						_getDynamicRegistrationConfiguration(companyId);
 
-			user = _userLocalService.getUser(
-				GetterUtil.getLong(jwtToken.getClaim("sub")));
+				if (dynamicRegistrationConfiguration.
+						requireInitialAccessToken()) {
 
-			OAuth2Application oAuth2Application = null;
+					throw ExceptionUtils.toNotAuthorizedException(null, null);
+				}
 
-			if (!Validator.isBlank(
-					GetterUtil.getString(jwtToken.getClaim("client_id")))) {
+				user = _userLocalService.getUserByScreenName(
+					companyId, "default-service-account");
+				anonymous = true;
 
-				oAuth2Application =
-					_oAuth2ApplicationLocalService.fetchOAuth2Application(
-						user.getCompanyId(),
-						GetterUtil.getString(jwtToken.getClaim("client_id")));
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Anonymous dynamic client registration accepted ",
+							"for company ", companyId, " from ",
+							httpServletRequest.getRemoteAddr()));
+				}
 			}
 			else {
-				oAuth2Application =
-					_oAuth2ApplicationLocalService.fetchOAuth2Application(
-						GetterUtil.getLong(
-							jwtToken.getClaim("application_id")));
-			}
-
-			PermissionChecker permissionChecker =
-				_permissionCheckerFactory.create(user);
-
-			if ((oAuth2Application == null) ||
-				!_oAuth2ApplicationModelResourcePermission.contains(
-					permissionChecker, oAuth2Application,
-					OAuth2ProviderActionKeys.REGISTER_APPLICATION)) {
-
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
-			}
-
-			String method = httpServletRequest.getMethod();
-
-			if (StringUtil.equalsIgnoreCase(method, "DELETE") &&
-				!_oAuth2ApplicationModelResourcePermission.contains(
-					permissionChecker, oAuth2Application, ActionKeys.DELETE)) {
-
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
-			}
-
-			if (StringUtil.equalsIgnoreCase(method, "PUT") &&
-				!_oAuth2ApplicationModelResourcePermission.contains(
-					permissionChecker, oAuth2Application, ActionKeys.UPDATE)) {
-
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
-			}
-
-			boolean dynamicRegistrator = StringUtil.equalsIgnoreCase(
-				OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR,
-				oAuth2Application.getName());
-
-			if (StringUtil.equalsIgnoreCase(method, "POST") &&
-				!dynamicRegistrator) {
-
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
-			}
-
-			String clientId = _getClientId(httpServletRequest);
-
-			if (Validator.isNotNull(clientId) && !dynamicRegistrator &&
-				!StringUtil.equalsIgnoreCase(
-					clientId, oAuth2Application.getClientId())) {
-
-				throw ExceptionUtils.toNotAuthorizedException(null, null);
+				user = _authorizeWithBearer(httpServletRequest, method);
 			}
 		}
 		catch (WebApplicationException webApplicationException) {
@@ -192,35 +165,93 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
 
-		try {
-			if (!user.isGuestUser()) {
-				long userId = user.getUserId();
-
-				containerRequestContext.setSecurityContext(
-					new PortalCXFSecurityContext() {
-
-						@Override
-						public Principal getUserPrincipal() {
-							return new ProtectedPrincipal(
-								String.valueOf(userId));
-						}
-
-						@Override
-						public boolean isSecure() {
-							return _portal.isSecure(httpServletRequest);
-						}
-
-					});
-			}
+		if (anonymous) {
+			containerRequestContext.setProperty(
+				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION, Boolean.TRUE);
 		}
-		catch (Exception exception) {
-			_log.error("Unable to resolve authenticated user", exception);
 
-			containerRequestContext.abortWith(
-				Response.status(
-					Response.Status.INTERNAL_SERVER_ERROR
-				).build());
+		_setSecurityContext(containerRequestContext, httpServletRequest, user);
+	}
+
+	private User _authorizeWithBearer(
+			HttpServletRequest httpServletRequest, String method)
+		throws Exception {
+
+		JwtToken jwtToken = _getJwtToken(httpServletRequest);
+
+		long currentTime = TimeUnit.SECONDS.convert(
+			System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+		long expirationTime = GetterUtil.getLong(jwtToken.getClaim("exp"));
+
+		if (currentTime > expirationTime) {
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
+
+		User user = _userLocalService.getUser(
+			GetterUtil.getLong(jwtToken.getClaim("sub")));
+
+		OAuth2Application oAuth2Application = null;
+
+		String tokenClientId = GetterUtil.getString(
+			jwtToken.getClaim("client_id"));
+
+		if (!Validator.isBlank(tokenClientId)) {
+			oAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					user.getCompanyId(), tokenClientId);
+		}
+		else {
+			oAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					GetterUtil.getLong(jwtToken.getClaim("application_id")));
+		}
+
+		PermissionChecker permissionChecker = _permissionCheckerFactory.create(
+			user);
+
+		if ((oAuth2Application == null) ||
+			!_oAuth2ApplicationModelResourcePermission.contains(
+				permissionChecker, oAuth2Application,
+				OAuth2ProviderActionKeys.REGISTER_APPLICATION)) {
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		if (StringUtil.equalsIgnoreCase(method, "DELETE") &&
+			!_oAuth2ApplicationModelResourcePermission.contains(
+				permissionChecker, oAuth2Application, ActionKeys.DELETE)) {
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		if (StringUtil.equalsIgnoreCase(method, "PUT") &&
+			!_oAuth2ApplicationModelResourcePermission.contains(
+				permissionChecker, oAuth2Application, ActionKeys.UPDATE)) {
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		boolean dynamicRegistrator = StringUtil.equalsIgnoreCase(
+			OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR,
+			oAuth2Application.getName());
+
+		if (StringUtil.equalsIgnoreCase(method, "POST") &&
+			!dynamicRegistrator) {
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		String clientId = _getClientId(httpServletRequest);
+
+		if (Validator.isNotNull(clientId) && !dynamicRegistrator &&
+			!StringUtil.equalsIgnoreCase(
+				clientId, oAuth2Application.getClientId())) {
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		return user;
 	}
 
 	private String _getClientId(HttpServletRequest httpServletRequest) {
@@ -236,9 +267,17 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		return null;
 	}
 
-	private JwtToken _getJwtToken(HttpServletRequest httpServletRequest)
-		throws WebApplicationException {
+	private DynamicRegistrationConfiguration
+			_getDynamicRegistrationConfiguration(long companyId)
+		throws ConfigurationException {
 
+		return _configurationProvider.getConfiguration(
+			DynamicRegistrationConfiguration.class,
+			new CompanyServiceSettingsLocator(
+				companyId, DynamicRegistrationConfiguration.class.getName()));
+	}
+
+	private JwtToken _getJwtToken(HttpServletRequest httpServletRequest) {
 		String authorization = httpServletRequest.getHeader("Authorization");
 
 		if (!StringUtil.startsWith(authorization, "Bearer ")) {
@@ -273,8 +312,47 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		return jwsJwtCompactConsumer.getJwtToken();
 	}
 
+	private void _setSecurityContext(
+		ContainerRequestContext containerRequestContext,
+		HttpServletRequest httpServletRequest, User user) {
+
+		try {
+			if (user.isGuestUser()) {
+				return;
+			}
+
+			long userId = user.getUserId();
+
+			containerRequestContext.setSecurityContext(
+				new PortalCXFSecurityContext() {
+
+					@Override
+					public Principal getUserPrincipal() {
+						return new ProtectedPrincipal(String.valueOf(userId));
+					}
+
+					@Override
+					public boolean isSecure() {
+						return _portal.isSecure(httpServletRequest);
+					}
+
+				});
+		}
+		catch (Exception exception) {
+			_log.error("Unable to resolve authenticated user", exception);
+
+			containerRequestContext.abortWith(
+				Response.status(
+					Response.Status.INTERNAL_SERVER_ERROR
+				).build());
+		}
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
