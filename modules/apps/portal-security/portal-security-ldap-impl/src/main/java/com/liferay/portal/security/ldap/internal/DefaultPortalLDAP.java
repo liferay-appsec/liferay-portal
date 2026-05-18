@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.ldap.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -23,12 +25,12 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.ldap.FIPSModeUtil;
+import com.liferay.portal.security.ldap.LDAPCredentialCipher;
 import com.liferay.portal.security.ldap.PortalLDAP;
 import com.liferay.portal.security.ldap.UserConverterKeys;
 import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
-import com.liferay.portal.security.ldap.LDAPCredentialCipher;
 import com.liferay.portal.security.ldap.internal.ssl.LDAPSSLSocketFactory;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -196,7 +198,19 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		LdapContext ldapContext = null;
 
 		try {
-			ldapContext = new InitialLdapContext(environmentProperties, null);
+			if (FIPSModeUtil.isEnabled()) {
+				try (SafeCloseable safeCloseable =
+						ThreadContextClassLoaderUtil.swap(
+							LDAPSSLSocketFactory.class.getClassLoader())) {
+
+					ldapContext = new InitialLdapContext(
+						environmentProperties, null);
+				}
+			}
+			else {
+				ldapContext = new InitialLdapContext(
+					environmentProperties, null);
+			}
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
