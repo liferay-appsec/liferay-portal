@@ -16,6 +16,7 @@
 		<!-- Audit fields -->
 
 		<column name="companyId" type="long" />
+		<column name="accountEntryId" type="long" />
 		<column name="userId" type="long" />
 		<column name="userName" type="String" />
 		<column name="createDate" type="Date" />
@@ -43,6 +44,10 @@
 
 		<finder name="CompanyId" return-type="Collection">
 			<finder-column name="companyId" />
+		</finder>
+		<finder name="C_A" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="accountEntryId" />
 		</finder>
 	</entity>
 </service-builder>

@@ -82,31 +82,31 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 	@Override
 	public List<AuditEvent> getAuditEvents(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID, boolean andSearch,
 		int start, int end) {
 
 		return getAuditEvents(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch, start, end,
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch, start, end,
 			new AuditEventCreateDateComparator());
 	}
 
 	@Override
 	public List<AuditEvent> getAuditEvents(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID, boolean andSearch,
 		int start, int end, OrderByComparator<AuditEvent> orderByComparator) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch);
 
 		return dynamicQuery(dynamicQuery, start, end, orderByComparator);
 	}
@@ -118,23 +118,23 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 	@Override
 	public int getAuditEventsCount(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID,
 		boolean andSearch) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch);
 
 		return (int)dynamicQueryCount(dynamicQuery);
 	}
 
 	private DynamicQuery _buildDynamicQuery(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID,
 		boolean andSearch) {
@@ -232,6 +232,17 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			dynamicQuery.add(property.eq(companyId));
 		}
 
+		if ((accountEntryIds != null) && (accountEntryIds.length > 0)) {
+			Property property = PropertyFactoryUtil.forName("accountEntryId");
+
+			if (accountEntryIds.length == 1) {
+				dynamicQuery.add(property.eq(accountEntryIds[0]));
+			}
+			else {
+				dynamicQuery.add(property.in(accountEntryIds));
+			}
+		}
+
 		if (createDateGT != null) {
 			Property property = PropertyFactoryUtil.forName("createDate");
 
@@ -254,6 +265,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 		auditEvent.setGroupId(auditMessage.getGroupId());
 		auditEvent.setCompanyId(auditMessage.getCompanyId());
+		auditEvent.setAccountEntryId(auditMessage.getAccountEntryId());
 		auditEvent.setUserId(auditMessage.getUserId());
 		auditEvent.setUserName(auditMessage.getUserName());
 		auditEvent.setCreateDate(auditMessage.getTimestamp());
