@@ -35,6 +35,7 @@ public class AuditMessage implements Serializable {
 	public AuditMessage(String message) throws JSONException {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(message);
 
+		_accountEntryId = jsonObject.getLong(_ACCOUNT_ENTRY_ID);
 		_additionalInfoJSONObject = jsonObject.getJSONObject(_ADDITIONAL_INFO);
 		_className = jsonObject.getString(_CLASS_NAME);
 		_classPK = jsonObject.getString(_CLASS_PK);
@@ -93,6 +94,7 @@ public class AuditMessage implements Serializable {
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
 
+		_accountEntryId = auditRequestThreadLocal.getAccountEntryId();
 		_clientHost = auditRequestThreadLocal.getClientHost();
 		_clientIP = auditRequestThreadLocal.getClientIP();
 		_serverName = auditRequestThreadLocal.getServerName();
@@ -181,6 +183,10 @@ public class AuditMessage implements Serializable {
 			message, null, additionalInfoJSONObject);
 	}
 
+	public long getAccountEntryId() {
+		return _accountEntryId;
+	}
+
 	public JSONObject getAdditionalInfo() {
 		return _additionalInfoJSONObject;
 	}
@@ -247,6 +253,10 @@ public class AuditMessage implements Serializable {
 
 	public String getUserName() {
 		return _userName;
+	}
+
+	public void setAccountEntryId(long accountEntryId) {
+		_accountEntryId = accountEntryId;
 	}
 
 	public void setAdditionalInfo(JSONObject additionalInfoJSONObject) {
@@ -323,6 +333,8 @@ public class AuditMessage implements Serializable {
 
 	public JSONObject toJSONObject() {
 		return JSONUtil.put(
+			_ACCOUNT_ENTRY_ID, _accountEntryId
+		).put(
 			_ADDITIONAL_INFO, _additionalInfoJSONObject
 		).put(
 			_CLASS_NAME, _className
@@ -360,6 +372,8 @@ public class AuditMessage implements Serializable {
 	private DateFormat _getDateFormat() {
 		return DateFormatFactoryUtil.getSimpleDateFormat(_DATE_FORMAT);
 	}
+
+	private static final String _ACCOUNT_ENTRY_ID = "accountEntryId";
 
 	private static final String _ADDITIONAL_INFO = "additionalInfo";
 
@@ -399,6 +413,7 @@ public class AuditMessage implements Serializable {
 
 	private static final Log _log = LogFactoryUtil.getLog(AuditMessage.class);
 
+	private long _accountEntryId;
 	private JSONObject _additionalInfoJSONObject;
 	private String _className;
 	private String _classPK;
