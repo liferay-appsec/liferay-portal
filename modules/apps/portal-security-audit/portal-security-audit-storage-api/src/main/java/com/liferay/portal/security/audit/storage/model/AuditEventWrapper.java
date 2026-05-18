@@ -36,6 +36,7 @@ public class AuditEventWrapper
 		attributes.put("auditEventId", getAuditEventId());
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
+		attributes.put("accountEntryId", getAccountEntryId());
 		attributes.put("userId", getUserId());
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
@@ -71,6 +72,12 @@ public class AuditEventWrapper
 
 		if (companyId != null) {
 			setCompanyId(companyId);
+		}
+
+		Long accountEntryId = (Long)attributes.get("accountEntryId");
+
+		if (accountEntryId != null) {
+			setAccountEntryId(accountEntryId);
 		}
 
 		Long userId = (Long)attributes.get("userId");
@@ -155,6 +162,16 @@ public class AuditEventWrapper
 	@Override
 	public AuditEvent cloneWithOriginalValues() {
 		return wrap(model.cloneWithOriginalValues());
+	}
+
+	/**
+	 * Returns the account entry ID of this audit event.
+	 *
+	 * @return the account entry ID of this audit event
+	 */
+	@Override
+	public long getAccountEntryId() {
+		return model.getAccountEntryId();
 	}
 
 	/**
@@ -340,6 +357,16 @@ public class AuditEventWrapper
 	@Override
 	public void persist() {
 		model.persist();
+	}
+
+	/**
+	 * Sets the account entry ID of this audit event.
+	 *
+	 * @param accountEntryId the account entry ID of this audit event
+	 */
+	@Override
+	public void setAccountEntryId(long accountEntryId) {
+		model.setAccountEntryId(accountEntryId);
 	}
 
 	/**
@@ -533,4 +560,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1416724512
+// LIFERAY-SERVICE-BUILDER-HASH:57412774

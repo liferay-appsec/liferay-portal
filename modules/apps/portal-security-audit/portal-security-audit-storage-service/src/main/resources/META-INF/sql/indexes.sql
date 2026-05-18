@@ -1,1 +1,1 @@
-create index IX_8FE31EDF on Audit_AuditEvent (companyId);
+create index IX_E7F5A093 on Audit_AuditEvent (companyId, accountEntryId);
