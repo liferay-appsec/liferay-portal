@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.audit.wiring.internal.servlet.filter;
 
+import com.liferay.account.constants.AccountConstants;
+import com.liferay.account.role.AccountRolePermissionThreadLocal;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -21,6 +23,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.BaseFilter;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.TryFilter;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
@@ -71,6 +74,9 @@ public class AuditFilter extends BaseFilter implements TryFilter {
 
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
+
+		auditRequestThreadLocal.setAccountEntryId(
+			_getAccountEntryId(httpServletRequest));
 
 		auditRequestThreadLocal.setClientHost(
 			httpServletRequest.getRemoteHost());
@@ -164,6 +170,18 @@ public class AuditFilter extends BaseFilter implements TryFilter {
 	@Override
 	protected Log getLog() {
 		return _log;
+	}
+
+	private long _getAccountEntryId(HttpServletRequest httpServletRequest) {
+		long accountEntryId =
+			AccountRolePermissionThreadLocal.getAccountEntryId();
+
+		if (accountEntryId != AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) {
+			return accountEntryId;
+		}
+
+		return GetterUtil.getLong(
+			httpServletRequest.getParameter("accountEntryId"));
 	}
 
 	private String _getUserLogin(User user) {
