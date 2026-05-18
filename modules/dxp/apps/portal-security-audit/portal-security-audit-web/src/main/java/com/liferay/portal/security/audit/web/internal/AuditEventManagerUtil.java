@@ -45,8 +45,8 @@ public class AuditEventManagerUtil {
 	}
 
 	public static List<AuditEvent> getAuditEvents(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID, boolean andSearch,
 		int start, int end,
@@ -57,9 +57,10 @@ public class AuditEventManagerUtil {
 		AuditEventManager auditEventManager = _auditEventManagerSnapshot.get();
 
 		return auditEventManager.getAuditEvents(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch, start, end, orderByComparator);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch, start, end,
+			orderByComparator);
 	}
 
 	public static int getAuditEventsCount(long companyId) {
@@ -69,8 +70,8 @@ public class AuditEventManagerUtil {
 	}
 
 	public static int getAuditEventsCount(
-		long companyId, long groupId, long userId, String userName,
-		Date createDateGT, Date createDateLT, String eventType,
+		long companyId, long[] accountEntryIds, long groupId, long userId,
+		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID,
 		boolean andSearch) {
@@ -78,9 +79,9 @@ public class AuditEventManagerUtil {
 		AuditEventManager auditEventManager = _auditEventManagerSnapshot.get();
 
 		return auditEventManager.getAuditEventsCount(
-			companyId, groupId, userId, userName, createDateGT, createDateLT,
-			eventType, className, classPK, clientHost, clientIP, serverName,
-			serverPort, sessionID, andSearch);
+			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
+			createDateLT, eventType, className, classPK, clientHost, clientIP,
+			serverName, serverPort, sessionID, andSearch);
 	}
 
 	private static final Snapshot<AuditEventManager>

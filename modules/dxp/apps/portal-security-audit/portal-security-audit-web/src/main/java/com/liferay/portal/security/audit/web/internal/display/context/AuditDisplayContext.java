@@ -67,6 +67,17 @@ public class AuditDisplayContext {
 		_yesterday.add(Calendar.DATE, -1);
 	}
 
+	public long getAccountEntryId() {
+		if (_accountEntryId != null) {
+			return _accountEntryId;
+		}
+
+		_accountEntryId = _getParamWithOrWithoutNamespace(
+			ParamUtil::getLong, "accountEntryId", 0L);
+
+		return _accountEntryId;
+	}
+
 	public String getClassName() {
 		if (_className != null) {
 			return _className;
@@ -238,18 +249,20 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, getEventType(),
-					getClassName(), getClassPK(), getClientHost(),
-					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator(), range[0], range[1],
-					new AuditEventCreateDateComparator()),
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					getUserId(), getUserName(), startDate, endDate,
+					getEventType(), getClassName(), getClassPK(),
+					getClientHost(), getClientIP(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator(),
+					range[0], range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, getEventType(),
-					getClassName(), getClassPK(), getClientHost(),
-					getClientIP(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator()));
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
+					getUserId(), getUserName(), startDate, endDate,
+					getEventType(), getClassName(), getClassPK(),
+					getClientHost(), getClientIP(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator()));
 		}
 		else {
 			String keywords = displayTerms.getKeywords();
@@ -259,13 +272,15 @@ public class AuditDisplayContext {
 
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
-					_themeDisplay.getCompanyId(), getGroupId(),
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
 					Long.valueOf(number), keywords, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
 					Integer.valueOf(number), null, false, range[0], range[1],
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
-					_themeDisplay.getCompanyId(), getGroupId(),
+					_themeDisplay.getCompanyId(),
+					_toAccountEntryIds(getAccountEntryId()), getGroupId(),
 					Long.valueOf(number), keywords, null, null, keywords,
 					keywords, keywords, keywords, keywords, keywords,
 					Integer.valueOf(number), null, false));
@@ -461,6 +476,8 @@ public class AuditDisplayContext {
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + "startDateYear",
 			getStartDateYear()
 		).setParameter(
+			"accountEntryId", getAccountEntryId()
+		).setParameter(
 			"className", getClassName()
 		).setParameter(
 			"classPK", getClassPK()
@@ -485,6 +502,15 @@ public class AuditDisplayContext {
 		return _portletURL;
 	}
 
+	private long[] _toAccountEntryIds(long accountEntryId) {
+		if (accountEntryId <= 0) {
+			return null;
+		}
+
+		return new long[] {accountEntryId};
+	}
+
+	private Long _accountEntryId;
 	private String _className;
 	private String _classPK;
 	private String _clientHost;

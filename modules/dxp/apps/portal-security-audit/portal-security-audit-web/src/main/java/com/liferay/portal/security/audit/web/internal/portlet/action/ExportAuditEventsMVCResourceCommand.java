@@ -182,6 +182,9 @@ public class ExportAuditEventsMVCResourceCommand
 				"create-date",
 				auditEvent -> _formatDate(auditEvent.getCreateDate())
 			).put(
+				"account-id",
+				auditEvent -> String.valueOf(auditEvent.getAccountEntryId())
+			).put(
 				"group-id",
 				auditEvent -> String.valueOf(auditEvent.getGroupId())
 			).put(
