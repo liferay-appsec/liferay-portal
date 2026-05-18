@@ -10,14 +10,27 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Tuple;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
 
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.OutputStream;
+
+import java.net.InetSocketAddress;
 import java.net.URI;
 
+import java.nio.charset.StandardCharsets;
+
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.http.ConnectionReuseStrategy;
@@ -218,6 +231,77 @@ public class HttpImplTest {
 			Collections.singletonMap("tcpKeepAliveEnabled", true));
 
 		_testTCPKeepAlive(true);
+	}
+
+	@Test
+	public void testURLtoStringWithCookieSpec() throws Exception {
+		HttpServer httpServer = HttpServer.create(
+			new InetSocketAddress("127.0.0.1", 0), 0);
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"org.apache.http.client.protocol.ResponseProcessCookies",
+				LoggerTestUtil.WARN)) {
+
+			String cookie =
+				RandomTestUtil.randomString() +
+					"=1; expires=Fri, 15 May 2027 18:46:54 GMT; path=/; " +
+						"secure; SameSite=None; HttpOnly";
+
+			httpServer.createContext(
+				"/",
+				httpExchange -> {
+					Headers responseHeaders = httpExchange.getResponseHeaders();
+
+					responseHeaders.add("Content-Type", "application/json");
+					responseHeaders.add("Set-Cookie", cookie);
+
+					String responseBody = "{}";
+
+					byte[] bodyBytes = responseBody.getBytes(
+						StandardCharsets.UTF_8);
+
+					httpExchange.sendResponseHeaders(200, bodyBytes.length);
+
+					try (OutputStream outputStream =
+							httpExchange.getResponseBody()) {
+
+						outputStream.write(bodyBytes);
+					}
+				});
+
+			httpServer.start();
+
+			InetSocketAddress address = httpServer.getAddress();
+
+			int port = address.getPort();
+
+			Http.Options options = new Http.Options();
+
+			options.setLocation("http://127.0.0.1:" + port + "/");
+
+			_httpImpl.URLtoString(options);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+
+			LogEntry logEntry = logEntries.get(0);
+
+			String message = logEntry.getMessage();
+
+			Assert.assertTrue(message.contains("Invalid 'expires' attribute"));
+
+			options.setCookieSpec(Http.CookieSpec.STANDARD);
+
+			_httpImpl.URLtoString(options);
+
+			logEntries = logCapture.getLogEntries();
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+		}
+		finally {
+			httpServer.stop(0);
+		}
 	}
 
 	private Tuple _getTuple() {
