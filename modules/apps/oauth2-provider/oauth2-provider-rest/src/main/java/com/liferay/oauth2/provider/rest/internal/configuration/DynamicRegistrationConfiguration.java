@@ -24,6 +24,14 @@ public interface DynamicRegistrationConfiguration {
 
 	@Meta.AD(
 		deflt = "",
+		description = "dynamic-registration-anonymous-allowed-hosts-description",
+		id = "dynamic.registration.anonymous.allowed.hosts",
+		name = "dynamic-registration-anonymous-allowed-hosts", required = false
+	)
+	public String[] anonymousAllowedHosts();
+
+	@Meta.AD(
+		deflt = "",
 		description = "dynamic-registration-anonymous-allowed-redirect-uri-patterns-description",
 		id = "dynamic.registration.anonymous.allowed.redirect.uri.patterns",
 		name = "dynamic-registration-anonymous-allowed-redirect-uri-patterns",
