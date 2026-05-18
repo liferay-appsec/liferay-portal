@@ -20,6 +20,8 @@ SearchContainer<?> searchContainer = (SearchContainer<?>)request.getAttribute("l
 
 	<aui:input label="user-name" name="userName" value="<%= auditDisplayContext.getUserName() %>" />
 
+	<aui:input label="account-id" name="accountEntryId" value="<%= (auditDisplayContext.getAccountEntryId() != 0) ? String.valueOf(auditDisplayContext.getAccountEntryId()) : StringPool.BLANK %>" />
+
 	<aui:input label="group-id" name="groupId" value="<%= (auditDisplayContext.getGroupId() != 0) ? String.valueOf(auditDisplayContext.getGroupId()) : StringPool.BLANK %>" />
 
 	<aui:input label="resource-id" name="classPK" value="<%= auditDisplayContext.getClassPK() %>" />
