@@ -28,16 +28,17 @@ import java.util.List;
 public class AuditMessageBuilder {
 
 	public static AuditMessage buildAuditMessage(
-		long groupId, String eventType, String className, long classPK,
-		List<Attribute> attributes) {
+		long accountEntryId, long groupId, String eventType, String className,
+		long classPK, List<Attribute> attributes) {
 
 		return buildAuditMessage(
-			groupId, eventType, className, String.valueOf(classPK), attributes);
+			accountEntryId, groupId, eventType, className,
+			String.valueOf(classPK), attributes);
 	}
 
 	public static AuditMessage buildAuditMessage(
-		long groupId, String eventType, String className, String classPK,
-		List<Attribute> attributes) {
+		long accountEntryId, long groupId, String eventType, String className,
+		String classPK, List<Attribute> attributes) {
 
 		long companyId = CompanyThreadLocal.getCompanyId();
 
@@ -73,9 +74,32 @@ public class AuditMessageBuilder {
 				"attributes", _getAttributesJSONArray(attributes));
 		}
 
-		return new AuditMessage(
+		AuditMessage auditMessage = new AuditMessage(
 			eventType, companyId, groupId, realUserId, realUserName, className,
 			classPK, null, null, additionalInfoJSONObject);
+
+		if (accountEntryId > 0) {
+			auditMessage.setAccountEntryId(accountEntryId);
+		}
+
+		return auditMessage;
+	}
+
+	public static AuditMessage buildAuditMessage(
+		long groupId, String eventType, String className, long classPK,
+		List<Attribute> attributes) {
+
+		return buildAuditMessage(
+			0, groupId, eventType, className, String.valueOf(classPK),
+			attributes);
+	}
+
+	public static AuditMessage buildAuditMessage(
+		long groupId, String eventType, String className, String classPK,
+		List<Attribute> attributes) {
+
+		return buildAuditMessage(
+			0, groupId, eventType, className, classPK, attributes);
 	}
 
 	public static AuditMessage buildAuditMessage(
