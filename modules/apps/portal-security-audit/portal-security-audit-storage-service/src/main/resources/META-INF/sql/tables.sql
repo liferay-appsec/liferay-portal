@@ -2,6 +2,7 @@ create table Audit_AuditEvent (
 	auditEventId LONG not null primary key,
 	groupId LONG,
 	companyId LONG,
+	accountEntryId LONG,
 	userId LONG,
 	userName VARCHAR(200) null,
 	createDate DATE null,
