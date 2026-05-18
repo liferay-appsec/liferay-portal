@@ -166,7 +166,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 
 		if (anonymous) {
-			containerRequestContext.setProperty(
+			httpServletRequest.setAttribute(
 				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION, Boolean.TRUE);
 		}
 

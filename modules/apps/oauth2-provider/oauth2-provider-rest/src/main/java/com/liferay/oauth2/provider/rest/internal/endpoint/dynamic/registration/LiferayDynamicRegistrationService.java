@@ -36,8 +36,10 @@ import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -143,9 +145,11 @@ public class LiferayDynamicRegistrationService
 
 		MessageContext messageContext = getMessageContext();
 
-		Object anonymous = messageContext.get(
+		Object anonymous = messageContext.getHttpServletRequest(
+		).getAttribute(
 			DynamicRegistrationServiceContainerRequestFilter.
-				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION);
+				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION
+		);
 
 		if (Boolean.TRUE.equals(anonymous)) {
 			Map<String, String> clientProperties = client.getProperties();
@@ -537,7 +541,13 @@ public class LiferayDynamicRegistrationService
 				continue;
 			}
 
-			compiledPatterns.add(_globToPattern(allowedPattern));
+			for (String line : allowedPattern.split("\\s+")) {
+				if (Validator.isBlank(line)) {
+					continue;
+				}
+
+				compiledPatterns.add(_globToPattern(line));
+			}
 		}
 
 		if (compiledPatterns.isEmpty()) {
@@ -579,10 +589,26 @@ public class LiferayDynamicRegistrationService
 			return;
 		}
 
+		Set<String> normalizedAllowedScopes = new HashSet<>();
+
+		for (String allowedScope : allowedScopes) {
+			if (Validator.isBlank(allowedScope)) {
+				continue;
+			}
+
+			for (String line : allowedScope.split("\\s+")) {
+				if (Validator.isBlank(line)) {
+					continue;
+				}
+
+				normalizedAllowedScopes.add(line);
+			}
+		}
+
 		List<String> requestedScopes = OAuthUtils.parseScope(scope);
 
 		for (String requestedScope : requestedScopes) {
-			if (!ArrayUtil.contains(allowedScopes, requestedScope)) {
+			if (!normalizedAllowedScopes.contains(requestedScope)) {
 				OAuth2ErrorUtil.reportInvalidRequestError(
 					"Scope " + requestedScope +
 						" is not permitted for anonymous registration",
