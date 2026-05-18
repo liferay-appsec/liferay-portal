@@ -28,6 +28,10 @@ public class AuditRequestThreadLocal {
 		_auditRequest.remove();
 	}
 
+	public long getAccountEntryId() {
+		return _accountEntryId;
+	}
+
 	public String getClientHost() {
 		return _clientHost;
 	}
@@ -66,6 +70,10 @@ public class AuditRequestThreadLocal {
 
 	public String getSessionID() {
 		return _sessionID;
+	}
+
+	public void setAccountEntryId(long accountEntryId) {
+		_accountEntryId = accountEntryId;
 	}
 
 	public void setClientHost(String clientHost) {
@@ -112,6 +120,7 @@ public class AuditRequestThreadLocal {
 		new CentralizedThreadLocal<>(
 			AuditRequestThreadLocal.class + "._auditRequest");
 
+	private long _accountEntryId;
 	private String _clientHost;
 	private String _clientIP;
 	private String _queryString;
