@@ -16,6 +16,8 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface AuditEvent {
 
+	public long getAccountEntryId();
+
 	public String getAdditionalInfo();
 
 	public long getAuditEventId();
@@ -51,6 +53,8 @@ public interface AuditEvent {
 	public String getUserName();
 
 	public String getUserUuid();
+
+	public void setAccountEntryId(long accountEntryId);
 
 	public void setAdditionalInfo(String additionalInfo);
 
