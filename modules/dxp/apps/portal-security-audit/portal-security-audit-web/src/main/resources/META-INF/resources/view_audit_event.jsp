@@ -51,6 +51,10 @@ renderResponse.setTitle((auditEvent == null) ? "audit-event" : auditEvent.getEve
 				<%= dateTimeFormat.format(auditEvent.getCreateDate()) %>
 			</aui:field-wrapper>
 
+			<aui:field-wrapper label="account-id">
+				<%= auditEvent.getAccountEntryId() %>
+			</aui:field-wrapper>
+
 			<aui:field-wrapper label="group-id">
 				<%= auditEvent.getGroupId() %>
 			</aui:field-wrapper>
