@@ -43,6 +43,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.PreMatching;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
@@ -52,8 +53,11 @@ import java.security.Principal;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.cxf.jaxrs.utils.ExceptionUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
@@ -124,10 +128,6 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 		try {
 			if (post && !hasBearer) {
-
-				// TODO Add rate limiting once OAUTH2-33 lands. Anonymous
-				// registrations are otherwise unbounded by IP or company.
-
 				DynamicRegistrationConfiguration
 					dynamicRegistrationConfiguration =
 						_getDynamicRegistrationConfiguration(companyId);
@@ -141,6 +141,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				_validateAnonymousHosts(
 					httpServletRequest,
 					dynamicRegistrationConfiguration.anonymousAllowedHosts());
+
+				_checkAnonymousRateLimit(
+					companyId, _getClientHost(httpServletRequest),
+					dynamicRegistrationConfiguration.
+						anonymousRegistrationsPerHour());
 
 				user = _userLocalService.getUserByScreenName(
 					companyId, "default-service-account");
@@ -260,6 +265,80 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 
 		return user;
+	}
+
+	private void _checkAnonymousRateLimit(
+		long companyId, String clientHost, int registrationsPerHour) {
+
+		if (registrationsPerHour <= 0) {
+			return;
+		}
+
+		long currentTimeMillis = System.currentTimeMillis();
+
+		long windowStart =
+			(currentTimeMillis / _RATE_LIMIT_WINDOW_MILLIS) *
+				_RATE_LIMIT_WINDOW_MILLIS;
+
+		String key = companyId + StringPool.COLON + clientHost;
+
+		_rateLimitBuckets.entrySet(
+		).removeIf(
+			entry -> {
+				RateLimitBucket bucket = entry.getValue();
+
+				return bucket.windowStart < windowStart;
+			}
+		);
+
+		RateLimitBucket bucket = _rateLimitBuckets.compute(
+			key,
+			(unusedKey, currentBucket) -> {
+				if ((currentBucket == null) ||
+					(currentBucket.windowStart != windowStart)) {
+
+					return new RateLimitBucket(windowStart);
+				}
+
+				return currentBucket;
+			});
+
+		int count = bucket.count.incrementAndGet();
+
+		if (count <= registrationsPerHour) {
+			return;
+		}
+
+		long retryAfterSeconds =
+			((windowStart + _RATE_LIMIT_WINDOW_MILLIS) - currentTimeMillis) /
+				1000;
+
+		if (retryAfterSeconds < 1) {
+			retryAfterSeconds = 1;
+		}
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				StringBundler.concat(
+					"Anonymous dynamic client registration rate limit ",
+					"exceeded for company ", companyId, " from ", clientHost,
+					"; retry after ", retryAfterSeconds, " seconds"));
+		}
+
+		throw new WebApplicationException(
+			Response.status(
+				Response.Status.TOO_MANY_REQUESTS
+			).entity(
+				StringBundler.concat(
+					"{\"error\":\"rate_limited\",\"error_description\":\"",
+					"Anonymous client registration rate limit exceeded for ",
+					"host ", clientHost, ". Retry after ", retryAfterSeconds,
+					" seconds.\"}")
+			).header(
+				"Retry-After", retryAfterSeconds
+			).type(
+				MediaType.APPLICATION_JSON
+			).build());
 	}
 
 	private String _getClientHost(HttpServletRequest httpServletRequest) {
@@ -409,8 +488,14 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 	}
 
+	private static final long _RATE_LIMIT_WINDOW_MILLIS =
+		TimeUnit.HOURS.toMillis(1);
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
+
+	private static final Map<String, RateLimitBucket> _rateLimitBuckets =
+		new ConcurrentHashMap<>();
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
@@ -448,6 +533,17 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		public boolean isUserInRole(String role) {
 			return false;
 		}
+
+	}
+
+	private static final class RateLimitBucket {
+
+		public RateLimitBucket(long windowStart) {
+			this.windowStart = windowStart;
+		}
+
+		public final AtomicInteger count = new AtomicInteger();
+		public final long windowStart;
 
 	}
 

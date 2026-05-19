@@ -48,6 +48,15 @@ public interface DynamicRegistrationConfiguration {
 	public String[] anonymousAllowedScopes();
 
 	@Meta.AD(
+		deflt = "10",
+		description = "dynamic-registration-anonymous-registrations-per-hour-description",
+		id = "dynamic.registration.anonymous.registrations.per.hour",
+		name = "dynamic-registration-anonymous-registrations-per-hour",
+		required = false
+	)
+	public int anonymousRegistrationsPerHour();
+
+	@Meta.AD(
 		deflt = "true",
 		description = "dynamic-registration-require-initial-access-token-description",
 		id = "dynamic.registration.require.initial.access.token",
