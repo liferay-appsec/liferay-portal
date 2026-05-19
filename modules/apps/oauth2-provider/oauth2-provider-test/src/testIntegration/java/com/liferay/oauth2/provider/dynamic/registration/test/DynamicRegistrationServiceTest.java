@@ -246,6 +246,165 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	@FeatureFlag("LPD-63416")
 	@Test
+	public void testPostAnonymousAcceptsAllowedHost() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String clientHost = "test-allowed-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.allowed.hosts",
+							new String[] {clientHost}
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", clientHost);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(201, response.getStatus());
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRateLimitDisabled() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String clientHost =
+			"test-rate-disabled-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.registrations." +
+								"per.hour",
+							0
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			for (int i = 0; i < 15; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRateLimitTriggers() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String clientHost =
+			"test-rate-triggers-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.registrations." +
+								"per.hour",
+							3
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			for (int i = 0; i < 3; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", clientHost);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(429, response.getStatus());
+			Assert.assertEquals("rate_limited", parseError(response));
+			Assert.assertNotNull(response.getHeaderString("Retry-After"));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
 	public void testPostAnonymousRejectedWhenStrict() throws Exception {
 		WebTarget registerWebTarget = getRegisterWebTarget();
 
@@ -259,6 +418,55 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 				).toString()));
 
 		Assert.assertEquals(401, response.getStatus());
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostAnonymousRejectsDisallowedHost() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String otherHost = "test-other-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			"client_name", RandomTestUtil.randomString()
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId,
+						"com.liferay.oauth2.provider.rest.internal." +
+							"configuration.DynamicRegistrationConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"dynamic.registration.anonymous.allowed.hosts",
+							new String[] {
+								"test-allowed-" + RandomTestUtil.randomString()
+							}
+						).put(
+							"dynamic.registration.require.initial.access.token",
+							false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", otherHost);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(403, response.getStatus());
+			Assert.assertEquals("access_denied", parseError(response));
+		}
 	}
 
 	@FeatureFlag("LPD-63416")
