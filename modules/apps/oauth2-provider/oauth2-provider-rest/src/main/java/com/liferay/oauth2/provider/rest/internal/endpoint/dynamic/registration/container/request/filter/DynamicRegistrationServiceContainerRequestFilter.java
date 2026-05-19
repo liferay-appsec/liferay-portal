@@ -10,6 +10,7 @@ import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.StringBundler;
@@ -27,6 +28,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -49,6 +51,8 @@ import jakarta.ws.rs.ext.Provider;
 import java.security.Principal;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.cxf.jaxrs.utils.ExceptionUtils;
@@ -134,6 +138,10 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					throw ExceptionUtils.toNotAuthorizedException(null, null);
 				}
 
+				_validateAnonymousHosts(
+					httpServletRequest,
+					dynamicRegistrationConfiguration.anonymousAllowedHosts());
+
 				user = _userLocalService.getUserByScreenName(
 					companyId, "default-service-account");
 				anonymous = true;
@@ -143,7 +151,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 						StringBundler.concat(
 							"Anonymous dynamic client registration accepted ",
 							"for company ", companyId, " from ",
-							httpServletRequest.getRemoteAddr()));
+							_getClientHost(httpServletRequest)));
 				}
 			}
 			else {
@@ -254,6 +262,22 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		return user;
 	}
 
+	private String _getClientHost(HttpServletRequest httpServletRequest) {
+		String forwardedFor = httpServletRequest.getHeader("X-Forwarded-For");
+
+		if (!Validator.isBlank(forwardedFor)) {
+			int index = forwardedFor.indexOf(',');
+
+			if (index > 0) {
+				forwardedFor = forwardedFor.substring(0, index);
+			}
+
+			return forwardedFor.trim();
+		}
+
+		return httpServletRequest.getRemoteAddr();
+	}
+
 	private String _getClientId(HttpServletRequest httpServletRequest) {
 		String requestURI = httpServletRequest.getRequestURI();
 
@@ -345,6 +369,43 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				Response.status(
 					Response.Status.INTERNAL_SERVER_ERROR
 				).build());
+		}
+	}
+
+	private void _validateAnonymousHosts(
+		HttpServletRequest httpServletRequest, String[] allowedHosts) {
+
+		if (ArrayUtil.isEmpty(allowedHosts)) {
+			return;
+		}
+
+		Set<String> normalizedAllowedHosts = new HashSet<>();
+
+		for (String allowedHost : allowedHosts) {
+			if (Validator.isBlank(allowedHost)) {
+				continue;
+			}
+
+			for (String line : allowedHost.split("\\s+")) {
+				if (Validator.isBlank(line)) {
+					continue;
+				}
+
+				normalizedAllowedHosts.add(line);
+			}
+		}
+
+		if (normalizedAllowedHosts.isEmpty()) {
+			return;
+		}
+
+		String clientHost = _getClientHost(httpServletRequest);
+
+		if (!normalizedAllowedHosts.contains(clientHost)) {
+			OAuth2ErrorUtil.reportInvalidRequestError(
+				"Host " + clientHost +
+					" is not permitted for anonymous registration",
+				"access_denied", Response.Status.FORBIDDEN);
 		}
 	}
 

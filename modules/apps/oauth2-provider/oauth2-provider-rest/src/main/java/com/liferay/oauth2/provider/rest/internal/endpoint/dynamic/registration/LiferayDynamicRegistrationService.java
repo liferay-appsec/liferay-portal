@@ -21,8 +21,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -328,22 +326,6 @@ public class LiferayDynamicRegistrationService
 		return applicationType;
 	}
 
-	private String _getClientHost(HttpServletRequest httpServletRequest) {
-		String forwardedFor = httpServletRequest.getHeader("X-Forwarded-For");
-
-		if (!Validator.isBlank(forwardedFor)) {
-			int index = forwardedFor.indexOf(',');
-
-			if (index > 0) {
-				forwardedFor = forwardedFor.substring(0, index);
-			}
-
-			return forwardedFor.trim();
-		}
-
-		return httpServletRequest.getRemoteAddr();
-	}
-
 	private DynamicRegistrationConfiguration
 			_getDynamicRegistrationConfiguration(long companyId)
 		throws ConfigurationException {
@@ -504,43 +486,6 @@ public class LiferayDynamicRegistrationService
 		}
 	}
 
-	private void _validateAnonymousHosts(
-		HttpServletRequest httpServletRequest, String[] allowedHosts) {
-
-		if (ArrayUtil.isEmpty(allowedHosts)) {
-			return;
-		}
-
-		Set<String> normalizedAllowedHosts = new HashSet<>();
-
-		for (String allowedHost : allowedHosts) {
-			if (Validator.isBlank(allowedHost)) {
-				continue;
-			}
-
-			for (String line : allowedHost.split("\\s+")) {
-				if (Validator.isBlank(line)) {
-					continue;
-				}
-
-				normalizedAllowedHosts.add(line);
-			}
-		}
-
-		if (normalizedAllowedHosts.isEmpty()) {
-			return;
-		}
-
-		String clientHost = _getClientHost(httpServletRequest);
-
-		if (!normalizedAllowedHosts.contains(clientHost)) {
-			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Host " + clientHost +
-					" is not permitted for anonymous registration",
-				"access_denied", Response.Status.FORBIDDEN);
-		}
-	}
-
 	private void _validateAnonymousPolicy(
 		ClientRegistration clientRegistration) {
 
@@ -564,10 +509,6 @@ public class LiferayDynamicRegistrationService
 
 			return;
 		}
-
-		_validateAnonymousHosts(
-			messageContext.getHttpServletRequest(),
-			dynamicRegistrationConfiguration.anonymousAllowedHosts());
 
 		_validateAnonymousScopes(
 			clientRegistration,
