@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import jakarta.ws.rs.client.Entity;
@@ -45,6 +46,70 @@ public class OAuth2ResourceIndicatorsTest extends BaseClientTestCase {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
+
+	@Test
+	public void testCodeGrantWithResourceBindsAudience() throws Exception {
+		Response codeResponse = getCodeResponse(
+			TestPropsValues.getUser().getEmailAddress(),
+			PropsValues.DEFAULT_ADMIN_PASSWORD, null,
+			getCodeFunction(
+				webTarget -> webTarget.queryParam(
+					"client_id", _CODE_CLIENT_ID
+				).queryParam(
+					"response_type", "code"
+				)));
+
+		String authorizationCode = parseAuthorizationCodeString(codeResponse);
+
+		Assert.assertNotNull(authorizationCode);
+
+		MultivaluedMap<String, String> tokenFormData =
+			new MultivaluedHashMap<>();
+
+		tokenFormData.add("client_id", _CODE_CLIENT_ID);
+		tokenFormData.add("client_secret", _CODE_CLIENT_SECRET);
+		tokenFormData.add("code", authorizationCode);
+		tokenFormData.add("grant_type", "authorization_code");
+		tokenFormData.add("resource", _RESOURCE_URI);
+
+		Invocation.Builder tokenInvocationBuilder =
+			getTokenWebTarget().request();
+
+		Response tokenResponse = tokenInvocationBuilder.post(
+			Entity.form(tokenFormData));
+
+		Assert.assertEquals(200, tokenResponse.getStatus());
+
+		String accessToken = parseTokenString(tokenResponse);
+
+		Assert.assertNotNull(accessToken);
+
+		MultivaluedMap<String, String> introspectFormData =
+			new MultivaluedHashMap<>();
+
+		introspectFormData.add("client_id", _CODE_CLIENT_ID);
+		introspectFormData.add("client_secret", _CODE_CLIENT_SECRET);
+		introspectFormData.add("token", accessToken);
+
+		Invocation.Builder introspectInvocationBuilder =
+			_getIntrospectionWebTarget().request();
+
+		Response introspectResponse = introspectInvocationBuilder.post(
+			Entity.form(introspectFormData));
+
+		Assert.assertEquals(200, introspectResponse.getStatus());
+
+		JSONObject jsonObject = parseJSONObject(introspectResponse);
+
+		Assert.assertTrue(jsonObject.getBoolean("active"));
+
+		JSONArray audJSONArray = jsonObject.getJSONArray("aud");
+
+		Assert.assertNotNull(
+			"introspection response missing aud", audJSONArray);
+		Assert.assertEquals(1, audJSONArray.length());
+		Assert.assertEquals(_RESOURCE_URI, audJSONArray.getString(0));
+	}
 
 	@Test
 	public void testIntrospectionEmitsAudAsJSONArray() throws Exception {
@@ -134,6 +199,12 @@ public class OAuth2ResourceIndicatorsTest extends BaseClientTestCase {
 	private static final String _CLIENT_SECRET =
 		"oauthResourceIndicatorsTestApplicationSecret";
 
+	private static final String _CODE_CLIENT_ID =
+		"oauthResourceIndicatorsCodeTestApplication";
+
+	private static final String _CODE_CLIENT_SECRET =
+		"oauthResourceIndicatorsCodeTestApplicationSecret";
+
 	private static final String _RESOURCE_URI = "https://mcp.example.com/o/mcp";
 
 	private class OAuth2ResourceIndicatorsTestPreparatorBundleActivator
@@ -149,6 +220,13 @@ public class OAuth2ResourceIndicatorsTest extends BaseClientTestCase {
 				companyId, user, _CLIENT_ID, _CLIENT_SECRET,
 				Collections.singletonList(GrantType.CLIENT_CREDENTIALS),
 				"client_secret_post", null, Arrays.asList(), false,
+				Collections.singletonList("everything"), false);
+
+			createOAuth2Application(
+				companyId, user, _CODE_CLIENT_ID, _CODE_CLIENT_SECRET,
+				Collections.singletonList(GrantType.AUTHORIZATION_CODE),
+				"client_secret_post", null,
+				Collections.singletonList("http://redirecturi:8080"), false,
 				Collections.singletonList("everything"), false);
 		}
 
