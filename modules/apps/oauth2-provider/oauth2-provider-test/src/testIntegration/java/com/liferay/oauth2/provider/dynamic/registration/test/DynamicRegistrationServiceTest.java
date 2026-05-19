@@ -8,6 +8,7 @@ package com.liferay.oauth2.provider.dynamic.registration.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth2.provider.client.test.BaseClientTestCase;
 import com.liferay.oauth2.provider.client.test.BaseTestPreparatorBundleActivator;
+import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
@@ -15,6 +16,7 @@ import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporaryS
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
@@ -645,6 +647,65 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 			Assert.assertEquals(400, response.getStatus());
 			Assert.assertEquals(
 				OAuthConstants.INVALID_SCOPE, parseError(response));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testPostPromotesPublicAuthorizationCode() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String clientName = RandomTestUtil.randomString();
+
+		String body = JSONUtil.put(
+			"client_name", clientName
+		).put(
+			"grant_types",
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			"redirect_uris",
+			new String[] {"https://client.example.org/callback"}
+		).put(
+			"response_types", new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).put(
+			"token_endpoint_auth_method",
+			OAuthConstants.TOKEN_ENDPOINT_AUTH_NONE
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _relaxIATSwap(
+					companyId)) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(201, response.getStatus());
+
+			JSONObject responseJSONObject = parseJSONObject(response);
+
+			JSONArray grantTypesJSONArray = responseJSONObject.getJSONArray(
+				"grant_types");
+
+			Assert.assertEquals(1, grantTypesJSONArray.length());
+			Assert.assertEquals(
+				OAuthConstants.AUTHORIZATION_CODE_GRANT,
+				grantTypesJSONArray.getString(0));
+
+			String clientId = responseJSONObject.getString(
+				OAuthConstants.CLIENT_ID);
+
+			OAuth2Application oAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					companyId, clientId);
+
+			Assert.assertNotNull(oAuth2Application);
+			Assert.assertEquals(
+				Collections.singletonList(GrantType.AUTHORIZATION_CODE_PKCE),
+				oAuth2Application.getAllowedGrantTypesList());
 		}
 	}
 
