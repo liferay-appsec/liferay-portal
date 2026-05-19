@@ -13,7 +13,8 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * @author Rafael Praxedes
  */
 @ExtendedObjectClassDefinition(
-	category = "oauth2", scope = ExtendedObjectClassDefinition.Scope.COMPANY
+	category = "oauth2", featureFlagKey = "LPD-63416",
+	scope = ExtendedObjectClassDefinition.Scope.COMPANY
 )
 @Meta.OCD(
 	id = "com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration",
