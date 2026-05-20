@@ -26,6 +26,14 @@ public class AuditEventServiceWrapper
 	}
 
 	@Override
+	public com.liferay.portal.security.audit.storage.model.AuditEvent
+			getAuditEvent(long auditEventId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _auditEventService.getAuditEvent(auditEventId);
+	}
+
+	@Override
 	public java.util.List
 		<com.liferay.portal.security.audit.storage.model.AuditEvent>
 				getAuditEvents(long companyId, int start, int end)
@@ -134,4 +142,4 @@ public class AuditEventServiceWrapper
 	private AuditEventService _auditEventService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1823489156
+// LIFERAY-SERVICE-BUILDER-HASH:649151379
