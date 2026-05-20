@@ -42,6 +42,18 @@ import org.osgi.service.component.annotations.Reference;
 public class AuditEventServiceImpl extends AuditEventServiceBaseImpl {
 
 	@Override
+	public AuditEvent getAuditEvent(long auditEventId) throws PortalException {
+		AuditEvent auditEvent = auditEventLocalService.getAuditEvent(
+			auditEventId);
+
+		_filterAccountEntryIds(
+			auditEvent.getCompanyId(),
+			new long[] {auditEvent.getAccountEntryId()});
+
+		return auditEvent;
+	}
+
+	@Override
 	public List<AuditEvent> getAuditEvents(long companyId, int start, int end)
 		throws PortalException {
 
