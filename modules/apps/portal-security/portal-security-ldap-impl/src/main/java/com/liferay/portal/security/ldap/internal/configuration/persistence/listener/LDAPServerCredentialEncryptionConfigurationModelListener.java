@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.ldap.internal.configuration.persistence.listener;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
@@ -13,13 +14,17 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 
 import java.util.Dictionary;
+
+import javax.crypto.spec.GCMParameterSpec;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -58,11 +63,20 @@ public class LDAPServerCredentialEncryptionConfigurationModelListener
 		try {
 			Company company = _companyLocalService.getCompany(companyId);
 
+			byte[] iv = new byte[_GCM_IV_LENGTH];
+
+			for (int i = 0; i < iv.length; i++) {
+				iv[i] = SecureRandomUtil.nextByte();
+			}
+
 			String encrypted = EncryptorUtil.encrypt(
-				company.getKeyObj(), securityCredential);
+				company.getKeyObj(), securityCredential, "AES/GCM/NoPadding",
+				new GCMParameterSpec(_GCM_TAG_LENGTH_BITS, iv));
 
 			properties.put(
-				"securityCredential", ENCRYPTED_VALUE_PREFIX + encrypted);
+				"securityCredential",
+				StringBundler.concat(
+					ENCRYPTED_VALUE_PREFIX, Base64.encode(iv), ".", encrypted));
 		}
 		catch (EncryptorException | PortalException exception) {
 			_log.error(
@@ -75,6 +89,10 @@ public class LDAPServerCredentialEncryptionConfigurationModelListener
 				properties);
 		}
 	}
+
+	private static final int _GCM_IV_LENGTH = 12;
+
+	private static final int _GCM_TAG_LENGTH_BITS = 128;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		LDAPServerCredentialEncryptionConfigurationModelListener.class);

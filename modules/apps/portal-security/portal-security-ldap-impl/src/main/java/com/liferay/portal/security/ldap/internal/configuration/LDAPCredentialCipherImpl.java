@@ -12,10 +12,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.LDAPCredentialCipher;
 import com.liferay.portal.security.ldap.internal.configuration.persistence.listener.LDAPServerCredentialEncryptionConfigurationModelListener;
+
+import javax.crypto.spec.GCMParameterSpec;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,11 +47,30 @@ public class LDAPCredentialCipherImpl implements LDAPCredentialCipher {
 		try {
 			Company company = _companyLocalService.getCompany(companyId);
 
-			return EncryptorUtil.decrypt(
-				company.getKeyObj(),
-				value.substring(
-					LDAPServerCredentialEncryptionConfigurationModelListener.
-						ENCRYPTED_VALUE_PREFIX.length()));
+			String stripped = value.substring(
+				LDAPServerCredentialEncryptionConfigurationModelListener.
+					ENCRYPTED_VALUE_PREFIX.length());
+
+			if (FIPSModeUtil.isEnabled()) {
+				int delimiter = stripped.indexOf('.');
+
+				if (delimiter <= 0) {
+					_log.error(
+						"Malformed encrypted LDAP credential for company " +
+							companyId);
+
+					return value;
+				}
+
+				byte[] iv = Base64.decode(stripped.substring(0, delimiter));
+
+				return EncryptorUtil.decrypt(
+					company.getKeyObj(), stripped.substring(delimiter + 1),
+					"AES/GCM/NoPadding",
+					new GCMParameterSpec(_GCM_TAG_LENGTH_BITS, iv));
+			}
+
+			return EncryptorUtil.decrypt(company.getKeyObj(), stripped);
 		}
 		catch (EncryptorException | PortalException exception) {
 			_log.error(
@@ -58,6 +81,8 @@ public class LDAPCredentialCipherImpl implements LDAPCredentialCipher {
 			return value;
 		}
 	}
+
+	private static final int _GCM_TAG_LENGTH_BITS = 128;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		LDAPCredentialCipherImpl.class);

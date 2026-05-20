@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.security.Key;
 import java.security.SecureRandom;
+import java.security.spec.AlgorithmParameterSpec;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,6 +54,27 @@ public class EncryptorImpl implements Encryptor {
 		byte[] encryptedBytes = Base64.decode(encryptedString);
 
 		return _decryptUnencodedAsString(key, encryptedBytes);
+	}
+
+	@Override
+	public String decrypt(
+			Key key, String encryptedString, String transformation,
+			AlgorithmParameterSpec algorithmParameterSpec)
+		throws EncryptorException {
+
+		try {
+			Cipher cipher = Cipher.getInstance(transformation);
+
+			cipher.init(Cipher.DECRYPT_MODE, key, algorithmParameterSpec);
+
+			byte[] decryptedBytes = cipher.doFinal(
+				Base64.decode(encryptedString));
+
+			return new String(decryptedBytes, ENCODING);
+		}
+		catch (Exception exception) {
+			throw new EncryptorException(exception);
+		}
 	}
 
 	@Override
@@ -103,6 +125,35 @@ public class EncryptorImpl implements Encryptor {
 		byte[] encryptedBytes = encryptUnencoded(key, plainText);
 
 		return Base64.encode(encryptedBytes);
+	}
+
+	@Override
+	public String encrypt(
+			Key key, String plainText, String transformation,
+			AlgorithmParameterSpec algorithmParameterSpec)
+		throws EncryptorException {
+
+		if (key == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Skip encrypting based on a null key");
+			}
+
+			return plainText;
+		}
+
+		try {
+			Cipher cipher = Cipher.getInstance(transformation);
+
+			cipher.init(Cipher.ENCRYPT_MODE, key, algorithmParameterSpec);
+
+			byte[] encryptedBytes = cipher.doFinal(
+				plainText.getBytes(ENCODING));
+
+			return Base64.encode(encryptedBytes);
+		}
+		catch (Exception exception) {
+			throw new EncryptorException(exception);
+		}
 	}
 
 	@Override
