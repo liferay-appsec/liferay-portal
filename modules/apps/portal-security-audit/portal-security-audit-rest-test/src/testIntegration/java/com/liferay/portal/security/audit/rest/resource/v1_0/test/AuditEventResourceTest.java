@@ -82,7 +82,8 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		serviceBuilderAuditEvent.setSessionID(RandomTestUtil.randomString());
 		serviceBuilderAuditEvent.setUserId(TestPropsValues.getUserId());
 		serviceBuilderAuditEvent.setUserName(
-			TestPropsValues.getUser().getFullName());
+			TestPropsValues.getUser(
+			).getFullName());
 
 		return _auditEventLocalService.addAuditEvent(serviceBuilderAuditEvent);
 	}

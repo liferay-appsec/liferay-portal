@@ -6,8 +6,6 @@
 package com.liferay.portal.security.audit.rest.internal.resource.v1_0;
 
 import com.liferay.headless.delivery.dto.v1_0.util.CreatorUtil;
-import com.liferay.petra.function.transform.TransformUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -23,7 +21,9 @@ import com.liferay.portal.security.audit.storage.service.AuditEventService;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
@@ -71,15 +71,24 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 			resolvedUserId = userId;
 		}
 
+		List<com.liferay.portal.security.audit.storage.model.AuditEvent>
+			serviceBuilderAuditEvents = _auditEventService.getAuditEvents(
+				companyId, accountEntryIds, 0L, resolvedUserId, null, startDate,
+				endDate, eventType, entityType, classPK, null, null, null, 0,
+				null, true, pagination.getStartPosition(),
+				pagination.getEndPosition(), null);
+
+		List<AuditEvent> auditEvents = new ArrayList<>(
+			serviceBuilderAuditEvents.size());
+
+		for (com.liferay.portal.security.audit.storage.model.AuditEvent
+				serviceBuilderAuditEvent : serviceBuilderAuditEvents) {
+
+			auditEvents.add(_toAuditEvent(serviceBuilderAuditEvent));
+		}
+
 		return Page.of(
-			TransformUtil.transform(
-				_auditEventService.getAuditEvents(
-					companyId, accountEntryIds, 0L, resolvedUserId, null,
-					startDate, endDate, eventType, entityType, classPK, null,
-					null, null, 0, null, true, pagination.getStartPosition(),
-					pagination.getEndPosition(), null),
-				this::_toAuditEvent),
-			pagination,
+			auditEvents, pagination,
 			_auditEventService.getAuditEventsCount(
 				companyId, accountEntryIds, 0L, resolvedUserId, null, startDate,
 				endDate, eventType, entityType, classPK, null, null, null, 0,
@@ -89,7 +98,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 	private AuditEvent _toAuditEvent(
 			com.liferay.portal.security.audit.storage.model.AuditEvent
 				serviceBuilderAuditEvent)
-		throws PortalException {
+		throws Exception {
 
 		return new AuditEvent() {
 			{

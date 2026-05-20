@@ -1,24 +1,29 @@
 components:
     schemas:
         AuditEvent:
-            description: An audit log entry.
+            description:
+                An audit log entry.
             properties:
                 accountEntryId:
-                    description: Identifier of the account the event was scoped to, when an account context was present.
+                    description:
+                        Identifier of the account the event was scoped to, when an account context was present.
                     format: int64
                     readOnly: true
                     type: integer
                 additionalInfo:
                     additionalProperties: true
-                    description: Structured payload captured at the configured log detail level.
+                    description:
+                        Structured payload captured at the configured log detail level.
                     readOnly: true
                     type: object
                 clientHost:
-                    description: Hostname of the client that initiated the audited request.
+                    description:
+                        Hostname of the client that initiated the audited request.
                     readOnly: true
                     type: string
                 clientIP:
-                    description: IP address of the client that initiated the audited request.
+                    description:
+                        IP address of the client that initiated the audited request.
                     readOnly: true
                     type: string
                 creator:
@@ -29,12 +34,14 @@ components:
                     readOnly: true
                     type: string
                 entityId:
-                    description: Identifier of the entity the event is about, within its type.
+                    description:
+                        Identifier of the entity the event is about, within its type.
                     format: int64
                     readOnly: true
                     type: integer
                 entityType:
-                    description: Fully-qualified class name of the entity the event is about.
+                    description:
+                        Fully-qualified class name of the entity the event is about.
                     readOnly: true
                     type: string
                 eventType:
@@ -48,16 +55,19 @@ components:
                     readOnly: true
                     type: string
                 serverName:
-                    description: Hostname of the server that processed the audited request.
+                    description:
+                        Hostname of the server that processed the audited request.
                     readOnly: true
                     type: string
                 serverPort:
-                    description: Port of the server that processed the audited request.
+                    description:
+                        Port of the server that processed the audited request.
                     format: int32
                     readOnly: true
                     type: integer
                 sessionId:
-                    description: HTTP session identifier of the audited request.
+                    description:
+                        HTTP session identifier of the audited request.
                     readOnly: true
                     type: string
             required: [id, dateCreated, eventType]
@@ -75,7 +85,8 @@ openapi: 3.0.1
 paths:
     "/audit-events":
         get:
-            description: Retrieves a paginated list of audit log entries, scoped to the caller's accessible accounts.
+            description:
+                Retrieves a paginated list of audit log entries, scoped to the caller's accessible accounts.
             operationId: getAuditEventsPage
             parameters:
                 -   in: query
@@ -151,7 +162,8 @@ paths:
             tags: ["AuditEvent"]
     "/audit-events/{auditEventId}":
         get:
-            description: Retrieves a single audit log entry by ID, including the full structured payload.
+            description:
+                Retrieves a single audit log entry by ID, including the full structured payload.
             operationId: getAuditEvent
             parameters:
                 -   in: path
