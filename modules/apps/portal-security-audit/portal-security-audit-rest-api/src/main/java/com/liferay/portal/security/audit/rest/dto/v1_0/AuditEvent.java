@@ -1,0 +1,1007 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.security.audit.rest.dto.v1_0;
+
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import com.liferay.headless.delivery.dto.v1_0.Creator;
+import com.liferay.petra.function.UnsafeSupplier;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
+import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
+import com.liferay.portal.vulcan.util.ObjectMapperUtil;
+
+import jakarta.annotation.Generated;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
+import jakarta.xml.bind.annotation.XmlRootElement;
+
+import java.io.Serializable;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
+
+/**
+ * @author Rafael Praxedes
+ * @generated
+ */
+@Generated("")
+@GraphQLName(description = "An audit log entry.", value = "AuditEvent")
+@io.swagger.v3.oas.annotations.media.Schema(
+	description = "An audit log entry.",
+	requiredProperties = {"id", "dateCreated", "eventType"}
+)
+@JsonFilter("Liferay.Vulcan")
+@XmlRootElement(name = "AuditEvent")
+public class AuditEvent implements Serializable {
+
+	public static AuditEvent toDTO(String json) {
+		return ObjectMapperUtil.readValue(AuditEvent.class, json);
+	}
+
+	public static AuditEvent unsafeToDTO(String json) {
+		return ObjectMapperUtil.unsafeReadValue(AuditEvent.class, json);
+	}
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Identifier of the account the event was scoped to, when an account context was present."
+	)
+	public Long getAccountEntryId() {
+		if (_accountEntryIdSupplier != null) {
+			accountEntryId = _accountEntryIdSupplier.get();
+
+			_accountEntryIdSupplier = null;
+		}
+
+		return accountEntryId;
+	}
+
+	public void setAccountEntryId(Long accountEntryId) {
+		this.accountEntryId = accountEntryId;
+
+		_accountEntryIdSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setAccountEntryId(
+		UnsafeSupplier<Long, Exception> accountEntryIdUnsafeSupplier) {
+
+		_accountEntryIdSupplier = () -> {
+			try {
+				return accountEntryIdUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Identifier of the account the event was scoped to, when an account context was present."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Long accountEntryId;
+
+	@JsonIgnore
+	private Supplier<Long> _accountEntryIdSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Structured payload captured at the configured log detail level."
+	)
+	@Valid
+	public Map<String, ?> getAdditionalInfo() {
+		if (_additionalInfoSupplier != null) {
+			additionalInfo = _additionalInfoSupplier.get();
+
+			_additionalInfoSupplier = null;
+		}
+
+		return additionalInfo;
+	}
+
+	public void setAdditionalInfo(Map<String, ?> additionalInfo) {
+		this.additionalInfo = additionalInfo;
+
+		_additionalInfoSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setAdditionalInfo(
+		UnsafeSupplier<Map<String, ?>, Exception>
+			additionalInfoUnsafeSupplier) {
+
+		_additionalInfoSupplier = () -> {
+			try {
+				return additionalInfoUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Structured payload captured at the configured log detail level."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Map<String, ?> additionalInfo;
+
+	@JsonIgnore
+	private Supplier<Map<String, ?>> _additionalInfoSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Hostname of the client that initiated the audited request."
+	)
+	public String getClientHost() {
+		if (_clientHostSupplier != null) {
+			clientHost = _clientHostSupplier.get();
+
+			_clientHostSupplier = null;
+		}
+
+		return clientHost;
+	}
+
+	public void setClientHost(String clientHost) {
+		this.clientHost = clientHost;
+
+		_clientHostSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setClientHost(
+		UnsafeSupplier<String, Exception> clientHostUnsafeSupplier) {
+
+		_clientHostSupplier = () -> {
+			try {
+				return clientHostUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Hostname of the client that initiated the audited request."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String clientHost;
+
+	@JsonIgnore
+	private Supplier<String> _clientHostSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "IP address of the client that initiated the audited request."
+	)
+	public String getClientIP() {
+		if (_clientIPSupplier != null) {
+			clientIP = _clientIPSupplier.get();
+
+			_clientIPSupplier = null;
+		}
+
+		return clientIP;
+	}
+
+	public void setClientIP(String clientIP) {
+		this.clientIP = clientIP;
+
+		_clientIPSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setClientIP(
+		UnsafeSupplier<String, Exception> clientIPUnsafeSupplier) {
+
+		_clientIPSupplier = () -> {
+			try {
+				return clientIPUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "IP address of the client that initiated the audited request."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String clientIP;
+
+	@JsonIgnore
+	private Supplier<String> _clientIPSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public Creator getCreator() {
+		if (_creatorSupplier != null) {
+			creator = _creatorSupplier.get();
+
+			_creatorSupplier = null;
+		}
+
+		return creator;
+	}
+
+	public void setCreator(Creator creator) {
+		this.creator = creator;
+
+		_creatorSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setCreator(
+		UnsafeSupplier<Creator, Exception> creatorUnsafeSupplier) {
+
+		_creatorSupplier = () -> {
+			try {
+				return creatorUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Creator creator;
+
+	@JsonIgnore
+	private Supplier<Creator> _creatorSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public Date getDateCreated() {
+		if (_dateCreatedSupplier != null) {
+			dateCreated = _dateCreatedSupplier.get();
+
+			_dateCreatedSupplier = null;
+		}
+
+		return dateCreated;
+	}
+
+	public void setDateCreated(Date dateCreated) {
+		this.dateCreated = dateCreated;
+
+		_dateCreatedSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setDateCreated(
+		UnsafeSupplier<Date, Exception> dateCreatedUnsafeSupplier) {
+
+		_dateCreatedSupplier = () -> {
+			try {
+				return dateCreatedUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	@NotNull
+	protected Date dateCreated;
+
+	@JsonIgnore
+	private Supplier<Date> _dateCreatedSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Identifier of the entity the event is about, within its type."
+	)
+	public Long getEntityId() {
+		if (_entityIdSupplier != null) {
+			entityId = _entityIdSupplier.get();
+
+			_entityIdSupplier = null;
+		}
+
+		return entityId;
+	}
+
+	public void setEntityId(Long entityId) {
+		this.entityId = entityId;
+
+		_entityIdSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setEntityId(
+		UnsafeSupplier<Long, Exception> entityIdUnsafeSupplier) {
+
+		_entityIdSupplier = () -> {
+			try {
+				return entityIdUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Identifier of the entity the event is about, within its type."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Long entityId;
+
+	@JsonIgnore
+	private Supplier<Long> _entityIdSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Fully-qualified class name of the entity the event is about."
+	)
+	public String getEntityType() {
+		if (_entityTypeSupplier != null) {
+			entityType = _entityTypeSupplier.get();
+
+			_entityTypeSupplier = null;
+		}
+
+		return entityType;
+	}
+
+	public void setEntityType(String entityType) {
+		this.entityType = entityType;
+
+		_entityTypeSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setEntityType(
+		UnsafeSupplier<String, Exception> entityTypeUnsafeSupplier) {
+
+		_entityTypeSupplier = () -> {
+			try {
+				return entityTypeUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Fully-qualified class name of the entity the event is about."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String entityType;
+
+	@JsonIgnore
+	private Supplier<String> _entityTypeSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public String getEventType() {
+		if (_eventTypeSupplier != null) {
+			eventType = _eventTypeSupplier.get();
+
+			_eventTypeSupplier = null;
+		}
+
+		return eventType;
+	}
+
+	public void setEventType(String eventType) {
+		this.eventType = eventType;
+
+		_eventTypeSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setEventType(
+		UnsafeSupplier<String, Exception> eventTypeUnsafeSupplier) {
+
+		_eventTypeSupplier = () -> {
+			try {
+				return eventTypeUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	@NotEmpty
+	protected String eventType;
+
+	@JsonIgnore
+	private Supplier<String> _eventTypeSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public Long getId() {
+		if (_idSupplier != null) {
+			id = _idSupplier.get();
+
+			_idSupplier = null;
+		}
+
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+
+		_idSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setId(UnsafeSupplier<Long, Exception> idUnsafeSupplier) {
+		_idSupplier = () -> {
+			try {
+				return idUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	@NotNull
+	protected Long id;
+
+	@JsonIgnore
+	private Supplier<Long> _idSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public String getMessage() {
+		if (_messageSupplier != null) {
+			message = _messageSupplier.get();
+
+			_messageSupplier = null;
+		}
+
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+
+		_messageSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setMessage(
+		UnsafeSupplier<String, Exception> messageUnsafeSupplier) {
+
+		_messageSupplier = () -> {
+			try {
+				return messageUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String message;
+
+	@JsonIgnore
+	private Supplier<String> _messageSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Hostname of the server that processed the audited request."
+	)
+	public String getServerName() {
+		if (_serverNameSupplier != null) {
+			serverName = _serverNameSupplier.get();
+
+			_serverNameSupplier = null;
+		}
+
+		return serverName;
+	}
+
+	public void setServerName(String serverName) {
+		this.serverName = serverName;
+
+		_serverNameSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setServerName(
+		UnsafeSupplier<String, Exception> serverNameUnsafeSupplier) {
+
+		_serverNameSupplier = () -> {
+			try {
+				return serverNameUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Hostname of the server that processed the audited request."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String serverName;
+
+	@JsonIgnore
+	private Supplier<String> _serverNameSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Port of the server that processed the audited request."
+	)
+	public Integer getServerPort() {
+		if (_serverPortSupplier != null) {
+			serverPort = _serverPortSupplier.get();
+
+			_serverPortSupplier = null;
+		}
+
+		return serverPort;
+	}
+
+	public void setServerPort(Integer serverPort) {
+		this.serverPort = serverPort;
+
+		_serverPortSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setServerPort(
+		UnsafeSupplier<Integer, Exception> serverPortUnsafeSupplier) {
+
+		_serverPortSupplier = () -> {
+			try {
+				return serverPortUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Port of the server that processed the audited request."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Integer serverPort;
+
+	@JsonIgnore
+	private Supplier<Integer> _serverPortSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "HTTP session identifier of the audited request."
+	)
+	public String getSessionId() {
+		if (_sessionIdSupplier != null) {
+			sessionId = _sessionIdSupplier.get();
+
+			_sessionIdSupplier = null;
+		}
+
+		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
+
+		_sessionIdSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setSessionId(
+		UnsafeSupplier<String, Exception> sessionIdUnsafeSupplier) {
+
+		_sessionIdSupplier = () -> {
+			try {
+				return sessionIdUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "HTTP session identifier of the audited request."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String sessionId;
+
+	@JsonIgnore
+	private Supplier<String> _sessionIdSupplier;
+
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+
+		if (!(object instanceof AuditEvent)) {
+			return false;
+		}
+
+		AuditEvent auditEvent = (AuditEvent)object;
+
+		return Objects.equals(toString(), auditEvent.toString());
+	}
+
+	@Override
+	public int hashCode() {
+		String string = toString();
+
+		return string.hashCode();
+	}
+
+	public String toString() {
+		StringBundler sb = new StringBundler();
+
+		sb.append("{");
+
+		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
+			"yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+		Long accountEntryId = getAccountEntryId();
+
+		if (accountEntryId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"accountEntryId\": ");
+
+			sb.append(accountEntryId);
+		}
+
+		Map<String, ?> additionalInfo = getAdditionalInfo();
+
+		if (additionalInfo != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"additionalInfo\": ");
+
+			sb.append(_toJSON(additionalInfo));
+		}
+
+		String clientHost = getClientHost();
+
+		if (clientHost != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"clientHost\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(clientHost));
+
+			sb.append("\"");
+		}
+
+		String clientIP = getClientIP();
+
+		if (clientIP != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"clientIP\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(clientIP));
+
+			sb.append("\"");
+		}
+
+		Creator creator = getCreator();
+
+		if (creator != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"creator\": ");
+
+			sb.append(creator);
+		}
+
+		Date dateCreated = getDateCreated();
+
+		if (dateCreated != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"dateCreated\": ");
+
+			sb.append("\"");
+
+			sb.append(liferayToJSONDateFormat.format(dateCreated));
+
+			sb.append("\"");
+		}
+
+		Long entityId = getEntityId();
+
+		if (entityId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"entityId\": ");
+
+			sb.append(entityId);
+		}
+
+		String entityType = getEntityType();
+
+		if (entityType != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"entityType\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(entityType));
+
+			sb.append("\"");
+		}
+
+		String eventType = getEventType();
+
+		if (eventType != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"eventType\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(eventType));
+
+			sb.append("\"");
+		}
+
+		Long id = getId();
+
+		if (id != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"id\": ");
+
+			sb.append(id);
+		}
+
+		String message = getMessage();
+
+		if (message != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"message\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(message));
+
+			sb.append("\"");
+		}
+
+		String serverName = getServerName();
+
+		if (serverName != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"serverName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(serverName));
+
+			sb.append("\"");
+		}
+
+		Integer serverPort = getServerPort();
+
+		if (serverPort != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"serverPort\": ");
+
+			sb.append(serverPort);
+		}
+
+		String sessionId = getSessionId();
+
+		if (sessionId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"sessionId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(sessionId));
+
+			sb.append("\"");
+		}
+
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
+		defaultValue = "com.liferay.portal.security.audit.rest.dto.v1_0.AuditEvent",
+		name = "x-class-name"
+	)
+	public String xClassName;
+
+	private static String _escape(Object object) {
+		return StringUtil.replace(
+			String.valueOf(object), _JSON_ESCAPE_STRINGS[0],
+			_JSON_ESCAPE_STRINGS[1]);
+	}
+
+	private static boolean _isArray(Object value) {
+		if (value == null) {
+			return false;
+		}
+
+		Class<?> clazz = value.getClass();
+
+		return clazz.isArray();
+	}
+
+	private static String _toJSON(Map<String, ?> map) {
+		StringBuilder sb = new StringBuilder("{");
+
+		@SuppressWarnings("unchecked")
+		Set set = map.entrySet();
+
+		@SuppressWarnings("unchecked")
+		Iterator<Map.Entry<String, ?>> iterator = set.iterator();
+
+		while (iterator.hasNext()) {
+			Map.Entry<String, ?> entry = iterator.next();
+
+			sb.append("\"");
+			sb.append(_escape(entry.getKey()));
+			sb.append("\": ");
+
+			Object value = entry.getValue();
+
+			if (_isArray(value)) {
+				sb.append("[");
+
+				Object[] valueArray = (Object[])value;
+
+				for (int i = 0; i < valueArray.length; i++) {
+					if (valueArray[i] instanceof Map) {
+						sb.append(_toJSON((Map<String, ?>)valueArray[i]));
+					}
+					else if (valueArray[i] instanceof String) {
+						sb.append("\"");
+						sb.append(valueArray[i]);
+						sb.append("\"");
+					}
+					else {
+						sb.append(valueArray[i]);
+					}
+
+					if ((i + 1) < valueArray.length) {
+						sb.append(", ");
+					}
+				}
+
+				sb.append("]");
+			}
+			else if (value instanceof Map) {
+				sb.append(_toJSON((Map<String, ?>)value));
+			}
+			else if (value instanceof String) {
+				sb.append("\"");
+				sb.append(_escape(value));
+				sb.append("\"");
+			}
+			else {
+				sb.append(value);
+			}
+
+			if (iterator.hasNext()) {
+				sb.append(", ");
+			}
+		}
+
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	private static final String[][] _JSON_ESCAPE_STRINGS = {
+		{"\\", "\"", "\b", "\f", "\n", "\r", "\t"},
+		{"\\\\", "\\\"", "\\b", "\\f", "\\n", "\\r", "\\t"}
+	};
+
+	private Map<String, Serializable> _extendedProperties;
+
+}
+// LIFERAY-REST-BUILDER-HASH:746140171

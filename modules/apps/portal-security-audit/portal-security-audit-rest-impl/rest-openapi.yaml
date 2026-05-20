@@ -63,7 +63,9 @@ components:
             required: [id, dateCreated, eventType]
             type: object
 info:
-    description: REST API for account-scoped audit log entries.
+    description:
+        "REST API for account-scoped audit log entries.. A Java client JAR is available for use with the group ID
+        'com.liferay', artifact ID 'com.liferay.portal.security.audit.rest.client', and version '1.0.0'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
