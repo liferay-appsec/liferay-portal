@@ -86,14 +86,14 @@ public class AuditEventServiceUtil {
 	}
 
 	public static List<AuditEvent> getAuditEvents(
-			long companyId, long[] accountEntryIds, String context,
+			long companyId, long[] accountEntryIds, String contextName,
 			String eventType, java.util.Date createDateGT,
 			java.util.Date createDateLT, int start, int end,
 			OrderByComparator<AuditEvent> orderByComparator)
 		throws PortalException {
 
 		return getService().getAuditEvents(
-			companyId, accountEntryIds, context, eventType, createDateGT,
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
 			createDateLT, start, end, orderByComparator);
 	}
 
@@ -119,13 +119,13 @@ public class AuditEventServiceUtil {
 	}
 
 	public static int getAuditEventsCount(
-			long companyId, long[] accountEntryIds, String context,
+			long companyId, long[] accountEntryIds, String contextName,
 			String eventType, java.util.Date createDateGT,
 			java.util.Date createDateLT)
 		throws PortalException {
 
 		return getService().getAuditEventsCount(
-			companyId, accountEntryIds, context, eventType, createDateGT,
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
 			createDateLT);
 	}
 
@@ -146,4 +146,4 @@ public class AuditEventServiceUtil {
 		new Snapshot<>(AuditEventServiceUtil.class, AuditEventService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:869905778
+// LIFERAY-SERVICE-BUILDER-HASH:-14205646

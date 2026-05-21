@@ -32,8 +32,8 @@ public class AuditEventTable extends BaseTable<AuditEventTable> {
 		"companyId", Long.class, Types.BIGINT, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, Long> accountEntryId = createColumn(
 		"accountEntryId", Long.class, Types.BIGINT, Column.FLAG_DEFAULT);
-	public final Column<AuditEventTable, String> context = createColumn(
-		"context", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<AuditEventTable, String> contextName = createColumn(
+		"contextName", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, Long> userId = createColumn(
 		"userId", Long.class, Types.BIGINT, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, String> userName = createColumn(
@@ -66,4 +66,4 @@ public class AuditEventTable extends BaseTable<AuditEventTable> {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1985774924
+// LIFERAY-SERVICE-BUILDER-HASH:1383426442

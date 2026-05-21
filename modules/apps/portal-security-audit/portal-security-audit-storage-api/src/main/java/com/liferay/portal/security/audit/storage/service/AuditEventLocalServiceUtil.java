@@ -291,13 +291,13 @@ public class AuditEventLocalServiceUtil {
 	}
 
 	public static List<AuditEvent> getAuditEvents(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, java.util.Date createDateGT,
 		java.util.Date createDateLT, int start, int end,
 		OrderByComparator<AuditEvent> orderByComparator) {
 
 		return getService().getAuditEvents(
-			companyId, accountEntryIds, context, eventType, createDateGT,
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
 			createDateLT, start, end, orderByComparator);
 	}
 
@@ -328,12 +328,12 @@ public class AuditEventLocalServiceUtil {
 	}
 
 	public static int getAuditEventsCount(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, java.util.Date createDateGT,
 		java.util.Date createDateLT) {
 
 		return getService().getAuditEventsCount(
-			companyId, accountEntryIds, context, eventType, createDateGT,
+			companyId, accountEntryIds, contextName, eventType, createDateGT,
 			createDateLT);
 	}
 
@@ -385,4 +385,4 @@ public class AuditEventLocalServiceUtil {
 			AuditEventLocalServiceUtil.class, AuditEventLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1846295736
+// LIFERAY-SERVICE-BUILDER-HASH:925590904

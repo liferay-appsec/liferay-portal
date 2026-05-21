@@ -106,19 +106,19 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	public void setAccountEntryId(long accountEntryId);
 
 	/**
-	 * Returns the context of this audit event.
+	 * Returns the context name of this audit event.
 	 *
-	 * @return the context of this audit event
+	 * @return the context name of this audit event
 	 */
 	@AutoEscape
-	public String getContext();
+	public String getContextName();
 
 	/**
-	 * Sets the context of this audit event.
+	 * Sets the context name of this audit event.
 	 *
-	 * @param context the context of this audit event
+	 * @param contextName the context name of this audit event
 	 */
-	public void setContext(String context);
+	public void setContextName(String contextName);
 
 	/**
 	 * Returns the user ID of this audit event.
@@ -334,4 +334,4 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:252493103
+// LIFERAY-SERVICE-BUILDER-HASH:-1875712901

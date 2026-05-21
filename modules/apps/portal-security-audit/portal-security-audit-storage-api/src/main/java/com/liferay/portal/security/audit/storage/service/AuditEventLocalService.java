@@ -250,7 +250,7 @@ public interface AuditEventLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AuditEvent> getAuditEvents(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, Date createDateGT, Date createDateLT, int start,
 		int end, OrderByComparator<AuditEvent> orderByComparator);
 
@@ -274,7 +274,7 @@ public interface AuditEventLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getAuditEventsCount(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, Date createDateGT, Date createDateLT);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -309,4 +309,4 @@ public interface AuditEventLocalService
 	public AuditEvent updateAuditEvent(AuditEvent auditEvent);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1163425600
+// LIFERAY-SERVICE-BUILDER-HASH:-567206486

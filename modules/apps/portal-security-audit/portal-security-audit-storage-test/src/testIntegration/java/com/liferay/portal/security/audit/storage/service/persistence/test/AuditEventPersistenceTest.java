@@ -120,7 +120,7 @@ public class AuditEventPersistenceTest {
 
 		newAuditEvent.setAccountEntryId(RandomTestUtil.nextLong());
 
-		newAuditEvent.setContext(RandomTestUtil.randomString());
+		newAuditEvent.setContextName(RandomTestUtil.randomString());
 
 		newAuditEvent.setUserId(RandomTestUtil.nextLong());
 
@@ -164,7 +164,8 @@ public class AuditEventPersistenceTest {
 			existingAuditEvent.getAccountEntryId(),
 			newAuditEvent.getAccountEntryId());
 		Assert.assertEquals(
-			existingAuditEvent.getContext(), newAuditEvent.getContext());
+			existingAuditEvent.getContextName(),
+			newAuditEvent.getContextName());
 		Assert.assertEquals(
 			existingAuditEvent.getUserId(), newAuditEvent.getUserId());
 		Assert.assertEquals(
@@ -236,7 +237,7 @@ public class AuditEventPersistenceTest {
 	protected OrderByComparator<AuditEvent> getOrderByComparator() {
 		return OrderByComparatorFactoryUtil.create(
 			"Audit_AuditEvent", "auditEventId", true, "groupId", true,
-			"companyId", true, "accountEntryId", true, "context", true,
+			"companyId", true, "accountEntryId", true, "contextName", true,
 			"userId", true, "userName", true, "createDate", true, "eventType",
 			true, "className", true, "classPK", true, "message", true,
 			"clientHost", true, "clientIP", true, "serverName", true,
@@ -463,7 +464,7 @@ public class AuditEventPersistenceTest {
 
 		auditEvent.setAccountEntryId(RandomTestUtil.nextLong());
 
-		auditEvent.setContext(RandomTestUtil.randomString());
+		auditEvent.setContextName(RandomTestUtil.randomString());
 
 		auditEvent.setUserId(RandomTestUtil.nextLong());
 
@@ -501,4 +502,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-2123280981
+// LIFERAY-SERVICE-BUILDER-HASH:1252137036

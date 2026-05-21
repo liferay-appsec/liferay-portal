@@ -3,7 +3,7 @@ create table Audit_AuditEvent (
 	groupId LONG,
 	companyId LONG,
 	accountEntryId LONG,
-	context VARCHAR(75) null,
+	contextName VARCHAR(75) null,
 	userId LONG,
 	userName VARCHAR(200) null,
 	createDate DATE null,

@@ -37,7 +37,7 @@ public class AuditEventWrapper
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("accountEntryId", getAccountEntryId());
-		attributes.put("context", getContext());
+		attributes.put("contextName", getContextName());
 		attributes.put("userId", getUserId());
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
@@ -81,10 +81,10 @@ public class AuditEventWrapper
 			setAccountEntryId(accountEntryId);
 		}
 
-		String context = (String)attributes.get("context");
+		String contextName = (String)attributes.get("contextName");
 
-		if (context != null) {
-			setContext(context);
+		if (contextName != null) {
+			setContextName(contextName);
 		}
 
 		Long userId = (Long)attributes.get("userId");
@@ -252,13 +252,13 @@ public class AuditEventWrapper
 	}
 
 	/**
-	 * Returns the context of this audit event.
+	 * Returns the context name of this audit event.
 	 *
-	 * @return the context of this audit event
+	 * @return the context name of this audit event
 	 */
 	@Override
-	public String getContext() {
-		return model.getContext();
+	public String getContextName() {
+		return model.getContextName();
 	}
 
 	/**
@@ -457,13 +457,13 @@ public class AuditEventWrapper
 	}
 
 	/**
-	 * Sets the context of this audit event.
+	 * Sets the context name of this audit event.
 	 *
-	 * @param context the context of this audit event
+	 * @param contextName the context name of this audit event
 	 */
 	@Override
-	public void setContext(String context) {
-		model.setContext(context);
+	public void setContextName(String contextName) {
+		model.setContextName(contextName);
 	}
 
 	/**
@@ -587,4 +587,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2038924644
+// LIFERAY-SERVICE-BUILDER-HASH:2003612284

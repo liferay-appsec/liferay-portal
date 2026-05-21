@@ -63,8 +63,8 @@ public class AuditEventCacheModel
 		sb.append(companyId);
 		sb.append(", accountEntryId=");
 		sb.append(accountEntryId);
-		sb.append(", context=");
-		sb.append(context);
+		sb.append(", contextName=");
+		sb.append(contextName);
 		sb.append(", userId=");
 		sb.append(userId);
 		sb.append(", userName=");
@@ -105,11 +105,11 @@ public class AuditEventCacheModel
 		auditEventImpl.setCompanyId(companyId);
 		auditEventImpl.setAccountEntryId(accountEntryId);
 
-		if (context == null) {
-			auditEventImpl.setContext("");
+		if (contextName == null) {
+			auditEventImpl.setContextName("");
 		}
 		else {
-			auditEventImpl.setContext(context);
+			auditEventImpl.setContextName(contextName);
 		}
 
 		auditEventImpl.setUserId(userId);
@@ -209,7 +209,7 @@ public class AuditEventCacheModel
 		companyId = objectInput.readLong();
 
 		accountEntryId = objectInput.readLong();
-		context = objectInput.readUTF();
+		contextName = objectInput.readUTF();
 
 		userId = objectInput.readLong();
 		userName = objectInput.readUTF();
@@ -237,11 +237,11 @@ public class AuditEventCacheModel
 
 		objectOutput.writeLong(accountEntryId);
 
-		if (context == null) {
+		if (contextName == null) {
 			objectOutput.writeUTF("");
 		}
 		else {
-			objectOutput.writeUTF(context);
+			objectOutput.writeUTF(contextName);
 		}
 
 		objectOutput.writeLong(userId);
@@ -325,7 +325,7 @@ public class AuditEventCacheModel
 	public long groupId;
 	public long companyId;
 	public long accountEntryId;
-	public String context;
+	public String contextName;
 	public long userId;
 	public String userName;
 	public long createDate;
@@ -341,4 +341,4 @@ public class AuditEventCacheModel
 	public String additionalInfo;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1811127670
+// LIFERAY-SERVICE-BUILDER-HASH:1289622432
