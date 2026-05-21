@@ -56,16 +56,16 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 
 	@Override
 	public Page<AuditEvent> getAuditEventsPage(
-			String context, Date endDate, String eventType, String search,
+			String contextName, Date endDate, String eventType, String search,
 			Date startDate, Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		return _getAuditEventsPage(
-			context, eventType, startDate, endDate, pagination);
+			contextName, eventType, startDate, endDate, pagination);
 	}
 
 	private Page<AuditEvent> _getAuditEventsPage(
-			String context, String eventType, Date startDate, Date endDate,
+			String contextName, String eventType, Date startDate, Date endDate,
 			Pagination pagination)
 		throws Exception {
 
@@ -73,7 +73,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 
 		List<com.liferay.portal.security.audit.storage.model.AuditEvent>
 			serviceBuilderAuditEvents = _auditEventService.getAuditEvents(
-				companyId, null, context, eventType, startDate, endDate,
+				companyId, null, contextName, eventType, startDate, endDate,
 				pagination.getStartPosition(), pagination.getEndPosition(),
 				null);
 
@@ -89,7 +89,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 		return Page.of(
 			auditEvents, pagination,
 			_auditEventService.getAuditEventsCount(
-				companyId, null, context, eventType, startDate, endDate));
+				companyId, null, contextName, eventType, startDate, endDate));
 	}
 
 	private AuditEvent _toAuditEvent(
@@ -104,7 +104,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 					() -> _toMap(serviceBuilderAuditEvent.getAdditionalInfo()));
 				setClientHost(serviceBuilderAuditEvent::getClientHost);
 				setClientIP(serviceBuilderAuditEvent::getClientIP);
-				setContext(serviceBuilderAuditEvent::getContext);
+				setContextName(serviceBuilderAuditEvent::getContextName);
 				setCreator(
 					() -> CreatorUtil.toCreator(
 						null, _portal,
