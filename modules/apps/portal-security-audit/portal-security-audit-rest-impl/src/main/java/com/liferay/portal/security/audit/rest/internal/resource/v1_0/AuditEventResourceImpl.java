@@ -10,7 +10,6 @@ import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -46,8 +45,8 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 
 	@Override
 	public Page<AuditEvent> getAuditEventByContextNameContextNamePage(
-			String contextName, Date endDate, String eventType, String search,
-			Date startDate, Filter filter, Pagination pagination, Sort[] sorts)
+			String contextName, Date endDate, String eventType, Date startDate,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		return _getAuditEventsPage(
@@ -56,8 +55,8 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 
 	@Override
 	public Page<AuditEvent> getAuditEventsPage(
-			String contextName, Date endDate, String eventType, String search,
-			Date startDate, Filter filter, Pagination pagination, Sort[] sorts)
+			String contextName, Date endDate, String eventType, Date startDate,
+			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
 		return _getAuditEventsPage(
