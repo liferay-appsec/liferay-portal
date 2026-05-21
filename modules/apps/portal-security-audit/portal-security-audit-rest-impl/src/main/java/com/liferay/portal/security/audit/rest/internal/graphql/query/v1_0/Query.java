@@ -50,7 +50,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountEntryId, additionalInfo, clientHost, clientIP, context, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountEntryId, additionalInfo, clientHost, clientIP, contextName, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a single audit log entry by ID, including the full structured payload."
@@ -99,13 +99,13 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvents(context: ___, endDate: ___, eventType: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___, startDate: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvents(contextName: ___, endDate: ___, eventType: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___, startDate: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a paginated list of audit log entries, scoped to the caller's accessible accounts."
 	)
 	public AuditEventPage auditEvents(
-			@GraphQLName("context") String context,
+			@GraphQLName("contextName") String contextName,
 			@GraphQLName("endDate") Date endDate,
 			@GraphQLName("eventType") String eventType,
 			@GraphQLName("search") String search,
@@ -121,7 +121,7 @@ public class Query {
 			this::_populateResourceContext,
 			auditEventResource -> new AuditEventPage(
 				auditEventResource.getAuditEventsPage(
-					context, endDate, eventType, search, startDate,
+					contextName, endDate, eventType, search, startDate,
 					_filterBiFunction.apply(auditEventResource, filterString),
 					Pagination.of(page, pageSize),
 					_sortsBiFunction.apply(auditEventResource, sortsString))));
@@ -216,4 +216,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1382020073
+// LIFERAY-REST-BUILDER-HASH:145145932

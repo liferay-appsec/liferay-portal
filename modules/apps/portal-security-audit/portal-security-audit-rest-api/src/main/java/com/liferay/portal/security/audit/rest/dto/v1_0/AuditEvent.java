@@ -244,29 +244,29 @@ public class AuditEvent implements Serializable {
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "Logical segregation key (e.g., subsystem or feature area that emitted the event)."
 	)
-	public String getContext() {
-		if (_contextSupplier != null) {
-			context = _contextSupplier.get();
+	public String getContextName() {
+		if (_contextNameSupplier != null) {
+			contextName = _contextNameSupplier.get();
 
-			_contextSupplier = null;
+			_contextNameSupplier = null;
 		}
 
-		return context;
+		return contextName;
 	}
 
-	public void setContext(String context) {
-		this.context = context;
+	public void setContextName(String contextName) {
+		this.contextName = contextName;
 
-		_contextSupplier = null;
+		_contextNameSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setContext(
-		UnsafeSupplier<String, Exception> contextUnsafeSupplier) {
+	public void setContextName(
+		UnsafeSupplier<String, Exception> contextNameUnsafeSupplier) {
 
-		_contextSupplier = () -> {
+		_contextNameSupplier = () -> {
 			try {
-				return contextUnsafeSupplier.get();
+				return contextNameUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -281,10 +281,10 @@ public class AuditEvent implements Serializable {
 		description = "Logical segregation key (e.g., subsystem or feature area that emitted the event)."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	protected String context;
+	protected String contextName;
 
 	@JsonIgnore
-	private Supplier<String> _contextSupplier;
+	private Supplier<String> _contextNameSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
@@ -804,18 +804,18 @@ public class AuditEvent implements Serializable {
 			sb.append("\"");
 		}
 
-		String context = getContext();
+		String contextName = getContextName();
 
-		if (context != null) {
+		if (contextName != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"context\": ");
+			sb.append("\"contextName\": ");
 
 			sb.append("\"");
 
-			sb.append(_escape(context));
+			sb.append(_escape(contextName));
 
 			sb.append("\"");
 		}
@@ -1065,4 +1065,4 @@ public class AuditEvent implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-448689232
+// LIFERAY-REST-BUILDER-HASH:31873670

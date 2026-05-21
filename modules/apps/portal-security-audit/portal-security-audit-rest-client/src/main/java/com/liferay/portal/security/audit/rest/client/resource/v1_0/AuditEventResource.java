@@ -56,26 +56,26 @@ public interface AuditEventResource {
 		throws Exception;
 
 	public Page<AuditEvent> getAuditEventsPage(
-			String context, java.util.Date endDate, String eventType,
+			String contextName, java.util.Date endDate, String eventType,
 			String search, java.util.Date startDate, String filterString,
 			Pagination pagination, String sortString)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getAuditEventsPageHttpResponse(
-			String context, java.util.Date endDate, String eventType,
+			String contextName, java.util.Date endDate, String eventType,
 			String search, java.util.Date startDate, String filterString,
 			Pagination pagination, String sortString)
 		throws Exception;
 
 	public void postAuditEventsPageExportBatch(
-			String context, java.util.Date endDate, String eventType,
+			String contextName, java.util.Date endDate, String eventType,
 			String search, java.util.Date startDate, String filterString,
 			String sortString, String callbackURL, String contentType,
 			String fieldNames)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse postAuditEventsPageExportBatchHttpResponse(
-			String context, java.util.Date endDate, String eventType,
+			String contextName, java.util.Date endDate, String eventType,
 			String search, java.util.Date startDate, String filterString,
 			String sortString, String callbackURL, String contentType,
 			String fieldNames)
@@ -443,14 +443,14 @@ public interface AuditEventResource {
 		}
 
 		public Page<AuditEvent> getAuditEventsPage(
-				String context, java.util.Date endDate, String eventType,
+				String contextName, java.util.Date endDate, String eventType,
 				String search, java.util.Date startDate, String filterString,
 				Pagination pagination, String sortString)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAuditEventsPageHttpResponse(
-					context, endDate, eventType, search, startDate,
+					contextName, endDate, eventType, search, startDate,
 					filterString, pagination, sortString);
 
 			String content = httpResponse.getContent();
@@ -513,7 +513,7 @@ public interface AuditEventResource {
 		}
 
 		public HttpInvoker.HttpResponse getAuditEventsPageHttpResponse(
-				String context, java.util.Date endDate, String eventType,
+				String contextName, java.util.Date endDate, String eventType,
 				String search, java.util.Date startDate, String filterString,
 				Pagination pagination, String sortString)
 			throws Exception {
@@ -542,8 +542,9 @@ public interface AuditEventResource {
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd'T'HH:mm:ssXX");
 
-			if (context != null) {
-				httpInvoker.parameter("context", String.valueOf(context));
+			if (contextName != null) {
+				httpInvoker.parameter(
+					"contextName", String.valueOf(contextName));
 			}
 
 			if (endDate != null) {
@@ -593,7 +594,7 @@ public interface AuditEventResource {
 		}
 
 		public void postAuditEventsPageExportBatch(
-				String context, java.util.Date endDate, String eventType,
+				String contextName, java.util.Date endDate, String eventType,
 				String search, java.util.Date startDate, String filterString,
 				String sortString, String callbackURL, String contentType,
 				String fieldNames)
@@ -601,7 +602,7 @@ public interface AuditEventResource {
 
 			HttpInvoker.HttpResponse httpResponse =
 				postAuditEventsPageExportBatchHttpResponse(
-					context, endDate, eventType, search, startDate,
+					contextName, endDate, eventType, search, startDate,
 					filterString, sortString, callbackURL, contentType,
 					fieldNames);
 
@@ -655,8 +656,8 @@ public interface AuditEventResource {
 
 		public HttpInvoker.HttpResponse
 				postAuditEventsPageExportBatchHttpResponse(
-					String context, java.util.Date endDate, String eventType,
-					String search, java.util.Date startDate,
+					String contextName, java.util.Date endDate,
+					String eventType, String search, java.util.Date startDate,
 					String filterString, String sortString, String callbackURL,
 					String contentType, String fieldNames)
 			throws Exception {
@@ -687,8 +688,9 @@ public interface AuditEventResource {
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd'T'HH:mm:ssXX");
 
-			if (context != null) {
-				httpInvoker.parameter("context", String.valueOf(context));
+			if (contextName != null) {
+				httpInvoker.parameter(
+					"contextName", String.valueOf(contextName));
 			}
 
 			if (endDate != null) {
@@ -756,4 +758,4 @@ public interface AuditEventResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:47012041
+// LIFERAY-REST-BUILDER-HASH:-106123083

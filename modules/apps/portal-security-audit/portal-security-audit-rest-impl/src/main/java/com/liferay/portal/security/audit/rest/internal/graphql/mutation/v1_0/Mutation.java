@@ -46,7 +46,7 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createAuditEventsPageExportBatch(
-			@GraphQLName("context") String context,
+			@GraphQLName("contextName") String contextName,
 			@GraphQLName("endDate") Date endDate,
 			@GraphQLName("eventType") String eventType,
 			@GraphQLName("search") String search,
@@ -63,7 +63,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			auditEventResource ->
 				auditEventResource.postAuditEventsPageExportBatch(
-					context, endDate, eventType, search, startDate,
+					contextName, endDate, eventType, search, startDate,
 					_filterBiFunction.apply(auditEventResource, filterString),
 					_sortsBiFunction.apply(auditEventResource, sortsString),
 					callbackURL, contentType, fieldNames));
@@ -148,4 +148,4 @@ public class Mutation {
 		_vulcanBatchEngineImportTaskResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1764782931
+// LIFERAY-REST-BUILDER-HASH:-1157832904

@@ -197,7 +197,7 @@ public abstract class BaseAuditEventResourceImpl
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "context"
+				name = "contextName"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -242,8 +242,8 @@ public abstract class BaseAuditEventResourceImpl
 	@Override
 	public Page<AuditEvent> getAuditEventsPage(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("context")
-			String context,
+			@jakarta.ws.rs.QueryParam("contextName")
+			String contextName,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("endDate")
 			Date endDate,
@@ -275,7 +275,7 @@ public abstract class BaseAuditEventResourceImpl
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "context"
+				name = "contextName"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -325,8 +325,8 @@ public abstract class BaseAuditEventResourceImpl
 	@Override
 	public Response postAuditEventsPageExportBatch(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("context")
-			String context,
+			@jakarta.ws.rs.QueryParam("contextName")
+			String contextName,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("endDate")
 			Date endDate,
@@ -428,7 +428,7 @@ public abstract class BaseAuditEventResourceImpl
 		throws Exception {
 
 		return getAuditEventsPage(
-			(String)parameters.get("context"),
+			(String)parameters.get("contextName"),
 			_parseDate((String)parameters.get("endDate")),
 			(String)parameters.get("eventType"), search,
 			_parseDate((String)parameters.get("startDate")), filter, pagination,
@@ -1050,4 +1050,4 @@ public abstract class BaseAuditEventResourceImpl
 		LogFactoryUtil.getLog(BaseAuditEventResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1367487370
+// LIFERAY-REST-BUILDER-HASH:1656466955

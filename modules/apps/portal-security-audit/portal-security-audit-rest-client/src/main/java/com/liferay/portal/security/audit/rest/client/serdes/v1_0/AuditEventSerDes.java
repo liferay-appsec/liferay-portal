@@ -98,16 +98,16 @@ public class AuditEventSerDes {
 			sb.append("\"");
 		}
 
-		if (auditEvent.getContext() != null) {
+		if (auditEvent.getContextName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"context\": ");
+			sb.append("\"contextName\": ");
 
 			sb.append("\"");
 
-			sb.append(_escape(auditEvent.getContext()));
+			sb.append(_escape(auditEvent.getContextName()));
 
 			sb.append("\"");
 		}
@@ -290,11 +290,11 @@ public class AuditEventSerDes {
 			map.put("clientIP", String.valueOf(auditEvent.getClientIP()));
 		}
 
-		if (auditEvent.getContext() == null) {
-			map.put("context", null);
+		if (auditEvent.getContextName() == null) {
+			map.put("contextName", null);
 		}
 		else {
-			map.put("context", String.valueOf(auditEvent.getContext()));
+			map.put("contextName", String.valueOf(auditEvent.getContextName()));
 		}
 
 		if (auditEvent.getCreator() == null) {
@@ -399,7 +399,7 @@ public class AuditEventSerDes {
 			else if (Objects.equals(jsonParserFieldName, "clientIP")) {
 				return false;
 			}
-			else if (Objects.equals(jsonParserFieldName, "context")) {
+			else if (Objects.equals(jsonParserFieldName, "contextName")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "creator")) {
@@ -463,9 +463,9 @@ public class AuditEventSerDes {
 					auditEvent.setClientIP((String)jsonParserFieldValue);
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "context")) {
+			else if (Objects.equals(jsonParserFieldName, "contextName")) {
 				if (jsonParserFieldValue != null) {
-					auditEvent.setContext((String)jsonParserFieldValue);
+					auditEvent.setContextName((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "creator")) {
@@ -604,4 +604,4 @@ public class AuditEventSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-943412962
+// LIFERAY-REST-BUILDER-HASH:872884178

@@ -199,7 +199,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		auditEvent.setClientHost(regex);
 		auditEvent.setClientIP(regex);
-		auditEvent.setContext(regex);
+		auditEvent.setContextName(regex);
 		auditEvent.setEntityType(regex);
 		auditEvent.setEventType(regex);
 		auditEvent.setMessage(regex);
@@ -214,7 +214,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		Assert.assertEquals(regex, auditEvent.getClientHost());
 		Assert.assertEquals(regex, auditEvent.getClientIP());
-		Assert.assertEquals(regex, auditEvent.getContext());
+		Assert.assertEquals(regex, auditEvent.getContextName());
 		Assert.assertEquals(regex, auditEvent.getEntityType());
 		Assert.assertEquals(regex, auditEvent.getEventType());
 		Assert.assertEquals(regex, auditEvent.getMessage());
@@ -1426,8 +1426,8 @@ public abstract class BaseAuditEventResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("context", additionalAssertFieldName)) {
-				if (auditEvent.getContext() == null) {
+			if (Objects.equals("contextName", additionalAssertFieldName)) {
+				if (auditEvent.getContextName() == null) {
 					valid = false;
 				}
 
@@ -1660,9 +1660,10 @@ public abstract class BaseAuditEventResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("context", additionalAssertFieldName)) {
+			if (Objects.equals("contextName", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						auditEvent1.getContext(), auditEvent2.getContext())) {
+						auditEvent1.getContextName(),
+						auditEvent2.getContextName())) {
 
 					return false;
 				}
@@ -1985,8 +1986,8 @@ public abstract class BaseAuditEventResourceTestCase {
 			return sb.toString();
 		}
 
-		if (entityFieldName.equals("context")) {
-			Object object = auditEvent.getContext();
+		if (entityFieldName.equals("contextName")) {
+			Object object = auditEvent.getContextName();
 
 			String value = String.valueOf(object);
 
@@ -2363,7 +2364,8 @@ public abstract class BaseAuditEventResourceTestCase {
 					RandomTestUtil.randomString());
 				clientIP = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
-				context = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				contextName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
 				entityId = RandomTestUtil.randomLong();
 				entityType = StringUtil.toLowerCase(
@@ -2624,4 +2626,4 @@ public abstract class BaseAuditEventResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-371405115
+// LIFERAY-REST-BUILDER-HASH:1563689627
