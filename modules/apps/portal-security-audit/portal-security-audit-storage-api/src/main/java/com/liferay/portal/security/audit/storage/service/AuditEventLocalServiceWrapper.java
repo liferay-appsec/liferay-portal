@@ -345,6 +345,22 @@ public class AuditEventLocalServiceWrapper
 			orderByComparator);
 	}
 
+	@Override
+	public java.util.List
+		<com.liferay.portal.security.audit.storage.model.AuditEvent>
+			getAuditEvents(
+				long companyId, long[] accountEntryIds, String context,
+				String eventType, java.util.Date createDateGT,
+				java.util.Date createDateLT, int start, int end,
+				com.liferay.portal.kernel.util.OrderByComparator
+					<com.liferay.portal.security.audit.storage.model.AuditEvent>
+						orderByComparator) {
+
+		return _auditEventLocalService.getAuditEvents(
+			companyId, accountEntryIds, context, eventType, createDateGT,
+			createDateLT, start, end, orderByComparator);
+	}
+
 	/**
 	 * Returns the number of audit events.
 	 *
@@ -372,6 +388,17 @@ public class AuditEventLocalServiceWrapper
 			companyId, accountEntryIds, groupId, userId, userName, createDateGT,
 			createDateLT, eventType, className, classPK, clientHost, clientIP,
 			serverName, serverPort, sessionID, andSearch);
+	}
+
+	@Override
+	public int getAuditEventsCount(
+		long companyId, long[] accountEntryIds, String context,
+		String eventType, java.util.Date createDateGT,
+		java.util.Date createDateLT) {
+
+		return _auditEventLocalService.getAuditEventsCount(
+			companyId, accountEntryIds, context, eventType, createDateGT,
+			createDateLT);
 	}
 
 	@Override
@@ -441,4 +468,4 @@ public class AuditEventLocalServiceWrapper
 	private AuditEventLocalService _auditEventLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-433178713
+// LIFERAY-SERVICE-BUILDER-HASH:1186449317

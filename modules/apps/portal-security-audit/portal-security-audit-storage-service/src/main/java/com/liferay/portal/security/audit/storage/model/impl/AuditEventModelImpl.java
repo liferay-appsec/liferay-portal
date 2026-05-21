@@ -65,13 +65,13 @@ public class AuditEventModelImpl
 	public static final Object[][] TABLE_COLUMNS = {
 		{"auditEventId", Types.BIGINT}, {"groupId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"accountEntryId", Types.BIGINT},
-		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
-		{"createDate", Types.TIMESTAMP}, {"eventType", Types.VARCHAR},
-		{"className", Types.VARCHAR}, {"classPK", Types.VARCHAR},
-		{"message", Types.VARCHAR}, {"clientHost", Types.VARCHAR},
-		{"clientIP", Types.VARCHAR}, {"serverName", Types.VARCHAR},
-		{"serverPort", Types.INTEGER}, {"sessionID", Types.VARCHAR},
-		{"additionalInfo", Types.CLOB}
+		{"context", Types.VARCHAR}, {"userId", Types.BIGINT},
+		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
+		{"eventType", Types.VARCHAR}, {"className", Types.VARCHAR},
+		{"classPK", Types.VARCHAR}, {"message", Types.VARCHAR},
+		{"clientHost", Types.VARCHAR}, {"clientIP", Types.VARCHAR},
+		{"serverName", Types.VARCHAR}, {"serverPort", Types.INTEGER},
+		{"sessionID", Types.VARCHAR}, {"additionalInfo", Types.CLOB}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -82,6 +82,7 @@ public class AuditEventModelImpl
 		TABLE_COLUMNS_MAP.put("groupId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("accountEntryId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("context", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("userId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
@@ -98,7 +99,7 @@ public class AuditEventModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,accountEntryId LONG,userId LONG,userName VARCHAR(200) null,createDate DATE null,eventType VARCHAR(75) null,className VARCHAR(200) null,classPK VARCHAR(75) null,message STRING null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,additionalInfo TEXT null)";
+		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,accountEntryId LONG,context VARCHAR(75) null,userId LONG,userName VARCHAR(200) null,createDate DATE null,eventType VARCHAR(75) null,className VARCHAR(200) null,classPK VARCHAR(75) null,message STRING null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,additionalInfo TEXT null)";
 
 	public static final String TABLE_SQL_DROP = "drop table Audit_AuditEvent";
 
@@ -248,6 +249,7 @@ public class AuditEventModelImpl
 			attributeGetterFunctions.put("companyId", AuditEvent::getCompanyId);
 			attributeGetterFunctions.put(
 				"accountEntryId", AuditEvent::getAccountEntryId);
+			attributeGetterFunctions.put("context", AuditEvent::getContext);
 			attributeGetterFunctions.put("userId", AuditEvent::getUserId);
 			attributeGetterFunctions.put("userName", AuditEvent::getUserName);
 			attributeGetterFunctions.put(
@@ -294,6 +296,9 @@ public class AuditEventModelImpl
 			attributeSetterBiConsumers.put(
 				"accountEntryId",
 				(BiConsumer<AuditEvent, Long>)AuditEvent::setAccountEntryId);
+			attributeSetterBiConsumers.put(
+				"context",
+				(BiConsumer<AuditEvent, String>)AuditEvent::setContext);
 			attributeSetterBiConsumers.put(
 				"userId", (BiConsumer<AuditEvent, Long>)AuditEvent::setUserId);
 			attributeSetterBiConsumers.put(
@@ -417,6 +422,26 @@ public class AuditEventModelImpl
 	public long getOriginalAccountEntryId() {
 		return GetterUtil.getLong(
 			this.<Long>getColumnOriginalValue("accountEntryId"));
+	}
+
+	@JSON
+	@Override
+	public String getContext() {
+		if (_context == null) {
+			return "";
+		}
+		else {
+			return _context;
+		}
+	}
+
+	@Override
+	public void setContext(String context) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_context = context;
 	}
 
 	@JSON
@@ -740,6 +765,7 @@ public class AuditEventModelImpl
 		auditEventImpl.setGroupId(getGroupId());
 		auditEventImpl.setCompanyId(getCompanyId());
 		auditEventImpl.setAccountEntryId(getAccountEntryId());
+		auditEventImpl.setContext(getContext());
 		auditEventImpl.setUserId(getUserId());
 		auditEventImpl.setUserName(getUserName());
 		auditEventImpl.setCreateDate(getCreateDate());
@@ -770,6 +796,8 @@ public class AuditEventModelImpl
 			this.<Long>getColumnOriginalValue("companyId"));
 		auditEventImpl.setAccountEntryId(
 			this.<Long>getColumnOriginalValue("accountEntryId"));
+		auditEventImpl.setContext(
+			this.<String>getColumnOriginalValue("context"));
 		auditEventImpl.setUserId(this.<Long>getColumnOriginalValue("userId"));
 		auditEventImpl.setUserName(
 			this.<String>getColumnOriginalValue("userName"));
@@ -877,6 +905,14 @@ public class AuditEventModelImpl
 		auditEventCacheModel.companyId = getCompanyId();
 
 		auditEventCacheModel.accountEntryId = getAccountEntryId();
+
+		auditEventCacheModel.context = getContext();
+
+		String context = auditEventCacheModel.context;
+
+		if ((context != null) && (context.length() == 0)) {
+			auditEventCacheModel.context = null;
+		}
 
 		auditEventCacheModel.userId = getUserId();
 
@@ -1036,6 +1072,7 @@ public class AuditEventModelImpl
 	private long _groupId;
 	private long _companyId;
 	private long _accountEntryId;
+	private String _context;
 	private long _userId;
 	private String _userName;
 	private Date _createDate;
@@ -1082,6 +1119,7 @@ public class AuditEventModelImpl
 		_columnOriginalValues.put("groupId", _groupId);
 		_columnOriginalValues.put("companyId", _companyId);
 		_columnOriginalValues.put("accountEntryId", _accountEntryId);
+		_columnOriginalValues.put("context", _context);
 		_columnOriginalValues.put("userId", _userId);
 		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
@@ -1116,31 +1154,33 @@ public class AuditEventModelImpl
 
 		columnBitmasks.put("accountEntryId", 8L);
 
-		columnBitmasks.put("userId", 16L);
+		columnBitmasks.put("context", 16L);
 
-		columnBitmasks.put("userName", 32L);
+		columnBitmasks.put("userId", 32L);
 
-		columnBitmasks.put("createDate", 64L);
+		columnBitmasks.put("userName", 64L);
 
-		columnBitmasks.put("eventType", 128L);
+		columnBitmasks.put("createDate", 128L);
 
-		columnBitmasks.put("className", 256L);
+		columnBitmasks.put("eventType", 256L);
 
-		columnBitmasks.put("classPK", 512L);
+		columnBitmasks.put("className", 512L);
 
-		columnBitmasks.put("message", 1024L);
+		columnBitmasks.put("classPK", 1024L);
 
-		columnBitmasks.put("clientHost", 2048L);
+		columnBitmasks.put("message", 2048L);
 
-		columnBitmasks.put("clientIP", 4096L);
+		columnBitmasks.put("clientHost", 4096L);
 
-		columnBitmasks.put("serverName", 8192L);
+		columnBitmasks.put("clientIP", 8192L);
 
-		columnBitmasks.put("serverPort", 16384L);
+		columnBitmasks.put("serverName", 16384L);
 
-		columnBitmasks.put("sessionID", 32768L);
+		columnBitmasks.put("serverPort", 32768L);
 
-		columnBitmasks.put("additionalInfo", 65536L);
+		columnBitmasks.put("sessionID", 65536L);
+
+		columnBitmasks.put("additionalInfo", 131072L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
@@ -1149,4 +1189,4 @@ public class AuditEventModelImpl
 	private AuditEvent _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-12607326
+// LIFERAY-SERVICE-BUILDER-HASH:-1672067860

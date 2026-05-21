@@ -37,6 +37,7 @@ public class AuditEventWrapper
 		attributes.put("groupId", getGroupId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("accountEntryId", getAccountEntryId());
+		attributes.put("context", getContext());
 		attributes.put("userId", getUserId());
 		attributes.put("userName", getUserName());
 		attributes.put("createDate", getCreateDate());
@@ -78,6 +79,12 @@ public class AuditEventWrapper
 
 		if (accountEntryId != null) {
 			setAccountEntryId(accountEntryId);
+		}
+
+		String context = (String)attributes.get("context");
+
+		if (context != null) {
+			setContext(context);
 		}
 
 		Long userId = (Long)attributes.get("userId");
@@ -242,6 +249,16 @@ public class AuditEventWrapper
 	@Override
 	public long getCompanyId() {
 		return model.getCompanyId();
+	}
+
+	/**
+	 * Returns the context of this audit event.
+	 *
+	 * @return the context of this audit event
+	 */
+	@Override
+	public String getContext() {
+		return model.getContext();
 	}
 
 	/**
@@ -440,6 +457,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Sets the context of this audit event.
+	 *
+	 * @param context the context of this audit event
+	 */
+	@Override
+	public void setContext(String context) {
+		model.setContext(context);
+	}
+
+	/**
 	 * Sets the create date of this audit event.
 	 *
 	 * @param createDate the create date of this audit event
@@ -560,4 +587,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:57412774
+// LIFERAY-SERVICE-BUILDER-HASH:2038924644

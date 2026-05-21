@@ -78,6 +78,13 @@ public interface AuditEventService extends BaseService {
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AuditEvent> getAuditEvents(
+			long companyId, long[] accountEntryIds, String context,
+			String eventType, Date createDateGT, Date createDateLT, int start,
+			int end, OrderByComparator<AuditEvent> orderByComparator)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getAuditEventsCount(long companyId) throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -89,6 +96,12 @@ public interface AuditEventService extends BaseService {
 			int serverPort, String sessionID, boolean andSearch)
 		throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getAuditEventsCount(
+			long companyId, long[] accountEntryIds, String context,
+			String eventType, Date createDateGT, Date createDateLT)
+		throws PortalException;
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -97,4 +110,4 @@ public interface AuditEventService extends BaseService {
 	public String getOSGiServiceIdentifier();
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1693854171
+// LIFERAY-SERVICE-BUILDER-HASH:-173681259
