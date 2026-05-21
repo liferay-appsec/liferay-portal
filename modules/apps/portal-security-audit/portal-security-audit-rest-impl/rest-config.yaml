@@ -8,5 +8,7 @@ author: Rafael Praxedes
 clientDir: ../portal-security-audit-rest-client/src/main/java
 compatibilityVersion: 15
 forcePredictableOperationId: true
+generateBatch: false
+generateGraphQL: false
 javaEEPackage: jakarta
 testDir: ../portal-security-audit-rest-test/src/testIntegration/java

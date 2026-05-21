@@ -16,8 +16,6 @@ import com.liferay.portal.test.rule.Inject;
 
 import java.util.Date;
 
-import org.junit.Ignore;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,24 +23,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
-
-	@Ignore
-	@Override
-	@Test
-	public void testBatchEngineDeleteImportTask() throws Exception {
-	}
-
-	@Ignore
-	@Override
-	@Test
-	public void testGraphQLGetAuditEvent() throws Exception {
-	}
-
-	@Ignore
-	@Override
-	@Test
-	public void testGraphQLGetAuditEventNotFound() throws Exception {
-	}
 
 	@Override
 	protected AuditEvent testGetAuditEvent_addAuditEvent() throws Exception {
