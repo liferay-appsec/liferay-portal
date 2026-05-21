@@ -50,7 +50,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountEntryId, additionalInfo, clientHost, clientIP, contextName, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountId, additionalInfo, clientHost, clientIP, contextName, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a single audit log entry by ID, including the full structured payload."
@@ -216,4 +216,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
-// LIFERAY-REST-BUILDER-HASH:145145932
+// LIFERAY-REST-BUILDER-HASH:-596368328

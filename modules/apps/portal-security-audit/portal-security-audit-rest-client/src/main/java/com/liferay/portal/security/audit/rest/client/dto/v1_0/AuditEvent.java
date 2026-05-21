@@ -27,26 +27,26 @@ public class AuditEvent implements Cloneable, Serializable {
 		return AuditEventSerDes.toDTO(json);
 	}
 
-	public Long getAccountEntryId() {
-		return accountEntryId;
+	public Long getAccountId() {
+		return accountId;
 	}
 
-	public void setAccountEntryId(Long accountEntryId) {
-		this.accountEntryId = accountEntryId;
+	public void setAccountId(Long accountId) {
+		this.accountId = accountId;
 	}
 
-	public void setAccountEntryId(
-		UnsafeSupplier<Long, Exception> accountEntryIdUnsafeSupplier) {
+	public void setAccountId(
+		UnsafeSupplier<Long, Exception> accountIdUnsafeSupplier) {
 
 		try {
-			accountEntryId = accountEntryIdUnsafeSupplier.get();
+			accountId = accountIdUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected Long accountEntryId;
+	protected Long accountId;
 
 	public Map<String, ?> getAdditionalInfo() {
 		return additionalInfo;
@@ -373,4 +373,4 @@ public class AuditEvent implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1948574935
+// LIFERAY-REST-BUILDER-HASH:576768127

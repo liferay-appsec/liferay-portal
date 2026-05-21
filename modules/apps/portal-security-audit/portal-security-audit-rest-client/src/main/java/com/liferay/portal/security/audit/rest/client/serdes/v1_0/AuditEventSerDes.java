@@ -50,14 +50,14 @@ public class AuditEventSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ssXX");
 
-		if (auditEvent.getAccountEntryId() != null) {
+		if (auditEvent.getAccountId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"accountEntryId\": ");
+			sb.append("\"accountId\": ");
 
-			sb.append(auditEvent.getAccountEntryId());
+			sb.append(auditEvent.getAccountId());
 		}
 
 		if (auditEvent.getAdditionalInfo() != null) {
@@ -258,13 +258,11 @@ public class AuditEventSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ssXX");
 
-		if (auditEvent.getAccountEntryId() == null) {
-			map.put("accountEntryId", null);
+		if (auditEvent.getAccountId() == null) {
+			map.put("accountId", null);
 		}
 		else {
-			map.put(
-				"accountEntryId",
-				String.valueOf(auditEvent.getAccountEntryId()));
+			map.put("accountId", String.valueOf(auditEvent.getAccountId()));
 		}
 
 		if (auditEvent.getAdditionalInfo() == null) {
@@ -387,7 +385,7 @@ public class AuditEventSerDes {
 
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
-			if (Objects.equals(jsonParserFieldName, "accountEntryId")) {
+			if (Objects.equals(jsonParserFieldName, "accountId")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "additionalInfo")) {
@@ -441,9 +439,9 @@ public class AuditEventSerDes {
 			AuditEvent auditEvent, String jsonParserFieldName,
 			Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "accountEntryId")) {
+			if (Objects.equals(jsonParserFieldName, "accountId")) {
 				if (jsonParserFieldValue != null) {
-					auditEvent.setAccountEntryId(
+					auditEvent.setAccountId(
 						Long.valueOf((String)jsonParserFieldValue));
 				}
 			}
@@ -604,4 +602,4 @@ public class AuditEventSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:872884178
+// LIFERAY-REST-BUILDER-HASH:-405741206

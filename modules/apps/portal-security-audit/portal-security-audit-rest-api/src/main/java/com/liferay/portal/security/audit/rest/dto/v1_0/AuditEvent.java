@@ -62,29 +62,29 @@ public class AuditEvent implements Serializable {
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "Identifier of the account the event was scoped to, when an account context was present."
 	)
-	public Long getAccountEntryId() {
-		if (_accountEntryIdSupplier != null) {
-			accountEntryId = _accountEntryIdSupplier.get();
+	public Long getAccountId() {
+		if (_accountIdSupplier != null) {
+			accountId = _accountIdSupplier.get();
 
-			_accountEntryIdSupplier = null;
+			_accountIdSupplier = null;
 		}
 
-		return accountEntryId;
+		return accountId;
 	}
 
-	public void setAccountEntryId(Long accountEntryId) {
-		this.accountEntryId = accountEntryId;
+	public void setAccountId(Long accountId) {
+		this.accountId = accountId;
 
-		_accountEntryIdSupplier = null;
+		_accountIdSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setAccountEntryId(
-		UnsafeSupplier<Long, Exception> accountEntryIdUnsafeSupplier) {
+	public void setAccountId(
+		UnsafeSupplier<Long, Exception> accountIdUnsafeSupplier) {
 
-		_accountEntryIdSupplier = () -> {
+		_accountIdSupplier = () -> {
 			try {
-				return accountEntryIdUnsafeSupplier.get();
+				return accountIdUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -99,10 +99,10 @@ public class AuditEvent implements Serializable {
 		description = "Identifier of the account the event was scoped to, when an account context was present."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	protected Long accountEntryId;
+	protected Long accountId;
 
 	@JsonIgnore
-	private Supplier<Long> _accountEntryIdSupplier;
+	private Supplier<Long> _accountIdSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "Structured payload captured at the configured log detail level."
@@ -748,16 +748,16 @@ public class AuditEvent implements Serializable {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-		Long accountEntryId = getAccountEntryId();
+		Long accountId = getAccountId();
 
-		if (accountEntryId != null) {
+		if (accountId != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"accountEntryId\": ");
+			sb.append("\"accountId\": ");
 
-			sb.append(accountEntryId);
+			sb.append(accountId);
 		}
 
 		Map<String, ?> additionalInfo = getAdditionalInfo();
@@ -1065,4 +1065,4 @@ public class AuditEvent implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:31873670
+// LIFERAY-REST-BUILDER-HASH:-380206878

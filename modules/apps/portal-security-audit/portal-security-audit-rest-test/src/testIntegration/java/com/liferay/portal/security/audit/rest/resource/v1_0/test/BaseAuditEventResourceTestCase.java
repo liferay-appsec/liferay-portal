@@ -1394,8 +1394,8 @@ public abstract class BaseAuditEventResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals("accountEntryId", additionalAssertFieldName)) {
-				if (auditEvent.getAccountEntryId() == null) {
+			if (Objects.equals("accountId", additionalAssertFieldName)) {
+				if (auditEvent.getAccountId() == null) {
 					valid = false;
 				}
 
@@ -1617,10 +1617,10 @@ public abstract class BaseAuditEventResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
-			if (Objects.equals("accountEntryId", additionalAssertFieldName)) {
+			if (Objects.equals("accountId", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						auditEvent1.getAccountEntryId(),
-						auditEvent2.getAccountEntryId())) {
+						auditEvent1.getAccountId(),
+						auditEvent2.getAccountId())) {
 
 					return false;
 				}
@@ -1884,7 +1884,7 @@ public abstract class BaseAuditEventResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
-		if (entityFieldName.equals("accountEntryId")) {
+		if (entityFieldName.equals("accountId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -2359,7 +2359,7 @@ public abstract class BaseAuditEventResourceTestCase {
 	protected AuditEvent randomAuditEvent() throws Exception {
 		return new AuditEvent() {
 			{
-				accountEntryId = RandomTestUtil.randomLong();
+				accountId = RandomTestUtil.randomLong();
 				clientHost = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				clientIP = StringUtil.toLowerCase(
@@ -2626,4 +2626,4 @@ public abstract class BaseAuditEventResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1563689627
+// LIFERAY-REST-BUILDER-HASH:2054446373
