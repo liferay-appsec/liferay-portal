@@ -17,6 +17,7 @@
 
 		<column name="companyId" type="long" />
 		<column name="accountEntryId" type="long" />
+		<column name="context" type="String" />
 		<column name="userId" type="long" />
 		<column name="userName" type="String" />
 		<column name="createDate" type="Date" />
