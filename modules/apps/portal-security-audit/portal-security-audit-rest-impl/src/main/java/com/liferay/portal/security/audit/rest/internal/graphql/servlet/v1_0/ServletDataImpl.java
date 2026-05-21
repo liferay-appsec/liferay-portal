@@ -86,6 +86,11 @@ public class ServletDataImpl implements ServletData {
 						new ObjectValuePair<>(
 							AuditEventResourceImpl.class, "getAuditEvent"));
 					put(
+						"query#auditEventByContextNameContextName",
+						new ObjectValuePair<>(
+							AuditEventResourceImpl.class,
+							"getAuditEventByContextNameContextNamePage"));
+					put(
 						"query#auditEvents",
 						new ObjectValuePair<>(
 							AuditEventResourceImpl.class,
@@ -98,4 +103,4 @@ public class ServletDataImpl implements ServletData {
 		_auditEventResourceComponentServiceObjects;
 
 }
-// LIFERAY-REST-BUILDER-HASH:248937522
+// LIFERAY-REST-BUILDER-HASH:-858558713

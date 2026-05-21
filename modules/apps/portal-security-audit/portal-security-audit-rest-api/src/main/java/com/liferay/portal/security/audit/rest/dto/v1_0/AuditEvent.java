@@ -241,6 +241,51 @@ public class AuditEvent implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _clientIPSupplier;
 
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Logical segregation key (e.g., subsystem or feature area that emitted the event)."
+	)
+	public String getContext() {
+		if (_contextSupplier != null) {
+			context = _contextSupplier.get();
+
+			_contextSupplier = null;
+		}
+
+		return context;
+	}
+
+	public void setContext(String context) {
+		this.context = context;
+
+		_contextSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setContext(
+		UnsafeSupplier<String, Exception> contextUnsafeSupplier) {
+
+		_contextSupplier = () -> {
+			try {
+				return contextUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Logical segregation key (e.g., subsystem or feature area that emitted the event)."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String context;
+
+	@JsonIgnore
+	private Supplier<String> _contextSupplier;
+
 	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
 	public Creator getCreator() {
@@ -759,6 +804,22 @@ public class AuditEvent implements Serializable {
 			sb.append("\"");
 		}
 
+		String context = getContext();
+
+		if (context != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"context\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(context));
+
+			sb.append("\"");
+		}
+
 		Creator creator = getCreator();
 
 		if (creator != null) {
@@ -1004,4 +1065,4 @@ public class AuditEvent implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:746140171
+// LIFERAY-REST-BUILDER-HASH:-448689232

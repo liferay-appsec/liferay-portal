@@ -112,6 +112,27 @@ public class AuditEvent implements Cloneable, Serializable {
 
 	protected String clientIP;
 
+	public String getContext() {
+		return context;
+	}
+
+	public void setContext(String context) {
+		this.context = context;
+	}
+
+	public void setContext(
+		UnsafeSupplier<String, Exception> contextUnsafeSupplier) {
+
+		try {
+			context = contextUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String context;
+
 	public Creator getCreator() {
 		return creator;
 	}
@@ -352,4 +373,4 @@ public class AuditEvent implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-947063074
+// LIFERAY-REST-BUILDER-HASH:-1179589630

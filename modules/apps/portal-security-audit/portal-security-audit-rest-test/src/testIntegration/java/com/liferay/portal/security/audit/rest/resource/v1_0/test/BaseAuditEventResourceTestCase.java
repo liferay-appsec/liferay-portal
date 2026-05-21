@@ -199,6 +199,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		auditEvent.setClientHost(regex);
 		auditEvent.setClientIP(regex);
+		auditEvent.setContext(regex);
 		auditEvent.setEntityType(regex);
 		auditEvent.setEventType(regex);
 		auditEvent.setMessage(regex);
@@ -213,6 +214,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		Assert.assertEquals(regex, auditEvent.getClientHost());
 		Assert.assertEquals(regex, auditEvent.getClientIP());
+		Assert.assertEquals(regex, auditEvent.getContext());
 		Assert.assertEquals(regex, auditEvent.getEntityType());
 		Assert.assertEquals(regex, auditEvent.getEventType());
 		Assert.assertEquals(regex, auditEvent.getMessage());
@@ -525,11 +527,446 @@ public abstract class BaseAuditEventResourceTestCase {
 	}
 
 	@Test
+	public void testGetAuditEventByContextNameContextNamePage()
+		throws Exception {
+
+		String contextName =
+			testGetAuditEventByContextNameContextNamePage_getContextName();
+		String irrelevantContextName =
+			testGetAuditEventByContextNameContextNamePage_getIrrelevantContextName();
+
+		Page<AuditEvent> page =
+			auditEventResource.getAuditEventByContextNameContextNamePage(
+				contextName, RandomTestUtil.nextDate(),
+				RandomTestUtil.randomString(), null, RandomTestUtil.nextDate(),
+				null, Pagination.of(1, 10), null);
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantContextName != null) {
+			AuditEvent irrelevantAuditEvent =
+				testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+					irrelevantContextName, randomIrrelevantAuditEvent());
+
+			page = auditEventResource.getAuditEventByContextNameContextNamePage(
+				irrelevantContextName, null, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 1), null);
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(
+				irrelevantAuditEvent, (List<AuditEvent>)page.getItems());
+			assertValid(
+				page,
+				testGetAuditEventByContextNameContextNamePage_getExpectedActions(
+					irrelevantContextName));
+		}
+
+		AuditEvent auditEvent1 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		AuditEvent auditEvent2 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		page = auditEventResource.getAuditEventByContextNameContextNamePage(
+			contextName, null, null, null, null, null, Pagination.of(1, 10),
+			null);
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
+		assertContains(auditEvent2, (List<AuditEvent>)page.getItems());
+		assertValid(
+			page,
+			testGetAuditEventByContextNameContextNamePage_getExpectedActions(
+				contextName));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAuditEventByContextNameContextNamePage_getExpectedActions(
+				String contextName)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithFilterDateTimeEquals()
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(
+			EntityField.Type.DATE_TIME);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		String contextName =
+			testGetAuditEventByContextNameContextNamePage_getContextName();
+
+		AuditEvent auditEvent1 = randomAuditEvent();
+
+		auditEvent1 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, auditEvent1);
+
+		for (EntityField entityField : entityFields) {
+			Page<AuditEvent> page =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null,
+					getFilterString(entityField, "between", auditEvent1),
+					Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(auditEvent1),
+				(List<AuditEvent>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithFilterDoubleEquals()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithFilter(
+			"eq", EntityField.Type.DOUBLE);
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithFilterStringContains()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithFilter(
+			"contains", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithFilterStringEquals()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithFilter(
+			"eq", EntityField.Type.STRING);
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithFilterStringStartsWith()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithFilter(
+			"startswith", EntityField.Type.STRING);
+	}
+
+	protected void testGetAuditEventByContextNameContextNamePageWithFilter(
+			String operator, EntityField.Type type)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		String contextName =
+			testGetAuditEventByContextNameContextNamePage_getContextName();
+
+		AuditEvent auditEvent1 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		AuditEvent auditEvent2 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		for (EntityField entityField : entityFields) {
+			Page<AuditEvent> page =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null,
+					getFilterString(entityField, operator, auditEvent1),
+					Pagination.of(1, 2), null);
+
+			assertEquals(
+				Collections.singletonList(auditEvent1),
+				(List<AuditEvent>)page.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithPagination()
+		throws Exception {
+
+		String contextName =
+			testGetAuditEventByContextNameContextNamePage_getContextName();
+
+		Page<AuditEvent> auditEventsPage =
+			auditEventResource.getAuditEventByContextNameContextNamePage(
+				contextName, null, null, null, null, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(auditEventsPage.getTotalCount());
+
+		AuditEvent auditEvent1 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		AuditEvent auditEvent2 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		AuditEvent auditEvent3 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, randomAuditEvent());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<AuditEvent> page1 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(auditEvent1, (List<AuditEvent>)page1.getItems());
+
+			Page<AuditEvent> page2 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			assertContains(auditEvent2, (List<AuditEvent>)page2.getItems());
+
+			Page<AuditEvent> page3 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(
+						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+						pageSizeLimit),
+					null);
+
+			assertContains(auditEvent3, (List<AuditEvent>)page3.getItems());
+		}
+		else {
+			Page<AuditEvent> page1 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(1, totalCount + 2), null);
+
+			List<AuditEvent> auditEvents1 = (List<AuditEvent>)page1.getItems();
+
+			Assert.assertEquals(
+				auditEvents1.toString(), totalCount + 2, auditEvents1.size());
+
+			Page<AuditEvent> page2 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(2, totalCount + 2), null);
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<AuditEvent> auditEvents2 = (List<AuditEvent>)page2.getItems();
+
+			Assert.assertEquals(
+				auditEvents2.toString(), 1, auditEvents2.size());
+
+			Page<AuditEvent> page3 =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(1, (int)totalCount + 3), null);
+
+			assertContains(auditEvent1, (List<AuditEvent>)page3.getItems());
+			assertContains(auditEvent2, (List<AuditEvent>)page3.getItems());
+			assertContains(auditEvent3, (List<AuditEvent>)page3.getItems());
+		}
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithSortDateTime()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithSort(
+			EntityField.Type.DATE_TIME,
+			(entityField, auditEvent1, auditEvent2) -> {
+				BeanTestUtil.setProperty(
+					auditEvent1, entityField.getName(),
+					new Date(System.currentTimeMillis() - (2 * Time.MINUTE)));
+			});
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithSortDouble()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithSort(
+			EntityField.Type.DOUBLE,
+			(entityField, auditEvent1, auditEvent2) -> {
+				BeanTestUtil.setProperty(
+					auditEvent1, entityField.getName(), 0.1);
+				BeanTestUtil.setProperty(
+					auditEvent2, entityField.getName(), 0.5);
+			});
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithSortInteger()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithSort(
+			EntityField.Type.INTEGER,
+			(entityField, auditEvent1, auditEvent2) -> {
+				BeanTestUtil.setProperty(auditEvent1, entityField.getName(), 0);
+				BeanTestUtil.setProperty(auditEvent2, entityField.getName(), 1);
+			});
+	}
+
+	@Test
+	public void testGetAuditEventByContextNameContextNamePageWithSortString()
+		throws Exception {
+
+		testGetAuditEventByContextNameContextNamePageWithSort(
+			EntityField.Type.STRING,
+			(entityField, auditEvent1, auditEvent2) -> {
+				Class<?> clazz = auditEvent1.getClass();
+
+				String entityFieldName = entityField.getName();
+
+				Method method = clazz.getMethod(
+					"get" + StringUtil.upperCaseFirstLetter(entityFieldName));
+
+				Class<?> returnType = method.getReturnType();
+
+				if (returnType.isAssignableFrom(Map.class)) {
+					BeanTestUtil.setProperty(
+						auditEvent1, entityFieldName,
+						Collections.singletonMap("Aaa", "Aaa"));
+					BeanTestUtil.setProperty(
+						auditEvent2, entityFieldName,
+						Collections.singletonMap("Bbb", "Bbb"));
+				}
+				else if (entityFieldName.contains("email")) {
+					BeanTestUtil.setProperty(
+						auditEvent1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+					BeanTestUtil.setProperty(
+						auditEvent2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()) +
+									"@liferay.com");
+				}
+				else {
+					BeanTestUtil.setProperty(
+						auditEvent1, entityFieldName,
+						"aaa" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+					BeanTestUtil.setProperty(
+						auditEvent2, entityFieldName,
+						"bbb" +
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()));
+				}
+			});
+	}
+
+	protected void testGetAuditEventByContextNameContextNamePageWithSort(
+			EntityField.Type type,
+			UnsafeTriConsumer<EntityField, AuditEvent, AuditEvent, Exception>
+				unsafeTriConsumer)
+		throws Exception {
+
+		List<EntityField> entityFields = getEntityFields(type);
+
+		if (entityFields.isEmpty()) {
+			return;
+		}
+
+		String contextName =
+			testGetAuditEventByContextNameContextNamePage_getContextName();
+
+		AuditEvent auditEvent1 = randomAuditEvent();
+		AuditEvent auditEvent2 = randomAuditEvent();
+
+		for (EntityField entityField : entityFields) {
+			unsafeTriConsumer.accept(entityField, auditEvent1, auditEvent2);
+		}
+
+		auditEvent1 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, auditEvent1);
+
+		auditEvent2 =
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				contextName, auditEvent2);
+
+		Page<AuditEvent> page =
+			auditEventResource.getAuditEventByContextNameContextNamePage(
+				contextName, null, null, null, null, null, null, null);
+
+		for (EntityField entityField : entityFields) {
+			Page<AuditEvent> ascPage =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
+					entityField.getName() + ":asc");
+
+			assertContains(auditEvent1, (List<AuditEvent>)ascPage.getItems());
+			assertContains(auditEvent2, (List<AuditEvent>)ascPage.getItems());
+
+			Page<AuditEvent> descPage =
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, null, null, null, null, null,
+					Pagination.of(1, (int)page.getTotalCount() + 1),
+					entityField.getName() + ":desc");
+
+			assertContains(auditEvent2, (List<AuditEvent>)descPage.getItems());
+			assertContains(auditEvent1, (List<AuditEvent>)descPage.getItems());
+		}
+	}
+
+	protected AuditEvent
+			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
+				String contextName, AuditEvent auditEvent)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAuditEventByContextNameContextNamePage_getContextName()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetAuditEventByContextNameContextNamePage_getIrrelevantContextName()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
 	public void testGetAuditEventsPage() throws Exception {
 		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-			null, RandomTestUtil.nextDate(), null,
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
-			RandomTestUtil.nextDate(), null, null, Pagination.of(1, 10), null);
+			RandomTestUtil.randomString(), RandomTestUtil.nextDate(),
+			RandomTestUtil.randomString(), null, RandomTestUtil.nextDate(),
+			null, Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -540,8 +977,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			randomAuditEvent());
 
 		page = auditEventResource.getAuditEventsPage(
-			null, null, null, null, null, null, null, null, null,
-			Pagination.of(1, 10), null);
+			null, null, null, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -576,7 +1012,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null,
+				null, null, null, null, null,
 				getFilterString(entityField, "between", auditEvent1),
 				Pagination.of(1, 2), null);
 
@@ -633,7 +1069,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null,
+				null, null, null, null, null,
 				getFilterString(entityField, operator, auditEvent1),
 				Pagination.of(1, 2), null);
 
@@ -647,8 +1083,7 @@ public abstract class BaseAuditEventResourceTestCase {
 	public void testGetAuditEventsPageWithPagination() throws Exception {
 		Page<AuditEvent> auditEventsPage =
 			auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null, null,
-				null);
+				null, null, null, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(auditEventsPage.getTotalCount());
 
@@ -667,7 +1102,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		if (totalCount >= (pageSizeLimit - 2)) {
 			Page<AuditEvent> page1 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -678,7 +1113,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent1, (List<AuditEvent>)page1.getItems());
 
 			Page<AuditEvent> page2 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -687,7 +1122,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent2, (List<AuditEvent>)page2.getItems());
 
 			Page<AuditEvent> page3 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -697,7 +1132,7 @@ public abstract class BaseAuditEventResourceTestCase {
 		}
 		else {
 			Page<AuditEvent> page1 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(1, totalCount + 2), null);
 
 			List<AuditEvent> auditEvents1 = (List<AuditEvent>)page1.getItems();
@@ -706,7 +1141,7 @@ public abstract class BaseAuditEventResourceTestCase {
 				auditEvents1.toString(), totalCount + 2, auditEvents1.size());
 
 			Page<AuditEvent> page2 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(2, totalCount + 2), null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
@@ -717,7 +1152,7 @@ public abstract class BaseAuditEventResourceTestCase {
 				auditEvents2.toString(), 1, auditEvents2.size());
 
 			Page<AuditEvent> page3 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(1, (int)totalCount + 3), null);
 
 			assertContains(auditEvent1, (List<AuditEvent>)page3.getItems());
@@ -834,11 +1269,11 @@ public abstract class BaseAuditEventResourceTestCase {
 		auditEvent2 = testGetAuditEventsPage_addAuditEvent(auditEvent2);
 
 		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-			null, null, null, null, null, null, null, null, null, null, null);
+			null, null, null, null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<AuditEvent> ascPage = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":asc");
 
@@ -846,7 +1281,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent2, (List<AuditEvent>)ascPage.getItems());
 
 			Page<AuditEvent> descPage = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null, null,
+				null, null, null, null, null, null,
 				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":desc");
 
@@ -985,6 +1420,14 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			if (Objects.equals("clientIP", additionalAssertFieldName)) {
 				if (auditEvent.getClientIP() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("context", additionalAssertFieldName)) {
+				if (auditEvent.getContext() == null) {
 					valid = false;
 				}
 
@@ -1210,6 +1653,16 @@ public abstract class BaseAuditEventResourceTestCase {
 			if (Objects.equals("clientIP", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						auditEvent1.getClientIP(), auditEvent2.getClientIP())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("context", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						auditEvent1.getContext(), auditEvent2.getContext())) {
 
 					return false;
 				}
@@ -1488,6 +1941,52 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		if (entityFieldName.equals("clientIP")) {
 			Object object = auditEvent.getClientIP();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("context")) {
+			Object object = auditEvent.getContext();
 
 			String value = String.valueOf(object);
 
@@ -1864,6 +2363,7 @@ public abstract class BaseAuditEventResourceTestCase {
 					RandomTestUtil.randomString());
 				clientIP = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
+				context = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
 				entityId = RandomTestUtil.randomLong();
 				entityType = StringUtil.toLowerCase(
@@ -2124,4 +2624,4 @@ public abstract class BaseAuditEventResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1479074782
+// LIFERAY-REST-BUILDER-HASH:-371405115

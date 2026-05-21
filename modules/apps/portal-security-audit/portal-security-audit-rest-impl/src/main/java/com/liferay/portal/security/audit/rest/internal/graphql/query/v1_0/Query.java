@@ -50,7 +50,7 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountEntryId, additionalInfo, clientHost, clientIP, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvent(auditEventId: ___){accountEntryId, additionalInfo, clientHost, clientIP, context, creator, dateCreated, entityId, entityType, eventType, id, message, serverName, serverPort, sessionId}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a single audit log entry by ID, including the full structured payload."
@@ -68,20 +68,48 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvents(accountEntryId: ___, endDate: ___, entityId: ___, entityType: ___, eventType: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___, startDate: ___, userId: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEventByContextNameContextName(contextName: ___, endDate: ___, eventType: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___, startDate: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 */
+	@GraphQLField(
+		description = "Retrieves a paginated list of audit log entries that share the given context, scoped to the caller's accessible accounts."
+	)
+	public AuditEventPage auditEventByContextNameContextName(
+			@GraphQLName("contextName") String contextName,
+			@GraphQLName("endDate") Date endDate,
+			@GraphQLName("eventType") String eventType,
+			@GraphQLName("search") String search,
+			@GraphQLName("startDate") Date startDate,
+			@GraphQLName("filter") String filterString,
+			@GraphQLName("pageSize") int pageSize,
+			@GraphQLName("page") int page,
+			@GraphQLName("sort") String sortsString)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_auditEventResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			auditEventResource -> new AuditEventPage(
+				auditEventResource.getAuditEventByContextNameContextNamePage(
+					contextName, endDate, eventType, search, startDate,
+					_filterBiFunction.apply(auditEventResource, filterString),
+					Pagination.of(page, pageSize),
+					_sortsBiFunction.apply(auditEventResource, sortsString))));
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {auditEvents(context: ___, endDate: ___, eventType: ___, filter: ___, page: ___, pageSize: ___, search: ___, sorts: ___, startDate: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField(
 		description = "Retrieves a paginated list of audit log entries, scoped to the caller's accessible accounts."
 	)
 	public AuditEventPage auditEvents(
-			@GraphQLName("accountEntryId") Long accountEntryId,
+			@GraphQLName("context") String context,
 			@GraphQLName("endDate") Date endDate,
-			@GraphQLName("entityId") Long entityId,
-			@GraphQLName("entityType") String entityType,
 			@GraphQLName("eventType") String eventType,
 			@GraphQLName("search") String search,
 			@GraphQLName("startDate") Date startDate,
-			@GraphQLName("userId") Long userId,
 			@GraphQLName("filter") String filterString,
 			@GraphQLName("pageSize") int pageSize,
 			@GraphQLName("page") int page,
@@ -93,8 +121,7 @@ public class Query {
 			this::_populateResourceContext,
 			auditEventResource -> new AuditEventPage(
 				auditEventResource.getAuditEventsPage(
-					accountEntryId, endDate, entityId, entityType, eventType,
-					search, startDate, userId,
+					context, endDate, eventType, search, startDate,
 					_filterBiFunction.apply(auditEventResource, filterString),
 					Pagination.of(page, pageSize),
 					_sortsBiFunction.apply(auditEventResource, sortsString))));
@@ -189,4 +216,4 @@ public class Query {
 	private com.liferay.portal.kernel.model.User _user;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1294345883
+// LIFERAY-REST-BUILDER-HASH:-1382020073
