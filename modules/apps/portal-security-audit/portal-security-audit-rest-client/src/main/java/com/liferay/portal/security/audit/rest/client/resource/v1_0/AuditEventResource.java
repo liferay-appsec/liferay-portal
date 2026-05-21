@@ -44,27 +44,24 @@ public interface AuditEventResource {
 
 	public Page<AuditEvent> getAuditEventByContextNameContextNamePage(
 			String contextName, java.util.Date endDate, String eventType,
-			String search, java.util.Date startDate, String filterString,
-			Pagination pagination, String sortString)
+			java.util.Date startDate, Pagination pagination, String sortString)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse
 			getAuditEventByContextNameContextNamePageHttpResponse(
 				String contextName, java.util.Date endDate, String eventType,
-				String search, java.util.Date startDate, String filterString,
-				Pagination pagination, String sortString)
+				java.util.Date startDate, Pagination pagination,
+				String sortString)
 		throws Exception;
 
 	public Page<AuditEvent> getAuditEventsPage(
 			String contextName, java.util.Date endDate, String eventType,
-			String search, java.util.Date startDate, String filterString,
-			Pagination pagination, String sortString)
+			java.util.Date startDate, Pagination pagination, String sortString)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getAuditEventsPageHttpResponse(
 			String contextName, java.util.Date endDate, String eventType,
-			String search, java.util.Date startDate, String filterString,
-			Pagination pagination, String sortString)
+			java.util.Date startDate, Pagination pagination, String sortString)
 		throws Exception;
 
 	public static class Builder {
@@ -280,14 +277,14 @@ public interface AuditEventResource {
 
 		public Page<AuditEvent> getAuditEventByContextNameContextNamePage(
 				String contextName, java.util.Date endDate, String eventType,
-				String search, java.util.Date startDate, String filterString,
-				Pagination pagination, String sortString)
+				java.util.Date startDate, Pagination pagination,
+				String sortString)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAuditEventByContextNameContextNamePageHttpResponse(
-					contextName, endDate, eventType, search, startDate,
-					filterString, pagination, sortString);
+					contextName, endDate, eventType, startDate, pagination,
+					sortString);
 
 			String content = httpResponse.getContent();
 
@@ -351,9 +348,8 @@ public interface AuditEventResource {
 		public HttpInvoker.HttpResponse
 				getAuditEventByContextNameContextNamePageHttpResponse(
 					String contextName, java.util.Date endDate,
-					String eventType, String search, java.util.Date startDate,
-					String filterString, Pagination pagination,
-					String sortString)
+					String eventType, java.util.Date startDate,
+					Pagination pagination, String sortString)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -389,17 +385,9 @@ public interface AuditEventResource {
 				httpInvoker.parameter("eventType", String.valueOf(eventType));
 			}
 
-			if (search != null) {
-				httpInvoker.parameter("search", String.valueOf(search));
-			}
-
 			if (startDate != null) {
 				httpInvoker.parameter(
 					"startDate", liferayToJSONDateFormat.format(startDate));
-			}
-
-			if (filterString != null) {
-				httpInvoker.parameter("filter", filterString);
 			}
 
 			if (pagination != null) {
@@ -430,14 +418,14 @@ public interface AuditEventResource {
 
 		public Page<AuditEvent> getAuditEventsPage(
 				String contextName, java.util.Date endDate, String eventType,
-				String search, java.util.Date startDate, String filterString,
-				Pagination pagination, String sortString)
+				java.util.Date startDate, Pagination pagination,
+				String sortString)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAuditEventsPageHttpResponse(
-					contextName, endDate, eventType, search, startDate,
-					filterString, pagination, sortString);
+					contextName, endDate, eventType, startDate, pagination,
+					sortString);
 
 			String content = httpResponse.getContent();
 
@@ -500,8 +488,8 @@ public interface AuditEventResource {
 
 		public HttpInvoker.HttpResponse getAuditEventsPageHttpResponse(
 				String contextName, java.util.Date endDate, String eventType,
-				String search, java.util.Date startDate, String filterString,
-				Pagination pagination, String sortString)
+				java.util.Date startDate, Pagination pagination,
+				String sortString)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -542,17 +530,9 @@ public interface AuditEventResource {
 				httpInvoker.parameter("eventType", String.valueOf(eventType));
 			}
 
-			if (search != null) {
-				httpInvoker.parameter("search", String.valueOf(search));
-			}
-
 			if (startDate != null) {
 				httpInvoker.parameter(
 					"startDate", liferayToJSONDateFormat.format(startDate));
-			}
-
-			if (filterString != null) {
-				httpInvoker.parameter("filter", filterString);
 			}
 
 			if (pagination != null) {
@@ -591,4 +571,4 @@ public interface AuditEventResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1816127333
+// LIFERAY-REST-BUILDER-HASH:-365034231

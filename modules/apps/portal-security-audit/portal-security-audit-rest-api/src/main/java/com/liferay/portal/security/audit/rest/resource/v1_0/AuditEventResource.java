@@ -47,17 +47,13 @@ public interface AuditEventResource {
 	public AuditEvent getAuditEvent(Long auditEventId) throws Exception;
 
 	public Page<AuditEvent> getAuditEventByContextNameContextNamePage(
-			String contextName, Date endDate, String eventType, String search,
-			Date startDate,
-			com.liferay.portal.kernel.search.filter.Filter filter,
+			String contextName, Date endDate, String eventType, Date startDate,
 			Pagination pagination,
 			com.liferay.portal.kernel.search.Sort[] sorts)
 		throws Exception;
 
 	public Page<AuditEvent> getAuditEventsPage(
-			String contextName, Date endDate, String eventType, String search,
-			Date startDate,
-			com.liferay.portal.kernel.search.filter.Filter filter,
+			String contextName, Date endDate, String eventType, Date startDate,
 			Pagination pagination,
 			com.liferay.portal.kernel.search.Sort[] sorts)
 		throws Exception;
@@ -150,4 +146,4 @@ public interface AuditEventResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-186362847
+// LIFERAY-REST-BUILDER-HASH:-1200881853

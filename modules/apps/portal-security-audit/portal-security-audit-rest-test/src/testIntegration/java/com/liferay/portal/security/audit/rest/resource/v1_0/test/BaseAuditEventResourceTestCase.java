@@ -42,7 +42,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.odata.entity.EntityModel;
-import com.liferay.portal.search.test.rule.SearchTestRule;
 import com.liferay.portal.security.audit.rest.client.dto.v1_0.AuditEvent;
 import com.liferay.portal.security.audit.rest.client.http.HttpInvoker;
 import com.liferay.portal.security.audit.rest.client.pagination.Page;
@@ -445,8 +444,8 @@ public abstract class BaseAuditEventResourceTestCase {
 		Page<AuditEvent> page =
 			auditEventResource.getAuditEventByContextNameContextNamePage(
 				contextName, RandomTestUtil.nextDate(),
-				RandomTestUtil.randomString(), null, RandomTestUtil.nextDate(),
-				null, Pagination.of(1, 10), null);
+				RandomTestUtil.randomString(), RandomTestUtil.nextDate(),
+				Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -456,7 +455,7 @@ public abstract class BaseAuditEventResourceTestCase {
 					irrelevantContextName, randomIrrelevantAuditEvent());
 
 			page = auditEventResource.getAuditEventByContextNameContextNamePage(
-				irrelevantContextName, null, null, null, null, null,
+				irrelevantContextName, null, null, null,
 				Pagination.of(1, (int)totalCount + 1), null);
 
 			Assert.assertEquals(totalCount + 1, page.getTotalCount());
@@ -478,8 +477,7 @@ public abstract class BaseAuditEventResourceTestCase {
 				contextName, randomAuditEvent());
 
 		page = auditEventResource.getAuditEventByContextNameContextNamePage(
-			contextName, null, null, null, null, null, Pagination.of(1, 10),
-			null);
+			contextName, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -502,106 +500,6 @@ public abstract class BaseAuditEventResourceTestCase {
 	}
 
 	@Test
-	public void testGetAuditEventByContextNameContextNamePageWithFilterDateTimeEquals()
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(
-			EntityField.Type.DATE_TIME);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		String contextName =
-			testGetAuditEventByContextNameContextNamePage_getContextName();
-
-		AuditEvent auditEvent1 = randomAuditEvent();
-
-		auditEvent1 =
-			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
-				contextName, auditEvent1);
-
-		for (EntityField entityField : entityFields) {
-			Page<AuditEvent> page =
-				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null,
-					getFilterString(entityField, "between", auditEvent1),
-					Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(auditEvent1),
-				(List<AuditEvent>)page.getItems());
-		}
-	}
-
-	@Test
-	public void testGetAuditEventByContextNameContextNamePageWithFilterDoubleEquals()
-		throws Exception {
-
-		testGetAuditEventByContextNameContextNamePageWithFilter(
-			"eq", EntityField.Type.DOUBLE);
-	}
-
-	@Test
-	public void testGetAuditEventByContextNameContextNamePageWithFilterStringContains()
-		throws Exception {
-
-		testGetAuditEventByContextNameContextNamePageWithFilter(
-			"contains", EntityField.Type.STRING);
-	}
-
-	@Test
-	public void testGetAuditEventByContextNameContextNamePageWithFilterStringEquals()
-		throws Exception {
-
-		testGetAuditEventByContextNameContextNamePageWithFilter(
-			"eq", EntityField.Type.STRING);
-	}
-
-	@Test
-	public void testGetAuditEventByContextNameContextNamePageWithFilterStringStartsWith()
-		throws Exception {
-
-		testGetAuditEventByContextNameContextNamePageWithFilter(
-			"startswith", EntityField.Type.STRING);
-	}
-
-	protected void testGetAuditEventByContextNameContextNamePageWithFilter(
-			String operator, EntityField.Type type)
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(type);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		String contextName =
-			testGetAuditEventByContextNameContextNamePage_getContextName();
-
-		AuditEvent auditEvent1 =
-			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
-				contextName, randomAuditEvent());
-
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		AuditEvent auditEvent2 =
-			testGetAuditEventByContextNameContextNamePage_addAuditEvent(
-				contextName, randomAuditEvent());
-
-		for (EntityField entityField : entityFields) {
-			Page<AuditEvent> page =
-				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null,
-					getFilterString(entityField, operator, auditEvent1),
-					Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(auditEvent1),
-				(List<AuditEvent>)page.getItems());
-		}
-	}
-
-	@Test
 	public void testGetAuditEventByContextNameContextNamePageWithPagination()
 		throws Exception {
 
@@ -610,7 +508,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		Page<AuditEvent> auditEventsPage =
 			auditEventResource.getAuditEventByContextNameContextNamePage(
-				contextName, null, null, null, null, null, null, null);
+				contextName, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(auditEventsPage.getTotalCount());
 
@@ -633,7 +531,7 @@ public abstract class BaseAuditEventResourceTestCase {
 		if (totalCount >= (pageSizeLimit - 2)) {
 			Page<AuditEvent> page1 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(
 						(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 						pageSizeLimit),
@@ -645,7 +543,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			Page<AuditEvent> page2 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(
 						(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 						pageSizeLimit),
@@ -655,7 +553,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			Page<AuditEvent> page3 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(
 						(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 						pageSizeLimit),
@@ -666,7 +564,7 @@ public abstract class BaseAuditEventResourceTestCase {
 		else {
 			Page<AuditEvent> page1 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(1, totalCount + 2), null);
 
 			List<AuditEvent> auditEvents1 = (List<AuditEvent>)page1.getItems();
@@ -676,7 +574,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			Page<AuditEvent> page2 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(2, totalCount + 2), null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
@@ -688,7 +586,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			Page<AuditEvent> page3 =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(1, (int)totalCount + 3), null);
 
 			assertContains(auditEvent1, (List<AuditEvent>)page3.getItems());
@@ -821,12 +719,12 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		Page<AuditEvent> page =
 			auditEventResource.getAuditEventByContextNameContextNamePage(
-				contextName, null, null, null, null, null, null, null);
+				contextName, null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<AuditEvent> ascPage =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(1, (int)page.getTotalCount() + 1),
 					entityField.getName() + ":asc");
 
@@ -835,7 +733,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 			Page<AuditEvent> descPage =
 				auditEventResource.getAuditEventByContextNameContextNamePage(
-					contextName, null, null, null, null, null,
+					contextName, null, null, null,
 					Pagination.of(1, (int)page.getTotalCount() + 1),
 					entityField.getName() + ":desc");
 
@@ -872,8 +770,8 @@ public abstract class BaseAuditEventResourceTestCase {
 	public void testGetAuditEventsPage() throws Exception {
 		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
 			RandomTestUtil.randomString(), RandomTestUtil.nextDate(),
-			RandomTestUtil.randomString(), null, RandomTestUtil.nextDate(),
-			null, Pagination.of(1, 10), null);
+			RandomTestUtil.randomString(), RandomTestUtil.nextDate(),
+			Pagination.of(1, 10), null);
 
 		long totalCount = page.getTotalCount();
 
@@ -884,7 +782,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			randomAuditEvent());
 
 		page = auditEventResource.getAuditEventsPage(
-			null, null, null, null, null, null, Pagination.of(1, 10), null);
+			null, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -903,94 +801,10 @@ public abstract class BaseAuditEventResourceTestCase {
 	}
 
 	@Test
-	public void testGetAuditEventsPageWithFilterDateTimeEquals()
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(
-			EntityField.Type.DATE_TIME);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		AuditEvent auditEvent1 = randomAuditEvent();
-
-		auditEvent1 = testGetAuditEventsPage_addAuditEvent(auditEvent1);
-
-		for (EntityField entityField : entityFields) {
-			Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null,
-				getFilterString(entityField, "between", auditEvent1),
-				Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(auditEvent1),
-				(List<AuditEvent>)page.getItems());
-		}
-	}
-
-	@Test
-	public void testGetAuditEventsPageWithFilterDoubleEquals()
-		throws Exception {
-
-		testGetAuditEventsPageWithFilter("eq", EntityField.Type.DOUBLE);
-	}
-
-	@Test
-	public void testGetAuditEventsPageWithFilterStringContains()
-		throws Exception {
-
-		testGetAuditEventsPageWithFilter("contains", EntityField.Type.STRING);
-	}
-
-	@Test
-	public void testGetAuditEventsPageWithFilterStringEquals()
-		throws Exception {
-
-		testGetAuditEventsPageWithFilter("eq", EntityField.Type.STRING);
-	}
-
-	@Test
-	public void testGetAuditEventsPageWithFilterStringStartsWith()
-		throws Exception {
-
-		testGetAuditEventsPageWithFilter("startswith", EntityField.Type.STRING);
-	}
-
-	protected void testGetAuditEventsPageWithFilter(
-			String operator, EntityField.Type type)
-		throws Exception {
-
-		List<EntityField> entityFields = getEntityFields(type);
-
-		if (entityFields.isEmpty()) {
-			return;
-		}
-
-		AuditEvent auditEvent1 = testGetAuditEventsPage_addAuditEvent(
-			randomAuditEvent());
-
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		AuditEvent auditEvent2 = testGetAuditEventsPage_addAuditEvent(
-			randomAuditEvent());
-
-		for (EntityField entityField : entityFields) {
-			Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null,
-				getFilterString(entityField, operator, auditEvent1),
-				Pagination.of(1, 2), null);
-
-			assertEquals(
-				Collections.singletonList(auditEvent1),
-				(List<AuditEvent>)page.getItems());
-		}
-	}
-
-	@Test
 	public void testGetAuditEventsPageWithPagination() throws Exception {
 		Page<AuditEvent> auditEventsPage =
 			auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null, null, null);
+				null, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(auditEventsPage.getTotalCount());
 
@@ -1009,7 +823,7 @@ public abstract class BaseAuditEventResourceTestCase {
 
 		if (totalCount >= (pageSizeLimit - 2)) {
 			Page<AuditEvent> page1 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
+				null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -1020,7 +834,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent1, (List<AuditEvent>)page1.getItems());
 
 			Page<AuditEvent> page2 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
+				null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -1029,7 +843,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent2, (List<AuditEvent>)page2.getItems());
 
 			Page<AuditEvent> page3 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
+				null, null, null, null,
 				Pagination.of(
 					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
 					pageSizeLimit),
@@ -1039,8 +853,7 @@ public abstract class BaseAuditEventResourceTestCase {
 		}
 		else {
 			Page<AuditEvent> page1 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
-				Pagination.of(1, totalCount + 2), null);
+				null, null, null, null, Pagination.of(1, totalCount + 2), null);
 
 			List<AuditEvent> auditEvents1 = (List<AuditEvent>)page1.getItems();
 
@@ -1048,8 +861,7 @@ public abstract class BaseAuditEventResourceTestCase {
 				auditEvents1.toString(), totalCount + 2, auditEvents1.size());
 
 			Page<AuditEvent> page2 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
-				Pagination.of(2, totalCount + 2), null);
+				null, null, null, null, Pagination.of(2, totalCount + 2), null);
 
 			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
 
@@ -1059,8 +871,8 @@ public abstract class BaseAuditEventResourceTestCase {
 				auditEvents2.toString(), 1, auditEvents2.size());
 
 			Page<AuditEvent> page3 = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
-				Pagination.of(1, (int)totalCount + 3), null);
+				null, null, null, null, Pagination.of(1, (int)totalCount + 3),
+				null);
 
 			assertContains(auditEvent1, (List<AuditEvent>)page3.getItems());
 			assertContains(auditEvent2, (List<AuditEvent>)page3.getItems());
@@ -1176,11 +988,11 @@ public abstract class BaseAuditEventResourceTestCase {
 		auditEvent2 = testGetAuditEventsPage_addAuditEvent(auditEvent2);
 
 		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-			null, null, null, null, null, null, null, null);
+			null, null, null, null, null, null);
 
 		for (EntityField entityField : entityFields) {
 			Page<AuditEvent> ascPage = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
+				null, null, null, null,
 				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":asc");
 
@@ -1188,7 +1000,7 @@ public abstract class BaseAuditEventResourceTestCase {
 			assertContains(auditEvent2, (List<AuditEvent>)ascPage.getItems());
 
 			Page<AuditEvent> descPage = auditEventResource.getAuditEventsPage(
-				null, null, null, null, null, null,
+				null, null, null, null,
 				Pagination.of(1, (int)page.getTotalCount() + 1),
 				entityField.getName() + ":desc");
 
@@ -1204,9 +1016,6 @@ public abstract class BaseAuditEventResourceTestCase {
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
 	}
-
-	@Rule
-	public SearchTestRule searchTestRule = new SearchTestRule();
 
 	protected void assertContains(
 		AuditEvent auditEvent, List<AuditEvent> auditEvents) {
@@ -2521,4 +2330,4 @@ public abstract class BaseAuditEventResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:74212075
+// LIFERAY-REST-BUILDER-HASH:880149160

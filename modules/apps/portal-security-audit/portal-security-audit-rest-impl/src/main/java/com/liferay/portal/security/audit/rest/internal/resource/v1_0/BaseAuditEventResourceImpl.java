@@ -108,19 +108,11 @@ public abstract class BaseAuditEventResourceImpl
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -151,13 +143,8 @@ public abstract class BaseAuditEventResourceImpl
 			@jakarta.ws.rs.QueryParam("eventType")
 			String eventType,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("startDate")
 			Date startDate,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
 			@jakarta.ws.rs.core.Context Pagination pagination,
 			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
 				sorts)
@@ -190,19 +177,11 @@ public abstract class BaseAuditEventResourceImpl
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "filter"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "page"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "pageSize"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "search"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -232,13 +211,8 @@ public abstract class BaseAuditEventResourceImpl
 			@jakarta.ws.rs.QueryParam("eventType")
 			String eventType,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("search")
-			String search,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("startDate")
 			Date startDate,
-			@jakarta.ws.rs.core.Context
-				com.liferay.portal.kernel.search.filter.Filter filter,
 			@jakarta.ws.rs.core.Context Pagination pagination,
 			@jakarta.ws.rs.core.Context com.liferay.portal.kernel.search.Sort[]
 				sorts)
@@ -704,4 +678,4 @@ public abstract class BaseAuditEventResourceImpl
 		LogFactoryUtil.getLog(BaseAuditEventResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:1618240878
+// LIFERAY-REST-BUILDER-HASH:-1953718292
