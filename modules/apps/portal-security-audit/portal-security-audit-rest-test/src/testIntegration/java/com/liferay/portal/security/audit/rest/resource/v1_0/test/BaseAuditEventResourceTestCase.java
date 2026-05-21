@@ -434,99 +434,6 @@ public abstract class BaseAuditEventResourceTestCase {
 	}
 
 	@Test
-	public void testGraphQLGetAuditEvent() throws Exception {
-		AuditEvent auditEvent = testGraphQLGetAuditEvent_addAuditEvent();
-
-		// No namespace
-
-		Assert.assertTrue(
-			equals(
-				auditEvent,
-				AuditEventSerDes.toDTO(
-					JSONUtil.getValueAsString(
-						invokeGraphQLQuery(
-							new GraphQLField(
-								"auditEvent",
-								new HashMap<String, Object>() {
-									{
-										put("auditEventId", auditEvent.getId());
-									}
-								},
-								getGraphQLFields())),
-						"JSONObject/data", "Object/auditEvent"))));
-
-		// Using the namespace audit_v1_0
-
-		Assert.assertTrue(
-			equals(
-				auditEvent,
-				AuditEventSerDes.toDTO(
-					JSONUtil.getValueAsString(
-						invokeGraphQLQuery(
-							new GraphQLField(
-								"audit_v1_0",
-								new GraphQLField(
-									"auditEvent",
-									new HashMap<String, Object>() {
-										{
-											put(
-												"auditEventId",
-												auditEvent.getId());
-										}
-									},
-									getGraphQLFields()))),
-						"JSONObject/data", "JSONObject/audit_v1_0",
-						"Object/auditEvent"))));
-	}
-
-	@Test
-	public void testGraphQLGetAuditEventNotFound() throws Exception {
-		Long irrelevantAuditEventId = RandomTestUtil.randomLong();
-
-		// No namespace
-
-		Assert.assertEquals(
-			"Not Found",
-			JSONUtil.getValueAsString(
-				invokeGraphQLQuery(
-					new GraphQLField(
-						"auditEvent",
-						new HashMap<String, Object>() {
-							{
-								put("auditEventId", irrelevantAuditEventId);
-							}
-						},
-						getGraphQLFields())),
-				"JSONArray/errors", "Object/0", "JSONObject/extensions",
-				"Object/code"));
-
-		// Using the namespace audit_v1_0
-
-		Assert.assertEquals(
-			"Not Found",
-			JSONUtil.getValueAsString(
-				invokeGraphQLQuery(
-					new GraphQLField(
-						"audit_v1_0",
-						new GraphQLField(
-							"auditEvent",
-							new HashMap<String, Object>() {
-								{
-									put("auditEventId", irrelevantAuditEventId);
-								}
-							},
-							getGraphQLFields()))),
-				"JSONArray/errors", "Object/0", "JSONObject/extensions",
-				"Object/code"));
-	}
-
-	protected AuditEvent testGraphQLGetAuditEvent_addAuditEvent()
-		throws Exception {
-
-		return testGraphQLAuditEvent_addAuditEvent();
-	}
-
-	@Test
 	public void testGetAuditEventByContextNameContextNamePage()
 		throws Exception {
 
@@ -1298,20 +1205,8 @@ public abstract class BaseAuditEventResourceTestCase {
 			"This method needs to be implemented");
 	}
 
-	@Test
-	public void testBatchEngineDeleteImportTask() throws Exception {
-		Assert.assertTrue(true);
-	}
-
 	@Rule
 	public SearchTestRule searchTestRule = new SearchTestRule();
-
-	protected AuditEvent testGraphQLAuditEvent_addAuditEvent()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
 
 	protected void assertContains(
 		AuditEvent auditEvent, List<AuditEvent> auditEvents) {
@@ -2626,4 +2521,4 @@ public abstract class BaseAuditEventResourceTestCase {
 		_vulcanCRUDItemDelegateBuilderRegistry;
 
 }
-// LIFERAY-REST-BUILDER-HASH:2054446373
+// LIFERAY-REST-BUILDER-HASH:74212075
