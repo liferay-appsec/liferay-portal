@@ -16,11 +16,15 @@ import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
@@ -135,15 +139,20 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				if (dynamicRegistrationConfiguration.
 						requireInitialAccessToken()) {
 
+					_auditRejection(
+						httpServletRequest, companyId, "anonymous",
+						"invalid_token", "Initial access token required");
+
 					throw ExceptionUtils.toNotAuthorizedException(null, null);
 				}
 
 				_validateAnonymousHosts(
-					httpServletRequest,
+					httpServletRequest, companyId,
 					dynamicRegistrationConfiguration.anonymousAllowedHosts());
 
 				_checkAnonymousRateLimit(
-					companyId, _getClientHost(httpServletRequest),
+					httpServletRequest, companyId,
+					_getClientHost(httpServletRequest),
 					dynamicRegistrationConfiguration.
 						anonymousRegistrationsPerHour());
 
@@ -175,6 +184,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				_log.debug(exception);
 			}
 
+			_auditRejection(
+				httpServletRequest, companyId,
+				hasBearer ? "authenticated" : "anonymous", "invalid_token",
+				"Bearer token authorization failed");
+
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
 
@@ -184,6 +198,44 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 
 		_setSecurityContext(containerRequestContext, httpServletRequest, user);
+	}
+
+	private void _auditRejection(
+		HttpServletRequest httpServletRequest, long companyId, String mode,
+		String error, String errorDescription) {
+
+		AuditRouter auditRouter = _auditRouterSnapshot.get();
+
+		if (auditRouter == null) {
+			return;
+		}
+
+		try {
+			AuditMessage auditMessage = new AuditMessage(
+				_EVENT_TYPE_DCR_REJECT, companyId, 0, 0, StringPool.BLANK,
+				OAuth2Application.class.getName(), StringPool.BLANK,
+				StringPool.BLANK, null,
+				JSONUtil.put(
+					"clientHost", _getClientHost(httpServletRequest)
+				).put(
+					"error", error
+				).put(
+					"errorDescription", errorDescription
+				).put(
+					"mode", mode
+				).put(
+					"userAgent",
+					GetterUtil.getString(
+						httpServletRequest.getHeader("User-Agent"))
+				));
+
+			auditRouter.route(auditMessage);
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
 	}
 
 	private User _authorizeWithBearer(
@@ -268,7 +320,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 	}
 
 	private void _checkAnonymousRateLimit(
-		long companyId, String clientHost, int registrationsPerHour) {
+		HttpServletRequest httpServletRequest, long companyId,
+		String clientHost, int registrationsPerHour) {
 
 		if (registrationsPerHour <= 0) {
 			return;
@@ -324,6 +377,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					"exceeded for company ", companyId, " from ", clientHost,
 					"; retry after ", retryAfterSeconds, " seconds"));
 		}
+
+		_auditRejection(
+			httpServletRequest, companyId, "anonymous", "rate_limited",
+			"Anonymous client registration rate limit exceeded for host " +
+				clientHost);
 
 		throw new WebApplicationException(
 			Response.status(
@@ -452,7 +510,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 	}
 
 	private void _validateAnonymousHosts(
-		HttpServletRequest httpServletRequest, String[] allowedHosts) {
+		HttpServletRequest httpServletRequest, long companyId,
+		String[] allowedHosts) {
 
 		if (ArrayUtil.isEmpty(allowedHosts)) {
 			return;
@@ -481,6 +540,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		String clientHost = _getClientHost(httpServletRequest);
 
 		if (!normalizedAllowedHosts.contains(clientHost)) {
+			_auditRejection(
+				httpServletRequest, companyId, "anonymous", "access_denied",
+				"Host " + clientHost +
+					" is not permitted for anonymous registration");
+
 			OAuth2ErrorUtil.reportInvalidRequestError(
 				"Host " + clientHost +
 					" is not permitted for anonymous registration",
@@ -488,12 +552,19 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 	}
 
+	private static final String _EVENT_TYPE_DCR_REJECT =
+		"DYNAMIC_REGISTRATION_REJECT";
+
 	private static final long _RATE_LIMIT_WINDOW_MILLIS =
 		TimeUnit.HOURS.toMillis(1);
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
 
+	private static final Snapshot<AuditRouter> _auditRouterSnapshot =
+		new Snapshot<>(
+			DynamicRegistrationServiceContainerRequestFilter.class,
+			AuditRouter.class, null, true);
 	private static final Map<String, RateLimitBucket> _rateLimitBuckets =
 		new ConcurrentHashMap<>();
 
