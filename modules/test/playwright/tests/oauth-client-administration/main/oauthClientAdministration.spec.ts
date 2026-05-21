@@ -14,6 +14,7 @@ import getRandomString from '../../../utils/getRandomString';
 
 let authServerLocalMetadataCreated = false;
 let oauthClientsCreated = false;
+let protectedResourceLocalMetadataCreated = false;
 let userCustomFieldsCreated = false;
 
 const test = mergeTests(
@@ -30,6 +31,7 @@ test.afterEach(
 	async ({
 		authServerLocalMetadatasPage,
 		oauthClientClientsPage,
+		protectedResourceLocalMetadatasPage,
 		viewAttributesPage,
 	}) => {
 		if (authServerLocalMetadataCreated) {
@@ -50,6 +52,14 @@ test.afterEach(
 			await oauthClientClientsPage.deleteOAuthClientEntries();
 
 			oauthClientsCreated = false;
+		}
+
+		if (protectedResourceLocalMetadataCreated) {
+			await protectedResourceLocalMetadatasPage.goTo();
+
+			await protectedResourceLocalMetadatasPage.deleteProtectedResourceLocalMetadata();
+
+			protectedResourceLocalMetadataCreated = false;
 		}
 	}
 );
@@ -102,6 +112,58 @@ test.describe('Enable Configuration of oauth-authorization-server Well-Known URI
 			).toBeVisible();
 
 			await authServerLocalMetadatasPage.oAuthAuthorizatoinServerTab.click();
+		}
+	);
+});
+
+test.describe('Enable Configuration of oauth-protected-resource Well-Known URIs in the OAuthClient Portlet', () => {
+	test(
+		'Create an oauth-protected-resource and validate',
+		{tag: '@LPD-91289'},
+		async ({protectedResourceLocalMetadatasPage}) => {
+			await protectedResourceLocalMetadatasPage.goTo();
+
+			// Empty resource fails the required validation.
+
+			await protectedResourceLocalMetadatasPage.addProtectedResourceLocalMetadata(
+				'',
+				'https://localhost.com',
+				'The Resource field is required.'
+			);
+
+			// Non-HTTPS resource fails the HTTPS validation.
+
+			await protectedResourceLocalMetadatasPage.addProtectedResourceLocalMetadata(
+				'http://example.com/o/mcp',
+				'https://localhost.com',
+				'Invalid HTTPS resource URL: http://example.com/o/mcp'
+			);
+
+			// Valid HTTPS resource is accepted.
+
+			protectedResourceLocalMetadataCreated = true;
+
+			await protectedResourceLocalMetadatasPage.addProtectedResourceLocalMetadata(
+				'https://localhost.com/o/mcp',
+				'https://localhost.com'
+			);
+
+			// Re-submitting the same resource fails with duplicate.
+
+			await protectedResourceLocalMetadatasPage.addProtectedResourceLocalMetadata(
+				'https://localhost.com/o/mcp',
+				'https://localhost.com',
+				'Duplicate'
+			);
+
+			// The created entry shows in the listing with its local
+			// well-known URI.
+
+			await expect(
+				await protectedResourceLocalMetadatasPage.page.getByText(
+					'https://localhost.com/.well-known/oauth-protected-resource/o/mcp'
+				)
+			).toBeVisible();
 		}
 	);
 });
