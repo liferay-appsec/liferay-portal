@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 
 import java.util.Dictionary;
@@ -63,20 +64,31 @@ public class LDAPServerCredentialEncryptionConfigurationModelListener
 		try {
 			Company company = _companyLocalService.getCompany(companyId);
 
-			byte[] iv = new byte[_GCM_IV_LENGTH];
+			if (FIPSModeUtil.isEnabled()) {
+				byte[] iv = new byte[_GCM_IV_LENGTH];
 
-			for (int i = 0; i < iv.length; i++) {
-				iv[i] = SecureRandomUtil.nextByte();
+				for (int i = 0; i < iv.length; i++) {
+					iv[i] = SecureRandomUtil.nextByte();
+				}
+
+				String encrypted = EncryptorUtil.encrypt(
+					company.getKeyObj(), securityCredential,
+					"AES/GCM/NoPadding",
+					new GCMParameterSpec(_GCM_TAG_LENGTH_BITS, iv));
+
+				properties.put(
+					"securityCredential",
+					StringBundler.concat(
+						ENCRYPTED_VALUE_PREFIX, Base64.encode(iv), ".",
+						encrypted));
 			}
+			else {
+				String encrypted = EncryptorUtil.encrypt(
+					company.getKeyObj(), securityCredential);
 
-			String encrypted = EncryptorUtil.encrypt(
-				company.getKeyObj(), securityCredential, "AES/GCM/NoPadding",
-				new GCMParameterSpec(_GCM_TAG_LENGTH_BITS, iv));
-
-			properties.put(
-				"securityCredential",
-				StringBundler.concat(
-					ENCRYPTED_VALUE_PREFIX, Base64.encode(iv), ".", encrypted));
+				properties.put(
+					"securityCredential", ENCRYPTED_VALUE_PREFIX + encrypted);
+			}
 		}
 		catch (EncryptorException | PortalException exception) {
 			_log.error(
