@@ -15,7 +15,6 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.LDAPCredentialCipher;
 import com.liferay.portal.security.ldap.internal.configuration.persistence.listener.LDAPServerCredentialEncryptionConfigurationModelListener;
 
@@ -51,23 +50,23 @@ public class LDAPCredentialCipherImpl implements LDAPCredentialCipher {
 				LDAPServerCredentialEncryptionConfigurationModelListener.
 					ENCRYPTED_VALUE_PREFIX.length());
 
-			if (FIPSModeUtil.isEnabled()) {
-				int delimiter = stripped.indexOf('.');
+			int delimiter = stripped.indexOf('.');
 
-				if (delimiter <= 0) {
-					_log.error(
-						"Malformed encrypted LDAP credential for company " +
-							companyId);
-
-					return value;
-				}
-
+			if (delimiter > 0) {
 				byte[] iv = Base64.decode(stripped.substring(0, delimiter));
 
 				return EncryptorUtil.decrypt(
 					company.getKeyObj(), stripped.substring(delimiter + 1),
 					"AES/GCM/NoPadding",
 					new GCMParameterSpec(_GCM_TAG_LENGTH_BITS, iv));
+			}
+
+			if (delimiter == 0) {
+				_log.error(
+					"Malformed encrypted LDAP credential for company " +
+						companyId);
+
+				return value;
 			}
 
 			return EncryptorUtil.decrypt(company.getKeyObj(), stripped);
