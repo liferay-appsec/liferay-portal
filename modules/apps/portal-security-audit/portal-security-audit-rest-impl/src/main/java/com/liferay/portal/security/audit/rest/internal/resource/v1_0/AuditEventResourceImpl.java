@@ -99,7 +99,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 
 		return new AuditEvent() {
 			{
-				setAccountEntryId(serviceBuilderAuditEvent::getAccountEntryId);
+				setAccountId(serviceBuilderAuditEvent::getAccountEntryId);
 				setAdditionalInfo(
 					() -> _toMap(serviceBuilderAuditEvent.getAdditionalInfo()));
 				setClientHost(serviceBuilderAuditEvent::getClientHost);

@@ -95,8 +95,7 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 
 		AuditEvent auditEvent = new AuditEvent();
 
-		auditEvent.setAccountEntryId(
-			serviceBuilderAuditEvent.getAccountEntryId());
+		auditEvent.setAccountId(serviceBuilderAuditEvent.getAccountEntryId());
 		auditEvent.setClientHost(serviceBuilderAuditEvent.getClientHost());
 		auditEvent.setClientIP(serviceBuilderAuditEvent.getClientIP());
 		auditEvent.setContextName(serviceBuilderAuditEvent.getContextName());

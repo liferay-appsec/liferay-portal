@@ -4,7 +4,7 @@ components:
             description:
                 An audit log entry.
             properties:
-                accountEntryId:
+                accountId:
                     description:
                         Identifier of the account the event was scoped to, when an account context was present.
                     format: int64
@@ -153,7 +153,8 @@ paths:
     "/audit-events/by-context-name/{contextName}":
         get:
             description:
-                Retrieves a paginated list of audit log entries that share the given context, scoped to the caller's accessible accounts.
+                Retrieves a paginated list of audit log entries that share the given context, scoped to the caller's
+                accessible accounts.
             operationId: getAuditEventByContextNameContextNamePage
             parameters:
                 -   in: path
