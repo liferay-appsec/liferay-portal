@@ -113,14 +113,14 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 	@Override
 	public List<AuditEvent> getAuditEvents(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, Date createDateGT, Date createDateLT, int start,
 		int end, OrderByComparator<AuditEvent> orderByComparator) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
 			companyId, accountEntryIds, 0L, 0L, null, createDateGT,
 			createDateLT, eventType, null, null, null, null, null, 0, null,
-			true, context);
+			true, contextName);
 
 		return dynamicQuery(dynamicQuery, start, end, orderByComparator);
 	}
@@ -148,13 +148,13 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 	@Override
 	public int getAuditEventsCount(
-		long companyId, long[] accountEntryIds, String context,
+		long companyId, long[] accountEntryIds, String contextName,
 		String eventType, Date createDateGT, Date createDateLT) {
 
 		DynamicQuery dynamicQuery = _buildDynamicQuery(
 			companyId, accountEntryIds, 0L, 0L, null, createDateGT,
 			createDateLT, eventType, null, null, null, null, null, 0, null,
-			true, context);
+			true, contextName);
 
 		return (int)dynamicQueryCount(dynamicQuery);
 	}
@@ -164,7 +164,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		String userName, Date createDateGT, Date createDateLT, String eventType,
 		String className, String classPK, String clientHost, String clientIP,
 		String serverName, int serverPort, String sessionID, boolean andSearch,
-		String context) {
+		String contextName) {
 
 		Junction junction = null;
 
@@ -270,10 +270,10 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			}
 		}
 
-		if (Validator.isNotNull(context)) {
-			Property property = PropertyFactoryUtil.forName("context");
+		if (Validator.isNotNull(contextName)) {
+			Property property = PropertyFactoryUtil.forName("contextName");
 
-			dynamicQuery.add(property.eq(context));
+			dynamicQuery.add(property.eq(contextName));
 		}
 
 		if (createDateGT != null) {

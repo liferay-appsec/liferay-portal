@@ -124,14 +124,14 @@ public class AuditEventServiceImpl extends AuditEventServiceBaseImpl {
 
 	@Override
 	public List<AuditEvent> getAuditEvents(
-			long companyId, long[] accountEntryIds, String context,
+			long companyId, long[] accountEntryIds, String contextName,
 			String eventType, Date createDateGT, Date createDateLT, int start,
 			int end, OrderByComparator<AuditEvent> orderByComparator)
 		throws PortalException {
 
 		return auditEventLocalService.getAuditEvents(
 			companyId, _filterAccountEntryIds(companyId, accountEntryIds),
-			context, eventType, createDateGT, createDateLT, start, end,
+			contextName, eventType, createDateGT, createDateLT, start, end,
 			orderByComparator);
 	}
 
@@ -167,13 +167,13 @@ public class AuditEventServiceImpl extends AuditEventServiceBaseImpl {
 
 	@Override
 	public int getAuditEventsCount(
-			long companyId, long[] accountEntryIds, String context,
+			long companyId, long[] accountEntryIds, String contextName,
 			String eventType, Date createDateGT, Date createDateLT)
 		throws PortalException {
 
 		return auditEventLocalService.getAuditEventsCount(
 			companyId, _filterAccountEntryIds(companyId, accountEntryIds),
-			context, eventType, createDateGT, createDateLT);
+			contextName, eventType, createDateGT, createDateLT);
 	}
 
 	private long[] _filterAccountEntryIds(
