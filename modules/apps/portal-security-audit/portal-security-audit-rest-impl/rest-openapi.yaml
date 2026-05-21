@@ -26,6 +26,11 @@ components:
                         IP address of the client that initiated the audited request.
                     readOnly: true
                     type: string
+                context:
+                    description:
+                        Logical segregation key (e.g., subsystem or feature area that emitted the event).
+                    readOnly: true
+                    type: string
                 creator:
                     $ref: ../../headless/headless-delivery/headless-delivery-impl/rest-openapi.yaml#Creator
                     readOnly: true
@@ -90,23 +95,13 @@ paths:
             operationId: getAuditEventsPage
             parameters:
                 -   in: query
-                    name: accountEntryId
+                    name: context
                     schema:
-                        format: int64
-                        type: integer
+                        type: string
                 -   in: query
                     name: endDate
                     schema:
                         format: date-time
-                        type: string
-                -   in: query
-                    name: entityId
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
-                    name: entityType
-                    schema:
                         type: string
                 -   in: query
                     name: eventType
@@ -137,11 +132,69 @@ paths:
                     schema:
                         format: date-time
                         type: string
-                -   in: query
-                    name: userId
+                -   in: header
+                    name: Accept-Language
                     schema:
-                        format: int64
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/AuditEvent"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/AuditEvent"
+                                type: array
+            tags: ["AuditEvent"]
+    "/audit-events/by-context-name/{contextName}":
+        get:
+            description:
+                Retrieves a paginated list of audit log entries that share the given context, scoped to the caller's accessible accounts.
+            operationId: getAuditEventByContextNameContextNamePage
+            parameters:
+                -   in: path
+                    name: contextName
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: endDate
+                    schema:
+                        format: date-time
+                        type: string
+                -   in: query
+                    name: eventType
+                    schema:
+                        type: string
+                -   in: query
+                    name: filter
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
                         type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: search
+                    schema:
+                        type: string
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
+                -   in: query
+                    name: startDate
+                    schema:
+                        format: date-time
+                        type: string
                 -   in: header
                     name: Accept-Language
                     schema:

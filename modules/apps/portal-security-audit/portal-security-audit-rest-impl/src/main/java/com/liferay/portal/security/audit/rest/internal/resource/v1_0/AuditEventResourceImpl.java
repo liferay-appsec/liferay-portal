@@ -45,38 +45,37 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 	}
 
 	@Override
-	public Page<AuditEvent> getAuditEventsPage(
-			Long accountEntryId, Date endDate, Long entityId, String entityType,
-			String eventType, String search, Date startDate, Long userId,
-			Filter filter, Pagination pagination, Sort[] sorts)
+	public Page<AuditEvent> getAuditEventByContextNameContextNamePage(
+			String contextName, Date endDate, String eventType, String search,
+			Date startDate, Filter filter, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		long[] accountEntryIds = null;
+		return _getAuditEventsPage(
+			contextName, eventType, startDate, endDate, pagination);
+	}
 
-		if (accountEntryId != null) {
-			accountEntryIds = new long[] {accountEntryId};
-		}
+	@Override
+	public Page<AuditEvent> getAuditEventsPage(
+			String context, Date endDate, String eventType, String search,
+			Date startDate, Filter filter, Pagination pagination, Sort[] sorts)
+		throws Exception {
 
-		String classPK = null;
+		return _getAuditEventsPage(
+			context, eventType, startDate, endDate, pagination);
+	}
 
-		if (entityId != null) {
-			classPK = String.valueOf(entityId);
-		}
+	private Page<AuditEvent> _getAuditEventsPage(
+			String context, String eventType, Date startDate, Date endDate,
+			Pagination pagination)
+		throws Exception {
 
 		long companyId = contextCompany.getCompanyId();
 
-		long resolvedUserId = 0L;
-
-		if (userId != null) {
-			resolvedUserId = userId;
-		}
-
 		List<com.liferay.portal.security.audit.storage.model.AuditEvent>
 			serviceBuilderAuditEvents = _auditEventService.getAuditEvents(
-				companyId, accountEntryIds, 0L, resolvedUserId, null, startDate,
-				endDate, eventType, entityType, classPK, null, null, null, 0,
-				null, true, pagination.getStartPosition(),
-				pagination.getEndPosition(), null);
+				companyId, null, context, eventType, startDate, endDate,
+				pagination.getStartPosition(), pagination.getEndPosition(),
+				null);
 
 		List<AuditEvent> auditEvents = new ArrayList<>(
 			serviceBuilderAuditEvents.size());
@@ -90,9 +89,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 		return Page.of(
 			auditEvents, pagination,
 			_auditEventService.getAuditEventsCount(
-				companyId, accountEntryIds, 0L, resolvedUserId, null, startDate,
-				endDate, eventType, entityType, classPK, null, null, null, 0,
-				null, true));
+				companyId, null, context, eventType, startDate, endDate));
 	}
 
 	private AuditEvent _toAuditEvent(
@@ -107,6 +104,7 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 					() -> _toMap(serviceBuilderAuditEvent.getAdditionalInfo()));
 				setClientHost(serviceBuilderAuditEvent::getClientHost);
 				setClientIP(serviceBuilderAuditEvent::getClientIP);
+				setContext(serviceBuilderAuditEvent::getContext);
 				setCreator(
 					() -> CreatorUtil.toCreator(
 						null, _portal,

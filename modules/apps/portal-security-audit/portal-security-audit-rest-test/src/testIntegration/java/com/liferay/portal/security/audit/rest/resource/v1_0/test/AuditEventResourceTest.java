@@ -74,6 +74,7 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		serviceBuilderAuditEvent.setClientHost(RandomTestUtil.randomString());
 		serviceBuilderAuditEvent.setClientIP(RandomTestUtil.randomString());
 		serviceBuilderAuditEvent.setCompanyId(testCompany.getCompanyId());
+		serviceBuilderAuditEvent.setContext(RandomTestUtil.randomString());
 		serviceBuilderAuditEvent.setCreateDate(new Date());
 		serviceBuilderAuditEvent.setEventType(RandomTestUtil.randomString());
 		serviceBuilderAuditEvent.setMessage(RandomTestUtil.randomString());
@@ -98,6 +99,7 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 			serviceBuilderAuditEvent.getAccountEntryId());
 		auditEvent.setClientHost(serviceBuilderAuditEvent.getClientHost());
 		auditEvent.setClientIP(serviceBuilderAuditEvent.getClientIP());
+		auditEvent.setContext(serviceBuilderAuditEvent.getContext());
 		auditEvent.setDateCreated(serviceBuilderAuditEvent.getCreateDate());
 		auditEvent.setEntityId(
 			GetterUtil.getLong(serviceBuilderAuditEvent.getClassPK()));
