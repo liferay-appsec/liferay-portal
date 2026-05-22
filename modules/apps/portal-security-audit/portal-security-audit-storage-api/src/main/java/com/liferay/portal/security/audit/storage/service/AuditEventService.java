@@ -59,26 +59,6 @@ public interface AuditEventService extends BaseService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AuditEvent> getAuditEvents(
-			long companyId, long[] accountEntryIds, long groupId, long userId,
-			String userName, Date createDateGT, Date createDateLT,
-			String eventType, String className, String classPK,
-			String clientHost, String clientIP, String serverName,
-			int serverPort, String sessionID, boolean andSearch, int start,
-			int end)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AuditEvent> getAuditEvents(
-			long companyId, long[] accountEntryIds, long groupId, long userId,
-			String userName, Date createDateGT, Date createDateLT,
-			String eventType, String className, String classPK,
-			String clientHost, String clientIP, String serverName,
-			int serverPort, String sessionID, boolean andSearch, int start,
-			int end, OrderByComparator<AuditEvent> orderByComparator)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<AuditEvent> getAuditEvents(
 			long companyId, long[] accountEntryIds, String contextName,
 			String eventType, Date createDateGT, Date createDateLT, int start,
 			int end, OrderByComparator<AuditEvent> orderByComparator)
@@ -86,15 +66,6 @@ public interface AuditEventService extends BaseService {
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getAuditEventsCount(long companyId) throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getAuditEventsCount(
-			long companyId, long[] accountEntryIds, long groupId, long userId,
-			String userName, Date createDateGT, Date createDateLT,
-			String eventType, String className, String classPK,
-			String clientHost, String clientIP, String serverName,
-			int serverPort, String sessionID, boolean andSearch)
-		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getAuditEventsCount(
@@ -110,4 +81,4 @@ public interface AuditEventService extends BaseService {
 	public String getOSGiServiceIdentifier();
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:717285163
+// LIFERAY-SERVICE-BUILDER-HASH:493084299
