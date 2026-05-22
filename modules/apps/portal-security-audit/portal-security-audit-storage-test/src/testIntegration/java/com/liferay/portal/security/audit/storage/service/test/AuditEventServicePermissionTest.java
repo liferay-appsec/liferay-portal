@@ -6,14 +6,19 @@
 package com.liferay.portal.security.audit.storage.service.test;
 
 import com.liferay.account.constants.AccountConstants;
+import com.liferay.account.constants.AccountRoleConstants;
 import com.liferay.account.model.AccountEntry;
+import com.liferay.account.model.AccountRole;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
+import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -62,10 +67,14 @@ public class AuditEventServicePermissionTest {
 		_accountEntryUserRelLocalService = bundleContext.getService(
 			bundleContext.getServiceReference(
 				AccountEntryUserRelLocalService.class));
+		_accountRoleLocalService = bundleContext.getService(
+			bundleContext.getServiceReference(AccountRoleLocalService.class));
 		_auditEventLocalService = bundleContext.getService(
 			bundleContext.getServiceReference(AuditEventLocalService.class));
 		_auditEventService = bundleContext.getService(
 			bundleContext.getServiceReference(AuditEventService.class));
+		_roleLocalService = bundleContext.getService(
+			bundleContext.getServiceReference(RoleLocalService.class));
 		_userLocalService = bundleContext.getService(
 			bundleContext.getServiceReference(UserLocalService.class));
 
@@ -80,6 +89,19 @@ public class AuditEventServicePermissionTest {
 		_accountEntryUserRelLocalService.addAccountEntryUserRel(
 			_accountEntryA.getAccountEntryId(), _accountAUser.getUserId());
 
+		Role accountAdministratorRole = _roleLocalService.getRole(
+			_companyId,
+			AccountRoleConstants.REQUIRED_ROLE_NAME_ACCOUNT_ADMINISTRATOR);
+
+		AccountRole accountAdministratorAccountRole =
+			_accountRoleLocalService.getAccountRoleByRoleId(
+				accountAdministratorRole.getRoleId());
+
+		_accountRoleLocalService.associateUser(
+			_accountEntryA.getAccountEntryId(),
+			accountAdministratorAccountRole.getAccountRoleId(),
+			_accountAUser.getUserId());
+
 		_addAuditEvent(_accountEntryA.getAccountEntryId());
 		_addAuditEvent(_accountEntryB.getAccountEntryId());
 		_addAuditEvent(AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT);
@@ -93,9 +115,8 @@ public class AuditEventServicePermissionTest {
 			PermissionCheckerFactoryUtil.create(_accountAUser));
 
 		_auditEventService.getAuditEvents(
-			_companyId, new long[] {_accountEntryB.getAccountEntryId()}, 0, 0,
-			null, null, null, _eventType, null, null, null, null, null, 0, null,
-			true, 0, Integer.MAX_VALUE);
+			_companyId, new long[] {_accountEntryB.getAccountEntryId()}, null,
+			_eventType, null, null, 0, Integer.MAX_VALUE, null);
 	}
 
 	@Test
@@ -104,9 +125,8 @@ public class AuditEventServicePermissionTest {
 			PermissionCheckerFactoryUtil.create(_accountAUser));
 
 		List<AuditEvent> auditEvents = _auditEventService.getAuditEvents(
-			_companyId, new long[] {_accountEntryA.getAccountEntryId()}, 0, 0,
-			null, null, null, _eventType, null, null, null, null, null, 0, null,
-			true, 0, Integer.MAX_VALUE);
+			_companyId, new long[] {_accountEntryA.getAccountEntryId()}, null,
+			_eventType, null, null, 0, Integer.MAX_VALUE, null);
 
 		for (AuditEvent auditEvent : auditEvents) {
 			Assert.assertEquals(
@@ -124,8 +144,8 @@ public class AuditEventServicePermissionTest {
 			PermissionCheckerFactoryUtil.create(adminUser));
 
 		List<AuditEvent> auditEvents = _auditEventService.getAuditEvents(
-			_companyId, null, 0, 0, null, null, null, _eventType, null, null,
-			null, null, null, 0, null, true, 0, Integer.MAX_VALUE);
+			_companyId, null, null, _eventType, null, null, 0,
+			Integer.MAX_VALUE, null);
 
 		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
 	}
@@ -159,10 +179,12 @@ public class AuditEventServicePermissionTest {
 	private AccountEntry _accountEntryB;
 	private AccountEntryLocalService _accountEntryLocalService;
 	private AccountEntryUserRelLocalService _accountEntryUserRelLocalService;
+	private AccountRoleLocalService _accountRoleLocalService;
 	private AuditEventLocalService _auditEventLocalService;
 	private AuditEventService _auditEventService;
 	private long _companyId;
 	private String _eventType;
+	private RoleLocalService _roleLocalService;
 	private UserLocalService _userLocalService;
 
 }

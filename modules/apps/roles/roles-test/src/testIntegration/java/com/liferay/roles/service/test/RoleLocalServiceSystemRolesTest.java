@@ -97,15 +97,6 @@ public class RoleLocalServiceSystemRolesTest {
 			_auditEventService.getAuditEvents(
 				TestPropsValues.getCompanyId(), QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS, null);
-			_auditEventService.getAuditEvents(
-				TestPropsValues.getCompanyId(), 0, _user.getUserId(),
-				_user.getScreenName(), null, null, null, null, null, null, null,
-				null, 0, null, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-			_auditEventService.getAuditEvents(
-				TestPropsValues.getCompanyId(), 0, _user.getUserId(),
-				_user.getScreenName(), null, null, null, null, null, null, null,
-				null, 0, null, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-				null);
 		}
 		finally {
 			PermissionThreadLocal.setPermissionChecker(oldPermissionChecker);
