@@ -1,0 +1,9 @@
+Bundle-Description: Liferay Key Manager Provider AWS: KMS and Secrets Manager backed CryptoVaultProvider and SecretVaultProvider implementations
+Bundle-Name: Liferay Key Manager Provider AWS
+Bundle-SymbolicName: com.liferay.keymanager.provider.aws
+Bundle-Version: 1.0.0
+Import-Package:\
+	com.amazonaws.*;resolution:=optional,\
+	\
+	*
+Liferay-Releng-Module-Group-Title: Key Manager
