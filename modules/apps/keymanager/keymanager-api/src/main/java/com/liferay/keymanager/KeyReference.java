@@ -65,11 +65,11 @@ public class KeyReference implements Serializable {
 
 	public KeyReference(String identifier, String providerId, Type type) {
 		if (identifier == null) {
-			throw new NullPointerException("Identifier must not be null");
+			throw new IllegalArgumentException("Identifier must not be null");
 		}
 
 		if (providerId == null) {
-			throw new NullPointerException("Provider ID must not be null");
+			throw new IllegalArgumentException("Provider ID must not be null");
 		}
 
 		if (providerId.indexOf(CharPool.COLON) >= 0) {
@@ -78,7 +78,7 @@ public class KeyReference implements Serializable {
 		}
 
 		if (type == null) {
-			throw new NullPointerException("Type must not be null");
+			throw new IllegalArgumentException("Type must not be null");
 		}
 
 		_identifier = identifier;

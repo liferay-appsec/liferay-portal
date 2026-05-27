@@ -44,7 +44,7 @@ public class SecretManagerImpl implements SecretManager {
 		throws SecretManagerException {
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
@@ -120,7 +120,7 @@ public class SecretManagerImpl implements SecretManager {
 		throws SecretManagerException {
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
@@ -189,7 +189,7 @@ public class SecretManagerImpl implements SecretManager {
 		throws SecretManagerException {
 
 		if (secureSecret == null) {
-			throw new NullPointerException("No secureSecret provided!");
+			throw new IllegalArgumentException("Secure secret is null");
 		}
 
 		try {

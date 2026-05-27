@@ -46,11 +46,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (ciphertext == null) {
-			throw new NullPointerException("No ciphertext provided!");
+			throw new IllegalArgumentException("Ciphertext is null");
 		}
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
@@ -77,7 +77,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
@@ -105,11 +105,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		if (plaintext == null) {
-			throw new NullPointerException("No plaintext provided!");
+			throw new IllegalArgumentException("Plaintext is null");
 		}
 
 		try {
@@ -221,7 +221,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (keyReference == null) {
-			throw new NullPointerException("No KeyReference provided!");
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
@@ -313,11 +313,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (masterKeyReference == null) {
-			throw new NullPointerException("No master KeyReference provided!");
+			throw new IllegalArgumentException("Master key reference is null");
 		}
 
 		if (wrappedKeyBytes == null) {
-			throw new NullPointerException("No wrappedKeyBytes provided!");
+			throw new IllegalArgumentException("Wrapped key bytes is null");
 		}
 
 		try {
@@ -347,11 +347,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		throws CryptoManagerException {
 
 		if (keyToWrap == null) {
-			throw new NullPointerException("No keyToWrap provided!");
+			throw new IllegalArgumentException("Key to wrap is null");
 		}
 
 		if (masterKeyReference == null) {
-			throw new NullPointerException("No master KeyReference provided!");
+			throw new IllegalArgumentException("Master key reference is null");
 		}
 
 		try {
