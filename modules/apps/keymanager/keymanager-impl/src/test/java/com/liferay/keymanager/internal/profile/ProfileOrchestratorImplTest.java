@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -26,6 +27,11 @@ import org.mockito.MockitoAnnotations;
  * @author Christopher Kian
  */
 public class ProfileOrchestratorImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
 
 	@Before
 	public void setUp() {
@@ -106,10 +112,6 @@ public class ProfileOrchestratorImplTest {
 			_keyManagerProfile, Mockito.never()
 		).bootstrap();
 	}
-
-	@Rule
-	public final LiferayUnitTestRule liferayUnitTestRule =
-		new LiferayUnitTestRule();
 
 	private void _invokeBootstrap(KeyManagerProfile keyManagerProfile)
 		throws Exception {
