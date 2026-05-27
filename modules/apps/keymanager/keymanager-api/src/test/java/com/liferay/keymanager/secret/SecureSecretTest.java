@@ -9,6 +9,8 @@ import com.liferay.keymanager.KeyReference;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.nio.charset.StandardCharsets;
+
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -57,14 +59,13 @@ public class SecureSecretTest {
 	}
 
 	@Test
-	public void testSecureSecretFromChars() {
-		char[] data = RandomTestUtil.randomString(
-		).toCharArray();
+	public void testGetCharsFromBytes() {
+		String data = RandomTestUtil.randomString();
 
-		SecureSecret secureSecret = new SecureSecret(data, _keyReference());
+		SecureSecret secureSecret = new SecureSecret(
+			data.getBytes(StandardCharsets.UTF_8), _keyReference());
 
-		Assert.assertArrayEquals(data, secureSecret.getChars());
-		Assert.assertTrue(secureSecret.getBytes().length > 0);
+		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
 	}
 
 	@Test

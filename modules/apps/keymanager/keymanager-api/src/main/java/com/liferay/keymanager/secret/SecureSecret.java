@@ -35,17 +35,6 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 		_keyReference = keyReference;
 	}
 
-	public SecureSecret(char[] chars, KeyReference keyReference) {
-		if (chars == null) {
-			_bytes = new byte[0];
-		}
-		else {
-			_init(chars);
-		}
-
-		_keyReference = keyReference;
-	}
-
 	public SecureSecret(KeyReference keyReference, String value) {
 		_keyReference = keyReference;
 
