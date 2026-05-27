@@ -9,7 +9,6 @@ import com.liferay.keymanager.KeyReference;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
@@ -80,20 +79,7 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 		return _bytes;
 	}
 
-	public char[] getChars() {
-		return _getChars(StandardCharsets.UTF_8);
-	}
-
-	public KeyReference getKeyReference() {
-		return _keyReference;
-	}
-
-	@Override
-	public synchronized boolean isDestroyed() {
-		return _destroyed;
-	}
-
-	private synchronized char[] _getChars(Charset charset) {
+	public synchronized char[] getChars() {
 		if (_destroyed) {
 			throw new IllegalArgumentException("Secret is destroyed");
 		}
@@ -104,7 +90,7 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 
 		ByteBuffer byteBuffer = ByteBuffer.wrap(_bytes);
 
-		CharsetDecoder charsetDecoder = charset.newDecoder();
+		CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
 
 		long maxChars = (long)Math.ceil(
 			(long)_bytes.length * charsetDecoder.maxCharsPerByte());
@@ -128,6 +114,15 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 		Arrays.fill(charBuffer.array(), '\0');
 
 		return _chars;
+	}
+
+	public KeyReference getKeyReference() {
+		return _keyReference;
+	}
+
+	@Override
+	public synchronized boolean isDestroyed() {
+		return _destroyed;
 	}
 
 	private void _init(char[] chars) {
