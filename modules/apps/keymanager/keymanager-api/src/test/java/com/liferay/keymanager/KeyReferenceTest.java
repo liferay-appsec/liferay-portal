@@ -27,8 +27,8 @@ public class KeyReferenceTest {
 	public void testEqualsAndHashCode() {
 		KeyReference keyReference1 = KeyReference.fromString("${keyRef:p1:i1}");
 
-		Assert.assertNotEquals(keyReference1, null);
-		Assert.assertNotEquals(keyReference1, "string");
+		Assert.assertNotNull(keyReference1);
+		Assert.assertNotEquals("string", keyReference1);
 
 		KeyReference keyReference2 = KeyReference.fromString("${keyRef:p1:i1}");
 
@@ -53,7 +53,6 @@ public class KeyReferenceTest {
 		Assert.assertEquals(
 			KeyReference.ANY_PROVIDER, keyReference.getProviderId());
 		Assert.assertEquals(raw, keyReference.toString());
-		Assert.assertNotNull(keyReference);
 	}
 
 	@Test
@@ -66,7 +65,6 @@ public class KeyReferenceTest {
 		Assert.assertEquals("keystore", keyReference.getProviderId());
 		Assert.assertEquals(KeyReference.Type.CRYPTO, keyReference.getType());
 		Assert.assertEquals(raw, keyReference.toString());
-		Assert.assertNotNull(keyReference);
 
 		// Identifier may contain colons — the third capture group is greedy
 
@@ -96,7 +94,6 @@ public class KeyReferenceTest {
 		Assert.assertEquals("db", keyReference.getProviderId());
 		Assert.assertEquals(KeyReference.Type.SECRET, keyReference.getType());
 		Assert.assertEquals(raw, keyReference.toString());
-		Assert.assertNotNull(keyReference);
 	}
 
 	@Test
