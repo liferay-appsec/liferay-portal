@@ -38,7 +38,7 @@ public class SecureSecretTest {
 		Assert.assertTrue(secureSecret.isDestroyed());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = IllegalStateException.class)
 	public void testGetBytesAfterDestroyThrows() {
 		SecureSecret secureSecret = new SecureSecret(
 			RandomTestUtil.randomBytes(), _keyReference());
@@ -48,7 +48,7 @@ public class SecureSecretTest {
 		secureSecret.getBytes();
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test(expected = IllegalStateException.class)
 	public void testGetCharsAfterDestroyThrows() {
 		SecureSecret secureSecret = new SecureSecret(
 			_keyReference(), RandomTestUtil.randomString());

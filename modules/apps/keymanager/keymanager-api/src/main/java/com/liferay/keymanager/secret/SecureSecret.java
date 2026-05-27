@@ -73,7 +73,7 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 
 	public synchronized byte[] getBytes() {
 		if (_destroyed) {
-			throw new IllegalArgumentException("Secret is destroyed");
+			throw new IllegalStateException("Secret is destroyed");
 		}
 
 		return _bytes;
@@ -81,7 +81,7 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 
 	public synchronized char[] getChars() {
 		if (_destroyed) {
-			throw new IllegalArgumentException("Secret is destroyed");
+			throw new IllegalStateException("Secret is destroyed");
 		}
 
 		if (_chars != null) {
