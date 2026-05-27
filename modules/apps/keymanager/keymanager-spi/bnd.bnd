@@ -1,9 +1,8 @@
-Bundle-Description: Liferay Key Manager SPI: vault provider, profile, and configuration listener interfaces
+Bundle-Description: Liferay Key Manager SPI: vault provider and profile interfaces
 Bundle-Name: Liferay Key Manager SPI
 Bundle-SymbolicName: com.liferay.keymanager.spi
 Bundle-Version: 1.0.0
 Export-Package:\
-	com.liferay.keymanager.spi.configuration.listener,\
 	com.liferay.keymanager.spi.crypto,\
 	com.liferay.keymanager.spi.profile,\
 	com.liferay.keymanager.spi.secret
