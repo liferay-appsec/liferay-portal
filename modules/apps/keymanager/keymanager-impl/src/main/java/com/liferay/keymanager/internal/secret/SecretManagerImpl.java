@@ -155,7 +155,7 @@ public class SecretManagerImpl implements SecretManager {
 			}
 
 			SecretVaultReader secretVaultReader = _getSecretVaultReader(
-				companyId, providerId);
+				companyId, resolvedProviderId);
 
 			List<String> identifiers = secretVaultReader.getSecretIdentifiers(
 				companyId);
