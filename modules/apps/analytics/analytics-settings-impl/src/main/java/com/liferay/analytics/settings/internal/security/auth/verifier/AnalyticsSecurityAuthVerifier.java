@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -166,9 +167,11 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 			String signatureString, String timestamp)
 		throws Exception {
 
-		Signature signature = Signature.getInstance("DSA");
+		Signature signature = Signature.getInstance(
+			PropsValues.FIPS_ENABLED ? _SHA_256_WITH_ECDSA : _DSA);
 
-		KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+		KeyFactory keyFactory = KeyFactory.getInstance(
+			PropsValues.FIPS_ENABLED ? _EC : _DSA);
 
 		signature.initVerify(
 			keyFactory.generatePublic(
@@ -203,7 +206,13 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 		return signature.verify(Base64.decode(signatureString));
 	}
 
+	private static final String _DSA = "DSA";
+
+	private static final String _EC = "EC";
+
 	private static final long _EXPIRATION = 10 * 60 * 1000;
+
+	private static final String _SHA_256_WITH_ECDSA = "SHA256withECDSA";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AnalyticsSecurityAuthVerifier.class);

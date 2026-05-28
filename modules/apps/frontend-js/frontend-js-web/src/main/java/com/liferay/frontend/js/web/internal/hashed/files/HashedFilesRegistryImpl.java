@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import jakarta.servlet.ServletContext;
@@ -336,7 +337,9 @@ public class HashedFilesRegistryImpl implements HashedFilesRegistry {
 
 		String hashesString = StringUtil.merge(hashesList, StringPool.PIPE);
 
-		byte[] hash = DigesterUtil.digestRaw(DigesterUtil.MD5, hashesString);
+		byte[] hash = DigesterUtil.digestRaw(
+			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5,
+			hashesString);
 
 		byte[] truncatedHash = new byte[8];
 
