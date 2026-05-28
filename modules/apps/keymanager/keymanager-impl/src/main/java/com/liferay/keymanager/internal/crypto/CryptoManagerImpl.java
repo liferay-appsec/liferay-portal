@@ -63,9 +63,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to decrypt cipherText: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+					"Unable to decrypt cipherText", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -89,10 +87,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to delete key: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+				_log.warn("Unable to delete key", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -122,9 +117,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to encrypt plaintext: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+					"Unable to encrypt plaintext", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -145,8 +138,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to generate asymmetric key pair: " +
-						cryptoManagerException.getMessage(),
+					"Unable to generate asymmetric key pair",
 					cryptoManagerException);
 			}
 
@@ -168,9 +160,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to generate secret key: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+					"Unable to generate secret key", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -207,9 +197,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to list key identifiers: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+					"Unable to list key identifiers", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -233,10 +221,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to get key metadata: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+				_log.warn("Unable to get key metadata", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -291,9 +276,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to import secret key: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+					"Unable to import secret key", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -331,10 +314,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to unwrap key: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+				_log.warn("Unable to unwrap key", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;
@@ -364,10 +344,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to wrap key: " +
-						cryptoManagerException.getMessage(),
-					cryptoManagerException);
+				_log.warn("Unable to wrap key", cryptoManagerException);
 			}
 
 			throw cryptoManagerException;

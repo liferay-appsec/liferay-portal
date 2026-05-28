@@ -62,10 +62,7 @@ public class SecretManagerImpl implements SecretManager {
 		}
 		catch (SecretManagerException secretManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to delete secret: " +
-						secretManagerException.getMessage(),
-					secretManagerException);
+				_log.warn("Unable to delete secret", secretManagerException);
 			}
 
 			throw secretManagerException;
@@ -132,10 +129,7 @@ public class SecretManagerImpl implements SecretManager {
 		}
 		catch (SecretManagerException secretManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to get secret: " +
-						secretManagerException.getMessage(),
-					secretManagerException);
+				_log.warn("Unable to get secret", secretManagerException);
 			}
 
 			throw secretManagerException;
@@ -175,8 +169,7 @@ public class SecretManagerImpl implements SecretManager {
 		catch (SecretManagerException secretManagerException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to list secret identifiers: " +
-						secretManagerException.getMessage(),
+					"Unable to list secret identifiers",
 					secretManagerException);
 			}
 
@@ -212,10 +205,7 @@ public class SecretManagerImpl implements SecretManager {
 		}
 		catch (SecretManagerException secretManagerException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to put secret: " +
-						secretManagerException.getMessage(),
-					secretManagerException);
+				_log.warn("Unable to put secret", secretManagerException);
 			}
 
 			throw secretManagerException;
