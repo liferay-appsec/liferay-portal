@@ -6,14 +6,19 @@
 package com.liferay.keymanager.internal.configuration.category;
 
 import com.liferay.configuration.admin.category.ConfigurationCategory;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 
 /**
  * @author Tomas Polesovsky
  * @author Christopher Kian
  */
-@Component(service = ConfigurationCategory.class)
+@Component(service = {})
 public class KeyManagerConfigurationCategory implements ConfigurationCategory {
 
 	@Override
@@ -35,5 +40,24 @@ public class KeyManagerConfigurationCategory implements ConfigurationCategory {
 	public String getCategorySection() {
 		return "security";
 	}
+
+	@Activate
+	protected void activate(BundleContext bundleContext) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPD-88411")) {
+			return;
+		}
+
+		_serviceRegistration = bundleContext.registerService(
+			ConfigurationCategory.class, this, null);
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		if (_serviceRegistration != null) {
+			_serviceRegistration.unregister();
+		}
+	}
+
+	private ServiceRegistration<ConfigurationCategory> _serviceRegistration;
 
 }
