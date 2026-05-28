@@ -1,4 +1,3 @@
-Bundle-Description: Liferay Key Manager Implementation: CryptoManager and SecretManager implementations and ProfileOrchestrator
 Bundle-Name: Liferay Key Manager Implementation
 Bundle-SymbolicName: com.liferay.keymanager.impl
 Bundle-Version: 1.0.0
