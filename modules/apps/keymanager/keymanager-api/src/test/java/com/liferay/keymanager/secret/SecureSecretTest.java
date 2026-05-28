@@ -28,6 +28,33 @@ public class SecureSecretTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testCharsRoundTripPreservesUnicodeContent() {
+		String data = "héllo 世界";
+
+		SecureSecret secureSecret = new SecureSecret(_keyReference(), data);
+
+		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
+		Assert.assertArrayEquals(
+			data.getBytes(StandardCharsets.UTF_8), secureSecret.getBytes());
+	}
+
+	@Test
+	public void testCharsZeroedOnDestroy() {
+		SecureSecret secureSecret = new SecureSecret(
+			_keyReference(), RandomTestUtil.randomString());
+
+		char[] chars = secureSecret.getChars();
+
+		Assert.assertTrue(chars.length > 0);
+
+		secureSecret.close();
+
+		for (char c : chars) {
+			Assert.assertEquals('\0', c);
+		}
+	}
+
+	@Test
 	public void testDestroyIsIdempotent() {
 		SecureSecret secureSecret = new SecureSecret(
 			RandomTestUtil.randomBytes(), _keyReference());
@@ -59,6 +86,17 @@ public class SecureSecretTest {
 	}
 
 	@Test
+	public void testGetCharsCachesResult() {
+		SecureSecret secureSecret = new SecureSecret(
+			_keyReference(), RandomTestUtil.randomString());
+
+		char[] chars1 = secureSecret.getChars();
+		char[] chars2 = secureSecret.getChars();
+
+		Assert.assertSame(chars1, chars2);
+	}
+
+	@Test
 	public void testGetCharsFromBytes() {
 		String data = RandomTestUtil.randomString();
 
@@ -66,6 +104,19 @@ public class SecureSecretTest {
 			data.getBytes(StandardCharsets.UTF_8), _keyReference());
 
 		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testRejectsInvalidUtf8WhenDecoding() {
+		SecureSecret secureSecret = new SecureSecret(
+			new byte[] {(byte)0xC0, (byte)0xC0}, _keyReference());
+
+		secureSecret.getChars();
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testRejectsLoneSurrogateChar() {
+		new SecureSecret(_keyReference(), new String(new char[] {'\uD800'}));
 	}
 
 	@Test
