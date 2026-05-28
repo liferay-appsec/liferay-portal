@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -101,6 +102,59 @@ public class SecretManagerImplTest {
 		).getSecret(
 			companyId, identifier
 		);
+	}
+
+	@Test
+	public void testGetSecretIdentifiersResolvesWildcardThroughActiveProfile()
+		throws Exception {
+
+		String resolvedProviderId = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_keyManagerProfile.getCompanySecretProviderId()
+		).thenReturn(
+			resolvedProviderId
+		);
+
+		Mockito.when(
+			_profileOrchestrator.getActiveProfile()
+		).thenReturn(
+			_keyManagerProfile
+		);
+
+		Mockito.when(
+			_readerServiceTrackerMap.getService(resolvedProviderId)
+		).thenReturn(
+			Collections.singletonList(_secretVaultReader)
+		);
+
+		String identifier = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_secretVaultReader.getSecretIdentifiers(Mockito.anyLong())
+		).thenReturn(
+			Collections.singletonList(identifier)
+		);
+
+		Mockito.when(
+			_secretVaultReader.isAllowedCompany(Mockito.anyLong())
+		).thenReturn(
+			true
+		);
+
+		long companyId = RandomTestUtil.randomLong();
+
+		List<KeyReference> keyReferences =
+			_secretManagerImpl.getSecretIdentifiers(
+				companyId, KeyReference.ANY_PROVIDER);
+
+		Assert.assertEquals(keyReferences.toString(), 1, keyReferences.size());
+
+		KeyReference keyReference = keyReferences.get(0);
+
+		Assert.assertEquals(identifier, keyReference.getIdentifier());
+		Assert.assertEquals(resolvedProviderId, keyReference.getProviderId());
+		Assert.assertEquals(KeyReference.Type.SECRET, keyReference.getType());
 	}
 
 	@Test
