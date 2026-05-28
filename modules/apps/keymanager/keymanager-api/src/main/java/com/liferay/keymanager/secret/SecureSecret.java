@@ -9,8 +9,7 @@ import com.liferay.keymanager.KeyReference;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 		char[] chars = value.toCharArray();
 
 		try {
-			_init(chars);
+			_bytes = _encode(chars);
 		}
 		finally {
 			Arrays.fill(chars, '\0');
@@ -84,34 +83,9 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 			throw new IllegalStateException("Secret is destroyed");
 		}
 
-		if (_chars != null) {
-			return _chars;
+		if (_chars == null) {
+			_chars = _decode(_bytes);
 		}
-
-		ByteBuffer byteBuffer = ByteBuffer.wrap(_bytes);
-
-		CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
-
-		long maxChars = (long)Math.ceil(
-			(long)_bytes.length * charsetDecoder.maxCharsPerByte());
-
-		if (maxChars > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException(
-				"Stored secret is too large to be decoded");
-		}
-
-		CharBuffer charBuffer = CharBuffer.allocate((int)maxChars);
-
-		charsetDecoder.decode(byteBuffer, charBuffer, true);
-		charsetDecoder.flush(charBuffer);
-
-		charBuffer.flip();
-
-		_chars = new char[charBuffer.remaining()];
-
-		charBuffer.get(_chars);
-
-		Arrays.fill(charBuffer.array(), '\0');
 
 		return _chars;
 	}
@@ -125,32 +99,47 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 		return _destroyed;
 	}
 
-	private void _init(char[] chars) {
-		_chars = Arrays.copyOf(chars, chars.length);
+	private char[] _decode(byte[] bytes) {
+		try {
+			CharBuffer charBuffer = StandardCharsets.UTF_8.newDecoder(
+			).decode(
+				ByteBuffer.wrap(bytes)
+			);
 
-		CharsetEncoder charsetEncoder = StandardCharsets.UTF_8.newEncoder();
-		CharBuffer charBuffer = CharBuffer.wrap(chars);
+			char[] chars = new char[charBuffer.remaining()];
 
-		long maxBytes = (long)Math.ceil(
-			(long)chars.length * charsetEncoder.maxBytesPerChar());
+			charBuffer.get(chars);
 
-		if (maxBytes > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException(
-				"Input char array is too large to be encoded");
+			Arrays.fill(charBuffer.array(), '\0');
+
+			return chars;
 		}
+		catch (CharacterCodingException characterCodingException) {
+			throw new IllegalArgumentException(
+				"Stored secret is not valid UTF-8", characterCodingException);
+		}
+	}
 
-		ByteBuffer byteBuffer = ByteBuffer.allocate((int)maxBytes);
+	private byte[] _encode(char[] chars) {
+		try {
+			ByteBuffer byteBuffer = StandardCharsets.UTF_8.newEncoder(
+			).encode(
+				CharBuffer.wrap(chars)
+			);
 
-		charsetEncoder.encode(charBuffer, byteBuffer, true);
-		charsetEncoder.flush(byteBuffer);
+			byte[] bytes = new byte[byteBuffer.remaining()];
 
-		byteBuffer.flip();
+			byteBuffer.get(bytes);
 
-		_bytes = new byte[byteBuffer.remaining()];
+			Arrays.fill(byteBuffer.array(), (byte)0);
 
-		byteBuffer.get(_bytes);
-
-		Arrays.fill(byteBuffer.array(), (byte)0);
+			return bytes;
+		}
+		catch (CharacterCodingException characterCodingException) {
+			throw new IllegalArgumentException(
+				"Input character sequence is not valid UTF-16",
+				characterCodingException);
+		}
 	}
 
 	private volatile byte[] _bytes;
