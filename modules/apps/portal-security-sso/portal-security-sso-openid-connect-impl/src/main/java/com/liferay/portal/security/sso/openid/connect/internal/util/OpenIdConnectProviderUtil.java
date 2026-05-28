@@ -14,6 +14,8 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.net.URI;
 
@@ -36,8 +38,9 @@ public class OpenIdConnectProviderUtil {
 			String issuer, String tokenEndpoint)
 		throws Exception {
 
-		MessageDigest messageDigest = MessageDigest.getInstance("MD5");
 		URI issuerURI = URI.create(issuer);
+		MessageDigest messageDigest = MessageDigest.getInstance(
+			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
 
 		return StringBundler.concat(
 			issuerURI.getScheme(), "://", issuerURI.getAuthority(),
