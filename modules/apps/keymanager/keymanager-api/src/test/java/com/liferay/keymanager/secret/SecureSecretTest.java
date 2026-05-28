@@ -31,7 +31,8 @@ public class SecureSecretTest {
 	public void testCharsRoundTripPreservesUnicodeContent() {
 		String data = "héllo 世界";
 
-		SecureSecret secureSecret = new SecureSecret(_keyReference(), data);
+		SecureSecret secureSecret = new SecureSecret(
+			_createKeyReference(), data);
 
 		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
 		Assert.assertArrayEquals(
@@ -41,7 +42,7 @@ public class SecureSecretTest {
 	@Test
 	public void testCharsZeroedOnDestroy() {
 		SecureSecret secureSecret = new SecureSecret(
-			_keyReference(), RandomTestUtil.randomString());
+			_createKeyReference(), RandomTestUtil.randomString());
 
 		char[] chars = secureSecret.getChars();
 
@@ -57,7 +58,7 @@ public class SecureSecretTest {
 	@Test
 	public void testDestroyIsIdempotent() {
 		SecureSecret secureSecret = new SecureSecret(
-			RandomTestUtil.randomBytes(), _keyReference());
+			RandomTestUtil.randomBytes(), _createKeyReference());
 
 		secureSecret.destroy();
 		secureSecret.destroy();
@@ -68,7 +69,7 @@ public class SecureSecretTest {
 	@Test(expected = IllegalStateException.class)
 	public void testGetBytesAfterDestroyThrows() {
 		SecureSecret secureSecret = new SecureSecret(
-			RandomTestUtil.randomBytes(), _keyReference());
+			RandomTestUtil.randomBytes(), _createKeyReference());
 
 		secureSecret.close();
 
@@ -78,7 +79,7 @@ public class SecureSecretTest {
 	@Test(expected = IllegalStateException.class)
 	public void testGetCharsAfterDestroyThrows() {
 		SecureSecret secureSecret = new SecureSecret(
-			_keyReference(), RandomTestUtil.randomString());
+			_createKeyReference(), RandomTestUtil.randomString());
 
 		secureSecret.close();
 
@@ -88,7 +89,7 @@ public class SecureSecretTest {
 	@Test
 	public void testGetCharsCachesResult() {
 		SecureSecret secureSecret = new SecureSecret(
-			_keyReference(), RandomTestUtil.randomString());
+			_createKeyReference(), RandomTestUtil.randomString());
 
 		char[] chars1 = secureSecret.getChars();
 		char[] chars2 = secureSecret.getChars();
@@ -101,7 +102,7 @@ public class SecureSecretTest {
 		String data = RandomTestUtil.randomString();
 
 		SecureSecret secureSecret = new SecureSecret(
-			data.getBytes(StandardCharsets.UTF_8), _keyReference());
+			data.getBytes(StandardCharsets.UTF_8), _createKeyReference());
 
 		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
 	}
@@ -109,21 +110,23 @@ public class SecureSecretTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testRejectsInvalidUtf8WhenDecoding() {
 		SecureSecret secureSecret = new SecureSecret(
-			new byte[] {(byte)0xC0, (byte)0xC0}, _keyReference());
+			new byte[] {(byte)0xC0, (byte)0xC0}, _createKeyReference());
 
 		secureSecret.getChars();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testRejectsLoneSurrogateChar() {
-		new SecureSecret(_keyReference(), new String(new char[] {'\uD800'}));
+		new SecureSecret(
+			_createKeyReference(), new String(new char[] {'\uD800'}));
 	}
 
 	@Test
 	public void testSecureSecretFromString() {
 		String data = RandomTestUtil.randomString();
 
-		SecureSecret secureSecret = new SecureSecret(_keyReference(), data);
+		SecureSecret secureSecret = new SecureSecret(
+			_createKeyReference(), data);
 
 		Assert.assertArrayEquals(data.toCharArray(), secureSecret.getChars());
 		Assert.assertTrue(secureSecret.getBytes().length > 0);
@@ -135,7 +138,8 @@ public class SecureSecretTest {
 
 		byte originalFirstByte = data[0];
 
-		SecureSecret secureSecret = new SecureSecret(data, _keyReference());
+		SecureSecret secureSecret = new SecureSecret(
+			data, _createKeyReference());
 
 		// Constructor must copy the input
 
@@ -147,7 +151,7 @@ public class SecureSecretTest {
 	@Test
 	public void testSecureSecretReturnsSameInstance() {
 		SecureSecret secureSecret = new SecureSecret(
-			RandomTestUtil.randomBytes(), _keyReference());
+			RandomTestUtil.randomBytes(), _createKeyReference());
 
 		byte[] internalBytes1 = secureSecret.getBytes();
 		byte[] internalBytes2 = secureSecret.getBytes();
@@ -159,7 +163,8 @@ public class SecureSecretTest {
 	public void testSecureSecretZeroing() {
 		byte[] data = RandomTestUtil.randomBytes();
 
-		SecureSecret secureSecret = new SecureSecret(data, _keyReference());
+		SecureSecret secureSecret = new SecureSecret(
+			data, _createKeyReference());
 
 		byte[] internalBytes = secureSecret.getBytes();
 
@@ -172,7 +177,7 @@ public class SecureSecretTest {
 		}
 	}
 
-	private KeyReference _keyReference() {
+	private KeyReference _createKeyReference() {
 		return new KeyReference(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			KeyReference.Type.SECRET);

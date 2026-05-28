@@ -45,32 +45,32 @@ public class KeyReferenceTest {
 
 	@Test
 	public void testFromStringAnyProvider() {
-		String raw = "${secretRef:*:my-secret}";
+		String keyReferenceString = "${secretRef:*:my-secret}";
 
-		KeyReference keyReference = KeyReference.fromString(raw);
+		KeyReference keyReference = KeyReference.fromString(keyReferenceString);
 
 		Assert.assertEquals("my-secret", keyReference.getIdentifier());
 		Assert.assertEquals(
 			KeyReference.ANY_PROVIDER, keyReference.getProviderId());
-		Assert.assertEquals(raw, keyReference.toString());
+		Assert.assertEquals(keyReferenceString, keyReference.toString());
 	}
 
 	@Test
 	public void testFromStringCrypto() {
-		String raw = "${keyRef:keystore:master-key}";
+		String keyReferenceString = "${keyRef:keystore:master-key}";
 
-		KeyReference keyReference = KeyReference.fromString(raw);
+		KeyReference keyReference = KeyReference.fromString(keyReferenceString);
 
 		Assert.assertEquals("master-key", keyReference.getIdentifier());
 		Assert.assertEquals("keystore", keyReference.getProviderId());
 		Assert.assertEquals(KeyReference.Type.CRYPTO, keyReference.getType());
-		Assert.assertEquals(raw, keyReference.toString());
+		Assert.assertEquals(keyReferenceString, keyReference.toString());
 
 		// Identifier may contain colons — the third capture group is greedy
 
-		raw = "${keyRef:gcp:my.key:v1}";
+		keyReferenceString = "${keyRef:gcp:my.key:v1}";
 
-		keyReference = KeyReference.fromString(raw);
+		keyReference = KeyReference.fromString(keyReferenceString);
 
 		Assert.assertEquals("my.key:v1", keyReference.getIdentifier());
 		Assert.assertEquals("gcp", keyReference.getProviderId());
@@ -86,14 +86,14 @@ public class KeyReferenceTest {
 
 	@Test
 	public void testFromStringSecret() {
-		String raw = "${secretRef:db:jdbc-password}";
+		String keyReferenceString = "${secretRef:db:jdbc-password}";
 
-		KeyReference keyReference = KeyReference.fromString(raw);
+		KeyReference keyReference = KeyReference.fromString(keyReferenceString);
 
 		Assert.assertEquals("jdbc-password", keyReference.getIdentifier());
 		Assert.assertEquals("db", keyReference.getProviderId());
 		Assert.assertEquals(KeyReference.Type.SECRET, keyReference.getType());
-		Assert.assertEquals(raw, keyReference.toString());
+		Assert.assertEquals(keyReferenceString, keyReference.toString());
 	}
 
 	@Test

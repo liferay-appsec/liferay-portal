@@ -35,12 +35,12 @@ public class KeyReference implements Serializable {
 		}
 
 		Type type;
-		String typeStr = matcher.group(1);
+		String typeString = matcher.group(1);
 
-		if (Objects.equals(typeStr, "keyRef")) {
+		if (Objects.equals(typeString, "keyRef")) {
 			type = Type.CRYPTO;
 		}
-		else if (Objects.equals(typeStr, "secretRef")) {
+		else if (Objects.equals(typeString, "secretRef")) {
 			type = Type.SECRET;
 		}
 		else {
@@ -135,14 +135,14 @@ public class KeyReference implements Serializable {
 
 	@Override
 	public String toString() {
-		String typeStr = "keyRef";
+		String typeString = "keyRef";
 
 		if (_type == Type.SECRET) {
-			typeStr = "secretRef";
+			typeString = "secretRef";
 		}
 
 		return StringBundler.concat(
-			"${", typeStr, ":", _providerId, ":", _identifier, "}");
+			"${", typeString, ":", _providerId, ":", _identifier, "}");
 	}
 
 	public enum Type {
