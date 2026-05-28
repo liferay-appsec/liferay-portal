@@ -21,7 +21,7 @@ public interface SecretManager {
 	public void deleteSecret(long companyId, KeyReference keyReference)
 		throws SecretManagerException;
 
-	public List<String> getProviders(long companyId)
+	public List<String> getProviderIds(long companyId)
 		throws SecretManagerException;
 
 	public SecureSecret getSecret(long companyId, KeyReference keyReference)

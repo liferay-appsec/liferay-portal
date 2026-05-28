@@ -229,7 +229,7 @@ public class CryptoManagerImpl implements CryptoManager {
 	}
 
 	@Override
-	public List<String> getProviders(long companyId) {
+	public List<String> getProviderIds(long companyId) {
 		List<String> providerIds = new ArrayList<>();
 
 		for (String providerId : _getProviderIds()) {

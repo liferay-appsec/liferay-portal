@@ -70,7 +70,7 @@ public class SecretManagerImpl implements SecretManager {
 	}
 
 	@Override
-	public List<String> getProviders(long companyId)
+	public List<String> getProviderIds(long companyId)
 		throws SecretManagerException {
 
 		Set<String> providerIds = new LinkedHashSet<>();

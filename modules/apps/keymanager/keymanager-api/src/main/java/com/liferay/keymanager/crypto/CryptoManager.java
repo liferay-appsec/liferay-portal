@@ -48,7 +48,7 @@ public interface CryptoManager {
 	public CryptoKey getKeyMetadata(long companyId, KeyReference keyReference)
 		throws CryptoManagerException;
 
-	public List<String> getProviders(long companyId)
+	public List<String> getProviderIds(long companyId)
 		throws CryptoManagerException;
 
 	public KeyReference importSecretKey(
