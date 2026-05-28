@@ -68,8 +68,16 @@ public class KeyReference implements Serializable {
 			throw new IllegalArgumentException("Identifier must not be null");
 		}
 
+		if (identifier.isEmpty()) {
+			throw new IllegalArgumentException("Identifier must not be empty");
+		}
+
 		if (providerId == null) {
 			throw new IllegalArgumentException("Provider ID must not be null");
+		}
+
+		if (providerId.isEmpty()) {
+			throw new IllegalArgumentException("Provider ID must not be empty");
 		}
 
 		if (providerId.indexOf(CharPool.COLON) >= 0) {
