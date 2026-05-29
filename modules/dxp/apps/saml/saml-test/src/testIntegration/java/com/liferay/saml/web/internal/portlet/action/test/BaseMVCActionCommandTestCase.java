@@ -11,7 +11,6 @@ import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -46,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockMultipartHttpServletRequest;
@@ -58,20 +56,36 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 
 	@Test
 	public void testProcessAction() throws Exception {
-		Assume.assumeFalse(PropsValues.DATABASE_PARTITION_ENABLED);
-
 		T baseModel = addBaseModel();
+		User user = TestPropsValues.getUser();
 
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-					RandomTestUtil.randomLong())) {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			Company company = CompanyTestUtil.addCompany(false);
 
-			_assertException(
-				() -> _processAction(
-					baseModel,
-					_companyLocalService.createCompany(
-						CompanyThreadLocal.getCompanyId()),
-					TestPropsValues.getUser()));
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						company.getCompanyId())) {
+
+				_assertException(
+					() -> _processAction(
+						addBaseModel(),
+						_companyLocalService.getCompanyById(
+							PortalInstancePool.getDefaultCompanyId()),
+						user));
+			}
+		}
+		else {
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						RandomTestUtil.randomLong())) {
+
+				_assertException(
+					() -> _processAction(
+						baseModel,
+						_companyLocalService.createCompany(
+							CompanyThreadLocal.getCompanyId()),
+						user));
+			}
 		}
 
 		Company company = _companyLocalService.getCompanyById(
@@ -81,53 +95,7 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 			() -> _processAction(
 				baseModel, company, UserTestUtil.addUser(company)));
 
-		_processAction(baseModel, company, TestPropsValues.getUser());
-
-		assertProcessAction(
-			fetchBaseModel(GetterUtil.getLong(baseModel.getPrimaryKeyObj())));
-	}
-
-	@Test
-	public void testProcessActionDBPartitionEnabled() throws Exception {
-		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
-
-		Layout layout = _layoutLocalService.getLayout(
-			TestPropsValues.getPlid());
-
-		LayoutSet layoutSet = layout.getLayoutSet();
-
-		User user = TestPropsValues.getUser();
-
-		Company crossTenantCompany = CompanyTestUtil.addCompany(true);
-
-		try {
-			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						crossTenantCompany.getCompanyId())) {
-
-				_assertException(
-					() -> _processAction(
-						addBaseModel(),
-						_companyLocalService.getCompanyById(
-							PortalInstancePool.getDefaultCompanyId()),
-						user, layout, layoutSet));
-			}
-		}
-		finally {
-			_companyLocalService.deleteCompany(crossTenantCompany);
-		}
-
-		Company company = _companyLocalService.getCompanyById(
-			TestPropsValues.getCompanyId());
-
-		T baseModel = addBaseModel();
-
-		_assertException(
-			() -> _processAction(
-				baseModel, company, UserTestUtil.addUser(company), layout,
-				layoutSet));
-
-		_processAction(baseModel, company, user, layout, layoutSet);
+		_processAction(baseModel, company, user);
 
 		assertProcessAction(
 			fetchBaseModel(GetterUtil.getLong(baseModel.getPrimaryKeyObj())));
@@ -181,17 +149,6 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 	private void _processAction(T baseModel, Company company, User user)
 		throws Exception {
 
-		Layout layout = _layoutLocalService.getLayout(
-			TestPropsValues.getPlid());
-
-		_processAction(baseModel, company, user, layout, layout.getLayoutSet());
-	}
-
-	private void _processAction(
-			T baseModel, Company company, User user, Layout layout,
-			LayoutSet layoutSet)
-		throws Exception {
-
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			new MockLiferayPortletActionRequest();
 
@@ -210,11 +167,14 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 		mockLiferayPortletActionRequest.setAttribute(
 			WebKeys.PORTLET_ID, SamlPortletKeys.SAML_ADMIN);
 
+		Layout layout = _layoutLocalService.getLayout(
+			TestPropsValues.getPlid());
+
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setCompany(company);
 		themeDisplay.setLayout(layout);
-		themeDisplay.setLayoutSet(layoutSet);
+		themeDisplay.setLayoutSet(layout.getLayoutSet());
 		themeDisplay.setSiteGroupId(layout.getGroupId());
 		themeDisplay.setUser(user);
 
@@ -243,8 +203,13 @@ public abstract class BaseMVCActionCommandTestCase<T extends BaseModel<?>> {
 							return method.invoke(_portal, args);
 						}))) {
 
-			PermissionThreadLocal.setPermissionChecker(
-				PermissionCheckerFactoryUtil.create(user));
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						user.getCompanyId())) {
+
+				PermissionThreadLocal.setPermissionChecker(
+					PermissionCheckerFactoryUtil.create(user));
+			}
 
 			MVCActionCommand mvcActionCommand = getMVCActionCommand();
 
