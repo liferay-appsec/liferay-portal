@@ -70,9 +70,9 @@ public class MCPProtectedResourceMetadataServlet extends HttpServlet {
 		httpServletResponse.setHeader(
 			HttpHeaders.CACHE_CONTROL, "public, max-age=300");
 
-		try (PrintWriter printWriter = httpServletResponse.getWriter()) {
-			printWriter.write(metadataJSONObject.toString());
-		}
+		PrintWriter printWriter = httpServletResponse.getWriter();
+
+		printWriter.write(metadataJSONObject.toString());
 	}
 
 	@Reference
