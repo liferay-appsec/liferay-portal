@@ -70,8 +70,6 @@ import jakarta.ws.rs.core.SecurityContext;
 import java.io.IOException;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import java.nio.charset.StandardCharsets;
 
@@ -990,8 +988,6 @@ public class LiferayOAuthDataProvider
 	protected ServerAccessToken doCreateAccessToken(
 		AccessTokenRegistration accessTokenRegistration) {
 
-		_validateAudiences(accessTokenRegistration.getAudiences());
-
 		ServerAccessToken serverAccessToken = _createOpaqueServerAccessToken(
 			accessTokenRegistration.getAudiences(),
 			accessTokenRegistration.getClient(),
@@ -1791,37 +1787,6 @@ public class LiferayOAuthDataProvider
 
 			throw new OAuthServiceException(
 				portalException.getMessage(), portalException);
-		}
-	}
-
-	private void _validateAudiences(List<String> audiences) {
-		if (ListUtil.isEmpty(audiences)) {
-			return;
-		}
-
-		for (String audience : audiences) {
-			if (Validator.isBlank(audience)) {
-				OAuth2ErrorUtil.reportInvalidRequestError(
-					audience, "invalid_target", Response.Status.BAD_REQUEST);
-			}
-
-			try {
-				URI uri = new URI(audience);
-
-				if (!uri.isAbsolute() || audience.contains(StringPool.POUND)) {
-					OAuth2ErrorUtil.reportInvalidRequestError(
-						audience, "invalid_target",
-						Response.Status.BAD_REQUEST);
-				}
-			}
-			catch (URISyntaxException uriSyntaxException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(uriSyntaxException);
-				}
-
-				OAuth2ErrorUtil.reportInvalidRequestError(
-					audience, "invalid_target", Response.Status.BAD_REQUEST);
-			}
 		}
 	}
 
