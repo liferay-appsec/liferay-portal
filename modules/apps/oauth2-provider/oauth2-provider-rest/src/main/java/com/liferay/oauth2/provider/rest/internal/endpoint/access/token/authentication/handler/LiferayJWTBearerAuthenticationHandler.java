@@ -6,6 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.access.token.authentication.handler;
 
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
+import com.liferay.oauth2.provider.security.fips.FIPSAlgorithmValidator;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -28,6 +29,7 @@ import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.jose.common.JoseConstants;
+import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKeys;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
 import org.apache.cxf.rs.security.jose.jws.HmacJwsSignatureVerifier;
@@ -115,6 +117,9 @@ public class LiferayJWTBearerAuthenticationHandler
 		String tokenEndpointAuthMethod = client.getTokenEndpointAuthMethod();
 
 		try {
+			FIPSAlgorithmValidator.validateJWSAlgorithm(
+				(String)jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM));
+
 			if (tokenEndpointAuthMethod.equals("client_secret_jwt")) {
 				String clientSecret = client.getClientSecret();
 
@@ -148,10 +153,13 @@ public class LiferayJWTBearerAuthenticationHandler
 						OAuth2ProviderRESTEndpointConstants.
 							PROPERTY_KEY_CLIENT_JWKS));
 
-				return JwsUtils.getSignatureVerifier(
-					jsonWebKeys.getKey(
-						(String)jwtToken.getJwsHeader(
-							JoseConstants.HEADER_KEY_ID)));
+				JsonWebKey jsonWebKey = jsonWebKeys.getKey(
+					(String)jwtToken.getJwsHeader(JoseConstants.HEADER_KEY_ID));
+
+				FIPSAlgorithmValidator.validateJWK(
+					JwkUtils.jwkKeyToJson(jsonWebKey));
+
+				return JwsUtils.getSignatureVerifier(jsonWebKey);
 			}
 
 			throw new IllegalArgumentException(
