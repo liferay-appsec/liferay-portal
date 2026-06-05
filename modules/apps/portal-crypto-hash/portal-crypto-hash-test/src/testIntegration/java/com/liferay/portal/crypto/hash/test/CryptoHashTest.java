@@ -7,6 +7,7 @@ package com.liferay.portal.crypto.hash.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
@@ -17,6 +18,7 @@ import com.liferay.portal.crypto.hash.exception.CryptoHashException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -34,6 +36,7 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 
 import jodd.util.BCrypt;
 
@@ -50,6 +53,9 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.runtime.ServiceComponentRuntime;
+import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * @author Carlos Sierra Andrés
@@ -198,6 +204,38 @@ public class CryptoHashTest {
 
 				return null;
 			});
+	}
+
+	@Test
+	public void testCryptoHashProviderFactoryInFIPSMode() throws Exception {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_restartBundle();
+
+			ComponentDescriptionDTO componentDescriptionDTO =
+				_serviceComponentRuntime.getComponentDescriptionDTO(
+					_getBundle(),
+					_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY);
+
+			Assert.assertNotNull(componentDescriptionDTO);
+			Assert.assertFalse(
+				_serviceComponentRuntime.isComponentEnabled(
+					componentDescriptionDTO));
+
+			Assert.assertThrows(
+				CryptoHashException.class,
+				() -> _cryptoHashVerifier.verify(
+					_password, _expectedBCryptHash,
+					new CryptoHashVerificationContext(
+						"BCrypt", Collections.emptyMap(), _bCryptSalt)));
+		}
+		finally {
+			_restartBundle();
+		}
+
+		Assert.assertNotNull(_waitForCryptoHashProviderFactory());
 	}
 
 	@Test
@@ -355,6 +393,56 @@ public class CryptoHashTest {
 		return null;
 	}
 
+	private Bundle _getBundle() {
+		for (Bundle bundle : _bundleContext.getBundles()) {
+			if (Objects.equals(
+					bundle.getSymbolicName(), _BUNDLE_SYMBOLIC_NAME)) {
+
+				return bundle;
+			}
+		}
+
+		return null;
+	}
+
+	private void _restartBundle() throws Exception {
+		Bundle bundle = _getBundle();
+
+		if (bundle == null) {
+			return;
+		}
+
+		bundle.stop();
+
+		bundle.start();
+	}
+
+	private Object _waitForCryptoHashProviderFactory() throws Exception {
+		ServiceTracker<Object, Object> serviceTracker = new ServiceTracker<>(
+			_bundleContext,
+			_bundleContext.createFilter(
+				"(component.name=" +
+					_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY + ")"),
+			null);
+
+		serviceTracker.open();
+
+		try {
+			return serviceTracker.waitForService(10000);
+		}
+		finally {
+			serviceTracker.close();
+		}
+	}
+
+	private static final String _BUNDLE_SYMBOLIC_NAME =
+		"com.liferay.portal.crypto.hash.provider.bcrypt";
+
+	private static final String
+		_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY =
+			"com.liferay.portal.crypto.hash.provider.bcrypt.internal." +
+				"BCryptCryptoHashProviderFactory";
+
 	private static final Log _log = LogFactoryUtil.getLog(CryptoHashTest.class);
 
 	private static byte[] _bCryptSalt;
@@ -368,5 +456,8 @@ public class CryptoHashTest {
 
 	@Inject
 	private CryptoHashVerifier _cryptoHashVerifier;
+
+	@Inject
+	private ServiceComponentRuntime _serviceComponentRuntime;
 
 }
