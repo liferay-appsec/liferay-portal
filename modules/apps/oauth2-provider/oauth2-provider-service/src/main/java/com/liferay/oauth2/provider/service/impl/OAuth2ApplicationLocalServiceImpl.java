@@ -13,6 +13,7 @@ import com.liferay.oauth2.provider.exception.NoSuchOAuth2ApplicationException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationClientGrantTypeException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationHomePageURLException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationHomePageURLSchemeException;
+import com.liferay.oauth2.provider.exception.OAuth2ApplicationJWKSException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationNameException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationPrivacyPolicyURLException;
 import com.liferay.oauth2.provider.exception.OAuth2ApplicationPrivacyPolicyURLSchemeException;
@@ -24,6 +25,7 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.redirect.OAuth2RedirectURIInterpolator;
+import com.liferay.oauth2.provider.security.fips.FIPSAlgorithmValidator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.oauth2.provider.service.base.OAuth2ApplicationLocalServiceBaseImpl;
@@ -794,6 +796,14 @@ public class OAuth2ApplicationLocalServiceImpl
 
 			if (Validator.isNull(jwks)) {
 				throw new PortalException("Client needs to specify JWKS");
+			}
+
+			try {
+				FIPSAlgorithmValidator.validateJWKS(jwks);
+			}
+			catch (IllegalStateException illegalStateException) {
+				throw new OAuth2ApplicationJWKSException(
+					illegalStateException.getMessage(), illegalStateException);
 			}
 		}
 		else {
