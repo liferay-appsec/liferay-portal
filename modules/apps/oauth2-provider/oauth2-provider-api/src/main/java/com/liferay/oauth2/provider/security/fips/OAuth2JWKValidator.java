@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author Pedro Victor Silvestre
  */
-public class FIPSAlgorithmValidator {
+public class OAuth2JWKValidator {
 
 	public static void validateJWK(String json) {
 		if (!PropsValues.FIPS_ENABLED) {
@@ -134,7 +134,7 @@ public class FIPSAlgorithmValidator {
 	private static final int _MIN_RSA_KEY_BITS = 2048;
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		FIPSAlgorithmValidator.class);
+		OAuth2JWKValidator.class);
 
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "HS256", "HS384", "HS512", "PS256", "PS384",

@@ -25,7 +25,7 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.redirect.OAuth2RedirectURIInterpolator;
-import com.liferay.oauth2.provider.security.fips.FIPSAlgorithmValidator;
+import com.liferay.oauth2.provider.security.fips.OAuth2JWKValidator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.oauth2.provider.service.base.OAuth2ApplicationLocalServiceBaseImpl;
@@ -799,7 +799,7 @@ public class OAuth2ApplicationLocalServiceImpl
 			}
 
 			try {
-				FIPSAlgorithmValidator.validateJWKS(jwks);
+				OAuth2JWKValidator.validateJWKS(jwks);
 			}
 			catch (SecurityException securityException) {
 				throw new OAuth2ApplicationJWKSException(

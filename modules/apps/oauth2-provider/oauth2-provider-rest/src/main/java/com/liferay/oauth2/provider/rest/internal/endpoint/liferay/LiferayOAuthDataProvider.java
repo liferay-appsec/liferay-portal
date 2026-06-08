@@ -22,7 +22,7 @@ import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenPro
 import com.liferay.oauth2.provider.rest.spi.bearer.token.provider.BearerTokenProviderAccessor;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
-import com.liferay.oauth2.provider.security.fips.FIPSAlgorithmValidator;
+import com.liferay.oauth2.provider.security.fips.OAuth2JWKValidator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
@@ -1228,7 +1228,7 @@ public class LiferayOAuthDataProvider
 			_oAuth2AuthorizationServerConfiguration.
 				jwtAccessTokenSigningJSONWebKey();
 
-		FIPSAlgorithmValidator.validateJWK(json);
+		OAuth2JWKValidator.validateJWK(json);
 
 		oAuthJoseJwtProducer.setSignatureProvider(
 			JwsUtils.getSignatureProvider(JwkUtils.readJwkKey(json)));

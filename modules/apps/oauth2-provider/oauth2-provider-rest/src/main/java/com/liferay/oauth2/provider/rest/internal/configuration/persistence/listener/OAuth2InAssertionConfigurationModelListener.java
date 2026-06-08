@@ -6,7 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.configuration.persistence.listener;
 
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration;
-import com.liferay.oauth2.provider.security.fips.FIPSAlgorithmValidator;
+import com.liferay.oauth2.provider.security.fips.OAuth2JWKValidator;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -38,7 +38,7 @@ public class OAuth2InAssertionConfigurationModelListener
 		}
 
 		try {
-			FIPSAlgorithmValidator.validateJWKS(jwks);
+			OAuth2JWKValidator.validateJWKS(jwks);
 		}
 		catch (SecurityException securityException) {
 			throw new ConfigurationModelListenerException(

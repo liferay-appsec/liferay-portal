@@ -29,7 +29,7 @@ import org.junit.Test;
 /**
  * @author Pedro Victor Silvestre
  */
-public class FIPSAlgorithmValidatorTest {
+public class OAuth2JWKValidatorTest {
 
 	@ClassRule
 	@Rule
@@ -50,28 +50,28 @@ public class FIPSAlgorithmValidatorTest {
 
 	@Test
 	public void testValidateJWKAcceptsApprovedRsaKey() throws Exception {
-		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(2048, "RS256"));
+		OAuth2JWKValidator.validateJWK(_generateRsaJWK(2048, "RS256"));
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsShortRsaKey() throws Exception {
-		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(1024, "RS256"));
+		OAuth2JWKValidator.validateJWK(_generateRsaJWK(1024, "RS256"));
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsWeakAlgorithm() throws Exception {
-		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(2048, "RS1"));
+		OAuth2JWKValidator.validateJWK(_generateRsaJWK(2048, "RS1"));
 	}
 
 	@Test
 	public void testValidateJWKSAcceptsApprovedKeys() throws Exception {
-		FIPSAlgorithmValidator.validateJWKS(
+		OAuth2JWKValidator.validateJWKS(
 			"{\"keys\":[" + _generateRsaJWK(2048, "RS256") + "]}");
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKSRejectsWeakKey() throws Exception {
-		FIPSAlgorithmValidator.validateJWKS(
+		OAuth2JWKValidator.validateJWKS(
 			StringBundler.concat(
 				"{\"keys\":[", _generateRsaJWK(2048, "RS256"), ",",
 				_generateRsaJWK(1024, "RS256"), "]}"));
@@ -85,7 +85,7 @@ public class FIPSAlgorithmValidatorTest {
 					"PS256", "PS384", "PS512", "RS256", "RS384", "RS512"
 				}) {
 
-			FIPSAlgorithmValidator.validateJWSAlgorithm(algorithm);
+			OAuth2JWKValidator.validateJWSAlgorithm(algorithm);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class FIPSAlgorithmValidatorTest {
 				}) {
 
 			try {
-				FIPSAlgorithmValidator.validateJWSAlgorithm(algorithm);
+				OAuth2JWKValidator.validateJWSAlgorithm(algorithm);
 
 				Assert.fail(
 					"Expected SecurityException for " +
