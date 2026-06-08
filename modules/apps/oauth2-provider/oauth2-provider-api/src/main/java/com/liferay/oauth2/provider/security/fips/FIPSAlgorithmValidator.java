@@ -73,9 +73,7 @@ public class FIPSAlgorithmValidator {
 			return;
 		}
 
-		if ((algorithm == null) ||
-			!_approvedJWSAlgorithms.contains(algorithm)) {
-
+		if ((algorithm == null) || !_allowedJWSAlgorithms.contains(algorithm)) {
 			throw new IllegalStateException(
 				"JWS algorithm \"" + algorithm +
 					"\" is not FIPS 140-3 approved");
@@ -136,7 +134,7 @@ public class FIPSAlgorithmValidator {
 	private static final Log _log = LogFactoryUtil.getLog(
 		FIPSAlgorithmValidator.class);
 
-	private static final Set<String> _approvedJWSAlgorithms = Set.of(
+	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "HS256", "HS384", "HS512", "PS256", "PS384",
 		"PS512", "RS256", "RS384", "RS512");
 
