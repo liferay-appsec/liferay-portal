@@ -40,9 +40,9 @@ public class OAuth2InAssertionConfigurationModelListener
 		try {
 			FIPSAlgorithmValidator.validateJWKS(jwks);
 		}
-		catch (IllegalStateException illegalStateException) {
+		catch (SecurityException securityException) {
 			throw new ConfigurationModelListenerException(
-				illegalStateException.getMessage(),
+				securityException.getMessage(),
 				OAuth2InAssertionConfiguration.class,
 				OAuth2InAssertionConfigurationModelListener.class, properties);
 		}

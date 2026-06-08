@@ -35,8 +35,7 @@ public class FIPSAlgorithmValidator {
 			jsonObject = JSONFactoryUtil.createJSONObject(json);
 		}
 		catch (JSONException jsonException) {
-			throw new IllegalStateException(
-				"Unable to parse JWK", jsonException);
+			throw new SecurityException("Unable to parse JWK", jsonException);
 		}
 
 		_validateJWK(jsonObject);
@@ -53,8 +52,7 @@ public class FIPSAlgorithmValidator {
 			jsonObject = JSONFactoryUtil.createJSONObject(json);
 		}
 		catch (JSONException jsonException) {
-			throw new IllegalStateException(
-				"Unable to parse JWKS", jsonException);
+			throw new SecurityException("Unable to parse JWKS", jsonException);
 		}
 
 		JSONArray keysJSONArray = jsonObject.getJSONArray("keys");
@@ -74,7 +72,7 @@ public class FIPSAlgorithmValidator {
 		}
 
 		if ((algorithm == null) || !_allowedJWSAlgorithms.contains(algorithm)) {
-			throw new IllegalStateException(
+			throw new SecurityException(
 				"JWS algorithm \"" + algorithm +
 					"\" is not FIPS 140-3 approved");
 		}
@@ -109,7 +107,7 @@ public class FIPSAlgorithmValidator {
 			int bits = _decodeBase64URLBitLength(jsonObject.getString("n"));
 
 			if (bits < _MIN_RSA_KEY_BITS) {
-				throw new IllegalStateException(
+				throw new SecurityException(
 					StringBundler.concat(
 						"RSA key of ", bits,
 						" bits is not FIPS 140-3 approved"));
@@ -119,7 +117,7 @@ public class FIPSAlgorithmValidator {
 			int bits = _decodeBase64URLBitLength(jsonObject.getString("k"));
 
 			if (bits < _MIN_HMAC_KEY_BITS) {
-				throw new IllegalStateException(
+				throw new SecurityException(
 					StringBundler.concat(
 						"HMAC key of ", bits,
 						" bits is not FIPS 140-3 approved"));

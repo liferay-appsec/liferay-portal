@@ -53,12 +53,12 @@ public class FIPSAlgorithmValidatorTest {
 		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(2048, "RS256"));
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsShortRsaKey() throws Exception {
 		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(1024, "RS256"));
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsWeakAlgorithm() throws Exception {
 		FIPSAlgorithmValidator.validateJWK(_generateRsaJWK(2048, "RS1"));
 	}
@@ -69,7 +69,7 @@ public class FIPSAlgorithmValidatorTest {
 			"{\"keys\":[" + _generateRsaJWK(2048, "RS256") + "]}");
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = SecurityException.class)
 	public void testValidateJWKSRejectsWeakKey() throws Exception {
 		FIPSAlgorithmValidator.validateJWKS(
 			StringBundler.concat(
@@ -101,10 +101,10 @@ public class FIPSAlgorithmValidatorTest {
 				FIPSAlgorithmValidator.validateJWSAlgorithm(algorithm);
 
 				Assert.fail(
-					"Expected IllegalStateException for " +
+					"Expected SecurityException for " +
 						String.valueOf(algorithm));
 			}
-			catch (IllegalStateException illegalStateException) {
+			catch (SecurityException securityException) {
 			}
 		}
 	}

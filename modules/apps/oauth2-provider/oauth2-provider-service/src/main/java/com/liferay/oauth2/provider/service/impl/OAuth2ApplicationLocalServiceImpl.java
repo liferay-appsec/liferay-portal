@@ -801,9 +801,9 @@ public class OAuth2ApplicationLocalServiceImpl
 			try {
 				FIPSAlgorithmValidator.validateJWKS(jwks);
 			}
-			catch (IllegalStateException illegalStateException) {
+			catch (SecurityException securityException) {
 				throw new OAuth2ApplicationJWKSException(
-					illegalStateException.getMessage(), illegalStateException);
+					securityException.getMessage(), securityException);
 			}
 		}
 		else {
