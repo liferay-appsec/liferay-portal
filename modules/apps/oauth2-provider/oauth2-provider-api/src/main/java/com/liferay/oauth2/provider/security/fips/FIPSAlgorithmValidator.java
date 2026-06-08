@@ -13,7 +13,6 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PropsValues;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.math.BigInteger;
 
@@ -84,22 +83,10 @@ public class FIPSAlgorithmValidator {
 	}
 
 	private static int _decodeBase64URLBitLength(String value) {
-		String padded = StringUtil.replace(
-			value, new char[] {'-', '_'}, new char[] {'+', '/'});
-
-		int remainder = padded.length() % 4;
-
-		if (remainder == 2) {
-			padded += "==";
-		}
-		else if (remainder == 3) {
-			padded += "=";
-		}
-
-		Base64.Decoder decoder = Base64.getDecoder();
+		Base64.Decoder decoder = Base64.getUrlDecoder();
 
 		try {
-			byte[] bytes = decoder.decode(padded);
+			byte[] bytes = decoder.decode(value);
 
 			BigInteger bigInteger = new BigInteger(1, bytes);
 
