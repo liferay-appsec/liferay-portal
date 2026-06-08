@@ -156,6 +156,11 @@ public class LiferayJWTBearerAuthenticationHandler
 				JsonWebKey jsonWebKey = jsonWebKeys.getKey(
 					(String)jwtToken.getJwsHeader(JoseConstants.HEADER_KEY_ID));
 
+				if (jsonWebKey == null) {
+					throw new IllegalArgumentException(
+						"No JWK found for the key ID");
+				}
+
 				FIPSAlgorithmValidator.validateJWK(
 					JwkUtils.jwkKeyToJson(jsonWebKey));
 

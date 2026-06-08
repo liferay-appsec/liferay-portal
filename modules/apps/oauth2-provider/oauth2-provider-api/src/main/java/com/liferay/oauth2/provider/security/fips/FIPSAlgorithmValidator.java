@@ -99,6 +99,10 @@ public class FIPSAlgorithmValidator {
 	}
 
 	private static void _validateJWK(JSONObject jsonObject) {
+		if (jsonObject == null) {
+			throw new SecurityException("Unable to read JWK");
+		}
+
 		validateJWSAlgorithm(jsonObject.getString("alg"));
 
 		String keyType = jsonObject.getString("kty");
