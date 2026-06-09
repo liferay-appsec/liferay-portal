@@ -21,12 +21,14 @@ public class ComponentEnabler {
 
 	@Activate
 	protected void activate(ComponentContext componentContext) {
-		if (!PropsValues.FIPS_ENABLED) {
-			componentContext.enableComponent(
-				BCryptPasswordEncryptor.class.getName());
-			componentContext.enableComponent(
-				CryptPasswordEncryptor.class.getName());
+		if (PropsValues.FIPS_ENABLED) {
+			return;
 		}
+
+		componentContext.enableComponent(
+			BCryptPasswordEncryptor.class.getName());
+		componentContext.enableComponent(
+			CryptPasswordEncryptor.class.getName());
 	}
 
 }

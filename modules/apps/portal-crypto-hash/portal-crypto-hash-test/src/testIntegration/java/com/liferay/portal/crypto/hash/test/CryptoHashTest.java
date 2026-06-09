@@ -55,7 +55,6 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
-import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * @author Carlos Sierra Andrés
@@ -214,15 +213,7 @@ public class CryptoHashTest {
 
 			_restartBundle();
 
-			ComponentDescriptionDTO componentDescriptionDTO =
-				_serviceComponentRuntime.getComponentDescriptionDTO(
-					_getBundle(),
-					_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY);
-
-			Assert.assertNotNull(componentDescriptionDTO);
-			Assert.assertFalse(
-				_serviceComponentRuntime.isComponentEnabled(
-					componentDescriptionDTO));
+			_assertIsComponentEnabled(false);
 
 			Assert.assertThrows(
 				CryptoHashException.class,
@@ -235,7 +226,7 @@ public class CryptoHashTest {
 			_restartBundle();
 		}
 
-		Assert.assertNotNull(_waitForCryptoHashProviderFactory());
+		_assertIsComponentEnabled(true);
 	}
 
 	@Test
@@ -351,6 +342,34 @@ public class CryptoHashTest {
 			() -> ConfigurationTestUtil.deleteConfiguration(configurationPid));
 	}
 
+	private void _assertIsComponentEnabled(boolean expectedEnabled)
+		throws Exception {
+
+		ComponentDescriptionDTO componentDescriptionDTO =
+			_serviceComponentRuntime.getComponentDescriptionDTO(
+				_getBundle(),
+				_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY);
+
+		Assert.assertNotNull(componentDescriptionDTO);
+
+		for (int i = 0; i < 100; i++) {
+			boolean componentEnabled =
+				_serviceComponentRuntime.isComponentEnabled(
+					componentDescriptionDTO);
+
+			if (componentEnabled == expectedEnabled) {
+				return;
+			}
+
+			Thread.sleep(100);
+		}
+
+		Assert.assertEquals(
+			expectedEnabled,
+			_serviceComponentRuntime.isComponentEnabled(
+				componentDescriptionDTO));
+	}
+
 	private <S, R, E extends Throwable> R _callService(
 		Class<S> serviceClass, String filterString,
 		UnsafeFunction<S, R, E> unsafeFunction) {
@@ -415,24 +434,6 @@ public class CryptoHashTest {
 		bundle.stop();
 
 		bundle.start();
-	}
-
-	private Object _waitForCryptoHashProviderFactory() throws Exception {
-		ServiceTracker<Object, Object> serviceTracker = new ServiceTracker<>(
-			_bundleContext,
-			_bundleContext.createFilter(
-				"(component.name=" +
-					_COMPONENT_NAME_BCRYPT_CRYPTO_HASH_PROVIDER_FACTORY + ")"),
-			null);
-
-		serviceTracker.open();
-
-		try {
-			return serviceTracker.waitForService(10000);
-		}
-		finally {
-			serviceTracker.close();
-		}
 	}
 
 	private static final String _BUNDLE_SYMBOLIC_NAME =

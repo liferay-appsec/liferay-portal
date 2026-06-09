@@ -20,10 +20,12 @@ public class ComponentEnabler {
 
 	@Activate
 	protected void activate(ComponentContext componentContext) {
-		if (!PropsValues.FIPS_ENABLED) {
-			componentContext.enableComponent(
-				BCryptCryptoHashProviderFactory.class.getName());
+		if (PropsValues.FIPS_ENABLED) {
+			return;
 		}
+
+		componentContext.enableComponent(
+			BCryptCryptoHashProviderFactory.class.getName());
 	}
 
 }

@@ -57,18 +57,22 @@ public class PasswordEncryptorUtilTest {
 			_restartBundle();
 
 			Assert.assertFalse(
-				_isComponentEnabled(_COMPONENT_NAME_BCRYPT_PASSWORD_ENCRYPTOR));
+				_isComponentEnabled(
+					"com.liferay.portal.security.password.encryptor.internal." +
+						"BCryptPasswordEncryptor"));
 			Assert.assertFalse(
-				_isComponentEnabled(_COMPONENT_NAME_CRYPT_PASSWORD_ENCRYPTOR));
+				_isComponentEnabled(
+					"com.liferay.portal.security.password.encryptor.internal." +
+						"CryptPasswordEncryptor"));
 		}
 		finally {
 			_restartBundle();
 		}
 
 		Assert.assertNotNull(
-			_waitForPasswordEncryptor(PasswordEncryptor.TYPE_BCRYPT));
+			_getPasswordEncryptor(PasswordEncryptor.TYPE_BCRYPT));
 		Assert.assertNotNull(
-			_waitForPasswordEncryptor(PasswordEncryptor.TYPE_UFC_CRYPT));
+			_getPasswordEncryptor(PasswordEncryptor.TYPE_UFC_CRYPT));
 	}
 
 	private Bundle _getBundle() {
@@ -83,6 +87,30 @@ public class PasswordEncryptorUtilTest {
 		}
 
 		return null;
+	}
+
+	private PasswordEncryptor _getPasswordEncryptor(String type)
+		throws Exception {
+
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		ServiceTracker<PasswordEncryptor, PasswordEncryptor> serviceTracker =
+			new ServiceTracker<>(
+				bundleContext,
+				bundleContext.createFilter(
+					StringBundler.concat(
+						"(&(objectClass=", PasswordEncryptor.class.getName(),
+						")(type=", type, "))")),
+				null);
+
+		serviceTracker.open();
+
+		try {
+			return serviceTracker.waitForService(10000);
+		}
+		finally {
+			serviceTracker.close();
+		}
 	}
 
 	private boolean _isComponentEnabled(String componentName) {
@@ -128,40 +156,8 @@ public class PasswordEncryptorUtilTest {
 				algorithm, password, encryptedPassword));
 	}
 
-	private PasswordEncryptor _waitForPasswordEncryptor(String type)
-		throws Exception {
-
-		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
-
-		ServiceTracker<PasswordEncryptor, PasswordEncryptor> serviceTracker =
-			new ServiceTracker<>(
-				bundleContext,
-				bundleContext.createFilter(
-					StringBundler.concat(
-						"(&(objectClass=", PasswordEncryptor.class.getName(),
-						")(type=", type, "))")),
-				null);
-
-		serviceTracker.open();
-
-		try {
-			return serviceTracker.waitForService(10000);
-		}
-		finally {
-			serviceTracker.close();
-		}
-	}
-
 	private static final String _BUNDLE_SYMBOLIC_NAME =
 		"com.liferay.portal.security.password.encryptor.impl";
-
-	private static final String _COMPONENT_NAME_BCRYPT_PASSWORD_ENCRYPTOR =
-		"com.liferay.portal.security.password.encryptor.internal." +
-			"BCryptPasswordEncryptor";
-
-	private static final String _COMPONENT_NAME_CRYPT_PASSWORD_ENCRYPTOR =
-		"com.liferay.portal.security.password.encryptor.internal." +
-			"CryptPasswordEncryptor";
 
 	@Inject
 	private ServiceComponentRuntime _serviceComponentRuntime;
