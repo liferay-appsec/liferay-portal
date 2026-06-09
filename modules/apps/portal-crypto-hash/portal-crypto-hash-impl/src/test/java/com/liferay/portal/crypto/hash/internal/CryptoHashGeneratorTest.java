@@ -12,8 +12,12 @@ import com.liferay.portal.crypto.hash.provider.bcrypt.internal.BCryptCryptoHashP
 import com.liferay.portal.crypto.hash.provider.message.digest.internal.MessageDigestCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.test.util.FIPSAlgorithmTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.security.MessageDigest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,6 +83,20 @@ public class CryptoHashGeneratorTest {
 		_serviceRegistration2.unregister();
 
 		_serviceRegistration1.unregister();
+	}
+
+	@Test
+	public void testCreate() throws Exception {
+		MessageDigestCryptoHashProviderFactory
+			messageDigestCryptoHashProviderFactory =
+				new MessageDigestCryptoHashProviderFactory();
+
+		FIPSAlgorithmTestUtil.assertAlgorithmSwitch(
+			() -> messageDigestCryptoHashProviderFactory.create(
+				Collections.singletonMap(
+					"message.digest.algorithm", DigesterUtil.MD5)),
+			DigesterUtil.MD5, MessageDigest::getInstance, MessageDigest.class,
+			DigesterUtil.SHA_256);
 	}
 
 	@Test
