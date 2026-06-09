@@ -95,11 +95,11 @@ import org.osgi.service.component.annotations.Reference;
 public class DynamicRegistrationServiceContainerRequestFilter
 	implements ContainerRequestFilter {
 
-	public static final String REQUEST_PROPERTY_ANONYMOUS_REGISTRATION =
-		"com.liferay.oauth2.dynamic.registration.anonymous";
-
 	public static final String REQUEST_PROPERTY_CLIENT_HOST =
 		"com.liferay.oauth2.dynamic.registration.client.host";
+
+	public static final String REQUEST_PROPERTY_OPEN_REGISTRATION =
+		"com.liferay.oauth2.dynamic.registration.open.registration";
 
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
@@ -134,7 +134,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		boolean hasBearer = StringUtil.startsWith(authorization, "Bearer ");
 
 		User user;
-		boolean anonymous = false;
+		boolean open = false;
 
 		try {
 			if (post && !hasBearer) {
@@ -156,16 +156,16 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					_audit(
 						clientHost, companyId, "invalid_token",
 						"Initial access token is required", httpServletRequest,
-						"anonymous");
+						"open");
 
 					throw ExceptionUtils.toNotAuthorizedException(null, null);
 				}
 
-				_validateAnonymousHosts(
+				_validateOpenRegistrationHosts(
 					dynamicRegistrationConfiguration.allowedHosts(), clientHost,
 					companyId, httpServletRequest);
 
-				_checkAnonymousRateLimit(
+				_checkOpenRegistrationRateLimit(
 					clientHost, companyId, httpServletRequest,
 					dynamicRegistrationConfiguration.
 						maximumNumberOfRegistrationsPerHour());
@@ -175,16 +175,16 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 				if (!user.isActive()) {
 					throw new NoSuchUserException(
-						"Anonymous service account user is inactive");
+						"Open registration service account user is inactive");
 				}
 
-				anonymous = true;
+				open = true;
 
 				if (_log.isInfoEnabled()) {
 					_log.info(
 						StringBundler.concat(
-							"Anonymous dynamic client registration accepted ",
-							"for company ", companyId, " from \"", clientHost,
+							"Open dynamic client registration accepted for ",
+							"company ", companyId, " from \"", clientHost,
 							"\""));
 				}
 			}
@@ -208,8 +208,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
-							"Anonymous service account is unavailable for ",
-							"company ", companyId, ": ",
+							"Open registration service account is unavailable ",
+							"for company ", companyId, ": ",
 							exception.getMessage()));
 				}
 			}
@@ -224,8 +224,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					_normalizeHost(_getClientHost(httpServletRequest, false))),
 				companyId, hasBearer ? "invalid_token" : "server_error",
 				hasBearer ? "Bearer token authorization failed" :
-					"Anonymous registration authorization failed",
-				httpServletRequest, hasBearer ? "authenticated" : "anonymous");
+					"Open registration authorization failed",
+				httpServletRequest, hasBearer ? "authenticated" : "open");
 
 			if (hasBearer) {
 				throw ExceptionUtils.toNotAuthorizedException(null, null);
@@ -237,9 +237,9 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				).build());
 		}
 
-		if (anonymous) {
+		if (open) {
 			httpServletRequest.setAttribute(
-				REQUEST_PROPERTY_ANONYMOUS_REGISTRATION, Boolean.TRUE);
+				REQUEST_PROPERTY_OPEN_REGISTRATION, Boolean.TRUE);
 		}
 
 		_setSecurityContext(containerRequestContext, httpServletRequest, user);
@@ -376,7 +376,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		return user;
 	}
 
-	private void _checkAnonymousRateLimit(
+	private void _checkOpenRegistrationRateLimit(
 		String clientHost, long companyId,
 		HttpServletRequest httpServletRequest,
 		int maximumNumberOfRegistrationsPerHour) {
@@ -431,16 +431,16 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		if (_log.isWarnEnabled()) {
 			_log.warn(
 				StringBundler.concat(
-					"Anonymous dynamic client registration rate limit ",
-					"exceeded for company ", companyId, " from \"", clientHost,
+					"Open dynamic client registration rate limit exceeded for ",
+					"company ", companyId, " from \"", clientHost,
 					"\"; retry after ", retryAfterSeconds, " seconds"));
 		}
 
 		_audit(
 			clientHost, companyId, "rate_limited",
-			"Anonymous client registration rate limit exceeded for host " +
+			"Open client registration rate limit exceeded for host " +
 				clientHost,
-			httpServletRequest, "anonymous");
+			httpServletRequest, "open");
 
 		throw new WebApplicationException(
 			Response.status(
@@ -451,8 +451,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				).put(
 					"error_description",
 					StringBundler.concat(
-						"Anonymous client registration rate limit exceeded ",
-						"for host ", clientHost, ". Retry after ",
+						"Open client registration rate limit exceeded for ",
+						"host ", clientHost, ". Retry after ",
 						retryAfterSeconds, " seconds.")
 				).toString()
 			).header(
@@ -610,7 +610,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 	}
 
-	private void _validateAnonymousHosts(
+	private void _validateOpenRegistrationHosts(
 		String[] allowedHosts, String clientHost, long companyId,
 		HttpServletRequest httpServletRequest) {
 
@@ -642,12 +642,12 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			_audit(
 				clientHost, companyId, "access_denied",
 				"Host " + clientHost +
-					" is not permitted for anonymous registration",
-				httpServletRequest, "anonymous");
+					" is not permitted for open registration",
+				httpServletRequest, "open");
 
 			OAuth2ErrorUtil.reportInvalidRequestError(
 				"Host " + clientHost +
-					" is not permitted for anonymous registration",
+					" is not permitted for open registration",
 				"access_denied", Response.Status.FORBIDDEN);
 		}
 	}

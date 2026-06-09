@@ -63,389 +63,6 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	@FeatureFlag("LPD-63416")
 	@Test
-	public void testAnonymousAcceptedWhenOpen() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		Invocation.Builder invocationBuilder = registerWebTarget.request();
-
-		String clientName = RandomTestUtil.randomString();
-
-		String body = JSONUtil.put(
-			_FIELD_CLIENT_NAME, clientName
-		).put(
-			_FIELD_GRANT_TYPES,
-			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
-		).put(
-			_FIELD_REDIRECT_URIS,
-			new String[] {
-				"https://" + RandomTestUtil.randomString() + ".com/callback"
-			}
-		).put(
-			_FIELD_RESPONSE_TYPES,
-			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
-		).toString();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
-						).build())) {
-
-			Response response = invocationBuilder.method(
-				"post", Entity.json(body));
-
-			Assert.assertEquals(201, response.getStatus());
-
-			JSONObject responseJSONObject = parseJSONObject(response);
-
-			Assert.assertEquals(
-				clientName, responseJSONObject.getString(_FIELD_CLIENT_NAME));
-
-			String clientId = responseJSONObject.getString(
-				OAuthConstants.CLIENT_ID);
-
-			OAuth2Application oAuth2Application =
-				_oAuth2ApplicationLocalService.fetchOAuth2Application(
-					companyId, clientId);
-
-			Assert.assertNotNull(oAuth2Application);
-
-			User serviceAccountUser = _userLocalService.getUserByScreenName(
-				companyId, "default-service-account");
-
-			Assert.assertEquals(
-				serviceAccountUser.getUserId(), oAuth2Application.getUserId());
-
-			Assert.assertFalse(oAuth2Application.isTrustedApplication());
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousBlankScopeIsRejected() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		String body = JSONUtil.put(
-			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
-		).put(
-			_FIELD_GRANT_TYPES,
-			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
-		).put(
-			_FIELD_REDIRECT_URIS,
-			new String[] {
-				"https://" + RandomTestUtil.randomString() + ".com/callback"
-			}
-		).put(
-			_FIELD_RESPONSE_TYPES,
-			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
-		).toString();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_SCOPES,
-							new String[] {
-								"Liferay.Headless.Delivery.everything"
-							}
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
-						).build())) {
-
-			Invocation.Builder invocationBuilder = registerWebTarget.request();
-
-			Response response = invocationBuilder.method(
-				"post", Entity.json(body));
-
-			Assert.assertEquals(400, response.getStatus());
-
-			Assert.assertEquals(
-				"invalid_client_metadata", parseError(response));
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousEnforcesHostAllowlist() throws Exception {
-		String allowedHost = "test-allowed-" + RandomTestUtil.randomString();
-
-		_testAnonymousEnforcesHostAllowlist(allowedHost, allowedHost, 201);
-		_testAnonymousEnforcesHostAllowlist(
-			allowedHost, "test-other-" + RandomTestUtil.randomString(), 403);
-
-		String bracketedHost = "test-bracket-" + RandomTestUtil.randomString();
-
-		_testAnonymousEnforcesHostAllowlist(
-			bracketedHost, "[" + bracketedHost + "]:8080", 201);
-		_testAnonymousEnforcesHostAllowlist(
-			"[" + bracketedHost + "]:8080", bracketedHost, 201);
-
-		String portHost = "test-port-" + RandomTestUtil.randomString();
-
-		_testAnonymousEnforcesHostAllowlist(portHost, portHost + ":8080", 201);
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRateLimitDisabled() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-
-		String clientHost =
-			"test-rate-disabled-" + RandomTestUtil.randomString();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		String body = JSONUtil.put(
-			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
-		).put(
-			_FIELD_GRANT_TYPES,
-			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
-		).put(
-			_FIELD_REDIRECT_URIS,
-			new String[] {
-				"https://" + RandomTestUtil.randomString() + ".com/callback"
-			}
-		).put(
-			_FIELD_RESPONSE_TYPES,
-			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
-		).toString();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
-						).put(
-							_PROPERTY_TRUST_PROXY_HEADERS, true
-						).build())) {
-
-			for (int i = 0; i < 15; i++) {
-				Invocation.Builder invocationBuilder =
-					registerWebTarget.request();
-
-				invocationBuilder.header("X-Forwarded-For", clientHost);
-
-				Response response = invocationBuilder.method(
-					"post", Entity.json(body));
-
-				Assert.assertEquals(201, response.getStatus());
-			}
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRateLimitTriggers() throws Exception {
-		String clientHost =
-			"test-rate-triggers-" + RandomTestUtil.randomString();
-
-		_testAnonymousRateLimitTriggers(
-			new String[] {clientHost, clientHost, clientHost}, clientHost);
-
-		String normalizedHost = "test-rl-key-" + RandomTestUtil.randomString();
-
-		_testAnonymousRateLimitTriggers(
-			new String[] {
-				"[" + normalizedHost + "]:8080",
-				"[" + normalizedHost + "]:9090", normalizedHost
-			},
-			"[" + normalizedHost + "]");
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRejectedWhenStrict() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_HOSTS, new String[0]
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[0]
-						).put(
-							_PROPERTY_ALLOWED_SCOPES, new String[0]
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, true
-						).build())) {
-
-			Invocation.Builder invocationBuilder = registerWebTarget.request();
-
-			Response response = invocationBuilder.method(
-				"post",
-				Entity.json(
-					JSONUtil.put(
-						_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
-					).toString()));
-
-			Assert.assertEquals(401, response.getStatus());
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRejectsDefaultGrantTypeWhenDisallowed()
-		throws Exception {
-
-		long companyId = TestPropsValues.getCompanyId();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		String body = JSONUtil.put(
-			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
-		).put(
-			_FIELD_REDIRECT_URIS,
-			new String[] {
-				"https://" + RandomTestUtil.randomString() + ".com/callback"
-			}
-		).toString();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_GRANT_TYPES,
-							new String[] {
-								OAuthConstants.CLIENT_CREDENTIALS_GRANT
-							}
-						).put(
-							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
-						).build())) {
-
-			Invocation.Builder invocationBuilder = registerWebTarget.request();
-
-			Response response = invocationBuilder.method(
-				"post", Entity.json(body));
-
-			Assert.assertEquals(400, response.getStatus());
-			Assert.assertEquals(
-				"invalid_client_metadata", parseError(response));
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRejectsDisallowedRedirectURI() throws Exception {
-		_testAnonymousRejectsDisallowedRedirectURI(
-			"https://attacker.test/callback");
-		_testAnonymousRejectsDisallowedRedirectURI(
-			"https://attacker.test/foo.example.org/callback");
-		_testAnonymousRejectsDisallowedRedirectURI("");
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
-	public void testAnonymousRejectsDisallowedScope() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-
-		WebTarget registerWebTarget = getRegisterWebTarget();
-
-		String body = JSONUtil.put(
-			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
-		).put(
-			_FIELD_GRANT_TYPES,
-			new String[] {OAuthConstants.CLIENT_CREDENTIALS_GRANT}
-		).put(
-			_FIELD_SCOPE, "Liferay.Headless.Admin.Site.everything"
-		).toString();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						companyId, _CONFIGURATION_PID,
-						HashMapDictionaryBuilder.<String, Object>put(
-							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
-							new String[] {"*"}
-						).put(
-							_PROPERTY_ALLOWED_SCOPES,
-							new String[] {
-								"Liferay.Headless.Delivery.everything"
-							}
-						).put(
-							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
-							0
-						).put(
-							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
-						).build())) {
-
-			Invocation.Builder invocationBuilder = registerWebTarget.request();
-
-			Response response = invocationBuilder.method(
-				"post", Entity.json(body));
-
-			Assert.assertEquals(400, response.getStatus());
-			Assert.assertEquals(
-				OAuthConstants.INVALID_SCOPE, parseError(response));
-		}
-	}
-
-	@FeatureFlag("LPD-63416")
-	@Test
 	public void testBearerInOpenMode() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
@@ -527,6 +144,388 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		response = invocationBuilder.delete();
 
 		Assert.assertEquals(401, response.getStatus());
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenAccepted() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+		String clientName = RandomTestUtil.randomString();
+
+		String body = JSONUtil.put(
+			_FIELD_CLIENT_NAME, clientName
+		).put(
+			_FIELD_GRANT_TYPES,
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			_FIELD_REDIRECT_URIS,
+			new String[] {
+				"https://" + RandomTestUtil.randomString() + ".com/callback"
+			}
+		).put(
+			_FIELD_RESPONSE_TYPES,
+			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
+						).build())) {
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(201, response.getStatus());
+
+			JSONObject responseJSONObject = parseJSONObject(response);
+
+			Assert.assertEquals(
+				clientName, responseJSONObject.getString(_FIELD_CLIENT_NAME));
+
+			String clientId = responseJSONObject.getString(
+				OAuthConstants.CLIENT_ID);
+
+			OAuth2Application oAuth2Application =
+				_oAuth2ApplicationLocalService.fetchOAuth2Application(
+					companyId, clientId);
+
+			Assert.assertNotNull(oAuth2Application);
+
+			User serviceAccountUser = _userLocalService.getUserByScreenName(
+				companyId, "default-service-account");
+
+			Assert.assertEquals(
+				serviceAccountUser.getUserId(), oAuth2Application.getUserId());
+
+			Assert.assertFalse(oAuth2Application.isTrustedApplication());
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenBlankScopeIsRejected() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
+		).put(
+			_FIELD_GRANT_TYPES,
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			_FIELD_REDIRECT_URIS,
+			new String[] {
+				"https://" + RandomTestUtil.randomString() + ".com/callback"
+			}
+		).put(
+			_FIELD_RESPONSE_TYPES,
+			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_SCOPES,
+							new String[] {
+								"Liferay.Headless.Delivery.everything"
+							}
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(400, response.getStatus());
+
+			Assert.assertEquals(
+				"invalid_client_metadata", parseError(response));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenEnforcesHostAllowlist() throws Exception {
+		String allowedHost = "test-allowed-" + RandomTestUtil.randomString();
+
+		_testOpenEnforcesHostAllowlist(allowedHost, allowedHost, 201);
+		_testOpenEnforcesHostAllowlist(
+			allowedHost, "test-other-" + RandomTestUtil.randomString(), 403);
+
+		String bracketedHost = "test-bracket-" + RandomTestUtil.randomString();
+
+		_testOpenEnforcesHostAllowlist(
+			bracketedHost, "[" + bracketedHost + "]:8080", 201);
+		_testOpenEnforcesHostAllowlist(
+			"[" + bracketedHost + "]:8080", bracketedHost, 201);
+
+		String portHost = "test-port-" + RandomTestUtil.randomString();
+
+		_testOpenEnforcesHostAllowlist(portHost, portHost + ":8080", 201);
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRateLimitDisabled() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String clientHost =
+			"test-rate-disabled-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
+		).put(
+			_FIELD_GRANT_TYPES,
+			new String[] {OAuthConstants.AUTHORIZATION_CODE_GRANT}
+		).put(
+			_FIELD_REDIRECT_URIS,
+			new String[] {
+				"https://" + RandomTestUtil.randomString() + ".com/callback"
+			}
+		).put(
+			_FIELD_RESPONSE_TYPES,
+			new String[] {OAuthConstants.CODE_RESPONSE_TYPE}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
+						).put(
+							_PROPERTY_TRUST_PROXY_HEADERS, true
+						).build())) {
+
+			for (int i = 0; i < 15; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRateLimitTriggers() throws Exception {
+		String clientHost =
+			"test-rate-triggers-" + RandomTestUtil.randomString();
+
+		_testOpenRateLimitTriggers(
+			new String[] {clientHost, clientHost, clientHost}, clientHost);
+
+		String normalizedHost = "test-rl-key-" + RandomTestUtil.randomString();
+
+		_testOpenRateLimitTriggers(
+			new String[] {
+				"[" + normalizedHost + "]:8080",
+				"[" + normalizedHost + "]:9090", normalizedHost
+			},
+			"[" + normalizedHost + "]");
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRejectedWhenStrict() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_HOSTS, new String[0]
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[0]
+						).put(
+							_PROPERTY_ALLOWED_SCOPES, new String[0]
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, true
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post",
+				Entity.json(
+					JSONUtil.put(
+						_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
+					).toString()));
+
+			Assert.assertEquals(401, response.getStatus());
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRejectsDefaultGrantTypeWhenDisallowed()
+		throws Exception {
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
+		).put(
+			_FIELD_REDIRECT_URIS,
+			new String[] {
+				"https://" + RandomTestUtil.randomString() + ".com/callback"
+			}
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_GRANT_TYPES,
+							new String[] {
+								OAuthConstants.CLIENT_CREDENTIALS_GRANT
+							}
+						).put(
+							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_SCOPES, new String[] {"*"}
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(400, response.getStatus());
+			Assert.assertEquals(
+				"invalid_client_metadata", parseError(response));
+		}
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRejectsDisallowedRedirectURI() throws Exception {
+		_testOpenRejectsDisallowedRedirectURI("https://attacker.test/callback");
+		_testOpenRejectsDisallowedRedirectURI(
+			"https://attacker.test/foo.example.org/callback");
+		_testOpenRejectsDisallowedRedirectURI("");
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
+	public void testOpenRejectsDisallowedScope() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = JSONUtil.put(
+			_FIELD_CLIENT_NAME, RandomTestUtil.randomString()
+		).put(
+			_FIELD_GRANT_TYPES,
+			new String[] {OAuthConstants.CLIENT_CREDENTIALS_GRANT}
+		).put(
+			_FIELD_SCOPE, "Liferay.Headless.Admin.Site.everything"
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						companyId, _CONFIGURATION_PID,
+						HashMapDictionaryBuilder.<String, Object>put(
+							_PROPERTY_ALLOWED_GRANT_TYPES, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_HOSTS, new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_REDIRECT_URI_PATTERNS,
+							new String[] {"*"}
+						).put(
+							_PROPERTY_ALLOWED_SCOPES,
+							new String[] {
+								"Liferay.Headless.Delivery.everything"
+							}
+						).put(
+							_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+							0
+						).put(
+							_PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN, false
+						).build())) {
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(400, response.getStatus());
+			Assert.assertEquals(
+				OAuthConstants.INVALID_SCOPE, parseError(response));
+		}
 	}
 
 	@FeatureFlag("LPD-63416")
@@ -814,7 +813,7 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		return tokenString;
 	}
 
-	private void _testAnonymousEnforcesHostAllowlist(
+	private void _testOpenEnforcesHostAllowlist(
 			String allowedHost, String requestHost, int expectedStatus)
 		throws Exception {
 
@@ -874,7 +873,7 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		}
 	}
 
-	private void _testAnonymousRateLimitTriggers(
+	private void _testOpenRateLimitTriggers(
 			String[] acceptedHosts, String rejectedHost)
 		throws Exception {
 
@@ -944,7 +943,7 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		}
 	}
 
-	private void _testAnonymousRejectsDisallowedRedirectURI(String redirectUri)
+	private void _testOpenRejectsDisallowedRedirectURI(String redirectUri)
 		throws Exception {
 
 		long companyId = TestPropsValues.getCompanyId();

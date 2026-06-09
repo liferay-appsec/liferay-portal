@@ -191,14 +191,14 @@ public class LiferayDynamicRegistrationService
 			Boolean.TRUE.equals(
 				httpServletRequest.getAttribute(
 					DynamicRegistrationServiceContainerRequestFilter.
-						REQUEST_PROPERTY_ANONYMOUS_REGISTRATION))) {
+						REQUEST_PROPERTY_OPEN_REGISTRATION))) {
 
 			Map<String, String> clientProperties = client.getProperties();
 
 			clientProperties.put(
 				OAuth2ProviderRESTEndpointConstants.
 					PROPERTY_KEY_DYNAMIC_REGISTRATION_MODE,
-				"anonymous");
+				"open");
 		}
 
 		_validate(client, clientRegistration);
@@ -553,9 +553,9 @@ public class LiferayDynamicRegistrationService
 			Boolean.TRUE.equals(
 				httpServletRequest.getAttribute(
 					DynamicRegistrationServiceContainerRequestFilter.
-						REQUEST_PROPERTY_ANONYMOUS_REGISTRATION))) {
+						REQUEST_PROPERTY_OPEN_REGISTRATION))) {
 
-			mode = "anonymous";
+			mode = "open";
 		}
 
 		String clientHost = StringPool.BLANK;
@@ -613,14 +613,14 @@ public class LiferayDynamicRegistrationService
 			glob, LiferayDynamicRegistrationService::_compileGlobToPattern);
 	}
 
-	private boolean _isAnonymousRegistration(Client client) {
+	private boolean _isOpenRegistration(Client client) {
 		Map<String, String> clientProperties = client.getProperties();
 
 		String mode = clientProperties.get(
 			OAuth2ProviderRESTEndpointConstants.
 				PROPERTY_KEY_DYNAMIC_REGISTRATION_MODE);
 
-		return Objects.equals(mode, "anonymous");
+		return Objects.equals(mode, "open");
 	}
 
 	private Set<String> _normalize(String[] values) {
@@ -776,12 +776,12 @@ public class LiferayDynamicRegistrationService
 			}
 		}
 
-		if (_isAnonymousRegistration(client)) {
-			_validateAnonymousPolicy(client, clientRegistration);
+		if (_isOpenRegistration(client)) {
+			_validateOpenRegistrationPolicy(client, clientRegistration);
 		}
 	}
 
-	private void _validateAnonymousGrantTypes(
+	private void _validateOpenRegistrationGrantTypes(
 		Client client, String[] allowedGrantTypes) {
 
 		List<String> requestedGrantTypes = client.getAllowedGrantTypes();
@@ -799,7 +799,7 @@ public class LiferayDynamicRegistrationService
 
 		if (normalizedAllowedGrantTypes.isEmpty()) {
 			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Anonymous registration does not permit any grant type",
+				"Open registration does not permit any grant type",
 				"invalid_client_metadata", Response.Status.BAD_REQUEST);
 		}
 
@@ -807,13 +807,13 @@ public class LiferayDynamicRegistrationService
 			if (!normalizedAllowedGrantTypes.contains(requestedGrantType)) {
 				OAuth2ErrorUtil.reportInvalidRequestError(
 					"Grant type " + requestedGrantType +
-						" is not permitted for anonymous registration",
+						" is not permitted for open registration",
 					"invalid_client_metadata", Response.Status.BAD_REQUEST);
 			}
 		}
 	}
 
-	private void _validateAnonymousPolicy(
+	private void _validateOpenRegistrationPolicy(
 		Client client, ClientRegistration clientRegistration) {
 
 		long companyId = _getCompanyId();
@@ -834,19 +834,19 @@ public class LiferayDynamicRegistrationService
 			return;
 		}
 
-		_validateAnonymousGrantTypes(
+		_validateOpenRegistrationGrantTypes(
 			client, dynamicRegistrationConfiguration.allowedGrantTypes());
 
-		_validateAnonymousScopes(
+		_validateOpenRegistrationScopes(
 			clientRegistration,
 			dynamicRegistrationConfiguration.allowedScopes());
 
-		_validateAnonymousRedirectURIs(
+		_validateOpenRegistrationRedirectURIs(
 			clientRegistration,
 			dynamicRegistrationConfiguration.allowedRedirectURIPatterns());
 	}
 
-	private void _validateAnonymousRedirectURIs(
+	private void _validateOpenRegistrationRedirectURIs(
 		ClientRegistration clientRegistration, String[] allowedPatterns) {
 
 		List<String> redirectUris = clientRegistration.getRedirectUris();
@@ -863,7 +863,7 @@ public class LiferayDynamicRegistrationService
 
 		if (normalizedAllowedPatterns.isEmpty()) {
 			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Anonymous registration does not permit any redirect URI",
+				"Open registration does not permit any redirect URI",
 				"invalid_redirect_uri", Response.Status.BAD_REQUEST);
 		}
 
@@ -896,13 +896,13 @@ public class LiferayDynamicRegistrationService
 			if (!matched) {
 				OAuth2ErrorUtil.reportInvalidRequestError(
 					"Redirect URI " + redirectUri +
-						" is not permitted for anonymous registration",
+						" is not permitted for open registration",
 					"invalid_redirect_uri", Response.Status.BAD_REQUEST);
 			}
 		}
 	}
 
-	private void _validateAnonymousScopes(
+	private void _validateOpenRegistrationScopes(
 		ClientRegistration clientRegistration, String[] allowedScopes) {
 
 		Set<String> normalizedAllowedScopes = _normalize(allowedScopes);
@@ -913,7 +913,7 @@ public class LiferayDynamicRegistrationService
 
 		if (normalizedAllowedScopes.isEmpty()) {
 			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Anonymous registration does not permit any scope",
+				"Open registration does not permit any scope",
 				OAuthConstants.INVALID_SCOPE, Response.Status.BAD_REQUEST);
 
 			return;
@@ -923,7 +923,7 @@ public class LiferayDynamicRegistrationService
 
 		if (Validator.isBlank(scope)) {
 			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Anonymous registration requires an explicit scope",
+				"Open registration requires an explicit scope",
 				"invalid_client_metadata", Response.Status.BAD_REQUEST);
 
 			return;
@@ -935,7 +935,7 @@ public class LiferayDynamicRegistrationService
 			if (!normalizedAllowedScopes.contains(requestedScope)) {
 				OAuth2ErrorUtil.reportInvalidRequestError(
 					"Scope " + requestedScope +
-						" is not permitted for anonymous registration",
+						" is not permitted for open registration",
 					OAuthConstants.INVALID_SCOPE, Response.Status.BAD_REQUEST);
 			}
 		}
