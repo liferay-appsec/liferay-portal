@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -27,7 +28,7 @@ public class UpgradeCompany extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		String keyAlgorithm = _KEY_ALGORITHM;
+		String keyAlgorithm = PropsValues.FIPS_ENABLED ? "AES" : _KEY_ALGORITHM;
 
 		if (keyAlgorithm.equals("DES")) {
 			return;

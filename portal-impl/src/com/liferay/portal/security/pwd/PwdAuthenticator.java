@@ -12,9 +12,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.UnsupportedEncodingException;
@@ -43,7 +45,8 @@ public class PwdAuthenticator {
 
 			try {
 				MessageDigest digester = MessageDigest.getInstance(
-					PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
+					PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
+						PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
 
 				digester.update(login.getBytes(StringPool.UTF8));
 

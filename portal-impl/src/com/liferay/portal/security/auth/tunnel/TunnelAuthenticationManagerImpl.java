@@ -206,8 +206,10 @@ public class TunnelAuthenticationManagerImpl
 			throw authException;
 		}
 
-		if (StringUtil.equalsIgnoreCase(
-				PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM, "AES") &&
+		String algorithm = PropsValues.FIPS_ENABLED ? _AES :
+			PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM;
+
+		if (StringUtil.equalsIgnoreCase(algorithm, _AES) &&
 			(key.length != 16) && (key.length != 32)) {
 
 			String message =
@@ -225,9 +227,10 @@ public class TunnelAuthenticationManagerImpl
 			throw authException;
 		}
 
-		return new SecretKeySpec(
-			key, PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+		return new SecretKeySpec(key, algorithm);
 	}
+
+	private static final String _AES = "AES";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		TunnelAuthenticationManagerImpl.class);
