@@ -19,6 +19,9 @@ public class OAuth2ProviderRESTEndpointConstants {
 	public static final String COOKIE_NAME_REMEMBER_DEVICE_PREFIX =
 		"OAUTH2_REMEMBER_DEVICE_";
 
+	public static final String EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT =
+		"DYNAMIC_REGISTRATION_REJECT";
+
 	public static final String PROPERTY_KEY_CLIENT_FEATURE_PREFIX = "feature.";
 
 	public static final String PROPERTY_KEY_CLIENT_FEATURE_TOKEN_INTROSPECTION =

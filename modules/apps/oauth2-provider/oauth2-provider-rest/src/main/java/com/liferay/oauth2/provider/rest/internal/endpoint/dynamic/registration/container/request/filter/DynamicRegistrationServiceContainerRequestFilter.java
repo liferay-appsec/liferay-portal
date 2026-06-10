@@ -10,6 +10,7 @@ import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
+import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
@@ -17,7 +18,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditMessage;
-import com.liferay.portal.kernel.audit.AuditRouter;
+import com.liferay.portal.kernel.audit.AuditRouterUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
@@ -27,8 +28,8 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
@@ -125,19 +126,17 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			return;
 		}
 
-		String method = httpServletRequest.getMethod();
+		boolean hasBearer = StringUtil.startsWith(
+			httpServletRequest.getHeader("Authorization"), "Bearer ");
 
-		boolean post = StringUtil.equalsIgnoreCase(method, "POST");
-
-		String authorization = httpServletRequest.getHeader("Authorization");
-
-		boolean hasBearer = StringUtil.startsWith(authorization, "Bearer ");
-
-		User user;
-		boolean open = false;
+		User user = null;
+		boolean openRegistration = false;
 
 		try {
-			if (post && !hasBearer) {
+			if (StringUtil.equalsIgnoreCase(
+					httpServletRequest.getMethod(), "POST") &&
+				!hasBearer) {
+
 				DynamicRegistrationConfiguration
 					dynamicRegistrationConfiguration =
 						_getDynamicRegistrationConfiguration(companyId);
@@ -153,7 +152,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				if (dynamicRegistrationConfiguration.
 						requireInitialAccessToken()) {
 
-					_audit(
+					_auditFailure(
 						clientHost, companyId, "invalid_token",
 						"Initial access token is required", httpServletRequest,
 						"open");
@@ -164,21 +163,21 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				_validateOpenRegistrationHosts(
 					dynamicRegistrationConfiguration.allowedHosts(), clientHost,
 					companyId, httpServletRequest);
-
 				_checkOpenRegistrationRateLimit(
 					clientHost, companyId, httpServletRequest,
 					dynamicRegistrationConfiguration.
 						maximumNumberOfRegistrationsPerHour());
 
 				user = _userLocalService.getUserByScreenName(
-					companyId, "default-service-account");
+					companyId,
+					UserConstants.SCREEN_NAME_DEFAULT_SERVICE_ACCOUNT);
 
 				if (!user.isActive()) {
 					throw new NoSuchUserException(
-						"Open registration service account user is inactive");
+						"The default service account is inactive");
 				}
 
-				open = true;
+				openRegistration = true;
 
 				if (_log.isInfoEnabled()) {
 					_log.info(
@@ -193,7 +192,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					REQUEST_PROPERTY_CLIENT_HOST,
 					_normalizeHost(_getClientHost(httpServletRequest, false)));
 
-				user = _authorizeWithBearer(httpServletRequest, method);
+				user = _authorizeWithBearer(
+					httpServletRequest, httpServletRequest.getMethod());
 			}
 		}
 		catch (WebApplicationException webApplicationException) {
@@ -208,8 +208,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
-							"Open registration service account is unavailable ",
-							"for company ", companyId, ": ",
+							"The default service account is unavailable for ",
+							"company ", companyId, ": ",
 							exception.getMessage()));
 				}
 			}
@@ -217,7 +217,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				_log.debug(exception);
 			}
 
-			_audit(
+			_auditFailure(
 				GetterUtil.getString(
 					httpServletRequest.getAttribute(
 						REQUEST_PROPERTY_CLIENT_HOST),
@@ -237,7 +237,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				).build());
 		}
 
-		if (open) {
+		if (openRegistration) {
 			httpServletRequest.setAttribute(
 				REQUEST_PROPERTY_OPEN_REGISTRATION, Boolean.TRUE);
 		}
@@ -252,37 +252,32 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			DynamicRegistrationServiceContainerRequestFilter.class.getName());
 	}
 
-	private void _audit(
+	private void _auditFailure(
 		String clientHost, long companyId, String error,
 		String errorDescription, HttpServletRequest httpServletRequest,
 		String mode) {
 
-		AuditRouter auditRouter = _auditRouterSnapshot.get();
-
-		if (auditRouter == null) {
-			return;
-		}
-
 		try {
-			AuditMessage auditMessage = new AuditMessage(
-				0, companyId, 0, StringPool.BLANK, null,
-				JSONUtil.put(
-					"clientHost", clientHost
-				).put(
-					"error", error
-				).put(
-					"errorDescription", errorDescription
-				).put(
-					"mode", mode
-				).put(
-					"userAgent",
-					GetterUtil.getString(
-						httpServletRequest.getHeader("User-Agent"))
-				),
-				OAuth2Application.class.getName(), StringPool.BLANK,
-				_EVENT_TYPE_DCR_REJECT, StringPool.BLANK);
-
-			auditRouter.route(auditMessage);
+			AuditRouterUtil.route(
+				new AuditMessage(
+					0, companyId, 0, StringPool.BLANK, null,
+					JSONUtil.put(
+						"clientHost", clientHost
+					).put(
+						"error", error
+					).put(
+						"errorDescription", errorDescription
+					).put(
+						"mode", mode
+					).put(
+						"userAgent",
+						GetterUtil.getString(
+							httpServletRequest.getHeader("User-Agent"))
+					),
+					OAuth2Application.class.getName(), StringPool.BLANK,
+					OAuth2ProviderRESTEndpointConstants.
+						EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
+					StringPool.BLANK));
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -436,7 +431,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 					"\"; retry after ", retryAfterSeconds, " seconds"));
 		}
 
-		_audit(
+		_auditFailure(
 			clientHost, companyId, "rate_limited",
 			"Open client registration rate limit exceeded for host " +
 				clientHost,
@@ -639,21 +634,18 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		if (normalizedAllowedHosts.isEmpty() ||
 			!normalizedAllowedHosts.contains(clientHost)) {
 
-			_audit(
-				clientHost, companyId, "access_denied",
+			String message =
 				"Host " + clientHost +
-					" is not permitted for open registration",
+					" is not permitted for open registration";
+
+			_auditFailure(
+				clientHost, companyId, "access_denied", message,
 				httpServletRequest, "open");
 
 			OAuth2ErrorUtil.reportInvalidRequestError(
-				"Host " + clientHost +
-					" is not permitted for open registration",
-				"access_denied", Response.Status.FORBIDDEN);
+				message, "access_denied", Response.Status.FORBIDDEN);
 		}
 	}
-
-	private static final String _EVENT_TYPE_DCR_REJECT =
-		"DYNAMIC_REGISTRATION_REJECT";
 
 	private static final int _RATE_LIMIT_TTL_SECONDS =
 		(int)TimeUnit.HOURS.toSeconds(1);
@@ -663,11 +655,6 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
-
-	private static final Snapshot<AuditRouter> _auditRouterSnapshot =
-		new Snapshot<>(
-			DynamicRegistrationServiceContainerRequestFilter.class,
-			AuditRouter.class, null, true);
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
