@@ -15,7 +15,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -58,13 +57,13 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 
 		return addOAuthClientPRLocalMetadata(
 			null, userId,
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("authorization_servers")),
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("bearer_methods_supported")),
 			false, metadataJSONObject.getString("resource"),
 			metadataJSONObject.getString("resource_name"),
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("scopes_supported")));
 	}
 
@@ -249,13 +248,13 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 
 		return updateOAuthClientPRLocalMetadata(
 			oAuthClientPRLocalMetadataId,
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("authorization_servers")),
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("bearer_methods_supported")),
 			false, metadataJSONObject.getString("resource"),
 			metadataJSONObject.getString("resource_name"),
-			_toStringArray(
+			JSONUtil.toStringArray(
 				metadataJSONObject.getJSONArray("scopes_supported")));
 	}
 
@@ -374,20 +373,6 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 		}
 
 		return urlString.substring(0, urlString.length() - 1);
-	}
-
-	private String[] _toStringArray(JSONArray jsonArray) {
-		if (jsonArray == null) {
-			return new String[0];
-		}
-
-		String[] strings = new String[jsonArray.length()];
-
-		for (int i = 0; i < jsonArray.length(); i++) {
-			strings[i] = jsonArray.getString(i);
-		}
-
-		return strings;
 	}
 
 	private void _validate(
