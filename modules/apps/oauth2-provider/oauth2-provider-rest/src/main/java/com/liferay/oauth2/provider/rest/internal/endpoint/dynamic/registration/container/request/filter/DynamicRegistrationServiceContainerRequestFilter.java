@@ -391,15 +391,6 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		int count;
 
 		synchronized (_rateLimitLock) {
-			if (_portalCache == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Portal cache is unavailable; skipping rate limit");
-				}
-
-				return;
-			}
-
 			RateLimitBucket bucket = _portalCache.get(key);
 
 			if ((bucket == null) || (bucket.windowStart != windowStart)) {
@@ -460,22 +451,23 @@ public class DynamicRegistrationServiceContainerRequestFilter
 	private String _getClientHost(
 		HttpServletRequest httpServletRequest, boolean trustProxyHeaders) {
 
-		if (trustProxyHeaders) {
-			String forwardedFor = httpServletRequest.getHeader(
-				"X-Forwarded-For");
+		if (!trustProxyHeaders) {
+			return httpServletRequest.getRemoteAddr();
+		}
 
-			if (!Validator.isBlank(forwardedFor)) {
-				int index = forwardedFor.indexOf(',');
+		String forwardedFor = httpServletRequest.getHeader("X-Forwarded-For");
 
-				if (index >= 0) {
-					forwardedFor = forwardedFor.substring(0, index);
-				}
+		if (!Validator.isBlank(forwardedFor)) {
+			int index = forwardedFor.indexOf(',');
 
-				forwardedFor = forwardedFor.trim();
+			if (index >= 0) {
+				forwardedFor = forwardedFor.substring(0, index);
+			}
 
-				if (!forwardedFor.isEmpty()) {
-					return forwardedFor;
-				}
+			forwardedFor = forwardedFor.trim();
+
+			if (!forwardedFor.isEmpty()) {
+				return forwardedFor;
 			}
 		}
 
