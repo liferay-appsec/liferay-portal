@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -63,6 +64,7 @@ import java.security.Principal;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -335,16 +337,12 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
 
-		if (StringUtil.equalsIgnoreCase(method, "DELETE") &&
-			!_oAuth2ApplicationModelResourcePermission.contains(
-				permissionChecker, oAuth2Application, ActionKeys.DELETE)) {
+		String actionKey = _actionKeysByMethod.get(
+			StringUtil.toUpperCase(method));
 
-			throw ExceptionUtils.toNotAuthorizedException(null, null);
-		}
-
-		if (StringUtil.equalsIgnoreCase(method, "PUT") &&
+		if ((actionKey != null) &&
 			!_oAuth2ApplicationModelResourcePermission.contains(
-				permissionChecker, oAuth2Application, ActionKeys.UPDATE)) {
+				permissionChecker, oAuth2Application, actionKey)) {
 
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
@@ -647,6 +645,13 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
+
+	private static final Map<String, String> _actionKeysByMethod =
+		HashMapBuilder.put(
+			"DELETE", ActionKeys.DELETE
+		).put(
+			"PUT", ActionKeys.UPDATE
+		).build();
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
