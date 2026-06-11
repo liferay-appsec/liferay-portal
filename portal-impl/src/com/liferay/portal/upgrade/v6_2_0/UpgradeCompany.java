@@ -6,13 +6,13 @@
 package com.liferay.portal.upgrade.v6_2_0;
 
 import com.liferay.portal.kernel.encryptor.EncryptorUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -28,9 +28,14 @@ public class UpgradeCompany extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		String keyAlgorithm = PropsValues.FIPS_ENABLED ? "AES" : _KEY_ALGORITHM;
+		if (FIPSModeUtil.isEnabled() &&
+			!FIPSModeUtil.isApprovedCipherAlgorithm(_KEY_ALGORITHM)) {
 
-		if (keyAlgorithm.equals("DES")) {
+			throw new SecurityException(
+				"Algorithm \"" + _KEY_ALGORITHM + "\" is not FIPS-approved");
+		}
+
+		if (_KEY_ALGORITHM.equals("DES")) {
 			return;
 		}
 

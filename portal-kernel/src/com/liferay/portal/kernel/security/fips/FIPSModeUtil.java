@@ -14,6 +14,16 @@ import com.liferay.portal.kernel.util.Validator;
  */
 public class FIPSModeUtil {
 
+	public static boolean isApprovedCipherAlgorithm(String algorithm) {
+		if (Validator.isNull(algorithm)) {
+			return false;
+		}
+
+		String normalizedString = StringUtil.toUpperCase(algorithm);
+
+		return normalizedString.equals("AES");
+	}
+
 	public static boolean isApprovedPasswordAlgorithm(String algorithm) {
 		if (Validator.isNull(algorithm)) {
 			return false;

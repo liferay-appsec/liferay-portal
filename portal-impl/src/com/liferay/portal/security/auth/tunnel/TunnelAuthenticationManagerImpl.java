@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.RemoteAuthException;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.tunnel.TunnelAuthenticationManager;
+import com.liferay.portal.kernel.security.fips.FIPSModeUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -206,10 +207,16 @@ public class TunnelAuthenticationManagerImpl
 			throw authException;
 		}
 
-		String algorithm = PropsValues.FIPS_ENABLED ? _AES :
-			PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM;
+		String algorithm = PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM;
 
-		if (StringUtil.equalsIgnoreCase(algorithm, _AES) &&
+		if (FIPSModeUtil.isEnabled() &&
+			!FIPSModeUtil.isApprovedCipherAlgorithm(algorithm)) {
+
+			throw new SecurityException(
+				"Algorithm \"" + algorithm + "\" is not FIPS-approved");
+		}
+
+		if (StringUtil.equalsIgnoreCase(algorithm, "AES") &&
 			(key.length != 16) && (key.length != 32)) {
 
 			String message =
@@ -229,8 +236,6 @@ public class TunnelAuthenticationManagerImpl
 
 		return new SecretKeySpec(key, algorithm);
 	}
-
-	private static final String _AES = "AES";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		TunnelAuthenticationManagerImpl.class);
