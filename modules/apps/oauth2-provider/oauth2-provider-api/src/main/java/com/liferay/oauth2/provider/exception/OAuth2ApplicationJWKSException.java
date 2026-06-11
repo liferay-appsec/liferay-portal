@@ -8,7 +8,7 @@ package com.liferay.oauth2.provider.exception;
 import com.liferay.portal.kernel.exception.PortalException;
 
 /**
- * @author Pedro Victor Silvestre
+ * @author Brian Wing Shun Chan
  */
 public class OAuth2ApplicationJWKSException extends PortalException {
 
