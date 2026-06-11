@@ -49,36 +49,34 @@ public class OAuth2JWKValidatorUtilTest {
 	}
 
 	@Test
-	public void testValidateJWKAcceptsApprovedRsaKey() throws Exception {
+	public void testValidateJWK() throws Exception {
 		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(2048, "RS256"));
-	}
 
-	@Test(expected = SecurityException.class)
-	public void testValidateJWKRejectsShortRsaKey() throws Exception {
-		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(1024, "RS256"));
-	}
-
-	@Test(expected = SecurityException.class)
-	public void testValidateJWKRejectsWeakAlgorithm() throws Exception {
-		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(2048, "RS1"));
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> OAuth2JWKValidatorUtil.validateJWK(
+				_generateRsaJWK(1024, "RS256")));
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> OAuth2JWKValidatorUtil.validateJWK(
+				_generateRsaJWK(2048, "RS1")));
 	}
 
 	@Test
-	public void testValidateJWKSAcceptsApprovedKeys() throws Exception {
+	public void testValidateJWKS() throws Exception {
 		OAuth2JWKValidatorUtil.validateJWKS(
 			"{\"keys\":[" + _generateRsaJWK(2048, "RS256") + "]}");
-	}
 
-	@Test(expected = SecurityException.class)
-	public void testValidateJWKSRejectsWeakKey() throws Exception {
-		OAuth2JWKValidatorUtil.validateJWKS(
-			StringBundler.concat(
-				"{\"keys\":[", _generateRsaJWK(2048, "RS256"), ",",
-				_generateRsaJWK(1024, "RS256"), "]}"));
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> OAuth2JWKValidatorUtil.validateJWKS(
+				StringBundler.concat(
+					"{\"keys\":[", _generateRsaJWK(2048, "RS256"), ",",
+					_generateRsaJWK(1024, "RS256"), "]}")));
 	}
 
 	@Test
-	public void testValidateJWSAlgorithmAcceptsApprovedSet() {
+	public void testValidateJWSAlgorithm() {
 		for (String algorithm :
 				new String[] {
 					"ES256", "ES384", "ES512", "HS256", "HS384", "HS512",
@@ -87,25 +85,16 @@ public class OAuth2JWKValidatorUtilTest {
 
 			OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
 		}
-	}
 
-	@Test
-	public void testValidateJWSAlgorithmRejectsAll() {
 		for (String algorithm :
 				new String[] {
 					null, "", "none", "HS1", "RS1", "ES256K", "EdDSA", "RSA1_5",
 					"garbage", "rs256"
 				}) {
 
-			try {
-				OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
-
-				Assert.fail(
-					"Expected SecurityException for " +
-						String.valueOf(algorithm));
-			}
-			catch (SecurityException securityException) {
-			}
+			Assert.assertThrows(
+				SecurityException.class,
+				() -> OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm));
 		}
 	}
 
