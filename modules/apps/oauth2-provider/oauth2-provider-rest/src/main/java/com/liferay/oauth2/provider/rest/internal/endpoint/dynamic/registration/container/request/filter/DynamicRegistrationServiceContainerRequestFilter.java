@@ -10,6 +10,7 @@ import com.liferay.oauth2.provider.constants.OAuth2ProviderActionKeys;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
+import com.liferay.oauth2.provider.rest.internal.constants.OAuth2ProviderRESTWebKeys;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
@@ -22,7 +23,6 @@ import com.liferay.portal.kernel.audit.AuditRouterUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
-import com.liferay.portal.kernel.exception.NoSuchUserException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -98,12 +98,6 @@ import org.osgi.service.component.annotations.Reference;
 public class DynamicRegistrationServiceContainerRequestFilter
 	implements ContainerRequestFilter {
 
-	public static final String REQUEST_PROPERTY_CLIENT_HOST =
-		"com.liferay.oauth2.dynamic.registration.client.host";
-
-	public static final String REQUEST_PROPERTY_OPEN_REGISTRATION =
-		"com.liferay.oauth2.dynamic.registration.open.registration";
-
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		UriInfo uriInfo = containerRequestContext.getUriInfo();
@@ -128,7 +122,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			return;
 		}
 
-		boolean hasBearer = StringUtil.startsWith(
+		boolean hasBearerToken = StringUtil.startsWith(
 			httpServletRequest.getHeader("Authorization"), "Bearer ");
 
 		User user = null;
@@ -137,64 +131,19 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		try {
 			if (StringUtil.equalsIgnoreCase(
 					httpServletRequest.getMethod(), "POST") &&
-				!hasBearer) {
+				!hasBearerToken) {
 
-				DynamicRegistrationConfiguration
-					dynamicRegistrationConfiguration =
-						_getDynamicRegistrationConfiguration(companyId);
-
-				String clientHost = _normalizeHost(
-					_getClientHost(
-						httpServletRequest,
-						dynamicRegistrationConfiguration.trustProxyHeaders()));
-
-				httpServletRequest.setAttribute(
-					REQUEST_PROPERTY_CLIENT_HOST, clientHost);
-
-				if (dynamicRegistrationConfiguration.
-						requireInitialAccessToken()) {
-
-					_auditFailure(
-						clientHost, companyId, "invalid_token",
-						"Initial access token is required", httpServletRequest,
-						"open");
-
-					throw ExceptionUtils.toNotAuthorizedException(null, null);
-				}
-
-				_validateOpenRegistrationHosts(
-					dynamicRegistrationConfiguration.allowedHosts(), clientHost,
+				user = _authorizeOpenRegistration(
 					companyId, httpServletRequest);
-				_checkOpenRegistrationRateLimit(
-					clientHost, companyId, httpServletRequest,
-					dynamicRegistrationConfiguration.
-						maximumNumberOfRegistrationsPerHour());
-
-				user = _userLocalService.getUserByScreenName(
-					companyId,
-					UserConstants.SCREEN_NAME_DEFAULT_SERVICE_ACCOUNT);
-
-				if (!user.isActive()) {
-					throw new NoSuchUserException(
-						"The default service account is inactive");
-				}
 
 				openRegistration = true;
-
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						StringBundler.concat(
-							"Open dynamic client registration accepted for ",
-							"company ", companyId, " from \"", clientHost,
-							"\""));
-				}
 			}
 			else {
 				httpServletRequest.setAttribute(
-					REQUEST_PROPERTY_CLIENT_HOST,
+					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_CLIENT_HOST,
 					_normalizeHost(_getClientHost(httpServletRequest, false)));
 
-				user = _authorizeWithBearer(
+				user = _authorizeBearer(
 					httpServletRequest, httpServletRequest.getMethod());
 			}
 		}
@@ -206,30 +155,19 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			throw webApplicationException;
 		}
 		catch (Exception exception) {
-			if (!hasBearer && (exception instanceof NoSuchUserException)) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"The default service account is unavailable for ",
-							"company ", companyId, ": ",
-							exception.getMessage()));
-				}
-			}
-			else if (_log.isDebugEnabled()) {
+			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
 
-			_auditFailure(
+			_auditAuthorizationFailure(
 				GetterUtil.getString(
 					httpServletRequest.getAttribute(
-						REQUEST_PROPERTY_CLIENT_HOST),
+						OAuth2ProviderRESTWebKeys.
+							DYNAMIC_REGISTRATION_CLIENT_HOST),
 					_normalizeHost(_getClientHost(httpServletRequest, false))),
-				companyId, hasBearer ? "invalid_token" : "server_error",
-				hasBearer ? "Bearer token authorization failed" :
-					"Open registration authorization failed",
-				httpServletRequest, hasBearer ? "authenticated" : "open");
+				companyId, hasBearerToken, httpServletRequest);
 
-			if (hasBearer) {
+			if (hasBearerToken) {
 				throw ExceptionUtils.toNotAuthorizedException(null, null);
 			}
 
@@ -241,7 +179,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 		if (openRegistration) {
 			httpServletRequest.setAttribute(
-				REQUEST_PROPERTY_OPEN_REGISTRATION, Boolean.TRUE);
+				OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_OPEN,
+				Boolean.TRUE);
 		}
 
 		_setSecurityContext(containerRequestContext, httpServletRequest, user);
@@ -252,6 +191,18 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		_portalCache = PortalCacheHelperUtil.getPortalCache(
 			PortalCacheManagerNames.SINGLE_VM,
 			DynamicRegistrationServiceContainerRequestFilter.class.getName());
+	}
+
+	private void _auditAuthorizationFailure(
+		String clientHost, long companyId, boolean hasBearerToken,
+		HttpServletRequest httpServletRequest) {
+
+		_auditFailure(
+			clientHost, companyId,
+			hasBearerToken ? "invalid_token" : "server_error",
+			hasBearerToken ? "Bearer token authorization failed" :
+				"Open registration authorization failed",
+			httpServletRequest, hasBearerToken ? "authenticated" : "open");
 	}
 
 	private void _auditFailure(
@@ -288,7 +239,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 	}
 
-	private User _authorizeWithBearer(
+	private User _authorizeBearer(
 			HttpServletRequest httpServletRequest, String method)
 		throws Exception {
 
@@ -364,6 +315,68 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				clientId, oAuth2Application.getClientId())) {
 
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		return user;
+	}
+
+	private User _authorizeOpenRegistration(
+			long companyId, HttpServletRequest httpServletRequest)
+		throws ConfigurationException {
+
+		DynamicRegistrationConfiguration dynamicRegistrationConfiguration =
+			_getDynamicRegistrationConfiguration(companyId);
+
+		String clientHost = _normalizeHost(
+			_getClientHost(
+				httpServletRequest,
+				dynamicRegistrationConfiguration.trustProxyHeaders()));
+
+		httpServletRequest.setAttribute(
+			OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_CLIENT_HOST,
+			clientHost);
+
+		if (dynamicRegistrationConfiguration.requireInitialAccessToken()) {
+			_auditFailure(
+				clientHost, companyId, "invalid_token",
+				"Initial access token is required", httpServletRequest, "open");
+
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		_validateOpenRegistrationHosts(
+			dynamicRegistrationConfiguration.allowedHosts(), clientHost,
+			companyId, httpServletRequest);
+		_checkOpenRegistrationRateLimit(
+			clientHost, companyId, httpServletRequest,
+			dynamicRegistrationConfiguration.
+				maximumNumberOfRegistrationsPerHour());
+
+		User user = _userLocalService.fetchUserByScreenName(
+			companyId, UserConstants.SCREEN_NAME_DEFAULT_SERVICE_ACCOUNT);
+
+		if ((user == null) || !user.isActive()) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"The default service account is unavailable for ",
+						"company ", companyId));
+			}
+
+			_auditAuthorizationFailure(
+				clientHost, companyId, false, httpServletRequest);
+
+			throw new WebApplicationException(
+				Response.status(
+					Response.Status.INTERNAL_SERVER_ERROR
+				).build());
+		}
+
+		if (_log.isInfoEnabled()) {
+			_log.info(
+				StringBundler.concat(
+					"Open dynamic client registration accepted for company ",
+					companyId, " from \"", clientHost, "\""));
 		}
 
 		return user;

@@ -7,8 +7,8 @@ package com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration;
 
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration;
+import com.liferay.oauth2.provider.rest.internal.constants.OAuth2ProviderRESTWebKeys;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
-import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.container.request.filter.DynamicRegistrationServiceContainerRequestFilter;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
@@ -183,8 +183,7 @@ public class LiferayDynamicRegistrationService
 		if ((httpServletRequest != null) &&
 			Boolean.TRUE.equals(
 				httpServletRequest.getAttribute(
-					DynamicRegistrationServiceContainerRequestFilter.
-						REQUEST_PROPERTY_OPEN_REGISTRATION))) {
+					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_OPEN))) {
 
 			Map<String, String> clientProperties = client.getProperties();
 
@@ -515,8 +514,7 @@ public class LiferayDynamicRegistrationService
 		if ((httpServletRequest != null) &&
 			Boolean.TRUE.equals(
 				httpServletRequest.getAttribute(
-					DynamicRegistrationServiceContainerRequestFilter.
-						REQUEST_PROPERTY_OPEN_REGISTRATION))) {
+					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_OPEN))) {
 
 			mode = "open";
 		}
@@ -527,8 +525,7 @@ public class LiferayDynamicRegistrationService
 		if (httpServletRequest != null) {
 			clientHost = GetterUtil.getString(
 				httpServletRequest.getAttribute(
-					DynamicRegistrationServiceContainerRequestFilter.
-						REQUEST_PROPERTY_CLIENT_HOST),
+					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_CLIENT_HOST),
 				httpServletRequest.getRemoteAddr());
 
 			userAgent = GetterUtil.getString(
