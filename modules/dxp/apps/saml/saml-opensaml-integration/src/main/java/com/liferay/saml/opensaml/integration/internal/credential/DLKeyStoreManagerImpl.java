@@ -85,7 +85,7 @@ public class DLKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 
 	@Override
 	public void saveKeyStore(KeyStore keyStore) throws Exception {
-		File tempFile = FileUtil.createTempFile("jks");
+		File tempFile = FileUtil.createTempFile("p12");
 
 		try {
 			String samlKeyStorePassword = getSamlKeyStorePassword();
@@ -118,7 +118,7 @@ public class DLKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 		updateConfigurations(properties);
 	}
 
-	private static final String _SAML_KEYSTORE_PATH = "saml/keystore.jks";
+	private static final String _SAML_KEYSTORE_PATH = "saml/keystore.p12";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DLKeyStoreManagerImpl.class);

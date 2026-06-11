@@ -5,6 +5,7 @@
 
 package com.liferay.saml.web.internal.portlet.action;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -17,9 +18,11 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -40,14 +43,19 @@ import jakarta.portlet.ActionResponse;
 
 import java.io.IOException;
 
+import java.math.BigInteger;
+
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.DSAKey;
+import java.security.interfaces.RSAKey;
 
 import java.util.Calendar;
 
@@ -250,9 +258,29 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 			return;
 		}
+		catch (Error | RuntimeException exception) {
+			if (!_isFIPSThrowable(exception)) {
+				throw exception;
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			SessionErrors.add(actionRequest, "certificateAlgorithmNotAllowed");
+
+			return;
+		}
 
 		X509Certificate x509Certificate =
 			(X509Certificate)privateKeyEntry.getCertificate();
+
+		if (PropsValues.FIPS_ENABLED && !_isFIPSCompliant(x509Certificate)) {
+			SessionErrors.add(actionRequest, "certificateAlgorithmNotAllowed");
+
+			return;
+		}
+
 		LocalEntityManager.CertificateUsage certificateUsage =
 			LocalEntityManager.CertificateUsage.valueOf(
 				ParamUtil.getString(actionRequest, "certificateUsage"));
@@ -271,6 +299,71 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 
 		actionRequest.setAttribute(
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
+	}
+
+	private boolean _isFIPSCompliant(X509Certificate x509Certificate) {
+		PublicKey publicKey = x509Certificate.getPublicKey();
+
+		if (publicKey instanceof DSAKey) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"DSA certificates are not FIPS 140-3 compliant for SAML " +
+						"and cannot be imported");
+			}
+
+			return false;
+		}
+
+		if (publicKey instanceof RSAKey) {
+			RSAKey rsaKey = (RSAKey)publicKey;
+
+			BigInteger modulus = rsaKey.getModulus();
+
+			int bitLength = modulus.bitLength();
+
+			if (bitLength < _MINIMUM_RSA_KEY_SIZE) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"RSA key size ", bitLength,
+							" bits is below the minimum ",
+							_MINIMUM_RSA_KEY_SIZE,
+							" bits required for FIPS 140-3 compliance"));
+				}
+
+				return false;
+			}
+
+			return true;
+		}
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"Unrecognized key algorithm " + publicKey.getAlgorithm() +
+					" cannot be validated for FIPS 140-3 compliance");
+		}
+
+		return false;
+	}
+
+	private boolean _isFIPSThrowable(Throwable throwable) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return false;
+		}
+
+		while (throwable != null) {
+			Class<?> throwableClass = throwable.getClass();
+
+			if (ArrayUtil.contains(
+					_FIPS_THROWABLE_CLASS_NAMES, throwableClass.getName())) {
+
+				return true;
+			}
+
+			throwable = throwable.getCause();
+		}
+
+		return false;
 	}
 
 	private void _replaceCertificate(
@@ -346,6 +439,13 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 			SamlWebKeys.SAML_X509_CERTIFICATE, x509Certificate);
 		actionResponse.setWindowState(LiferayWindowState.EXCLUSIVE);
 	}
+
+	private static final String[] _FIPS_THROWABLE_CLASS_NAMES = {
+		"com.amazon.corretto.crypto.provider.RuntimeCryptoException",
+		"org.bouncycastle.crypto.fips.FipsUnapprovedOperationError"
+	};
+
+	private static final int _MINIMUM_RSA_KEY_SIZE = 2048;
 
 	private static final String _SHA256_PREFIX = "SHA256with";
 
