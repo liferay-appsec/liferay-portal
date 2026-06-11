@@ -6,7 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.access.token.authentication.handler;
 
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
-import com.liferay.oauth2.provider.security.fips.OAuth2JWKValidator;
+import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -117,7 +117,7 @@ public class LiferayJWTBearerAuthenticationHandler
 		String tokenEndpointAuthMethod = client.getTokenEndpointAuthMethod();
 
 		try {
-			OAuth2JWKValidator.validateJWSAlgorithm(
+			OAuth2JWKValidatorUtil.validateJWSAlgorithm(
 				(String)jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM));
 
 			if (tokenEndpointAuthMethod.equals("client_secret_jwt")) {
@@ -161,7 +161,7 @@ public class LiferayJWTBearerAuthenticationHandler
 						"No JWK found for the key ID");
 				}
 
-				OAuth2JWKValidator.validateJWK(
+				OAuth2JWKValidatorUtil.validateJWK(
 					JwkUtils.jwkKeyToJson(jsonWebKey));
 
 				return JwsUtils.getSignatureVerifier(jsonWebKey);

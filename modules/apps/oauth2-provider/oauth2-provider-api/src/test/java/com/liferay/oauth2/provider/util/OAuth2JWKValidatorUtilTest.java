@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.oauth2.provider.security.fips;
+package com.liferay.oauth2.provider.util;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -29,7 +29,7 @@ import org.junit.Test;
 /**
  * @author Pedro Victor Silvestre
  */
-public class OAuth2JWKValidatorTest {
+public class OAuth2JWKValidatorUtilTest {
 
 	@ClassRule
 	@Rule
@@ -50,28 +50,28 @@ public class OAuth2JWKValidatorTest {
 
 	@Test
 	public void testValidateJWKAcceptsApprovedRsaKey() throws Exception {
-		OAuth2JWKValidator.validateJWK(_generateRsaJWK(2048, "RS256"));
+		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(2048, "RS256"));
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsShortRsaKey() throws Exception {
-		OAuth2JWKValidator.validateJWK(_generateRsaJWK(1024, "RS256"));
+		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(1024, "RS256"));
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKRejectsWeakAlgorithm() throws Exception {
-		OAuth2JWKValidator.validateJWK(_generateRsaJWK(2048, "RS1"));
+		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(2048, "RS1"));
 	}
 
 	@Test
 	public void testValidateJWKSAcceptsApprovedKeys() throws Exception {
-		OAuth2JWKValidator.validateJWKS(
+		OAuth2JWKValidatorUtil.validateJWKS(
 			"{\"keys\":[" + _generateRsaJWK(2048, "RS256") + "]}");
 	}
 
 	@Test(expected = SecurityException.class)
 	public void testValidateJWKSRejectsWeakKey() throws Exception {
-		OAuth2JWKValidator.validateJWKS(
+		OAuth2JWKValidatorUtil.validateJWKS(
 			StringBundler.concat(
 				"{\"keys\":[", _generateRsaJWK(2048, "RS256"), ",",
 				_generateRsaJWK(1024, "RS256"), "]}"));
@@ -85,7 +85,7 @@ public class OAuth2JWKValidatorTest {
 					"PS256", "PS384", "PS512", "RS256", "RS384", "RS512"
 				}) {
 
-			OAuth2JWKValidator.validateJWSAlgorithm(algorithm);
+			OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class OAuth2JWKValidatorTest {
 				}) {
 
 			try {
-				OAuth2JWKValidator.validateJWSAlgorithm(algorithm);
+				OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
 
 				Assert.fail(
 					"Expected SecurityException for " +

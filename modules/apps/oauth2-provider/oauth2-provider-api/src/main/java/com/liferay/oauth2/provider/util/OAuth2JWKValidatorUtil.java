@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.oauth2.provider.security.fips;
+package com.liferay.oauth2.provider.util;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author Pedro Victor Silvestre
  */
-public class OAuth2JWKValidator {
+public class OAuth2JWKValidatorUtil {
 
 	public static void validateJWK(String json) {
 		if (!PropsValues.FIPS_ENABLED) {
@@ -134,7 +134,7 @@ public class OAuth2JWKValidator {
 	private static final int _MIN_RSA_KEY_BITS = 2048;
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		OAuth2JWKValidator.class);
+		OAuth2JWKValidatorUtil.class);
 
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "HS256", "HS384", "HS512", "PS256", "PS384",

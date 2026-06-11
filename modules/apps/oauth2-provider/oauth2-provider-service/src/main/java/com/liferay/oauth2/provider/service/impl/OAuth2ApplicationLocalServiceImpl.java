@@ -25,10 +25,10 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.redirect.OAuth2RedirectURIInterpolator;
-import com.liferay.oauth2.provider.security.fips.OAuth2JWKValidator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.oauth2.provider.service.base.OAuth2ApplicationLocalServiceBaseImpl;
+import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
 import com.liferay.oauth2.provider.util.builder.OAuth2ScopeBuilder;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
@@ -799,7 +799,7 @@ public class OAuth2ApplicationLocalServiceImpl
 			}
 
 			try {
-				OAuth2JWKValidator.validateJWKS(jwks);
+				OAuth2JWKValidatorUtil.validateJWKS(jwks);
 			}
 			catch (SecurityException securityException) {
 				throw new OAuth2ApplicationJWKSException(
