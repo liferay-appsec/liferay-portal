@@ -12,6 +12,7 @@ import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
@@ -27,6 +28,7 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -290,13 +292,22 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		String bracketedHost = "test-bracket-" + RandomTestUtil.randomString();
 
 		_testOpenEnforcesHostAllowlist(
-			bracketedHost, "[" + bracketedHost + "]:8080", 201);
+			bracketedHost,
+			StringBundler.concat(
+				"[", bracketedHost, "]:",
+				PortalUtil.getPortalServerPort(false)),
+			201);
 		_testOpenEnforcesHostAllowlist(
-			"[" + bracketedHost + "]:8080", bracketedHost, 201);
+			StringBundler.concat(
+				"[", bracketedHost, "]:",
+				PortalUtil.getPortalServerPort(false)),
+			bracketedHost, 201);
 
 		String portHost = "test-port-" + RandomTestUtil.randomString();
 
-		_testOpenEnforcesHostAllowlist(portHost, portHost + ":8080", 201);
+		_testOpenEnforcesHostAllowlist(
+			portHost, portHost + ":" + PortalUtil.getPortalServerPort(false),
+			201);
 	}
 
 	@FeatureFlag("LPD-63416")
@@ -373,7 +384,9 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 		_testOpenRateLimitTriggers(
 			new String[] {
-				"[" + normalizedHost + "]:8080",
+				StringBundler.concat(
+					"[", normalizedHost, "]:",
+					PortalUtil.getPortalServerPort(false)),
 				"[" + normalizedHost + "]:9090", normalizedHost
 			},
 			"[" + normalizedHost + "]");
