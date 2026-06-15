@@ -362,6 +362,29 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 	}
 
 	@Test
+	public void testRegisterInOpenModeEnforcesRateLimit() throws Exception {
+		String clientHost = RandomTestUtil.randomString();
+
+		// Enforce the limit for a plain request host
+
+		_testRegisterInOpenModeEnforcesRateLimit(
+			new String[] {clientHost, clientHost, clientHost}, clientHost);
+
+		// Enforce the limit for a bracketed IPv6 host with or without a port
+
+		clientHost = RandomTestUtil.randomString();
+
+		_testRegisterInOpenModeEnforcesRateLimit(
+			new String[] {
+				StringBundler.concat(
+					"[", clientHost, "]:",
+					PortalUtil.getPortalServerPort(false)),
+				"[" + clientHost + "]:9090", clientHost
+			},
+			"[" + clientHost + "]");
+	}
+
+	@Test
 	public void testRegisterInOpenModeIsCreateOnly() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
@@ -495,6 +518,38 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 			).toString(),
 			null, 401, "dynamic.registration.require.initial.access.token",
 			true);
+	}
+
+	@Test
+	public void testRegisterInOpenModeWithRateLimitDisabled() throws Exception {
+		String clientHost = RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _createOpenRegistrationJSONObject(
+			"https://" + RandomTestUtil.randomString() + ".com/callback", true
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						TestPropsValues.getCompanyId(),
+						"dynamic.registration.maximum.number.of." +
+							"registrations.per.hour",
+						0, "dynamic.registration.trust.proxy.headers", true)) {
+
+			for (int i = 0; i < 15; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+		}
 	}
 
 	@Test
@@ -821,6 +876,50 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 				Assert.assertEquals(
 					OAuthConstants.ACCESS_DENIED, parseError(response));
 			}
+		}
+	}
+
+	private void _testRegisterInOpenModeEnforcesRateLimit(
+			String[] acceptedHosts, String hostExceedingLimit)
+		throws Exception {
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _createOpenRegistrationJSONObject(
+			"https://" + RandomTestUtil.randomString() + ".com/callback", true
+		).toString();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						TestPropsValues.getCompanyId(),
+						"dynamic.registration.maximum.number.of." +
+							"registrations.per.hour",
+						acceptedHosts.length,
+						"dynamic.registration.trust.proxy.headers", true)) {
+
+			for (String acceptedHost : acceptedHosts) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", acceptedHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", hostExceedingLimit);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(429, response.getStatus());
+			Assert.assertEquals("rate_limited", parseError(response));
+			Assert.assertNotNull(response.getHeaderString("Retry-After"));
 		}
 	}
 
