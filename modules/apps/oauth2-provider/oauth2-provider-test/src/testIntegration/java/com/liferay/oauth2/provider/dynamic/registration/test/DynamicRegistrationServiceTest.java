@@ -279,6 +279,54 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 	}
 
 	@Test
+	public void testOpenRegistrationRateLimitDisabled() throws Exception {
+		String clientHost = RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _body();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						TestPropsValues.getCompanyId(),
+						_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR, 0,
+						_PROPERTY_TRUST_PROXY_HEADERS, true)) {
+
+			for (int i = 0; i < 15; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+		}
+	}
+
+	@Test
+	public void testOpenRegistrationRateLimitEnabled() throws Exception {
+		String clientHost = RandomTestUtil.randomString();
+
+		_testOpenRegistrationRateLimitEnabled(
+			new String[] {clientHost, clientHost, clientHost}, clientHost);
+
+		clientHost = RandomTestUtil.randomString();
+
+		_testOpenRegistrationRateLimitEnabled(
+			new String[] {
+				StringBundler.concat(
+					"[", clientHost, "]:",
+					PortalUtil.getPortalServerPort(false)),
+				"[" + clientHost + "]:9090", clientHost
+			},
+			"[" + clientHost + "]");
+	}
+
+	@Test
 	public void testPost() throws Exception {
 		WebTarget registerWebTarget = getRegisterWebTarget();
 
@@ -649,6 +697,47 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		}
 	}
 
+	private void _testOpenRegistrationRateLimitEnabled(
+			String[] acceptedHosts, String hostExceedingLimit)
+		throws Exception {
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _body();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						TestPropsValues.getCompanyId(),
+						_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+						acceptedHosts.length, _PROPERTY_TRUST_PROXY_HEADERS,
+						true)) {
+
+			for (String acceptedHost : acceptedHosts) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", acceptedHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", hostExceedingLimit);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(429, response.getStatus());
+			Assert.assertEquals("rate_limited", parseError(response));
+			Assert.assertNotNull(response.getHeaderString("Retry-After"));
+		}
+	}
+
 	private static final String _APPLICATION_NAME_DELETE_ME =
 		"oauthDeleteMeApplication";
 
@@ -670,6 +759,10 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	private static final String _PROPERTY_ALLOWED_SCOPES =
 		"dynamic.registration.allowed.scopes";
+
+	private static final String
+		_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR =
+			"dynamic.registration.maximum.number.of.registrations.per.hour";
 
 	private static final String _PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN =
 		"dynamic.registration.require.initial.access.token";
