@@ -221,6 +221,58 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 	}
 
 	@Test
+	public void testOpenRateLimitDisabled() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		String clientHost =
+			"test-rate-disabled-" + RandomTestUtil.randomString();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _body();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						companyId,
+						_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR, 0,
+						_PROPERTY_TRUST_PROXY_HEADERS, true)) {
+
+			for (int i = 0; i < 15; i++) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", clientHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+		}
+	}
+
+	@Test
+	public void testOpenRateLimitTriggers() throws Exception {
+		String clientHost =
+			"test-rate-triggers-" + RandomTestUtil.randomString();
+
+		_testOpenRateLimitTriggers(
+			new String[] {clientHost, clientHost, clientHost}, clientHost);
+
+		String normalizedHost = "test-rl-key-" + RandomTestUtil.randomString();
+
+		_testOpenRateLimitTriggers(
+			new String[] {
+				StringBundler.concat(
+					"[", normalizedHost, "]:",
+					PortalUtil.getPortalServerPort(false)),
+				"[" + normalizedHost + "]:9090", normalizedHost
+			},
+			"[" + normalizedHost + "]");
+	}
+
+	@Test
 	public void testOpenRegistrationIsRejected() throws Exception {
 		_testOpenRegistrationIsRejected(
 			400, "invalid_client_metadata", _bodyWithoutGrantTypes(),
@@ -632,6 +684,49 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		}
 	}
 
+	private void _testOpenRateLimitTriggers(
+			String[] acceptedHosts, String rejectedHost)
+		throws Exception {
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		String body = _body();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					_createCompanyConfigurationTemporarySwapper(
+						companyId,
+						_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR,
+						acceptedHosts.length, _PROPERTY_TRUST_PROXY_HEADERS,
+						true)) {
+
+			for (String acceptedHost : acceptedHosts) {
+				Invocation.Builder invocationBuilder =
+					registerWebTarget.request();
+
+				invocationBuilder.header("X-Forwarded-For", acceptedHost);
+
+				Response response = invocationBuilder.method(
+					"post", Entity.json(body));
+
+				Assert.assertEquals(201, response.getStatus());
+			}
+
+			Invocation.Builder invocationBuilder = registerWebTarget.request();
+
+			invocationBuilder.header("X-Forwarded-For", rejectedHost);
+
+			Response response = invocationBuilder.method(
+				"post", Entity.json(body));
+
+			Assert.assertEquals(429, response.getStatus());
+			Assert.assertEquals("rate_limited", parseError(response));
+			Assert.assertNotNull(response.getHeaderString("Retry-After"));
+		}
+	}
+
 	private void _testOpenRegistrationIsRejected(
 			int expectedStatus, String expectedError, String body,
 			Object... configOverrides)
@@ -693,6 +788,10 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	private static final String _PROPERTY_ALLOWED_SCOPES =
 		"dynamic.registration.allowed.scopes";
+
+	private static final String
+		_PROPERTY_MAXIMUM_NUMBER_OF_REGISTRATIONS_PER_HOUR =
+			"dynamic.registration.maximum.number.of.registrations.per.hour";
 
 	private static final String _PROPERTY_REQUIRE_INITIAL_ACCESS_TOKEN =
 		"dynamic.registration.require.initial.access.token";
