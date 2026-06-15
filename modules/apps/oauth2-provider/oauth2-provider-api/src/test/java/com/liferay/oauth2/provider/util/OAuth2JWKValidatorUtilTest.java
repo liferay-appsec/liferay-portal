@@ -5,6 +5,7 @@
 
 package com.liferay.oauth2.provider.util;
 
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -52,40 +53,36 @@ public class OAuth2JWKValidatorUtilTest {
 
 	@Test
 	public void testValidateJWK() throws Exception {
-		OAuth2JWKValidatorUtil.validateJWK(
-			_generateRsaJWK(
-				2048, "RS256"
-			).toString());
+		OAuth2JWKValidatorUtil.validateJWK(_generateRsaJWK(2048, "RS256"));
 
 		Assert.assertThrows(
 			SecurityException.class,
 			() -> OAuth2JWKValidatorUtil.validateJWK(
-				_generateRsaJWK(
-					1024, "RS256"
-				).toString()));
+				_generateRsaJWK(1024, "RS256")));
 		Assert.assertThrows(
 			SecurityException.class,
 			() -> OAuth2JWKValidatorUtil.validateJWK(
-				_generateRsaJWK(
-					2048, "RS1"
-				).toString()));
+				_generateRsaJWK(2048, "RS1")));
 	}
 
 	@Test
 	public void testValidateJWKS() throws Exception {
+		JSONObject jwkJSONObject = JSONFactoryUtil.createJSONObject(
+			_generateRsaJWK(2048, "RS256"));
+
 		OAuth2JWKValidatorUtil.validateJWKS(
 			JSONUtil.put(
-				"keys", JSONUtil.putAll(_generateRsaJWK(2048, "RS256"))
+				"keys", JSONUtil.putAll(jwkJSONObject)
 			).toString());
+
+		JSONObject weakJWKJSONObject = JSONFactoryUtil.createJSONObject(
+			_generateRsaJWK(1024, "RS256"));
 
 		Assert.assertThrows(
 			SecurityException.class,
 			() -> OAuth2JWKValidatorUtil.validateJWKS(
 				JSONUtil.put(
-					"keys",
-					JSONUtil.putAll(
-						_generateRsaJWK(2048, "RS256"),
-						_generateRsaJWK(1024, "RS256"))
+					"keys", JSONUtil.putAll(jwkJSONObject, weakJWKJSONObject)
 				).toString()));
 	}
 
@@ -112,7 +109,7 @@ public class OAuth2JWKValidatorUtilTest {
 		}
 	}
 
-	private JSONObject _generateRsaJWK(int bits, String algorithm)
+	private String _generateRsaJWK(int bits, String algorithm)
 		throws Exception {
 
 		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
@@ -121,30 +118,41 @@ public class OAuth2JWKValidatorUtilTest {
 
 		KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-		Base64.Encoder encoder = Base64.getUrlEncoder();
+		Base64.Encoder base64Encoder = Base64.getUrlEncoder();
 
-		encoder = encoder.withoutPadding();
+		Base64.Encoder encoder = base64Encoder.withoutPadding();
 
 		RSAPublicKey rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
 		RSAPrivateKey rsaPrivateKey = (RSAPrivateKey)keyPair.getPrivate();
 
-		BigInteger modulus = rsaPublicKey.getModulus();
-		BigInteger publicExponent = rsaPublicKey.getPublicExponent();
-		BigInteger privateExponent = rsaPrivateKey.getPrivateExponent();
-
 		return JSONUtil.put(
 			"alg", algorithm
 		).put(
-			"d", encoder.encodeToString(privateExponent.toByteArray())
+			"d",
+			() -> {
+				BigInteger privateExponent = rsaPrivateKey.getPrivateExponent();
+
+				return encoder.encodeToString(privateExponent.toByteArray());
+			}
 		).put(
-			"e", encoder.encodeToString(publicExponent.toByteArray())
+			"e",
+			() -> {
+				BigInteger publicExponent = rsaPublicKey.getPublicExponent();
+
+				return encoder.encodeToString(publicExponent.toByteArray());
+			}
 		).put(
 			"kid", RandomTestUtil.randomString()
 		).put(
 			"kty", "RSA"
 		).put(
-			"n", encoder.encodeToString(modulus.toByteArray())
-		);
+			"n",
+			() -> {
+				BigInteger modulus = rsaPublicKey.getModulus();
+
+				return encoder.encodeToString(modulus.toByteArray());
+			}
+		).toString();
 	}
 
 	private boolean _fipsEnabled;
