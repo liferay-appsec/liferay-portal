@@ -40,9 +40,7 @@ String externalReferenceCode = (oAuth2Application == null) ? "" : oAuth2Applicat
 
 					<liferay-ui:error exception="<%= OAuth2ApplicationHomePageURLException.class %>" focusField="homePageURL" message="home-page-url-is-invalid" />
 
-					<liferay-ui:error exception="<%= OAuth2ApplicationJWKSException.class %>" focusField="jwks">
-						<liferay-ui:message arguments="<%= HtmlUtil.escape(((OAuth2ApplicationJWKSException)errorException).getMessage()) %>" key="the-json-web-key-set-is-not-fips-140-3-compliant-x" />
-					</liferay-ui:error>
+					<liferay-ui:error exception="<%= OAuth2ApplicationJWKSException.class %>" focusField="jwks" message="the-json-web-key-set-is-not-fips-compliant" />
 
 					<liferay-ui:error exception="<%= OAuth2ApplicationHomePageURLSchemeException.class %>" focusField="homePageURL" message="home-page-url-scheme-is-invalid" />
 					<liferay-ui:error exception="<%= OAuth2ApplicationNameException.class %>" focusField="name" message="missing-application-name" />

@@ -73,8 +73,7 @@ public class OAuth2JWKValidatorUtil {
 
 		if ((algorithm == null) || !_allowedJWSAlgorithms.contains(algorithm)) {
 			throw new SecurityException(
-				"JWS algorithm \"" + algorithm +
-					"\" is not FIPS 140-3 approved");
+				"JWS algorithm \"" + algorithm + "\" is not FIPS approved");
 		}
 	}
 
@@ -113,8 +112,7 @@ public class OAuth2JWKValidatorUtil {
 			if (bits < _MIN_RSA_KEY_BITS) {
 				throw new SecurityException(
 					StringBundler.concat(
-						"RSA key of ", bits,
-						" bits is not FIPS 140-3 approved"));
+						"RSA key of ", bits, " bits is not FIPS approved"));
 			}
 		}
 		else if (keyType.equals("oct")) {
@@ -123,8 +121,7 @@ public class OAuth2JWKValidatorUtil {
 			if (bits < _MIN_HMAC_KEY_BITS) {
 				throw new SecurityException(
 					StringBundler.concat(
-						"HMAC key of ", bits,
-						" bits is not FIPS 140-3 approved"));
+						"HMAC key of ", bits, " bits is not FIPS approved"));
 			}
 		}
 	}
