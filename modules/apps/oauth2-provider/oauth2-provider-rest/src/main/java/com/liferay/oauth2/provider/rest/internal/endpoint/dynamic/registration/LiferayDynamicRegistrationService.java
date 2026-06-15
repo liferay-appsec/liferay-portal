@@ -13,6 +13,7 @@ import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.m
 import com.liferay.oauth2.provider.rest.internal.endpoint.dynamic.registration.model.LiferayClientRegistrationResponse;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
 import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditException;
@@ -335,7 +336,7 @@ public class LiferayDynamicRegistrationService
 	}
 
 	private static Pattern _compileGlobToPattern(String glob) {
-		StringBuilder sb = new StringBuilder("^");
+		StringBundler sb = new StringBundler("^");
 
 		for (int i = 0; i < glob.length(); i++) {
 			char c = glob.charAt(i);
