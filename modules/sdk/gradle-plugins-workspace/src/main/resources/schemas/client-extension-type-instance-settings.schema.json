@@ -2821,6 +2821,66 @@
 		},
 		{
 			"properties": {
+				"allowedGrantTypes": {
+					"default": "",
+					"description": "When open registration is enabled, restrict the \"grant_types\" a newly registered client may declare to the grant types listed here (e.g. \"authorization_code\", \"refresh_token\"). An empty list rejects all open registrations.",
+					"items": {
+						"type": "string"
+					},
+					"title": "Allowed Grant Types",
+					"type": "array"
+				},
+				"allowedHosts": {
+					"default": "",
+					"description": "When open registration is enabled, restrict registrations to requests originating from one of the IP addresses listed here. Each entry must be a literal IP address, since host names are not resolved, or \"*\" to allow any host. The client IP is taken from the \"X-Forwarded-For\" header when trust proxy headers is enabled, otherwise from the direct TCP peer. An empty list rejects all open registrations.",
+					"items": {
+						"type": "string"
+					},
+					"title": "Allowed Hosts",
+					"type": "array"
+				},
+				"allowedRedirectURIPatterns": {
+					"default": "",
+					"description": "When open registration is enabled, restrict the \"redirect_uris\" of newly registered clients to URIs matching at least one of these glob patterns, where \"*\" matches within a single path segment. An empty list rejects all open registrations.",
+					"items": {
+						"type": "string"
+					},
+					"title": "Allowed Redirect URI Patterns",
+					"type": "array"
+				},
+				"allowedScopes": {
+					"default": "",
+					"description": "When open registration is enabled, restrict the scopes a newly registered client may declare to the scopes listed here. An empty list rejects all open registrations.",
+					"items": {
+						"type": "string"
+					},
+					"title": "Allowed Scopes",
+					"type": "array"
+				},
+				"pid": {
+					"const": "com.liferay.oauth2.provider.rest.internal.configuration.DynamicRegistrationConfiguration",
+					"title": "Dynamic Client Registration"
+				},
+				"requireInitialAccessToken": {
+					"default": true,
+					"description": "When enabled (default), POST /o/oauth2/register requires a bearer token issued for the \"Dynamic Registrator\" OAuth 2 application. When disabled, an open registration POST is accepted and the new client is owned by the default service account.",
+					"title": "Require Initial Access Token",
+					"type": "boolean"
+				},
+				"trustProxyHeaders": {
+					"default": false,
+					"description": "When enabled, use the \"X-Forwarded-For\" header to identify the client host for the open registration host allowlist and rate limit. Enable only when the portal sits behind a trusted proxy that overwrites this header; otherwise the value can be spoofed.",
+					"title": "Trust Proxy Headers",
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"pid"
+			],
+			"title": "Dynamic Client Registration"
+		},
+		{
+			"properties": {
 				"issuer": {
 					"description": "OAuth 2 Incoming Assertion Issuer",
 					"title": "OAuth 2 Incoming Assertion Issuer",
