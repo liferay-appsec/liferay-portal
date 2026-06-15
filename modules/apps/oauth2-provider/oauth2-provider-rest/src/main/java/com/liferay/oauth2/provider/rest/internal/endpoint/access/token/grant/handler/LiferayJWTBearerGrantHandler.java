@@ -253,12 +253,12 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 
 				JwtToken jwtToken = jwsJwtCompactConsumer.getJwtToken();
 
-				JwtClaims jwtClaims = jwtToken.getClaims();
-
 				JwsHeaders jwsHeaders = jwtToken.getJwsHeaders();
 
 				OAuth2JWKValidatorUtil.validateJWSAlgorithm(
 					jwsHeaders.getAlgorithm());
+
+				JwtClaims jwtClaims = jwtToken.getClaims();
 
 				if (StringUtil.equals(
 						jwsHeaders.getAlgorithm(),
