@@ -33,6 +33,7 @@ import com.liferay.portal.security.ldap.UserConverterKeys;
 import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
+import com.liferay.portal.security.ldap.internal.util.LDAPReferralUtil;
 import com.liferay.portal.security.ldap.internal.validator.SafeLdapContextImpl;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -421,14 +422,14 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		SystemLDAPConfiguration systemLDAPConfiguration =
 			_systemLDAPConfigurationProvider.getConfiguration(companyId);
 
+		String referral = systemLDAPConfiguration.referral();
+
 		Properties environmentProperties = new Properties();
 
 		environmentProperties.put(
 			Context.INITIAL_CONTEXT_FACTORY,
 			systemLDAPConfiguration.factoryInitial());
 		environmentProperties.put(Context.PROVIDER_URL, providerURL);
-		environmentProperties.put(
-			Context.REFERRAL, systemLDAPConfiguration.referral());
 		environmentProperties.put(Context.SECURITY_CREDENTIALS, credentials);
 		environmentProperties.put(Context.SECURITY_PRINCIPAL, principal);
 
@@ -453,6 +454,9 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				connectionProperty[0], connectionProperty[1]);
 		}
 
+		LDAPReferralUtil.hardenReferralEnvironment(
+			environmentProperties, referral);
+
 		if (_log.isDebugEnabled()) {
 			_log.debug(
 				MapUtil.toString(
@@ -463,7 +467,8 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				SafeLdapContextImpl.class.getClassLoader())) {
 
 			return new SafeLdapContextImpl(
-				new InitialLdapContext(environmentProperties, null));
+				new InitialLdapContext(environmentProperties, null),
+				LDAPReferralUtil.isManagedFollow(referral));
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
