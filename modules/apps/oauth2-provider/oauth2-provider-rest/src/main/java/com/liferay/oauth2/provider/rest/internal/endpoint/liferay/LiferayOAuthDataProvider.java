@@ -1224,14 +1224,15 @@ public class LiferayOAuthDataProvider
 	private OAuthJoseJwtProducer _createJwtAccessTokenProducer() {
 		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
 
-		String json =
+		String jwtAccessTokenSigningJSONWebKey =
 			_oAuth2AuthorizationServerConfiguration.
 				jwtAccessTokenSigningJSONWebKey();
 
-		OAuth2JWKValidatorUtil.validateJWK(json);
+		OAuth2JWKValidatorUtil.validateJWK(jwtAccessTokenSigningJSONWebKey);
 
 		oAuthJoseJwtProducer.setSignatureProvider(
-			JwsUtils.getSignatureProvider(JwkUtils.readJwkKey(json)));
+			JwsUtils.getSignatureProvider(
+				JwkUtils.readJwkKey(jwtAccessTokenSigningJSONWebKey)));
 
 		return oAuthJoseJwtProducer;
 	}
