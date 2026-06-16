@@ -22,8 +22,10 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.SafeLdapContext;
 import com.liferay.portal.security.ldap.SafeLdapFilter;
 import com.liferay.portal.security.ldap.SafeLdapFilterConstraints;
@@ -33,6 +35,7 @@ import com.liferay.portal.security.ldap.UserConverterKeys;
 import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
+import com.liferay.portal.security.ldap.internal.ssl.LDAPSSLSocketFactory;
 import com.liferay.portal.security.ldap.internal.validator.SafeLdapContextImpl;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -418,6 +421,14 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		long companyId, String providerURL, String principal,
 		String credentials) {
 
+		boolean fipsEnabled = PropsValues.FIPS_ENABLED;
+
+		if (fipsEnabled && FIPSModeUtil.isNotSecureProtocol(providerURL)) {
+			throw new SecurityException(
+				"FIPS mode requires the LDAP base provider URL to use the " +
+					"\"ldaps://\" scheme " + providerURL);
+		}
+
 		SystemLDAPConfiguration systemLDAPConfiguration =
 			_systemLDAPConfigurationProvider.getConfiguration(companyId);
 
@@ -453,6 +464,21 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				connectionProperty[0], connectionProperty[1]);
 		}
 
+		String[] fipsCipherSuites = null;
+
+		if (fipsEnabled) {
+			environmentProperties.put(Context.SECURITY_PROTOCOL, "ssl");
+			environmentProperties.put(
+				"java.naming.ldap.factory.socket",
+				LDAPSSLSocketFactory.class.getName());
+
+			fipsCipherSuites = systemLDAPConfiguration.fipsCipherSuites();
+
+			if (ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+				LDAPSSLSocketFactory.setCipherSuitesOverride(fipsCipherSuites);
+			}
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug(
 				MapUtil.toString(
@@ -471,6 +497,11 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 			}
 
 			return null;
+		}
+		finally {
+			if (fipsEnabled && ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+				LDAPSSLSocketFactory.setCipherSuitesOverride(null);
+			}
 		}
 	}
 
