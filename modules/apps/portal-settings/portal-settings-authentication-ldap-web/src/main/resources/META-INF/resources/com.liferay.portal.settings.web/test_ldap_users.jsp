@@ -24,6 +24,15 @@ if (credentials.equals(Portal.TEMP_OBFUSCATION_VALUE)) {
 	credentials = ldapServerConfiguration.securityCredential();
 }
 
+if (PropsValues.FIPS_ENABLED && FIPSModeUtil.isNotSecureProtocol(baseProviderURL)) {
+%>
+
+	<liferay-ui:message key="fips-mode-requires-the-ldaps-scheme-for-ldap-connections" />
+
+<%
+	return;
+}
+
 SafePortalLDAP safePortalLDAP = SafePortalLDAPUtil.getSafePortalLDAP();
 
 SafeLdapContext safeLdapContext = safePortalLDAP.getSafeLdapContext(companyId, baseProviderURL, principal, credentials);
