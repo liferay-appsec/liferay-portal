@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.ldap.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -20,13 +22,16 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.ldap.FIPSModeUtil;
 import com.liferay.portal.security.ldap.PortalLDAP;
 import com.liferay.portal.security.ldap.UserConverterKeys;
 import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.configuration.SystemLDAPConfiguration;
+import com.liferay.portal.security.ldap.internal.ssl.LDAPSSLSocketFactory;
 import com.liferay.portal.security.ldap.internal.util.SafeLdapReferralUtil;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -125,6 +130,13 @@ public class DefaultPortalLDAP implements PortalLDAP {
 			String credentials)
 		throws Exception {
 
+		if (PropsValues.FIPS_ENABLED &&
+			FIPSModeUtil.isNotSecureProtocol(providerURL)) {
+
+			throw new SecurityException(
+				"FIPS mode requires the \"ldaps://\" scheme");
+		}
+
 		SystemLDAPConfiguration systemLDAPConfiguration =
 			_systemLDAPConfigurationProvider.getConfiguration(companyId);
 
@@ -161,6 +173,21 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		SafeLdapReferralUtil.setProperties(
 			environmentProperties, systemLDAPConfiguration.referral());
 
+		String[] fipsCipherSuites = null;
+
+		if (PropsValues.FIPS_ENABLED) {
+			environmentProperties.put(Context.SECURITY_PROTOCOL, "ssl");
+			environmentProperties.put(
+				"java.naming.ldap.factory.socket",
+				LDAPSSLSocketFactory.class.getName());
+
+			fipsCipherSuites = systemLDAPConfiguration.fipsCipherSuites();
+
+			if (ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+				LDAPSSLSocketFactory.setCipherSuitesOverride(fipsCipherSuites);
+			}
+		}
+
 		if (_log.isDebugEnabled()) {
 			_log.debug(
 				MapUtil.toString(
@@ -170,11 +197,30 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		LdapContext ldapContext = null;
 
 		try {
-			ldapContext = new InitialLdapContext(environmentProperties, null);
+			if (PropsValues.FIPS_ENABLED) {
+				try (SafeCloseable safeCloseable =
+						ThreadContextClassLoaderUtil.swap(
+							LDAPSSLSocketFactory.class.getClassLoader())) {
+
+					ldapContext = new InitialLdapContext(
+						environmentProperties, null);
+				}
+			}
+			else {
+				ldapContext = new InitialLdapContext(
+					environmentProperties, null);
+			}
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
 				_log.warn("Unable to bind to the LDAP server", exception);
+			}
+		}
+		finally {
+			if (PropsValues.FIPS_ENABLED &&
+				ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+
+				LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 			}
 		}
 
