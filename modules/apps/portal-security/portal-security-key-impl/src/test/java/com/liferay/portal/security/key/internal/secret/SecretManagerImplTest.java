@@ -7,6 +7,7 @@ package com.liferay.portal.security.key.internal.secret;
 
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.secret.SecretManagerException;
@@ -16,8 +17,6 @@ import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 import com.liferay.portal.security.key.spi.secret.SecretVaultReader;
 import com.liferay.portal.security.key.spi.secret.SecretVaultWriter;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-
-import java.lang.reflect.Field;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,14 +47,19 @@ public class SecretManagerImplTest {
 
 		_secretManagerImpl = new SecretManagerImpl();
 
-		_inject(
-			"_keyManagerProfileRegistry", _keyManagerProfileRegistry);
-		_inject("_readerServiceTrackerMap", _readerServiceTrackerMap);
-		_inject("_writerServiceTrackerMap", _writerServiceTrackerMap);
+		ReflectionTestUtil.setFieldValue(
+			_secretManagerImpl, "_keyManagerProfileRegistry",
+			_keyManagerProfileRegistry);
+		ReflectionTestUtil.setFieldValue(
+			_secretManagerImpl, "_readerServiceTrackerMap",
+			_readerServiceTrackerMap);
+		ReflectionTestUtil.setFieldValue(
+			_secretManagerImpl, "_writerServiceTrackerMap",
+			_writerServiceTrackerMap);
 	}
 
-	@Test(expected = SecretManagerException.class)
-	public void testDeleteThrowsWhenNoWriterRegistered() throws Exception {
+	@Test
+	public void testDeleteThrowsWhenNoWriterRegistered() {
 		String providerId = RandomTestUtil.randomString();
 
 		Mockito.when(
@@ -64,8 +68,10 @@ public class SecretManagerImplTest {
 			null
 		);
 
-		_secretManagerImpl.deleteSecret(
-			RandomTestUtil.randomLong(), _secretReference(providerId));
+		Assert.assertThrows(
+			SecretManagerException.class,
+			() -> _secretManagerImpl.deleteSecret(
+				RandomTestUtil.randomLong(), _secretReference(providerId)));
 	}
 
 	@Test
@@ -239,18 +245,6 @@ public class SecretManagerImplTest {
 		).putSecret(
 			Mockito.eq(companyId), Mockito.any(SecureSecret.class)
 		);
-	}
-
-	private void _inject(String fieldName, Object value) {
-		try {
-			Field field = SecretManagerImpl.class.getDeclaredField(fieldName);
-
-			field.setAccessible(true);
-			field.set(_secretManagerImpl, value);
-		}
-		catch (Exception exception) {
-			throw new RuntimeException(exception);
-		}
 	}
 
 	private KeyReference _secretReference(String providerId) {
