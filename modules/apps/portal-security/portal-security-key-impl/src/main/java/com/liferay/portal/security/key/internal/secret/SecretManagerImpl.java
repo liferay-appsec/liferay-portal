@@ -76,36 +76,46 @@ public class SecretManagerImpl implements SecretManager {
 
 		Set<String> providerIds = new LinkedHashSet<>();
 
-		for (String providerId : _readerServiceTrackerMap.keySet()) {
-			List<SecretVaultReader> secretVaultReaders =
-				_readerServiceTrackerMap.getService(providerId);
+		ServiceTrackerMap<String, List<SecretVaultReader>>
+			readerServiceTrackerMap = _readerServiceTrackerMap;
 
-			if (secretVaultReaders == null) {
-				continue;
-			}
+		if (readerServiceTrackerMap != null) {
+			for (String providerId : readerServiceTrackerMap.keySet()) {
+				List<SecretVaultReader> secretVaultReaders =
+					readerServiceTrackerMap.getService(providerId);
 
-			for (SecretVaultReader secretVaultReader : secretVaultReaders) {
-				if (secretVaultReader.isAllowedCompany(companyId)) {
-					providerIds.add(providerId);
+				if (secretVaultReaders == null) {
+					continue;
+				}
 
-					break;
+				for (SecretVaultReader secretVaultReader : secretVaultReaders) {
+					if (secretVaultReader.isAllowedCompany(companyId)) {
+						providerIds.add(providerId);
+
+						break;
+					}
 				}
 			}
 		}
 
-		for (String providerId : _writerServiceTrackerMap.keySet()) {
-			List<SecretVaultWriter> secretVaultWriters =
-				_writerServiceTrackerMap.getService(providerId);
+		ServiceTrackerMap<String, List<SecretVaultWriter>>
+			writerServiceTrackerMap = _writerServiceTrackerMap;
 
-			if (secretVaultWriters == null) {
-				continue;
-			}
+		if (writerServiceTrackerMap != null) {
+			for (String providerId : writerServiceTrackerMap.keySet()) {
+				List<SecretVaultWriter> secretVaultWriters =
+					writerServiceTrackerMap.getService(providerId);
 
-			for (SecretVaultWriter secretVaultWriter : secretVaultWriters) {
-				if (secretVaultWriter.isAllowedCompany(companyId)) {
-					providerIds.add(providerId);
+				if (secretVaultWriters == null) {
+					continue;
+				}
 
-					break;
+				for (SecretVaultWriter secretVaultWriter : secretVaultWriters) {
+					if (secretVaultWriter.isAllowedCompany(companyId)) {
+						providerIds.add(providerId);
+
+						break;
+					}
 				}
 			}
 		}
@@ -260,11 +270,19 @@ public class SecretManagerImpl implements SecretManager {
 			long companyId, String providerId)
 		throws SecretManagerException {
 
+		ServiceTrackerMap<String, List<SecretVaultReader>>
+			readerServiceTrackerMap = _readerServiceTrackerMap;
+
+		if (readerServiceTrackerMap == null) {
+			throw new SecretManagerException(
+				"The secret manager is not active");
+		}
+
 		String secretVaultReaderProviderId = _getSecretVaultReaderProviderId(
 			companyId, providerId);
 
 		List<SecretVaultReader> candidateSecretVaultReaders =
-			_readerServiceTrackerMap.getService(secretVaultReaderProviderId);
+			readerServiceTrackerMap.getService(secretVaultReaderProviderId);
 
 		if (candidateSecretVaultReaders != null) {
 			for (SecretVaultReader secretVaultReader :
@@ -304,8 +322,16 @@ public class SecretManagerImpl implements SecretManager {
 			long companyId, String providerId)
 		throws SecretManagerException {
 
+		ServiceTrackerMap<String, List<SecretVaultWriter>>
+			writerServiceTrackerMap = _writerServiceTrackerMap;
+
+		if (writerServiceTrackerMap == null) {
+			throw new SecretManagerException(
+				"The secret manager is not active");
+		}
+
 		List<SecretVaultWriter> secretVaultWriters =
-			_writerServiceTrackerMap.getService(providerId);
+			writerServiceTrackerMap.getService(providerId);
 
 		if (secretVaultWriters != null) {
 			for (SecretVaultWriter secretVaultWriter : secretVaultWriters) {

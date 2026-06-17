@@ -120,7 +120,9 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 
 			charBuffer.get(chars);
 
-			Arrays.fill(charBuffer.array(), '\0');
+			if (charBuffer.hasArray() && !charBuffer.isReadOnly()) {
+				Arrays.fill(charBuffer.array(), '\0');
+			}
 
 			return chars;
 		}
@@ -141,7 +143,9 @@ public final class SecureSecret implements AutoCloseable, Destroyable {
 
 			byteBuffer.get(bytes);
 
-			Arrays.fill(byteBuffer.array(), (byte)0);
+			if (byteBuffer.hasArray() && !byteBuffer.isReadOnly()) {
+				Arrays.fill(byteBuffer.array(), (byte)0);
+			}
 
 			return bytes;
 		}
