@@ -7,6 +7,7 @@ package com.liferay.saml.web.internal.portlet.action;
 
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.portal.util.PropsValues;
 
 import java.math.BigInteger;
 
@@ -15,6 +16,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.RSAPublicKey;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -34,9 +36,20 @@ public class UpdateCertificateMVCActionCommandTest {
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
+	@After
+	public void tearDown() {
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "FIPS_ENABLED", _fipsEnabled);
+	}
+
 	@Before
 	public void setUp() {
 		_actionCommand = new UpdateCertificateMVCActionCommand();
+
+		_fipsEnabled = PropsValues.FIPS_ENABLED;
+
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "FIPS_ENABLED", true);
 	}
 
 	@Test
@@ -110,5 +123,6 @@ public class UpdateCertificateMVCActionCommandTest {
 	}
 
 	private UpdateCertificateMVCActionCommand _actionCommand;
+	private boolean _fipsEnabled;
 
 }
