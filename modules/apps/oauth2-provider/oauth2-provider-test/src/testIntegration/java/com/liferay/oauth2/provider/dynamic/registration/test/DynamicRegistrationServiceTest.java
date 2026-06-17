@@ -187,6 +187,42 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 	@FeatureFlag("LPD-63416")
 	@Test
+	public void testPostSerializesScopeAsString() throws Exception {
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		Invocation.Builder invocationBuilder = authorize(
+			registerWebTarget.request(),
+			_getToken(_getDynamicRegistratorOAuth2Application()));
+
+		String scope =
+			"Liferay.Headless.Admin.Site.everything " +
+				"Liferay.Headless.Admin.User.everything";
+
+		Response response = invocationBuilder.method(
+			"post",
+			Entity.json(
+				JSONUtil.put(
+					"client_name", RandomTestUtil.randomString()
+				).put(
+					"grant_types",
+					new String[] {OAuthConstants.CLIENT_CREDENTIALS_GRANT}
+				).put(
+					"redirect_uris",
+					new String[] {"https://client.example.org/callback"}
+				).put(
+					"scope", scope
+				).toString()));
+
+		Assert.assertEquals(201, response.getStatus());
+
+		String json = response.readEntity(String.class);
+
+		Assert.assertTrue(json, json.contains("\"scope\":\"" + scope + "\""));
+		Assert.assertFalse(json, json.contains("\"scope\":["));
+	}
+
+	@FeatureFlag("LPD-63416")
+	@Test
 	public void testPut() throws Exception {
 		OAuth2Application oAuth2Application =
 			_oAuth2ApplicationLocalService.fetchOAuth2Application(
