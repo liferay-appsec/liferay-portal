@@ -29,7 +29,6 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import java.util.List;
 import java.util.Objects;
@@ -77,7 +76,9 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 			throw new OAuthClientPRLocalMetadataProtectedResourceURIException();
 		}
 
-		_validateURL(protectedResourceURI);
+		_validateURL(
+			protectedResourceURI,
+			OAuthClientPRLocalMetadataProtectedResourceURIException.class);
 
 		protectedResourceURI = _removeTrailingSlash(protectedResourceURI);
 
@@ -275,7 +276,9 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 		String localWellKnownURI =
 			oAuthClientPRLocalMetadata.getLocalWellKnownURI();
 
-		_validateURL(protectedResourceURI);
+		_validateURL(
+			protectedResourceURI,
+			OAuthClientPRLocalMetadataProtectedResourceURIException.class);
 
 		protectedResourceURI = _removeTrailingSlash(protectedResourceURI);
 
@@ -389,22 +392,20 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 			String protectedResourceURI)
 		throws PortalException {
 
-		if (Validator.isNull(protectedResourceURI)) {
-			throw new OAuthClientPRLocalMetadataProtectedResourceURIException();
-		}
-
 		if (ArrayUtil.isEmpty(authorizationServers)) {
 			throw new OAuthClientPRLocalMetadataMetadataJSONException(
 				"authorization_servers is required");
 		}
 
+		for (String authorizationServer : authorizationServers) {
+			_validateURL(
+				authorizationServer,
+				OAuthClientPRLocalMetadataMetadataJSONException.class);
+		}
+
 		if (ArrayUtil.isEmpty(bearerMethodsSupported)) {
 			throw new OAuthClientPRLocalMetadataMetadataJSONException(
 				"bearer_methods_supported is required");
-		}
-
-		for (String authorizationServer : authorizationServers) {
-			_validateURL(authorizationServer);
 		}
 
 		OAuthClientPRLocalMetadata oAuthClientPRLocalMetadata =
@@ -416,6 +417,10 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 				oldOAuthClientPRLocalMetadata, oAuthClientPRLocalMetadata)) {
 
 			throw new DuplicateOAuthClientPRLocalMetadataException();
+		}
+
+		if (Validator.isNull(protectedResourceURI)) {
+			throw new OAuthClientPRLocalMetadataProtectedResourceURIException();
 		}
 
 		oAuthClientPRLocalMetadata =
@@ -430,7 +435,11 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 		}
 	}
 
-	private void _validateURL(String urlString) throws PortalException {
+	private void _validateURL(
+			String urlString,
+			Class<? extends PortalException> portalExceptionClass)
+		throws PortalException {
+
 		if (Validator.isNull(urlString)) {
 			return;
 		}
@@ -443,15 +452,13 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 			if (!Http.HTTP.equalsIgnoreCase(scheme) &&
 				!Http.HTTPS.equalsIgnoreCase(scheme)) {
 
-				throw new OAuthClientPRLocalMetadataProtectedResourceURIException(
-					urlString);
+				throw portalExceptionClass.newInstance();
 			}
 
 			String host = uri.getHost();
 
 			if (Validator.isNull(host)) {
-				throw new OAuthClientPRLocalMetadataProtectedResourceURIException(
-					urlString);
+				throw portalExceptionClass.newInstance();
 			}
 
 			if (Validator.isNotNull(uri.getFragment()) ||
@@ -460,13 +467,14 @@ public class OAuthClientPRLocalMetadataLocalServiceImpl
 				 !Objects.equals(host, "[::1]") &&
 				 !Objects.equals(host, "localhost"))) {
 
-				throw new OAuthClientPRLocalMetadataProtectedResourceURIException(
-					urlString);
+				throw portalExceptionClass.newInstance();
 			}
 		}
-		catch (URISyntaxException uriSyntaxException) {
-			throw new OAuthClientPRLocalMetadataProtectedResourceURIException(
-				urlString, uriSyntaxException);
+		catch (PortalException portalException) {
+			throw portalException;
+		}
+		catch (Exception exception) {
+			throw new PortalException(exception);
 		}
 	}
 
