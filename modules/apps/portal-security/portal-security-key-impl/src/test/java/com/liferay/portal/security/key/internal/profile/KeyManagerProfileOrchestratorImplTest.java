@@ -47,6 +47,31 @@ public class KeyManagerProfileOrchestratorImplTest {
 	}
 
 	@Test
+	public void testBootstrapInvokedForFallbackCustomProfile()
+		throws Exception {
+
+		_setActiveProfileId(null);
+
+		Mockito.when(
+			_keyManagerProfile.getProfileId()
+		).thenReturn(
+			CustomKeyManagerProfile.PROFILE_ID
+		);
+
+		Mockito.when(
+			_serviceTrackerMap.getService(CustomKeyManagerProfile.PROFILE_ID)
+		).thenReturn(
+			_keyManagerProfile
+		);
+
+		_invokeBootstrap(_keyManagerProfile);
+
+		Mockito.verify(
+			_keyManagerProfile, Mockito.times(1)
+		).bootstrap();
+	}
+
+	@Test
 	public void testBootstrapInvokedOnceWhenProfilePresent() throws Exception {
 		Mockito.when(
 			_keyManagerProfile.getProfileId()
@@ -70,6 +95,21 @@ public class KeyManagerProfileOrchestratorImplTest {
 
 	@Test
 	public void testBootstrapSkipsMismatchedProfile() throws Exception {
+		KeyManagerProfile activeKeyManagerProfile = Mockito.mock(
+			KeyManagerProfile.class);
+
+		Mockito.when(
+			activeKeyManagerProfile.getProfileId()
+		).thenReturn(
+			CustomKeyManagerProfile.PROFILE_ID
+		);
+
+		Mockito.when(
+			_serviceTrackerMap.getService(CustomKeyManagerProfile.PROFILE_ID)
+		).thenReturn(
+			activeKeyManagerProfile
+		);
+
 		Mockito.when(
 			_keyManagerProfile.getProfileId()
 		).thenReturn(
