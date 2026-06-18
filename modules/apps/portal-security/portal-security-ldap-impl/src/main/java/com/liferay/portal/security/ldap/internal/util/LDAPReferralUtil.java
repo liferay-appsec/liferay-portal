@@ -42,7 +42,7 @@ public class LDAPReferralUtil {
 		environment.put(_TRUST_URL_CODEBASE_RMI, "false");
 
 		if (Objects.equals(referral, LDAPConstants.REFERRAL_FOLLOW)) {
-			environment.put(Context.REFERRAL, LDAPConstants.REFERRAL_THROWS);
+			environment.put(Context.REFERRAL, LDAPConstants.REFERRAL_THROW);
 		}
 		else {
 			environment.put(Context.REFERRAL, referral);
