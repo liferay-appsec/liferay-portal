@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.ProtectedPrincipal;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -58,7 +57,6 @@ import java.security.Principal;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -115,28 +113,29 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			return;
 		}
 
-		boolean hasBearerToken = StringUtil.startsWith(
+		boolean authenticatedRegistration = StringUtil.startsWith(
 			httpServletRequest.getHeader("Authorization"), "Bearer ");
 
 		User user = null;
-		boolean openRegistration = false;
 
 		try {
-			if (StringUtil.equalsIgnoreCase(
-					httpServletRequest.getMethod(), "POST") &&
-				!hasBearerToken) {
+			if (!authenticatedRegistration &&
+				StringUtil.equalsIgnoreCase(
+					httpServletRequest.getMethod(), "POST")) {
 
 				user = _authorizeOpenRegistration(
 					companyId, httpServletRequest);
 
-				openRegistration = true;
+				httpServletRequest.setAttribute(
+					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_OPEN,
+					Boolean.TRUE);
 			}
 			else {
 				httpServletRequest.setAttribute(
 					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_CLIENT_HOST,
 					_normalizeHost(_getClientHost(httpServletRequest, false)));
 
-				user = _authorizeBearer(
+				user = _authorize(
 					httpServletRequest, httpServletRequest.getMethod());
 			}
 		}
@@ -153,14 +152,15 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			}
 
 			_auditAuthorizationFailure(
+				authenticatedRegistration,
 				GetterUtil.getString(
 					httpServletRequest.getAttribute(
 						OAuth2ProviderRESTWebKeys.
 							DYNAMIC_REGISTRATION_CLIENT_HOST),
 					_normalizeHost(_getClientHost(httpServletRequest, false))),
-				companyId, hasBearerToken, httpServletRequest);
+				companyId, httpServletRequest);
 
-			if (hasBearerToken) {
+			if (authenticatedRegistration) {
 				throw ExceptionUtils.toNotAuthorizedException(null, null);
 			}
 
@@ -170,33 +170,27 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				).build());
 		}
 
-		if (openRegistration) {
-			httpServletRequest.setAttribute(
-				OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_OPEN,
-				Boolean.TRUE);
-		}
-
 		_setSecurityContext(containerRequestContext, httpServletRequest, user);
 	}
 
 	private void _auditAuthorizationFailure(
-		String clientHost, long companyId, boolean hasBearerToken,
+		boolean authenticatedRegistration, String clientHost, long companyId,
 		HttpServletRequest httpServletRequest) {
 
-		if (hasBearerToken) {
+		if (authenticatedRegistration) {
 			_auditFailure(
 				clientHost, companyId, "invalid_token",
 				"Bearer token authorization failed", httpServletRequest,
 				OAuth2ProviderRESTEndpointConstants.
 					DYNAMIC_REGISTRATION_MODE_AUTHENTICATED);
+
+			return;
 		}
-		else {
-			_auditFailure(
-				clientHost, companyId, "server_error",
-				"Open registration authorization failed", httpServletRequest,
-				OAuth2ProviderRESTEndpointConstants.
-					DYNAMIC_REGISTRATION_MODE_OPEN);
-		}
+
+		_auditFailure(
+			clientHost, companyId, "server_error",
+			"Open registration authorization failed", httpServletRequest,
+			OAuth2ProviderRESTEndpointConstants.DYNAMIC_REGISTRATION_MODE_OPEN);
 	}
 
 	private void _auditFailure(
@@ -233,7 +227,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 	}
 
-	private User _authorizeBearer(
+	private User _authorize(
 			HttpServletRequest httpServletRequest, String method)
 		throws Exception {
 
@@ -282,12 +276,18 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
 
-		String actionKey = _actionKeysByMethod.get(
-			StringUtil.toUpperCase(method));
+		String actionId = StringPool.BLANK;
 
-		if ((actionKey != null) &&
+		if (StringUtil.equalsIgnoreCase(method, "DELETE")) {
+			actionId = ActionKeys.DELETE;
+		}
+		else if (StringUtil.equalsIgnoreCase(method, "PUT")) {
+			actionId = ActionKeys.UPDATE;
+		}
+
+		if (Validator.isNotNull(actionId) &&
 			!_oAuth2ApplicationModelResourcePermission.contains(
-				permissionChecker, oAuth2Application, actionKey)) {
+				permissionChecker, oAuth2Application, actionId)) {
 
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
@@ -356,7 +356,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			}
 
 			_auditAuthorizationFailure(
-				clientHost, companyId, false, httpServletRequest);
+				false, clientHost, companyId, httpServletRequest);
 
 			throw new WebApplicationException(
 				Response.status(
@@ -555,7 +555,8 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			!normalizedAllowedHosts.contains(clientHost)) {
 
 			String message =
-				"Host " + clientHost + " is not allowed for open registration";
+				"OAuth 2 application open registration is not allowed for " +
+					"host: " + clientHost;
 
 			_auditFailure(
 				clientHost, companyId, "access_denied", message,
@@ -570,13 +571,6 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DynamicRegistrationServiceContainerRequestFilter.class);
-
-	private static final Map<String, String> _actionKeysByMethod =
-		HashMapBuilder.put(
-			"DELETE", ActionKeys.DELETE
-		).put(
-			"PUT", ActionKeys.UPDATE
-		).build();
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;

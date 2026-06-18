@@ -340,35 +340,6 @@ public class LiferayDynamicRegistrationService
 		return OAuth2SecureRandomGenerator.generateClientSecret();
 	}
 
-	private static Pattern _compileGlobToPattern(String glob) {
-		StringBundler sb = new StringBundler("^");
-
-		for (int i = 0; i < glob.length(); i++) {
-			char c = glob.charAt(i);
-
-			if (c == '*') {
-				sb.append("[^/]*");
-
-				while (((i + 1) < glob.length()) &&
-					   (glob.charAt(i + 1) == '*')) {
-
-					i++;
-				}
-			}
-			else if ("\\.+?()[]{}^$|".indexOf(c) >= 0) {
-				sb.append('\\');
-				sb.append(c);
-			}
-			else {
-				sb.append(c);
-			}
-		}
-
-		sb.append('$');
-
-		return Pattern.compile(sb.toString());
-	}
-
 	private void _auditFailure(
 		Exception exception1,
 		LiferayClientRegistration liferayClientRegistration) {
@@ -417,20 +388,21 @@ public class LiferayDynamicRegistrationService
 			AuditRouterUtil.route(
 				new AuditMessage(
 					0, _getCompanyId(), 0, StringPool.BLANK, null,
-					_getBaseAuditInfoJSONObject(
-					).put(
-						"clientName", clientName
-					).put(
-						"error", error
-					).put(
-						"errorDescription", errorDescription
-					).put(
-						"grantTypes", grantTypesJSONArray
-					).put(
-						"redirectUris", redirectUrisJSONArray
-					).put(
-						"scope", scope
-					),
+					JSONUtil.merge(
+						_getBaseAdditionalInfoJSONObject(),
+						JSONUtil.put(
+							"clientName", clientName
+						).put(
+							"error", error
+						).put(
+							"errorDescription", errorDescription
+						).put(
+							"grantTypes", grantTypesJSONArray
+						).put(
+							"redirectUris", redirectUrisJSONArray
+						).put(
+							"scope", scope
+						)),
 					OAuth2Application.class.getName(), StringPool.BLANK,
 					OAuth2ProviderRESTEndpointConstants.
 						EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
@@ -469,24 +441,27 @@ public class LiferayDynamicRegistrationService
 			AuditRouterUtil.route(
 				new AuditMessage(
 					0, _getCompanyId(), 0, StringPool.BLANK, null,
-					_getBaseAuditInfoJSONObject(
-					).put(
-						"clientId",
-						liferayClientRegistrationResponse.getClientId()
-					).put(
-						"clientName",
-						liferayClientRegistrationResponse.getClientName()
-					).put(
-						"grantTypes",
-						_toJSONArray(
-							liferayClientRegistrationResponse.getGrantTypes())
-					).put(
-						"redirectUris",
-						_toJSONArray(
-							liferayClientRegistrationResponse.getRedirectUris())
-					).put(
-						"scope", scope
-					),
+					JSONUtil.merge(
+						_getBaseAdditionalInfoJSONObject(),
+						JSONUtil.put(
+							"clientId",
+							liferayClientRegistrationResponse.getClientId()
+						).put(
+							"clientName",
+							liferayClientRegistrationResponse.getClientName()
+						).put(
+							"grantTypes",
+							_toJSONArray(
+								liferayClientRegistrationResponse.
+									getGrantTypes())
+						).put(
+							"redirectUris",
+							_toJSONArray(
+								liferayClientRegistrationResponse.
+									getRedirectUris())
+						).put(
+							"scope", scope
+						)),
 					OAuth2Application.class.getName(),
 					GetterUtil.getString(
 						liferayClientRegistrationResponse.getClientId()),
@@ -501,6 +476,35 @@ public class LiferayDynamicRegistrationService
 		}
 	}
 
+	private Pattern _buildPattern(String glob) {
+		StringBundler sb = new StringBundler("^");
+
+		for (int i = 0; i < glob.length(); i++) {
+			char c = glob.charAt(i);
+
+			if (c == '*') {
+				sb.append("[^/]*");
+
+				while (((i + 1) < glob.length()) &&
+					   (glob.charAt(i + 1) == '*')) {
+
+					i++;
+				}
+			}
+			else if ("\\.+?()[]{}^$|".indexOf(c) >= 0) {
+				sb.append('\\');
+				sb.append(c);
+			}
+			else {
+				sb.append(c);
+			}
+		}
+
+		sb.append('$');
+
+		return Pattern.compile(sb.toString());
+	}
+
 	private String _getApplicationType(ClientRegistration clientRegistration) {
 		String applicationType = clientRegistration.getApplicationType();
 
@@ -511,7 +515,7 @@ public class LiferayDynamicRegistrationService
 		return applicationType;
 	}
 
-	private JSONObject _getBaseAuditInfoJSONObject() {
+	private JSONObject _getBaseAdditionalInfoJSONObject() {
 		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
 		String mode =
@@ -576,11 +580,6 @@ public class LiferayDynamicRegistrationService
 		return messageContext.getHttpServletRequest();
 	}
 
-	private Pattern _globToPattern(String glob) {
-		return _compiledGlobPatterns.computeIfAbsent(
-			glob, LiferayDynamicRegistrationService::_compileGlobToPattern);
-	}
-
 	private boolean _isOpenRegistration(Client client) {
 		Map<String, String> clientProperties = client.getProperties();
 
@@ -607,35 +606,11 @@ public class LiferayDynamicRegistrationService
 		return false;
 	}
 
-	private Set<String> _normalize(String[] values) {
-		Set<String> normalized = new HashSet<>();
-
-		if (values == null) {
-			return normalized;
-		}
-
-		for (String value : values) {
-			if (Validator.isBlank(value)) {
-				continue;
-			}
-
-			for (String token : value.split("\\s+")) {
-				if (Validator.isBlank(token)) {
-					continue;
-				}
-
-				normalized.add(token);
-			}
-		}
-
-		return normalized;
-	}
-
 	private Set<String> _normalizeOpenRegistrationAllowList(
 		String[] allowedValues, String emptyAllowListMessage,
 		String errorCode) {
 
-		Set<String> normalizedAllowedValues = _normalize(allowedValues);
+		Set<String> normalizedAllowedValues = _normalizeValues(allowedValues);
 
 		if (normalizedAllowedValues.contains(StringPool.STAR)) {
 			return null;
@@ -647,6 +622,30 @@ public class LiferayDynamicRegistrationService
 		}
 
 		return normalizedAllowedValues;
+	}
+
+	private Set<String> _normalizeValues(String[] values) {
+		if (values == null) {
+			return Collections.emptySet();
+		}
+
+		Set<String> normalizedValues = new HashSet<>();
+
+		for (String value : values) {
+			if (Validator.isBlank(value)) {
+				continue;
+			}
+
+			for (String part : value.split("\\s+")) {
+				if (Validator.isBlank(part)) {
+					continue;
+				}
+
+				normalizedValues.add(part);
+			}
+		}
+
+		return normalizedValues;
 	}
 
 	private void _promotePublicClientAuthorizationCode(Client client) {
@@ -870,18 +869,21 @@ public class LiferayDynamicRegistrationService
 		Set<String> normalizedAllowedPatterns =
 			_normalizeOpenRegistrationAllowList(
 				allowedPatterns,
-				"Open registration does not permit any redirect URI",
+				"OAuth 2 application open registration does not allow any " +
+					"redirect URI",
 				OAuth2ProviderRESTEndpointConstants.ERROR_INVALID_REDIRECT_URI);
 
 		if (normalizedAllowedPatterns == null) {
 			return;
 		}
 
-		List<Pattern> compiledPatterns = new ArrayList<>(
+		List<Pattern> patterns = new ArrayList<>(
 			normalizedAllowedPatterns.size());
 
 		for (String normalizedAllowedPattern : normalizedAllowedPatterns) {
-			compiledPatterns.add(_globToPattern(normalizedAllowedPattern));
+			patterns.add(
+				_globPatterns.computeIfAbsent(
+					normalizedAllowedPattern, this::_buildPattern));
 		}
 
 		for (String redirectUri : redirectUris) {
@@ -895,7 +897,7 @@ public class LiferayDynamicRegistrationService
 
 			boolean matched = false;
 
-			for (Pattern compiledPattern : compiledPatterns) {
+			for (Pattern compiledPattern : patterns) {
 				Matcher matcher = compiledPattern.matcher(redirectUri);
 
 				if (matcher.matches()) {
@@ -962,7 +964,7 @@ public class LiferayDynamicRegistrationService
 		).put(
 			OAuthConstants.IMPLICIT_GRANT, OAuthConstants.TOKEN_RESPONSE_TYPE
 		).build();
-	private static final Map<String, Pattern> _compiledGlobPatterns =
+	private static final Map<String, Pattern> _globPatterns =
 		new ConcurrentHashMap<>();
 
 	private ConfigurationProvider _configurationProvider;
