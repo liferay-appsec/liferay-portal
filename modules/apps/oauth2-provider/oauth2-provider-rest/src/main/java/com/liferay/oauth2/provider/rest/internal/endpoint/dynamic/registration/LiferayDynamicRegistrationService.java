@@ -947,8 +947,6 @@ public class LiferayDynamicRegistrationService
 				OAuth2ProviderRESTEndpointConstants.
 					ERROR_INVALID_CLIENT_METADATA,
 				Response.Status.BAD_REQUEST);
-
-			return;
 		}
 
 		List<String> requestedScopes = OAuthUtils.parseScope(scope);
