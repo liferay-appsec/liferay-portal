@@ -381,9 +381,9 @@ public class LiferayDynamicRegistrationService
 			if (liferayClientRegistration != null) {
 				clientName = GetterUtil.getString(
 					liferayClientRegistration.getClientName());
-				grantTypesJSONArray = _toJSONArray(
+				grantTypesJSONArray = JSONFactoryUtil.createJSONArray(
 					liferayClientRegistration.getGrantTypes());
-				redirectUrisJSONArray = _toJSONArray(
+				redirectUrisJSONArray = JSONFactoryUtil.createJSONArray(
 					liferayClientRegistration.getRedirectUris());
 				scope = GetterUtil.getString(
 					liferayClientRegistration.getScope());
@@ -455,12 +455,12 @@ public class LiferayDynamicRegistrationService
 							liferayClientRegistrationResponse.getClientName()
 						).put(
 							"grantTypes",
-							_toJSONArray(
+							JSONFactoryUtil.createJSONArray(
 								liferayClientRegistrationResponse.
 									getGrantTypes())
 						).put(
 							"redirectUris",
-							_toJSONArray(
+							JSONFactoryUtil.createJSONArray(
 								liferayClientRegistrationResponse.
 									getRedirectUris())
 						).put(
@@ -710,14 +710,6 @@ public class LiferayDynamicRegistrationService
 			OAuth2ProviderRESTEndpointConstants.AUTHORIZATION_CODE_PKCE_GRANT);
 
 		client.setAllowedGrantTypes(promotedAllowedGrantTypes);
-	}
-
-	private JSONArray _toJSONArray(List<String> list) {
-		if (list == null) {
-			return JSONFactoryUtil.createJSONArray();
-		}
-
-		return JSONFactoryUtil.createJSONArray(list);
 	}
 
 	private List<String> _toResponseGrantTypes(List<String> allowedGrantTypes) {
