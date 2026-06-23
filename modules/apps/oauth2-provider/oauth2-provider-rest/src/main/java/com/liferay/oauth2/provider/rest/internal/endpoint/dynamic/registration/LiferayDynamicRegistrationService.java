@@ -522,10 +522,17 @@ public class LiferayDynamicRegistrationService
 	private JSONObject _getBaseAdditionalInfoJSONObject() {
 		HttpServletRequest httpServletRequest = _getHttpServletRequest();
 
-		String clientHost = StringPool.BLANK;
 		String mode =
 			OAuth2ProviderRESTEndpointConstants.
 				DYNAMIC_REGISTRATION_MODE_AUTHENTICATED;
+
+		if (_isOpenRegistrationRequest(httpServletRequest)) {
+			mode =
+				OAuth2ProviderRESTEndpointConstants.
+					DYNAMIC_REGISTRATION_MODE_OPEN;
+		}
+
+		String clientHost = StringPool.BLANK;
 		String userAgent = StringPool.BLANK;
 
 		if (httpServletRequest != null) {
@@ -533,14 +540,9 @@ public class LiferayDynamicRegistrationService
 				httpServletRequest.getAttribute(
 					OAuth2ProviderRESTWebKeys.DYNAMIC_REGISTRATION_CLIENT_HOST),
 				httpServletRequest.getRemoteAddr());
+
 			userAgent = GetterUtil.getString(
 				httpServletRequest.getHeader("User-Agent"));
-
-			if (_isOpenRegistrationRequest(httpServletRequest)) {
-				mode =
-					OAuth2ProviderRESTEndpointConstants.
-						DYNAMIC_REGISTRATION_MODE_OPEN;
-			}
 		}
 
 		return JSONUtil.put(
@@ -615,8 +617,29 @@ public class LiferayDynamicRegistrationService
 
 		Set<String> normalizedAllowedValues = _normalizeValues(allowedValues);
 
-		if (normalizedAllowedValues.contains(StringPool.STAR)) {
-			return null;
+		if (allowedValues == null) {
+			OAuth2ErrorUtil.reportInvalidRequestError(
+				emptyAllowListMessage, errorCode, Response.Status.BAD_REQUEST);
+		}
+
+		Set<String> normalizedValues = new HashSet<>();
+
+		for (String allowedValue : allowedValues) {
+			if (Validator.isBlank(allowedValue)) {
+				continue;
+			}
+
+			for (String part : allowedValue.split("\\s+")) {
+				if (Validator.isBlank(part)) {
+					continue;
+				}
+
+				if (part.equals(StringPool.STAR)) {
+					return null;
+				}
+
+				normalizedValues.add(part);
+			}
 		}
 
 		if (normalizedAllowedValues.isEmpty()) {
