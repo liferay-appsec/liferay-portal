@@ -86,10 +86,9 @@ public class LiferayDynamicRegistrationService
 
 		super.deleteClientRegistration(clientId);
 
-		Response.ResponseBuilder responseBuilder = JAXRSUtils.toResponseBuilder(
-			204);
-
-		return responseBuilder.build();
+		return JAXRSUtils.toResponseBuilder(
+			204
+		).build();
 	}
 
 	@GET
@@ -807,13 +806,6 @@ public class LiferayDynamicRegistrationService
 	private void _validateOpenRegistrationGrantTypes(
 		String[] allowedGrantTypes, Client client) {
 
-		List<String> requestedGrantTypes = client.getAllowedGrantTypes();
-
-		if (ListUtil.isEmpty(requestedGrantTypes)) {
-			requestedGrantTypes = Collections.singletonList(
-				OAuthConstants.AUTHORIZATION_CODE_GRANT);
-		}
-
 		Set<String> normalizedAllowedGrantTypes =
 			_normalizeOpenRegistrationAllowList(
 				allowedGrantTypes,
@@ -823,6 +815,13 @@ public class LiferayDynamicRegistrationService
 
 		if (normalizedAllowedGrantTypes == null) {
 			return;
+		}
+
+		List<String> requestedGrantTypes = client.getAllowedGrantTypes();
+
+		if (ListUtil.isEmpty(requestedGrantTypes)) {
+			requestedGrantTypes = Collections.singletonList(
+				OAuthConstants.AUTHORIZATION_CODE_GRANT);
 		}
 
 		for (String requestedGrantType : requestedGrantTypes) {
@@ -840,14 +839,12 @@ public class LiferayDynamicRegistrationService
 	private void _validateOpenRegistrationPolicy(
 		Client client, ClientRegistration clientRegistration) {
 
-		long companyId = _getCompanyId();
-
 		OAuth2DynamicRegistrationConfiguration
 			oAuth2DynamicRegistrationConfiguration;
 
 		try {
 			oAuth2DynamicRegistrationConfiguration =
-				_getOAuth2DynamicRegistrationConfiguration(companyId);
+				_getOAuth2DynamicRegistrationConfiguration(_getCompanyId());
 		}
 		catch (ConfigurationException configurationException) {
 			OAuth2ErrorUtil.reportInvalidRequestError(
@@ -861,24 +858,16 @@ public class LiferayDynamicRegistrationService
 
 		_validateOpenRegistrationGrantTypes(
 			oAuth2DynamicRegistrationConfiguration.allowedGrantTypes(), client);
-
-		_validateOpenRegistrationScopes(
-			oAuth2DynamicRegistrationConfiguration.allowedScopes(),
-			clientRegistration);
-
 		_validateOpenRegistrationRedirectURIs(
 			oAuth2DynamicRegistrationConfiguration.allowedRedirectURIPatterns(),
+			clientRegistration);
+		_validateOpenRegistrationScopes(
+			oAuth2DynamicRegistrationConfiguration.allowedScopes(),
 			clientRegistration);
 	}
 
 	private void _validateOpenRegistrationRedirectURIs(
 		String[] allowedPatterns, ClientRegistration clientRegistration) {
-
-		List<String> redirectUris = clientRegistration.getRedirectUris();
-
-		if (ListUtil.isEmpty(redirectUris)) {
-			return;
-		}
 
 		Set<String> normalizedAllowedPatterns =
 			_normalizeOpenRegistrationAllowList(
@@ -888,6 +877,12 @@ public class LiferayDynamicRegistrationService
 				OAuth2ProviderRESTEndpointConstants.ERROR_INVALID_REDIRECT_URI);
 
 		if (normalizedAllowedPatterns == null) {
+			return;
+		}
+
+		List<String> redirectUris = clientRegistration.getRedirectUris();
+
+		if (ListUtil.isEmpty(redirectUris)) {
 			return;
 		}
 
@@ -911,8 +906,8 @@ public class LiferayDynamicRegistrationService
 
 			boolean matched = false;
 
-			for (Pattern compiledPattern : patterns) {
-				Matcher matcher = compiledPattern.matcher(redirectUri);
+			for (Pattern pattern : patterns) {
+				Matcher matcher = pattern.matcher(redirectUri);
 
 				if (matcher.matches()) {
 					matched = true;
