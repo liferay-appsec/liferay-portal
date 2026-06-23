@@ -184,15 +184,15 @@ public class DynamicRegistrationServiceContainerRequestFilter
 				"Bearer token authorization failed", httpServletRequest,
 				OAuth2ProviderRESTEndpointConstants.
 					DYNAMIC_REGISTRATION_MODE_AUTHENTICATED);
-
-			return;
 		}
-
-		_auditFailure(
-			clientHost, companyId,
-			OAuth2ProviderRESTEndpointConstants.ERROR_SERVER_ERROR,
-			"Open registration authorization failed", httpServletRequest,
-			OAuth2ProviderRESTEndpointConstants.DYNAMIC_REGISTRATION_MODE_OPEN);
+		else {
+			_auditFailure(
+				clientHost, companyId,
+				OAuth2ProviderRESTEndpointConstants.ERROR_SERVER_ERROR,
+				"Open registration authorization failed", httpServletRequest,
+				OAuth2ProviderRESTEndpointConstants.
+					DYNAMIC_REGISTRATION_MODE_OPEN);
+		}
 	}
 
 	private void _auditFailure(
