@@ -467,10 +467,10 @@ public class LDAPPropertiesUpgradeProcess extends UpgradeProcess {
 				_prefsProps.getInteger(
 					companyId, LegacyLDAPPropsKeys.LDAP_RANGE_SIZE, 1000)
 			).put(
-				LDAPConstants.REFERRAL,
+				LDAPConstants.REFERRAL_MODE,
 				_prefsProps.getString(
 					companyId, LegacyLDAPPropsKeys.LDAP_REFERRAL,
-					LDAPConstants.REFERRAL_FOLLOW)
+					LDAPConstants.REFERRAL_MODE_FOLLOW)
 			).build();
 
 		if (_log.isInfoEnabled()) {
