@@ -20,15 +20,15 @@ import com.liferay.portal.kernel.util.Validator;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
+import java.security.GeneralSecurityException;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jodd.util.StringUtil;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.crypto.Digest;
-import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
-import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.jcajce.provider.util.DigestFactory;
+import jodd.util.StringUtil;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -57,23 +57,13 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 
 		pbkdf2EncryptionConfiguration.configure(algorithm, encryptedPassword);
 
-		PKCS5S2ParametersGenerator pkcs5S2ParametersGenerator =
-			new PKCS5S2ParametersGenerator(
-				pbkdf2EncryptionConfiguration.getDigest());
-
-		pkcs5S2ParametersGenerator.init(
-			plainTextPassword.getBytes(),
-			pbkdf2EncryptionConfiguration.getSaltBytes(),
-			pbkdf2EncryptionConfiguration.getRounds());
-
-		KeyParameter keyParameter =
-			(KeyParameter)
-				pkcs5S2ParametersGenerator.generateDerivedMacParameters(
-					pbkdf2EncryptionConfiguration.getKeySize());
-
-		byte[] secretKeyBytes = keyParameter.getKey();
-
 		byte[] saltBytes = pbkdf2EncryptionConfiguration.getSaltBytes();
+
+		byte[] secretKeyBytes = _generateDerivedKey(
+			pbkdf2EncryptionConfiguration.getMacAlgorithm(),
+			plainTextPassword.getBytes(), saltBytes,
+			pbkdf2EncryptionConfiguration.getRounds(),
+			pbkdf2EncryptionConfiguration.getKeySize());
 
 		ByteBuffer byteBuffer = ByteBuffer.allocate(
 			(2 * 4) + saltBytes.length + secretKeyBytes.length);
@@ -111,6 +101,65 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 		}
 		catch (PwdEncryptorException pwdEncryptorException) {
 			return ReflectionUtil.throwException(pwdEncryptorException);
+		}
+	}
+
+	private byte[] _generateDerivedKey(
+			String macAlgorithm, byte[] passwordBytes, byte[] saltBytes,
+			int rounds, int keySize)
+		throws PwdEncryptorException {
+
+		try {
+			Mac mac = Mac.getInstance(macAlgorithm);
+
+			mac.init(new SecretKeySpec(passwordBytes, macAlgorithm));
+
+			int macLength = mac.getMacLength();
+
+			int derivedKeyLength = keySize / 8;
+
+			byte[] derivedKeyBytes = new byte[derivedKeyLength];
+
+			byte[] blockBytes = new byte[saltBytes.length + 4];
+
+			System.arraycopy(saltBytes, 0, blockBytes, 0, saltBytes.length);
+
+			int blockCount = (int)Math.ceil(
+				(double)derivedKeyLength / macLength);
+
+			int offset = 0;
+
+			for (int i = 1; i <= blockCount; i++) {
+				blockBytes[saltBytes.length] = (byte)(i >>> 24);
+				blockBytes[saltBytes.length + 1] = (byte)(i >>> 16);
+				blockBytes[saltBytes.length + 2] = (byte)(i >>> 8);
+				blockBytes[saltBytes.length + 3] = (byte)i;
+
+				byte[] uBytes = mac.doFinal(blockBytes);
+
+				byte[] tBytes = uBytes.clone();
+
+				for (int j = 1; j < rounds; j++) {
+					uBytes = mac.doFinal(uBytes);
+
+					for (int k = 0; k < tBytes.length; k++) {
+						tBytes[k] ^= uBytes[k];
+					}
+				}
+
+				int length = Math.min(macLength, derivedKeyLength - offset);
+
+				System.arraycopy(tBytes, 0, derivedKeyBytes, offset, length);
+
+				offset += length;
+			}
+
+			return derivedKeyBytes;
+		}
+		catch (GeneralSecurityException generalSecurityException) {
+			throw new PwdEncryptorException.InvalidAlgorithm(
+				"Unable to derive key using " + macAlgorithm,
+				generalSecurityException);
 		}
 	}
 
@@ -175,15 +224,15 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 			String[] parts = StringUtil.split(
 				algorithm.substring(index), StringPool.FORWARD_SLASH);
 
-			_digest = DigestFactory.getDigest(parts[0]);
-		}
-
-		public Digest getDigest() {
-			return _digest;
+			_macAlgorithm = "Hmac" + StringUtil.remove(parts[0], CharPool.DASH);
 		}
 
 		public int getKeySize() {
 			return _keySize;
+		}
+
+		public String getMacAlgorithm() {
+			return _macAlgorithm;
 		}
 
 		public int getRounds() {
@@ -194,8 +243,8 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 			return _saltBytes;
 		}
 
-		private Digest _digest = DigestFactory.getDigest("SHA1");
 		private int _keySize = _KEY_SIZE;
+		private String _macAlgorithm = "HmacSHA1";
 		private int _rounds = _ROUNDS;
 		private byte[] _saltBytes;
 
