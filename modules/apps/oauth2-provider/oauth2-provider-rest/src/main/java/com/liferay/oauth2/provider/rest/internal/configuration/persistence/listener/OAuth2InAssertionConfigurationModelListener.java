@@ -30,15 +30,15 @@ public class OAuth2InAssertionConfigurationModelListener
 	public void onBeforeSave(String pid, Dictionary<String, Object> properties)
 		throws ConfigurationModelListenerException {
 
-		String jwks = GetterUtil.getString(
+		String jwksJSON = GetterUtil.getString(
 			properties.get("oauth2.in.assertion.signature.json.web.key.set"));
 
-		if (Validator.isNull(jwks)) {
+		if (Validator.isNull(jwksJSON)) {
 			return;
 		}
 
 		try {
-			OAuth2JWKValidatorUtil.validateJWKS(jwks);
+			OAuth2JWKValidatorUtil.validateJWKS(jwksJSON);
 		}
 		catch (SecurityException securityException) {
 			throw new ConfigurationModelListenerException(

@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class OAuth2JWKValidatorUtil {
 
-	public static void validateJWK(String jwk) {
+	public static void validateJWK(String jwkJSON) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return;
 		}
@@ -32,7 +32,7 @@ public class OAuth2JWKValidatorUtil {
 		JSONObject jsonObject = null;
 
 		try {
-			jsonObject = JSONFactoryUtil.createJSONObject(jwk);
+			jsonObject = JSONFactoryUtil.createJSONObject(jwkJSON);
 		}
 		catch (JSONException jsonException) {
 			throw new SecurityException("Unable to parse JWK", jsonException);
@@ -41,7 +41,7 @@ public class OAuth2JWKValidatorUtil {
 		_validateJWK(jsonObject);
 	}
 
-	public static void validateJWKS(String jwks) {
+	public static void validateJWKS(String jwksJSON) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return;
 		}
@@ -49,7 +49,7 @@ public class OAuth2JWKValidatorUtil {
 		JSONObject jsonObject = null;
 
 		try {
-			jsonObject = JSONFactoryUtil.createJSONObject(jwks);
+			jsonObject = JSONFactoryUtil.createJSONObject(jwksJSON);
 		}
 		catch (JSONException jsonException) {
 			throw new SecurityException("Unable to parse JWKS", jsonException);
