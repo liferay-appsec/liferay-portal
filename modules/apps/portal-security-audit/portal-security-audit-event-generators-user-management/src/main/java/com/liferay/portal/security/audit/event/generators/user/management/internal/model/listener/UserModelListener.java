@@ -63,8 +63,7 @@ public class UserModelListener extends BaseModelListener<User> {
 			if (!attributes.isEmpty()) {
 				AuditMessage auditMessage =
 					AuditMessageBuilder.buildAuditMessage(
-						User.class.getName(), user.getUserId(),
-						EventTypes.UPDATE, attributes);
+						user, EventTypes.UPDATE, attributes);
 
 				_auditRouter.route(auditMessage);
 			}
@@ -79,7 +78,7 @@ public class UserModelListener extends BaseModelListener<User> {
 
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
-				User.class.getName(), user.getUserId(), eventType, null);
+				user, eventType, null);
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
@@ -138,8 +137,7 @@ public class UserModelListener extends BaseModelListener<User> {
 
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
-				User.class.getName(), user.getUserId(),
-				EventTypes.AGREED_TO_TERMS_OF_USE, null);
+				user, EventTypes.AGREED_TO_TERMS_OF_USE, null);
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();

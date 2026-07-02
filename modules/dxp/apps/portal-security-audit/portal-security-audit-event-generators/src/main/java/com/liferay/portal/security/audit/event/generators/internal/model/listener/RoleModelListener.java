@@ -79,8 +79,7 @@ public class RoleModelListener extends BaseModelListener<Role> {
 			if (!attributes.isEmpty()) {
 				AuditMessage auditMessage =
 					AuditMessageBuilder.buildAuditMessage(
-						Role.class.getName(), role.getRoleId(),
-						EventTypes.UPDATE, attributes);
+						role, EventTypes.UPDATE, attributes);
 
 				_auditRouter.route(auditMessage);
 			}
@@ -95,7 +94,7 @@ public class RoleModelListener extends BaseModelListener<Role> {
 
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
-				Role.class.getName(), role.getRoleId(), eventType, null);
+				role, eventType, null);
 
 			_auditRouter.route(auditMessage);
 		}
@@ -131,6 +130,8 @@ public class RoleModelListener extends BaseModelListener<Role> {
 			Role role = _roleLocalService.getRole(roleId);
 
 			additionalInfoJSONObject.put("roleName", role.getName());
+
+			auditMessage.setCompanyId(role.getCompanyId());
 
 			if (associationClassName.equals(Group.class.getName())) {
 				long groupId = (Long)associationClassPK;

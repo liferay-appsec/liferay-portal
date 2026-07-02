@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassedModel;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -39,10 +40,18 @@ public class AuditMessageBuilder {
 			groupId = groupedModel.getGroupId();
 		}
 
-		return buildAuditMessage(
+		AuditMessage auditMessage = buildAuditMessage(
 			groupId, 0, classedModel.getModelClassName(),
 			String.valueOf(classedModel.getPrimaryKeyObj()), null, eventType,
 			attributes);
+
+		if (classedModel instanceof ShardedModel) {
+			ShardedModel shardedModel = (ShardedModel)classedModel;
+
+			auditMessage.setCompanyId(shardedModel.getCompanyId());
+		}
+
+		return auditMessage;
 	}
 
 	public static AuditMessage buildAuditMessage(
