@@ -8,7 +8,7 @@ package com.liferay.portal.security.key.spi.crypto;
 import com.liferay.portal.security.key.crypto.CryptoKey;
 import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
-import com.liferay.portal.security.key.spi.SecurityModuleProvider;
+import com.liferay.portal.security.key.spi.ProviderStatus;
 
 import java.security.Key;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * @author Tomas Polesovsky
  * @author Christopher Kian
  */
-public interface CryptoProvider extends SecurityModuleProvider {
+public interface CryptoProvider {
 
 	public CryptoServiceResult<byte[]> decrypt(
 			byte[] ciphertext, long companyId, String identifier)
@@ -48,10 +48,14 @@ public interface CryptoProvider extends SecurityModuleProvider {
 	public List<String> getKeyIdentifiers(long companyId)
 		throws CryptoManagerException;
 
+	public ProviderStatus getStatus();
+
 	public CryptoServiceResult<String> importSecretKey(
 			String algorithm, long companyId, String identifier,
 			byte[] rawKeyMaterial)
 		throws CryptoManagerException;
+
+	public boolean isAllowedCompany(long companyId);
 
 	public CryptoServiceResult<String> unwrap(
 			long companyId, String identifier, String masterIdentifier,

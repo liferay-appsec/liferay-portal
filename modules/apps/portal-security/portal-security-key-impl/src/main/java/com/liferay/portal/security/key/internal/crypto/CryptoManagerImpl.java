@@ -20,7 +20,7 @@ import com.liferay.portal.security.key.crypto.CryptoKey;
 import com.liferay.portal.security.key.crypto.CryptoManager;
 import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
-import com.liferay.portal.security.key.spi.ModuleStatus;
+import com.liferay.portal.security.key.spi.ProviderStatus;
 import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
@@ -505,8 +505,8 @@ public class CryptoManagerImpl implements CryptoManager {
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, CryptoProvider.class, "(keymanager.provider.id=*)",
-			new PropertyServiceReferenceMapper<>("keymanager.provider.id"));
+			bundleContext, CryptoProvider.class, "(crypto.provider.id=*)",
+			new PropertyServiceReferenceMapper<>("crypto.provider.id"));
 	}
 
 	@Deactivate
@@ -583,7 +583,7 @@ public class CryptoManagerImpl implements CryptoManager {
 					continue;
 				}
 
-				if (cryptoProvider.getModuleStatus() == ModuleStatus.ERROR) {
+				if (cryptoProvider.getStatus() == ProviderStatus.ERROR) {
 					throw new CryptoManagerException(
 						StringBundler.concat(
 							"Crypto provider ", resolvedProviderId,

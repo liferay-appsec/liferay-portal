@@ -14,7 +14,7 @@ import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.ServiceIndicator;
 import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
-import com.liferay.portal.security.key.spi.ModuleStatus;
+import com.liferay.portal.security.key.spi.ProviderStatus;
 import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
@@ -133,9 +133,9 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testEncryptThrowsWhenProviderInErrorState() {
 		Mockito.when(
-			_cryptoProvider.getModuleStatus()
+			_cryptoProvider.getStatus()
 		).thenReturn(
-			ModuleStatus.ERROR
+			ProviderStatus.ERROR
 		);
 
 		Mockito.when(
