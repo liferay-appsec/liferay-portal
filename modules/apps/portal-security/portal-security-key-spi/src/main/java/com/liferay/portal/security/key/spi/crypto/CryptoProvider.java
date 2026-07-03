@@ -18,7 +18,7 @@ import java.util.List;
  * @author Tomas Polesovsky
  * @author Christopher Kian
  */
-public interface CryptoVaultProvider extends SecurityModuleProvider {
+public interface CryptoProvider extends SecurityModuleProvider {
 
 	public CryptoServiceResult<byte[]> decrypt(
 			byte[] ciphertext, long companyId, String identifier)

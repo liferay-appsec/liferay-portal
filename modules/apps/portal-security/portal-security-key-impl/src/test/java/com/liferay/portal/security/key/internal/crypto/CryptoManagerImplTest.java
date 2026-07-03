@@ -15,7 +15,7 @@ import com.liferay.portal.security.key.ServiceIndicator;
 import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
 import com.liferay.portal.security.key.spi.ModuleStatus;
-import com.liferay.portal.security.key.spi.crypto.CryptoVaultProvider;
+import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -63,7 +63,7 @@ public class CryptoManagerImplTest {
 		byte[] plaintext = RandomTestUtil.randomBytes();
 
 		Mockito.when(
-			_cryptoVaultProvider.decrypt(
+			_cryptoProvider.decrypt(
 				Mockito.any(byte[].class), Mockito.anyLong(),
 				Mockito.anyString())
 		).thenReturn(
@@ -71,7 +71,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -81,7 +81,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		CryptoServiceResult<byte[]> cryptoServiceResult =
@@ -133,13 +133,13 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testEncryptThrowsWhenProviderInErrorState() {
 		Mockito.when(
-			_cryptoVaultProvider.getModuleStatus()
+			_cryptoProvider.getModuleStatus()
 		).thenReturn(
 			ModuleStatus.ERROR
 		);
 
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -149,7 +149,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		Assert.assertThrows(
@@ -164,14 +164,13 @@ public class CryptoManagerImplTest {
 		Key key = Mockito.mock(Key.class);
 
 		Mockito.when(
-			_cryptoVaultProvider.exportKey(
-				Mockito.anyLong(), Mockito.anyString())
+			_cryptoProvider.exportKey(Mockito.anyLong(), Mockito.anyString())
 		).thenReturn(
 			_cryptoServiceResult(key)
 		);
 
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -181,7 +180,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		CryptoServiceResult<Key> cryptoServiceResult =
@@ -196,7 +195,7 @@ public class CryptoManagerImplTest {
 		throws Exception {
 
 		Mockito.when(
-			_cryptoVaultProvider.importSecretKey(
+			_cryptoProvider.importSecretKey(
 				Mockito.anyString(), Mockito.anyLong(), Mockito.anyString(),
 				Mockito.any(byte[].class))
 		).thenThrow(
@@ -204,7 +203,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -214,7 +213,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		byte[] rawKeyMaterial = RandomTestUtil.randomBytes();
@@ -233,7 +232,7 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testUnwrap() throws Exception {
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -241,7 +240,7 @@ public class CryptoManagerImplTest {
 		String unwrappedIdentifier = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_cryptoVaultProvider.unwrap(
+			_cryptoProvider.unwrap(
 				Mockito.anyLong(), Mockito.anyString(), Mockito.anyString(),
 				Mockito.anyString(), Mockito.any(byte[].class),
 				Mockito.anyInt())
@@ -254,7 +253,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		CryptoServiceResult<KeyReference> cryptoServiceResult =
@@ -272,7 +271,7 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testWrap() throws Exception {
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(Mockito.anyLong())
+			_cryptoProvider.isAllowedCompany(Mockito.anyLong())
 		).thenReturn(
 			true
 		);
@@ -280,7 +279,7 @@ public class CryptoManagerImplTest {
 		byte[] wrappedKeyBytes = RandomTestUtil.randomBytes();
 
 		Mockito.when(
-			_cryptoVaultProvider.wrap(
+			_cryptoProvider.wrap(
 				Mockito.anyLong(), Mockito.anyString(), Mockito.anyString())
 		).thenReturn(
 			_cryptoServiceResult(wrappedKeyBytes)
@@ -291,7 +290,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		CryptoServiceResult<byte[]> cryptoServiceResult =
@@ -332,7 +331,7 @@ public class CryptoManagerImplTest {
 		String identifier = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_cryptoVaultProvider.encrypt(
+			_cryptoProvider.encrypt(
 				Mockito.eq(companyId), Mockito.eq(identifier),
 				Mockito.any(byte[].class))
 		).thenReturn(
@@ -340,7 +339,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Mockito.when(
-			_cryptoVaultProvider.isAllowedCompany(companyId)
+			_cryptoProvider.isAllowedCompany(companyId)
 		).thenReturn(
 			true
 		);
@@ -371,7 +370,7 @@ public class CryptoManagerImplTest {
 		Mockito.when(
 			_serviceTrackerMap.getService(providerId)
 		).thenReturn(
-			Collections.singletonList(_cryptoVaultProvider)
+			Collections.singletonList(_cryptoProvider)
 		);
 
 		_cryptoManagerImpl.encrypt(
@@ -393,7 +392,7 @@ public class CryptoManagerImplTest {
 	private CryptoManagerImpl _cryptoManagerImpl;
 
 	@Mock
-	private CryptoVaultProvider _cryptoVaultProvider;
+	private CryptoProvider _cryptoProvider;
 
 	@Mock
 	private KeyManagerProfile _keyManagerProfile;
@@ -402,7 +401,6 @@ public class CryptoManagerImplTest {
 	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
 
 	@Mock
-	private ServiceTrackerMap<String, List<CryptoVaultProvider>>
-		_serviceTrackerMap;
+	private ServiceTrackerMap<String, List<CryptoProvider>> _serviceTrackerMap;
 
 }

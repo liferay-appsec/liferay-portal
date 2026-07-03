@@ -21,7 +21,7 @@ import com.liferay.portal.security.key.crypto.CryptoManager;
 import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
 import com.liferay.portal.security.key.spi.ModuleStatus;
-import com.liferay.portal.security.key.spi.crypto.CryptoVaultProvider;
+import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
@@ -60,11 +60,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			CryptoServiceResult<byte[]> cryptoServiceResult =
-				cryptoVaultProvider.decrypt(
+				cryptoProvider.decrypt(
 					ciphertext, companyId, keyReference.getIdentifier());
 
 			_auditServiceIndicator(
@@ -92,11 +92,10 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
-			cryptoVaultProvider.deleteKey(
-				companyId, keyReference.getIdentifier());
+			cryptoProvider.deleteKey(companyId, keyReference.getIdentifier());
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
@@ -121,11 +120,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			CryptoServiceResult<byte[]> cryptoServiceResult =
-				cryptoVaultProvider.encrypt(
+				cryptoProvider.encrypt(
 					companyId, keyReference.getIdentifier(), plaintext);
 
 			_auditServiceIndicator(
@@ -154,11 +153,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			CryptoServiceResult<Key> cryptoServiceResult =
-				cryptoVaultProvider.exportKey(
+				cryptoProvider.exportKey(
 					companyId, keyReference.getIdentifier());
 
 			_auditServiceIndicator(
@@ -197,7 +196,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		try {
 			return _generate(
 				algorithm, companyId, identifier,
-				CryptoVaultProvider::generateAsymmetricKeyPair, providerId);
+				CryptoProvider::generateAsymmetricKeyPair, providerId);
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
@@ -231,7 +230,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		try {
 			return _generate(
 				algorithm, companyId, identifier,
-				CryptoVaultProvider::generateSecretKey, providerId);
+				CryptoProvider::generateSecretKey, providerId);
 		}
 		catch (CryptoManagerException cryptoManagerException) {
 			if (_log.isWarnEnabled()) {
@@ -252,10 +251,10 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
-			return cryptoVaultProvider.getCryptoKey(
+			return cryptoProvider.getCryptoKey(
 				companyId, keyReference.getIdentifier());
 		}
 		catch (CryptoManagerException cryptoManagerException) {
@@ -277,13 +276,13 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedProviderId = _getCryptoVaultProviderId(
+			String resolvedProviderId = _getCryptoProviderId(
 				companyId, providerId, ProviderRole.DEK);
 
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, resolvedProviderId);
 
-			List<String> identifiers = cryptoVaultProvider.getKeyIdentifiers(
+			List<String> identifiers = cryptoProvider.getKeyIdentifiers(
 				companyId);
 
 			if (identifiers == null) {
@@ -309,7 +308,7 @@ public class CryptoManagerImpl implements CryptoManager {
 	public List<String> getProviderIds(long companyId) {
 		List<String> providerIds = new ArrayList<>();
 
-		ServiceTrackerMap<String, List<CryptoVaultProvider>> serviceTrackerMap =
+		ServiceTrackerMap<String, List<CryptoProvider>> serviceTrackerMap =
 			_serviceTrackerMap;
 
 		if (serviceTrackerMap == null) {
@@ -317,17 +316,15 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		for (String providerId : serviceTrackerMap.keySet()) {
-			List<CryptoVaultProvider> cryptoVaultProviders =
-				serviceTrackerMap.getService(providerId);
+			List<CryptoProvider> cryptoProviders = serviceTrackerMap.getService(
+				providerId);
 
-			if (cryptoVaultProviders == null) {
+			if (cryptoProviders == null) {
 				continue;
 			}
 
-			for (CryptoVaultProvider cryptoVaultProvider :
-					cryptoVaultProviders) {
-
-				if (cryptoVaultProvider.isAllowedCompany(companyId)) {
+			for (CryptoProvider cryptoProvider : cryptoProviders) {
+				if (cryptoProvider.isAllowedCompany(companyId)) {
 					providerIds.add(providerId);
 
 					break;
@@ -361,14 +358,14 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			providerId = _getCryptoVaultProviderId(
+			providerId = _getCryptoProviderId(
 				companyId, providerId, ProviderRole.DEK);
 
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, providerId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
-				cryptoVaultProvider.importSecretKey(
+				cryptoProvider.importSecretKey(
 					algorithm, companyId, identifier, rawKeyMaterial);
 
 			_auditServiceIndicator(
@@ -420,15 +417,15 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedProviderId = _getCryptoVaultProviderId(
+			String resolvedProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, resolvedProviderId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
-				cryptoVaultProvider.unwrap(
+				cryptoProvider.unwrap(
 					companyId, identifier, masterKeyReference.getIdentifier(),
 					wrappedKeyAlgorithm, wrappedKeyBytes, wrappedKeyCipherType);
 
@@ -465,11 +462,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedKeyToWrapProviderId = _getCryptoVaultProviderId(
+			String resolvedKeyToWrapProviderId = _getCryptoProviderId(
 				companyId, keyToWrapReference.getProviderId(),
 				ProviderRole.DEK);
 
-			String resolvedMasterKeyProviderId = _getCryptoVaultProviderId(
+			String resolvedMasterKeyProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
@@ -483,11 +480,11 @@ public class CryptoManagerImpl implements CryptoManager {
 						resolvedMasterKeyProviderId));
 			}
 
-			CryptoVaultProvider cryptoVaultProvider = _getCryptoVaultProvider(
+			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, resolvedMasterKeyProviderId);
 
 			CryptoServiceResult<byte[]> cryptoServiceResult =
-				cryptoVaultProvider.wrap(
+				cryptoProvider.wrap(
 					companyId, keyToWrapReference.getIdentifier(),
 					masterKeyReference.getIdentifier());
 
@@ -508,8 +505,7 @@ public class CryptoManagerImpl implements CryptoManager {
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
-			bundleContext, CryptoVaultProvider.class,
-			"(keymanager.provider.id=*)",
+			bundleContext, CryptoProvider.class, "(keymanager.provider.id=*)",
 			new PropertyServiceReferenceMapper<>("keymanager.provider.id"));
 	}
 
@@ -553,12 +549,12 @@ public class CryptoManagerImpl implements CryptoManager {
 			KeyGenerator keyGenerator, String providerId)
 		throws CryptoManagerException {
 
-		providerId = _getCryptoVaultProviderId(
+		providerId = _getCryptoProviderId(
 			companyId, providerId, ProviderRole.DEK);
 
 		CryptoServiceResult<String> cryptoServiceResult = keyGenerator.generate(
-			_getCryptoVaultProvider(companyId, providerId), algorithm,
-			companyId, identifier);
+			_getCryptoProvider(companyId, providerId), algorithm, companyId,
+			identifier);
 
 		_auditServiceIndicator(
 			companyId, "generate", cryptoServiceResult.getServiceIndicator());
@@ -570,7 +566,7 @@ public class CryptoManagerImpl implements CryptoManager {
 				KeyReference.Type.CRYPTO));
 	}
 
-	private CryptoVaultProvider _getCryptoVaultProvider(
+	private CryptoProvider _getCryptoProvider(
 			long companyId, String resolvedProviderId)
 		throws CryptoManagerException {
 
@@ -578,47 +574,43 @@ public class CryptoManagerImpl implements CryptoManager {
 			throw new CryptoManagerException("Resolved provider ID is null");
 		}
 
-		List<CryptoVaultProvider> cryptoVaultProviders =
-			_serviceTrackerMap.getService(resolvedProviderId);
+		List<CryptoProvider> cryptoProviders = _serviceTrackerMap.getService(
+			resolvedProviderId);
 
-		if (cryptoVaultProviders != null) {
-			for (CryptoVaultProvider cryptoVaultProvider :
-					cryptoVaultProviders) {
-
-				if (!cryptoVaultProvider.isAllowedCompany(companyId)) {
+		if (cryptoProviders != null) {
+			for (CryptoProvider cryptoProvider : cryptoProviders) {
+				if (!cryptoProvider.isAllowedCompany(companyId)) {
 					continue;
 				}
 
-				if (cryptoVaultProvider.getModuleStatus() ==
-						ModuleStatus.ERROR) {
-
+				if (cryptoProvider.getModuleStatus() == ModuleStatus.ERROR) {
 					throw new CryptoManagerException(
 						StringBundler.concat(
-							"Crypto vault provider ", resolvedProviderId,
+							"Crypto provider ", resolvedProviderId,
 							" is in an error state for company ID ",
 							companyId));
 				}
 
-				return cryptoVaultProvider;
+				return cryptoProvider;
 			}
 		}
 
 		throw new CryptoManagerException(
 			StringBundler.concat(
-				"No crypto vault provider found for ID ", resolvedProviderId,
+				"No crypto provider found for ID ", resolvedProviderId,
 				" and company ID ", companyId));
 	}
 
-	private CryptoVaultProvider _getCryptoVaultProvider(
+	private CryptoProvider _getCryptoProvider(
 			long companyId, String providerId, ProviderRole providerRole)
 		throws CryptoManagerException {
 
-		return _getCryptoVaultProvider(
+		return _getCryptoProvider(
 			companyId,
-			_getCryptoVaultProviderId(companyId, providerId, providerRole));
+			_getCryptoProviderId(companyId, providerId, providerRole));
 	}
 
-	private String _getCryptoVaultProviderId(
+	private String _getCryptoProviderId(
 			long companyId, String providerId, ProviderRole providerRole)
 		throws CryptoManagerException {
 
@@ -667,15 +659,14 @@ public class CryptoManagerImpl implements CryptoManager {
 	@Reference
 	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
 
-	private ServiceTrackerMap<String, List<CryptoVaultProvider>>
-		_serviceTrackerMap;
+	private ServiceTrackerMap<String, List<CryptoProvider>> _serviceTrackerMap;
 
 	@FunctionalInterface
 	private interface KeyGenerator {
 
 		public CryptoServiceResult<String> generate(
-				CryptoVaultProvider cryptoVaultProvider, String algorithm,
-				long companyId, String identifier)
+				CryptoProvider cryptoProvider, String algorithm, long companyId,
+				String identifier)
 			throws CryptoManagerException;
 
 	}
