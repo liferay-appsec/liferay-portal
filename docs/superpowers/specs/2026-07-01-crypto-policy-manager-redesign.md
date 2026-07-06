@@ -34,8 +34,8 @@ Concretely, `FIPSModeValidator` keeps companion providers registered in FIPS mod
 `SUN`, `SunJCE`, and others are whitelisted in both the BCFIPS and Amazon Corretto
 lists (`FIPSModeValidator.java:155-164`). `SUN` unconditionally registers MD5 and
 SHA-1. Enumerating `Security.getProviders()` therefore surfaces MD5 and SHA-1 even with
-`fips.enabled=true`, so `getAllowedAlgorithms(MESSAGE_DIGEST)` would contain MD5 and
-`checkAlgorithm("MD5", MESSAGE_DIGEST)` would not throw — defeating the gate and
+`fips.enabled=true`, so the prior gate's approved set for `MESSAGE_DIGEST` would contain
+MD5 and `checkAlgorithm("MD5", MESSAGE_DIGEST)` would not throw — defeating the gate and
 contradicting the prior spec's own integration assertions. The prior unit test hid this
 by injecting a single clean mock provider, never exercising the real multi-provider
 path.
@@ -113,9 +113,13 @@ Algorithm Names* spec) against actual Liferay usage found nothing else to gate:
    No external resource file, no parsing, no operator override — a compliance authority
    should have one auditable definition with no runtime failure modes.
 
-1. **`fips.enabled` gates enforcement, not querying.** Query methods always return the
-   catalog (so selection UIs and config validation work in any mode). `checkAlgorithm`
-   is passthrough outside FIPS mode and enforcing (may throw) inside it.
+1. **`fips.enabled` gates both enforcement and filtering.** Every method passes its input
+   through unchanged outside FIPS mode and enforces inside it. `checkAlgorithm` asserts a
+   single value: passthrough outside FIPS, throw on a non-approved value inside. The
+   `getAllowedAlgorithms` / `getAllowedKeySizes` filters take the caller's candidate list
+   and return it unchanged outside FIPS, or its approved subset (order preserved) inside —
+   so a selection UI feeds the algorithms it offers and gets back what it may show, and a
+   validator feeds the configured values and gets back the acceptable ones.
 
 1. **Reuse the existing module and API surface.** Keep the `portal-security-crypto-policy-api`
    / `-impl` modules and the `CryptoPolicyManager` / `ServiceType` / `CryptoPolicyException`
@@ -176,14 +180,23 @@ requested.
 ```java
 public interface CryptoPolicyManager {
 
-    // Advisory. Always returns the catalog set for the service type, regardless of
-    // FIPS mode. Empty set for an unknown or unpopulated service type.
-    Set<String> getAllowedAlgorithms(ServiceType serviceType);
+    // Filters the caller's candidate algorithms.
+    // Non-FIPS: returns the candidates unchanged.
+    // FIPS: returns only the approved candidates for the service type, preserving the
+    // caller's order. Always a SUBSET of the candidates, never a superset — an approved
+    // algorithm the caller did not offer is never added.
+    List<String> getAllowedAlgorithms(
+        ServiceType serviceType, List<String> candidateAlgorithms);
 
-    // Advisory. Returns the approved key sizes for the algorithm, or an EMPTY SET when
-    // the algorithm has no configurable key size (e.g. every MessageDigest, HMAC,
-    // Signature name). Empty means "no key-size constraint," not "nothing is allowed."
-    Set<Integer> getAllowedKeySizes(String algorithm);
+    // Filters the caller's candidate key sizes for the algorithm.
+    // Non-FIPS: returns the candidates unchanged.
+    // FIPS: returns only the approved candidate key sizes, preserving order; when the
+    // algorithm has no key-size constraint the candidates are returned unchanged (an
+    // empty catalog set means "unconstrained," not "nothing allowed"). Pass the BASE
+    // algorithm name (AES, RSA, EC) — no service type is supplied, so Cipher
+    // transformation names are not normalized.
+    List<Integer> getAllowedKeySizes(
+        String algorithm, List<Integer> candidateKeySizes);
 
     // Non-FIPS: returns algorithm unchanged.
     // FIPS: returns algorithm if approved for the service type; else throws.
@@ -300,7 +313,7 @@ applied consistently before every lookup (in both `checkAlgorithm` overloads and
 
 The same normalized base algorithm is used for the key-size lookup, so
 `checkAlgorithm("AES/GCM/NoPadding", 256, CIPHER)` normalizes to `"AES"`, confirms `AES`
-is approved, then checks 256 against `getAllowedKeySizes("AES")`.
+is approved, then checks 256 against the catalog's approved sizes for `AES`.
 
 ### `checkAlgorithm` — key-size semantics
 
@@ -314,9 +327,14 @@ public String checkAlgorithm(String algorithm, int keySize, ServiceType serviceT
     checkAlgorithm(algorithm, serviceType);   // algorithm-level check first
 
     if (isFIPSEnabled()) {
-        Set<Integer> allowedKeySizes = getAllowedKeySizes(algorithm);  // normalized inside
 
-        if (!allowedKeySizes.isEmpty() && !allowedKeySizes.contains(keySize)) {
+        // Reads the catalog directly. The public getAllowedKeySizes is a
+        // mode-aware candidate filter, so checkAlgorithm cannot delegate to it.
+
+        Set<Integer> approvedKeySizes = _getApprovedKeySizes(
+            _baseAlgorithm(algorithm, serviceType));
+
+        if (!approvedKeySizes.isEmpty() && !approvedKeySizes.contains(keySize)) {
             throw new CryptoPolicyException(
                 "Key size " + keySize + " for algorithm \"" + algorithm +
                     "\" is not approved in FIPS mode");
@@ -333,12 +351,23 @@ from "probing failed.") Without this rule, `checkAlgorithm("HmacSHA256", 256,
 KEY_GENERATOR)` — or any size-less algorithm routed through the 3-arg overload — would
 falsely throw.
 
-### Query methods
+### Query methods (candidate filters)
 
-`getAllowedAlgorithms` and `getAllowedKeySizes` always return the catalog contents,
-independent of FIPS mode, so selection UIs and validation work everywhere. Both return
-unmodifiable sets; unknown/unpopulated keys return an empty set (never `null`, never an
-exception).
+`getAllowedAlgorithms` and `getAllowedKeySizes` are mode-aware filters over the caller's
+candidate list, not catalog dumps:
+
+- **Non-FIPS:** early-exit — the caller's list is returned **as-is** (the same instance;
+  no copy, no filtering). A `null` candidate list is returned unchanged.
+- **FIPS:** returns a fresh `List` containing only the approved candidates, in the
+  caller's order. `getAllowedAlgorithms` matches case-insensitively and applies
+  `CIPHER`-only transformation reduction to each candidate before the catalog test, but
+  returns the caller's original strings. `getAllowedKeySizes` returns the candidates
+  unchanged when the algorithm has no key-size constraint (empty catalog set =
+  "unconstrained").
+
+The result is always a **subset** of the candidates, never a superset — an approved value
+the caller did not offer is never introduced. The full approved catalog is not itself
+externally queryable (see Maintenance).
 
 ## Call-Site Wiring and Compatibility Consequences
 
@@ -381,10 +410,14 @@ Decided consequences to document, not discover:
 
 - `CryptoPolicyException` (unchecked) only in FIPS mode, only for a non-approved
   algorithm or a constrained-but-non-approved key size.
-- Unknown `ServiceType`, unknown algorithm, or an algorithm without a configurable key
-  size → empty set from the query methods and no exception from the 3-arg
-  `checkAlgorithm` (empty = unconstrained).
-- Non-FIPS mode → `checkAlgorithm` never throws.
+- Unknown `ServiceType` or unknown algorithm → the FIPS filter drops every candidate (an
+  empty result); an algorithm without a configurable key size → the FIPS key-size filter
+  returns the candidates unchanged and the 3-arg `checkAlgorithm` does not throw on size
+  (empty = unconstrained).
+- The query filters never throw and never return `null` in FIPS mode (a `null` candidate
+  list is returned unchanged only through the non-FIPS early exit).
+- Non-FIPS mode → `checkAlgorithm` never throws and the filters return their input
+  unchanged.
 
 ## Testing
 
@@ -396,27 +429,38 @@ Named tests:
 
 - `testNonFIPSPassesThroughUnchanged` — every `checkAlgorithm` returns its input verbatim
   when FIPS is off, including non-approved algorithms.
+- `testGetAllowedNonFIPSReturnsCandidatesUnchanged` — when FIPS is off, both filters
+  return the caller's candidate list as the same instance, non-approved entries included.
 - `testFIPSApprovedAlgorithmReturned` — `checkAlgorithm("SHA-256", MESSAGE_DIGEST)`
   returns `"SHA-256"`.
-- `testFIPSNonApprovedAlgorithmThrows` — `checkAlgorithm("MD5", MESSAGE_DIGEST)` throws;
-  `getAllowedAlgorithms(MESSAGE_DIGEST)` contains neither `MD5` nor `SHA-1`.
-- `testKeySizeConstraintEnforced` — `getAllowedKeySizes("AES")` equals `{128,192,256}`;
-  `checkAlgorithm("AES", 192, CIPHER)` returns; `checkAlgorithm("AES", 200, CIPHER)`
-  throws.
-- `testEmptyKeySizeSetAccepts` — `checkAlgorithm("HmacSHA256", 256, KEY_GENERATOR)` and
-  `checkAlgorithm("SHA-256", 0, MESSAGE_DIGEST)` return without throwing (no size
-  constraint).
+- `testFIPSNonApprovedAlgorithmThrows` — `checkAlgorithm("MD5", MESSAGE_DIGEST)` throws.
+- `testGetAllowedAlgorithmsReturnsApprovedSubsetOfCandidates` — in FIPS,
+  `getAllowedAlgorithms(KEY_PAIR_GENERATOR, ["RSA", "DSA"])` returns exactly `["RSA"]`:
+  `DSA` (offered, not approved) is dropped, and `EC` (approved, not offered) is never
+  added. This is the defining subset-not-superset contract of the redesign.
+- `testGetAllowedAlgorithmsExcludesLegacyPreservingOrder` — in FIPS,
+  `getAllowedAlgorithms(MESSAGE_DIGEST, ["MD5", "SHA-256", "SHA-1", "SHA-512"])` returns
+  `["SHA-256", "SHA-512"]` (legacy dropped, order preserved).
+- `testKeySizeConstraintEnforced` — `checkAlgorithm("AES", 192, CIPHER)` returns;
+  `checkAlgorithm("AES", 200, CIPHER)` throws.
+- `testGetAllowedKeySizesFiltersToApproved` — in FIPS,
+  `getAllowedKeySizes("RSA", [1024, 2048, 3072, 4096])` returns `[2048, 3072, 4096]`.
+- `testGetAllowedKeySizesUnconstrainedReturnsAllCandidates` — in FIPS,
+  `getAllowedKeySizes("SHA-256", [128, 256])` returns `[128, 256]` unchanged (no size
+  constraint → empty catalog set → all candidates pass).
+- `testEmptyKeySizeSetAccepts` — `checkAlgorithm("HmacSHA256", 256, KEY_GENERATOR)`
+  returns without throwing (no size constraint).
 - `testNormalizationReducesCipherTransformation` — `checkAlgorithm("AES/GCM/NoPadding",
   256, CIPHER)` returns; a non-approved base still throws after normalization, e.g.
   `checkAlgorithm("DES/CBC/PKCS5Padding", CIPHER)`.
+- `testSHA512SlashDigestIsApproved` — `checkAlgorithm("SHA-512/256", MESSAGE_DIGEST)`
+  returns (the `/` in the digest name is not stripped).
 - `testSHA1SplitByServiceType` — `checkAlgorithm("PBKDF2WithHmacSHA1",
   SECRET_KEY_FACTORY)` and `checkAlgorithm("HmacSHA1", MAC)` pass; `checkAlgorithm("SHA-1",
   MESSAGE_DIGEST)` and `checkAlgorithm("SHA1withRSA", SIGNATURE)` throw.
 - `testKeyStoreFormatGated` — `checkAlgorithm("PKCS12", KEY_STORE)` returns;
   `checkAlgorithm("jks", KEY_STORE)` and `checkAlgorithm("JKS", KEY_STORE)` both throw
   (case-insensitive).
-- `testUnknownServiceTypeReturnsEmptySet` — `getAllowedAlgorithms` on an unpopulated
-  service type returns an empty set.
 
 ## Maintenance and Known Limitations
 
@@ -432,6 +476,12 @@ Named tests:
   decrypt-only), so it lists only "approved for new use."
 - **No `KEY_AGREEMENT` service type.** ECDH / DH are not covered (no portal-layer call
   sites — see ServiceType coverage). Add the value if a direct consumer appears.
+- **The full approved catalog is not externally queryable.** The query methods are
+  candidate filters — they only ever narrow a caller-supplied list — so no consumer can
+  enumerate the entire approved set through the API. This is a deliberate consequence of
+  dropping the no-arg query forms in favor of the mode-aware filters. A maintainer who
+  needs a compliance dump reads the `static` catalog table in `CryptoPolicyManagerImpl`
+  directly.
 - **`KEY_STORE` is policy-driven, not Annex-C-derived** (see the catalog note). Its
   approved set (`PKCS12`, `BCFKS`) reflects keystore-format suitability, so it is the one
   catalog row a maintainer updates on format guidance rather than on an SP 800-140C change.
