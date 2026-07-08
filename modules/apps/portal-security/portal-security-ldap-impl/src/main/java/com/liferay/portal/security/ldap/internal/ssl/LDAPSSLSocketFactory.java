@@ -45,16 +45,23 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 
 	@Override
 	public Socket createSocket() throws IOException {
-		return new LDAPSSLSocket(
-			_configure((SSLSocket)_sslSocketFactory.createSocket()));
+		SSLSocket sslSocket = (SSLSocket)_sslSocketFactory.createSocket();
+
+		_configure(sslSocket);
+
+		return new LDAPSSLSocket(sslSocket);
 	}
 
 	@Override
 	public Socket createSocket(InetAddress inetAddress, int port)
 		throws IOException {
 
-		return _configure(
-			(SSLSocket)_sslSocketFactory.createSocket(inetAddress, port));
+		SSLSocket sslSocket = (SSLSocket)_sslSocketFactory.createSocket(
+			inetAddress, port);
+
+		_configure(sslSocket);
+
+		return sslSocket;
 	}
 
 	@Override
@@ -63,15 +70,22 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 			int localPort)
 		throws IOException {
 
-		return _configure(
-			(SSLSocket)_sslSocketFactory.createSocket(
-				inetAddress, port, localAddress, localPort));
+		SSLSocket sslSocket = (SSLSocket)_sslSocketFactory.createSocket(
+			inetAddress, port, localAddress, localPort);
+
+		_configure(sslSocket);
+
+		return sslSocket;
 	}
 
 	@Override
 	public Socket createSocket(String host, int port) throws IOException {
-		return _configure(
-			(SSLSocket)_sslSocketFactory.createSocket(host, port));
+		SSLSocket sslSocket = (SSLSocket)_sslSocketFactory.createSocket(
+			host, port);
+
+		_configure(sslSocket);
+
+		return sslSocket;
 	}
 
 	@Override
@@ -79,9 +93,12 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 			String host, int port, InetAddress inetAddress, int localPort)
 		throws IOException {
 
-		return _configure(
-			(SSLSocket)_sslSocketFactory.createSocket(
-				host, port, inetAddress, localPort));
+		SSLSocket sslSocket = (SSLSocket)_sslSocketFactory.createSocket(
+			host, port, inetAddress, localPort);
+
+		_configure(sslSocket);
+
+		return sslSocket;
 	}
 
 	private LDAPSSLSocketFactory() {
@@ -99,7 +116,7 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 		}
 	}
 
-	private SSLSocket _configure(SSLSocket sslSocket) {
+	private void _configure(SSLSocket sslSocket) {
 		Set<String> enabledProtocols = SetUtil.intersect(
 			ListUtil.fromArray(_ENABLED_PROTOCOLS),
 			ListUtil.fromArray(sslSocket.getSupportedProtocols()));
@@ -108,11 +125,12 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 
 		String[] cipherSuites = _cipherSuites.get();
 
-		String[] desired =
-			(cipherSuites != null) ? cipherSuites : _ALLOWED_CIPHER_SUITES;
+		if (cipherSuites == null) {
+			cipherSuites = _ALLOWED_CIPHER_SUITES;
+		}
 
 		Set<String> enabledCipherSuites = SetUtil.intersect(
-			ListUtil.fromArray(desired),
+			ListUtil.fromArray(cipherSuites),
 			ListUtil.fromArray(sslSocket.getSupportedCipherSuites()));
 
 		if (enabledCipherSuites.isEmpty()) {
@@ -129,8 +147,6 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 		sslParameters.setEndpointIdentificationAlgorithm("LDAPS");
 
 		sslSocket.setSSLParameters(sslParameters);
-
-		return sslSocket;
 	}
 
 	private static final String[] _ALLOWED_CIPHER_SUITES = {
