@@ -23,11 +23,9 @@ if (credentials.equals(Portal.TEMP_OBFUSCATION_VALUE)) {
 	credentials = ldapServerConfiguration.securityCredential();
 }
 
-boolean fipsRejected = PropsValues.FIPS_ENABLED && FIPSModeUtil.isNotSecureProtocol(baseProviderURL);
-
 SafeLdapContext safeLdapContext = null;
 
-if (!fipsRejected) {
+if (!PropsValues.FIPS_ENABLED || !FIPSModeUtil.isNotAllowedProtocol(baseProviderURL)) {
 	SafePortalLDAP safePortalLDAP = SafePortalLDAPUtil.getSafePortalLDAP();
 
 	safeLdapContext = safePortalLDAP.getSafeLdapContext(companyId, baseProviderURL, principal, credentials);
@@ -35,7 +33,7 @@ if (!fipsRejected) {
 %>
 
 <c:choose>
-	<c:when test="<%= fipsRejected %>">
+	<c:when test="<%= PropsValues.FIPS_ENABLED && FIPSModeUtil.isNotAllowedProtocol(baseProviderURL) %>">
 		<liferay-ui:message key="fips-mode-requires-the-ldaps-scheme-for-ldap-connections" />
 	</c:when>
 	<c:when test="<%= safeLdapContext != null %>">
