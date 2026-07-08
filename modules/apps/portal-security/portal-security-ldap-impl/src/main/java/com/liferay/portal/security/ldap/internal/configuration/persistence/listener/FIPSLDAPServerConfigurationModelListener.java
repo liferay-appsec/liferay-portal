@@ -45,8 +45,8 @@ public class FIPSLDAPServerConfigurationModelListener
 
 		if (FIPSModeUtil.isNotAllowedProtocol(baseProviderURL)) {
 			throw new LDAPConfigurationModelListenerException(
-				"FIPS mode requires the LDAP base provider URL to use the " +
-					"\"ldaps://\" scheme " + baseProviderURL,
+				"The LDAP base provider URL \"" + baseProviderURL +
+					"\" must use the \"ldaps://\" scheme in FIPS mode",
 				"fips-mode-requires-the-ldaps-scheme-for-the-base-provider-" +
 					"url-x",
 				new Object[] {baseProviderURL}, LDAPServerConfiguration.class,
