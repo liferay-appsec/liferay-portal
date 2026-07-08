@@ -467,7 +467,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		SafeLdapReferralUtil.setProperties(
 			environmentProperties, systemLDAPConfiguration.referral());
 
-		String[] fipsCipherSuites = null;
+		String[] cipherSuites = null;
 
 		if (PropsValues.FIPS_ENABLED) {
 			environmentProperties.put(Context.SECURITY_PROTOCOL, "ssl");
@@ -475,10 +475,10 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 				"java.naming.ldap.factory.socket",
 				LDAPSSLSocketFactory.class.getName());
 
-			fipsCipherSuites = systemLDAPConfiguration.fipsCipherSuites();
+			cipherSuites = systemLDAPConfiguration.fipsCipherSuites();
 
-			if (ArrayUtil.isNotEmpty(fipsCipherSuites)) {
-				LDAPSSLSocketFactory.setCipherSuitesOverride(fipsCipherSuites);
+			if (ArrayUtil.isNotEmpty(cipherSuites)) {
+				LDAPSSLSocketFactory.setCipherSuitesOverride(cipherSuites);
 			}
 		}
 
@@ -506,7 +506,7 @@ public class SafePortalLDAPImpl implements SafePortalLDAP {
 		}
 		finally {
 			if (PropsValues.FIPS_ENABLED &&
-				ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+				ArrayUtil.isNotEmpty(cipherSuites)) {
 
 				LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 			}

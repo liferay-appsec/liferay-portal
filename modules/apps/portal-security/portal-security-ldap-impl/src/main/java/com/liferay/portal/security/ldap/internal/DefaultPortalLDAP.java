@@ -173,7 +173,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		SafeLdapReferralUtil.setProperties(
 			environmentProperties, systemLDAPConfiguration.referral());
 
-		String[] fipsCipherSuites = null;
+		String[] cipherSuites = null;
 
 		if (PropsValues.FIPS_ENABLED) {
 			environmentProperties.put(Context.SECURITY_PROTOCOL, "ssl");
@@ -181,10 +181,10 @@ public class DefaultPortalLDAP implements PortalLDAP {
 				"java.naming.ldap.factory.socket",
 				LDAPSSLSocketFactory.class.getName());
 
-			fipsCipherSuites = systemLDAPConfiguration.fipsCipherSuites();
+			cipherSuites = systemLDAPConfiguration.fipsCipherSuites();
 
-			if (ArrayUtil.isNotEmpty(fipsCipherSuites)) {
-				LDAPSSLSocketFactory.setCipherSuitesOverride(fipsCipherSuites);
+			if (ArrayUtil.isNotEmpty(cipherSuites)) {
+				LDAPSSLSocketFactory.setCipherSuitesOverride(cipherSuites);
 			}
 		}
 
@@ -218,7 +218,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		}
 		finally {
 			if (PropsValues.FIPS_ENABLED &&
-				ArrayUtil.isNotEmpty(fipsCipherSuites)) {
+				ArrayUtil.isNotEmpty(cipherSuites)) {
 
 				LDAPSSLSocketFactory.setCipherSuitesOverride(null);
 			}
