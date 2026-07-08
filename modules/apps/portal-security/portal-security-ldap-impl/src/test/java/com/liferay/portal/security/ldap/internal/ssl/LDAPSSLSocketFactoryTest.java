@@ -15,8 +15,10 @@ import java.net.Socket;
 
 import java.util.List;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 
 import org.junit.After;
@@ -42,11 +44,12 @@ public class LDAPSSLSocketFactoryTest {
 
 	@Test
 	public void testCreateSocket() throws IOException {
-		Socket socket = LDAPSSLSocketFactory.getDefault(
-		).createSocket();
+		SocketFactory socketFactory = LDAPSSLSocketFactory.getDefault();
 
-		SSLSocket delegate = ReflectionTestUtil.getFieldValue(
-			socket, "_delegate");
+		Socket socket = socketFactory.createSocket();
+
+		SSLSocket sslSocket = ReflectionTestUtil.getFieldValue(
+			socket, "_sslSocket");
 
 		try {
 			socket.connect(new InetSocketAddress("localhost", 64999), 1000);
@@ -54,8 +57,9 @@ public class LDAPSSLSocketFactoryTest {
 		catch (IOException ioException) {
 		}
 
-		List<SNIServerName> serverNames = delegate.getSSLParameters(
-		).getServerNames();
+		SSLParameters sslParameters = sslSocket.getSSLParameters();
+
+		List<SNIServerName> serverNames = sslParameters.getServerNames();
 
 		Assert.assertEquals(serverNames.toString(), 1, serverNames.size());
 		Assert.assertTrue(serverNames.get(0) instanceof SNIHostName);
@@ -67,14 +71,8 @@ public class LDAPSSLSocketFactoryTest {
 		LDAPSSLSocketFactory.setCipherSuitesOverride(
 			new String[] {"TLS_FAKE_NONEXISTENT_CIPHER"});
 
-		try {
-			LDAPSSLSocketFactory.getDefault(
-			).createSocket();
-
-			Assert.fail();
-		}
-		catch (SecurityException securityException) {
-		}
+		Assert.assertThrows(
+			SecurityException.class, socketFactory::createSocket);
 	}
 
 }
