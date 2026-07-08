@@ -131,7 +131,7 @@ public class DefaultPortalLDAP implements PortalLDAP {
 		throws Exception {
 
 		if (PropsValues.FIPS_ENABLED &&
-			FIPSModeUtil.isNotSecureProtocol(providerURL)) {
+			FIPSModeUtil.isNotAllowedProtocol(providerURL)) {
 
 			throw new SecurityException(
 				"FIPS mode requires the \"ldaps://\" scheme");
