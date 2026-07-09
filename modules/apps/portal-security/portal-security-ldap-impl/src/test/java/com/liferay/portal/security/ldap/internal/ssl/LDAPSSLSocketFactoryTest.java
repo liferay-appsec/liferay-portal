@@ -5,10 +5,7 @@
 
 package com.liferay.portal.security.ldap.internal.ssl;
 
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-
-import java.io.IOException;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -27,6 +24,9 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
 /**
  * @author Jorge García Jiménez
  */
@@ -43,23 +43,31 @@ public class LDAPSSLSocketFactoryTest {
 	}
 
 	@Test
-	public void testCreateSocket() throws IOException {
-		SocketFactory socketFactory = LDAPSSLSocketFactory.getDefault();
+	public void testConnectSetsServerName() throws Exception {
+		SSLSocket sslSocket = Mockito.mock(SSLSocket.class);
 
-		Socket socket = socketFactory.createSocket();
+		Mockito.when(
+			sslSocket.getSSLParameters()
+		).thenReturn(
+			new SSLParameters()
+		);
 
-		SSLSocket sslSocket = ReflectionTestUtil.getFieldValue(
-			socket, "_sslSocket");
+		LDAPSSLSocket ldapSSLSocket = new LDAPSSLSocket(sslSocket);
 
-		try {
-			socket.connect(new InetSocketAddress("localhost", 64999), 1000);
-		}
-		catch (IOException ioException) {
-		}
+		ldapSSLSocket.connect(
+			InetSocketAddress.createUnresolved("localhost", 636));
 
-		SSLParameters sslParameters = sslSocket.getSSLParameters();
+		ArgumentCaptor<SSLParameters> argumentCaptor = ArgumentCaptor.forClass(
+			SSLParameters.class);
 
-		List<SNIServerName> serverNames = sslParameters.getServerNames();
+		Mockito.verify(
+			sslSocket
+		).setSSLParameters(
+			argumentCaptor.capture()
+		);
+
+		List<SNIServerName> serverNames = argumentCaptor.getValue(
+		).getServerNames();
 
 		Assert.assertEquals(serverNames.toString(), 1, serverNames.size());
 		Assert.assertTrue(serverNames.get(0) instanceof SNIHostName);
@@ -67,12 +75,26 @@ public class LDAPSSLSocketFactoryTest {
 		SNIHostName sniHostName = (SNIHostName)serverNames.get(0);
 
 		Assert.assertEquals("localhost", sniHostName.getAsciiName());
+	}
 
+	@Test
+	public void testCreateSocketRejectsUnsupportedCipherSuites() {
 		LDAPSSLSocketFactory.setCipherSuitesOverride(
 			new String[] {"TLS_FAKE_NONEXISTENT_CIPHER"});
 
+		SocketFactory socketFactory = LDAPSSLSocketFactory.getDefault();
+
 		Assert.assertThrows(
 			SecurityException.class, socketFactory::createSocket);
+	}
+
+	@Test
+	public void testCreateSocketWrapsSSLSocket() throws Exception {
+		SocketFactory socketFactory = LDAPSSLSocketFactory.getDefault();
+
+		Socket socket = socketFactory.createSocket();
+
+		Assert.assertTrue(socket instanceof LDAPSSLSocket);
 	}
 
 }
