@@ -31,27 +31,16 @@ public interface CryptoManager {
 			long companyId, KeyReference keyReference, byte[] plaintext)
 		throws CryptoException;
 
-	/**
-	 * Exports the plaintext key material referenced by the given key reference.
-	 * This is the only operation that removes a key from the vault in plaintext
-	 * form, so treat it as a deliberate, audited action: prefer referencing keys
-	 * by {@link KeyReference} and unwrapping into the vault, and call this method
-	 * only when a caller genuinely requires the raw key outside the module.
-	 *
-	 * @return the plaintext key material paired with its service indicator
-	 */
 	public CryptoServiceResult<Key> exportKey(
 			long companyId, KeyReference keyReference)
 		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> generateAsymmetricKeyPair(
-			String algorithm, long companyId, String identifier,
-			String providerId)
+			String algorithm, long companyId, KeyReference keyReference)
 		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> generateSecretKey(
-			String algorithm, long companyId, String identifier,
-			String providerId)
+			String algorithm, long companyId, KeyReference keyReference)
 		throws CryptoException;
 
 	public CryptoKey getCryptoKey(long companyId, KeyReference keyReference)
@@ -63,26 +52,19 @@ public interface CryptoManager {
 
 	public List<String> getProviderIds(long companyId) throws CryptoException;
 
-	/**
-	 * Imports the given raw key material into the vault. This method zeroes the
-	 * passed array before returning, so the caller must not reuse or rely on its
-	 * contents afterward.
-	 *
-	 * @return the imported key reference paired with its service indicator
-	 */
 	public CryptoServiceResult<KeyReference> importSecretKey(
-			String algorithm, long companyId, String identifier,
-			String providerId, byte[] rawKeyMaterial)
+			String algorithm, long companyId, KeyReference keyReference,
+			byte[] rawKeyMaterial)
 		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> unwrap(
-			long companyId, String identifier, KeyReference masterKeyReference,
-			String wrappedKeyAlgorithm, byte[] wrappedKeyBytes,
-			int wrappedKeyCipherType)
+			long companyId, KeyReference keyReference,
+			KeyReference masterKeyReference, String wrappedKeyAlgorithm,
+			byte[] wrappedKeyBytes, int wrappedKeyCipherType)
 		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> wrap(
-			long companyId, KeyReference keyToWrapReference,
+			long companyId, KeyReference keyReference,
 			KeyReference masterKeyReference)
 		throws CryptoException;
 

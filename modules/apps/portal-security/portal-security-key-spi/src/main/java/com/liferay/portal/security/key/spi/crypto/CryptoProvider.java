@@ -64,7 +64,7 @@ public interface CryptoProvider {
 		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> wrap(
-			long companyId, String keyToWrapIdentifier, String masterIdentifier)
+			long companyId, String identifier, String masterIdentifier)
 		throws CryptoException;
 
 }

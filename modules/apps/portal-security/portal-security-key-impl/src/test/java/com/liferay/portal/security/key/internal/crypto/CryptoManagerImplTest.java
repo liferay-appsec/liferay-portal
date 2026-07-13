@@ -222,7 +222,7 @@ public class CryptoManagerImplTest {
 			CryptoException.class,
 			() -> _cryptoManagerImpl.importSecretKey(
 				RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
-				RandomTestUtil.randomString(), providerId, rawKeyMaterial));
+				_keyReference(providerId), rawKeyMaterial));
 
 		for (byte b : rawKeyMaterial) {
 			Assert.assertEquals(0, b);
@@ -258,7 +258,7 @@ public class CryptoManagerImplTest {
 
 		CryptoServiceResult<KeyReference> cryptoServiceResult =
 			_cryptoManagerImpl.unwrap(
-				RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomLong(), _keyReference(providerId),
 				_keyReference(providerId), RandomTestUtil.randomString(),
 				RandomTestUtil.randomBytes(), RandomTestUtil.randomInt());
 

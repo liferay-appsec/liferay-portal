@@ -175,26 +175,21 @@ public class CryptoManagerImpl implements CryptoManager {
 
 	@Override
 	public CryptoServiceResult<KeyReference> generateAsymmetricKeyPair(
-			String algorithm, long companyId, String identifier,
-			String providerId)
+			String algorithm, long companyId, KeyReference keyReference)
 		throws CryptoException {
 
 		if (algorithm == null) {
 			throw new IllegalArgumentException("Algorithm is null");
 		}
 
-		if (identifier == null) {
-			throw new IllegalArgumentException("Identifier is null");
-		}
-
-		if (providerId == null) {
-			throw new IllegalArgumentException("Provider ID is null");
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
 			return _generate(
-				algorithm, companyId, identifier,
-				CryptoProvider::generateAsymmetricKeyPair, providerId);
+				algorithm, companyId, CryptoProvider::generateAsymmetricKeyPair,
+				keyReference);
 		}
 		catch (CryptoException cryptoException) {
 			if (_log.isWarnEnabled()) {
@@ -208,26 +203,21 @@ public class CryptoManagerImpl implements CryptoManager {
 
 	@Override
 	public CryptoServiceResult<KeyReference> generateSecretKey(
-			String algorithm, long companyId, String identifier,
-			String providerId)
+			String algorithm, long companyId, KeyReference keyReference)
 		throws CryptoException {
 
 		if (algorithm == null) {
 			throw new IllegalArgumentException("Algorithm is null");
 		}
 
-		if (identifier == null) {
-			throw new IllegalArgumentException("Identifier is null");
-		}
-
-		if (providerId == null) {
-			throw new IllegalArgumentException("Provider ID is null");
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		try {
 			return _generate(
-				algorithm, companyId, identifier,
-				CryptoProvider::generateSecretKey, providerId);
+				algorithm, companyId, CryptoProvider::generateSecretKey,
+				keyReference);
 		}
 		catch (CryptoException cryptoException) {
 			if (_log.isWarnEnabled()) {
@@ -332,20 +322,16 @@ public class CryptoManagerImpl implements CryptoManager {
 
 	@Override
 	public CryptoServiceResult<KeyReference> importSecretKey(
-			String algorithm, long companyId, String identifier,
-			String providerId, byte[] rawKeyMaterial)
+			String algorithm, long companyId, KeyReference keyReference,
+			byte[] rawKeyMaterial)
 		throws CryptoException {
 
 		if (algorithm == null) {
 			throw new IllegalArgumentException("Algorithm is null");
 		}
 
-		if (identifier == null) {
-			throw new IllegalArgumentException("Identifier is null");
-		}
-
-		if (providerId == null) {
-			throw new IllegalArgumentException("Provider ID is null");
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		if (rawKeyMaterial == null) {
@@ -353,15 +339,16 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			providerId = _getCryptoProviderId(
-				companyId, providerId, ProviderRole.DEK);
+			String resolvedKeyProviderId = _getCryptoProviderId(
+				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, providerId);
+				companyId, resolvedKeyProviderId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
 				cryptoProvider.importSecretKey(
-					algorithm, companyId, identifier, rawKeyMaterial);
+					algorithm, companyId, keyReference.getIdentifier(),
+					rawKeyMaterial);
 
 			_auditServiceIndicator(
 				companyId, "importSecretKey",
@@ -370,7 +357,7 @@ public class CryptoManagerImpl implements CryptoManager {
 			return new CryptoServiceResult<>(
 				cryptoServiceResult.getServiceIndicator(),
 				new KeyReference(
-					cryptoServiceResult.getValue(), providerId,
+					cryptoServiceResult.getValue(), resolvedKeyProviderId,
 					KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
@@ -389,13 +376,13 @@ public class CryptoManagerImpl implements CryptoManager {
 
 	@Override
 	public CryptoServiceResult<KeyReference> unwrap(
-			long companyId, String identifier, KeyReference masterKeyReference,
-			String wrappedKeyAlgorithm, byte[] wrappedKeyBytes,
-			int wrappedKeyCipherType)
+			long companyId, KeyReference keyReference,
+			KeyReference masterKeyReference, String wrappedKeyAlgorithm,
+			byte[] wrappedKeyBytes, int wrappedKeyCipherType)
 		throws CryptoException {
 
-		if (identifier == null) {
-			throw new IllegalArgumentException("Identifier is null");
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		if (masterKeyReference == null) {
@@ -411,17 +398,31 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedProviderId = _getCryptoProviderId(
+			String resolvedKeyProviderId = _getCryptoProviderId(
+				companyId, keyReference.getProviderId(), ProviderRole.DEK);
+
+			String resolvedMasterKeyProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
+			if (!Objects.equals(
+					resolvedKeyProviderId, resolvedMasterKeyProviderId)) {
+
+				throw new CryptoException(
+					StringBundler.concat(
+						"Key provider ", resolvedKeyProviderId,
+						" does not match master key provider ",
+						resolvedMasterKeyProviderId));
+			}
+
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedProviderId);
+				companyId, resolvedKeyProviderId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
 				cryptoProvider.unwrap(
-					companyId, identifier, masterKeyReference.getIdentifier(),
-					wrappedKeyAlgorithm, wrappedKeyBytes, wrappedKeyCipherType);
+					companyId, keyReference.getIdentifier(),
+					masterKeyReference.getIdentifier(), wrappedKeyAlgorithm,
+					wrappedKeyBytes, wrappedKeyCipherType);
 
 			_auditServiceIndicator(
 				companyId, "unwrap", cryptoServiceResult.getServiceIndicator());
@@ -429,7 +430,7 @@ public class CryptoManagerImpl implements CryptoManager {
 			return new CryptoServiceResult<>(
 				cryptoServiceResult.getServiceIndicator(),
 				new KeyReference(
-					cryptoServiceResult.getValue(), resolvedProviderId,
+					cryptoServiceResult.getValue(), resolvedKeyProviderId,
 					KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
@@ -443,12 +444,12 @@ public class CryptoManagerImpl implements CryptoManager {
 
 	@Override
 	public CryptoServiceResult<byte[]> wrap(
-			long companyId, KeyReference keyToWrapReference,
+			long companyId, KeyReference keyReference,
 			KeyReference masterKeyReference)
 		throws CryptoException {
 
-		if (keyToWrapReference == null) {
-			throw new IllegalArgumentException("Key to wrap reference is null");
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Key reference is null");
 		}
 
 		if (masterKeyReference == null) {
@@ -456,30 +457,29 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedKeyToWrapProviderId = _getCryptoProviderId(
-				companyId, keyToWrapReference.getProviderId(),
-				ProviderRole.DEK);
+			String resolvedKeyProviderId = _getCryptoProviderId(
+				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			String resolvedMasterKeyProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
 			if (!Objects.equals(
-					resolvedKeyToWrapProviderId, resolvedMasterKeyProviderId)) {
+					resolvedKeyProviderId, resolvedMasterKeyProviderId)) {
 
 				throw new CryptoException(
 					StringBundler.concat(
-						"Key to wrap provider ", resolvedKeyToWrapProviderId,
+						"Key provider ", resolvedKeyProviderId,
 						" does not match master key provider ",
 						resolvedMasterKeyProviderId));
 			}
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedMasterKeyProviderId);
+				companyId, resolvedKeyProviderId);
 
 			CryptoServiceResult<byte[]> cryptoServiceResult =
 				cryptoProvider.wrap(
-					companyId, keyToWrapReference.getIdentifier(),
+					companyId, keyReference.getIdentifier(),
 					masterKeyReference.getIdentifier());
 
 			_auditServiceIndicator(
@@ -539,16 +539,16 @@ public class CryptoManagerImpl implements CryptoManager {
 	}
 
 	private CryptoServiceResult<KeyReference> _generate(
-			String algorithm, long companyId, String identifier,
-			KeyGenerator keyGenerator, String providerId)
+			String algorithm, long companyId, KeyGenerator keyGenerator,
+			KeyReference keyReference)
 		throws CryptoException {
 
-		providerId = _getCryptoProviderId(
-			companyId, providerId, ProviderRole.DEK);
+		String resolvedKeyProviderId = _getCryptoProviderId(
+			companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 		CryptoServiceResult<String> cryptoServiceResult = keyGenerator.generate(
-			_getCryptoProvider(companyId, providerId), algorithm, companyId,
-			identifier);
+			_getCryptoProvider(companyId, resolvedKeyProviderId), algorithm,
+			companyId, keyReference.getIdentifier());
 
 		_auditServiceIndicator(
 			companyId, "generate", cryptoServiceResult.getServiceIndicator());
@@ -556,7 +556,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		return new CryptoServiceResult<>(
 			cryptoServiceResult.getServiceIndicator(),
 			new KeyReference(
-				cryptoServiceResult.getValue(), providerId,
+				cryptoServiceResult.getValue(), resolvedKeyProviderId,
 				KeyReference.Type.CRYPTO));
 	}
 
