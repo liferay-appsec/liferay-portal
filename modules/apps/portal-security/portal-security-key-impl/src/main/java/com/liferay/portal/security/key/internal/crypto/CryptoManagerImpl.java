@@ -282,7 +282,7 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 		catch (CryptoException cryptoException) {
 			if (_log.isWarnEnabled()) {
-				_log.warn("Unable to list key identifiers", cryptoException);
+				_log.warn("Unable to get key identifiers", cryptoException);
 			}
 
 			throw cryptoException;
