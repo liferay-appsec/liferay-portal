@@ -85,10 +85,10 @@ public class UpdateCertificateMVCActionCommandTest {
 		Assert.assertFalse(_isValidX509Certificate(x509Certificate));
 	}
 
-	private boolean _isValidX509Certificate(X509Certificate certificate) {
+	private boolean _isValidX509Certificate(X509Certificate x509Certificate) {
 		return ReflectionTestUtil.invoke(
 			_actionCommand, "_isValidX509Certificate",
-			new Class<?>[] {X509Certificate.class}, certificate);
+			new Class<?>[] {X509Certificate.class}, x509Certificate);
 	}
 
 	private X509Certificate _mockCertificateWithRSAKey(int keySize) {
