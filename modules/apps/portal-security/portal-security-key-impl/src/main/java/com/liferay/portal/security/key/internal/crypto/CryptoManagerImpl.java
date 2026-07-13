@@ -268,17 +268,18 @@ public class CryptoManagerImpl implements CryptoManager {
 			CryptoProvider cryptoProvider = _getCryptoProvider(
 				companyId, resolvedProviderId);
 
-			List<String> identifiers = cryptoProvider.getKeyIdentifiers(
+			List<String> keyIdentifiers = cryptoProvider.getKeyIdentifiers(
 				companyId);
 
-			if (identifiers == null) {
+			if (keyIdentifiers == null) {
 				return Collections.emptyList();
 			}
 
 			return TransformUtil.transform(
-				identifiers,
-				identifier -> new KeyReference(
-					identifier, resolvedProviderId, KeyReference.Type.CRYPTO));
+				keyIdentifiers,
+				keyIdentifier -> new KeyReference(
+					keyIdentifier, resolvedProviderId,
+					KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
 			if (_log.isWarnEnabled()) {
