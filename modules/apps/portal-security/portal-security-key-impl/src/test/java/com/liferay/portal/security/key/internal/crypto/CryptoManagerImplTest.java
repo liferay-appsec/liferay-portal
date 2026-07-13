@@ -49,8 +49,6 @@ public class CryptoManagerImplTest {
 	public void setUp() {
 		MockitoAnnotations.openMocks(this);
 
-		_cryptoManagerImpl = new CryptoManagerImpl();
-
 		ReflectionTestUtil.setFieldValue(
 			_cryptoManagerImpl, "_keyManagerProfileRegistry",
 			_keyManagerProfileRegistry);
@@ -389,7 +387,8 @@ public class CryptoManagerImplTest {
 		}
 	}
 
-	private CryptoManagerImpl _cryptoManagerImpl;
+	private final CryptoManagerImpl _cryptoManagerImpl =
+		new CryptoManagerImpl();
 
 	@Mock
 	private CryptoProvider _cryptoProvider;
