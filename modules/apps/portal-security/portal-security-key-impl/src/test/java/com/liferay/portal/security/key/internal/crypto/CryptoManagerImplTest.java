@@ -133,7 +133,7 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testEncryptThrowsWhenProviderInErrorState() {
 		Mockito.when(
-			_cryptoProvider.getStatus()
+			_cryptoProvider.getProviderStatus()
 		).thenReturn(
 			ProviderStatus.ERROR
 		);

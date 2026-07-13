@@ -577,7 +577,9 @@ public class CryptoManagerImpl implements CryptoManager {
 					continue;
 				}
 
-				if (cryptoProvider.getStatus() == ProviderStatus.ERROR) {
+				if (cryptoProvider.getProviderStatus() ==
+						ProviderStatus.ERROR) {
+
 					throw new CryptoException(
 						StringBundler.concat(
 							"Crypto provider ", resolvedProviderId,

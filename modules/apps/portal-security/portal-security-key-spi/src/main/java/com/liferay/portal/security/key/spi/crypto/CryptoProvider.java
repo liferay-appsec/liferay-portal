@@ -48,7 +48,7 @@ public interface CryptoProvider {
 	public List<String> getKeyIdentifiers(long companyId)
 		throws CryptoException;
 
-	public ProviderStatus getStatus();
+	public ProviderStatus getProviderStatus();
 
 	public CryptoServiceResult<String> importSecretKey(
 			String algorithm, long companyId, String identifier,
