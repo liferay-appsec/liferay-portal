@@ -262,11 +262,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedProviderId = _getCryptoProviderId(
+			String cryptoProviderId = _getCryptoProviderId(
 				companyId, providerId, ProviderRole.DEK);
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedProviderId);
+				companyId, cryptoProviderId);
 
 			List<String> keyIdentifiers = cryptoProvider.getKeyIdentifiers(
 				companyId);
@@ -278,8 +278,7 @@ public class CryptoManagerImpl implements CryptoManager {
 			return TransformUtil.transform(
 				keyIdentifiers,
 				keyIdentifier -> new KeyReference(
-					keyIdentifier, resolvedProviderId,
-					KeyReference.Type.CRYPTO));
+					keyIdentifier, cryptoProviderId, KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
 			if (_log.isWarnEnabled()) {
@@ -340,11 +339,11 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedKeyProviderId = _getCryptoProviderId(
+			String cryptoProviderId = _getCryptoProviderId(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedKeyProviderId);
+				companyId, cryptoProviderId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
 				cryptoProvider.importSecretKey(
@@ -358,7 +357,7 @@ public class CryptoManagerImpl implements CryptoManager {
 			return new CryptoServiceResult<>(
 				cryptoServiceResult.getServiceIndicator(),
 				new KeyReference(
-					cryptoServiceResult.getValue(), resolvedKeyProviderId,
+					cryptoServiceResult.getValue(), cryptoProviderId,
 					KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
@@ -399,25 +398,23 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedKeyProviderId = _getCryptoProviderId(
+			String cryptoProviderId = _getCryptoProviderId(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
-			String resolvedMasterKeyProviderId = _getCryptoProviderId(
+			String masterCryptoProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
-			if (!Objects.equals(
-					resolvedKeyProviderId, resolvedMasterKeyProviderId)) {
-
+			if (!Objects.equals(cryptoProviderId, masterCryptoProviderId)) {
 				throw new CryptoException(
 					StringBundler.concat(
-						"Key provider ", resolvedKeyProviderId,
+						"Key provider ", cryptoProviderId,
 						" does not match master key provider ",
-						resolvedMasterKeyProviderId));
+						masterCryptoProviderId));
 			}
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedKeyProviderId);
+				companyId, cryptoProviderId);
 
 			CryptoServiceResult<String> cryptoServiceResult =
 				cryptoProvider.unwrap(
@@ -431,7 +428,7 @@ public class CryptoManagerImpl implements CryptoManager {
 			return new CryptoServiceResult<>(
 				cryptoServiceResult.getServiceIndicator(),
 				new KeyReference(
-					cryptoServiceResult.getValue(), resolvedKeyProviderId,
+					cryptoServiceResult.getValue(), cryptoProviderId,
 					KeyReference.Type.CRYPTO));
 		}
 		catch (CryptoException cryptoException) {
@@ -458,25 +455,23 @@ public class CryptoManagerImpl implements CryptoManager {
 		}
 
 		try {
-			String resolvedKeyProviderId = _getCryptoProviderId(
+			String cryptoProviderId = _getCryptoProviderId(
 				companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
-			String resolvedMasterKeyProviderId = _getCryptoProviderId(
+			String masterCryptoProviderId = _getCryptoProviderId(
 				companyId, masterKeyReference.getProviderId(),
 				ProviderRole.KEK);
 
-			if (!Objects.equals(
-					resolvedKeyProviderId, resolvedMasterKeyProviderId)) {
-
+			if (!Objects.equals(cryptoProviderId, masterCryptoProviderId)) {
 				throw new CryptoException(
 					StringBundler.concat(
-						"Key provider ", resolvedKeyProviderId,
+						"Key provider ", cryptoProviderId,
 						" does not match master key provider ",
-						resolvedMasterKeyProviderId));
+						masterCryptoProviderId));
 			}
 
 			CryptoProvider cryptoProvider = _getCryptoProvider(
-				companyId, resolvedKeyProviderId);
+				companyId, cryptoProviderId);
 
 			CryptoServiceResult<byte[]> cryptoServiceResult =
 				cryptoProvider.wrap(
@@ -544,11 +539,11 @@ public class CryptoManagerImpl implements CryptoManager {
 			KeyReference keyReference)
 		throws CryptoException {
 
-		String resolvedKeyProviderId = _getCryptoProviderId(
+		String cryptoProviderId = _getCryptoProviderId(
 			companyId, keyReference.getProviderId(), ProviderRole.DEK);
 
 		CryptoServiceResult<String> cryptoServiceResult = keyGenerator.generate(
-			_getCryptoProvider(companyId, resolvedKeyProviderId), algorithm,
+			_getCryptoProvider(companyId, cryptoProviderId), algorithm,
 			companyId, keyReference.getIdentifier());
 
 		_auditServiceIndicator(
@@ -557,20 +552,20 @@ public class CryptoManagerImpl implements CryptoManager {
 		return new CryptoServiceResult<>(
 			cryptoServiceResult.getServiceIndicator(),
 			new KeyReference(
-				cryptoServiceResult.getValue(), resolvedKeyProviderId,
+				cryptoServiceResult.getValue(), cryptoProviderId,
 				KeyReference.Type.CRYPTO));
 	}
 
 	private CryptoProvider _getCryptoProvider(
-			long companyId, String resolvedProviderId)
+			long companyId, String cryptoProviderId)
 		throws CryptoException {
 
-		if (resolvedProviderId == null) {
+		if (cryptoProviderId == null) {
 			throw new CryptoException("Resolved provider ID is null");
 		}
 
 		List<CryptoProvider> cryptoProviders = _serviceTrackerMap.getService(
-			resolvedProviderId);
+			cryptoProviderId);
 
 		if (cryptoProviders != null) {
 			for (CryptoProvider cryptoProvider : cryptoProviders) {
@@ -583,7 +578,7 @@ public class CryptoManagerImpl implements CryptoManager {
 
 					throw new CryptoException(
 						StringBundler.concat(
-							"Crypto provider ", resolvedProviderId,
+							"Crypto provider ", cryptoProviderId,
 							" is in an error state for company ID ",
 							companyId));
 				}
@@ -594,7 +589,7 @@ public class CryptoManagerImpl implements CryptoManager {
 
 		throw new CryptoException(
 			StringBundler.concat(
-				"No crypto provider found for ID ", resolvedProviderId,
+				"No crypto provider found for ID ", cryptoProviderId,
 				" and company ID ", companyId));
 	}
 
