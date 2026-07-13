@@ -22,14 +22,14 @@ public interface CryptoManager {
 
 	public CryptoServiceResult<byte[]> decrypt(
 			byte[] ciphertext, long companyId, KeyReference keyReference)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public void deleteKey(long companyId, KeyReference keyReference)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> encrypt(
 			long companyId, KeyReference keyReference, byte[] plaintext)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	/**
 	 * Exports the plaintext key material referenced by the given key reference.
@@ -42,27 +42,26 @@ public interface CryptoManager {
 	 */
 	public CryptoServiceResult<Key> exportKey(
 			long companyId, KeyReference keyReference)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> generateAsymmetricKeyPair(
 			String algorithm, long companyId, String identifier,
 			String providerId)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> generateSecretKey(
 			String algorithm, long companyId, String identifier,
 			String providerId)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoKey getCryptoKey(long companyId, KeyReference keyReference)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public List<KeyReference> getKeyReferences(
 			long companyId, String providerId)
-		throws CryptoManagerException;
+		throws CryptoException;
 
-	public List<String> getProviderIds(long companyId)
-		throws CryptoManagerException;
+	public List<String> getProviderIds(long companyId) throws CryptoException;
 
 	/**
 	 * Imports the given raw key material into the vault. This method zeroes the
@@ -74,17 +73,17 @@ public interface CryptoManager {
 	public CryptoServiceResult<KeyReference> importSecretKey(
 			String algorithm, long companyId, String identifier,
 			String providerId, byte[] rawKeyMaterial)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<KeyReference> unwrap(
 			long companyId, String identifier, KeyReference masterKeyReference,
 			String wrappedKeyAlgorithm, byte[] wrappedKeyBytes,
 			int wrappedKeyCipherType)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> wrap(
 			long companyId, KeyReference keyToWrapReference,
 			KeyReference masterKeyReference)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 }

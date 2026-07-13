@@ -5,8 +5,8 @@
 
 package com.liferay.portal.security.key.spi.crypto;
 
+import com.liferay.portal.security.key.crypto.CryptoException;
 import com.liferay.portal.security.key.crypto.CryptoKey;
-import com.liferay.portal.security.key.crypto.CryptoManagerException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
 import com.liferay.portal.security.key.spi.ProviderStatus;
 
@@ -22,38 +22,38 @@ public interface CryptoProvider {
 
 	public CryptoServiceResult<byte[]> decrypt(
 			byte[] ciphertext, long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public void deleteKey(long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> encrypt(
 			long companyId, String identifier, byte[] plaintext)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<Key> exportKey(long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<String> generateAsymmetricKeyPair(
 			String algorithm, long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<String> generateSecretKey(
 			String algorithm, long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoKey getCryptoKey(long companyId, String identifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public List<String> getKeyIdentifiers(long companyId)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public ProviderStatus getStatus();
 
 	public CryptoServiceResult<String> importSecretKey(
 			String algorithm, long companyId, String identifier,
 			byte[] rawKeyMaterial)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public boolean isAllowedCompany(long companyId);
 
@@ -61,10 +61,10 @@ public interface CryptoProvider {
 			long companyId, String identifier, String masterIdentifier,
 			String wrappedKeyAlgorithm, byte[] wrappedKeyBytes,
 			int wrappedKeyCipherType)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 	public CryptoServiceResult<byte[]> wrap(
 			long companyId, String keyToWrapIdentifier, String masterIdentifier)
-		throws CryptoManagerException;
+		throws CryptoException;
 
 }

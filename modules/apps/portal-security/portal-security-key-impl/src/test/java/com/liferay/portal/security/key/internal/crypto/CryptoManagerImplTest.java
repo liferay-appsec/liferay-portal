@@ -12,7 +12,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.ServiceIndicator;
-import com.liferay.portal.security.key.crypto.CryptoManagerException;
+import com.liferay.portal.security.key.crypto.CryptoException;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
 import com.liferay.portal.security.key.spi.ProviderStatus;
 import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
@@ -107,7 +107,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Assert.assertThrows(
-			CryptoManagerException.class,
+			CryptoException.class,
 			() -> _cryptoManagerImpl.encrypt(
 				RandomTestUtil.randomLong(), _keyReference(StringPool.STAR),
 				RandomTestUtil.randomBytes()));
@@ -124,7 +124,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Assert.assertThrows(
-			CryptoManagerException.class,
+			CryptoException.class,
 			() -> _cryptoManagerImpl.encrypt(
 				RandomTestUtil.randomLong(), _keyReference(providerId),
 				RandomTestUtil.randomBytes()));
@@ -153,7 +153,7 @@ public class CryptoManagerImplTest {
 		);
 
 		Assert.assertThrows(
-			CryptoManagerException.class,
+			CryptoException.class,
 			() -> _cryptoManagerImpl.encrypt(
 				RandomTestUtil.randomLong(), _keyReference(providerId),
 				RandomTestUtil.randomBytes()));
@@ -199,7 +199,7 @@ public class CryptoManagerImplTest {
 				Mockito.anyString(), Mockito.anyLong(), Mockito.anyString(),
 				Mockito.any(byte[].class))
 		).thenThrow(
-			new CryptoManagerException()
+			new CryptoException()
 		);
 
 		Mockito.when(
@@ -219,7 +219,7 @@ public class CryptoManagerImplTest {
 		byte[] rawKeyMaterial = RandomTestUtil.randomBytes();
 
 		Assert.assertThrows(
-			CryptoManagerException.class,
+			CryptoException.class,
 			() -> _cryptoManagerImpl.importSecretKey(
 				RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
 				RandomTestUtil.randomString(), providerId, rawKeyMaterial));
@@ -304,7 +304,7 @@ public class CryptoManagerImplTest {
 	@Test
 	public void testWrapThrowsWhenProvidersDiffer() {
 		Assert.assertThrows(
-			CryptoManagerException.class,
+			CryptoException.class,
 			() -> _cryptoManagerImpl.wrap(
 				RandomTestUtil.randomLong(),
 				_keyReference(RandomTestUtil.randomString()),

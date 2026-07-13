@@ -11,20 +11,20 @@ import com.liferay.portal.kernel.exception.PortalException;
  * @author Tomas Polesovsky
  * @author Christopher Kian
  */
-public class CryptoManagerException extends PortalException {
+public class CryptoException extends PortalException {
 
-	public CryptoManagerException() {
+	public CryptoException() {
 	}
 
-	public CryptoManagerException(String msg) {
+	public CryptoException(String msg) {
 		super(msg);
 	}
 
-	public CryptoManagerException(String msg, Throwable throwable) {
+	public CryptoException(String msg, Throwable throwable) {
 		super(msg, throwable);
 	}
 
-	public CryptoManagerException(Throwable throwable) {
+	public CryptoException(Throwable throwable) {
 		super(throwable);
 	}
 
