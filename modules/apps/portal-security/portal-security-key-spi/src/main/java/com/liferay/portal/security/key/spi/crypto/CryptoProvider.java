@@ -5,9 +5,9 @@
 
 package com.liferay.portal.security.key.spi.crypto;
 
-import com.liferay.portal.security.key.crypto.CryptoException;
 import com.liferay.portal.security.key.crypto.CryptoKey;
 import com.liferay.portal.security.key.crypto.CryptoServiceResult;
+import com.liferay.portal.security.key.crypto.exception.CryptoException;
 import com.liferay.portal.security.key.spi.ProviderStatus;
 
 import java.security.Key;

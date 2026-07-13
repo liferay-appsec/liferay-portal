@@ -6,6 +6,7 @@
 package com.liferay.portal.security.key.crypto;
 
 import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.crypto.exception.CryptoException;
 
 import java.security.Key;
 
