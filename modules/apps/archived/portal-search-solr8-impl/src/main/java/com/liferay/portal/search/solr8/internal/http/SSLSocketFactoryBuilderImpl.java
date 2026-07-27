@@ -8,6 +8,7 @@ package com.liferay.portal.search.solr8.internal.http;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.search.solr8.configuration.SolrSSLSocketFactoryConfiguration;
 
 import java.security.KeyStore;
@@ -40,6 +41,11 @@ public class SSLSocketFactoryBuilderImpl implements SSLSocketFactoryBuilder {
 
 	@Override
 	public SSLConnectionSocketFactory build() throws Exception {
+		FIPSModeValidator.validateServerCertificateVerification(
+			_verifyServerCertificate);
+		FIPSModeValidator.validateServerHostnameVerification(
+			_verifyServerHostname);
+
 		KeyStore keyStore = _keyStoreLoader.load(
 			_keyStoreType, _keyStorePath, _keyStorePassword);
 

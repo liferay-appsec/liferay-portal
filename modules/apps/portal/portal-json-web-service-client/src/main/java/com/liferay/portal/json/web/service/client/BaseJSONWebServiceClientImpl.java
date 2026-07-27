@@ -16,6 +16,7 @@ import com.liferay.portal.json.web.service.client.internal.IdleConnectionMonitor
 import com.liferay.portal.json.web.service.client.internal.X509TrustManagerImpl;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
@@ -922,6 +923,9 @@ public abstract class BaseJSONWebServiceClientImpl
 	}
 
 	protected SSLIOSessionStrategy getSSLIOSessionStrategy() {
+		FIPSModeValidator.validateServerCertificateVerification(
+			!_trustSelfSignedCertificates);
+
 		SSLContextBuilder sslContextBuilder = SSLContexts.custom();
 
 		SSLContext sslContext = null;

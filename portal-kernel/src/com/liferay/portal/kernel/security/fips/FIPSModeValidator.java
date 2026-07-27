@@ -86,6 +86,24 @@ public class FIPSModeValidator {
 		}
 	}
 
+	public static void validateServerCertificateVerification(
+		boolean verifyServerCertificate) {
+
+		if (PropsValues.FIPS_ENABLED && !verifyServerCertificate) {
+			throw new SecurityException(
+				"Servers certificates must be verified in FIPS mode");
+		}
+	}
+
+	public static void validateServerHostnameVerification(
+		boolean verifyServerHostname) {
+
+		if (PropsValues.FIPS_ENABLED && !verifyServerHostname) {
+			throw new SecurityException(
+				"Servers hostname must be verified in FIPS mode");
+		}
+	}
+
 	private static void _assertAllowedValue(
 		String name, String value, String[] requiredValues) {
 
@@ -264,6 +282,12 @@ public class FIPSModeValidator {
 		validateAlgorithm(
 			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
 		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+
+		validateServerHostnameVerification(
+			GetterUtil.getBoolean(
+				PropsUtil.get(
+					"com.liferay.portal.kernel.service.http.TunnelUtil." +
+						"verify.ssl.hostname")));
 
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
