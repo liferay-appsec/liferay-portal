@@ -5,7 +5,9 @@
 
 package com.liferay.portal.kernel.security.fips;
 
+import com.liferay.petra.function.UnsafeTriConsumer;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +43,17 @@ public class FIPSModeValidator {
 		_validateFIPSProvider(providers);
 		_validateProviders(providers);
 
-		_validateProperties();
+		_validatePortalProperties();
+
+		_validateProperties(
+			_requiredSecurityProperties, Security::getProperty,
+			FIPSModeValidator::_assertAllRequiredValues);
+		_validateProperties(
+			_requiredSystemProperties, System::getProperty,
+			FIPSModeValidator::_assertAllRequiredValues);
+		_validateProperties(
+			_allowedSystemProperties, System::getProperty,
+			FIPSModeValidator::_assertAllowedValue);
 	}
 
 	public static void validateAlgorithm(String algorithm) {
@@ -70,6 +83,34 @@ public class FIPSModeValidator {
 		if ((keySize != 0) && !_allowedKeySizes.contains(keySize)) {
 			throw new SecurityException(
 				"AES key must be 128, 192, or 256 bits");
+		}
+	}
+
+	private static void _assertAllowedValue(
+		String name, String value, String[] requiredValues) {
+
+		for (String requiredValue : requiredValues) {
+			if (StringUtil.contains(value, requiredValue)) {
+				return;
+			}
+		}
+
+		throw new SecurityException(
+			StringBundler.concat(
+				"FIPS mode requires the property \"", name,
+				"\" to include one of ", Arrays.toString(requiredValues)));
+	}
+
+	private static void _assertAllRequiredValues(
+		String name, String value, String[] requiredValues) {
+
+		for (String requiredValue : requiredValues) {
+			if (!StringUtil.containsIgnoreCase(value, requiredValue)) {
+				throw new SecurityException(
+					StringBundler.concat(
+						"FIPS mode requires the property \"", name,
+						"\" to include \"", requiredValue, "\""));
+			}
 		}
 	}
 
@@ -215,7 +256,7 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validateProperties() {
+	private static void _validatePortalProperties() {
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
 			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
 		}
@@ -226,6 +267,19 @@ public class FIPSModeValidator {
 
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
+	}
+
+	private static void _validateProperties(
+		Map<String, String[]> properties, Function<String, String> function,
+		UnsafeTriConsumer<String, String, String[], SecurityException>
+			unsafeTriConsumer) {
+
+		for (Map.Entry<String, String[]> entry : properties.entrySet()) {
+			String value = StringUtil.removeChar(
+				function.apply(entry.getKey()), CharPool.SPACE);
+
+			unsafeTriConsumer.accept(entry.getKey(), value, entry.getValue());
+		}
 	}
 
 	private static void _validateProviders(Provider[] providers) {
@@ -270,7 +324,19 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
+	private static final Map<String, String[]> _allowedSystemProperties =
+		Map.of("jdk.tls.client.protocols", new String[] {"TLSv1.2", "TLSv1.3"});
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
+	private static final Map<String, String[]> _requiredSecurityProperties =
+		Map.of(
+			"jdk.tls.disabledAlgorithms",
+			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
+			"ocsp.enable", new String[] {"true"},
+			"ssl.TrustManagerFactory.algorithm", new String[] {"PKIX"});
+	private static final Map<String, String[]> _requiredSystemProperties =
+		Map.of(
+			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
+			"com.sun.security.enableCRLDP", new String[] {"true"});
 
 }
