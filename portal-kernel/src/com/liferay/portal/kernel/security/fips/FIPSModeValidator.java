@@ -5,7 +5,9 @@
 
 package com.liferay.portal.kernel.security.fips;
 
+import com.liferay.petra.function.UnsafeTriConsumer;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -34,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,7 +89,17 @@ public class FIPSModeValidator {
 		_validateFIPSProvider(providers);
 		_validateProviders(providers);
 
-		_validateProperties();
+		_validatePortalProperties();
+
+		_validateProperties(
+			Security::getProperty, _requiredSecurityProperties,
+			FIPSModeValidator::_validateRequiredValues);
+		_validateProperties(
+			System::getProperty, _allowedSystemProperties,
+			FIPSModeValidator::_validateAllowedValues);
+		_validateProperties(
+			System::getProperty, _requiredSystemProperties,
+			FIPSModeValidator::_validateRequiredValues);
 	}
 
 	public static void validateAlgorithm(String algorithm) {
@@ -143,6 +156,21 @@ public class FIPSModeValidator {
 		}
 
 		return plaintextSecretProperties;
+	}
+
+	private static void _validateAllowedValues(
+		String[] allowedValues, String name, String value) {
+
+		if (ArrayUtil.containsAll(
+				allowedValues, StringUtil.split(value, CharPool.COMMA))) {
+
+			return;
+		}
+
+		throw new SecurityException(
+			StringBundler.concat(
+				"FIPS mode requires the property \"", name,
+				"\" to contain only ", Arrays.toString(allowedValues)));
 	}
 
 	private static void _validateFIPSProvider(Provider[] providers) {
@@ -321,7 +349,7 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validateProperties() {
+	private static void _validatePortalProperties() {
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
 			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
 		}
@@ -333,6 +361,19 @@ public class FIPSModeValidator {
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
 		_validatePlaintextSecrets();
+	}
+
+	private static void _validateProperties(
+		Function<String, String> function, Map<String, String[]> properties,
+		UnsafeTriConsumer<String[], String, String, SecurityException>
+			unsafeTriConsumer) {
+
+		for (Map.Entry<String, String[]> entry : properties.entrySet()) {
+			String value = StringUtil.removeChar(
+				function.apply(entry.getKey()), CharPool.SPACE);
+
+			unsafeTriConsumer.accept(entry.getValue(), entry.getKey(), value);
+		}
 	}
 
 	private static void _validateProviders(Provider[] providers) {
@@ -357,6 +398,19 @@ public class FIPSModeValidator {
 				" are not allowed in FIPS mode for ", provider.getName()));
 	}
 
+	private static void _validateRequiredValues(
+		String[] requiredValues, String name, String value) {
+
+		for (String requiredValue : requiredValues) {
+			if (!StringUtil.containsIgnoreCase(value, requiredValue)) {
+				throw new SecurityException(
+					StringBundler.concat(
+						"FIPS mode requires the property \"", name,
+						"\" to include \"", requiredValue, "\""));
+			}
+		}
+	}
+
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
@@ -377,6 +431,8 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
+	private static final Map<String, String[]> _allowedSystemProperties =
+		Map.of("jdk.tls.client.protocols", new String[] {"TLSv1.2", "TLSv1.3"});
 	private static final Set<String> _allowedTLSCipherSuites = Set.of(
 		"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384",
 		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
@@ -387,5 +443,15 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
+	private static final Map<String, String[]> _requiredSecurityProperties =
+		Map.of(
+			"jdk.tls.disabledAlgorithms",
+			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
+			"ocsp.enable", new String[] {"true"},
+			"ssl.TrustManagerFactory.algorithm", new String[] {"PKIX"});
+	private static final Map<String, String[]> _requiredSystemProperties =
+		Map.of(
+			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
+			"com.sun.security.enableCRLDP", new String[] {"true"});
 
 }
