@@ -10,6 +10,7 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
+import com.liferay.portal.kernel.service.http.TunnelUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
@@ -156,6 +157,24 @@ public class FIPSModeValidator {
 		}
 
 		return plaintextSecretProperties;
+	}
+
+	public static void validateServerCertificateVerification(
+		boolean verifyServerCertificate) {
+
+		if (PropsValues.FIPS_ENABLED && !verifyServerCertificate) {
+			throw new SecurityException(
+				"Server certificates must be verified in FIPS mode");
+		}
+	}
+
+	public static void validateServerHostnameVerification(
+		boolean verifyServerHostname) {
+
+		if (PropsValues.FIPS_ENABLED && !verifyServerHostname) {
+			throw new SecurityException(
+				"Server hostnames must be verified in FIPS mode");
+		}
 	}
 
 	private static void _validateAllowedValues(
@@ -357,6 +376,11 @@ public class FIPSModeValidator {
 		validateAlgorithm(
 			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
 		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+
+		validateServerHostnameVerification(
+			GetterUtil.getBoolean(
+				PropsUtil.get(
+					TunnelUtil.class.getName() + ".verify.ssl.hostname")));
 
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));

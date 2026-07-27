@@ -5,6 +5,7 @@
 
 package com.liferay.portal.json.web.service.client.internal;
 
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.security.KeyStore;
@@ -22,6 +23,8 @@ import javax.net.ssl.X509TrustManager;
 public class X509TrustManagerImpl implements X509TrustManager {
 
 	public X509TrustManagerImpl() {
+		FIPSModeValidator.validateServerCertificateVerification(false);
+
 		try {
 			_defaultX509TrustManager = _getX509TrustManager(null);
 			_extraX509TrustManager = null;
@@ -34,6 +37,9 @@ public class X509TrustManagerImpl implements X509TrustManager {
 
 	public X509TrustManagerImpl(
 		KeyStore keyStore, boolean trustSelfSignedCertificates) {
+
+		FIPSModeValidator.validateServerCertificateVerification(
+			!trustSelfSignedCertificates);
 
 		try {
 			_defaultX509TrustManager = _getX509TrustManager(null);
