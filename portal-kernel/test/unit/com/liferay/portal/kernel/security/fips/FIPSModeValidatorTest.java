@@ -5,15 +5,21 @@
 
 package com.liferay.portal.kernel.security.fips;
 
+import com.liferay.petra.function.UnsafeTriConsumer;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 
 import java.security.Provider;
+import java.security.Security;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,32 +55,6 @@ public class FIPSModeValidatorTest {
 					() -> FIPSModeValidator.validateAlgorithm(algorithm));
 			}
 		}
-	}
-
-	@Test
-	public void testValidateFIPSProvider() {
-		for (String name : List.of("AmazonCorrettoCryptoProvider", "BCFIPS")) {
-			_assertSecurityException(
-				"FIPS provider integrity failed:",
-				() -> ReflectionTestUtil.invoke(
-					FIPSModeValidator.class, "_validateFIPSProvider",
-					new Class<?>[] {Provider[].class},
-					(Object)new Provider[] {_createProvider(name)}));
-		}
-
-		_assertSecurityException(
-			"The first security provider must be an allowed FIPS provider",
-			() -> ReflectionTestUtil.invoke(
-				FIPSModeValidator.class, "_validateFIPSProvider",
-				new Class<?>[] {Provider[].class},
-				(Object)new Provider[] {
-					_createProvider(RandomTestUtil.randomString())
-				}));
-		_assertSecurityException(
-			"There are no security providers",
-			() -> ReflectionTestUtil.invoke(
-				FIPSModeValidator.class, "_validateFIPSProvider",
-				new Class<?>[] {Provider[].class}, (Object)new Provider[0]));
 	}
 
 	@Test
@@ -139,6 +119,151 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testValidatePortalProperties() {
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"TUNNELING_SERVLET_ENCRYPTION_ALGORITHM", "AES");
+			SafeCloseable safeCloseable3 = _swapPortalProperty(
+				PropsKeys.COMPANY_ENCRYPTION_ALGORITHM, "AES");
+			SafeCloseable safeCloseable4 = _swapPortalProperty(
+				PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM,
+				"PBKDF2WithHmacSHA256/256/1300000")) {
+
+			try (SafeCloseable safeCloseable5 = _swapPortalProperty(
+					_TUNNEL_VERIFY_SSL_HOSTNAME_KEY, "true")) {
+
+				_validatePortalProperties();
+			}
+
+			for (String value : new String[] {"", "false"}) {
+				try (SafeCloseable safeCloseable5 = _swapPortalProperty(
+						_TUNNEL_VERIFY_SSL_HOSTNAME_KEY, value)) {
+
+					_assertSecurityException(
+						"Servers hostname must be verified in FIPS mode",
+						this::_validatePortalProperties);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void testValidateProperties() {
+		String name = RandomTestUtil.randomString();
+
+		for (String[] validProperty :
+				new String[][] {
+					{"PKIX", "PKIX"}, {"SSLv3, TLSv1", "TLSv1"},
+					{"TLSv1.2,TLSv1.3", "TLSv1.2"}, {"TRUE", "true"},
+					{"pkix", "PKIX"}, {"true", "true"}
+				}) {
+
+			_validateProperties(
+				Map.of(name, new String[] {validProperty[1]}),
+				curName -> validProperty[0], this::_assertAllRequiredValues);
+		}
+
+		for (String[] invalidProperty :
+				new String[][] {
+					{"SunPKIXFoo", "PKIX"}, {"TLSv1.1", "TLSv1"},
+					{"untrue", "true"}
+				}) {
+
+			_assertSecurityException(
+				_REQUIRED_PROPERTY_MESSAGE_PREFIX + name + "\"",
+				() -> _validateProperties(
+					Map.of(name, new String[] {invalidProperty[1]}),
+					curName -> invalidProperty[0],
+					this::_assertAllRequiredValues));
+		}
+
+		_assertSecurityException(
+			_REQUIRED_PROPERTY_MESSAGE_PREFIX + name + "\"",
+			() -> _validateProperties(
+				Map.of(name, new String[] {"true"}), curName -> null,
+				this::_assertAllRequiredValues));
+
+		try (SafeCloseable safeCloseable = _swapSystemProperty(name, "true")) {
+			_validateProperties(
+				Map.of(name, new String[] {"true"}), System::getProperty,
+				this::_assertAllRequiredValues);
+
+			_assertSecurityException(
+				_REQUIRED_PROPERTY_MESSAGE_PREFIX + name + "\"",
+				() -> _validateProperties(
+					Map.of(name, new String[] {"true"}), Security::getProperty,
+					this::_assertAllRequiredValues));
+		}
+
+		for (String value : List.of("TLSv1.2", "TLSv1.2,TLSv1.3", "TLSv1.3")) {
+			_validateProperties(
+				Map.of(name, new String[] {"TLSv1.2", "TLSv1.3"}),
+				curName -> value, this::_assertAllowedValue);
+		}
+
+		for (String value :
+				List.of("TLSv1", "TLSv1.1", "TLSv1.11", "tlsv1.2")) {
+
+			_assertSecurityException(
+				_REQUIRED_PROPERTY_MESSAGE_PREFIX + name + "\"",
+				() -> _validateProperties(
+					Map.of(name, new String[] {"TLSv1.2", "TLSv1.3"}),
+					curName -> value, this::_assertAllowedValue));
+		}
+
+		_assertSecurityException(
+			_REQUIRED_PROPERTY_MESSAGE_PREFIX + name + "\"",
+			() -> _validateProperties(
+				Map.of(name, new String[] {"TLSv1.2", "TLSv1.3"}),
+				curName -> null, this::_assertAllowedValue));
+
+		Map<String, String[]> requiredSecurityProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSecurityProperties");
+
+		Assert.assertEquals(
+			requiredSecurityProperties.toString(), 3,
+			requiredSecurityProperties.size());
+		Assert.assertArrayEquals(
+			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
+			requiredSecurityProperties.get("jdk.tls.disabledAlgorithms"));
+		Assert.assertArrayEquals(
+			new String[] {"true"},
+			requiredSecurityProperties.get("ocsp.enable"));
+		Assert.assertArrayEquals(
+			new String[] {"PKIX"},
+			requiredSecurityProperties.get(
+				"ssl.TrustManagerFactory.algorithm"));
+
+		Map<String, String[]> requiredSystemProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSystemProperties");
+
+		Assert.assertEquals(
+			requiredSystemProperties.toString(), 2,
+			requiredSystemProperties.size());
+		Assert.assertArrayEquals(
+			new String[] {"true"},
+			requiredSystemProperties.get("com.sun.net.ssl.checkRevocation"));
+		Assert.assertArrayEquals(
+			new String[] {"true"},
+			requiredSystemProperties.get("com.sun.security.enableCRLDP"));
+
+		Map<String, String[]> requiredOneOfSystemProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_allowedSystemProperties");
+
+		Assert.assertEquals(
+			requiredOneOfSystemProperties.toString(), 1,
+			requiredOneOfSystemProperties.size());
+		Assert.assertArrayEquals(
+			new String[] {"TLSv1.2", "TLSv1.3"},
+			requiredOneOfSystemProperties.get("jdk.tls.client.protocols"));
+	}
+
+	@Test
 	public void testValidateProviders() {
 		Map<String, List<String>> allowedProviderNames =
 			ReflectionTestUtil.getFieldValue(
@@ -155,6 +280,73 @@ public class FIPSModeValidatorTest {
 						_createProvider(RandomTestUtil.randomString())
 					}));
 		}
+	}
+
+	@Test
+	public void testValidateServerCertificateVerification() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			for (boolean verifyServerCertificate :
+					new boolean[] {false, true}) {
+
+				FIPSModeValidator.validateServerCertificateVerification(
+					verifyServerCertificate);
+			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			FIPSModeValidator.validateServerCertificateVerification(true);
+
+			_assertSecurityException(
+				"Servers certificates must be verified in FIPS mode",
+				() -> FIPSModeValidator.validateServerCertificateVerification(
+					false));
+		}
+	}
+
+	@Test
+	public void testValidateServerHostnameVerification() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			FIPSModeValidator.validateServerHostnameVerification(false);
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			FIPSModeValidator.validateServerHostnameVerification(true);
+
+			_assertSecurityException(
+				"Servers hostname must be verified in FIPS mode",
+				() -> FIPSModeValidator.validateServerHostnameVerification(
+					false));
+		}
+	}
+
+	private void _assertAllowedValue(
+		String name, String value, String[] requiredValues) {
+
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_assertAllowedValue",
+			new Class<?>[] {String.class, String.class, String[].class}, name,
+			value, requiredValues);
+	}
+
+	private void _assertAllRequiredValues(
+		String name, String value, String[] requiredValues) {
+
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_assertAllRequiredValues",
+			new Class<?>[] {String.class, String.class, String[].class}, name,
+			value, requiredValues);
 	}
 
 	private void _assertSecurityException(
@@ -174,5 +366,51 @@ public class FIPSModeValidatorTest {
 			RandomTestUtil.randomString()) {
 		};
 	}
+
+	private SafeCloseable _swapPortalProperty(String key, String value) {
+		String oldValue = GetterUtil.getString(PropsUtil.get(key));
+
+		PropsUtil.set(key, value);
+
+		return () -> PropsUtil.set(key, oldValue);
+	}
+
+	private SafeCloseable _swapSystemProperty(String name, String value) {
+		String oldValue = System.getProperty(name);
+
+		System.setProperty(name, value);
+
+		return () -> {
+			if (oldValue == null) {
+				System.clearProperty(name);
+			}
+			else {
+				System.setProperty(name, oldValue);
+			}
+		};
+	}
+
+	private void _validatePortalProperties() {
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validatePortalProperties",
+			new Class<?>[0]);
+	}
+
+	private void _validateProperties(
+		Map<String, String[]> properties, Function<String, String> function,
+		UnsafeTriConsumer<String, String, String[], SecurityException>
+			unsafeTriConsumer) {
+
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validateProperties",
+			new Class<?>[] {Map.class, Function.class, UnsafeTriConsumer.class},
+			properties, function, unsafeTriConsumer);
+	}
+
+	private static final String _REQUIRED_PROPERTY_MESSAGE_PREFIX =
+		"FIPS mode requires the property \"";
+
+	private static final String _TUNNEL_VERIFY_SSL_HOSTNAME_KEY =
+		"com.liferay.portal.kernel.service.http.TunnelUtil.verify.ssl.hostname";
 
 }
