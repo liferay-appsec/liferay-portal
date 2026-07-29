@@ -35,6 +35,33 @@ public class FIPSApplicationStateMachineUtil {
 		_transition(FIPSApplicationState.OPERATIONAL);
 	}
 
+	public static FIPSApplicationState transitionOrGetBlockingState(
+		FIPSApplicationState fipsApplicationState) {
+
+		FIPSApplicationState currentFIPSApplicationState =
+			_fipsApplicationStateAtomicReference.get();
+
+		Set<FIPSApplicationState> nextFIPSApplicationStates =
+			_allowedTransitions.getOrDefault(
+				currentFIPSApplicationState, Set.of());
+
+		while (nextFIPSApplicationStates.contains(fipsApplicationState)) {
+			if (_fipsApplicationStateAtomicReference.compareAndSet(
+					currentFIPSApplicationState, fipsApplicationState)) {
+
+				return null;
+			}
+
+			currentFIPSApplicationState =
+				_fipsApplicationStateAtomicReference.get();
+
+			nextFIPSApplicationStates = _allowedTransitions.getOrDefault(
+				currentFIPSApplicationState, Set.of());
+		}
+
+		return currentFIPSApplicationState;
+	}
+
 	private static void _transition(FIPSApplicationState fipsApplicationState) {
 		_fipsApplicationStateAtomicReference.updateAndGet(
 			currentFIPSApplicationState -> {
@@ -62,7 +89,9 @@ public class FIPSApplicationStateMachineUtil {
 				FIPSApplicationState.ERROR, FIPSApplicationState.POWER_OFF,
 				FIPSApplicationState.SELF_TEST),
 			FIPSApplicationState.OPERATIONAL,
-			Set.of(FIPSApplicationState.ERROR, FIPSApplicationState.POWER_OFF),
+			Set.of(
+				FIPSApplicationState.ERROR, FIPSApplicationState.POWER_OFF,
+				FIPSApplicationState.SELF_TEST),
 			FIPSApplicationState.POWER_OFF, Set.of(),
 			FIPSApplicationState.SELF_TEST,
 			Set.of(
