@@ -31,6 +31,7 @@ public class X509TrustManagerImplTest {
 					"FIPS_ENABLED", false)) {
 
 			new X509TrustManagerImpl();
+			new X509TrustManagerImpl(null, true);
 		}
 
 		try (SafeCloseable safeCloseable =
@@ -40,6 +41,13 @@ public class X509TrustManagerImplTest {
 			new X509TrustManagerImpl(null, false);
 
 			SecurityException securityException = Assert.assertThrows(
+				SecurityException.class, () -> new X509TrustManagerImpl());
+
+			Assert.assertEquals(
+				"Servers certificates must be verified in FIPS mode",
+				securityException.getMessage());
+
+			securityException = Assert.assertThrows(
 				SecurityException.class,
 				() -> new X509TrustManagerImpl(null, true));
 
