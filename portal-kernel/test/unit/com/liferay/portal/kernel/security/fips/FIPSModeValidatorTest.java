@@ -58,6 +58,32 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testValidateFIPSProvider() {
+		for (String name : List.of("AmazonCorrettoCryptoProvider", "BCFIPS")) {
+			_assertSecurityException(
+				"FIPS provider integrity failed:",
+				() -> ReflectionTestUtil.invoke(
+					FIPSModeValidator.class, "_validateFIPSProvider",
+					new Class<?>[] {Provider[].class},
+					(Object)new Provider[] {_createProvider(name)}));
+		}
+
+		_assertSecurityException(
+			"The first security provider must be an allowed FIPS provider",
+			() -> ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateFIPSProvider",
+				new Class<?>[] {Provider[].class},
+				(Object)new Provider[] {
+					_createProvider(RandomTestUtil.randomString())
+				}));
+		_assertSecurityException(
+			"There are no security providers",
+			() -> ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateFIPSProvider",
+				new Class<?>[] {Provider[].class}, (Object)new Provider[0]));
+	}
+
+	@Test
 	public void testValidateKey() {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
