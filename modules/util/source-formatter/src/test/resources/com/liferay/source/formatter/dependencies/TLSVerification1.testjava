@@ -1,0 +1,59 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.source.formatter.dependencies;
+
+import java.security.KeyStore;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
+
+/**
+ * @author Caio Farias
+ */
+public class TLSVerification1 {
+
+	public void anonymousHostnameVerifier(HttpClientBuilder httpClientBuilder) {
+		httpClientBuilder.setSSLHostnameVerifier(
+			new HostnameVerifier() {
+
+				@Override
+				public boolean verify(String hostName, SSLSession sslSession) {
+					return true;
+				}
+
+			});
+	}
+
+	public void noopHostnameVerifier(HttpClientBuilder httpClientBuilder) {
+		httpClientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+	}
+
+	public void pinnedTrustAnchor(
+			SSLContextBuilder sslContextBuilder, KeyStore keyStore)
+		throws Exception {
+
+		sslContextBuilder.loadTrustMaterial(keyStore, null);
+	}
+
+	public void selfSignedTrustStrategy(SSLContextBuilder sslContextBuilder)
+		throws Exception {
+
+		sslContextBuilder.loadTrustMaterial(new TrustSelfSignedStrategy());
+	}
+
+	public void strictHostnameVerifier(
+		HttpClientBuilder httpClientBuilder,
+		HostnameVerifier hostnameVerifier) {
+
+		httpClientBuilder.setSSLHostnameVerifier(hostnameVerifier);
+	}
+
+}

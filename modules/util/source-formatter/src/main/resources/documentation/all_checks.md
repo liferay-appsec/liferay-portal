@@ -331,6 +331,7 @@ JavaStylingCheck | [Styling](styling_checks.md#styling-checks) | .java | Applies
 [JavaSwitchCheck](check/java_switch_check.md#javaswitchcheck) | [Styling](styling_checks.md#styling-checks) | .java | Checks that `if/else` statement is used instead of `switch` statement. |
 JavaSystemEventAnnotationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds missing method `setDeletionSystemEventStagedModelTypes` in class with annotation @SystemEvent. |
 JavaSystemExceptionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds unnecessary SystemExceptions. |
+JavaTLSVerificationCheck | [Security](security_checks.md#security-checks) | .java | Checks that outbound TLS verification bypasses are guarded by `FIPSModeValidator`, see LPD-93649. |
 JavaTaglibMethodCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that a `*Tag` class has a `set*` and `get*` or `is*` method for each attribute. |
 JavaTermDividersCheck | [Styling](styling_checks.md#styling-checks) | .java | Finds missing or unnecessary empty lines between javaterms. |
 JavaTermOrderCheck | [Styling](styling_checks.md#styling-checks) | .java | Checks the order of javaterms. |

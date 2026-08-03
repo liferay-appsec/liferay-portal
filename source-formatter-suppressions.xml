@@ -110,6 +110,8 @@
 		<suppress checks="JavaStaticMethodCheck" files="portal-impl/src/com/liferay/portal/struts/FindStrutsAction\.java" />
 		<suppress checks="JavaTaglibMethodCheck" files="util-taglib/src/com/liferay/taglib/ui/IconTag\.java" />
 		<suppress checks="JavaTaglibMethodCheck" files="util-taglib/src/com/liferay/taglib/ui/SearchFormTag\.java" />
+
+		<suppress checks="JavaTLSVerificationCheck" files="portal-kernel/src/com/liferay/portal/kernel/service/http/TunnelUtil\.java" />
 		<suppress checks="JavaUnsafeCastingCheck" files="portal-impl/src/com/liferay/portal/util/PortalImpl\.java" />
 		<suppress checks="JavaUpgradeClassCheck" files="portal-impl/src/com/liferay/portal/upgrade/data/cleanup/CounterDataCleanupPreupgradeProcess\.java" />
 		<suppress checks="JavaUpgradeClassCheck" files="portal-impl/src/com/liferay/portal/upgrade/data/cleanup/DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess\.java" />

@@ -1053,6 +1053,31 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testTLSVerification() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"TLSVerification1.testjava"
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateServer*\" in the same file " +
+					"as \"new HostnameVerifier(\", see LPD-93649",
+				25
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateServer*\" in the same file " +
+					"as \"NoopHostnameVerifier\", see LPD-93649",
+				36
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateServer*\" in the same file " +
+					"as \"TrustSelfSignedStrategy\", see LPD-93649",
+				49
+			));
+		test("TLSVerification2.testjava");
+		test(
+			"TLSVerification3.testjava",
+			"Call \"FIPSModeValidator.validateServer*\" in the same file as " +
+				"a trust manager, see LPD-93649");
+	}
+
+	@Test
 	public void testToJSONStringMethodCalls() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(

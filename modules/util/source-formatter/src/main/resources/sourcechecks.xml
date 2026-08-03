@@ -718,6 +718,10 @@
 			<category name="Styling" />
 			<description name="Applies rules to enforce consistency in code style." />
 		</check>
+		<check name="JavaTLSVerificationCheck">
+			<category name="Security" />
+			<description name="Checks that outbound TLS verification bypasses are guarded by `FIPSModeValidator`, see LPD-93649." />
+		</check>
 		<check name="JavaUpgradeModelPermissionsCheck">
 			<category name="Upgrade" />
 			<description name="Replace setGroupPermissions and setGuestPermissions by new implementation." />
