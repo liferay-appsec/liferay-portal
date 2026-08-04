@@ -31,6 +31,14 @@
 				<Layout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%t][%c{1}:%L] %m%n" type="PatternLayout" />
 			</FilePattern>
 		</Appender>
+
+		<Appender filePattern="@liferay.home@/logs/fips-audit.%d{yyyy-MM-dd}{UTC}.ndjson" filePermissions="rw-------" ignoreExceptions="false" immediateFlush="true" name="FIPS_AUDIT_FILE" type="RollingFile">
+			<Layout type="FIPSAuditNDJSONLayout" />
+
+			<TimeBasedTriggeringPolicy />
+
+			<DirectWriteRolloverStrategy />
+		</Appender>
 	</Appenders>
 
 	<Loggers>
@@ -205,6 +213,11 @@
 		<Logger level="ERROR" name="freemarker.beans" />
 		<Logger level="ERROR" name="hsqldb.db" />
 		<Logger level="ERROR" name="httpclient.wire" />
+
+		<Logger additivity="false" level="INFO" name="liferay.fips.audit">
+			<AppenderRef ref="FIPS_AUDIT_FILE" />
+		</Logger>
+
 		<Logger level="ERROR" name="net.htmlparser.jericho" />
 		<Logger level="ERROR" name="net.sf.ehcache" />
 		<Logger level="INFO" name="net.sf.ehcache.config.ConfigurationFactory" />
