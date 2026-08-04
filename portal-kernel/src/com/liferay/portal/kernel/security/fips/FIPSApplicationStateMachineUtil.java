@@ -94,6 +94,19 @@ public class FIPSApplicationStateMachineUtil {
 			});
 	}
 
+	/**
+	 * Records the terminal power-off transition on a best-effort basis.
+	 *
+	 * <p>
+	 * A JVM shutdown hook runs after the servlet context is destroyed, and the
+	 * context shuts Log4J down on its way out, so on an orderly stop the
+	 * <code>FIPS_AUDIT_FILE</code> appender is already gone by the time this
+	 * hook fires and the record is lost. §5.2 accepts that: a reliable
+	 * emit-and-flush during JVM termination is a known limitation. Anything
+	 * needing the record for certain has to power off before Log4J does, which
+	 * the guard below already allows for.
+	 * </p>
+	 */
 	public static void registerShutdownHook() {
 		Runtime runtime = Runtime.getRuntime();
 

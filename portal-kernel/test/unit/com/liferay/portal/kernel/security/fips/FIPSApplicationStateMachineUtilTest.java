@@ -6,20 +6,13 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
-import java.io.File;
-import java.io.IOException;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -28,32 +21,40 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
 /**
  * @author Jorge García Jiménez
+ * @author Rafael Praxedes
  */
 public class FIPSApplicationStateMachineUtilTest {
 
 	@Before
-	public void setUp() throws Exception {
-		_liferayHomePath = Files.createTempDirectory("fips-audit-test");
-
-		_fipsAuditLogPath = _liferayHomePath.resolve("logs/fips-audit.ndjson");
-
-		_safeCloseable1 = PropsValuesTestUtil.swapWithSafeCloseable(
-			"LIFERAY_HOME", String.valueOf(_liferayHomePath));
-
-		_safeCloseable2 = PropsValuesTestUtil.swapWithSafeCloseable(
+	public void setUp() {
+		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
 			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
+
+		_fipsAuditUtilMockedStatic = Mockito.mockStatic(FIPSAuditUtil.class);
+
+		_fipsAuditUtilMockedStatic.when(
+			() -> FIPSAuditUtil.write(Mockito.any(), Mockito.any())
+		).thenAnswer(
+			invocation -> {
+				_records.add(invocation.getArgument(1));
+
+				return null;
+			}
+		);
 
 		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
 	}
 
 	@After
-	public void tearDown() throws Exception {
-		_safeCloseable2.close();
-		_safeCloseable1.close();
+	public void tearDown() {
+		_fipsAuditUtilMockedStatic.close();
 
-		_delete(_liferayHomePath);
+		_safeCloseable.close();
 	}
 
 	@Test
@@ -69,15 +70,16 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.ERROR,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String ndjson = _read();
+		Map<String, Object> record = _getRecord();
 
-		_assertField(ndjson, "event-type", "fips-state-transition");
-		_assertField(ndjson, "failed-step", failedStep);
-		_assertField(ndjson, "from-state", "Operational");
+		_assertEnvelope(record, "event-type", "fips-state-transition");
+		_assertEnvelope(record, "severity", "critical");
+
+		_assertField(record, "failed-step", failedStep);
+		_assertField(record, "from-state", "Operational");
 		_assertField(
-			ndjson, "provider-error-message", "The provider is unhappy");
-		_assertField(ndjson, "severity", "critical");
-		_assertField(ndjson, "to-state", "Error");
+			record, "provider-error-message", "The provider is unhappy");
+		_assertField(record, "to-state", "Error");
 	}
 
 	@Test
@@ -96,19 +98,20 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.OPERATIONAL,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
+		_assertEnvelope(_records.get(0), "severity", "info");
 
-		_assertField(ndjsons[0], "crypto-officer-user-id", cryptoOfficerUserId);
-		_assertField(ndjsons[0], "operation-type", operationType);
-		_assertField(ndjsons[0], "severity", "info");
-		_assertField(ndjsons[0], "to-state", "Key/CSP Entry");
-
-		_assertField(ndjsons[1], "from-state", "Key/CSP Entry");
 		_assertField(
-			ndjsons[1], "message", "The operation was completed successfully");
-		_assertField(ndjsons[1], "to-state", "Operational");
+			_records.get(0), "crypto-officer-user-id", cryptoOfficerUserId);
+		_assertField(_records.get(0), "operation-type", operationType);
+		_assertField(_records.get(0), "to-state", "Key/CSP Entry");
+
+		_assertField(_records.get(1), "from-state", "Key/CSP Entry");
+		_assertField(
+			_records.get(1), "message",
+			"The operation was completed successfully");
+		_assertField(_records.get(1), "to-state", "Operational");
 	}
 
 	@Test
@@ -127,15 +130,14 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.ERROR,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
+		_assertEnvelope(_records.get(1), "severity", "critical");
 
-		_assertField(ndjsons[1], "failed-step", "Key or CSP entry");
+		_assertField(_records.get(1), "failed-step", "Key or CSP entry");
 		_assertField(
-			ndjsons[1], "provider-error-message", "The key is unusable");
-		_assertField(ndjsons[1], "severity", "critical");
-		_assertField(ndjsons[1], "to-state", "Error");
+			_records.get(1), "provider-error-message", "The key is unusable");
+		_assertField(_records.get(1), "to-state", "Error");
 	}
 
 	@Test
@@ -150,12 +152,13 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.POWER_OFF,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String ndjson = _read();
+		Map<String, Object> record = _getRecord();
 
-		_assertField(ndjson, "from-state", "Operational");
-		_assertField(ndjson, "initiating-actor", initiatingActor);
-		_assertField(ndjson, "severity", "info");
-		_assertField(ndjson, "to-state", "Power-off");
+		_assertEnvelope(record, "severity", "info");
+
+		_assertField(record, "from-state", "Operational");
+		_assertField(record, "initiating-actor", initiatingActor);
+		_assertField(record, "to-state", "Power-off");
 	}
 
 	@Test
@@ -178,17 +181,16 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.OPERATIONAL,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
+		_assertField(
+			_records.get(0), "crypto-officer-user-id", cryptoOfficerUserId);
+		_assertField(_records.get(0), "reason", reason);
+		_assertField(_records.get(0), "to-state", "Quiescent");
 
-		_assertField(ndjsons[0], "crypto-officer-user-id", cryptoOfficerUserId);
-		_assertField(ndjsons[0], "reason", reason);
-		_assertField(ndjsons[0], "to-state", "Quiescent");
-
-		_assertField(ndjsons[1], "from-state", "Quiescent");
-		_assertField(ndjsons[1], "reason", reason);
-		_assertField(ndjsons[1], "to-state", "Operational");
+		_assertField(_records.get(1), "from-state", "Quiescent");
+		_assertField(_records.get(1), "reason", reason);
+		_assertField(_records.get(1), "to-state", "Operational");
 	}
 
 	@Test
@@ -201,19 +203,17 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.OPERATIONAL,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
-
-		_assertField(ndjsons[0], "from-state", "Initializing");
+		_assertField(_records.get(0), "from-state", "Initializing");
 		_assertField(
-			ndjsons[0], "message", "The integrity checks were started");
-		_assertField(ndjsons[0], "to-state", "Self-Test");
+			_records.get(0), "message", "The integrity checks were started");
+		_assertField(_records.get(0), "to-state", "Self-Test");
 
 		_assertField(
-			ndjsons[1], "message",
+			_records.get(1), "message",
 			"All checks and the validated provider self tests passed");
-		_assertField(ndjsons[1], "to-state", "Operational");
+		_assertField(_records.get(1), "to-state", "Operational");
 
 		_testSelfTest(new RuntimeException());
 		_testSelfTest(new SecurityException());
@@ -235,16 +235,15 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.OPERATIONAL,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
+		_assertField(
+			_records.get(0), "crypto-officer-user-id", cryptoOfficerUserId);
+		_assertField(_records.get(0), "from-state", "Error");
+		_assertField(_records.get(0), "recovery-action", recoveryAction);
+		_assertField(_records.get(0), "to-state", "Self-Test");
 
-		_assertField(ndjsons[0], "crypto-officer-user-id", cryptoOfficerUserId);
-		_assertField(ndjsons[0], "from-state", "Error");
-		_assertField(ndjsons[0], "recovery-action", recoveryAction);
-		_assertField(ndjsons[0], "to-state", "Self-Test");
-
-		_assertField(ndjsons[1], "to-state", "Operational");
+		_assertField(_records.get(1), "to-state", "Operational");
 	}
 
 	@Test
@@ -361,49 +360,22 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.SELF_TEST, FIPSApplicationState.SELF_TEST);
 	}
 
-	private void _assertField(String ndjson, String key, String value) {
-		Assert.assertTrue(
-			ndjson,
-			ndjson.contains(
-				StringBundler.concat("\"", key, "\":\"", value, "\"")));
+	private void _assertEnvelope(
+		Map<String, Object> record, String key, String value) {
+
+		Assert.assertEquals(String.valueOf(record), value, record.get(key));
 	}
 
-	private void _delete(Path path) throws Exception {
-		File file = path.toFile();
+	private void _assertField(
+		Map<String, Object> record, String key, String value) {
 
-		File[] childFiles = file.listFiles();
+		Map<?, ?> fields = (Map<?, ?>)record.get("fields");
 
-		if (childFiles != null) {
-			for (File childFile : childFiles) {
-				_delete(childFile.toPath());
-			}
-		}
-
-		Files.delete(path);
+		Assert.assertEquals(String.valueOf(record), value, fields.get(key));
 	}
 
-	private void _deleteFIPSAuditLog() {
-		File file = _fipsAuditLogPath.toFile();
-
-		file.delete();
-	}
-
-	private String _read() {
-		try {
-			if (!Files.exists(_fipsAuditLogPath)) {
-				return "";
-			}
-
-			return new String(
-				Files.readAllBytes(_fipsAuditLogPath), StandardCharsets.UTF_8);
-		}
-		catch (IOException ioException) {
-			throw new AssertionError(ioException);
-		}
-	}
-
-	private String[] _readLines() {
-		return StringUtil.split(_read(), '\n');
+	private Map<String, Object> _getRecord() {
+		return _records.get(_records.size() - 1);
 	}
 
 	private void _setFIPSApplicationState(
@@ -419,7 +391,7 @@ public class FIPSApplicationStateMachineUtilTest {
 	}
 
 	private void _testSelfTest(RuntimeException runtimeException) {
-		_deleteFIPSAuditLog();
+		_records.clear();
 
 		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
 
@@ -434,21 +406,20 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationState.ERROR,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 2, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 2, ndjsons.length);
+		_assertEnvelope(_records.get(1), "severity", "critical");
 
-		_assertField(ndjsons[1], "failed-step", "Self test");
-		_assertField(ndjsons[1], "from-state", "Self-Test");
-		_assertField(ndjsons[1], "severity", "critical");
-		_assertField(ndjsons[1], "to-state", "Error");
+		_assertField(_records.get(1), "failed-step", "Self test");
+		_assertField(_records.get(1), "from-state", "Self-Test");
+		_assertField(_records.get(1), "to-state", "Error");
 	}
 
 	private void _testTransition(
 		FIPSApplicationState fromFIPSApplicationState,
 		FIPSApplicationState toFIPSApplicationState) {
 
-		_deleteFIPSAuditLog();
+		_records.clear();
 
 		_setFIPSApplicationState(fromFIPSApplicationState);
 
@@ -458,21 +429,21 @@ public class FIPSApplicationStateMachineUtilTest {
 			toFIPSApplicationState,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		String[] ndjsons = _readLines();
+		Assert.assertEquals(_records.toString(), 1, _records.size());
 
-		Assert.assertEquals(Arrays.toString(ndjsons), 1, ndjsons.length);
+		_assertEnvelope(_records.get(0), "event-type", "fips-state-transition");
 
-		_assertField(ndjsons[0], "event-type", "fips-state-transition");
 		_assertField(
-			ndjsons[0], "from-state", fromFIPSApplicationState.getValue());
-		_assertField(ndjsons[0], "to-state", toFIPSApplicationState.getValue());
+			_records.get(0), "from-state", fromFIPSApplicationState.getValue());
+		_assertField(
+			_records.get(0), "to-state", toFIPSApplicationState.getValue());
 	}
 
 	private void _testTransitionWithIllegalState(
 		FIPSApplicationState fromFIPSApplicationState,
 		FIPSApplicationState toFIPSApplicationState) {
 
-		_deleteFIPSAuditLog();
+		_records.clear();
 
 		_setFIPSApplicationState(fromFIPSApplicationState);
 
@@ -484,7 +455,7 @@ public class FIPSApplicationStateMachineUtilTest {
 			fromFIPSApplicationState,
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
-		Assert.assertEquals("", _read());
+		Assert.assertTrue(_records.toString(), _records.isEmpty());
 	}
 
 	private void _transition(FIPSApplicationState fipsApplicationState) {
@@ -496,9 +467,8 @@ public class FIPSApplicationStateMachineUtilTest {
 			});
 	}
 
-	private Path _fipsAuditLogPath;
-	private Path _liferayHomePath;
-	private SafeCloseable _safeCloseable1;
-	private SafeCloseable _safeCloseable2;
+	private MockedStatic<FIPSAuditUtil> _fipsAuditUtilMockedStatic;
+	private final List<Map<String, Object>> _records = new ArrayList<>();
+	private SafeCloseable _safeCloseable;
 
 }

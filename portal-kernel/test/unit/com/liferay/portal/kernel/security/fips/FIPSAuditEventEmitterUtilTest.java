@@ -8,61 +8,118 @@ package com.liferay.portal.kernel.security.fips;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
 import java.io.IOException;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.security.Provider;
+import java.security.Security;
+
+import java.time.Instant;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Jorge García Jiménez
+ * @author Rafael Praxedes
  */
 public class FIPSAuditEventEmitterUtilTest {
 
-	@Test
-	public void testEmit() throws Exception {
-		Path liferayHome = Files.createTempDirectory("fips-audit-test");
+	@Before
+	public void setUp() {
+		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
+			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
 
+		_fipsAuditUtilMockedStatic = Mockito.mockStatic(FIPSAuditUtil.class);
+
+		_fipsAuditUtilMockedStatic.when(
+			() -> FIPSAuditUtil.write(Mockito.any(), Mockito.any())
+		).thenAnswer(
+			invocation -> {
+				_fipsAuditSeverities.add(invocation.getArgument(0));
+				_records.add(invocation.getArgument(1));
+
+				return null;
+			}
+		);
+	}
+
+	@After
+	public void tearDown() {
+		_fipsAuditUtilMockedStatic.close();
+
+		_safeCloseable.close();
+	}
+
+	@Test
+	public void testEmit() {
 		try (SafeCloseable safeCloseable1 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"LIFERAY_HOME", liferayHome.toString());
-			SafeCloseable safeCloseable2 =
-				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", "instance-1");
-			SafeCloseable safeCloseable3 =
+			SafeCloseable safeCloseable2 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID", "4743")) {
 
-			FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-				RandomTestUtil.randomString(), FIPSAuditSeverity.CRITICAL);
+			String eventType = RandomTestUtil.randomString();
 
-			fipsAuditEvent.put("from-state", "Operational");
-			fipsAuditEvent.put("to-state", RandomTestUtil.randomString());
+			FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+				eventType, FIPSAuditSeverity.CRITICAL);
+
+			String fromState = RandomTestUtil.randomString();
+			String toState = RandomTestUtil.randomString();
+
+			fipsAuditEvent.put("from-state", fromState);
+			fipsAuditEvent.put("to-state", toState);
 
 			FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
 
-			String ndjson = _read(
-				liferayHome.resolve("logs/fips-audit.ndjson"));
+			Assert.assertEquals(
+				FIPSAuditSeverity.CRITICAL, _getFIPSAuditSeverity());
 
-			Assert.assertTrue(ndjson, ndjson.endsWith("}\n"));
+			Map<String, Object> record = _getRecord();
+
+			Assert.assertEquals("4743", record.get("cmvp-certificate-id"));
+			Assert.assertEquals(
+				"instance-1", record.get("deployment-instance-id"));
+			Assert.assertEquals("1.0", record.get("event-schema-version"));
+			Assert.assertEquals(eventType, record.get("event-type"));
+
+			Map<?, ?> fields = (Map<?, ?>)record.get("fields");
+
+			Assert.assertEquals(fromState, fields.get("from-state"));
+			Assert.assertEquals(toState, fields.get("to-state"));
+
+			Provider provider = _getProvider();
+
+			Assert.assertEquals(
+				provider.getName(), record.get("provider-name"));
+			Assert.assertEquals(
+				provider.getVersionStr(), record.get("provider-version"));
+
+			Assert.assertEquals("critical", record.get("severity"));
+
+			String timestamp = String.valueOf(record.get("timestamp"));
+
 			Assert.assertTrue(
-				ndjson, ndjson.contains("\"cmvp-certificate-id\":\"4743\""));
-			Assert.assertTrue(
-				ndjson,
-				ndjson.contains("\"deployment-instance-id\":\"instance-1\""));
-			Assert.assertTrue(
-				ndjson, ndjson.contains("\"from-state\":\"Operational\""));
-			Assert.assertTrue(ndjson, ndjson.contains("\"provider-name\":"));
-			Assert.assertTrue(ndjson, ndjson.contains("\"provider-version\":"));
-		}
-		finally {
-			_delete(liferayHome);
+				timestamp,
+				timestamp.matches(
+					"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
 		}
 	}
 
@@ -89,16 +146,21 @@ public class FIPSAuditEventEmitterUtilTest {
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
 
-			String[] lines = StringUtil.split(
-				_read(liferayHome.resolve("logs/fips-audit.ndjson")), '\n');
+			Assert.assertEquals(_records.toString(), 2, _records.size());
 
-			String deploymentInstanceId = _extractDeploymentInstanceId(
-				lines[0]);
+			Map<String, Object> record = _records.get(0);
+
+			Object deploymentInstanceId = record.get("deployment-instance-id");
 
 			Assert.assertTrue(
-				deploymentInstanceId, !deploymentInstanceId.isEmpty());
+				String.valueOf(deploymentInstanceId),
+				Validator.isNotNull(String.valueOf(deploymentInstanceId)));
+
+			Map<String, Object> secondRecord = _records.get(1);
+
 			Assert.assertEquals(
-				deploymentInstanceId, _extractDeploymentInstanceId(lines[1]));
+				deploymentInstanceId,
+				secondRecord.get("deployment-instance-id"));
 
 			Assert.assertTrue(
 				Files.exists(
@@ -108,6 +170,55 @@ public class FIPSAuditEventEmitterUtilTest {
 		finally {
 			_delete(liferayHome);
 		}
+	}
+
+	@Test
+	public void testEmitFormatsTimestampInUTC() {
+		TimeZone timeZone = TimeZone.getDefault();
+
+		try {
+			TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
+
+			FIPSAuditEventEmitterUtil.emit(
+				new FIPSAuditEvent(
+					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+
+			Map<String, Object> record = _getRecord();
+
+			String timestamp = String.valueOf(record.get("timestamp"));
+
+			Instant instant = Instant.parse(timestamp);
+
+			Assert.assertTrue(
+				timestamp,
+				Math.abs(System.currentTimeMillis() - instant.toEpochMilli()) <
+					Time.MINUTE);
+		}
+		finally {
+			TimeZone.setDefault(timeZone);
+		}
+	}
+
+	@Test
+	public void testEmitNestsFields() {
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			RandomTestUtil.randomString(), FIPSAuditSeverity.INFO);
+
+		String spoofedProviderName = RandomTestUtil.randomString();
+
+		fipsAuditEvent.put("provider-name", spoofedProviderName);
+
+		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+
+		Map<String, Object> record = _getRecord();
+
+		Provider provider = _getProvider();
+
+		Assert.assertEquals(provider.getName(), record.get("provider-name"));
+
+		Map<?, ?> fields = (Map<?, ?>)record.get("fields");
+
+		Assert.assertEquals(spoofedProviderName, fields.get("provider-name"));
 	}
 
 	private void _delete(Path path) throws IOException {
@@ -124,18 +235,24 @@ public class FIPSAuditEventEmitterUtilTest {
 		Files.delete(path);
 	}
 
-	private String _extractDeploymentInstanceId(String ndjson) {
-		String prefix = "\"deployment-instance-id\":\"";
-
-		int start = ndjson.indexOf(prefix) + prefix.length();
-
-		int end = ndjson.indexOf("\"", start);
-
-		return ndjson.substring(start, end);
+	private FIPSAuditSeverity _getFIPSAuditSeverity() {
+		return _fipsAuditSeverities.get(_fipsAuditSeverities.size() - 1);
 	}
 
-	private String _read(Path path) throws IOException {
-		return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+	private Provider _getProvider() {
+		Provider[] providers = Security.getProviders();
+
+		return providers[0];
 	}
+
+	private Map<String, Object> _getRecord() {
+		return _records.get(_records.size() - 1);
+	}
+
+	private final List<FIPSAuditSeverity> _fipsAuditSeverities =
+		new ArrayList<>();
+	private MockedStatic<FIPSAuditUtil> _fipsAuditUtilMockedStatic;
+	private final List<Map<String, Object>> _records = new ArrayList<>();
+	private SafeCloseable _safeCloseable;
 
 }

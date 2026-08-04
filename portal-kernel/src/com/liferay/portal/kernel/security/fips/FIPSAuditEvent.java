@@ -13,7 +13,7 @@ import java.util.Map;
  * A single FIPS audit event: its type, its {@link FIPSAuditSeverity}, and an
  * insertion ordered set of event specific fields. The shared envelope fields
  * (schema version, timestamp, provider identity, and deployment instance) are
- * added by {@link FIPSAuditEventEmitter} at emission time, so callers only
+ * added by {@link FIPSAuditEventEmitterUtil} at emission time, so callers only
  * supply what is specific to the event.
  *
  * @author Jorge García Jiménez
