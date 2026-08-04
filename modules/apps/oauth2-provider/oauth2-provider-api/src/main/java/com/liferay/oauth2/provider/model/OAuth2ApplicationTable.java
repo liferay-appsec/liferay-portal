@@ -73,6 +73,10 @@ public class OAuth2ApplicationTable extends BaseTable<OAuth2ApplicationTable> {
 	public final Column<OAuth2ApplicationTable, String> clientSecret =
 		createColumn(
 			"clientSecret", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<OAuth2ApplicationTable, String>
+		clientSecretKeyReference = createColumn(
+			"clientSecretKeyReference", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
 	public final Column<OAuth2ApplicationTable, String> description =
 		createColumn(
 			"description", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
@@ -109,4 +113,4 @@ public class OAuth2ApplicationTable extends BaseTable<OAuth2ApplicationTable> {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1631243351
+// LIFERAY-SERVICE-BUILDER-HASH:1723588236

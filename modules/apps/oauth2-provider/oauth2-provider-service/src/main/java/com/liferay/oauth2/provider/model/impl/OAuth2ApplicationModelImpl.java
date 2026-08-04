@@ -74,12 +74,13 @@ public class OAuth2ApplicationModelImpl
 		{"clientCredentialUserId", Types.BIGINT},
 		{"clientCredentialUserName", Types.VARCHAR},
 		{"clientId", Types.VARCHAR}, {"clientProfile", Types.INTEGER},
-		{"clientSecret", Types.VARCHAR}, {"description", Types.VARCHAR},
-		{"features", Types.VARCHAR}, {"homePageURL", Types.VARCHAR},
-		{"iconFileEntryId", Types.BIGINT}, {"jwks", Types.VARCHAR},
-		{"name", Types.VARCHAR}, {"privacyPolicyURL", Types.VARCHAR},
-		{"redirectURIs", Types.VARCHAR}, {"rememberDevice", Types.BOOLEAN},
-		{"trustedApplication", Types.BOOLEAN}
+		{"clientSecret", Types.VARCHAR},
+		{"clientSecretKeyReference", Types.VARCHAR},
+		{"description", Types.VARCHAR}, {"features", Types.VARCHAR},
+		{"homePageURL", Types.VARCHAR}, {"iconFileEntryId", Types.BIGINT},
+		{"jwks", Types.VARCHAR}, {"name", Types.VARCHAR},
+		{"privacyPolicyURL", Types.VARCHAR}, {"redirectURIs", Types.VARCHAR},
+		{"rememberDevice", Types.BOOLEAN}, {"trustedApplication", Types.BOOLEAN}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -102,6 +103,7 @@ public class OAuth2ApplicationModelImpl
 		TABLE_COLUMNS_MAP.put("clientId", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("clientProfile", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("clientSecret", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("clientSecretKeyReference", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("description", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("features", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("homePageURL", Types.VARCHAR);
@@ -115,7 +117,7 @@ public class OAuth2ApplicationModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table OAuth2Application (uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(500) null,oAuth2ApplicationId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,oA2AScopeAliasesId LONG,allowedGrantTypes VARCHAR(128) null,clientAuthenticationMethod VARCHAR(75) null,clientCredentialUserId LONG,clientCredentialUserName VARCHAR(75) null,clientId VARCHAR(75) null,clientProfile INTEGER,clientSecret VARCHAR(75) null,description STRING null,features STRING null,homePageURL STRING null,iconFileEntryId LONG,jwks VARCHAR(3999) null,name VARCHAR(255) null,privacyPolicyURL STRING null,redirectURIs STRING null,rememberDevice BOOLEAN,trustedApplication BOOLEAN)";
+		"create table OAuth2Application (uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(500) null,oAuth2ApplicationId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,oA2AScopeAliasesId LONG,allowedGrantTypes VARCHAR(128) null,clientAuthenticationMethod VARCHAR(75) null,clientCredentialUserId LONG,clientCredentialUserName VARCHAR(75) null,clientId VARCHAR(75) null,clientProfile INTEGER,clientSecret VARCHAR(75) null,clientSecretKeyReference VARCHAR(75) null,description STRING null,features STRING null,homePageURL STRING null,iconFileEntryId LONG,jwks VARCHAR(3999) null,name VARCHAR(255) null,privacyPolicyURL STRING null,redirectURIs STRING null,rememberDevice BOOLEAN,trustedApplication BOOLEAN)";
 
 	public static final String TABLE_SQL_DROP = "drop table OAuth2Application";
 
@@ -323,6 +325,9 @@ public class OAuth2ApplicationModelImpl
 			attributeGetterFunctions.put(
 				"clientSecret", OAuth2Application::getClientSecret);
 			attributeGetterFunctions.put(
+				"clientSecretKeyReference",
+				OAuth2Application::getClientSecretKeyReference);
+			attributeGetterFunctions.put(
 				"description", OAuth2Application::getDescription);
 			attributeGetterFunctions.put(
 				"features", OAuth2Application::getFeatures);
@@ -422,6 +427,10 @@ public class OAuth2ApplicationModelImpl
 				"clientSecret",
 				(BiConsumer<OAuth2Application, String>)
 					OAuth2Application::setClientSecret);
+			attributeSetterBiConsumers.put(
+				"clientSecretKeyReference",
+				(BiConsumer<OAuth2Application, String>)
+					OAuth2Application::setClientSecretKeyReference);
 			attributeSetterBiConsumers.put(
 				"description",
 				(BiConsumer<OAuth2Application, String>)
@@ -841,6 +850,26 @@ public class OAuth2ApplicationModelImpl
 
 	@JSON
 	@Override
+	public String getClientSecretKeyReference() {
+		if (_clientSecretKeyReference == null) {
+			return "";
+		}
+		else {
+			return _clientSecretKeyReference;
+		}
+	}
+
+	@Override
+	public void setClientSecretKeyReference(String clientSecretKeyReference) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_clientSecretKeyReference = clientSecretKeyReference;
+	}
+
+	@JSON
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return "";
@@ -1120,6 +1149,8 @@ public class OAuth2ApplicationModelImpl
 		oAuth2ApplicationImpl.setClientId(getClientId());
 		oAuth2ApplicationImpl.setClientProfile(getClientProfile());
 		oAuth2ApplicationImpl.setClientSecret(getClientSecret());
+		oAuth2ApplicationImpl.setClientSecretKeyReference(
+			getClientSecretKeyReference());
 		oAuth2ApplicationImpl.setDescription(getDescription());
 		oAuth2ApplicationImpl.setFeatures(getFeatures());
 		oAuth2ApplicationImpl.setHomePageURL(getHomePageURL());
@@ -1173,6 +1204,8 @@ public class OAuth2ApplicationModelImpl
 			this.<Integer>getColumnOriginalValue("clientProfile"));
 		oAuth2ApplicationImpl.setClientSecret(
 			this.<String>getColumnOriginalValue("clientSecret"));
+		oAuth2ApplicationImpl.setClientSecretKeyReference(
+			this.<String>getColumnOriginalValue("clientSecretKeyReference"));
 		oAuth2ApplicationImpl.setDescription(
 			this.<String>getColumnOriginalValue("description"));
 		oAuth2ApplicationImpl.setFeatures(
@@ -1381,6 +1414,18 @@ public class OAuth2ApplicationModelImpl
 			oAuth2ApplicationCacheModel.clientSecret = null;
 		}
 
+		oAuth2ApplicationCacheModel.clientSecretKeyReference =
+			getClientSecretKeyReference();
+
+		String clientSecretKeyReference =
+			oAuth2ApplicationCacheModel.clientSecretKeyReference;
+
+		if ((clientSecretKeyReference != null) &&
+			(clientSecretKeyReference.length() == 0)) {
+
+			oAuth2ApplicationCacheModel.clientSecretKeyReference = null;
+		}
+
 		oAuth2ApplicationCacheModel.description = getDescription();
 
 		String description = oAuth2ApplicationCacheModel.description;
@@ -1522,6 +1567,7 @@ public class OAuth2ApplicationModelImpl
 	private String _clientId;
 	private int _clientProfile;
 	private String _clientSecret;
+	private String _clientSecretKeyReference;
 	private String _description;
 	private String _features;
 	private String _homePageURL;
@@ -1584,6 +1630,8 @@ public class OAuth2ApplicationModelImpl
 		_columnOriginalValues.put("clientId", _clientId);
 		_columnOriginalValues.put("clientProfile", _clientProfile);
 		_columnOriginalValues.put("clientSecret", _clientSecret);
+		_columnOriginalValues.put(
+			"clientSecretKeyReference", _clientSecretKeyReference);
 		_columnOriginalValues.put("description", _description);
 		_columnOriginalValues.put("features", _features);
 		_columnOriginalValues.put("homePageURL", _homePageURL);
@@ -1651,25 +1699,27 @@ public class OAuth2ApplicationModelImpl
 
 		columnBitmasks.put("clientSecret", 32768L);
 
-		columnBitmasks.put("description", 65536L);
+		columnBitmasks.put("clientSecretKeyReference", 65536L);
 
-		columnBitmasks.put("features", 131072L);
+		columnBitmasks.put("description", 131072L);
 
-		columnBitmasks.put("homePageURL", 262144L);
+		columnBitmasks.put("features", 262144L);
 
-		columnBitmasks.put("iconFileEntryId", 524288L);
+		columnBitmasks.put("homePageURL", 524288L);
 
-		columnBitmasks.put("jwks", 1048576L);
+		columnBitmasks.put("iconFileEntryId", 1048576L);
 
-		columnBitmasks.put("name", 2097152L);
+		columnBitmasks.put("jwks", 2097152L);
 
-		columnBitmasks.put("privacyPolicyURL", 4194304L);
+		columnBitmasks.put("name", 4194304L);
 
-		columnBitmasks.put("redirectURIs", 8388608L);
+		columnBitmasks.put("privacyPolicyURL", 8388608L);
 
-		columnBitmasks.put("rememberDevice", 16777216L);
+		columnBitmasks.put("redirectURIs", 16777216L);
 
-		columnBitmasks.put("trustedApplication", 33554432L);
+		columnBitmasks.put("rememberDevice", 33554432L);
+
+		columnBitmasks.put("trustedApplication", 67108864L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
@@ -1678,4 +1728,4 @@ public class OAuth2ApplicationModelImpl
 	private OAuth2Application _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-123573437
+// LIFERAY-SERVICE-BUILDER-HASH:176044529

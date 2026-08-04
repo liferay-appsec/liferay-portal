@@ -330,6 +330,21 @@ public interface OAuth2ApplicationModel
 	public void setClientSecret(String clientSecret);
 
 	/**
+	 * Returns the client secret key reference of this o auth2 application.
+	 *
+	 * @return the client secret key reference of this o auth2 application
+	 */
+	@AutoEscape
+	public String getClientSecretKeyReference();
+
+	/**
+	 * Sets the client secret key reference of this o auth2 application.
+	 *
+	 * @param clientSecretKeyReference the client secret key reference of this o auth2 application
+	 */
+	public void setClientSecretKeyReference(String clientSecretKeyReference);
+
+	/**
 	 * Returns the description of this o auth2 application.
 	 *
 	 * @return the description of this o auth2 application
@@ -498,4 +513,4 @@ public interface OAuth2ApplicationModel
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1896141665
+// LIFERAY-SERVICE-BUILDER-HASH:1598805331

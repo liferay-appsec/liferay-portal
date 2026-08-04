@@ -55,7 +55,7 @@ public class OAuth2ApplicationCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(53);
+		StringBundler sb = new StringBundler(55);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -89,6 +89,8 @@ public class OAuth2ApplicationCacheModel
 		sb.append(clientProfile);
 		sb.append(", clientSecret=");
 		sb.append(clientSecret);
+		sb.append(", clientSecretKeyReference=");
+		sb.append(clientSecretKeyReference);
 		sb.append(", description=");
 		sb.append(description);
 		sb.append(", features=");
@@ -203,6 +205,14 @@ public class OAuth2ApplicationCacheModel
 			oAuth2ApplicationImpl.setClientSecret(clientSecret);
 		}
 
+		if (clientSecretKeyReference == null) {
+			oAuth2ApplicationImpl.setClientSecretKeyReference("");
+		}
+		else {
+			oAuth2ApplicationImpl.setClientSecretKeyReference(
+				clientSecretKeyReference);
+		}
+
 		if (description == null) {
 			oAuth2ApplicationImpl.setDescription("");
 		}
@@ -286,6 +296,7 @@ public class OAuth2ApplicationCacheModel
 
 		clientProfile = objectInput.readInt();
 		clientSecret = objectInput.readUTF();
+		clientSecretKeyReference = objectInput.readUTF();
 		description = objectInput.readUTF();
 		features = objectInput.readUTF();
 		homePageURL = objectInput.readUTF();
@@ -374,6 +385,13 @@ public class OAuth2ApplicationCacheModel
 			objectOutput.writeUTF(clientSecret);
 		}
 
+		if (clientSecretKeyReference == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(clientSecretKeyReference);
+		}
+
 		if (description == null) {
 			objectOutput.writeUTF("");
 		}
@@ -446,6 +464,7 @@ public class OAuth2ApplicationCacheModel
 	public String clientId;
 	public int clientProfile;
 	public String clientSecret;
+	public String clientSecretKeyReference;
 	public String description;
 	public String features;
 	public String homePageURL;
@@ -458,4 +477,4 @@ public class OAuth2ApplicationCacheModel
 	public boolean trustedApplication;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1038855590
+// LIFERAY-SERVICE-BUILDER-HASH:-514669466

@@ -22,6 +22,7 @@ create table OAuth2Application (
 	clientId VARCHAR(75) null,
 	clientProfile INTEGER,
 	clientSecret VARCHAR(75) null,
+	clientSecretKeyReference VARCHAR(75) null,
 	description STRING null,
 	features STRING null,
 	homePageURL STRING null,

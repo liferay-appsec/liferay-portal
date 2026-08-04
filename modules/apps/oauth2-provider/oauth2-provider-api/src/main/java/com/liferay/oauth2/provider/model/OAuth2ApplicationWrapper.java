@@ -54,6 +54,8 @@ public class OAuth2ApplicationWrapper
 		attributes.put("clientId", getClientId());
 		attributes.put("clientProfile", getClientProfile());
 		attributes.put("clientSecret", getClientSecret());
+		attributes.put(
+			"clientSecretKeyReference", getClientSecretKeyReference());
 		attributes.put("description", getDescription());
 		attributes.put("features", getFeatures());
 		attributes.put("homePageURL", getHomePageURL());
@@ -169,6 +171,13 @@ public class OAuth2ApplicationWrapper
 
 		if (clientSecret != null) {
 			setClientSecret(clientSecret);
+		}
+
+		String clientSecretKeyReference = (String)attributes.get(
+			"clientSecretKeyReference");
+
+		if (clientSecretKeyReference != null) {
+			setClientSecretKeyReference(clientSecretKeyReference);
 		}
 
 		String description = (String)attributes.get("description");
@@ -323,6 +332,16 @@ public class OAuth2ApplicationWrapper
 	@Override
 	public String getClientSecret() {
 		return model.getClientSecret();
+	}
+
+	/**
+	 * Returns the client secret key reference of this o auth2 application.
+	 *
+	 * @return the client secret key reference of this o auth2 application
+	 */
+	@Override
+	public String getClientSecretKeyReference() {
+		return model.getClientSecretKeyReference();
 	}
 
 	/**
@@ -661,6 +680,16 @@ public class OAuth2ApplicationWrapper
 	}
 
 	/**
+	 * Sets the client secret key reference of this o auth2 application.
+	 *
+	 * @param clientSecretKeyReference the client secret key reference of this o auth2 application
+	 */
+	@Override
+	public void setClientSecretKeyReference(String clientSecretKeyReference) {
+		model.setClientSecretKeyReference(clientSecretKeyReference);
+	}
+
+	/**
 	 * Sets the company ID of this o auth2 application.
 	 *
 	 * @param companyId the company ID of this o auth2 application
@@ -901,4 +930,4 @@ public class OAuth2ApplicationWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-237298256
+// LIFERAY-SERVICE-BUILDER-HASH:-912346748
