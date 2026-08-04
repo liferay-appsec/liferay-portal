@@ -10,6 +10,7 @@ import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.constants.ClientProfile;
 import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalServiceUtil;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationServiceUtil;
@@ -126,6 +127,13 @@ public class OAuth2AdminPortletDisplayContext
 	public String[] getOAuth2Features(PortletPreferences portletPreferences) {
 		return StringUtil.split(
 			portletPreferences.getValue("oAuth2Features", StringPool.BLANK));
+	}
+
+	public String getResolvedClientSecret(OAuth2Application oAuth2Application)
+		throws PortalException {
+
+		return OAuth2ApplicationLocalServiceUtil.resolveClientSecret(
+			oAuth2Application);
 	}
 
 	public ClientProfile[] getSortedClientProfiles() {
