@@ -154,6 +154,12 @@ public class OAuth2ServiceUpgradeStepRegistrator
 			"4.2.8", "5.0.0",
 			new com.liferay.oauth2.provider.internal.upgrade.v5_0_0.
 				OAuth2ApplicationIndexedColumnSizeUpgradeProcess());
+
+		registry.register(
+			"5.0.0", "5.1.0",
+			UpgradeProcessFactory.addColumns(
+				"OAuth2Application",
+				"clientSecretKeyReference VARCHAR(75) null"));
 	}
 
 	@Reference
