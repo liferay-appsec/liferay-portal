@@ -27,6 +27,7 @@
 		<column name="clientId" type="String" />
 		<column name="clientProfile" type="int" />
 		<column name="clientSecret" type="String" />
+		<column name="clientSecretKeyReference" type="String" />
 		<column name="description" type="String" />
 		<column name="features" type="String" />
 		<column name="homePageURL" type="String" />
