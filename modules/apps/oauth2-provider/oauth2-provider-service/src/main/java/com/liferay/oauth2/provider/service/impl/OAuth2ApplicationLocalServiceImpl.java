@@ -34,12 +34,15 @@ import com.liferay.oauth2.provider.util.OAuth2SecureRandomGenerator;
 import com.liferay.oauth2.provider.util.builder.OAuth2ScopeBuilder;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.image.ImageToolUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.ImageTypeException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.image.ImageBag;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Repository;
@@ -61,6 +64,9 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.secret.Secret;
+import com.liferay.portal.security.key.secret.SecretManager;
 
 import java.awt.image.RenderedImage;
 
@@ -155,7 +161,6 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setClientCredentialUserName(user.getScreenName());
 		oAuth2Application.setClientId(clientId);
 		oAuth2Application.setClientProfile(clientProfile);
-		oAuth2Application.setClientSecret(clientSecret);
 		oAuth2Application.setDescription(description);
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
@@ -183,6 +188,8 @@ public class OAuth2ApplicationLocalServiceImpl
 			oAuth2Application.getCompanyId(), 0, oAuth2Application.getUserId(),
 			OAuth2Application.class.getName(),
 			oAuth2Application.getOAuth2ApplicationId(), false, false, false);
+
+		_setClientSecret(oAuth2Application, clientSecret);
 
 		return oAuth2ApplicationPersistence.update(oAuth2Application);
 	}
@@ -253,7 +260,6 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setClientCredentialUserName(user.getScreenName());
 		oAuth2Application.setClientId(clientId);
 		oAuth2Application.setClientProfile(clientProfile);
-		oAuth2Application.setClientSecret(clientSecret);
 		oAuth2Application.setDescription(description);
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
@@ -281,6 +287,8 @@ public class OAuth2ApplicationLocalServiceImpl
 			oAuth2Application.getCompanyId(), 0, oAuth2Application.getUserId(),
 			OAuth2Application.class.getName(),
 			oAuth2Application.getOAuth2ApplicationId(), false, false, false);
+
+		_setClientSecret(oAuth2Application, clientSecret);
 
 		return oAuth2ApplicationPersistence.update(oAuth2Application);
 	}
@@ -485,6 +493,32 @@ public class OAuth2ApplicationLocalServiceImpl
 			companyId, clientProfile);
 	}
 
+	public String resolveClientSecret(OAuth2Application oAuth2Application)
+		throws PortalException {
+
+		String clientSecretKeyReference =
+			oAuth2Application.getClientSecretKeyReference();
+
+		if (Validator.isNull(clientSecretKeyReference)) {
+			return oAuth2Application.getClientSecret();
+		}
+
+		String[] providerIdAndIdentifier = StringUtil.split(
+			clientSecretKeyReference.substring(
+				_CLIENT_SECRET_REFERENCE_PREFIX.length(),
+				clientSecretKeyReference.length() - 1),
+			CharPool.COLON);
+
+		try (Secret secret = _secretManager.getSecret(
+				oAuth2Application.getCompanyId(),
+				new KeyReference(
+					providerIdAndIdentifier[1], providerIdAndIdentifier[0],
+					KeyReference.Type.SECRET))) {
+
+			return new String(secret.getChars());
+		}
+	}
+
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public OAuth2Application updateExternalReferenceCode(
@@ -645,7 +679,6 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setClientCredentialUserName(user.getScreenName());
 		oAuth2Application.setClientId(clientId);
 		oAuth2Application.setClientProfile(clientProfile);
-		oAuth2Application.setClientSecret(clientSecret);
 		oAuth2Application.setDescription(description);
 		oAuth2Application.setFeaturesList(featuresList);
 		oAuth2Application.setHomePageURL(homePageURL);
@@ -656,6 +689,8 @@ public class OAuth2ApplicationLocalServiceImpl
 		oAuth2Application.setRedirectURIsList(redirectURIsList);
 		oAuth2Application.setRememberDevice(rememberDevice);
 		oAuth2Application.setTrustedApplication(trustedApplication);
+
+		_setClientSecret(oAuth2Application, clientSecret);
 
 		return oAuth2ApplicationPersistence.update(oAuth2Application);
 	}
@@ -731,6 +766,40 @@ public class OAuth2ApplicationLocalServiceImpl
 
 		return oAuth2ApplicationScopeAliases.
 			getOAuth2ApplicationScopeAliasesId();
+	}
+
+	private void _setClientSecret(
+			OAuth2Application oAuth2Application, String clientSecret)
+		throws PortalException {
+
+		if (Validator.isNull(clientSecret) ||
+			!FeatureFlagManagerUtil.isEnabled(
+				oAuth2Application.getCompanyId(), "LPD-88411")) {
+
+			oAuth2Application.setClientSecret(clientSecret);
+			oAuth2Application.setClientSecretKeyReference(null);
+
+			return;
+		}
+
+		oAuth2Application.setClientSecret(null);
+
+		try (Secret secret = new Secret(
+				new KeyReference(
+					String.valueOf(oAuth2Application.getOAuth2ApplicationId()),
+					StringPool.STAR, KeyReference.Type.SECRET),
+				clientSecret)) {
+
+			KeyReference keyReference = _secretManager.putSecret(
+				oAuth2Application.getCompanyId(), secret);
+
+			oAuth2Application.setClientSecretKeyReference(
+				StringBundler.concat(
+					_CLIENT_SECRET_REFERENCE_PREFIX,
+					keyReference.getProviderId(), StringPool.COLON,
+					keyReference.getIdentifier(),
+					StringPool.CLOSE_CURLY_BRACE));
+		}
 	}
 
 	private void _validate(
@@ -909,6 +978,9 @@ public class OAuth2ApplicationLocalServiceImpl
 		}
 	}
 
+	private static final String _CLIENT_SECRET_REFERENCE_PREFIX =
+		"${secretRef:";
+
 	private static Set<String> _ianaRegisteredUriSchemes = SetUtil.fromArray(
 		"aaa", "aaas", "about", "acap", "acct", "acr", "adiumxtra", "afp",
 		"afs", "aim", "appdata", "apt", "attachment", "aw", "barion", "beshare",
@@ -978,6 +1050,9 @@ public class OAuth2ApplicationLocalServiceImpl
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private SecretManager _secretManager;
 
 	@Reference
 	private UserLocalService _userLocalService;
