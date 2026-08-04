@@ -91,7 +91,9 @@ public class SEOStudioFeatureFlagListener implements FeatureFlagListener {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"clientId", oAuth2Application.getClientId()
 			).put(
-				"clientSecret", oAuth2Application.getClientSecret()
+				"clientSecret",
+				_oAuth2ApplicationLocalService.resolveClientSecret(
+					oAuth2Application)
 			).put(
 				"serviceURL", company.getPortalURL(0)
 			).build());
