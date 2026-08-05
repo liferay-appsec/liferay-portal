@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
+import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.message.ObjectMessage;
 
@@ -49,10 +50,14 @@ import org.apache.logging.log4j.message.ObjectMessage;
  * A critical record is forced to disk before the call returns. The appender
  * flushes its own stream on every event, but a flush only reaches the operating
  * system, so an Error State entry would still be lost to a crash without the
- * {@link FileChannel#force} below.
+ * {@link FileChannel#force} below. The path comes from the appender's manager
+ * rather than from the appender, because a
+ * <code>DirectWriteRolloverStrategy</code> leaves the appender with no file name
+ * of its own and only the manager resolves the file a record was written to.
  * </p>
  *
  * @author Rafael Praxedes
+ * @author Jorge García Jiménez
  */
 public class FIPSAuditUtil {
 
@@ -110,6 +115,15 @@ public class FIPSAuditUtil {
 		return null;
 	}
 
+	private static String _getFileName(
+		RollingFileAppender rollingFileAppender) {
+
+		RollingFileManager rollingFileManager =
+			rollingFileAppender.getManager();
+
+		return rollingFileManager.getFileName();
+	}
+
 	private static Level _getLevel(FIPSAuditSeverity fipsAuditSeverity) {
 		if (fipsAuditSeverity == FIPSAuditSeverity.CRITICAL) {
 			return Level.ERROR;
@@ -125,7 +139,7 @@ public class FIPSAuditUtil {
 			return;
 		}
 
-		String fileName = rollingFileAppender.getFileName();
+		String fileName = _getFileName(rollingFileAppender);
 
 		if (fileName == null) {
 			return;
