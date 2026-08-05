@@ -6,6 +6,8 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -95,16 +97,23 @@ public class FIPSApplicationStateMachineUtil {
 	}
 
 	/**
-	 * Records the terminal power-off transition on a best-effort basis.
+	 * Records the terminal power-off transition for a termination that never
+	 * reached the framework stop path, such as an interrupt during boot.
 	 *
 	 * <p>
-	 * A JVM shutdown hook runs after the servlet context is destroyed, and the
-	 * context shuts Log4J down on its way out, so on an orderly stop the
-	 * <code>FIPS_AUDIT_FILE</code> appender is already gone by the time this
-	 * hook fires and the record is lost. §5.2 accepts that: a reliable
-	 * emit-and-flush during JVM termination is a known limitation. Anything
-	 * needing the record for certain has to power off before Log4J does, which
-	 * the guard below already allows for.
+	 * An orderly stop is recorded before this hook runs, because the servlet
+	 * context shuts Log4J down on its way out and the
+	 * <code>FIPS_AUDIT_FILE</code> appender is gone by the time a JVM shutdown
+	 * hook fires. The transition is therefore emitted from the framework stop
+	 * path, and this hook only covers the case where that path never ran; the
+	 * guard below keeps the two from recording the same transition twice.
+	 * </p>
+	 *
+	 * <p>
+	 * A failure here is swallowed rather than propagated. The hook runs when
+	 * Log4J may already be down, and an audit record is exactly what cannot be
+	 * written in that case, so throwing would only replace a missing record
+	 * with an uncaught exception in a shutdown thread.
 	 * </p>
 	 */
 	public static void registerShutdownHook() {
@@ -119,7 +128,14 @@ public class FIPSApplicationStateMachineUtil {
 						return;
 					}
 
-					powerOff("OS signal");
+					try {
+						powerOff("OS signal");
+					}
+					catch (Throwable throwable) {
+						if (_log.isDebugEnabled()) {
+							_log.debug(throwable);
+						}
+					}
 				}));
 	}
 
@@ -226,6 +242,9 @@ public class FIPSApplicationStateMachineUtil {
 
 		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		FIPSApplicationStateMachineUtil.class);
 
 	private static final Map<FIPSApplicationState, Set<FIPSApplicationState>>
 		_allowedTransitions = Map.of(
