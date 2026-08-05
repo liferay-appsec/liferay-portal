@@ -8,11 +8,14 @@ package com.liferay.portal.kernel.security.fips;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,11 +30,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.RollingFileAppender;
+import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.message.ObjectMessage;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -43,26 +58,27 @@ public class FIPSAuditEventEmitterUtilTest {
 
 	@Before
 	public void setUp() {
+
+		// Loading PropsUtil also loads ServerDetector, and ServerDetector logs
+		// while it loads. Both have to load before LogManager is mocked,
+		// because a class that loads inside the mock keeps a null logger.
+
+		PropsUtil.get("fips.enabled");
+
 		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
 			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
 
-		_fipsAuditUtilMockedStatic = Mockito.mockStatic(FIPSAuditUtil.class);
+		_logger = Mockito.mock(Logger.class);
 
-		_fipsAuditUtilMockedStatic.when(
-			() -> FIPSAuditUtil.write(Mockito.any(), Mockito.any())
-		).thenAnswer(
-			invocation -> {
-				_fipsAuditSeverities.add(invocation.getArgument(0));
-				_records.add(invocation.getArgument(1));
+		_logManagerMockedStatic = Mockito.mockStatic(
+			LogManager.class, Mockito.CALLS_REAL_METHODS);
 
-				return null;
-			}
-		);
+		_whenLogManager(null);
 	}
 
 	@After
 	public void tearDown() {
-		_fipsAuditUtilMockedStatic.close();
+		_logManagerMockedStatic.close();
 
 		_safeCloseable.close();
 	}
@@ -89,10 +105,7 @@ public class FIPSAuditEventEmitterUtilTest {
 
 			FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
 
-			Assert.assertEquals(
-				FIPSAuditSeverity.CRITICAL, _getFIPSAuditSeverity());
-
-			Map<String, Object> record = _getRecord();
+			Map<String, Object> record = _getRecord(Level.ERROR);
 
 			Assert.assertEquals("4743", record.get("cmvp-certificate-id"));
 			Assert.assertEquals(
@@ -146,9 +159,11 @@ public class FIPSAuditEventEmitterUtilTest {
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
 
-			Assert.assertEquals(_records.toString(), 2, _records.size());
+			List<Map<String, Object>> records = _getRecords(Level.INFO);
 
-			Map<String, Object> record = _records.get(0);
+			Assert.assertEquals(records.toString(), 2, records.size());
+
+			Map<String, Object> record = records.get(0);
 
 			Object deploymentInstanceId = record.get("deployment-instance-id");
 
@@ -156,7 +171,7 @@ public class FIPSAuditEventEmitterUtilTest {
 				String.valueOf(deploymentInstanceId),
 				Validator.isNotNull(String.valueOf(deploymentInstanceId)));
 
-			Map<String, Object> secondRecord = _records.get(1);
+			Map<String, Object> secondRecord = records.get(1);
 
 			Assert.assertEquals(
 				deploymentInstanceId,
@@ -183,7 +198,7 @@ public class FIPSAuditEventEmitterUtilTest {
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
 
-			Map<String, Object> record = _getRecord();
+			Map<String, Object> record = _getRecord(Level.INFO);
 
 			String timestamp = String.valueOf(record.get("timestamp"));
 
@@ -200,6 +215,14 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
+	public void testEmitLogsRecordAtTheSeverityLevel() {
+		_testEmitLogsRecordAtTheSeverityLevel(
+			FIPSAuditSeverity.CRITICAL, Level.ERROR);
+		_testEmitLogsRecordAtTheSeverityLevel(
+			FIPSAuditSeverity.INFO, Level.INFO);
+	}
+
+	@Test
 	public void testEmitNestsFields() {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			RandomTestUtil.randomString(), FIPSAuditSeverity.INFO);
@@ -210,7 +233,7 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
 
-		Map<String, Object> record = _getRecord();
+		Map<String, Object> record = _getRecord(Level.INFO);
 
 		Provider provider = _getProvider();
 
@@ -219,6 +242,120 @@ public class FIPSAuditEventEmitterUtilTest {
 		Map<?, ?> fields = (Map<?, ?>)record.get("fields");
 
 		Assert.assertEquals(spoofedProviderName, fields.get("provider-name"));
+	}
+
+	@Test
+	public void testEmitSyncsCriticalRecordOnly() {
+		_whenLogManager(_mockRollingFileAppender("/dev/null/missing.ndjson"));
+
+		FIPSAuditEventEmitterUtil.emit(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+
+		Assert.assertThrows(
+			UncheckedIOException.class,
+			() -> FIPSAuditEventEmitterUtil.emit(
+				new FIPSAuditEvent(
+					RandomTestUtil.randomString(),
+					FIPSAuditSeverity.CRITICAL)));
+	}
+
+	@Test
+	public void testEmitThrowsWhenAppenderIsMissing() {
+		Mockito.when(
+			_logger.isEnabled(Level.INFO)
+		).thenReturn(
+			true
+		);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			MockedStatic<ServerDetector> serverDetectorMockedStatic =
+				Mockito.mockStatic(
+					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
+
+			serverDetectorMockedStatic.when(
+				ServerDetector::getServerId
+			).thenReturn(
+				"tomcat"
+			);
+
+			Assert.assertThrows(
+				IllegalStateException.class,
+				() -> FIPSAuditEventEmitterUtil.emit(
+					new FIPSAuditEvent(
+						RandomTestUtil.randomString(),
+						FIPSAuditSeverity.INFO)));
+		}
+	}
+
+	@Test
+	public void testEmitThrowsWhenLayoutIsNotTheNDJSONLayout() {
+		Mockito.when(
+			_logger.isEnabled(Level.INFO)
+		).thenReturn(
+			true
+		);
+
+		RollingFileAppender rollingFileAppender = _mockRollingFileAppender(
+			"/dev/null/missing.ndjson");
+
+		Mockito.doReturn(
+			Mockito.mock(Layout.class)
+		).when(
+			rollingFileAppender
+		).getLayout();
+
+		_whenLogManager(rollingFileAppender);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			MockedStatic<ServerDetector> serverDetectorMockedStatic =
+				Mockito.mockStatic(
+					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
+
+			serverDetectorMockedStatic.when(
+				ServerDetector::getServerId
+			).thenReturn(
+				"tomcat"
+			);
+
+			Assert.assertThrows(
+				IllegalStateException.class,
+				() -> FIPSAuditEventEmitterUtil.emit(
+					new FIPSAuditEvent(
+						RandomTestUtil.randomString(),
+						FIPSAuditSeverity.INFO)));
+		}
+	}
+
+	@Test
+	public void testEmitThrowsWhenLoggerIsDisabled() {
+		Mockito.when(
+			_logger.isEnabled(Level.INFO)
+		).thenReturn(
+			false
+		);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			MockedStatic<ServerDetector> serverDetectorMockedStatic =
+				Mockito.mockStatic(
+					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
+
+			serverDetectorMockedStatic.when(
+				ServerDetector::getServerId
+			).thenReturn(
+				"tomcat"
+			);
+
+			Assert.assertThrows(
+				IllegalStateException.class,
+				() -> FIPSAuditEventEmitterUtil.emit(
+					new FIPSAuditEvent(
+						RandomTestUtil.randomString(),
+						FIPSAuditSeverity.INFO)));
+		}
 	}
 
 	private void _delete(Path path) throws IOException {
@@ -235,24 +372,110 @@ public class FIPSAuditEventEmitterUtilTest {
 		Files.delete(path);
 	}
 
-	private FIPSAuditSeverity _getFIPSAuditSeverity() {
-		return _fipsAuditSeverities.get(_fipsAuditSeverities.size() - 1);
-	}
-
 	private Provider _getProvider() {
 		Provider[] providers = Security.getProviders();
 
 		return providers[0];
 	}
 
-	private Map<String, Object> _getRecord() {
-		return _records.get(_records.size() - 1);
+	private Map<String, Object> _getRecord(Level level) {
+		List<Map<String, Object>> records = _getRecords(level);
+
+		return records.get(records.size() - 1);
 	}
 
-	private final List<FIPSAuditSeverity> _fipsAuditSeverities =
-		new ArrayList<>();
-	private MockedStatic<FIPSAuditUtil> _fipsAuditUtilMockedStatic;
-	private final List<Map<String, Object>> _records = new ArrayList<>();
+	private List<Map<String, Object>> _getRecords(Level level) {
+		List<Map<String, Object>> records = new ArrayList<>();
+
+		ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(
+			Message.class);
+
+		Mockito.verify(
+			_logger, Mockito.atLeastOnce()
+		).log(
+			Mockito.eq(level), argumentCaptor.capture()
+		);
+
+		for (Message message : argumentCaptor.getAllValues()) {
+			ObjectMessage objectMessage = (ObjectMessage)message;
+
+			records.add((Map<String, Object>)objectMessage.getParameter());
+		}
+
+		return records;
+	}
+
+	private RollingFileAppender _mockRollingFileAppender(String fileName) {
+		RollingFileManager rollingFileManager = Mockito.mock(
+			RollingFileManager.class);
+
+		Mockito.when(
+			rollingFileManager.getFileName()
+		).thenReturn(
+			fileName
+		);
+
+		RollingFileAppender rollingFileAppender = Mockito.mock(
+			RollingFileAppender.class);
+
+		Mockito.when(
+			rollingFileAppender.getManager()
+		).thenReturn(
+			rollingFileManager
+		);
+
+		return rollingFileAppender;
+	}
+
+	private void _testEmitLogsRecordAtTheSeverityLevel(
+		FIPSAuditSeverity fipsAuditSeverity, Level level) {
+
+		FIPSAuditEventEmitterUtil.emit(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), fipsAuditSeverity));
+
+		Map<String, Object> record = _getRecord(level);
+
+		Assert.assertEquals(
+			fipsAuditSeverity.getValue(), record.get("severity"));
+	}
+
+	private void _whenLogManager(RollingFileAppender rollingFileAppender) {
+		_logManagerMockedStatic.when(
+			() -> LogManager.getLogger(_LOGGER_NAME)
+		).thenReturn(
+			_logger
+		);
+
+		Configuration configuration = Mockito.mock(Configuration.class);
+
+		Mockito.when(
+			configuration.getAppender(_APPENDER_NAME)
+		).thenReturn(
+			rollingFileAppender
+		);
+
+		LoggerContext loggerContext = Mockito.mock(LoggerContext.class);
+
+		Mockito.when(
+			loggerContext.getConfiguration()
+		).thenReturn(
+			configuration
+		);
+
+		_logManagerMockedStatic.when(
+			() -> LogManager.getContext(false)
+		).thenReturn(
+			loggerContext
+		);
+	}
+
+	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
+
+	private static final String _LOGGER_NAME = "liferay.fips.audit";
+
+	private Logger _logger;
+	private MockedStatic<LogManager> _logManagerMockedStatic;
 	private SafeCloseable _safeCloseable;
 
 }

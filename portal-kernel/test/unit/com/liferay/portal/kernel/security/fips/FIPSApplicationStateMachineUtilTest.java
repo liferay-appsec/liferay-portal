@@ -9,12 +9,19 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.message.ObjectMessage;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -32,19 +39,39 @@ public class FIPSApplicationStateMachineUtilTest {
 
 	@Before
 	public void setUp() {
+
+		// Loading PropsUtil also loads ServerDetector, and ServerDetector logs
+		// while it loads. Both have to load before LogManager is mocked,
+		// because a class that loads inside the mock keeps a null logger.
+
+		PropsUtil.get("fips.enabled");
+
 		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
 			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
 
-		_fipsAuditUtilMockedStatic = Mockito.mockStatic(FIPSAuditUtil.class);
+		_logger = Mockito.mock(Logger.class);
 
-		_fipsAuditUtilMockedStatic.when(
-			() -> FIPSAuditUtil.write(Mockito.any(), Mockito.any())
-		).thenAnswer(
+		Mockito.doAnswer(
 			invocation -> {
-				_records.add(invocation.getArgument(1));
+				ObjectMessage objectMessage = invocation.getArgument(1);
+
+				_records.add((Map<String, Object>)objectMessage.getParameter());
 
 				return null;
 			}
+		).when(
+			_logger
+		).log(
+			Mockito.any(Level.class), Mockito.any(Message.class)
+		);
+
+		_logManagerMockedStatic = Mockito.mockStatic(
+			LogManager.class, Mockito.CALLS_REAL_METHODS);
+
+		_logManagerMockedStatic.when(
+			() -> LogManager.getLogger(_LOGGER_NAME)
+		).thenReturn(
+			_logger
 		);
 
 		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
@@ -52,7 +79,7 @@ public class FIPSApplicationStateMachineUtilTest {
 
 	@After
 	public void tearDown() {
-		_fipsAuditUtilMockedStatic.close();
+		_logManagerMockedStatic.close();
 
 		_safeCloseable.close();
 	}
@@ -467,7 +494,10 @@ public class FIPSApplicationStateMachineUtilTest {
 			});
 	}
 
-	private MockedStatic<FIPSAuditUtil> _fipsAuditUtilMockedStatic;
+	private static final String _LOGGER_NAME = "liferay.fips.audit";
+
+	private Logger _logger;
+	private MockedStatic<LogManager> _logManagerMockedStatic;
 	private final List<Map<String, Object>> _records = new ArrayList<>();
 	private SafeCloseable _safeCloseable;
 
