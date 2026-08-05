@@ -21,6 +21,7 @@ import java.util.Map;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
 import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
@@ -132,6 +133,49 @@ public class FIPSAuditUtilTest {
 					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
 
 			_whenLogManager(logManagerMockedStatic, logger, null);
+
+			serverDetectorMockedStatic.when(
+				ServerDetector::getServerId
+			).thenReturn(
+				"tomcat"
+			);
+
+			Assert.assertThrows(
+				IllegalStateException.class,
+				() -> _write(FIPSAuditSeverity.INFO));
+		}
+	}
+
+	@Test
+	public void testWriteThrowsWhenLayoutIsNotTheNDJSONLayout() {
+		Logger logger = Mockito.mock(Logger.class);
+
+		Mockito.when(
+			logger.isEnabled(Level.INFO)
+		).thenReturn(
+			true
+		);
+
+		RollingFileAppender rollingFileAppender = _mockRollingFileAppender(
+			"/dev/null/missing.ndjson");
+
+		Mockito.doReturn(
+			Mockito.mock(Layout.class)
+		).when(
+			rollingFileAppender
+		).getLayout();
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			MockedStatic<LogManager> logManagerMockedStatic =
+				Mockito.mockStatic(
+					LogManager.class, Mockito.CALLS_REAL_METHODS);
+			MockedStatic<ServerDetector> serverDetectorMockedStatic =
+				Mockito.mockStatic(
+					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
+
+			_whenLogManager(
+				logManagerMockedStatic, logger, rollingFileAppender);
 
 			serverDetectorMockedStatic.when(
 				ServerDetector::getServerId

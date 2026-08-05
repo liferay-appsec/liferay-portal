@@ -6,6 +6,9 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.internal.log4j.FIPSAuditNDJSONLayout;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ServerDetector;
 
@@ -13,11 +16,16 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -89,15 +97,31 @@ public class FIPSAuditUtil {
 				StringBundler.concat(
 					"Unable to write a FIPS audit record because the logger \"",
 					_LOGGER_NAME, "\" is disabled for the level \"", level,
-					"\""));
+					"\". Check that the portal property ",
+					"\"log4j.configure.on.startup\" is enabled and that no ",
+					"configuration lowers the level of that logger"));
 		}
 
-		if (_fetchRollingFileAppender() == null) {
+		RollingFileAppender rollingFileAppender = _fetchRollingFileAppender();
+
+		if (rollingFileAppender == null) {
 			throw new IllegalStateException(
 				StringBundler.concat(
 					"Unable to write a FIPS audit record because the appender ",
 					"\"", _APPENDER_NAME, "\" is not configured"));
 		}
+
+		if (!(rollingFileAppender.getLayout() instanceof
+				FIPSAuditNDJSONLayout)) {
+
+			throw new IllegalStateException(
+				StringBundler.concat(
+					"Unable to write a FIPS audit record because the appender ",
+					"\"", _APPENDER_NAME, "\" does not render it with \"",
+					FIPSAuditNDJSONLayout.PLUGIN_NAME, "\""));
+		}
+
+		_warnUnprotectedAuditLog(rollingFileAppender);
 	}
 
 	private static RollingFileAppender _fetchRollingFileAppender() {
@@ -158,8 +182,63 @@ public class FIPSAuditUtil {
 		}
 	}
 
+	private static void _warnUnprotectedAuditLog(
+		RollingFileAppender rollingFileAppender) {
+
+		if (!_filePermissionsChecked.compareAndSet(false, true)) {
+			return;
+		}
+
+		RollingFileManager rollingFileManager =
+			rollingFileAppender.getManager();
+
+		Set<PosixFilePermission> posixFilePermissions =
+			rollingFileManager.getFilePermissions();
+
+		String fileName = _getFileName(rollingFileAppender);
+
+		if ((posixFilePermissions == null) || (fileName == null)) {
+			return;
+		}
+
+		try {
+			Set<PosixFilePermission> currentPosixFilePermissions =
+				Files.getPosixFilePermissions(Paths.get(fileName));
+
+			if (posixFilePermissions.equals(currentPosixFilePermissions) ||
+				!_log.isWarnEnabled()) {
+
+				return;
+			}
+
+			_log.warn(
+				StringBundler.concat(
+					"The FIPS audit log ", fileName, " has the permissions ",
+					PosixFilePermissions.toString(currentPosixFilePermissions),
+					" instead of the configured ",
+					PosixFilePermissions.toString(posixFilePermissions),
+					", so it is not protected against unauthorized reading"));
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Unable to verify the permissions of the FIPS audit ",
+						"log ", fileName,
+						", so it is not known to be protected against ",
+						"unauthorized reading"),
+					exception);
+			}
+		}
+	}
+
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
 
 	private static final String _LOGGER_NAME = "liferay.fips.audit";
+
+	private static final Log _log = LogFactoryUtil.getLog(FIPSAuditUtil.class);
+
+	private static final AtomicBoolean _filePermissionsChecked =
+		new AtomicBoolean();
 
 }
