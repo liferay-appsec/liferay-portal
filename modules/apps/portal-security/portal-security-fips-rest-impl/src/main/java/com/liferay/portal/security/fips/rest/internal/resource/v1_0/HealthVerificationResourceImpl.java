@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.fips.rest.dto.v1_0.HealthVerification;
+import com.liferay.portal.security.fips.rest.internal.audit.FIPSHealthCheckAuditor;
 import com.liferay.portal.security.fips.rest.resource.v1_0.HealthVerificationResource;
 
 import jakarta.ws.rs.WebApplicationException;
@@ -20,6 +21,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.Date;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 
 /**
@@ -65,6 +67,15 @@ public class HealthVerificationResourceImpl
 				FIPSModeValidator::validate);
 		}
 		catch (Exception exception) {
+
+			// A rejected state transition means the FIPS application was
+			// already non-operational, not that a self-test failed, so it
+			// emits no audit event.
+
+			if (!(exception instanceof IllegalStateException)) {
+				_fipsHealthCheckAuditor.audit(exception);
+			}
+
 			healthVerification.setProviderMessage(exception::getMessage);
 			healthVerification.setStatus(
 				() -> HealthVerification.Status.FAILED);
@@ -81,5 +92,8 @@ public class HealthVerificationResourceImpl
 
 		return healthVerification;
 	}
+
+	@Reference
+	private FIPSHealthCheckAuditor _fipsHealthCheckAuditor;
 
 }
