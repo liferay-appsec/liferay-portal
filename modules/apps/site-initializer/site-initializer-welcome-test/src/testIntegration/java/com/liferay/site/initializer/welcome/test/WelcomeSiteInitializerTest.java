@@ -43,6 +43,7 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -131,6 +132,52 @@ public class WelcomeSiteInitializerTest {
 				layout.getPlid()));
 
 		Assert.assertTrue(html.contains("Enjoy using the best DXP on Earth!"));
+	}
+
+	@Test
+	@TestInfo("LPD-101357")
+	public void testCookiePolicyLayoutUtilityPageEntryWidgets()
+		throws Exception {
+
+		SiteInitializer siteInitializer =
+			_siteInitializerRegistry.getSiteInitializer(
+				"com.liferay.site.initializer.welcome");
+
+		siteInitializer.initialize(_group.getGroupId());
+
+		Layout layout =
+			LayoutUtilityPageEntryLayoutProviderUtil.
+				getDefaultLayoutUtilityPageEntryLayout(
+					_group.getGroupId(),
+					LayoutUtilityPageEntryConstants.TYPE_COOKIE_POLICY);
+
+		Assert.assertNotNull(layout);
+
+		List<FragmentEntryLink> fragmentEntryLinks =
+			_fragmentEntryLinkLocalService.getFragmentEntryLinksByPlid(
+				_group.getGroupId(), layout.getPlid());
+
+		int widgetCount = 0;
+
+		for (FragmentEntryLink fragmentEntryLink : fragmentEntryLinks) {
+			JSONObject editableValuesJSONObject = _jsonFactory.createJSONObject(
+				fragmentEntryLink.getEditableValues());
+
+			String portletId = editableValuesJSONObject.getString("portletId");
+
+			if (Validator.isNull(portletId)) {
+				continue;
+			}
+
+			widgetCount++;
+
+			Assert.assertNotNull(
+				"Object definition portlet " + portletId + " is not registered",
+				_portletLocalService.fetchPortletById(
+					_group.getCompanyId(), portletId));
+		}
+
+		Assert.assertEquals(fragmentEntryLinks.toString(), 4, widgetCount);
 	}
 
 	@Test

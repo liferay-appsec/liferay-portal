@@ -5,6 +5,7 @@
 
 package com.liferay.site.welcome.site.initializer.internal.instance.lifecycle;
 
+import com.liferay.batch.engine.unit.BatchEngineUnitBundleTracker;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.instance.lifecycle.InitialRequestPortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
@@ -163,6 +164,8 @@ public class AddDefaultLayoutInitialRequestPortalInstanceLifecycleListener
 			SiteInitializer siteInitializer =
 				_siteInitializerRegistry.getSiteInitializer(siteInitializerKey);
 
+			_batchEngineUnitBundleTracker.open();
+
 			siteInitializer.initialize(group.getGroupId());
 		}
 		finally {
@@ -308,6 +311,9 @@ public class AddDefaultLayoutInitialRequestPortalInstanceLifecycleListener
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AddDefaultLayoutInitialRequestPortalInstanceLifecycleListener.class);
+
+	@Reference
+	private BatchEngineUnitBundleTracker _batchEngineUnitBundleTracker;
 
 	@Reference
 	private CompanyLocalService _companyLocalService;

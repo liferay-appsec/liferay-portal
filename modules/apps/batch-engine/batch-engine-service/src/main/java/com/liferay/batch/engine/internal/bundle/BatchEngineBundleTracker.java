@@ -7,6 +7,7 @@ package com.liferay.batch.engine.internal.bundle;
 
 import com.liferay.batch.engine.internal.unit.MultiCompanyBatchEngineUnitProcessor;
 import com.liferay.batch.engine.unit.BatchEngineUnit;
+import com.liferay.batch.engine.unit.BatchEngineUnitBundleTracker;
 import com.liferay.batch.engine.unit.BatchEngineUnitMetaInfo;
 import com.liferay.batch.engine.unit.BatchEngineUnitProcessor;
 import com.liferay.batch.engine.unit.BatchEngineUnitReader;
@@ -25,6 +26,7 @@ import java.util.Map;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -36,7 +38,12 @@ import org.osgi.util.tracker.BundleTrackerCustomizer;
  * @author Raymond Augé
  */
 @Component(service = {})
-public class BatchEngineBundleTracker {
+public class BatchEngineBundleTracker implements BatchEngineUnitBundleTracker {
+
+	@Override
+	public void open() {
+		_bundleTracker.open();
+	}
 
 	@Activate
 	protected void activate(
@@ -45,6 +52,9 @@ public class BatchEngineBundleTracker {
 		_bundleTracker = new BundleTracker<>(
 			bundleContext, Bundle.ACTIVE,
 			new BatchEngineBundleTrackerCustomizer());
+
+		_serviceRegistration = bundleContext.registerService(
+			BatchEngineUnitBundleTracker.class, this, null);
 
 		InitialRequestSyncUtil.registerSyncCallable(
 			() -> {
@@ -56,6 +66,8 @@ public class BatchEngineBundleTracker {
 
 	@Deactivate
 	protected void deactivate() {
+		_serviceRegistration.unregister();
+
 		_bundleTracker.close();
 	}
 
@@ -73,6 +85,9 @@ public class BatchEngineBundleTracker {
 	@Reference
 	private MultiCompanyBatchEngineUnitProcessor
 		_multiCompanyBatchEngineUnitProcessor;
+
+	private ServiceRegistration<BatchEngineUnitBundleTracker>
+		_serviceRegistration;
 
 	private class BatchEngineBundleTrackerCustomizer
 		implements BundleTrackerCustomizer<Bundle> {
