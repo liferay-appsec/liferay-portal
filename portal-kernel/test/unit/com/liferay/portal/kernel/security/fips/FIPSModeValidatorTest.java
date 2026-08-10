@@ -182,7 +182,7 @@ public class FIPSModeValidatorTest {
 			}
 
 			_assertSecurityException(
-				"AES key must be 128, 192, or 256 bits",
+				"Key size 64 is not allowed in FIPS mode",
 				() -> FIPSModeValidator.validateKey("AES", 64));
 			_assertSecurityException(
 				"is not allowed in FIPS mode",
