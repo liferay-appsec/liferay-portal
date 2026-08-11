@@ -24,8 +24,10 @@ import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ObjectMessage;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.mockito.MockedStatic;
@@ -37,14 +39,33 @@ import org.mockito.Mockito;
  */
 public class FIPSApplicationStateMachineUtilTest {
 
+	@BeforeClass
+	public static void setUpClass() {
+		PropsUtil.get("fips.enabled");
+
+		_logger = Mockito.mock(Logger.class);
+
+		_logManagerMockedStatic = Mockito.mockStatic(
+			LogManager.class, Mockito.CALLS_REAL_METHODS);
+
+		_logManagerMockedStatic.when(
+			() -> LogManager.getLogger(FIPSAuditEventEmitterUtil.class)
+		).thenReturn(
+			_logger
+		);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		_logManagerMockedStatic.close();
+	}
+
 	@Before
 	public void setUp() {
-		PropsUtil.get("fips.enabled");
+		Mockito.reset(_logger);
 
 		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
 			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
-
-		_logger = Mockito.mock(Logger.class);
 
 		Mockito.doAnswer(
 			invocation -> {
@@ -60,22 +81,11 @@ public class FIPSApplicationStateMachineUtilTest {
 			Mockito.any(Level.class), Mockito.any(Message.class)
 		);
 
-		_logManagerMockedStatic = Mockito.mockStatic(
-			LogManager.class, Mockito.CALLS_REAL_METHODS);
-
-		_logManagerMockedStatic.when(
-			() -> LogManager.getLogger(_LOGGER_NAME)
-		).thenReturn(
-			_logger
-		);
-
 		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
 	}
 
 	@After
 	public void tearDown() {
-		_logManagerMockedStatic.close();
-
 		_safeCloseable.close();
 	}
 
@@ -489,10 +499,10 @@ public class FIPSApplicationStateMachineUtilTest {
 			});
 	}
 
-	private static final String _LOGGER_NAME = "liferay.fips.audit";
+	private static Logger _logger;
 
-	private Logger _logger;
-	private MockedStatic<LogManager> _logManagerMockedStatic;
+	private static MockedStatic<LogManager> _logManagerMockedStatic;
+
 	private final List<Map<String, Object>> _records = new ArrayList<>();
 	private SafeCloseable _safeCloseable;
 

@@ -99,6 +99,11 @@
 		<Logger level="WARN" name="com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet" />
 		<Logger level="WARN" name="com.liferay.portal.kernel.search.HitsOpenSearchImpl" />
 		<Logger level="WARN" name="com.liferay.portal.kernel.security.auth.CompanyThreadLocal" />
+
+		<Logger additivity="false" level="INFO" name="com.liferay.portal.kernel.security.fips.FIPSAuditEventEmitterUtil">
+			<AppenderRef ref="FIPS_AUDIT_FILE" />
+		</Logger>
+
 		<Logger level="ERROR" name="com.liferay.portal.kernel.servlet.PipingServletResponse" />
 		<Logger level="WARN" name="com.liferay.portal.kernel.servlet.PluginContextListener" />
 		<Logger level="ERROR" name="com.liferay.portal.kernel.servlet.SecurePluginContextListener" />
@@ -213,11 +218,6 @@
 		<Logger level="ERROR" name="freemarker.beans" />
 		<Logger level="ERROR" name="hsqldb.db" />
 		<Logger level="ERROR" name="httpclient.wire" />
-
-		<Logger additivity="false" level="INFO" name="liferay.fips.audit">
-			<AppenderRef ref="FIPS_AUDIT_FILE" />
-		</Logger>
-
 		<Logger level="ERROR" name="net.htmlparser.jericho" />
 		<Logger level="ERROR" name="net.sf.ehcache" />
 		<Logger level="INFO" name="net.sf.ehcache.config.ConfigurationFactory" />

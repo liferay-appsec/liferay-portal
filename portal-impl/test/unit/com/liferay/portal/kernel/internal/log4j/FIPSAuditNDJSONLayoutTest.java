@@ -7,6 +7,7 @@ package com.liferay.portal.kernel.internal.log4j;
 
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.CodeCoverageAssertor;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -204,7 +205,7 @@ public class FIPSAuditNDJSONLayoutTest {
 		Log4jLogEvent.Builder builder = Log4jLogEvent.newBuilder();
 
 		builder.setLevel(Level.INFO);
-		builder.setLoggerName("liferay.fips.audit");
+		builder.setLoggerName(RandomTestUtil.randomString());
 		builder.setMessage(message);
 
 		return builder.build();

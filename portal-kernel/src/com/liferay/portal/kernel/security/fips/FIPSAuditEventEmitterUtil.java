@@ -59,7 +59,6 @@ public class FIPSAuditEventEmitterUtil {
 		FIPSAuditEvent.Severity severity = fipsAuditEvent.getSeverity();
 
 		_write(
-			severity,
 			LinkedHashMapBuilder.<String, Object>put(
 				"cmvp-certificate-id",
 				PropsValues.FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID
@@ -103,21 +102,23 @@ public class FIPSAuditEventEmitterUtil {
 					return _dateTimeFormatter.format(
 						instant.atZone(ZoneOffset.UTC));
 				}
-			).build());
+			).build(),
+			severity);
 	}
 
-	private static void _assertDeliverable(Level level, Logger logger) {
+	private static void _assertDeliverable(Level level) {
 		if (!PropsValues.FIPS_ENABLED ||
 			(ServerDetector.getServerId() == null)) {
 
 			return;
 		}
 
-		if (!logger.isEnabled(level)) {
+		if (!_logger.isEnabled(level)) {
 			throw new IllegalStateException(
 				StringBundler.concat(
 					"Unable to write a FIPS audit record because the logger \"",
-					_LOGGER_NAME, "\" is disabled for the level \"", level,
+					FIPSAuditEventEmitterUtil.class.getName(),
+					"\" is disabled for the level \"", level,
 					"\". Check that the portal property ",
 					"\"log4j.configure.on.startup\" is enabled and that no ",
 					"configuration lowers the level of that logger"));
@@ -299,15 +300,13 @@ public class FIPSAuditEventEmitterUtil {
 	}
 
 	private static void _write(
-		FIPSAuditEvent.Severity severity, Map<String, Object> record) {
+		Map<String, Object> record, FIPSAuditEvent.Severity severity) {
 
 		Level level = _getLevel(severity);
 
-		Logger logger = LogManager.getLogger(_LOGGER_NAME);
+		_assertDeliverable(level);
 
-		_assertDeliverable(level, logger);
-
-		logger.log(level, new ObjectMessage(record));
+		_logger.log(level, new ObjectMessage(record));
 
 		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
 			_sync();
@@ -316,9 +315,10 @@ public class FIPSAuditEventEmitterUtil {
 
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
 
-	private static final String _LOGGER_NAME = "liferay.fips.audit";
-
 	private static final Log _log = LogFactoryUtil.getLog(
+		FIPSAuditEventEmitterUtil.class);
+
+	private static final Logger _logger = LogManager.getLogger(
 		FIPSAuditEventEmitterUtil.class);
 
 	private static final DateTimeFormatter _dateTimeFormatter =

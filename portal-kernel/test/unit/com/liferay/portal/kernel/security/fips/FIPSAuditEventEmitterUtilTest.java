@@ -42,8 +42,10 @@ import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ObjectMessage;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.mockito.ArgumentCaptor;
@@ -56,25 +58,39 @@ import org.mockito.Mockito;
  */
 public class FIPSAuditEventEmitterUtilTest {
 
-	@Before
-	public void setUp() {
+	@BeforeClass
+	public static void setUpClass() {
 		PropsUtil.get("fips.enabled");
-
-		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
-			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
 
 		_logger = Mockito.mock(Logger.class);
 
 		_logManagerMockedStatic = Mockito.mockStatic(
 			LogManager.class, Mockito.CALLS_REAL_METHODS);
 
+		_logManagerMockedStatic.when(
+			() -> LogManager.getLogger(FIPSAuditEventEmitterUtil.class)
+		).thenReturn(
+			_logger
+		);
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		_logManagerMockedStatic.close();
+	}
+
+	@Before
+	public void setUp() {
+		Mockito.reset(_logger);
+
+		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
+			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
+
 		_whenLogManager(null);
 	}
 
 	@After
 	public void tearDown() {
-		_logManagerMockedStatic.close();
-
 		_safeCloseable.close();
 	}
 
@@ -437,12 +453,6 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	private void _whenLogManager(RollingFileAppender rollingFileAppender) {
-		_logManagerMockedStatic.when(
-			() -> LogManager.getLogger(_LOGGER_NAME)
-		).thenReturn(
-			_logger
-		);
-
 		Configuration configuration = Mockito.mock(Configuration.class);
 
 		Mockito.when(
@@ -468,10 +478,10 @@ public class FIPSAuditEventEmitterUtilTest {
 
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
 
-	private static final String _LOGGER_NAME = "liferay.fips.audit";
+	private static Logger _logger;
 
-	private Logger _logger;
-	private MockedStatic<LogManager> _logManagerMockedStatic;
+	private static MockedStatic<LogManager> _logManagerMockedStatic;
+
 	private SafeCloseable _safeCloseable;
 
 }
