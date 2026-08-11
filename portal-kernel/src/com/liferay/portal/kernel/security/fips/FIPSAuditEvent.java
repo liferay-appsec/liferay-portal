@@ -14,11 +14,9 @@ import java.util.Map;
  */
 public class FIPSAuditEvent {
 
-	public FIPSAuditEvent(
-		String eventType, FIPSAuditSeverity fipsAuditSeverity) {
-
+	public FIPSAuditEvent(String eventType, Severity severity) {
 		_eventType = eventType;
-		_fipsAuditSeverity = fipsAuditSeverity;
+		_severity = severity;
 	}
 
 	public String getEventType() {
@@ -29,8 +27,8 @@ public class FIPSAuditEvent {
 		return Collections.unmodifiableMap(_fields);
 	}
 
-	public FIPSAuditSeverity getFIPSAuditSeverity() {
-		return _fipsAuditSeverity;
+	public Severity getSeverity() {
+		return _severity;
 	}
 
 	public FIPSAuditEvent put(String key, Object value) {
@@ -39,8 +37,24 @@ public class FIPSAuditEvent {
 		return this;
 	}
 
+	public enum Severity {
+
+		CRITICAL("critical"), INFO("info");
+
+		public String getValue() {
+			return _value;
+		}
+
+		private Severity(String value) {
+			_value = value;
+		}
+
+		private final String _value;
+
+	}
+
 	private final String _eventType;
 	private final Map<String, Object> _fields = new LinkedHashMap<>();
-	private final FIPSAuditSeverity _fipsAuditSeverity;
+	private final Severity _severity;
 
 }

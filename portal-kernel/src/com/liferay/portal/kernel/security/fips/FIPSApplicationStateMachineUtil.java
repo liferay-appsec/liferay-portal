@@ -122,16 +122,6 @@ public class FIPSApplicationStateMachineUtil {
 		_runSelfTest(runnable);
 	}
 
-	private static FIPSAuditSeverity _getFIPSAuditSeverity(
-		FIPSApplicationState fipsApplicationState) {
-
-		if (fipsApplicationState == FIPSApplicationState.ERROR) {
-			return FIPSAuditSeverity.CRITICAL;
-		}
-
-		return FIPSAuditSeverity.INFO;
-	}
-
 	private static String _getMessage(Throwable throwable) {
 		String message = throwable.getMessage();
 
@@ -140,6 +130,16 @@ public class FIPSApplicationStateMachineUtil {
 		}
 
 		return message;
+	}
+
+	private static FIPSAuditEvent.Severity _getSeverity(
+		FIPSApplicationState fipsApplicationState) {
+
+		if (fipsApplicationState == FIPSApplicationState.ERROR) {
+			return FIPSAuditEvent.Severity.CRITICAL;
+		}
+
+		return FIPSAuditEvent.Severity.INFO;
 	}
 
 	private static void _run(
@@ -191,8 +191,7 @@ public class FIPSApplicationStateMachineUtil {
 				});
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-			"fips-state-transition",
-			_getFIPSAuditSeverity(fipsApplicationState));
+			"fips-state-transition", _getSeverity(fipsApplicationState));
 
 		fipsAuditEvent.put(
 			"from-state", previousFIPSApplicationState.getValue());

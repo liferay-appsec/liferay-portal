@@ -56,11 +56,10 @@ import org.apache.logging.log4j.message.ObjectMessage;
 public class FIPSAuditEventEmitterUtil {
 
 	public static void emit(FIPSAuditEvent fipsAuditEvent) {
-		FIPSAuditSeverity fipsAuditSeverity =
-			fipsAuditEvent.getFIPSAuditSeverity();
+		FIPSAuditEvent.Severity severity = fipsAuditEvent.getSeverity();
 
 		_write(
-			fipsAuditSeverity,
+			severity,
 			LinkedHashMapBuilder.<String, Object>put(
 				"cmvp-certificate-id",
 				PropsValues.FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID
@@ -95,7 +94,7 @@ public class FIPSAuditEventEmitterUtil {
 					return provider.getVersionStr();
 				}
 			).put(
-				"severity", fipsAuditSeverity.getValue()
+				"severity", severity.getValue()
 			).put(
 				"timestamp",
 				() -> {
@@ -215,8 +214,8 @@ public class FIPSAuditEventEmitterUtil {
 		return rollingFileManager.getFileName();
 	}
 
-	private static Level _getLevel(FIPSAuditSeverity fipsAuditSeverity) {
-		if (fipsAuditSeverity == FIPSAuditSeverity.CRITICAL) {
+	private static Level _getLevel(FIPSAuditEvent.Severity severity) {
+		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
 			return Level.ERROR;
 		}
 
@@ -300,9 +299,9 @@ public class FIPSAuditEventEmitterUtil {
 	}
 
 	private static void _write(
-		FIPSAuditSeverity fipsAuditSeverity, Map<String, Object> record) {
+		FIPSAuditEvent.Severity severity, Map<String, Object> record) {
 
-		Level level = _getLevel(fipsAuditSeverity);
+		Level level = _getLevel(severity);
 
 		Logger logger = LogManager.getLogger(_LOGGER_NAME);
 
@@ -310,7 +309,7 @@ public class FIPSAuditEventEmitterUtil {
 
 		logger.log(level, new ObjectMessage(record));
 
-		if (fipsAuditSeverity == FIPSAuditSeverity.CRITICAL) {
+		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
 			_sync();
 		}
 	}

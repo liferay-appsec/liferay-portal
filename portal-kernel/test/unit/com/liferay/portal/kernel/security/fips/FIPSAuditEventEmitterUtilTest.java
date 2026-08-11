@@ -90,7 +90,7 @@ public class FIPSAuditEventEmitterUtilTest {
 			String eventType = RandomTestUtil.randomString();
 
 			FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-				eventType, FIPSAuditSeverity.CRITICAL);
+				eventType, FIPSAuditEvent.Severity.CRITICAL);
 
 			String fromState = RandomTestUtil.randomString();
 			String toState = RandomTestUtil.randomString();
@@ -149,10 +149,12 @@ public class FIPSAuditEventEmitterUtilTest {
 
 			FIPSAuditEventEmitterUtil.emit(
 				new FIPSAuditEvent(
-					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+					RandomTestUtil.randomString(),
+					FIPSAuditEvent.Severity.INFO));
 			FIPSAuditEventEmitterUtil.emit(
 				new FIPSAuditEvent(
-					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+					RandomTestUtil.randomString(),
+					FIPSAuditEvent.Severity.INFO));
 
 			List<Map<String, Object>> records = _getRecords(Level.INFO);
 
@@ -191,7 +193,8 @@ public class FIPSAuditEventEmitterUtilTest {
 
 			FIPSAuditEventEmitterUtil.emit(
 				new FIPSAuditEvent(
-					RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+					RandomTestUtil.randomString(),
+					FIPSAuditEvent.Severity.INFO));
 
 			Map<String, Object> record = _getRecord(Level.INFO);
 
@@ -212,15 +215,15 @@ public class FIPSAuditEventEmitterUtilTest {
 	@Test
 	public void testEmitLogsRecordAtTheSeverityLevel() {
 		_testEmitLogsRecordAtTheSeverityLevel(
-			FIPSAuditSeverity.CRITICAL, Level.ERROR);
+			FIPSAuditEvent.Severity.CRITICAL, Level.ERROR);
 		_testEmitLogsRecordAtTheSeverityLevel(
-			FIPSAuditSeverity.INFO, Level.INFO);
+			FIPSAuditEvent.Severity.INFO, Level.INFO);
 	}
 
 	@Test
 	public void testEmitNestsFields() {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-			RandomTestUtil.randomString(), FIPSAuditSeverity.INFO);
+			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
 
 		String spoofedProviderName = RandomTestUtil.randomString();
 
@@ -245,14 +248,14 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		FIPSAuditEventEmitterUtil.emit(
 			new FIPSAuditEvent(
-				RandomTestUtil.randomString(), FIPSAuditSeverity.INFO));
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
 
 		Assert.assertThrows(
 			UncheckedIOException.class,
 			() -> FIPSAuditEventEmitterUtil.emit(
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(),
-					FIPSAuditSeverity.CRITICAL)));
+					FIPSAuditEvent.Severity.CRITICAL)));
 	}
 
 	@Test
@@ -280,7 +283,7 @@ public class FIPSAuditEventEmitterUtilTest {
 				() -> FIPSAuditEventEmitterUtil.emit(
 					new FIPSAuditEvent(
 						RandomTestUtil.randomString(),
-						FIPSAuditSeverity.INFO)));
+						FIPSAuditEvent.Severity.INFO)));
 		}
 	}
 
@@ -320,7 +323,7 @@ public class FIPSAuditEventEmitterUtilTest {
 				() -> FIPSAuditEventEmitterUtil.emit(
 					new FIPSAuditEvent(
 						RandomTestUtil.randomString(),
-						FIPSAuditSeverity.INFO)));
+						FIPSAuditEvent.Severity.INFO)));
 		}
 	}
 
@@ -349,7 +352,7 @@ public class FIPSAuditEventEmitterUtilTest {
 				() -> FIPSAuditEventEmitterUtil.emit(
 					new FIPSAuditEvent(
 						RandomTestUtil.randomString(),
-						FIPSAuditSeverity.INFO)));
+						FIPSAuditEvent.Severity.INFO)));
 		}
 	}
 
@@ -423,16 +426,14 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	private void _testEmitLogsRecordAtTheSeverityLevel(
-		FIPSAuditSeverity fipsAuditSeverity, Level level) {
+		FIPSAuditEvent.Severity severity, Level level) {
 
 		FIPSAuditEventEmitterUtil.emit(
-			new FIPSAuditEvent(
-				RandomTestUtil.randomString(), fipsAuditSeverity));
+			new FIPSAuditEvent(RandomTestUtil.randomString(), severity));
 
 		Map<String, Object> record = _getRecord(level);
 
-		Assert.assertEquals(
-			fipsAuditSeverity.getValue(), record.get("severity"));
+		Assert.assertEquals(severity.getValue(), record.get("severity"));
 	}
 
 	private void _whenLogManager(RollingFileAppender rollingFileAppender) {
