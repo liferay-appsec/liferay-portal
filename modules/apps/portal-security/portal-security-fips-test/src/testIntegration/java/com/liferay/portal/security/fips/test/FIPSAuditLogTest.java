@@ -36,13 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Asserts that the FIPS audit trail reaches disk through the real
- * <code>FIPS_AUDIT_FILE</code> appender, which no unit test covers because every
- * one of them stubs the logger. ISO/IEC 19790 7.11.6.2 [AS11.29] asks for
- * functional testing that the module behaves according to its functional
- * specification, and the trail only exists once the appender, the layout and the
- * logger are wired together at boot.
- *
  * @author Jorge García Jiménez
  */
 @RunWith(Arquillian.class)

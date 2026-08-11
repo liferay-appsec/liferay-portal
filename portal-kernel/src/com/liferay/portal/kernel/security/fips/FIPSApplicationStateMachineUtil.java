@@ -15,26 +15,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
- * The §2.2 finite state model of the portal as a FIPS application, and the only
- * writer of the <code>fips-state-transition</code> audit trail. Each transition
- * is recorded where it happens, carrying the detail §5.2 asks of that
- * transition, so a state the model gains can never go unrecorded.
- *
- * <p>
- * The record is written after the state has already changed, and a write that
- * fails leaves it changed. Writing first would trade a lost record for a
- * phantom one, since the swap can still be refused once a record claiming it
- * has reached the trail, and a trail that attests to a transition that never
- * happened is worse than one that misses a transition that did. Rolling the
- * state back is not available either: the model has no return edge, the earlier
- * value has stopped being true of the portal, and a terminal power-off has
- * nothing to return to. ISO/IEC 19790 7.6.3.2 [AS06.29] asks the module to
- * provide its events to an audit mechanism and puts no obligation on it to undo
- * an event it could not record, so the failure is surfaced instead of repaired:
- * the exception leaves the machine and fails the transition closed at its
- * caller.
- * </p>
- *
  * @author Jorge García Jiménez
  */
 public class FIPSApplicationStateMachineUtil {
@@ -96,26 +76,6 @@ public class FIPSApplicationStateMachineUtil {
 			});
 	}
 
-	/**
-	 * Records the terminal power-off transition for a termination that never
-	 * reached the framework stop path, such as an interrupt during boot.
-	 *
-	 * <p>
-	 * An orderly stop is recorded before this hook runs, because the servlet
-	 * context shuts Log4J down on its way out and the
-	 * <code>FIPS_AUDIT_FILE</code> appender is gone by the time a JVM shutdown
-	 * hook fires. The transition is therefore emitted from the framework stop
-	 * path, and this hook only covers the case where that path never ran; the
-	 * guard below keeps the two from recording the same transition twice.
-	 * </p>
-	 *
-	 * <p>
-	 * A failure here is swallowed rather than propagated. The hook runs when
-	 * Log4J may already be down, and an audit record is exactly what cannot be
-	 * written in that case, so throwing would only replace a missing record
-	 * with an uncaught exception in a shutdown thread.
-	 * </p>
-	 */
 	public static void registerShutdownHook() {
 		Runtime runtime = Runtime.getRuntime();
 

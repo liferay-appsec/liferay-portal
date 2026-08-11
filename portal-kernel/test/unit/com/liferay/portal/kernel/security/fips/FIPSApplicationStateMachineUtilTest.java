@@ -39,11 +39,6 @@ public class FIPSApplicationStateMachineUtilTest {
 
 	@Before
 	public void setUp() {
-
-		// Loading PropsUtil also loads ServerDetector, and ServerDetector logs
-		// while it loads. Both have to load before LogManager is mocked,
-		// because a class that loads inside the mock keeps a null logger.
-
 		PropsUtil.get("fips.enabled");
 
 		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(

@@ -6,9 +6,6 @@
 package com.liferay.portal.kernel.security.fips;
 
 /**
- * Severity of a FIPS audit event: {@link #INFO} for a normal state transition
- * and {@link #CRITICAL} for an Error State entry.
- *
  * @author Jorge García Jiménez
  */
 public enum FIPSAuditSeverity {

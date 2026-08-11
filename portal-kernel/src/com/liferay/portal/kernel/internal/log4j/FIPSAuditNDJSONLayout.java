@@ -28,28 +28,6 @@ import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ObjectMessage;
 
 /**
- * Writes each log event as one newline delimited JSON record, so an audit log
- * stays parseable one line at a time.
- *
- * <p>
- * The record is the event's message: a caller logs an {@link ObjectMessage}
- * wrapping a map of keys to values, and that map becomes the JSON object. A
- * message of any other shape is written as a single <code>message</code> key, so
- * a stray logger cannot leave a malformed line behind.
- * </p>
- *
- * <p>
- * Keys are sorted at every level, which keeps a record byte for byte
- * reproducible for downstream integrity chaining regardless of the order the
- * caller assembled the map in.
- * </p>
- *
- * <p>
- * JSON is written by hand rather than through <code>JSONUtil</code> because
- * <code>JSONFactoryUtil</code> is installed after Log4J is configured. A layout
- * that reached for it would fail for every event logged in between.
- * </p>
- *
  * @author Rafael Praxedes
  * @see    LiferayXmlLayout
  */

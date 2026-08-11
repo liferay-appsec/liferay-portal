@@ -6,10 +6,6 @@
 package com.liferay.portal.kernel.security.fips;
 
 /**
- * A state of the FIPS application state machine. The value is the name the state
- * is known by outside the JVM, so an audit record and an administration surface
- * report the same state.
- *
  * @author Jorge García Jiménez
  */
 public enum FIPSApplicationState {
