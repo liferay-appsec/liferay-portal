@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -42,13 +41,13 @@ import org.xml.sax.InputSource;
  */
 public class FIPSModeHelperUtil {
 
-	public static Map<String, Element> getJGroupsProfileElements(
+	public static Map<String, Element> getJGroupsProfileSecurityElements(
 		String channelPropertiesLocation) {
 
 		String channelPropertiesXML;
 
 		try {
-			channelPropertiesXML = _readChannelProperties(
+			channelPropertiesXML = _readChannelPropertiesXML(
 				channelPropertiesLocation);
 		}
 		catch (IOException ioException) {
@@ -72,11 +71,13 @@ public class FIPSModeHelperUtil {
 				exception);
 		}
 
-		return _getElementsMap(document);
+		return _getSecurityElements(document);
 	}
 
-	private static Map<String, Element> _getElementsMap(Document document) {
-		Map<String, Element> elementsMap = new LinkedHashMap<>();
+	private static Map<String, Element> _getSecurityElements(
+		Document document) {
+
+		Map<String, Element> securityElements = new LinkedHashMap<>();
 
 		NodeList nodeList = document.getElementsByTagName(StringPool.STAR);
 
@@ -85,24 +86,24 @@ public class FIPSModeHelperUtil {
 
 			String tagName = element.getTagName();
 
-			if (Objects.equals(tagName, "AUTH") ||
-				tagName.contains("ENCRYPT")) {
-
-				elementsMap.put(tagName, element);
+			if (tagName.equals("AUTH") || tagName.contains("ENCRYPT")) {
+				securityElements.put(tagName, element);
 			}
 		}
 
-		return elementsMap;
+		return securityElements;
 	}
 
-	private static String _readChannelProperties(
+	private static String _readChannelPropertiesXML(
 			String channelPropertiesLocation)
 		throws IOException {
 
-		Path path = Paths.get(channelPropertiesLocation);
+		Path channelPropertiesPath = Paths.get(channelPropertiesLocation);
 
-		if (Files.isRegularFile(path)) {
-			try (InputStream inputStream = Files.newInputStream(path)) {
+		if (Files.isRegularFile(channelPropertiesPath)) {
+			try (InputStream inputStream = Files.newInputStream(
+					channelPropertiesPath)) {
+
 				return StringUtil.read(inputStream);
 			}
 		}

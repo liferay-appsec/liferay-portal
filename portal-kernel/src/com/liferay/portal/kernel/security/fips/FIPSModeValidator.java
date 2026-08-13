@@ -5,15 +5,14 @@
 
 package com.liferay.portal.kernel.security.fips;
 
-import com.liferay.petra.function.UnsafeTriConsumer;
-import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
-import com.liferay.portal.kernel.service.http.TunnelUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -95,15 +94,10 @@ public class FIPSModeValidator {
 
 		_validatePortalProperties();
 
-		_validateProperties(
-			Security::getProperty, _requiredSecurityProperties,
-			FIPSModeValidator::_validateRequiredValues);
-		_validateProperties(
-			System::getProperty, _allowedSystemProperties,
-			FIPSModeValidator::_validateAllowedValues);
-		_validateProperties(
-			System::getProperty, _requiredSystemProperties,
-			FIPSModeValidator::_validateRequiredValues);
+		_validateRequiredValues(
+			Security::getProperty, _requiredSecurityProperties);
+		_validateAllowedValues(System::getProperty, _allowedSystemProperties);
+		_validateRequiredValues(System::getProperty, _requiredSystemProperties);
 	}
 
 	public static void validateAlgorithm(String algorithm) {
@@ -191,6 +185,18 @@ public class FIPSModeValidator {
 	}
 
 	private static void _validateAllowedValues(
+		Function<String, String> function,
+		Map<String, String[]> propertiesMap) {
+
+		for (Map.Entry<String, String[]> entry : propertiesMap.entrySet()) {
+			_validateAllowedValues(
+				entry.getValue(), entry.getKey(),
+				StringUtil.removeChar(
+					function.apply(entry.getKey()), CharPool.SPACE));
+		}
+	}
+
+	private static void _validateAllowedValues(
 		String[] allowedValues, String key, String value) {
 
 		if (ArrayUtil.containsAll(
@@ -202,7 +208,7 @@ public class FIPSModeValidator {
 		throw new SecurityException(
 			StringBundler.concat(
 				"FIPS mode requires the property \"", key,
-				"\" to contain only ", Arrays.toString(allowedValues)));
+				"\" to be set to only ", Arrays.toString(allowedValues)));
 	}
 
 	private static void _validateClusterProperties() {
@@ -222,8 +228,9 @@ public class FIPSModeValidator {
 		Properties properties = PropsUtil.getProperties(
 			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT, true);
 
-		for (Object value : properties.values()) {
-			_validateJGroupsProfile(GetterUtil.getString(value));
+		for (Object channelPropertiesLocation : properties.values()) {
+			_validateJGroupsProfile(
+				GetterUtil.getString(channelPropertiesLocation));
 		}
 	}
 
@@ -326,7 +333,7 @@ public class FIPSModeValidator {
 	}
 
 	private static void _validateIVSize(int ivSize) {
-		if (!PropsValues.FIPS_ENABLED || (ivSize == 16)) {
+		if (ivSize == _ALLOWED_IV_SIZE) {
 			return;
 		}
 
@@ -338,44 +345,43 @@ public class FIPSModeValidator {
 	private static void _validateJGroupsProfile(
 		String channelPropertiesLocation) {
 
-		Map<String, Element> elementsMap =
-			FIPSModeHelperUtil.getJGroupsProfileElements(
+		Map<String, Element> securityElements =
+			FIPSModeHelperUtil.getJGroupsProfileSecurityElements(
 				channelPropertiesLocation);
 
 		_validateJGroupsProfileAuthElement(
-			elementsMap.get("AUTH"), channelPropertiesLocation);
+			securityElements.get("AUTH"), channelPropertiesLocation);
+
+		List<String> encryptElementNames = ListUtil.filter(
+			ListUtil.fromCollection(securityElements.keySet()),
+			tagName -> tagName.contains("ENCRYPT"));
 
 		_validateJGroupsProfileEncryptElementNames(
-			channelPropertiesLocation,
-			TransformUtil.transform(
-				elementsMap.keySet(),
-				tagName -> Objects.equals(tagName, "AUTH") ? null : tagName));
+			channelPropertiesLocation, encryptElementNames);
 
 		_validateJGroupsProfileSymEncryptElement(
-			channelPropertiesLocation, elementsMap.get("SYM_ENCRYPT"));
+			channelPropertiesLocation, securityElements.get("SYM_ENCRYPT"));
 	}
 
 	private static void _validateJGroupsProfileAuthElement(
 		Element authElement, String channelPropertiesLocation) {
 
-		if (authElement == null) {
-			return;
+		String authClassName = StringPool.BLANK;
+
+		if (authElement != null) {
+			authClassName = authElement.getAttribute("auth_class");
 		}
 
-		String authClass = authElement.getAttribute("auth_class");
-
-		if (Validator.isNull(authClass) ||
-			Objects.equals(authClass, "org.jgroups.auth.X509Token")) {
-
+		if (authClassName.equals(_AUTH_CLASS_NAME)) {
 			return;
 		}
 
 		throw new SecurityException(
 			StringBundler.concat(
 				"The JGroups channel properties \"", channelPropertiesLocation,
-				"\" must authenticate cluster members with ",
-				"\"org.jgroups.auth.X509Token\" in FIPS mode, not \"",
-				authClass, "\""));
+				"\" must authenticate cluster members with \"",
+				_AUTH_CLASS_NAME, "\" in FIPS mode, not \"", authClassName,
+				"\""));
 	}
 
 	private static void _validateJGroupsProfileEncryptElementNames(
@@ -409,45 +415,33 @@ public class FIPSModeValidator {
 			String[] symAlgorithmParts = StringUtil.split(
 				symAlgorithm, CharPool.SLASH);
 
-			String symKeyAlgorithm = symAlgorithm;
-
-			if (ArrayUtil.isNotEmpty(symAlgorithmParts)) {
-				symKeyAlgorithm = symAlgorithmParts[0];
-			}
-
 			validateKey(
-				symKeyAlgorithm,
+				symAlgorithmParts[0],
 				GetterUtil.getInteger(
 					symEncryptElement.getAttribute("sym_keylength")));
 
-			String symIVLength = symEncryptElement.getAttribute(
+			String symIVLengthString = symEncryptElement.getAttribute(
 				"sym_iv_length");
 
-			if (Validator.isNotNull(symIVLength)) {
-				_validateIVSize(GetterUtil.getInteger(symIVLength));
+			_validateIVSize(GetterUtil.getInteger(symIVLengthString));
+
+			String providerName = symEncryptElement.getAttribute("provider");
+
+			if (Validator.isNotNull(providerName) &&
+				_isNotAllowedProviderName(providerName)) {
+
+				throw new SecurityException(
+					"Security provider \"" + providerName +
+						"\" is not allowed in FIPS mode");
 			}
 		}
 		catch (SecurityException securityException) {
 			throw new SecurityException(
 				StringBundler.concat(
 					"The JGroups channel properties \"",
-					channelPropertiesLocation,
-					"\" are not allowed in FIPS mode: ",
+					channelPropertiesLocation, "\" are not allowed: ",
 					securityException.getMessage()),
 				securityException);
-		}
-
-		String providerName = symEncryptElement.getAttribute("provider");
-
-		if (Validator.isNotNull(providerName) &&
-			_isNotAllowedProviderName(providerName)) {
-
-			throw new SecurityException(
-				StringBundler.concat(
-					"The JGroups channel properties \"",
-					channelPropertiesLocation,
-					"\" must not encrypt intracluster traffic with the ",
-					"security provider \"", providerName, "\" in FIPS mode"));
 		}
 	}
 
@@ -537,26 +531,12 @@ public class FIPSModeValidator {
 
 		validateServerHostnameVerification(
 			GetterUtil.getBoolean(
-				PropsUtil.get(
-					TunnelUtil.class.getName() + ".verify.ssl.hostname")));
+				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME)));
 
 		_validateClusterProperties();
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
 		_validatePlaintextSecrets();
-	}
-
-	private static void _validateProperties(
-		Function<String, String> function, Map<String, String[]> properties,
-		UnsafeTriConsumer<String[], String, String, SecurityException>
-			unsafeTriConsumer) {
-
-		for (Map.Entry<String, String[]> entry : properties.entrySet()) {
-			String value = StringUtil.removeChar(
-				function.apply(entry.getKey()), CharPool.SPACE);
-
-			unsafeTriConsumer.accept(entry.getValue(), entry.getKey(), value);
-		}
 	}
 
 	private static void _validateProviders(Provider[] providers) {
@@ -582,6 +562,18 @@ public class FIPSModeValidator {
 	}
 
 	private static void _validateRequiredValues(
+		Function<String, String> function,
+		Map<String, String[]> propertiesMap) {
+
+		for (Map.Entry<String, String[]> entry : propertiesMap.entrySet()) {
+			_validateRequiredValues(
+				entry.getValue(), entry.getKey(),
+				StringUtil.removeChar(
+					function.apply(entry.getKey()), CharPool.SPACE));
+		}
+	}
+
+	private static void _validateRequiredValues(
 		String[] requiredValues, String key, String value) {
 
 		for (String requiredValue : requiredValues) {
@@ -595,10 +587,6 @@ public class FIPSModeValidator {
 	}
 
 	private static void _validateTransformation(String transformation) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
-		}
-
 		if (Validator.isNull(transformation) ||
 			!_allowedTransformations.contains(transformation)) {
 
@@ -607,6 +595,10 @@ public class FIPSModeValidator {
 					"\" is not allowed in FIPS mode");
 		}
 	}
+
+	private static final int _ALLOWED_IV_SIZE = 16;
+
+	private static final String _AUTH_CLASS_NAME = "org.jgroups.auth.X509Token";
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
