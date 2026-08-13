@@ -305,18 +305,14 @@ public class FIPSAuditEventEmitterUtil {
 					"\"", _APPENDER_NAME, "\" does not render it with \"",
 					FIPSAuditNDJSONLayout.PLUGIN_NAME, "\""));
 		}
+
+		_warnUnprotectedAuditLog(rollingFileAppender);
 	}
 
-	private static void _warnUnprotectedAuditLog() {
-		if (!PropsValues.FIPS_ENABLED ||
-			(ServerDetector.getServerId() == null)) {
+	private static void _warnUnprotectedAuditLog(
+		RollingFileAppender rollingFileAppender) {
 
-			return;
-		}
-
-		RollingFileAppender rollingFileAppender = _fetchRollingFileAppender();
-
-		if (rollingFileAppender == null) {
+		if (!_filePermissionsChecked.compareAndSet(false, true)) {
 			return;
 		}
 
@@ -328,9 +324,7 @@ public class FIPSAuditEventEmitterUtil {
 
 		String fileName = _fetchFileName(rollingFileAppender);
 
-		if ((posixFilePermissions == null) || (fileName == null) ||
-			!_filePermissionsChecked.compareAndSet(false, true)) {
-
+		if ((posixFilePermissions == null) || (fileName == null)) {
 			return;
 		}
 
@@ -373,8 +367,6 @@ public class FIPSAuditEventEmitterUtil {
 		_validateDeliverable(level);
 
 		_logger.log(level, new ObjectMessage(record));
-
-		_warnUnprotectedAuditLog();
 
 		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
 			_sync();

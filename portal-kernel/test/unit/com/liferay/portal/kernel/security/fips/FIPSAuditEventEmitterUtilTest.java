@@ -6,7 +6,6 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.internal.log4j.FIPSAuditNDJSONLayout;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -55,7 +54,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -151,65 +149,6 @@ public class FIPSAuditEventEmitterUtilTest {
 				timestamp,
 				timestamp.matches(
 					"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
-		}
-	}
-
-	@Test
-	public void testEmitChecksTheAuditLogPermissionsAfterWritingTheRecord() {
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
-			MockedStatic<ServerDetector> serverDetectorMockedStatic =
-				Mockito.mockStatic(
-					ServerDetector.class, Mockito.CALLS_REAL_METHODS)) {
-
-			serverDetectorMockedStatic.when(
-				ServerDetector::getServerId
-			).thenReturn(
-				"tomcat"
-			);
-
-			Mockito.when(
-				_logger.isEnabled(Level.INFO)
-			).thenReturn(
-				true
-			);
-
-			RollingFileAppender rollingFileAppender = _mockRollingFileAppender(
-				"/dev/null/missing.ndjson");
-
-			Mockito.doReturn(
-				Mockito.mock(FIPSAuditNDJSONLayout.class)
-			).when(
-				rollingFileAppender
-			).getLayout();
-
-			RollingFileManager rollingFileManager =
-				rollingFileAppender.getManager();
-
-			Mockito.when(
-				rollingFileManager.getFilePermissions()
-			).thenReturn(
-				null
-			);
-
-			_mockLogManager(rollingFileAppender);
-
-			FIPSAuditEventEmitterUtil.emit(
-				new FIPSAuditEvent(
-					RandomTestUtil.randomString(),
-					FIPSAuditEvent.Severity.INFO));
-
-			InOrder inOrder = Mockito.inOrder(_logger, rollingFileManager);
-
-			inOrder.verify(
-				_logger
-			).log(
-				Mockito.eq(Level.INFO), Mockito.any(Message.class)
-			);
-
-			inOrder.verify(
-				rollingFileManager
-			).getFilePermissions();
 		}
 	}
 
