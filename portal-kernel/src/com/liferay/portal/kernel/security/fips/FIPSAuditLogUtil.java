@@ -51,9 +51,9 @@ import org.apache.logging.log4j.message.ObjectMessage;
  * @author Jorge García Jiménez
  * @author Rafael Praxedes
  */
-public class FIPSAuditEventEmitterUtil {
+public class FIPSAuditLogUtil {
 
-	public static void emit(FIPSAuditEvent fipsAuditEvent) {
+	public static void write(FIPSAuditEvent fipsAuditEvent) {
 		FIPSAuditEvent.Severity severity = fipsAuditEvent.getSeverity();
 
 		_write(
@@ -236,7 +236,7 @@ public class FIPSAuditEventEmitterUtil {
 			throw new IllegalStateException(
 				StringBundler.concat(
 					"Unable to write a FIPS audit record because the logger \"",
-					FIPSAuditEventEmitterUtil.class.getName(),
+					FIPSAuditLogUtil.class.getName(),
 					"\" is disabled for the level \"", level,
 					"\". Check that the portal property ",
 					"\"log4j.configure.on.startup\" is enabled and that no ",
@@ -276,7 +276,7 @@ public class FIPSAuditEventEmitterUtil {
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
 
 	private static final Logger _logger = LogManager.getLogger(
-		FIPSAuditEventEmitterUtil.class);
+		FIPSAuditLogUtil.class);
 
 	private static final DateTimeFormatter _dateTimeFormatter =
 		DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");

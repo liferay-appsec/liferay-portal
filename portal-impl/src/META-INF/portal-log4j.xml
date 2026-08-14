@@ -100,7 +100,7 @@
 		<Logger level="WARN" name="com.liferay.portal.kernel.search.HitsOpenSearchImpl" />
 		<Logger level="WARN" name="com.liferay.portal.kernel.security.auth.CompanyThreadLocal" />
 
-		<Logger additivity="false" level="INFO" name="com.liferay.portal.kernel.security.fips.FIPSAuditEventEmitterUtil">
+		<Logger additivity="false" level="INFO" name="com.liferay.portal.kernel.security.fips.FIPSAuditLogUtil">
 			<AppenderRef ref="FIPS_AUDIT_FILE" />
 		</Logger>
 

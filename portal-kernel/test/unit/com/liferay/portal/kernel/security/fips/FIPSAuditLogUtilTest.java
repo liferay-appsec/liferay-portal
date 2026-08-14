@@ -59,7 +59,7 @@ import org.mockito.Mockito;
  * @author Jorge García Jiménez
  * @author Rafael Praxedes
  */
-public class FIPSAuditEventEmitterUtilTest {
+public class FIPSAuditLogUtilTest {
 
 	@BeforeClass
 	public static void setUpClass() {
@@ -71,7 +71,7 @@ public class FIPSAuditEventEmitterUtilTest {
 			LogManager.class, Mockito.CALLS_REAL_METHODS);
 
 		_logManagerMockedStatic.when(
-			() -> LogManager.getLogger(FIPSAuditEventEmitterUtil.class)
+			() -> LogManager.getLogger(FIPSAuditLogUtil.class)
 		).thenReturn(
 			_logger
 		);
@@ -98,7 +98,7 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmit() {
+	public void testWrite() {
 		try (SafeCloseable safeCloseable1 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", "instance-1");
@@ -117,7 +117,7 @@ public class FIPSAuditEventEmitterUtilTest {
 			fipsAuditEvent.put("from-state", fromState);
 			fipsAuditEvent.put("to-state", toState);
 
-			FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+			FIPSAuditLogUtil.write(fipsAuditEvent);
 
 			Map<String, Object> record = _getRecord(Level.ERROR);
 
@@ -151,7 +151,7 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitDerivesStableDeploymentInstanceIdWhenUnset()
+	public void testWriteDerivesStableDeploymentInstanceIdWhenUnset()
 		throws Exception {
 
 		Path liferayHome = Files.createTempDirectory("fips-audit-test");
@@ -166,11 +166,11 @@ public class FIPSAuditEventEmitterUtilTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID", "")) {
 
-			FIPSAuditEventEmitterUtil.emit(
+			FIPSAuditLogUtil.write(
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(),
 					FIPSAuditEvent.Severity.INFO));
-			FIPSAuditEventEmitterUtil.emit(
+			FIPSAuditLogUtil.write(
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(),
 					FIPSAuditEvent.Severity.INFO));
@@ -203,13 +203,13 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitFormatsTimestampInUTC() {
+	public void testWriteFormatsTimestampInUTC() {
 		TimeZone timeZone = TimeZone.getDefault();
 
 		try {
 			TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
 
-			FIPSAuditEventEmitterUtil.emit(
+			FIPSAuditLogUtil.write(
 				new FIPSAuditEvent(
 					RandomTestUtil.randomString(),
 					FIPSAuditEvent.Severity.INFO));
@@ -231,15 +231,15 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitLogsRecordAtTheSeverityLevel() {
-		_testEmitLogsRecordAtTheSeverityLevel(
+	public void testWriteLogsRecordAtTheSeverityLevel() {
+		_testWriteLogsRecordAtTheSeverityLevel(
 			Level.ERROR, FIPSAuditEvent.Severity.CRITICAL);
-		_testEmitLogsRecordAtTheSeverityLevel(
+		_testWriteLogsRecordAtTheSeverityLevel(
 			Level.INFO, FIPSAuditEvent.Severity.INFO);
 	}
 
 	@Test
-	public void testEmitNestsFields() {
+	public void testWriteNestsFields() {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
 
@@ -247,7 +247,7 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		fipsAuditEvent.put("provider-name", spoofedProviderName);
 
-		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+		FIPSAuditLogUtil.write(fipsAuditEvent);
 
 		Map<String, Object> record = _getRecord(Level.INFO);
 
@@ -261,22 +261,22 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitNormalizesFieldTimestamps() {
-		_testEmitNormalizesFieldTimestamp(
+	public void testWriteNormalizesFieldTimestamps() {
+		_testWriteNormalizesFieldTimestamp(
 			"2025-05-06T14:19:23.471Z",
 			Date.from(Instant.parse("2025-05-06T14:19:23.471Z")));
-		_testEmitNormalizesFieldTimestamp(
+		_testWriteNormalizesFieldTimestamp(
 			"2026-05-06T14:19:23.000Z", Instant.parse("2026-05-06T14:19:23Z"));
-		_testEmitNormalizesFieldTimestamp(
+		_testWriteNormalizesFieldTimestamp(
 			"2026-05-06T14:19:23.471Z",
 			Instant.parse("2026-05-06T14:19:23.471999999Z"));
-		_testEmitNormalizesFieldTimestamp(
+		_testWriteNormalizesFieldTimestamp(
 			"2026-05-06T14:19:23.471Z",
 			OffsetDateTime.parse("2026-05-06T16:19:23.471+02:00"));
 	}
 
 	@Test
-	public void testEmitNormalizesNestedFieldTimestamps() {
+	public void testWriteNormalizesNestedFieldTimestamps() {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
 
@@ -288,7 +288,7 @@ public class FIPSAuditEventEmitterUtilTest {
 			"provider-timestamps",
 			Arrays.asList(Instant.parse("2026-05-06T14:19:23Z")));
 
-		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+		FIPSAuditLogUtil.write(fipsAuditEvent);
 
 		Map<String, Object> record = _getRecord(Level.INFO);
 
@@ -306,7 +306,7 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitRejectsAFieldTimestampWithoutATimeZone() {
+	public void testWriteRejectsAFieldTimestampWithoutATimeZone() {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
 
@@ -315,15 +315,15 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		Assert.assertThrows(
 			IllegalArgumentException.class,
-			() -> FIPSAuditEventEmitterUtil.emit(fipsAuditEvent));
+			() -> FIPSAuditLogUtil.write(fipsAuditEvent));
 	}
 
 	@Test
-	public void testEmitSequencesRecordsMonotonically() {
-		FIPSAuditEventEmitterUtil.emit(
+	public void testWriteSequencesRecordsMonotonically() {
+		FIPSAuditLogUtil.write(
 			new FIPSAuditEvent(
 				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
-		FIPSAuditEventEmitterUtil.emit(
+		FIPSAuditLogUtil.write(
 			new FIPSAuditEvent(
 				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
 
@@ -342,18 +342,18 @@ public class FIPSAuditEventEmitterUtilTest {
 	}
 
 	@Test
-	public void testEmitThrowsWhenAppenderIsMissing() {
+	public void testWriteThrowsWhenAppenderIsMissing() {
 		Mockito.when(
 			_logger.isEnabled(Level.INFO)
 		).thenReturn(
 			true
 		);
 
-		_testEmitThrows();
+		_testWriteThrows();
 	}
 
 	@Test
-	public void testEmitThrowsWhenLayoutIsNotTheNDJSONLayout() {
+	public void testWriteThrowsWhenLayoutIsNotTheNDJSONLayout() {
 		Mockito.when(
 			_logger.isEnabled(Level.INFO)
 		).thenReturn(
@@ -371,18 +371,18 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		_mockLogManager(rollingFileAppender);
 
-		_testEmitThrows();
+		_testWriteThrows();
 	}
 
 	@Test
-	public void testEmitThrowsWhenLoggerIsDisabled() {
+	public void testWriteThrowsWhenLoggerIsDisabled() {
 		Mockito.when(
 			_logger.isEnabled(Level.INFO)
 		).thenReturn(
 			false
 		);
 
-		_testEmitThrows();
+		_testWriteThrows();
 	}
 
 	private void _delete(Path path) throws IOException {
@@ -456,10 +456,10 @@ public class FIPSAuditEventEmitterUtilTest {
 		);
 	}
 
-	private void _testEmitLogsRecordAtTheSeverityLevel(
+	private void _testWriteLogsRecordAtTheSeverityLevel(
 		Level level, FIPSAuditEvent.Severity severity) {
 
-		FIPSAuditEventEmitterUtil.emit(
+		FIPSAuditLogUtil.write(
 			new FIPSAuditEvent(RandomTestUtil.randomString(), severity));
 
 		Map<String, Object> record = _getRecord(level);
@@ -467,7 +467,7 @@ public class FIPSAuditEventEmitterUtilTest {
 		Assert.assertEquals(severity.getValue(), record.get("severity"));
 	}
 
-	private void _testEmitNormalizesFieldTimestamp(
+	private void _testWriteNormalizesFieldTimestamp(
 		String expectedTimestamp, Object value) {
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
@@ -475,7 +475,7 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		fipsAuditEvent.put("provider-timestamp", value);
 
-		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+		FIPSAuditLogUtil.write(fipsAuditEvent);
 
 		Map<String, Object> record = _getRecord(Level.INFO);
 
@@ -485,7 +485,7 @@ public class FIPSAuditEventEmitterUtilTest {
 			expectedTimestamp, fields.get("provider-timestamp"));
 	}
 
-	private void _testEmitThrows() {
+	private void _testWriteThrows() {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
 			MockedStatic<ServerDetector> serverDetectorMockedStatic =
@@ -500,7 +500,7 @@ public class FIPSAuditEventEmitterUtilTest {
 
 			Assert.assertThrows(
 				IllegalStateException.class,
-				() -> FIPSAuditEventEmitterUtil.emit(
+				() -> FIPSAuditLogUtil.write(
 					new FIPSAuditEvent(
 						RandomTestUtil.randomString(),
 						FIPSAuditEvent.Severity.INFO)));

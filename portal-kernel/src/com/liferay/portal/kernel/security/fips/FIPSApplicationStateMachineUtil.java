@@ -199,7 +199,7 @@ public class FIPSApplicationStateMachineUtil {
 
 		fipsAuditEventConsumer.accept(fipsAuditEvent);
 
-		FIPSAuditEventEmitterUtil.emit(fipsAuditEvent);
+		FIPSAuditLogUtil.write(fipsAuditEvent);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

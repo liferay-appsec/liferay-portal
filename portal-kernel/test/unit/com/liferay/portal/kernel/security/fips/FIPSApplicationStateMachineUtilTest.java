@@ -50,7 +50,7 @@ public class FIPSApplicationStateMachineUtilTest {
 			LogManager.class, Mockito.CALLS_REAL_METHODS);
 
 		_logManagerMockedStatic.when(
-			() -> LogManager.getLogger(FIPSAuditEventEmitterUtil.class)
+			() -> LogManager.getLogger(FIPSAuditLogUtil.class)
 		).thenReturn(
 			_logger
 		);
