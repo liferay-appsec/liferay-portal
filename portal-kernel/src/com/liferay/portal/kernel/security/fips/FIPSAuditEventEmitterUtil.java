@@ -7,8 +7,6 @@ package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.internal.log4j.FIPSAuditNDJSONLayout;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -22,8 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 
 import java.security.Provider;
 import java.security.Security;
@@ -39,9 +35,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -50,7 +44,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.message.ObjectMessage;
 
@@ -105,15 +98,6 @@ public class FIPSAuditEventEmitterUtil {
 				"timestamp", () -> _formatTimestamp(Instant.now())
 			).build(),
 			severity);
-	}
-
-	private static String _fetchFileName(
-		RollingFileAppender rollingFileAppender) {
-
-		RollingFileManager rollingFileManager =
-			rollingFileAppender.getManager();
-
-		return rollingFileManager.getFileName();
 	}
 
 	private static Provider _fetchProvider() {
@@ -277,58 +261,6 @@ public class FIPSAuditEventEmitterUtil {
 					"\"", _APPENDER_NAME, "\" does not render it with \"",
 					FIPSAuditNDJSONLayout.PLUGIN_NAME, "\""));
 		}
-
-		_warnUnprotectedAuditLog(rollingFileAppender);
-	}
-
-	private static void _warnUnprotectedAuditLog(
-		RollingFileAppender rollingFileAppender) {
-
-		if (!_filePermissionsChecked.compareAndSet(false, true)) {
-			return;
-		}
-
-		RollingFileManager rollingFileManager =
-			rollingFileAppender.getManager();
-
-		Set<PosixFilePermission> posixFilePermissions =
-			rollingFileManager.getFilePermissions();
-
-		String fileName = _fetchFileName(rollingFileAppender);
-
-		if ((posixFilePermissions == null) || (fileName == null)) {
-			return;
-		}
-
-		try {
-			Set<PosixFilePermission> currentPosixFilePermissions =
-				Files.getPosixFilePermissions(Paths.get(fileName));
-
-			if (posixFilePermissions.equals(currentPosixFilePermissions) ||
-				!_log.isWarnEnabled()) {
-
-				return;
-			}
-
-			_log.warn(
-				StringBundler.concat(
-					"The FIPS audit log ", fileName, " has the permissions ",
-					PosixFilePermissions.toString(currentPosixFilePermissions),
-					" instead of the configured ",
-					PosixFilePermissions.toString(posixFilePermissions),
-					", so it is not protected against unauthorized reading"));
-		}
-		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					StringBundler.concat(
-						"Unable to verify the permissions of the FIPS audit ",
-						"log ", fileName,
-						", so it is not known to be protected against ",
-						"unauthorized reading"),
-					exception);
-			}
-		}
 	}
 
 	private static void _write(
@@ -343,16 +275,11 @@ public class FIPSAuditEventEmitterUtil {
 
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		FIPSAuditEventEmitterUtil.class);
-
 	private static final Logger _logger = LogManager.getLogger(
 		FIPSAuditEventEmitterUtil.class);
 
 	private static final DateTimeFormatter _dateTimeFormatter =
 		DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	private static final AtomicLong _eventSequence = new AtomicLong();
-	private static final AtomicBoolean _filePermissionsChecked =
-		new AtomicBoolean();
 
 }

@@ -40,7 +40,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.message.Message;
 import org.apache.logging.log4j.message.ObjectMessage;
@@ -361,8 +360,8 @@ public class FIPSAuditEventEmitterUtilTest {
 			true
 		);
 
-		RollingFileAppender rollingFileAppender = _mockRollingFileAppender(
-			"/dev/null/missing.ndjson");
+		RollingFileAppender rollingFileAppender = Mockito.mock(
+			RollingFileAppender.class);
 
 		Mockito.doReturn(
 			Mockito.mock(Layout.class)
@@ -455,28 +454,6 @@ public class FIPSAuditEventEmitterUtilTest {
 		).thenReturn(
 			loggerContext
 		);
-	}
-
-	private RollingFileAppender _mockRollingFileAppender(String fileName) {
-		RollingFileManager rollingFileManager = Mockito.mock(
-			RollingFileManager.class);
-
-		Mockito.when(
-			rollingFileManager.getFileName()
-		).thenReturn(
-			fileName
-		);
-
-		RollingFileAppender rollingFileAppender = Mockito.mock(
-			RollingFileAppender.class);
-
-		Mockito.when(
-			rollingFileAppender.getManager()
-		).thenReturn(
-			rollingFileManager
-		);
-
-		return rollingFileAppender;
 	}
 
 	private void _testEmitLogsRecordAtTheSeverityLevel(
