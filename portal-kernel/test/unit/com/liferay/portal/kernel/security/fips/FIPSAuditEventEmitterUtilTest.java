@@ -15,7 +15,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -341,22 +340,6 @@ public class FIPSAuditEventEmitterUtilTest {
 
 		Assert.assertEquals(
 			records.toString(), eventSequence1 + 1, eventSequence2);
-	}
-
-	@Test
-	public void testEmitSyncsCriticalRecordOnly() {
-		_mockLogManager(_mockRollingFileAppender("/dev/null/missing.ndjson"));
-
-		FIPSAuditEventEmitterUtil.emit(
-			new FIPSAuditEvent(
-				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
-
-		Assert.assertThrows(
-			UncheckedIOException.class,
-			() -> FIPSAuditEventEmitterUtil.emit(
-				new FIPSAuditEvent(
-					RandomTestUtil.randomString(),
-					FIPSAuditEvent.Severity.CRITICAL)));
 	}
 
 	@Test

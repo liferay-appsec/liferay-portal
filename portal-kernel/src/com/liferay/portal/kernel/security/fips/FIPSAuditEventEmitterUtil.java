@@ -18,12 +18,10 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 
@@ -230,32 +228,6 @@ public class FIPSAuditEventEmitterUtil {
 		return normalizedMap;
 	}
 
-	private static void _sync() {
-		RollingFileAppender rollingFileAppender = _fetchRollingFileAppender();
-
-		if (rollingFileAppender == null) {
-			return;
-		}
-
-		String fileName = _fetchFileName(rollingFileAppender);
-
-		if (fileName == null) {
-			return;
-		}
-
-		Path path = Paths.get(fileName);
-
-		try (FileChannel fileChannel = FileChannel.open(
-				path, StandardOpenOption.WRITE)) {
-
-			fileChannel.force(true);
-		}
-		catch (IOException ioException) {
-			throw new UncheckedIOException(
-				"Unable to flush the FIPS audit log", ioException);
-		}
-	}
-
 	private static Instant _toInstant(TemporalAccessor temporalAccessor) {
 		try {
 			return Instant.from(temporalAccessor);
@@ -367,10 +339,6 @@ public class FIPSAuditEventEmitterUtil {
 		_validateDeliverable(level);
 
 		_logger.log(level, new ObjectMessage(record));
-
-		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
-			_sync();
-		}
 	}
 
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
