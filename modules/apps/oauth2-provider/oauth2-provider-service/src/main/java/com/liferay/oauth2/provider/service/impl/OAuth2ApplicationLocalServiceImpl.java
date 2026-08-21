@@ -54,7 +54,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
+import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -431,7 +431,7 @@ public class OAuth2ApplicationLocalServiceImpl
 		if (KeyReferenceUtil.isKeyReference(clientSecret)) {
 			long companyId = oAuth2Application.getCompanyId();
 
-			TransactionCommitCallbackUtil.registerCallback(
+			TransactionCallbackUtil.registerCommitCallback(
 				() -> {
 					_secretManager.deleteSecret(
 						companyId,
@@ -793,7 +793,7 @@ public class OAuth2ApplicationLocalServiceImpl
 
 		long companyId = oAuth2Application.getCompanyId();
 
-		TransactionCommitCallbackUtil.registerCallback(
+		TransactionCallbackUtil.registerCommitCallback(
 			() -> {
 				try (Secret secret = new Secret(keyReference, clientSecret)) {
 					_secretManager.putSecret(companyId, secret);
