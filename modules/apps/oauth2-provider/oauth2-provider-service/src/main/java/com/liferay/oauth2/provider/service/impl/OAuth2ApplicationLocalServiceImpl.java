@@ -776,7 +776,8 @@ public class OAuth2ApplicationLocalServiceImpl
 	}
 
 	private void _setClientSecret(
-		String clientSecret, OAuth2Application oAuth2Application) {
+			String clientSecret, OAuth2Application oAuth2Application)
+		throws PortalException {
 
 		if (Validator.isNull(clientSecret) || !PropsValues.FIPS_ENABLED) {
 			oAuth2Application.setClientSecret(clientSecret);
@@ -793,11 +794,13 @@ public class OAuth2ApplicationLocalServiceImpl
 
 		long companyId = oAuth2Application.getCompanyId();
 
-		TransactionCallbackUtil.registerCommitCallback(
+		try (Secret secret = new Secret(keyReference, clientSecret)) {
+			_secretManager.putSecret(companyId, secret);
+		}
+
+		TransactionCallbackUtil.registerRollbackCallback(
 			() -> {
-				try (Secret secret = new Secret(keyReference, clientSecret)) {
-					_secretManager.putSecret(companyId, secret);
-				}
+				_secretManager.deleteSecret(companyId, keyReference);
 
 				return null;
 			});

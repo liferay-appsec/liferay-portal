@@ -61,8 +61,10 @@ public class OAuth2ApplicationLocalServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
+		_testSecretProvider = new TestSecretProvider();
+
 		_serviceRegistration = _bundleContext.registerService(
-			SecretProvider.class, new TestSecretProvider(),
+			SecretProvider.class, _testSecretProvider,
 			HashMapDictionaryBuilder.<String, Object>put(
 				"secret.provider.id", _PROVIDER_ID
 			).build());
@@ -84,6 +86,36 @@ public class OAuth2ApplicationLocalServiceTest {
 			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
 
 		_serviceRegistration.unregister();
+	}
+
+	@Test
+	public void testAddOAuth2ApplicationWhenPutSecretFails() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			List<OAuth2Application> oAuth2Applications =
+				_oAuth2ApplicationLocalService.getOAuth2Applications(
+					TestPropsValues.getCompanyId());
+
+			_testSecretProvider.setPutSecretFailure(true);
+
+			try {
+				_addOAuth2Application(RandomTestUtil.randomString());
+
+				Assert.fail();
+			}
+			catch (SecretException secretException) {
+				Assert.assertEquals(
+					_PUT_SECRET_FAILURE_MESSAGE, secretException.getMessage());
+			}
+
+			Assert.assertEquals(
+				oAuth2Applications.size(),
+				_oAuth2ApplicationLocalService.getOAuth2Applications(
+					TestPropsValues.getCompanyId()
+				).size());
+		}
 	}
 
 	@Test
@@ -140,6 +172,9 @@ public class OAuth2ApplicationLocalServiceTest {
 
 	private static final String _PROVIDER_ID = "test-oauth2-secret";
 
+	private static final String _PUT_SECRET_FAILURE_MESSAGE =
+		"Unable to put secret";
+
 	private static final BundleContext _bundleContext =
 		SystemBundleUtil.getBundleContext();
 
@@ -150,6 +185,7 @@ public class OAuth2ApplicationLocalServiceTest {
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
 	private ServiceRegistration<SecretProvider> _serviceRegistration;
+	private TestSecretProvider _testSecretProvider;
 
 	@DeleteAfterTestRun
 	private User _user;
@@ -204,7 +240,13 @@ public class OAuth2ApplicationLocalServiceTest {
 		}
 
 		@Override
-		public void putSecret(long companyId, Secret secret) {
+		public void putSecret(long companyId, Secret secret)
+			throws SecretException {
+
+			if (_putSecretFailure) {
+				throw new SecretException(_PUT_SECRET_FAILURE_MESSAGE);
+			}
+
 			KeyReference keyReference = secret.getKeyReference();
 
 			_secrets.put(
@@ -212,10 +254,15 @@ public class OAuth2ApplicationLocalServiceTest {
 				new String(secret.getChars()));
 		}
 
+		public void setPutSecretFailure(boolean putSecretFailure) {
+			_putSecretFailure = putSecretFailure;
+		}
+
 		private String _key(long companyId, String secretIdentifier) {
 			return companyId + StringPool.SLASH + secretIdentifier;
 		}
 
+		private boolean _putSecretFailure;
 		private final Map<String, String> _secrets = new ConcurrentHashMap<>();
 
 	}

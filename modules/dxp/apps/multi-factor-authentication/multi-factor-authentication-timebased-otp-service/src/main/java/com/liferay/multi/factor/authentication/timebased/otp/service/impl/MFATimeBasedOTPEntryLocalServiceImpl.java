@@ -202,7 +202,8 @@ public class MFATimeBasedOTPEntryLocalServiceImpl
 	}
 
 	private void _setSharedSecret(
-		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry, String sharedSecret) {
+			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry, String sharedSecret)
+		throws PortalException {
 
 		if (Validator.isNull(sharedSecret) || !PropsValues.FIPS_ENABLED) {
 			mfaTimeBasedOTPEntry.setSharedSecret(sharedSecret);
@@ -219,11 +220,13 @@ public class MFATimeBasedOTPEntryLocalServiceImpl
 
 		long companyId = mfaTimeBasedOTPEntry.getCompanyId();
 
-		TransactionCallbackUtil.registerCommitCallback(
+		try (Secret secret = new Secret(keyReference, sharedSecret)) {
+			_secretManager.putSecret(companyId, secret);
+		}
+
+		TransactionCallbackUtil.registerRollbackCallback(
 			() -> {
-				try (Secret secret = new Secret(keyReference, sharedSecret)) {
-					_secretManager.putSecret(companyId, secret);
-				}
+				_secretManager.deleteSecret(companyId, keyReference);
 
 				return null;
 			});

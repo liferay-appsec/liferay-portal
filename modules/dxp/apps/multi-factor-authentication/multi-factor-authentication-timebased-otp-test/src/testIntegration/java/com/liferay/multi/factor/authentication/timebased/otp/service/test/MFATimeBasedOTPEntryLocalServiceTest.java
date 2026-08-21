@@ -95,6 +95,31 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testAddTimeBasedOTPEntryWhenPutSecretFails() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			_testSecretProvider.setPutSecretFailure(true);
+
+			try {
+				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
+					_user.getUserId(), RandomTestUtil.randomString());
+
+				Assert.fail();
+			}
+			catch (SecretException secretException) {
+				Assert.assertEquals(
+					_PUT_SECRET_FAILURE_MESSAGE, secretException.getMessage());
+			}
+
+			Assert.assertNull(
+				_mfaTimeBasedOTPEntryLocalService.
+					fetchMFATimeBasedOTPEntryByUserId(_user.getUserId()));
+		}
+	}
+
+	@Test
 	public void testAddTimeBasedOTPEntryWhenSharedSecretIsKeyReference()
 		throws Exception {
 
@@ -251,6 +276,9 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 
 	private static final String _PROVIDER_ID = "test-mfa-timebased-otp-secret";
 
+	private static final String _PUT_SECRET_FAILURE_MESSAGE =
+		"Unable to put secret";
+
 	private static final BundleContext _bundleContext =
 		SystemBundleUtil.getBundleContext();
 
@@ -314,7 +342,13 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 		}
 
 		@Override
-		public void putSecret(long companyId, Secret secret) {
+		public void putSecret(long companyId, Secret secret)
+			throws SecretException {
+
+			if (_putSecretFailure) {
+				throw new SecretException(_PUT_SECRET_FAILURE_MESSAGE);
+			}
+
 			KeyReference keyReference = secret.getKeyReference();
 
 			_secrets.put(
@@ -322,10 +356,15 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 				new String(secret.getChars()));
 		}
 
+		public void setPutSecretFailure(boolean putSecretFailure) {
+			_putSecretFailure = putSecretFailure;
+		}
+
 		private String _getKey(long companyId, String secretIdentifier) {
 			return companyId + StringPool.SLASH + secretIdentifier;
 		}
 
+		private boolean _putSecretFailure;
 		private final Map<String, String> _secrets = new ConcurrentHashMap<>();
 
 	}
