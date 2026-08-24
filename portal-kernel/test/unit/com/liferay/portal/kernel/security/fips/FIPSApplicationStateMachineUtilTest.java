@@ -10,10 +10,12 @@ import com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -224,6 +226,65 @@ public class FIPSApplicationStateMachineUtilTest {
 	}
 
 	@Test
+	public void testPreOperationalSelfTest() {
+		FIPSApplicationStateMachineUtil.preOperationalSelfTest(
+			() -> {
+			});
+
+		Assert.assertEquals(
+			FIPSApplicationState.OPERATIONAL,
+			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
+
+		Assert.assertEquals(
+			_fipsAuditLogEntries.toString(), 2, _fipsAuditLogEntries.size());
+
+		_assertField(_fipsAuditLogEntries.get(0), "from-state", "INITIALIZING");
+		_assertField(
+			_fipsAuditLogEntries.get(0), "message",
+			"The pre-operational self tests were started");
+		_assertField(_fipsAuditLogEntries.get(0), "to-state", "SELF_TEST");
+		_assertField(
+			_fipsAuditLogEntries.get(1), "message",
+			"All checks and the validated provider self tests passed");
+		_assertField(_fipsAuditLogEntries.get(1), "to-state", "OPERATIONAL");
+
+		_fipsAuditLogEntries.clear();
+
+		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
+
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> FIPSApplicationStateMachineUtil.preOperationalSelfTest(
+				() -> {
+					throw new SecurityException("The provider is unhappy");
+				}));
+
+		Assert.assertEquals(
+			FIPSApplicationState.ERROR,
+			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
+
+		Assert.assertEquals(
+			_fipsAuditLogEntries.toString(), 3, _fipsAuditLogEntries.size());
+
+		_assertEnvelope(
+			_fipsAuditLogEntries.get(1), "event-type",
+			"pre-operational-health-failure");
+		_assertEnvelope(_fipsAuditLogEntries.get(1), "severity", "CRITICAL");
+		_assertField(_fipsAuditLogEntries.get(1), "failed-step", "Self test");
+		_assertField(_fipsAuditLogEntries.get(1), "fips-state", "SELF_TEST");
+		_assertField(
+			_fipsAuditLogEntries.get(1), "provider-error-message",
+			"The provider is unhappy");
+
+		_assertEnvelope(
+			_fipsAuditLogEntries.get(2), "event-type", "fips-state-transition");
+		_assertEnvelope(_fipsAuditLogEntries.get(2), "severity", "CRITICAL");
+		_assertField(_fipsAuditLogEntries.get(2), "failed-step", "Self test");
+		_assertField(_fipsAuditLogEntries.get(2), "from-state", "SELF_TEST");
+		_assertField(_fipsAuditLogEntries.get(2), "to-state", "ERROR");
+	}
+
+	@Test
 	public void testQuiescent() {
 		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
 
@@ -283,6 +344,8 @@ public class FIPSApplicationStateMachineUtilTest {
 
 	@Test
 	public void testSelfTest() {
+		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
+
 		FIPSApplicationStateMachineUtil.selfTest(
 			() -> {
 			});
@@ -294,7 +357,7 @@ public class FIPSApplicationStateMachineUtilTest {
 		Assert.assertEquals(
 			_fipsAuditLogEntries.toString(), 2, _fipsAuditLogEntries.size());
 
-		_assertField(_fipsAuditLogEntries.get(0), "from-state", "INITIALIZING");
+		_assertField(_fipsAuditLogEntries.get(0), "from-state", "OPERATIONAL");
 		_assertField(
 			_fipsAuditLogEntries.get(0), "message",
 			"The integrity checks were started");
@@ -338,6 +401,94 @@ public class FIPSApplicationStateMachineUtilTest {
 			_fipsAuditLogEntries.get(0), "recovery-action", recoveryAction);
 		_assertField(_fipsAuditLogEntries.get(0), "to-state", "SELF_TEST");
 		_assertField(_fipsAuditLogEntries.get(1), "to-state", "OPERATIONAL");
+	}
+
+	@Test
+	public void testSelfTestWithSuppressedFailure() {
+		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
+
+		SecurityException securityException1 = new SecurityException(
+			"The provider is unhappy");
+
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> FIPSApplicationStateMachineUtil.selfTest(
+				() -> {
+					_setFIPSApplicationState(FIPSApplicationState.POWER_OFF);
+
+					throw securityException1;
+				}));
+
+		Assert.assertEquals(
+			_fipsAuditLogEntries.toString(), 2, _fipsAuditLogEntries.size());
+
+		_assertEnvelope(
+			_fipsAuditLogEntries.get(1), "event-type",
+			"periodic-health-failure");
+		_assertField(_fipsAuditLogEntries.get(1), "fips-state", "POWER_OFF");
+
+		Throwable[] suppressedThrowables1 = securityException1.getSuppressed();
+
+		Assert.assertEquals(
+			ArrayUtil.toString(suppressedThrowables1, ""), 1,
+			suppressedThrowables1.length);
+		Assert.assertSame(
+			IllegalStateException.class, suppressedThrowables1[0].getClass());
+
+		_fipsAuditLogEntries.clear();
+
+		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
+
+		Mockito.doAnswer(
+			invocation -> {
+				ObjectMessage objectMessage = invocation.getArgument(2);
+
+				Map<String, Object> fipsAuditLogEntry =
+					(Map<String, Object>)objectMessage.getParameter();
+
+				if (Objects.equals(
+						fipsAuditLogEntry.get("event-type"),
+						"periodic-health-failure")) {
+
+					throw new RuntimeException();
+				}
+
+				_fipsAuditLogEntries.add(fipsAuditLogEntry);
+
+				return null;
+			}
+		).when(
+			_logger
+		).log(
+			Mockito.any(Level.class), Mockito.any(Marker.class),
+			Mockito.any(Message.class)
+		);
+
+		SecurityException securityException2 = new SecurityException();
+
+		Assert.assertThrows(
+			SecurityException.class,
+			() -> FIPSApplicationStateMachineUtil.selfTest(
+				() -> {
+					throw securityException2;
+				}));
+
+		Assert.assertEquals(
+			FIPSApplicationState.ERROR,
+			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
+
+		Assert.assertEquals(
+			_fipsAuditLogEntries.toString(), 2, _fipsAuditLogEntries.size());
+
+		_assertField(_fipsAuditLogEntries.get(1), "to-state", "ERROR");
+
+		Throwable[] suppressedThrowables2 = securityException2.getSuppressed();
+
+		Assert.assertEquals(
+			ArrayUtil.toString(suppressedThrowables2, ""), 1,
+			suppressedThrowables2.length);
+		Assert.assertSame(
+			RuntimeException.class, suppressedThrowables2[0].getClass());
 	}
 
 	@Test
@@ -555,7 +706,7 @@ public class FIPSApplicationStateMachineUtilTest {
 	private void _testSelfTestWithFailure(RuntimeException runtimeException) {
 		_fipsAuditLogEntries.clear();
 
-		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
+		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
 
 		Assert.assertThrows(
 			runtimeException.getClass(),
@@ -569,12 +720,24 @@ public class FIPSApplicationStateMachineUtilTest {
 			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
 
 		Assert.assertEquals(
-			_fipsAuditLogEntries.toString(), 2, _fipsAuditLogEntries.size());
+			_fipsAuditLogEntries.toString(), 3, _fipsAuditLogEntries.size());
 
+		_assertEnvelope(
+			_fipsAuditLogEntries.get(1), "event-type",
+			"periodic-health-failure");
 		_assertEnvelope(_fipsAuditLogEntries.get(1), "severity", "CRITICAL");
 		_assertField(_fipsAuditLogEntries.get(1), "failed-step", "Self test");
-		_assertField(_fipsAuditLogEntries.get(1), "from-state", "SELF_TEST");
-		_assertField(_fipsAuditLogEntries.get(1), "to-state", "ERROR");
+		_assertField(_fipsAuditLogEntries.get(1), "fips-state", "SELF_TEST");
+		_assertField(
+			_fipsAuditLogEntries.get(1), "provider-error-message",
+			runtimeException.toString());
+
+		_assertEnvelope(
+			_fipsAuditLogEntries.get(2), "event-type", "fips-state-transition");
+		_assertEnvelope(_fipsAuditLogEntries.get(2), "severity", "CRITICAL");
+		_assertField(_fipsAuditLogEntries.get(2), "failed-step", "Self test");
+		_assertField(_fipsAuditLogEntries.get(2), "from-state", "SELF_TEST");
+		_assertField(_fipsAuditLogEntries.get(2), "to-state", "ERROR");
 	}
 
 	private void _testTransition(
