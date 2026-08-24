@@ -177,9 +177,56 @@ public class AuditMessage implements Serializable {
 			_contextName = jsonObject.getString(_CONTEXT_NAME);
 		}
 
+		if (jsonObject.has(_CORRELATION_ID)) {
+			_correlationId = jsonObject.getString(_CORRELATION_ID);
+		}
+
 		_eventType = jsonObject.getString(_EVENT_TYPE);
 		_groupId = jsonObject.getLong(_GROUP_ID);
+
+		if (jsonObject.has(_HTTP_METHOD)) {
+			_httpMethod = jsonObject.getString(_HTTP_METHOD);
+		}
+
+		if (jsonObject.has(_IMPERSONATED)) {
+			_impersonated = jsonObject.getBoolean(_IMPERSONATED);
+		}
+
+		if (jsonObject.has(_IMPERSONATED_USER_EMAIL_ADDRESS)) {
+			_impersonatedUserEmailAddress = jsonObject.getString(
+				_IMPERSONATED_USER_EMAIL_ADDRESS);
+		}
+
+		if (jsonObject.has(_IMPERSONATED_USER_ID)) {
+			_impersonatedUserId = jsonObject.getLong(_IMPERSONATED_USER_ID);
+		}
+
+		if (jsonObject.has(_IMPERSONATED_USER_NAME)) {
+			_impersonatedUserName = jsonObject.getString(
+				_IMPERSONATED_USER_NAME);
+		}
+
 		_message = jsonObject.getString(_MESSAGE);
+
+		if (jsonObject.has(_OBJECT_NAME)) {
+			_objectName = jsonObject.getString(_OBJECT_NAME);
+		}
+
+		if (jsonObject.has(_REQUEST_ID)) {
+			_requestId = jsonObject.getString(_REQUEST_ID);
+		}
+
+		if (jsonObject.has(_RESOURCE_ACTION)) {
+			_resourceAction = jsonObject.getString(_RESOURCE_ACTION);
+		}
+
+		if (jsonObject.has(_RESOURCE_TYPE)) {
+			_resourceType = jsonObject.getString(_RESOURCE_TYPE);
+		}
+
+		if (jsonObject.has(_ROLES)) {
+			_roles = jsonObject.getString(_ROLES);
+		}
 
 		if (jsonObject.has(_SERVER_NAME)) {
 			_serverName = jsonObject.getString(_SERVER_NAME);
@@ -195,10 +242,19 @@ public class AuditMessage implements Serializable {
 
 		_timestampDate = GetterUtil.getDate(
 			jsonObject.getString(_TIMESTAMP), _getDateFormat());
+
+		if (jsonObject.has(_USER_AGENT)) {
+			_userAgent = jsonObject.getString(_USER_AGENT);
+		}
+
 		_userEmailAddress = jsonObject.getString(_USER_EMAIL_ADDRESS);
 		_userId = jsonObject.getLong(_USER_ID);
 		_userLogin = jsonObject.getString(_USER_LOGIN);
 		_userName = jsonObject.getString(_USER_NAME);
+
+		if (jsonObject.has(_X_REQUEST_ID)) {
+			_xRequestId = jsonObject.getString(_X_REQUEST_ID);
+		}
 	}
 
 	public long getAccountEntryId() {
@@ -233,6 +289,10 @@ public class AuditMessage implements Serializable {
 		return _contextName;
 	}
 
+	public String getCorrelationId() {
+		return _correlationId;
+	}
+
 	public String getEventType() {
 		return _eventType;
 	}
@@ -241,8 +301,44 @@ public class AuditMessage implements Serializable {
 		return _groupId;
 	}
 
+	public String getHttpMethod() {
+		return _httpMethod;
+	}
+
+	public String getImpersonatedUserEmailAddress() {
+		return _impersonatedUserEmailAddress;
+	}
+
+	public long getImpersonatedUserId() {
+		return _impersonatedUserId;
+	}
+
+	public String getImpersonatedUserName() {
+		return _impersonatedUserName;
+	}
+
 	public String getMessage() {
 		return _message;
+	}
+
+	public String getObjectName() {
+		return _objectName;
+	}
+
+	public String getRequestId() {
+		return _requestId;
+	}
+
+	public String getResourceAction() {
+		return _resourceAction;
+	}
+
+	public String getResourceType() {
+		return _resourceType;
+	}
+
+	public String getRoles() {
+		return _roles;
 	}
 
 	public String getServerName() {
@@ -261,6 +357,10 @@ public class AuditMessage implements Serializable {
 		return _timestampDate;
 	}
 
+	public String getUserAgent() {
+		return _userAgent;
+	}
+
 	public String getUserEmailAddress() {
 		return _userEmailAddress;
 	}
@@ -275,6 +375,14 @@ public class AuditMessage implements Serializable {
 
 	public String getUserName() {
 		return _userName;
+	}
+
+	public String getXRequestId() {
+		return _xRequestId;
+	}
+
+	public boolean isImpersonated() {
+		return _impersonated;
 	}
 
 	public void setAccountEntryId(long accountEntryId) {
@@ -313,6 +421,10 @@ public class AuditMessage implements Serializable {
 		_contextName = contextName;
 	}
 
+	public void setCorrelationId(String correlationId) {
+		_correlationId = correlationId;
+	}
+
 	public void setEventType(String eventType) {
 		_eventType = eventType;
 	}
@@ -321,8 +433,50 @@ public class AuditMessage implements Serializable {
 		_groupId = groupId;
 	}
 
+	public void setHttpMethod(String httpMethod) {
+		_httpMethod = httpMethod;
+	}
+
+	public void setImpersonated(boolean impersonated) {
+		_impersonated = impersonated;
+	}
+
+	public void setImpersonatedUserEmailAddress(
+		String impersonatedUserEmailAddress) {
+
+		_impersonatedUserEmailAddress = impersonatedUserEmailAddress;
+	}
+
+	public void setImpersonatedUserId(long impersonatedUserId) {
+		_impersonatedUserId = impersonatedUserId;
+	}
+
+	public void setImpersonatedUserName(String impersonatedUserName) {
+		_impersonatedUserName = impersonatedUserName;
+	}
+
 	public void setMessage(String message) {
 		_message = message;
+	}
+
+	public void setObjectName(String objectName) {
+		_objectName = objectName;
+	}
+
+	public void setRequestId(String requestId) {
+		_requestId = requestId;
+	}
+
+	public void setResourceAction(String resourceAction) {
+		_resourceAction = resourceAction;
+	}
+
+	public void setResourceType(String resourceType) {
+		_resourceType = resourceType;
+	}
+
+	public void setRoles(String roles) {
+		_roles = roles;
 	}
 
 	public void setServerName(String serverName) {
@@ -341,6 +495,10 @@ public class AuditMessage implements Serializable {
 		_timestampDate = timestampDate;
 	}
 
+	public void setUserAgent(String userAgent) {
+		_userAgent = userAgent;
+	}
+
 	public void setUserEmailAddress(String userEmailAddress) {
 		_userEmailAddress = userEmailAddress;
 	}
@@ -355,6 +513,10 @@ public class AuditMessage implements Serializable {
 
 	public void setUserName(String userName) {
 		_userName = userName;
+	}
+
+	public void setXRequestId(String xRequestId) {
+		_xRequestId = xRequestId;
 	}
 
 	public JSONObject toJSONObject() {
@@ -377,11 +539,33 @@ public class AuditMessage implements Serializable {
 		).put(
 			_CONTEXT_NAME, _contextName
 		).put(
+			_CORRELATION_ID, _correlationId
+		).put(
 			_EVENT_TYPE, _eventType
 		).put(
 			_GROUP_ID, _groupId
 		).put(
+			_HTTP_METHOD, _httpMethod
+		).put(
+			_IMPERSONATED, _impersonated
+		).put(
+			_IMPERSONATED_USER_EMAIL_ADDRESS, _impersonatedUserEmailAddress
+		).put(
+			_IMPERSONATED_USER_ID, _impersonatedUserId
+		).put(
+			_IMPERSONATED_USER_NAME, _impersonatedUserName
+		).put(
 			_MESSAGE, _message
+		).put(
+			_OBJECT_NAME, _objectName
+		).put(
+			_REQUEST_ID, _requestId
+		).put(
+			_RESOURCE_ACTION, _resourceAction
+		).put(
+			_RESOURCE_TYPE, _resourceType
+		).put(
+			_ROLES, _roles
 		).put(
 			_SERVER_NAME, _serverName
 		).put(
@@ -393,6 +577,8 @@ public class AuditMessage implements Serializable {
 			dateFormat.format(
 				(_timestampDate != null) ? _timestampDate : new Date())
 		).put(
+			_USER_AGENT, _userAgent
+		).put(
 			_USER_EMAIL_ADDRESS, _userEmailAddress
 		).put(
 			_USER_ID, _userId
@@ -400,6 +586,8 @@ public class AuditMessage implements Serializable {
 			_USER_LOGIN, _userLogin
 		).put(
 			_USER_NAME, _userName
+		).put(
+			_X_REQUEST_ID, _xRequestId
 		);
 	}
 
@@ -423,13 +611,37 @@ public class AuditMessage implements Serializable {
 
 	private static final String _CONTEXT_NAME = "contextName";
 
+	private static final String _CORRELATION_ID = "correlationId";
+
 	private static final String _DATE_FORMAT = "yyyyMMddkkmmssSSS";
 
 	private static final String _EVENT_TYPE = "eventType";
 
 	private static final String _GROUP_ID = "groupId";
 
+	private static final String _HTTP_METHOD = "httpMethod";
+
+	private static final String _IMPERSONATED = "impersonated";
+
+	private static final String _IMPERSONATED_USER_EMAIL_ADDRESS =
+		"impersonatedUserEmailAddress";
+
+	private static final String _IMPERSONATED_USER_ID = "impersonatedUserId";
+
+	private static final String _IMPERSONATED_USER_NAME =
+		"impersonatedUserName";
+
 	private static final String _MESSAGE = "message";
+
+	private static final String _OBJECT_NAME = "objectName";
+
+	private static final String _REQUEST_ID = "requestId";
+
+	private static final String _RESOURCE_ACTION = "resourceAction";
+
+	private static final String _RESOURCE_TYPE = "resourceType";
+
+	private static final String _ROLES = "roles";
 
 	private static final String _SERVER_NAME = "serverName";
 
@@ -439,6 +651,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _TIMESTAMP = "timestamp";
 
+	private static final String _USER_AGENT = "userAgent";
+
 	private static final String _USER_EMAIL_ADDRESS = "userEmailAddress";
 
 	private static final String _USER_ID = "userId";
@@ -446,6 +660,8 @@ public class AuditMessage implements Serializable {
 	private static final String _USER_LOGIN = "userLogin";
 
 	private static final String _USER_NAME = "userName";
+
+	private static final String _X_REQUEST_ID = "xRequestId";
 
 	private static final Log _log = LogFactoryUtil.getLog(AuditMessage.class);
 
@@ -457,16 +673,29 @@ public class AuditMessage implements Serializable {
 	private String _clientIP;
 	private long _companyId = -1;
 	private String _contextName;
+	private String _correlationId;
 	private String _eventType;
 	private long _groupId = -1;
+	private String _httpMethod;
+	private boolean _impersonated;
+	private String _impersonatedUserEmailAddress;
+	private long _impersonatedUserId;
+	private String _impersonatedUserName;
 	private String _message;
+	private String _objectName;
+	private String _requestId;
+	private String _resourceAction;
+	private String _resourceType;
+	private String _roles;
 	private String _serverName;
 	private int _serverPort;
 	private String _sessionID;
 	private Date _timestampDate;
+	private String _userAgent;
 	private String _userEmailAddress;
 	private long _userId = -1;
 	private String _userLogin;
 	private String _userName;
+	private String _xRequestId;
 
 }
