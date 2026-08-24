@@ -46,7 +46,7 @@ public class FIPSApplicationStateMachineUtil {
 			});
 
 		_runAndTransitionToOperational(
-			"Key or CSP entry", "The operation was completed successfully",
+			"Key or CSP entry", "The operation completed successfully",
 			runnable);
 	}
 
@@ -81,7 +81,7 @@ public class FIPSApplicationStateMachineUtil {
 		_transition(
 			FIPSApplicationState.SELF_TEST,
 			fipsAuditEvent -> fipsAuditEvent.put(
-				"message", "The integrity checks were started"));
+				"message", "The integrity checks started"));
 
 		_runSelfTest(runnable);
 	}
