@@ -43,11 +43,6 @@ public class FIPSApplicationStateMachineUtilTest {
 
 	@BeforeClass
 	public static void setUpClass() {
-		_logger = Mockito.mock(Logger.class);
-
-		_logManagerMockedStatic = Mockito.mockStatic(
-			LogManager.class, Mockito.CALLS_REAL_METHODS);
-
 		_logManagerMockedStatic.when(
 			() -> LogManager.getLogger(FIPSLog4jUtil.class)
 		).thenReturn(
@@ -634,9 +629,10 @@ public class FIPSApplicationStateMachineUtilTest {
 			});
 	}
 
-	private static Logger _logger;
+	private static final Logger _logger = Mockito.mock(Logger.class);
 
-	private static MockedStatic<LogManager> _logManagerMockedStatic;
+	private static final MockedStatic<LogManager> _logManagerMockedStatic =
+		Mockito.mockStatic(LogManager.class, Mockito.CALLS_REAL_METHODS);
 
 	private final List<Map<String, Object>> _fipsAuditLogEntries =
 		new ArrayList<>();
