@@ -16,7 +16,9 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -34,6 +36,13 @@ public class AuditEventLocalServiceTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
+	@After
+	public void tearDown() {
+		for (AuditEvent auditEvent : _auditEvents) {
+			_auditEventLocalService.deleteAuditEvent(auditEvent);
+		}
+	}
+
 	@Test
 	public void testAddAuditEvent() {
 		AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
@@ -45,13 +54,62 @@ public class AuditEventLocalServiceTest {
 
 		auditMessage.setCompanyId(companyId);
 
+		auditMessage.setCorrelationId(RandomTestUtil.randomString());
+		auditMessage.setHttpMethod(RandomTestUtil.randomString());
+		auditMessage.setImpersonated(RandomTestUtil.randomBoolean());
+		auditMessage.setImpersonatedUserEmailAddress(
+			RandomTestUtil.randomString());
+		auditMessage.setImpersonatedUserId(RandomTestUtil.randomLong());
+		auditMessage.setImpersonatedUserName(RandomTestUtil.randomString());
+		auditMessage.setObjectName(RandomTestUtil.randomString());
+		auditMessage.setRequestId(RandomTestUtil.randomString());
+		auditMessage.setResourceAction(RandomTestUtil.randomString());
+		auditMessage.setResourceType(RandomTestUtil.randomString());
+		auditMessage.setRoles(RandomTestUtil.randomString());
+		auditMessage.setUserAgent(RandomTestUtil.randomString());
+		auditMessage.setUserEmailAddress(RandomTestUtil.randomString());
+		auditMessage.setXRequestId(RandomTestUtil.randomString());
+
 		AuditEvent auditEvent = _auditEventLocalService.addAuditEvent(
 			auditMessage);
+
+		_auditEvents.add(auditEvent);
 
 		Assert.assertEquals(
 			auditEvent.getAccountEntryId(), auditMessage.getAccountEntryId());
 		Assert.assertEquals(
 			auditEvent.getContextName(), auditMessage.getContextName());
+		Assert.assertEquals(
+			auditEvent.getCorrelationId(), auditMessage.getCorrelationId());
+		Assert.assertEquals(
+			auditEvent.getHttpMethod(), auditMessage.getHttpMethod());
+		Assert.assertEquals(
+			auditEvent.isImpersonated(), auditMessage.isImpersonated());
+		Assert.assertEquals(
+			auditEvent.getImpersonatedUserEmailAddress(),
+			auditMessage.getImpersonatedUserEmailAddress());
+		Assert.assertEquals(
+			auditEvent.getImpersonatedUserId(),
+			auditMessage.getImpersonatedUserId());
+		Assert.assertEquals(
+			auditEvent.getImpersonatedUserName(),
+			auditMessage.getImpersonatedUserName());
+		Assert.assertEquals(
+			auditEvent.getObjectName(), auditMessage.getObjectName());
+		Assert.assertEquals(
+			auditEvent.getRequestId(), auditMessage.getRequestId());
+		Assert.assertEquals(
+			auditEvent.getResourceAction(), auditMessage.getResourceAction());
+		Assert.assertEquals(
+			auditEvent.getResourceType(), auditMessage.getResourceType());
+		Assert.assertEquals(auditEvent.getRoles(), auditMessage.getRoles());
+		Assert.assertEquals(
+			auditEvent.getUserAgent(), auditMessage.getUserAgent());
+		Assert.assertEquals(
+			auditEvent.getUserEmailAddress(),
+			auditMessage.getUserEmailAddress());
+		Assert.assertEquals(
+			auditEvent.getXRequestId(), auditMessage.getXRequestId());
 
 		AuditEvent persistedAuditEvent =
 			_auditEventLocalService.fetchAuditEvent(
@@ -59,6 +117,8 @@ public class AuditEventLocalServiceTest {
 
 		Assert.assertEquals(companyId, persistedAuditEvent.getCompanyId());
 	}
+
+	private static final List<AuditEvent> _auditEvents = new ArrayList<>();
 
 	@Inject
 	private AuditEventLocalService _auditEventLocalService;
