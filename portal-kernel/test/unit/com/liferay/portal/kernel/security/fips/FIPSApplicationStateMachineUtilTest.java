@@ -59,9 +59,6 @@ public class FIPSApplicationStateMachineUtilTest {
 	public void setUp() {
 		Mockito.reset(_logger);
 
-		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
-			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
-
 		Mockito.doAnswer(
 			invocation -> {
 				ObjectMessage objectMessage = invocation.getArgument(2);
@@ -77,6 +74,9 @@ public class FIPSApplicationStateMachineUtilTest {
 			Mockito.any(Level.class), Mockito.any(Marker.class),
 			Mockito.any(Message.class)
 		);
+
+		_safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
+			"FIPS_AUDIT_DEPLOYMENT_INSTANCE_ID", RandomTestUtil.randomString());
 
 		_setFIPSApplicationState(FIPSApplicationState.INITIALIZING);
 	}
