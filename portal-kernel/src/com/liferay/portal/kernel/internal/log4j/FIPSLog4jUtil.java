@@ -34,34 +34,13 @@ public class FIPSLog4jUtil {
 	}
 
 	public static void validate(FIPSAuditEvent.Severity severity) {
-		_validate(_getLevel(severity));
-	}
-
-	public static void write(
-		Map<String, Object> fipsAuditLogEntry,
-		FIPSAuditEvent.Severity severity) {
-
-		Level level = _getLevel(severity);
-
-		_validate(level);
-
-		_logger.log(level, _marker, new ObjectMessage(fipsAuditLogEntry));
-	}
-
-	private static Level _getLevel(FIPSAuditEvent.Severity severity) {
-		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
-			return Level.ERROR;
-		}
-
-		return Level.INFO;
-	}
-
-	private static void _validate(Level level) {
 		if (!PropsValues.FIPS_ENABLED ||
 			(ServerDetector.getServerId() == null)) {
 
 			return;
 		}
+
+		Level level = _getLevel(severity);
 
 		if (!_logger.isEnabled(level)) {
 			throw new IllegalStateException(
@@ -95,6 +74,22 @@ public class FIPSLog4jUtil {
 					"\"", _APPENDER_NAME, "\" does not use the layout \"",
 					FIPSAuditNDJSONLayout.PLUGIN_NAME, "\""));
 		}
+	}
+
+	public static void write(
+		Map<String, Object> fipsAuditLogEntry,
+		FIPSAuditEvent.Severity severity) {
+
+		_logger.log(
+			_getLevel(severity), _marker, new ObjectMessage(fipsAuditLogEntry));
+	}
+
+	private static Level _getLevel(FIPSAuditEvent.Severity severity) {
+		if (severity == FIPSAuditEvent.Severity.CRITICAL) {
+			return Level.ERROR;
+		}
+
+		return Level.INFO;
 	}
 
 	private static final String _APPENDER_NAME = "FIPS_AUDIT_FILE";
