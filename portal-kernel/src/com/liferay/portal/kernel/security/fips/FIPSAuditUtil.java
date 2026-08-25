@@ -57,6 +57,9 @@ public class FIPSAuditUtil {
 			providerVersion = provider.getVersionStr();
 		}
 
+		Map<String, Object> fields = _normalizeTimestamps(
+			fipsAuditEvent.getFields());
+
 		FIPSAuditEvent.Severity severity = fipsAuditEvent.getSeverity();
 
 		FIPSLog4jUtil.write(
@@ -73,7 +76,7 @@ public class FIPSAuditUtil {
 			).put(
 				"event-type", fipsAuditEvent.getEventType()
 			).put(
-				"fields", _normalizeTimestamps(fipsAuditEvent.getFields())
+				"fields", fields
 			).put(
 				"provider-name", providerName
 			).put(
