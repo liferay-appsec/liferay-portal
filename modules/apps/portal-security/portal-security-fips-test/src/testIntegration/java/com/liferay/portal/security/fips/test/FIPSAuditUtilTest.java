@@ -281,13 +281,7 @@ public class FIPSAuditUtilTest {
 
 	@Test
 	public void testWriteWithPosixFileSystem() throws Exception {
-		FIPSAuditUtil.write(
-			new FIPSAuditEvent(
-				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
-
 		Path path = _getFIPSAuditLogPath();
-
-		Assert.assertTrue(Files.exists(path));
 
 		FileSystem fileSystem = path.getFileSystem();
 
@@ -295,6 +289,12 @@ public class FIPSAuditUtilTest {
 			fileSystem.supportedFileAttributeViews();
 
 		Assume.assumeTrue(supportedFileAttributeViews.contains("posix"));
+
+		FIPSAuditUtil.write(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
+
+		Assert.assertTrue(Files.exists(path));
 
 		Assert.assertEquals(
 			PosixFilePermissions.fromString("rw-------"),
