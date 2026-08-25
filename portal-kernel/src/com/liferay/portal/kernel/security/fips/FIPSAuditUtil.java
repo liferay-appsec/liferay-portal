@@ -61,6 +61,8 @@ public class FIPSAuditUtil {
 
 		FIPSAuditEvent.Severity severity = fipsAuditEvent.getSeverity();
 
+		FIPSLog4jUtil.validate(severity);
+
 		FIPSLog4jUtil.write(
 			HashMapBuilder.<String, Object>put(
 				"cmvp-certificate-id",

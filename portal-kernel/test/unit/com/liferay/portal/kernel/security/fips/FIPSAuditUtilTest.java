@@ -110,10 +110,7 @@ public class FIPSAuditUtilTest {
 			new FIPSAuditEvent(
 				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
 
-		Map<String, Object> fipsAuditLogEntry = _getLastFIPSAuditLogEntry();
-
-		long eventSequence = GetterUtil.getLong(
-			fipsAuditLogEntry.get("event-sequence"));
+		long eventSequence = _getLastEventSequence();
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
@@ -129,11 +126,7 @@ public class FIPSAuditUtilTest {
 			new FIPSAuditEvent(
 				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
 
-		fipsAuditLogEntry = _getLastFIPSAuditLogEntry();
-
-		Assert.assertEquals(
-			eventSequence + 1,
-			GetterUtil.getLong(fipsAuditLogEntry.get("event-sequence")));
+		Assert.assertEquals(eventSequence + 1, _getLastEventSequence());
 	}
 
 	@Test
@@ -188,6 +181,12 @@ public class FIPSAuditUtilTest {
 		_testWriteThrows();
 	}
 
+	private long _getLastEventSequence() {
+		Map<String, Object> fipsAuditLogEntry = _getLastFIPSAuditLogEntry();
+
+		return GetterUtil.getLong(fipsAuditLogEntry.get("event-sequence"));
+	}
+
 	private Map<String, Object> _getLastFIPSAuditLogEntry() {
 		ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(
 			Message.class);
@@ -229,6 +228,12 @@ public class FIPSAuditUtilTest {
 	}
 
 	private void _testWriteThrows() {
+		FIPSAuditUtil.write(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
+
+		long eventSequence = _getLastEventSequence();
+
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
 			MockedStatic<ServerDetector> serverDetectorMockedStatic =
@@ -248,6 +253,12 @@ public class FIPSAuditUtilTest {
 						RandomTestUtil.randomString(),
 						FIPSAuditEvent.Severity.INFO)));
 		}
+
+		FIPSAuditUtil.write(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
+
+		Assert.assertEquals(eventSequence + 1, _getLastEventSequence());
 	}
 
 	private static final Logger _logger = Mockito.mock(Logger.class);
