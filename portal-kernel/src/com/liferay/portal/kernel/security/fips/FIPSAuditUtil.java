@@ -9,7 +9,6 @@ import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
@@ -65,8 +64,7 @@ public class FIPSAuditUtil {
 		FIPSLog4jUtil.write(
 			HashMapBuilder.<String, Object>put(
 				"cmvp-certificate-id",
-				GetterUtil.getString(
-					PropsValues.FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID)
+				PropsValues.FIPS_AUDIT_PROVIDER_CMVP_CERTIFICATE_ID
 			).put(
 				"deployment-instance-id", _getDeploymentInstanceId()
 			).put(
