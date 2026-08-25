@@ -292,11 +292,12 @@ public class FIPSApplicationStateMachineUtilTest {
 		_assertField(_fipsAuditLogEntries.get(0), "from-state", "INITIALIZING");
 		_assertField(
 			_fipsAuditLogEntries.get(0), "message",
-			"The integrity checks started");
+			"The FIPS provider and configuration checks started");
 		_assertField(_fipsAuditLogEntries.get(0), "to-state", "SELF_TEST");
 		_assertField(
 			_fipsAuditLogEntries.get(1), "message",
-			"All checks and the validated provider self tests passed");
+			"The FIPS provider reported its self tests passed and the " +
+				"configuration checks passed");
 		_assertField(_fipsAuditLogEntries.get(1), "to-state", "OPERATIONAL");
 	}
 

@@ -85,7 +85,8 @@ public class FIPSApplicationStateMachineUtil {
 		_transition(
 			FIPSApplicationState.SELF_TEST,
 			fipsAuditEvent -> fipsAuditEvent.put(
-				"message", "The integrity checks started"));
+				"message",
+				"The FIPS provider and configuration checks started"));
 
 		_runSelfTest(runnable);
 	}
@@ -161,7 +162,8 @@ public class FIPSApplicationStateMachineUtil {
 	private static void _runSelfTest(Runnable runnable) {
 		_runAndTransitionToOperational(
 			"Self test",
-			"All checks and the validated provider self tests passed",
+			"The FIPS provider reported its self tests passed and the " +
+				"configuration checks passed",
 			runnable);
 	}
 
