@@ -39,7 +39,7 @@
 			<finder-column name="userId" />
 			<finder-column name="issuer" />
 		</finder>
-		<finder name="I_S" return-type="OpenIdConnectSession" unique="true">
+		<finder name="I_S" return-type="OpenIdConnectSession">
 			<finder-column name="issuer" />
 			<finder-column name="sessionId" />
 		</finder>
