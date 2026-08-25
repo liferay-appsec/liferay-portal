@@ -13,7 +13,7 @@ import java.security.Key;
 import java.security.spec.KeySpec;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -126,7 +126,7 @@ public class FIPSAuditEvent {
 	}
 
 	private final String _eventType;
-	private final Map<String, Object> _fields = new LinkedHashMap<>();
+	private final Map<String, Object> _fields = new HashMap<>();
 	private final Severity _severity;
 
 }
