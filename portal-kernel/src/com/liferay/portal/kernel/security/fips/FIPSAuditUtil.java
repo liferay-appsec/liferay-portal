@@ -118,9 +118,9 @@ public class FIPSAuditUtil {
 				return deploymentInstanceId.trim();
 			}
 
-			String deploymentInstanceId = String.valueOf(UUID.randomUUID());
-
 			Files.createDirectories(path.getParent());
+
+			String deploymentInstanceId = String.valueOf(UUID.randomUUID());
 
 			Files.write(
 				path, deploymentInstanceId.getBytes(StandardCharsets.UTF_8));
