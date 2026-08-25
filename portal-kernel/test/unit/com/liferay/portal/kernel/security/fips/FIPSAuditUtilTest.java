@@ -9,10 +9,12 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.Time;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 import java.util.Collections;
 import java.util.Map;
@@ -100,6 +102,38 @@ public class FIPSAuditUtilTest {
 				Time.MINUTE);
 
 		TimeZone.setDefault(timeZone);
+	}
+
+	@Test
+	public void testWriteKeepsTheEventSequenceAfterARejection() {
+		FIPSAuditUtil.write(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
+
+		Map<String, Object> fipsAuditLogEntry = _getLastFIPSAuditLogEntry();
+
+		long eventSequence = GetterUtil.getLong(
+			fipsAuditLogEntry.get("event-sequence"));
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO);
+
+		fipsAuditEvent.put(
+			"provider-timestamp", LocalDateTime.parse("2026-05-06T14:19:23"));
+
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> FIPSAuditUtil.write(fipsAuditEvent));
+
+		FIPSAuditUtil.write(
+			new FIPSAuditEvent(
+				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
+
+		fipsAuditLogEntry = _getLastFIPSAuditLogEntry();
+
+		Assert.assertEquals(
+			eventSequence + 1,
+			GetterUtil.getLong(fipsAuditLogEntry.get("event-sequence")));
 	}
 
 	@Test
