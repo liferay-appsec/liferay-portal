@@ -14,6 +14,8 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -218,6 +220,49 @@ public class FIPSApplicationStateMachineUtilTest {
 		_assertField(fipsAuditLogEntry, "from-state", "OPERATIONAL");
 		_assertField(fipsAuditLogEntry, "initiating-actor", initiatingActor);
 		_assertField(fipsAuditLogEntry, "to-state", "POWER_OFF");
+	}
+
+	@Test
+	public void testPowerOffConcurrently() throws Exception {
+		_setFIPSApplicationState(FIPSApplicationState.OPERATIONAL);
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		List<Throwable> throwables = new CopyOnWriteArrayList<>();
+
+		List<Thread> threads = new ArrayList<>();
+
+		for (int i = 0; i < 8; i++) {
+			Thread thread = new Thread(
+				() -> {
+					try {
+						countDownLatch.await();
+
+						FIPSApplicationStateMachineUtil.powerOff(
+							RandomTestUtil.randomString());
+					}
+					catch (Throwable throwable) {
+						throwables.add(throwable);
+					}
+				});
+
+			thread.start();
+
+			threads.add(thread);
+		}
+
+		countDownLatch.countDown();
+
+		for (Thread thread : threads) {
+			thread.join();
+		}
+
+		Assert.assertTrue(throwables.toString(), throwables.isEmpty());
+		Assert.assertEquals(
+			FIPSApplicationState.POWER_OFF,
+			FIPSApplicationStateMachineUtil.getFIPSApplicationState());
+		Assert.assertEquals(
+			_fipsAuditLogEntries.toString(), 1, _fipsAuditLogEntries.size());
 	}
 
 	@Test

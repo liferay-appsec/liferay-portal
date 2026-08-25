@@ -61,14 +61,30 @@ public class FIPSApplicationStateMachineUtil {
 	}
 
 	public static void powerOff(String initiatingActor) {
-		if (getFIPSApplicationState() == FIPSApplicationState.POWER_OFF) {
+		FIPSApplicationState previousFIPSApplicationState =
+			_fipsApplicationStateAtomicReference.getAndUpdate(
+				currentFIPSApplicationState -> {
+					if (currentFIPSApplicationState ==
+							FIPSApplicationState.POWER_OFF) {
+
+						return currentFIPSApplicationState;
+					}
+
+					_checkTransition(
+						currentFIPSApplicationState,
+						FIPSApplicationState.POWER_OFF);
+
+					return FIPSApplicationState.POWER_OFF;
+				});
+
+		if (previousFIPSApplicationState == FIPSApplicationState.POWER_OFF) {
 			return;
 		}
 
-		_transition(
-			FIPSApplicationState.POWER_OFF,
+		_writeTransition(
 			fipsAuditEvent -> fipsAuditEvent.put(
-				"initiating-actor", initiatingActor));
+				"initiating-actor", initiatingActor),
+			previousFIPSApplicationState, FIPSApplicationState.POWER_OFF);
 	}
 
 	public static void quiescent(String cryptoOfficerUserId, String reason) {
@@ -103,6 +119,23 @@ public class FIPSApplicationStateMachineUtil {
 			});
 
 		_runSelfTest(runnable);
+	}
+
+	private static void _checkTransition(
+		FIPSApplicationState currentFIPSApplicationState,
+		FIPSApplicationState fipsApplicationState) {
+
+		Set<FIPSApplicationState> nextFIPSApplicationStates =
+			_allowedTransitions.getOrDefault(
+				currentFIPSApplicationState, Set.of());
+
+		if (!nextFIPSApplicationStates.contains(fipsApplicationState)) {
+			throw new IllegalStateException(
+				StringBundler.concat(
+					"Unable to transition the FIPS application state from \"",
+					currentFIPSApplicationState, "\" to \"",
+					fipsApplicationState, "\""));
+		}
 	}
 
 	private static String _getMessage(Throwable throwable) {
@@ -174,28 +207,27 @@ public class FIPSApplicationStateMachineUtil {
 		FIPSApplicationState previousFIPSApplicationState =
 			_fipsApplicationStateAtomicReference.getAndUpdate(
 				currentFIPSApplicationState -> {
-					Set<FIPSApplicationState> nextFIPSApplicationStates =
-						_allowedTransitions.getOrDefault(
-							currentFIPSApplicationState, Set.of());
-
-					if (!nextFIPSApplicationStates.contains(
-							fipsApplicationState)) {
-
-						throw new IllegalStateException(
-							StringBundler.concat(
-								"Unable to transition the FIPS application ",
-								"state from \"", currentFIPSApplicationState,
-								"\" to \"", fipsApplicationState, "\""));
-					}
+					_checkTransition(
+						currentFIPSApplicationState, fipsApplicationState);
 
 					return fipsApplicationState;
 				});
 
-		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-			"fips-state-transition", _getSeverity(fipsApplicationState));
+		_writeTransition(
+			fipsAuditEventConsumer, previousFIPSApplicationState,
+			fipsApplicationState);
+	}
 
-		fipsAuditEvent.put("from-state", previousFIPSApplicationState.name());
-		fipsAuditEvent.put("to-state", fipsApplicationState.name());
+	private static void _writeTransition(
+		Consumer<FIPSAuditEvent> fipsAuditEventConsumer,
+		FIPSApplicationState fromFIPSApplicationState,
+		FIPSApplicationState toFIPSApplicationState) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"fips-state-transition", _getSeverity(toFIPSApplicationState));
+
+		fipsAuditEvent.put("from-state", fromFIPSApplicationState.name());
+		fipsAuditEvent.put("to-state", toFIPSApplicationState.name());
 
 		fipsAuditEventConsumer.accept(fipsAuditEvent);
 
