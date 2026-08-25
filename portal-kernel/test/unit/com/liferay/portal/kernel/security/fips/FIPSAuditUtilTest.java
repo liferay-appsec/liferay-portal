@@ -150,12 +150,14 @@ public class FIPSAuditUtilTest {
 	}
 
 	@Test
-	public void testWriteThrowsWhenAppenderIsMissing() {
-		_testWriteThrows();
-	}
+	public void testWriteThrows() {
 
-	@Test
-	public void testWriteThrowsWhenLayoutIsNotTheNDJSONLayout() {
+		// Appender is missing
+
+		_testWriteThrows("is not configured");
+
+		// Layout is not the NDJSON layout
+
 		RollingFileAppender rollingFileAppender = Mockito.mock(
 			RollingFileAppender.class);
 
@@ -167,18 +169,17 @@ public class FIPSAuditUtilTest {
 
 		_mockLogManager(rollingFileAppender);
 
-		_testWriteThrows();
-	}
+		_testWriteThrows("does not use the layout");
 
-	@Test
-	public void testWriteThrowsWhenLoggerIsDisabled() {
+		// Logger is disabled
+
 		Mockito.when(
 			_logger.isEnabled(Level.INFO)
 		).thenReturn(
 			false
 		);
 
-		_testWriteThrows();
+		_testWriteThrows("is disabled for the level");
 	}
 
 	private long _getLastEventSequence() {
@@ -227,7 +228,7 @@ public class FIPSAuditUtilTest {
 		);
 	}
 
-	private void _testWriteThrows() {
+	private void _testWriteThrows(String message) {
 		FIPSAuditUtil.write(
 			new FIPSAuditEvent(
 				RandomTestUtil.randomString(), FIPSAuditEvent.Severity.INFO));
@@ -246,12 +247,16 @@ public class FIPSAuditUtilTest {
 				RandomTestUtil.randomString()
 			);
 
-			Assert.assertThrows(
+			IllegalStateException illegalStateException = Assert.assertThrows(
 				IllegalStateException.class,
 				() -> FIPSAuditUtil.write(
 					new FIPSAuditEvent(
 						RandomTestUtil.randomString(),
 						FIPSAuditEvent.Severity.INFO)));
+
+			String errorMessage = illegalStateException.getMessage();
+
+			Assert.assertTrue(errorMessage, errorMessage.contains(message));
 		}
 
 		FIPSAuditUtil.write(
