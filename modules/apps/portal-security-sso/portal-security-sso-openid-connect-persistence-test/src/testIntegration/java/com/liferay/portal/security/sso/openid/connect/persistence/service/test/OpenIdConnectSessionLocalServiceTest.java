@@ -39,6 +39,29 @@ public class OpenIdConnectSessionLocalServiceTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
+	public void testAddOpenIdConnectSessionWithBlankSessionId()
+		throws Exception {
+
+		String issuer = RandomTestUtil.randomString();
+		long userId1 = RandomTestUtil.randomLong();
+		long userId2 = RandomTestUtil.randomLong();
+
+		OpenIdConnectSession openIdConnectSession1 = _addOpenIdConnectSession(
+			issuer, userId1);
+		OpenIdConnectSession openIdConnectSession2 = _addOpenIdConnectSession(
+			issuer, userId2);
+
+		Assert.assertEquals(
+			openIdConnectSession1,
+			_openIdConnectSessionLocalService.getOpenIdConnectSession(
+				userId1, issuer));
+		Assert.assertEquals(
+			openIdConnectSession2,
+			_openIdConnectSessionLocalService.getOpenIdConnectSession(
+				userId2, issuer));
+	}
+
+	@Test
 	public void testFetchCurrentOpenIdConnectSession() throws Exception {
 		_addOpenIdConnectSession();
 
@@ -80,13 +103,21 @@ public class OpenIdConnectSessionLocalServiceTest {
 	}
 
 	private OpenIdConnectSession _addOpenIdConnectSession() throws Exception {
+		return _addOpenIdConnectSession(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId());
+	}
+
+	private OpenIdConnectSession _addOpenIdConnectSession(
+		String issuer, long userId) {
+
 		OpenIdConnectSession openIdConnectSession =
 			_openIdConnectSessionLocalService.createOpenIdConnectSession(
 				_counterLocalService.increment(
 					OpenIdConnectSession.class.getName()));
 
-		openIdConnectSession.setUserId(TestPropsValues.getUserId());
+		openIdConnectSession.setUserId(userId);
 		openIdConnectSession.setAccessToken(RandomTestUtil.randomString());
+		openIdConnectSession.setIssuer(issuer);
 
 		return _openIdConnectSessionLocalService.addOpenIdConnectSession(
 			openIdConnectSession);
