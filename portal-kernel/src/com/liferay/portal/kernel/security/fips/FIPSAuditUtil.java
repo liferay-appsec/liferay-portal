@@ -112,19 +112,20 @@ public class FIPSAuditUtil {
 
 		try {
 			if (Files.exists(path)) {
-				String persistedId = new String(
+				String deploymentInstanceId = new String(
 					Files.readAllBytes(path), StandardCharsets.UTF_8);
 
-				return persistedId.trim();
+				return deploymentInstanceId.trim();
 			}
 
-			String generatedId = String.valueOf(UUID.randomUUID());
+			String deploymentInstanceId = String.valueOf(UUID.randomUUID());
 
 			Files.createDirectories(path.getParent());
 
-			Files.write(path, generatedId.getBytes(StandardCharsets.UTF_8));
+			Files.write(
+				path, deploymentInstanceId.getBytes(StandardCharsets.UTF_8));
 
-			return generatedId;
+			return deploymentInstanceId;
 		}
 		catch (IOException ioException) {
 			throw new UncheckedIOException(
