@@ -15,6 +15,7 @@ import org.junit.Test;
 
 /**
  * @author Christopher Kian
+ * @author Pedro Victor Silvestre
  */
 public class KeyReferenceUtilTest {
 
@@ -37,21 +38,69 @@ public class KeyReferenceUtilTest {
 
 	@Test
 	public void testToKeyReference() {
-		_testToKeyReference("${keyRef:", KeyReference.Type.CRYPTO);
-		_testToKeyReference("${secretRef:", KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"${keyRef:provider:identifier}", "identifier", "provider",
+			KeyReference.Type.CRYPTO);
+		_assertKeyReference(
+			"${secretRef:provider:identifier}", "identifier", "provider",
+			KeyReference.Type.SECRET);
+
+		_assertKeyReference(
+			"${secretRef:*:identifier}", "identifier", "*",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"${secretRef:provider:identi}fier}", "identi}fier", "provider",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"${secretRef:aws-kms:arn:aws:kms:us-east-1:123:key/abc}",
+			"arn:aws:kms:us-east-1:123:key/abc", "aws-kms",
+			KeyReference.Type.SECRET);
+
+		for (KeyReference.Type type : KeyReference.Type.values()) {
+			KeyReference keyReference = new KeyReference(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				type);
+
+			Assert.assertEquals(
+				keyReference,
+				KeyReferenceUtil.toKeyReference(
+					KeyReferenceUtil.toKeyReferenceString(keyReference)));
+		}
 	}
 
-	private void _testToKeyReference(String prefix, KeyReference.Type type) {
-		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), type);
+	@Test
+	public void testToKeyReferenceWithInvalidKeyReference() {
+		for (String keyReferenceString :
+				new String[] {
+					"", "${SecretRef:provider:identifier}", "${secretRef:",
+					"${secretRef::identifier}", "${secretRef:provider:   }",
+					"${secretRef:provider:identifier",
+					"${secretRef:provider:identifier}trailing",
+					"${secretRef:provider:null}", "${secretRef:provider:}",
+					"${secretRef:provider}",
+					"${secretRef:pro}vider:identifier}", "${secretRef:}",
+					"${secretRef}", "${}", "abc", null
+				}) {
 
-		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
-			keyReference);
+			Assert.assertThrows(
+				keyReferenceString, IllegalArgumentException.class,
+				() -> KeyReferenceUtil.toKeyReference(keyReferenceString));
+		}
+	}
 
+	private void _assertKeyReference(
+		String keyReferenceString, String identifier, String providerId,
+		KeyReference.Type type) {
+
+		KeyReference keyReference = KeyReferenceUtil.toKeyReference(
+			keyReferenceString);
+
+		Assert.assertEquals(identifier, keyReference.getIdentifier());
+		Assert.assertEquals(providerId, keyReference.getProviderId());
+		Assert.assertEquals(type, keyReference.getType());
 		Assert.assertEquals(
-			keyReference, KeyReferenceUtil.toKeyReference(keyReferenceString));
-		Assert.assertTrue(
-			keyReferenceString, keyReferenceString.startsWith(prefix));
+			keyReferenceString,
+			KeyReferenceUtil.toKeyReferenceString(keyReference));
 	}
 
 }

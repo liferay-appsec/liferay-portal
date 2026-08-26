@@ -8,10 +8,11 @@ package com.liferay.portal.security.key;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 /**
  * @author Christopher Kian
+ * @author Pedro Victor Silvestre
  */
 public class KeyReferenceUtil {
 
@@ -27,20 +28,13 @@ public class KeyReferenceUtil {
 	}
 
 	public static KeyReference toKeyReference(String keyReferenceString) {
-		String prefix = _KEY_REFERENCE_PREFIX_SECRET;
-		KeyReference.Type type = KeyReference.Type.SECRET;
+		KeyReference keyReference = _parse(keyReferenceString);
 
-		if (keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_CRYPTO)) {
-			prefix = _KEY_REFERENCE_PREFIX_CRYPTO;
-			type = KeyReference.Type.CRYPTO;
+		if (keyReference == null) {
+			throw new IllegalArgumentException("Invalid key reference");
 		}
 
-		String[] parts = StringUtil.split(
-			keyReferenceString.substring(
-				prefix.length(), keyReferenceString.length() - 1),
-			CharPool.COLON);
-
-		return new KeyReference(parts[1], parts[0], type);
+		return keyReference;
 	}
 
 	public static String toKeyReferenceString(KeyReference keyReference) {
@@ -53,6 +47,61 @@ public class KeyReferenceUtil {
 		return StringBundler.concat(
 			prefix, keyReference.getProviderId(), StringPool.COLON,
 			keyReference.getIdentifier(), StringPool.CLOSE_CURLY_BRACE);
+	}
+
+	private static KeyReference _parse(String keyReferenceString) {
+		if (keyReferenceString == null) {
+			return null;
+		}
+
+		String prefix = null;
+		KeyReference.Type type = null;
+
+		if (keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_CRYPTO)) {
+			prefix = _KEY_REFERENCE_PREFIX_CRYPTO;
+			type = KeyReference.Type.CRYPTO;
+		}
+		else if (keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_SECRET)) {
+			prefix = _KEY_REFERENCE_PREFIX_SECRET;
+			type = KeyReference.Type.SECRET;
+		}
+		else {
+			return null;
+		}
+
+		int length = keyReferenceString.length();
+
+		if ((length <= prefix.length()) ||
+			(keyReferenceString.charAt(length - 1) !=
+				CharPool.CLOSE_CURLY_BRACE)) {
+
+			return null;
+		}
+
+		String value = keyReferenceString.substring(
+			prefix.length(), length - 1);
+
+		int index = value.indexOf(CharPool.COLON);
+
+		if (index <= 0) {
+			return null;
+		}
+
+		String providerId = value.substring(0, index);
+
+		if (Validator.isNull(providerId) ||
+			(providerId.indexOf(CharPool.CLOSE_CURLY_BRACE) >= 0)) {
+
+			return null;
+		}
+
+		String identifier = value.substring(index + 1);
+
+		if (Validator.isNull(identifier)) {
+			return null;
+		}
+
+		return new KeyReference(identifier, providerId, type);
 	}
 
 	private static final String _KEY_REFERENCE_PREFIX_CRYPTO = "${keyRef:";
