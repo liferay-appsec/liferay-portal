@@ -7,6 +7,7 @@ package com.liferay.oauth2.provider.internal.configuration;
 
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
+import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.portal.k8s.agent.PortalK8sConfigMapModifier;
@@ -267,6 +268,9 @@ public class ConfigurationFactoryTest {
 			_user
 		);
 
+		_unresolvedScopeAliasesRegistry = Mockito.mock(
+			UnresolvedScopeAliasesRegistry.class);
+
 		Runnable syncCallableFuture = ReflectionTestUtil.getFieldValue(
 			DependencyManagerSyncUtil.class,
 			"_syncCallableDefaultNoticeableFuture");
@@ -315,6 +319,8 @@ public class ConfigurationFactoryTest {
 		configurationFactory.oAuth2ApplicationScopeAliasesLocalService =
 			_oAuth2ApplicationScopeAliasesLocalService;
 		configurationFactory.scopeLocator = _scopeLocator;
+		configurationFactory.unresolvedScopeAliasesRegistry =
+			_unresolvedScopeAliasesRegistry;
 		configurationFactory.userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
@@ -391,6 +397,8 @@ public class ConfigurationFactoryTest {
 		configurationFactory.oAuth2ApplicationScopeAliasesLocalService =
 			_oAuth2ApplicationScopeAliasesLocalService;
 		configurationFactory.scopeLocator = _scopeLocator;
+		configurationFactory.unresolvedScopeAliasesRegistry =
+			_unresolvedScopeAliasesRegistry;
 		configurationFactory.userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
@@ -444,6 +452,7 @@ public class ConfigurationFactoryTest {
 	private String _serviceId;
 	private String _serviceUid;
 	private Snapshot<PortalK8sConfigMapModifier> _snapshot;
+	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
 	private User _user;
 	private UserLocalService _userLocalService;
 	private String _webId;
