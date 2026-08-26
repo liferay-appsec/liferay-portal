@@ -8,6 +8,7 @@ package com.liferay.oauth2.provider.internal.configuration;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
+import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
 import com.liferay.osgi.util.configuration.ConfigurationFactoryUtil;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -83,6 +85,8 @@ public abstract class BaseConfigurationFactory {
 			log.debug("Deactivating " + oAuth2Application);
 		}
 
+		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
+
 		ConfigurationFactoryUtil.executeAsCompany(
 			companyLocalService,
 			HashMapBuilder.<String, Object>put(
@@ -114,6 +118,9 @@ public abstract class BaseConfigurationFactory {
 					},
 					_configMapName);
 			});
+
+		unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			oAuth2Application.getCompanyId(), oAuth2ApplicationId);
 	}
 
 	protected abstract void doActivate(
@@ -252,38 +259,44 @@ public abstract class BaseConfigurationFactory {
 			OAuth2Application oAuth2Application, List<String> scopeAliasesList)
 		throws Exception {
 
-		boolean update = true;
+		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 
 		OAuth2ApplicationScopeAliases oAuth2ApplicationScopeAliases =
 			oAuth2ApplicationScopeAliasesLocalService.
 				fetchOAuth2ApplicationScopeAliases(
-					oAuth2Application.getOAuth2ApplicationId(),
-					scopeAliasesList);
+					oAuth2ApplicationId, scopeAliasesList);
 
 		if (oAuth2ApplicationScopeAliases != null) {
-			List<String> currentScopeAliasesList =
+			List<String> grantedScopeAliasesList =
 				oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 					oAuth2ApplicationScopeAliases.
 						getOAuth2ApplicationScopeAliasesId());
 
-			if (currentScopeAliasesList.containsAll(scopeAliasesList) &&
-				(currentScopeAliasesList.size() == scopeAliasesList.size())) {
+			if (grantedScopeAliasesList.containsAll(scopeAliasesList) &&
+				(grantedScopeAliasesList.size() == scopeAliasesList.size())) {
 
-				update = false;
+				_updateUnresolvedScopeAliases(
+					oAuth2Application.getCompanyId(), oAuth2ApplicationId,
+					scopeAliasesList, grantedScopeAliasesList);
+
+				return;
 			}
 		}
 
-		if (update) {
+		// Make sure all scopes are registered
 
-			// Make sure all scopes are registered
+		scopeLocator.getLiferayOAuth2Scopes(oAuth2Application.getCompanyId());
 
-			scopeLocator.getLiferayOAuth2Scopes(
-				oAuth2Application.getCompanyId());
-
+		OAuth2Application updatedOAuth2Application =
 			oAuth2ApplicationLocalService.updateScopeAliases(
 				oAuth2Application.getUserId(), oAuth2Application.getUserName(),
-				oAuth2Application.getOAuth2ApplicationId(), scopeAliasesList);
-		}
+				oAuth2ApplicationId, scopeAliasesList);
+
+		_updateUnresolvedScopeAliases(
+			oAuth2Application.getCompanyId(), oAuth2ApplicationId,
+			scopeAliasesList,
+			oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
+				updatedOAuth2Application.getOAuth2ApplicationScopeAliasesId()));
 	}
 
 	@Reference
@@ -305,7 +318,40 @@ public abstract class BaseConfigurationFactory {
 	protected ScopeLocator scopeLocator;
 
 	@Reference
+	protected UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry;
+
+	@Reference
 	protected UserLocalService userLocalService;
+
+	private void _updateUnresolvedScopeAliases(
+		long companyId, long oAuth2ApplicationId, List<String> scopeAliasesList,
+		List<String> grantedScopeAliasesList) {
+
+		List<String> unresolvedScopeAliasesList = new ArrayList<>(
+			scopeAliasesList);
+
+		unresolvedScopeAliasesList.removeAll(grantedScopeAliasesList);
+
+		if (unresolvedScopeAliasesList.isEmpty()) {
+			unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+				companyId, oAuth2ApplicationId);
+
+			return;
+		}
+
+		Log log = getLog();
+
+		if (log.isWarnEnabled()) {
+			log.warn(
+				StringBundler.concat(
+					"OAuth 2 application ", oAuth2ApplicationId,
+					" declared scope aliases that resolved to no scopes: ",
+					unresolvedScopeAliasesList));
+		}
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			companyId, oAuth2ApplicationId, unresolvedScopeAliasesList);
+	}
 
 	private static final Snapshot<PortalK8sConfigMapModifier>
 		_portalK8sConfigMapModifierSnapshot = new Snapshot<>(
