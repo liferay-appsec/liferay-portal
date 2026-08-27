@@ -37,7 +37,7 @@ public class KeyReferenceUtilTest {
 	}
 
 	@Test
-	public void testIsValidKeyReference() {
+	public void testIsValidKeyReferenceWithInvalidKeyReference() {
 		for (String keyReferenceString : _KEY_REFERENCE_STRINGS_INVALID) {
 			Assert.assertFalse(
 				keyReferenceString,
@@ -48,21 +48,20 @@ public class KeyReferenceUtilTest {
 	@Test
 	public void testToKeyReference() {
 		_assertKeyReference(
-			"${keyRef:provider:identifier}", "identifier", "provider",
+			"identifier", "${keyRef:provider:identifier}", "provider",
 			KeyReference.Type.CRYPTO);
 		_assertKeyReference(
-			"${secretRef:provider:identifier}", "identifier", "provider",
-			KeyReference.Type.SECRET);
-
-		_assertKeyReference(
-			"${secretRef:*:identifier}", "identifier", "*",
+			"identifier", "${secretRef:*:identifier}", "*",
 			KeyReference.Type.SECRET);
 		_assertKeyReference(
-			"${secretRef:provider:identi}fier}", "identi}fier", "provider",
+			"arn:aws:kms:us-east-1:123:key/abc",
+			"${secretRef:aws-kms:arn:aws:kms:us-east-1:123:key/abc}", "aws-kms",
 			KeyReference.Type.SECRET);
 		_assertKeyReference(
-			"${secretRef:aws-kms:arn:aws:kms:us-east-1:123:key/abc}",
-			"arn:aws:kms:us-east-1:123:key/abc", "aws-kms",
+			"identifier", "${secretRef:provider:identifier}", "provider",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"identi}fier", "${secretRef:provider:identi}fier}", "provider",
 			KeyReference.Type.SECRET);
 
 		for (KeyReference.Type type : KeyReference.Type.values()) {
@@ -87,7 +86,7 @@ public class KeyReferenceUtilTest {
 	}
 
 	private void _assertKeyReference(
-		String keyReferenceString, String identifier, String providerId,
+		String identifier, String keyReferenceString, String providerId,
 		KeyReference.Type type) {
 
 		Assert.assertTrue(
@@ -98,11 +97,11 @@ public class KeyReferenceUtilTest {
 			keyReferenceString);
 
 		Assert.assertEquals(identifier, keyReference.getIdentifier());
-		Assert.assertEquals(providerId, keyReference.getProviderId());
-		Assert.assertEquals(type, keyReference.getType());
 		Assert.assertEquals(
 			keyReferenceString,
 			KeyReferenceUtil.toKeyReferenceString(keyReference));
+		Assert.assertEquals(providerId, keyReference.getProviderId());
+		Assert.assertEquals(type, keyReference.getType());
 	}
 
 	private static final String[] _KEY_REFERENCE_STRINGS_INVALID = {

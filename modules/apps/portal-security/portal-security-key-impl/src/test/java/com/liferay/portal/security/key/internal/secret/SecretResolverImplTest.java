@@ -50,7 +50,7 @@ public class SecretResolverImplTest {
 	}
 
 	@Test
-	public void testResolveWhenKeyReferenceIsCrypto() throws Exception {
+	public void testResolveCryptoKeyReference() throws Exception {
 		Assert.assertThrows(
 			SecretException.class,
 			() -> _secretResolverImpl.resolve(
@@ -60,7 +60,7 @@ public class SecretResolverImplTest {
 	}
 
 	@Test
-	public void testResolveWhenKeyReferenceIsInvalid() throws Exception {
+	public void testResolveInvalidKeyReference() throws Exception {
 		Assert.assertThrows(
 			SecretException.class,
 			() -> _secretResolverImpl.resolve(
@@ -76,7 +76,6 @@ public class SecretResolverImplTest {
 		KeyReference keyReference = new KeyReference(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			KeyReference.Type.SECRET);
-
 		SecretException secretException = new SecretException();
 
 		Mockito.when(
@@ -98,12 +97,11 @@ public class SecretResolverImplTest {
 	public void testResolveWhenValueIsNotKeyReference() throws Exception {
 		String value = RandomTestUtil.randomString();
 
+		Assert.assertNull(
+			_secretResolverImpl.resolve(RandomTestUtil.randomLong(), null));
 		Assert.assertSame(
 			value,
 			_secretResolverImpl.resolve(RandomTestUtil.randomLong(), value));
-
-		Assert.assertNull(
-			_secretResolverImpl.resolve(RandomTestUtil.randomLong(), null));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
@@ -114,7 +112,6 @@ public class SecretResolverImplTest {
 		KeyReference keyReference = new KeyReference(
 			RandomTestUtil.randomString(), providerId,
 			KeyReference.Type.SECRET);
-
 		String value = RandomTestUtil.randomString();
 
 		Secret secret = new Secret(keyReference, value);
