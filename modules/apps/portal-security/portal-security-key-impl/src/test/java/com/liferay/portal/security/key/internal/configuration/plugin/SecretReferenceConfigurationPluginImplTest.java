@@ -81,13 +81,13 @@ public class SecretReferenceConfigurationPluginImplTest {
 				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
 				companyId
 			).put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build());
 
 		_assertResolvedPassword(
 			CompanyConstants.SYSTEM,
 			HashMapDictionaryBuilder.<String, Object>put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build());
 	}
 
@@ -97,16 +97,16 @@ public class SecretReferenceConfigurationPluginImplTest {
 
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
-				Constants.SERVICE_PID, _PID
+				Constants.SERVICE_PID, _TEST_CONFIGURATION_PID
 			).put(
-				"otherPassword", _SECRET_REFERENCE_OTHER
+				"otherPassword", _KEY_REFERENCE_SECRET_OTHER
 			).put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build();
 
 		Mockito.when(
 			_secretResolver.resolve(
-				CompanyConstants.SYSTEM, _SECRET_REFERENCE_OTHER)
+				CompanyConstants.SYSTEM, _KEY_REFERENCE_SECRET_OTHER)
 		).thenThrow(
 			new SecretException()
 		);
@@ -114,7 +114,8 @@ public class SecretReferenceConfigurationPluginImplTest {
 		String value = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(CompanyConstants.SYSTEM, _SECRET_REFERENCE)
+			_secretResolver.resolve(
+				CompanyConstants.SYSTEM, _KEY_REFERENCE_SECRET)
 		).thenReturn(
 			value
 		);
@@ -123,10 +124,10 @@ public class SecretReferenceConfigurationPluginImplTest {
 			null, properties);
 
 		Assert.assertEquals(
-			_SECRET_REFERENCE_OTHER, properties.get("otherPassword"));
+			_KEY_REFERENCE_SECRET_OTHER, properties.get("otherPassword"));
 		Assert.assertEquals(value, properties.get("password"));
 
-		Assert.assertTrue(_getPids().contains(_PID));
+		Assert.assertTrue(_getPids().contains(_TEST_CONFIGURATION_PID));
 	}
 
 	@Test
@@ -135,15 +136,15 @@ public class SecretReferenceConfigurationPluginImplTest {
 
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
-				Constants.SERVICE_PID, _PID
+				Constants.SERVICE_PID, _TEST_CONFIGURATION_PID
 			).put(
-				"password", _CRYPTO_REFERENCE
+				"password", _KEY_REFERENCE_CRYPTO
 			).build();
 
 		_secretReferenceConfigurationPluginImpl.modifyConfiguration(
 			null, properties);
 
-		Assert.assertEquals(_CRYPTO_REFERENCE, properties.get("password"));
+		Assert.assertEquals(_KEY_REFERENCE_CRYPTO, properties.get("password"));
 
 		Assert.assertTrue(_getPids().isEmpty());
 
@@ -162,17 +163,17 @@ public class SecretReferenceConfigurationPluginImplTest {
 
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
-				Constants.SERVICE_PID, _PID
+				Constants.SERVICE_PID, _TEST_CONFIGURATION_PID
 			).put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build();
 
 		_secretReferenceConfigurationPluginImpl.modifyConfiguration(
 			null, properties);
 
-		Assert.assertEquals(_SECRET_REFERENCE, properties.get("password"));
+		Assert.assertEquals(_KEY_REFERENCE_SECRET, properties.get("password"));
 
-		Assert.assertTrue(_getPids().contains(_PID));
+		Assert.assertTrue(_getPids().contains(_TEST_CONFIGURATION_PID));
 	}
 
 	@Test
@@ -202,9 +203,9 @@ public class SecretReferenceConfigurationPluginImplTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"enabled", Boolean.TRUE
 			).put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).put(
-				"passwords", new String[] {literal, _SECRET_REFERENCE}
+				"passwords", new String[] {literal, _KEY_REFERENCE_SECRET}
 			).put(
 				"size", 42
 			).build();
@@ -212,7 +213,8 @@ public class SecretReferenceConfigurationPluginImplTest {
 		String value = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(CompanyConstants.SYSTEM, _SECRET_REFERENCE)
+			_secretResolver.resolve(
+				CompanyConstants.SYSTEM, _KEY_REFERENCE_SECRET)
 		).thenReturn(
 			value
 		);
@@ -233,14 +235,15 @@ public class SecretReferenceConfigurationPluginImplTest {
 		_record();
 
 		Mockito.when(
-			_configurationAdmin.listConfigurations(_PID_FILTER)
+			_configurationAdmin.listConfigurations(
+				_TEST_CONFIGURATION_PID_FILTER)
 		).thenThrow(
 			new IllegalStateException()
 		);
 
 		_redeliver();
 
-		Assert.assertTrue(_getPids().contains(_PID));
+		Assert.assertTrue(_getPids().contains(_TEST_CONFIGURATION_PID));
 	}
 
 	@Test
@@ -257,7 +260,7 @@ public class SecretReferenceConfigurationPluginImplTest {
 
 		_redeliver();
 
-		Assert.assertTrue(_getPids().contains(_PID));
+		Assert.assertTrue(_getPids().contains(_TEST_CONFIGURATION_PID));
 
 		Mockito.verifyNoInteractions(_configurationAdmin);
 	}
@@ -267,7 +270,8 @@ public class SecretReferenceConfigurationPluginImplTest {
 		_record();
 
 		Mockito.when(
-			_configurationAdmin.listConfigurations(_PID_FILTER)
+			_configurationAdmin.listConfigurations(
+				_TEST_CONFIGURATION_PID_FILTER)
 		).thenReturn(
 			null
 		);
@@ -290,7 +294,7 @@ public class SecretReferenceConfigurationPluginImplTest {
 
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build();
 
 		Mockito.when(
@@ -300,7 +304,8 @@ public class SecretReferenceConfigurationPluginImplTest {
 		);
 
 		Mockito.when(
-			_configurationAdmin.listConfigurations(_PID_FILTER)
+			_configurationAdmin.listConfigurations(
+				_TEST_CONFIGURATION_PID_FILTER)
 		).thenReturn(
 			new Configuration[] {_configuration}
 		);
@@ -323,7 +328,7 @@ public class SecretReferenceConfigurationPluginImplTest {
 		String value = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, _SECRET_REFERENCE)
+			_secretResolver.resolve(companyId, _KEY_REFERENCE_SECRET)
 		).thenReturn(
 			value
 		);
@@ -343,9 +348,9 @@ public class SecretReferenceConfigurationPluginImplTest {
 		ReflectionTestUtil.invoke(
 			_secretReferenceConfigurationPluginImpl, "_record",
 			new Class<?>[] {List.class, String.class, Dictionary.class},
-			Collections.singletonList("password"), _PID,
+			Collections.singletonList("password"), _TEST_CONFIGURATION_PID,
 			HashMapDictionaryBuilder.<String, Object>put(
-				"password", _SECRET_REFERENCE
+				"password", _KEY_REFERENCE_SECRET
 			).build());
 	}
 
@@ -355,19 +360,21 @@ public class SecretReferenceConfigurationPluginImplTest {
 			new Class<?>[0]);
 	}
 
-	private static final String _CRYPTO_REFERENCE =
+	private static final String _KEY_REFERENCE_CRYPTO =
 		"${keyRef:provider:identifier}";
 
-	private static final String _PID = "com.liferay.test.Configuration";
-
-	private static final String _PID_FILTER = StringBundler.concat(
-		"(", Constants.SERVICE_PID, "=", _PID, ")");
-
-	private static final String _SECRET_REFERENCE =
+	private static final String _KEY_REFERENCE_SECRET =
 		"${secretRef:provider:identifier}";
 
-	private static final String _SECRET_REFERENCE_OTHER =
+	private static final String _KEY_REFERENCE_SECRET_OTHER =
 		"${secretRef:provider:other}";
+
+	private static final String _TEST_CONFIGURATION_PID =
+		"com.liferay.test.Configuration";
+
+	private static final String _TEST_CONFIGURATION_PID_FILTER =
+		StringBundler.concat(
+			"(", Constants.SERVICE_PID, "=", _TEST_CONFIGURATION_PID, ")");
 
 	@Mock
 	private Configuration _configuration;

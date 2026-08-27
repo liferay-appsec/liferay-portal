@@ -84,7 +84,6 @@ public class SecretReferenceConfigurationPluginImpl
 
 		String pid = GetterUtil.getString(
 			properties.get(Constants.SERVICE_PID));
-
 		SecretResolver secretResolver =
 			_secretResolverServiceTracker.getService();
 
@@ -204,7 +203,9 @@ public class SecretReferenceConfigurationPluginImpl
 			_bundleContext.getServiceReference(DataSource.class);
 
 		if (dataSourceServiceReference == null) {
-			_log.error("The data source service is unavailable");
+			if (_log.isWarnEnabled()) {
+				_log.warn("The data source service is unavailable");
+			}
 
 			return null;
 		}
@@ -232,13 +233,18 @@ public class SecretReferenceConfigurationPluginImpl
 				}
 			}
 
-			_log.error("No company was found for group " + groupId);
+			if (_log.isWarnEnabled()) {
+				_log.warn("No company was found for group " + groupId);
+			}
 
 			return null;
 		}
 		catch (Exception exception) {
-			_log.error(
-				"Unable to get the company for group " + groupId, exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to get the company for group " + groupId,
+					exception);
+			}
 
 			return null;
 		}

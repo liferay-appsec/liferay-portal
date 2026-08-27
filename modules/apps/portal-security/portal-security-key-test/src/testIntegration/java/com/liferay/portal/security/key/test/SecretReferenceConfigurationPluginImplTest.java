@@ -100,7 +100,6 @@ public class SecretReferenceConfigurationPluginImplTest {
 		Assert.assertEquals(
 			_secretValue,
 			_getProcessedProperty("password", _toSecretReference(_identifier)));
-
 		Assert.assertEquals(
 			_secretValue,
 			_getProcessedProperty(
