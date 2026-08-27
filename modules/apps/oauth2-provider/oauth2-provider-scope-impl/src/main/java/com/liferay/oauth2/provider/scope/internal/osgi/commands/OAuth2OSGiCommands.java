@@ -8,6 +8,7 @@ package com.liferay.oauth2.provider.scope.internal.osgi.commands;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
+import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasReconciler;
 import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.osgi.util.osgi.commands.OSGiCommands;
@@ -32,7 +33,7 @@ import org.osgi.service.component.annotations.Reference;
 	property = {
 		"osgi.command.function=listScopes",
 		"osgi.command.function=listUnresolvedScopes",
-		"osgi.command.scope=oauth2"
+		"osgi.command.function=reconcile", "osgi.command.scope=oauth2"
 	},
 	service = OSGiCommands.class
 )
@@ -107,6 +108,15 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 		}
 	}
 
+	public void reconcile() throws Exception {
+		if (_unresolvedScopeAliasReconciler.reconcile()) {
+			System.out.println("Bound previously unresolved scope aliases");
+		}
+		else {
+			System.out.println("No unresolved scope aliases were bound");
+		}
+	}
+
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
@@ -118,5 +128,8 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 
 	@Reference
 	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
+
+	@Reference
+	private UnresolvedScopeAliasReconciler _unresolvedScopeAliasReconciler;
 
 }
