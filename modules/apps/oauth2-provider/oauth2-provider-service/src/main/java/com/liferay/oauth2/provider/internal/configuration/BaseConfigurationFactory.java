@@ -276,8 +276,8 @@ public abstract class BaseConfigurationFactory {
 				(grantedScopeAliasesList.size() == scopeAliasesList.size())) {
 
 				_updateUnresolvedScopeAliases(
-					oAuth2Application.getCompanyId(), oAuth2ApplicationId,
-					scopeAliasesList, grantedScopeAliasesList);
+					oAuth2Application, scopeAliasesList,
+					grantedScopeAliasesList);
 
 				return;
 			}
@@ -293,8 +293,7 @@ public abstract class BaseConfigurationFactory {
 				oAuth2ApplicationId, scopeAliasesList);
 
 		_updateUnresolvedScopeAliases(
-			oAuth2Application.getCompanyId(), oAuth2ApplicationId,
-			scopeAliasesList,
+			oAuth2Application, scopeAliasesList,
 			oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 				updatedOAuth2Application.getOAuth2ApplicationScopeAliasesId()));
 	}
@@ -324,7 +323,7 @@ public abstract class BaseConfigurationFactory {
 	protected UserLocalService userLocalService;
 
 	private void _updateUnresolvedScopeAliases(
-		long companyId, long oAuth2ApplicationId, List<String> scopeAliasesList,
+		OAuth2Application oAuth2Application, List<String> scopeAliasesList,
 		List<String> grantedScopeAliasesList) {
 
 		List<String> unresolvedScopeAliasesList = new ArrayList<>(
@@ -332,20 +331,33 @@ public abstract class BaseConfigurationFactory {
 
 		unresolvedScopeAliasesList.removeAll(grantedScopeAliasesList);
 
+		long companyId = oAuth2Application.getCompanyId();
+		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
+
+		Log log = getLog();
+
 		if (unresolvedScopeAliasesList.isEmpty()) {
 			unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId);
 
+			if (log.isInfoEnabled()) {
+				log.info(
+					StringBundler.concat(
+						"OAuth 2 application ", oAuth2ApplicationId, " (",
+						oAuth2Application.getName(),
+						") resolved all declared scope aliases: ",
+						grantedScopeAliasesList));
+			}
+
 			return;
 		}
-
-		Log log = getLog();
 
 		if (log.isWarnEnabled()) {
 			log.warn(
 				StringBundler.concat(
-					"OAuth 2 application ", oAuth2ApplicationId,
-					" declared scope aliases that resolved to no scopes: ",
+					"OAuth 2 application ", oAuth2ApplicationId, " (",
+					oAuth2Application.getName(),
+					") declared scope aliases that resolved to no scopes: ",
 					unresolvedScopeAliasesList));
 		}
 
