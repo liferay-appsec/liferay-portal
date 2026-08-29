@@ -5,9 +5,11 @@
 
 package com.liferay.oauth2.provider.scope.internal.osgi.commands;
 
+import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
+import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.osgi.util.osgi.commands.OSGiCommands;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -85,10 +87,17 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 			long companyId = entry.getKey();
 
 			for (long oAuth2ApplicationId : entry.getValue()) {
+				OAuth2Application oAuth2Application =
+					_oAuth2ApplicationLocalService.fetchOAuth2Application(
+						oAuth2ApplicationId);
+
 				System.out.println(
 					StringBundler.concat(
 						"company ", companyId, " application ",
-						oAuth2ApplicationId, ": ",
+						oAuth2ApplicationId, " (",
+						(oAuth2Application == null) ? "" :
+							oAuth2Application.getName(),
+						"): ",
 						ListUtil.sort(
 							new ArrayList<>(
 								_unresolvedScopeAliasesRegistry.
@@ -97,6 +106,9 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 			}
 		}
 	}
+
+	@Reference
+	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
 	@Reference
 	private Portal _portal;
