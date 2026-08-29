@@ -367,7 +367,16 @@ public class UnresolvedScopeAliasReconcilerImpl
 				StringBundler.concat(
 					"Bound previously unresolved scope aliases ",
 					persistedScopeAliases, " for OAuth 2 application ",
-					oAuth2ApplicationId));
+					oAuth2ApplicationId, " (", oAuth2Application.getName(),
+					")"));
+
+			if (remainingScopeAliasesList.isEmpty()) {
+				_log.info(
+					StringBundler.concat(
+						"OAuth 2 application ", oAuth2ApplicationId, " (",
+						oAuth2Application.getName(),
+						") resolved all previously unresolved scope aliases"));
+			}
 		}
 
 		return !persistedScopeAliases.isEmpty();
