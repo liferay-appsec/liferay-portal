@@ -117,6 +117,29 @@ public class OAuth2ApplicationScopeAliasesLocalServiceImpl
 	}
 
 	@Override
+	public OAuth2Application
+			addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+				long companyId, long userId, String userName,
+				long oAuth2ApplicationId,
+				Consumer<OAuth2ScopeBuilder> builderConsumer)
+		throws PortalException {
+
+		OAuth2ApplicationScopeAliases oAuth2ApplicationScopeAliases =
+			addOAuth2ApplicationScopeAliases(
+				companyId, userId, userName, oAuth2ApplicationId,
+				builderConsumer);
+
+		OAuth2Application oAuth2Application =
+			_oAuth2ApplicationPersistence.findByPrimaryKey(oAuth2ApplicationId);
+
+		oAuth2Application.setModifiedDate(new Date());
+		oAuth2Application.setOAuth2ApplicationScopeAliasesId(
+			oAuth2ApplicationScopeAliases.getOAuth2ApplicationScopeAliasesId());
+
+		return _oAuth2ApplicationPersistence.update(oAuth2Application);
+	}
+
+	@Override
 	public OAuth2ApplicationScopeAliases deleteOAuth2ApplicationScopeAliases(
 			long oAuth2ApplicationScopeAliasesId)
 		throws PortalException {

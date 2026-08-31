@@ -5,6 +5,7 @@
 
 package com.liferay.oauth2.provider.service;
 
+import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.util.builder.OAuth2ScopeBuilder;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
@@ -78,6 +79,13 @@ public interface OAuth2ApplicationScopeAliasesLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public OAuth2ApplicationScopeAliases addOAuth2ApplicationScopeAliases(
 		OAuth2ApplicationScopeAliases oAuth2ApplicationScopeAliases);
+
+	public OAuth2Application
+			addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+				long companyId, long userId, String userName,
+				long oAuth2ApplicationId,
+				Consumer<OAuth2ScopeBuilder> builderConsumer)
+		throws PortalException;
 
 	/**
 	 * Creates a new o auth2 application scope aliases with the primary key. Does not add the o auth2 application scope aliases to the database.
@@ -293,4 +301,4 @@ public interface OAuth2ApplicationScopeAliasesLocalService
 		OAuth2ApplicationScopeAliases oAuth2ApplicationScopeAliases);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:223143113
+// LIFERAY-SERVICE-BUILDER-HASH:-516406736
