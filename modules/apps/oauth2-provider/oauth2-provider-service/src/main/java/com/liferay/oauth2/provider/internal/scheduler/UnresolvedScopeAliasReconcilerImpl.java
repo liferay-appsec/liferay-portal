@@ -6,7 +6,6 @@
 package com.liferay.oauth2.provider.internal.scheduler;
 
 import com.liferay.oauth2.provider.model.OAuth2Application;
-import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
@@ -21,16 +20,12 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.transaction.Propagation;
-import com.liferay.portal.kernel.transaction.TransactionConfig;
-import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,12 +47,13 @@ import org.osgi.service.component.annotations.Reference;
  * {@code updateScopeAliases}, which rebuilds the whole scope-aliases snapshot
  * and re-resolves every alias, {@link #_addScopeAliases} feeds every existing
  * grant plus the grants for the aliases that resolve now to
- * {@code OAuth2ApplicationScopeAliasesLocalService.addOAuth2ApplicationScopeAliases}.
- * The service persists the new snapshot and its grant rows, and
- * {@link #_addScopeAliases} then repoints the application at it; both writes run
- * inside one transaction against an application re-fetched in that transaction,
- * so a failure leaves no orphan snapshot and the window for losing a concurrent
- * edit of the application shrinks to that transaction. The application has no
+ * {@code OAuth2ApplicationScopeAliasesLocalService.addOAuth2ApplicationScopeAliasesAndUpdateApplication}.
+ * That service method persists the new snapshot and its grant rows and repoints
+ * the application at it, both writes running inside the single transaction
+ * Service Builder wraps around the method, against an application re-fetched in
+ * that transaction, so a failure leaves no orphan snapshot and the window for
+ * losing a concurrent edit of the application shrinks to that transaction. The
+ * application has no
  * optimistic-lock column, so a configuration redeploy or scope update
  * interleaving on the same node can still drop one write's aliases; that is a
  * known limitation. Existing grants are never re-resolved, so
@@ -108,127 +104,77 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		Set<String> persistedScopeAliases = new HashSet<>();
 
-		try {
-			TransactionInvokerUtil.invoke(
-				_transactionConfig,
-				() -> {
-					Map<String, String> stillResolvingScopeAliases =
-						new LinkedHashMap<>();
+		Map<String, String> stillResolvingScopeAliases = new LinkedHashMap<>();
+
+		for (Map.Entry<String, String> entry :
+				resolvedScopeAliases.entrySet()) {
+
+			if (!_scopeLocator.getLiferayOAuth2Scopes(
+					companyId, entry.getValue()
+				).isEmpty()) {
+
+				stillResolvingScopeAliases.put(
+					entry.getKey(), entry.getValue());
+			}
+		}
+
+		if (stillResolvingScopeAliases.isEmpty()) {
+			return persistedScopeAliases;
+		}
+
+		OAuth2Application oAuth2Application =
+			_oAuth2ApplicationLocalService.getOAuth2Application(
+				oAuth2ApplicationId);
+
+		long oAuth2ApplicationScopeAliasesId =
+			oAuth2Application.getOAuth2ApplicationScopeAliasesId();
+
+		_oAuth2ApplicationScopeAliasesLocalService.
+			addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+				companyId, oAuth2Application.getUserId(),
+				oAuth2Application.getUserName(), oAuth2ApplicationId,
+				oAuth2ScopeBuilder -> {
+					for (OAuth2ScopeGrant oAuth2ScopeGrant :
+							_oAuth2ScopeGrantLocalService.getOAuth2ScopeGrants(
+								oAuth2ApplicationScopeAliasesId,
+								QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+
+						oAuth2ScopeBuilder.forApplication(
+							oAuth2ScopeGrant.getApplicationName(),
+							oAuth2ScopeGrant.getBundleSymbolicName(),
+							applicationScopeAssigner ->
+								applicationScopeAssigner.assignScope(
+									oAuth2ScopeGrant.getScope()
+								).mapToScopeAlias(
+									oAuth2ScopeGrant.getScopeAliasesList()
+								));
+					}
 
 					for (Map.Entry<String, String> entry :
-							resolvedScopeAliases.entrySet()) {
+							stillResolvingScopeAliases.entrySet()) {
 
-						if (!_scopeLocator.getLiferayOAuth2Scopes(
-								companyId, entry.getValue()
-							).isEmpty()) {
+						String declaredScopeAlias = entry.getKey();
 
-							stillResolvingScopeAliases.put(
-								entry.getKey(), entry.getValue());
+						for (LiferayOAuth2Scope liferayOAuth2Scope :
+								_scopeLocator.getLiferayOAuth2Scopes(
+									companyId, entry.getValue())) {
+
+							Bundle bundle = liferayOAuth2Scope.getBundle();
+
+							oAuth2ScopeBuilder.forApplication(
+								liferayOAuth2Scope.getApplicationName(),
+								bundle.getSymbolicName(),
+								applicationScopeAssigner ->
+									applicationScopeAssigner.assignScope(
+										liferayOAuth2Scope.getScope()
+									).mapToScopeAlias(
+										declaredScopeAlias
+									));
+
+							persistedScopeAliases.add(declaredScopeAlias);
 						}
 					}
-
-					if (stillResolvingScopeAliases.isEmpty()) {
-						return null;
-					}
-
-					OAuth2Application oAuth2Application =
-						_oAuth2ApplicationLocalService.getOAuth2Application(
-							oAuth2ApplicationId);
-
-					long oAuth2ApplicationScopeAliasesId =
-						oAuth2Application.getOAuth2ApplicationScopeAliasesId();
-
-					OAuth2ApplicationScopeAliases
-						oAuth2ApplicationScopeAliases =
-							_oAuth2ApplicationScopeAliasesLocalService.
-								addOAuth2ApplicationScopeAliases(
-									companyId, oAuth2Application.getUserId(),
-									oAuth2Application.getUserName(),
-									oAuth2ApplicationId,
-									oAuth2ScopeBuilder -> {
-										for (OAuth2ScopeGrant oAuth2ScopeGrant :
-												_oAuth2ScopeGrantLocalService.
-													getOAuth2ScopeGrants(
-														oAuth2ApplicationScopeAliasesId,
-														QueryUtil.ALL_POS,
-														QueryUtil.ALL_POS,
-														null)) {
-
-											oAuth2ScopeBuilder.forApplication(
-												oAuth2ScopeGrant.
-													getApplicationName(),
-												oAuth2ScopeGrant.
-													getBundleSymbolicName(),
-												applicationScopeAssigner ->
-													applicationScopeAssigner.
-														assignScope(
-															oAuth2ScopeGrant.
-																getScope()
-														).mapToScopeAlias(
-															oAuth2ScopeGrant.
-																getScopeAliasesList()
-														));
-										}
-
-										for (Map.Entry<String, String> entry :
-												stillResolvingScopeAliases.
-													entrySet()) {
-
-											String declaredScopeAlias =
-												entry.getKey();
-
-											for (LiferayOAuth2Scope
-													liferayOAuth2Scope :
-														_scopeLocator.
-															getLiferayOAuth2Scopes(
-																companyId,
-																entry.
-																	getValue())) {
-
-												Bundle bundle =
-													liferayOAuth2Scope.
-														getBundle();
-
-												oAuth2ScopeBuilder.
-													forApplication(
-														liferayOAuth2Scope.
-															getApplicationName(),
-														bundle.
-															getSymbolicName(),
-														applicationScopeAssigner ->
-															applicationScopeAssigner.
-																assignScope(
-																	liferayOAuth2Scope.
-																		getScope()
-																).
-																	mapToScopeAlias(
-																		declaredScopeAlias
-																	));
-
-												persistedScopeAliases.add(
-													declaredScopeAlias);
-											}
-										}
-									});
-
-					oAuth2Application.setModifiedDate(new Date());
-					oAuth2Application.setOAuth2ApplicationScopeAliasesId(
-						oAuth2ApplicationScopeAliases.
-							getOAuth2ApplicationScopeAliasesId());
-
-					_oAuth2ApplicationLocalService.updateOAuth2Application(
-						oAuth2Application);
-
-					return null;
 				});
-		}
-		catch (Throwable throwable) {
-			if (throwable instanceof Exception) {
-				throw (Exception)throwable;
-			}
-
-			throw new RuntimeException(throwable);
-		}
 
 		return persistedScopeAliases;
 	}
@@ -433,10 +379,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UnresolvedScopeAliasReconcilerImpl.class);
-
-	private static final TransactionConfig _transactionConfig =
-		TransactionConfig.Factory.create(
-			Propagation.REQUIRED, new Class<?>[] {Exception.class});
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
