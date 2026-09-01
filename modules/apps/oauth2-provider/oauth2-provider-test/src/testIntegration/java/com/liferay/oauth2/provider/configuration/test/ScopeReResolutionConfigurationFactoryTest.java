@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -121,7 +121,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				startCountDownLatch.countDown();
 
 				Assert.assertTrue(
-					"The concurrent reconciles did not finish in time",
 					doneCountDownLatch.await(60, TimeUnit.SECONDS));
 
 				Assert.assertEquals(
@@ -129,11 +128,9 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					Collections.emptyList(), throwables);
 
 				Assert.assertTrue(
-					"The alias must be bound after concurrent reconciles",
 					_hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 
 				Assert.assertFalse(
-					"The registry must be cleared once the alias is bound",
 					_unresolvedApplicationIds().contains(oAuth2ApplicationId));
 
 				Assert.assertEquals(
@@ -164,15 +161,12 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					oAuth2Application.getOAuth2ApplicationId();
 
 				Assert.assertTrue(
-					"Expected the unresolvable alias to be recorded",
 					_waitForUnresolved(oAuth2ApplicationId, true));
 
 				_saveConfiguration(
 					companyId, Collections.singletonList(scopeAlias));
 
 				Assert.assertTrue(
-					"Expected the registry entry to clear once the " +
-						"unresolvable alias left the configuration",
 					_waitForUnresolved(oAuth2ApplicationId, false));
 			}
 			finally {
@@ -201,7 +195,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				_runReconcile();
 
 				Assert.assertTrue(
-					"Expected " + scopeAlias + " to be bound",
 					_hasScopeAlias(
 						oAuth2Application.getOAuth2ApplicationId(),
 						scopeAlias));
@@ -246,8 +239,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				// grant is persisted under the declared casing the client holds
 
 				Assert.assertTrue(
-					"Expected the declared alias " + declaredScopeAlias +
-						" to be bound so the client can match it",
 					_hasScopeAlias(
 						oAuth2Application.getOAuth2ApplicationId(),
 						declaredScopeAlias));
@@ -297,7 +288,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					Collections.singletonList(grantedScopeAlias));
 
 				Assert.assertTrue(
-					"Precondition: the test alias must be granted",
 					_hasScopeAlias(oAuth2ApplicationId, grantedScopeAlias));
 
 				_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
@@ -313,12 +303,8 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				_runReconcile();
 
 				Assert.assertTrue(
-					"The reconcile must bind " + resolvableScopeAlias +
-						" additively",
 					_hasScopeAlias(oAuth2ApplicationId, resolvableScopeAlias));
 				Assert.assertTrue(
-					"The reconcile must copy the unresolvable grant " +
-						grantedScopeAlias + " rather than revoke it",
 					_hasScopeAlias(oAuth2ApplicationId, grantedScopeAlias));
 			}
 			finally {
@@ -372,7 +358,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					Collections.singletonList(grantedScopeAlias));
 
 				Assert.assertTrue(
-					"Precondition: the test alias must be granted",
 					_hasScopeAlias(oAuth2ApplicationId, grantedScopeAlias));
 
 				_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
@@ -388,8 +373,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				_runReconcile();
 
 				Assert.assertTrue(
-					"The reconcile must not revoke the already-granted alias " +
-						grantedScopeAlias,
 					_hasScopeAlias(oAuth2ApplicationId, grantedScopeAlias));
 			}
 			finally {
@@ -425,7 +408,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				_runReconcile();
 
 				Assert.assertTrue(
-					"Expected " + scopeAlias + " to be bound",
 					_hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 
 				OAuth2Application reconciledOAuth2Application =
@@ -467,21 +449,16 @@ public class ScopeReResolutionConfigurationFactoryTest {
 				_runReconcile();
 
 				Assert.assertTrue(
-					"Expected " + resolvableScopeAlias + " to be bound",
 					_hasScopeAlias(
 						oAuth2Application.getOAuth2ApplicationId(),
 						resolvableScopeAlias));
 
 				Assert.assertFalse(
-					"Expected " + _UNRESOLVABLE_SCOPE_ALIAS +
-						" not to be bound before it resolves",
 					_hasScopeAlias(
 						oAuth2Application.getOAuth2ApplicationId(),
 						_UNRESOLVABLE_SCOPE_ALIAS));
 
 				Assert.assertTrue(
-					"Expected the application to stay tracked while " +
-						_UNRESOLVABLE_SCOPE_ALIAS + " is unresolved",
 					_unresolvedApplicationIds().contains(
 						oAuth2Application.getOAuth2ApplicationId()));
 			}
@@ -511,7 +488,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					Collections.singletonList(scopeAlias));
 
 				Assert.assertTrue(
-					"Precondition: the alias must be granted",
 					_hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 
 				long grantedOAuth2ApplicationScopeAliasesId =
@@ -725,15 +701,11 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					oAuth2Application.getOAuth2ApplicationId();
 
 				Assert.assertTrue(
-					"Expected the unresolvable alias to be recorded before " +
-						"the ScopeFinder registers",
 					_waitForUnresolved(oAuth2ApplicationId, true));
 
 				serviceRegistration = _registerTestScopeFinder(bundleContext);
 
 				Assert.assertTrue(
-					"Expected the ScopeFinder registration to drive the " +
-						"reconcile that binds " + scopeAlias,
 					_waitForScopeAlias(oAuth2ApplicationId, scopeAlias));
 			}
 			finally {
@@ -785,8 +757,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		// clobber the grant snapshot the test stages below
 
 		Assert.assertTrue(
-			"The configuration factory must grant " + anchorScopeAlias +
-				" before the test resets the grants",
 			_waitForScopeAlias(oAuth2ApplicationId, anchorScopeAlias));
 
 		// Reset the grant snapshot to a known empty state, so the reconcile has
@@ -907,9 +877,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
 			companyId);
 
-		Assert.assertFalse(
-			"No resolvable scope alias is available in this environment",
-			scopeAliases.isEmpty());
+		Assert.assertFalse(scopeAliases.isEmpty());
 
 		return Collections.min(scopeAliases);
 	}
@@ -1039,7 +1007,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		}
 
 		Assert.assertTrue(
-			"Alias " + scopeAlias + " still resolves after deregistration",
 			_scopeLocator.getLiferayOAuth2Scopes(
 				companyId, scopeAlias
 			).isEmpty());
