@@ -79,6 +79,50 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		}
 	}
 
+	@Test
+	public void testResourceActionForAddUpdateAndDelete() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			auditMessages.clear();
+
+			_user = UserTestUtil.addUser();
+
+			_assertResourceAction(
+				fetchAuditMessage(User.class.getName(), EventTypes.ADD),
+				"system.user.add");
+
+			auditMessages.clear();
+
+			_user.setComments(RandomTestUtil.randomString());
+
+			_user = _userLocalService.updateUser(_user);
+
+			_assertResourceAction(
+				fetchAuditMessage(User.class.getName(), EventTypes.UPDATE),
+				"system.user.update");
+
+			auditMessages.clear();
+
+			_userLocalService.deleteUser(_user);
+
+			_assertResourceAction(
+				fetchAuditMessage(User.class.getName(), EventTypes.DELETE),
+				"system.user.delete");
+		}
+	}
+
+	private void _assertResourceAction(
+		AuditMessage auditMessage, String expectedResourceAction) {
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
+
 	@DeleteAfterTestRun
 	private Company _company;
 
