@@ -72,7 +72,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, null);
@@ -132,7 +132,8 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					_hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 
 				Assert.assertFalse(
-					_unresolvedApplicationIds().contains(oAuth2ApplicationId));
+					_getUnresolvedApplicationIds().contains(
+						oAuth2ApplicationId));
 
 				Assert.assertEquals(
 					"Serialized reconciles must write exactly one snapshot",
@@ -151,7 +152,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _saveConfiguration(
 				companyId,
@@ -183,7 +184,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, scopeAlias);
@@ -200,7 +201,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 						oAuth2Application.getOAuth2ApplicationId(),
 						scopeAlias));
 				Assert.assertFalse(
-					_unresolvedApplicationIds().contains(
+					_getUnresolvedApplicationIds().contains(
 						oAuth2Application.getOAuth2ApplicationId()));
 			}
 			finally {
@@ -269,7 +270,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String resolvableScopeAlias = _resolvableScopeAlias(companyId);
+			String resolvableScopeAlias = _getResolvableScopeAlias(companyId);
 
 			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
@@ -339,7 +340,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String registryScopeAlias = _resolvableScopeAlias(companyId);
+			String registryScopeAlias = _getResolvableScopeAlias(companyId);
 
 			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
@@ -405,7 +406,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, scopeAlias);
@@ -448,7 +449,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String resolvableScopeAlias = _resolvableScopeAlias(companyId);
+			String resolvableScopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, resolvableScopeAlias);
@@ -472,7 +473,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 						_UNRESOLVABLE_SCOPE_ALIAS));
 
 				Assert.assertTrue(
-					_unresolvedApplicationIds().contains(
+					_getUnresolvedApplicationIds().contains(
 						oAuth2Application.getOAuth2ApplicationId()));
 			}
 			finally {
@@ -486,7 +487,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, null);
@@ -529,7 +530,8 @@ public class ScopeReResolutionConfigurationFactoryTest {
 						getOAuth2ApplicationScopeAliasesId());
 
 				Assert.assertFalse(
-					_unresolvedApplicationIds().contains(oAuth2ApplicationId));
+					_getUnresolvedApplicationIds().contains(
+						oAuth2ApplicationId));
 			}
 			finally {
 				_cleanUp(oAuth2Application);
@@ -544,7 +546,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = _getResolvableScopeAlias(companyId);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, null);
@@ -680,7 +682,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 						getOAuth2ApplicationScopeAliasesId());
 
 				Assert.assertTrue(
-					_unresolvedApplicationIds().contains(
+					_getUnresolvedApplicationIds().contains(
 						oAuth2Application.getOAuth2ApplicationId()));
 			}
 			finally {
@@ -738,7 +740,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		String anchorScopeAlias = excludedScopeAlias;
 
 		if (anchorScopeAlias == null) {
-			anchorScopeAlias = _resolvableScopeAlias(companyId);
+			anchorScopeAlias = _getResolvableScopeAlias(companyId);
 		}
 
 		_configuration = _configurationAdmin.getFactoryConfiguration(
@@ -860,6 +862,31 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		return null;
 	}
 
+	private String _getResolvableScopeAlias(long companyId) {
+		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
+			companyId);
+
+		Assert.assertFalse(scopeAliases.isEmpty());
+
+		return Collections.min(scopeAliases);
+	}
+
+	private Collection<Long> _getUnresolvedApplicationIds() {
+		Set<Long> oAuth2ApplicationIds = new HashSet<>();
+
+		Map<Long, Set<Long>> oAuth2ApplicationIdsByCompanyId =
+			_unresolvedScopeAliasesRegistry.
+				getOAuth2ApplicationIdsByCompanyId();
+
+		for (Set<Long> companyOAuth2ApplicationIds :
+				oAuth2ApplicationIdsByCompanyId.values()) {
+
+			oAuth2ApplicationIds.addAll(companyOAuth2ApplicationIds);
+		}
+
+		return oAuth2ApplicationIds;
+	}
+
 	private boolean _hasScopeAlias(long oAuth2ApplicationId, String scopeAlias)
 		throws Exception {
 
@@ -884,15 +911,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"osgi.jaxrs.name", _APPLICATION_NAME
 			).build());
-	}
-
-	private String _resolvableScopeAlias(long companyId) {
-		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
-			companyId);
-
-		Assert.assertFalse(scopeAliases.isEmpty());
-
-		return Collections.min(scopeAliases);
 	}
 
 	private void _runReconcile() throws Exception {
@@ -956,22 +974,6 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		return oAuth2Application;
 	}
 
-	private Collection<Long> _unresolvedApplicationIds() {
-		Set<Long> oAuth2ApplicationIds = new HashSet<>();
-
-		Map<Long, Set<Long>> oAuth2ApplicationIdsByCompanyId =
-			_unresolvedScopeAliasesRegistry.
-				getOAuth2ApplicationIdsByCompanyId();
-
-		for (Set<Long> companyOAuth2ApplicationIds :
-				oAuth2ApplicationIdsByCompanyId.values()) {
-
-			oAuth2ApplicationIds.addAll(companyOAuth2ApplicationIds);
-		}
-
-		return oAuth2ApplicationIds;
-	}
-
 	private String _waitForNewScopeAlias(
 			long companyId, Collection<String> beforeScopeAliases)
 		throws Exception {
@@ -1030,7 +1032,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		throws Exception {
 
 		for (int i = 0; i < 300; i++) {
-			if (_unresolvedApplicationIds().contains(oAuth2ApplicationId) ==
+			if (_getUnresolvedApplicationIds().contains(oAuth2ApplicationId) ==
 					unresolved) {
 
 				return true;
@@ -1039,7 +1041,7 @@ public class ScopeReResolutionConfigurationFactoryTest {
 			Thread.sleep(10);
 		}
 
-		if (_unresolvedApplicationIds().contains(oAuth2ApplicationId) ==
+		if (_getUnresolvedApplicationIds().contains(oAuth2ApplicationId) ==
 				unresolved) {
 
 			return true;
