@@ -20,10 +20,10 @@ import org.osgi.annotation.versioning.ProviderType;
  * reconciler can bind it once the missing scope sources register.
  *
  * <p>
- * Entries are keyed on the company together with the application because primary
- * keys repeat across virtual instances under database partitioning. A caller
- * must supply the company so a reconciler can select the right schema before it
- * reads the application.
+ * Entries are keyed on the company together with the application because
+ * primary keys repeat across virtual instances under database partitioning. A
+ * caller must supply the company so a reconciler can select the right schema
+ * before it reads the application.
  * </p>
  *
  * @author Allen Ziegenfus

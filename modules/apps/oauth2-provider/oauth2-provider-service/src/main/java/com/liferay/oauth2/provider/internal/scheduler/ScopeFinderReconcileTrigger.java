@@ -35,14 +35,14 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  *
  * <p>
  * Each registration requests a reconcile. Requests are coalesced through the
- * {@code _reconcilePending} / {@code _reconcileRunning} handshake and drained on
- * a portal executor thread, so a burst of registrations at startup collapses
- * into as few passes as possible without dropping a request that arrives while a
- * pass is running. Because a finder's aliases can lag its service registration,
- * a drain retries a few times; it stops as soon as a pass reports it bound
- * something, so an unrelated alias that never resolves does not keep every
- * registration retrying. Reconciling runs only on the cluster master, matching
- * the clustered scheduler that owns the fallback pass.
+ * {@code _reconcilePending} / {@code _reconcileRunning} handshake and drained
+ * on a portal executor thread, so a burst of registrations at startup collapses
+ * into as few passes as possible without dropping a request that arrives while
+ * a pass is running. Because a finder's aliases can lag its service
+ * registration, a drain retries a few times; it stops as soon as a pass reports
+ * it bound something, so an unrelated alias that never resolves does not keep
+ * every registration retrying. Reconciling runs only on the cluster master,
+ * matching the clustered scheduler that owns the fallback pass.
  * </p>
  *
  * @author Allen Ziegenfus
