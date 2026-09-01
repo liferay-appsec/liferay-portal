@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -53,21 +53,19 @@ import org.osgi.service.component.annotations.Reference;
  * Service Builder wraps around the method, against an application re-fetched in
  * that transaction, so a failure leaves no orphan snapshot and the window for
  * losing a concurrent edit of the application shrinks to that transaction. The
- * application has no
- * optimistic-lock column, so a configuration redeploy or scope update
- * interleaving on the same node can still drop one write's aliases; that is a
- * known limitation. Existing grants are never re-resolved, so
- * an already-granted alias whose source is momentarily unavailable can never be
- * revoked, and there is no need to guard against transient churn. A recorded
+ * application has no optimistic-lock column, so a configuration redeploy or
+ * scope update interleaving on the same node can still drop one write's
+ * aliases; that is a known limitation. Existing grants are never re-resolved,
+ * so an already-granted alias whose source is momentarily unavailable can never
+ * be revoked, and there is no need to guard against transient churn. A recorded
  * alias is looked up under its registered casing, matching what the
  * headless-server configuration factory does when the scope source is present,
  * and its grant is persisted under the declared alias the client holds. Tokens
  * issued against the old snapshot keep referencing it and are unaffected. An
- * alias that
- * already resolves and is already granted is skipped, so a redundant reconcile
- * writes nothing; because the registry is node-local while reconciling is
- * master-only, this keeps a new master from rewriting an already-bound alias
- * after a cluster failover.
+ * alias that already resolves and is already granted is skipped, so a redundant
+ * reconcile writes nothing; because the registry is node-local while
+ * reconciling is master-only, this keeps a new master from rewriting an
+ * already-bound alias after a cluster failover.
  * </p>
  *
  * <p>
@@ -75,8 +73,8 @@ import org.osgi.service.component.annotations.Reference;
  * scheduler and the scope finder trigger). {@link #reconcile()} serializes on a
  * lock and runs one pass per call, so a caller only returns after its own pass
  * has completed and its return value reflects that pass. Concurrent callers run
- * their passes in turn rather than sharing one; a pass that finds nothing to bind
- * is cheap, so the redundancy is immaterial.
+ * their passes in turn rather than sharing one; a pass that finds nothing to
+ * bind is cheap, so the redundancy is immaterial.
  * </p>
  *
  * @author Allen Ziegenfus
@@ -255,7 +253,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId());
 
 		List<String> alreadyGrantedScopeAliasesList = new ArrayList<>();
-
 		Map<String, String> resolvedScopeAliases = new LinkedHashMap<>();
 
 		for (String scopeAlias : unresolvedScopeAliases) {
@@ -349,7 +346,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 				oAuth2ApplicationIdsByCompanyId.entrySet()) {
 
 			long companyId = entry.getKey();
-
 			Set<Long> oAuth2ApplicationIds = entry.getValue();
 
 			try {
