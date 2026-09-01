@@ -15,6 +15,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.osgi.framework.BundleContext;
@@ -64,6 +66,23 @@ public class ScopeFinderReconcileTrigger {
 		if (_scopeFinderServiceTracker != null) {
 			_scopeFinderServiceTracker.close();
 		}
+
+		Future<?> reconcileFuture = _reconcileFuture;
+
+		if (reconcileFuture != null) {
+			try {
+				reconcileFuture.get(1, TimeUnit.MINUTES);
+			}
+			catch (Exception exception) {
+				reconcileFuture.cancel(true);
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to wait for the in-flight reconcile to finish",
+						exception);
+				}
+			}
+		}
 	}
 
 	private void _drainReconcile() {
@@ -101,7 +120,7 @@ public class ScopeFinderReconcileTrigger {
 				_portalExecutorManager.getPortalExecutor(
 					ScopeFinderReconcileTrigger.class.getName());
 
-			executorService.submit(this::_drainReconcile);
+			_reconcileFuture = executorService.submit(this::_drainReconcile);
 		}
 		catch (Throwable throwable) {
 			_reconcileRunning.set(false);
@@ -173,6 +192,7 @@ public class ScopeFinderReconcileTrigger {
 	@Reference
 	private PortalExecutorManager _portalExecutorManager;
 
+	private volatile Future<?> _reconcileFuture;
 	private final AtomicBoolean _reconcilePending = new AtomicBoolean();
 	private final AtomicBoolean _reconcileRunning = new AtomicBoolean();
 	private ServiceTracker<ScopeFinder, Boolean> _scopeFinderServiceTracker;
