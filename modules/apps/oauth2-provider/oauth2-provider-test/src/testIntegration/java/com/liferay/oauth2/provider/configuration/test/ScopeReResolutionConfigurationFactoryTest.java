@@ -8,6 +8,7 @@ package com.liferay.oauth2.provider.configuration.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderApplicationHeadlessServerConfiguration;
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
@@ -16,6 +17,9 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalSer
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.model.BaseModelListener;
+import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.scheduler.SchedulerJobConfiguration;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -26,6 +30,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,6 +63,90 @@ public class ScopeReResolutionConfigurationFactoryTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
+
+	@Test
+	public void testConcurrentReconcilesCreateSingleSnapshot()
+		throws Exception {
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
+			String scopeAlias = _resolvableScopeAlias(companyId);
+
+			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
+				companyId, null);
+
+			try {
+				long oAuth2ApplicationId =
+					oAuth2Application.getOAuth2ApplicationId();
+
+				int originalCount =
+					_oAuth2ApplicationScopeAliasesLocalService.
+						getOAuth2ApplicationScopeAliasesesCount();
+
+				_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+					companyId, oAuth2ApplicationId,
+					Collections.singletonList(scopeAlias));
+
+				// Two reconciles released at once must serialize on the
+				// reconcile lock, so exactly one binds the alias and writes one
+				// snapshot
+
+				CountDownLatch startCountDownLatch = new CountDownLatch(1);
+				CountDownLatch doneCountDownLatch = new CountDownLatch(2);
+
+				List<Throwable> throwables = Collections.synchronizedList(
+					new ArrayList<>());
+
+				Runnable runnable = () -> {
+					try {
+						startCountDownLatch.await();
+
+						_runReconcile();
+					}
+					catch (Throwable throwable) {
+						throwables.add(throwable);
+					}
+					finally {
+						doneCountDownLatch.countDown();
+					}
+				};
+
+				Thread thread1 = new Thread(runnable);
+				Thread thread2 = new Thread(runnable);
+
+				thread1.start();
+				thread2.start();
+
+				startCountDownLatch.countDown();
+
+				Assert.assertTrue(
+					"The concurrent reconciles did not finish in time",
+					doneCountDownLatch.await(60, TimeUnit.SECONDS));
+
+				Assert.assertEquals(
+					"Concurrent reconciles must not error",
+					Collections.emptyList(), throwables);
+
+				Assert.assertTrue(
+					"The alias must be bound after concurrent reconciles",
+					_hasScopeAlias(oAuth2ApplicationId, scopeAlias));
+
+				Assert.assertFalse(
+					"The registry must be cleared once the alias is bound",
+					_unresolvedApplicationIds().contains(oAuth2ApplicationId));
+
+				Assert.assertEquals(
+					"Serialized reconciles must write exactly one snapshot",
+					originalCount + 1,
+					_oAuth2ApplicationScopeAliasesLocalService.
+						getOAuth2ApplicationScopeAliasesesCount());
+			}
+			finally {
+				_cleanUp(oAuth2Application);
+			}
+		}
+	}
 
 	@Test
 	public void testConfigurationDropClearsRegistry() throws Exception {
@@ -454,6 +543,118 @@ public class ScopeReResolutionConfigurationFactoryTest {
 					_unresolvedApplicationIds().contains(oAuth2ApplicationId));
 			}
 			finally {
+				_cleanUp(oAuth2Application);
+			}
+		}
+	}
+
+	@Test
+	public void testReconcileWriteFailureLeavesNoOrphanSnapshot()
+		throws Exception {
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
+			String scopeAlias = _resolvableScopeAlias(companyId);
+
+			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
+				companyId, null);
+
+			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+			ServiceRegistration<ModelListener<OAuth2Application>>
+				serviceRegistration = null;
+
+			try {
+				long oAuth2ApplicationId =
+					oAuth2Application.getOAuth2ApplicationId();
+
+				long originalOAuth2ApplicationScopeAliasesId =
+					oAuth2Application.getOAuth2ApplicationScopeAliasesId();
+
+				int originalCount =
+					_oAuth2ApplicationScopeAliasesLocalService.
+						getOAuth2ApplicationScopeAliasesesCount();
+
+				// Fail the application repoint so the snapshot write and the
+				// repoint must roll back together
+
+				serviceRegistration = bundleContext.registerService(
+					(Class<ModelListener<OAuth2Application>>)
+						(Class<?>)ModelListener.class,
+					new BaseModelListener<OAuth2Application>() {
+
+						@Override
+						public void onBeforeUpdate(
+								OAuth2Application originalOAuth2Application,
+								OAuth2Application oAuth2Application)
+							throws ModelListenerException {
+
+							throw new ModelListenerException(
+								"Forced application repoint failure");
+						}
+
+					},
+					null);
+
+				try {
+					_oAuth2ApplicationScopeAliasesLocalService.
+						addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+							companyId, oAuth2Application.getUserId(),
+							oAuth2Application.getUserName(),
+							oAuth2ApplicationId,
+							oAuth2ScopeBuilder -> {
+								for (LiferayOAuth2Scope liferayOAuth2Scope :
+										_scopeLocator.getLiferayOAuth2Scopes(
+											companyId, scopeAlias)) {
+
+									oAuth2ScopeBuilder.forApplication(
+										liferayOAuth2Scope.getApplicationName(),
+										liferayOAuth2Scope.getBundle(
+										).getSymbolicName(),
+										applicationScopeAssigner ->
+											applicationScopeAssigner.
+												assignScope(
+													liferayOAuth2Scope.
+														getScope()
+												).mapToScopeAlias(
+													scopeAlias
+												));
+								}
+							});
+
+					Assert.fail(
+						"Expected the forced repoint failure to abort the " +
+							"write");
+				}
+				catch (Exception exception) {
+
+					// Expected: the failure must roll back the transaction
+
+				}
+
+				OAuth2Application reloadedOAuth2Application =
+					_oAuth2ApplicationLocalService.getOAuth2Application(
+						oAuth2ApplicationId);
+
+				Assert.assertEquals(
+					"A failed write must not repoint the application",
+					originalOAuth2ApplicationScopeAliasesId,
+					reloadedOAuth2Application.
+						getOAuth2ApplicationScopeAliasesId());
+
+				Assert.assertEquals(
+					"A failed write must not leave an orphan scope aliases " +
+						"snapshot",
+					originalCount,
+					_oAuth2ApplicationScopeAliasesLocalService.
+						getOAuth2ApplicationScopeAliasesesCount());
+			}
+			finally {
+				if (serviceRegistration != null) {
+					serviceRegistration.unregister();
+				}
+
 				_cleanUp(oAuth2Application);
 			}
 		}
