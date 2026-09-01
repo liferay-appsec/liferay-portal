@@ -565,7 +565,8 @@ public class FIPSModeValidatorTest {
 						false)) {
 
 				_assertSecurityException(
-					"TLS verification must be enabled in FIPS mode",
+					"FIPS mode requires the property \"com.liferay.portal." +
+						"kernel.service.http.TunnelUtil.verify.ssl.hostname\"",
 					"_validatePortalProperties", new Class<?>[0]);
 			}
 
@@ -574,7 +575,8 @@ public class FIPSModeValidatorTest {
 						"TUNNEL_UTIL_VERIFY_SSL_HOSTNAME", "false", false)) {
 
 				_assertSecurityException(
-					"TLS verification must be enabled in FIPS mode",
+					"FIPS mode requires the property \"com.liferay.portal." +
+						"kernel.service.http.TunnelUtil.verify.ssl.hostname\"",
 					"_validatePortalProperties", new Class<?>[0]);
 			}
 		}
@@ -675,22 +677,6 @@ public class FIPSModeValidatorTest {
 		}
 		finally {
 			System.clearProperty(key);
-		}
-	}
-
-	@Test
-	public void testValidateTLSVerification() {
-		FIPSModeValidator.validateTLSVerification(false);
-
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true)) {
-
-			FIPSModeValidator.validateTLSVerification(true);
-
-			FIPSModeTestUtil.assertSecurityException(
-				"TLS verification must be enabled in FIPS mode",
-				() -> FIPSModeValidator.validateTLSVerification(false));
 		}
 	}
 
