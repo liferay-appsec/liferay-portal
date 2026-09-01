@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -213,14 +214,26 @@ public class ScopeReResolutionConfigurationFactoryTest {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
-			String scopeAlias = _resolvableScopeAlias(companyId);
+			String scopeAlias = null;
+
+			for (String curScopeAlias :
+					_scopeLocator.getScopeAliases(companyId)) {
+
+				if (!curScopeAlias.equals(
+						StringUtil.toUpperCase(curScopeAlias))) {
+
+					scopeAlias = curScopeAlias;
+
+					break;
+				}
+			}
+
+			Assume.assumeTrue(
+				"No registered scope alias has a distinct uppercase form to " +
+					"exercise case normalization",
+				scopeAlias != null);
 
 			String declaredScopeAlias = StringUtil.toUpperCase(scopeAlias);
-
-			Assert.assertNotEquals(
-				"The environment must yield a scope alias with a distinct " +
-					"uppercase form to exercise case normalization",
-				scopeAlias, declaredScopeAlias);
 
 			OAuth2Application oAuth2Application = _addOAuth2ApplicationWithout(
 				companyId, scopeAlias);
