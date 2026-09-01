@@ -70,6 +70,22 @@ public interface UnresolvedScopeAliasesRegistry {
 		long companyId, long oAuth2ApplicationId);
 
 	/**
+	 * Stops tracking the given scope aliases for an application, leaving any
+	 * others tracked for it in place. Unlike {@link #setUnresolvedScopeAliases},
+	 * which replaces the whole set from the caller's snapshot, this removes only
+	 * the named aliases atomically, so a concurrent update that added an alias is
+	 * not clobbered. The application stops being tracked once its last alias is
+	 * removed.
+	 *
+	 * @param companyId the company the application belongs to
+	 * @param oAuth2ApplicationId the application's primary key
+	 * @param scopeAliases the aliases to stop tracking
+	 */
+	public void removeUnresolvedScopeAliases(
+		long companyId, long oAuth2ApplicationId,
+		Collection<String> scopeAliases);
+
+	/**
 	 * Records the unresolved scope aliases for an application, replacing any
 	 * already tracked for it. An empty or <code>null</code> collection stops
 	 * tracking the application.
