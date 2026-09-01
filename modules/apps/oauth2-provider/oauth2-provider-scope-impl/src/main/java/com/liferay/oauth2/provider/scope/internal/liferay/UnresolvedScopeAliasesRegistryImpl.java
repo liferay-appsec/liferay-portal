@@ -91,6 +91,45 @@ public class UnresolvedScopeAliasesRegistryImpl
 	}
 
 	@Override
+	public void removeUnresolvedScopeAliases(
+		long companyId, long oAuth2ApplicationId,
+		Collection<String> scopeAliases) {
+
+		if ((scopeAliases == null) || scopeAliases.isEmpty()) {
+			return;
+		}
+
+		_scopeAliasesMap.computeIfPresent(
+			companyId,
+			(key, scopeAliasesMap) -> {
+				Set<String> unresolvedScopeAliases = scopeAliasesMap.get(
+					oAuth2ApplicationId);
+
+				if (unresolvedScopeAliases != null) {
+					Set<String> remainingScopeAliases = new LinkedHashSet<>(
+						unresolvedScopeAliases);
+
+					remainingScopeAliases.removeAll(scopeAliases);
+
+					if (remainingScopeAliases.isEmpty()) {
+						scopeAliasesMap.remove(oAuth2ApplicationId);
+					}
+					else {
+						scopeAliasesMap.put(
+							oAuth2ApplicationId,
+							Collections.unmodifiableSet(remainingScopeAliases));
+					}
+				}
+
+				if (scopeAliasesMap.isEmpty()) {
+					return null;
+				}
+
+				return scopeAliasesMap;
+			});
+	}
+
+	@Override
 	public void setUnresolvedScopeAliases(
 		long companyId, long oAuth2ApplicationId,
 		Collection<String> scopeAliases) {

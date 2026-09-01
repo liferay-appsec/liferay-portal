@@ -102,21 +102,29 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		Set<String> persistedScopeAliases = new HashSet<>();
 
-		Map<String, String> stillResolvingScopeAliases = new LinkedHashMap<>();
+		// Resolve each alias once, here, and reuse the result when building the
+		// snapshot. Resolving again inside the builder let a scope source that
+		// deregistered between the two calls leave a no-op snapshot behind
+		// (copied grants, nothing new), orphaning the prior snapshot on every
+		// pass. Guarding on a nonempty resolution keeps the write additive.
+
+		Map<String, Collection<LiferayOAuth2Scope>>
+			resolvedLiferayOAuth2Scopes = new LinkedHashMap<>();
 
 		for (Map.Entry<String, String> entry :
 				resolvedScopeAliases.entrySet()) {
 
-			if (!_scopeLocator.getLiferayOAuth2Scopes(
-					companyId, entry.getValue()
-				).isEmpty()) {
+			Collection<LiferayOAuth2Scope> liferayOAuth2Scopes =
+				_scopeLocator.getLiferayOAuth2Scopes(
+					companyId, entry.getValue());
 
-				stillResolvingScopeAliases.put(
-					entry.getKey(), entry.getValue());
+			if (!liferayOAuth2Scopes.isEmpty()) {
+				resolvedLiferayOAuth2Scopes.put(
+					entry.getKey(), liferayOAuth2Scopes);
 			}
 		}
 
-		if (stillResolvingScopeAliases.isEmpty()) {
+		if (resolvedLiferayOAuth2Scopes.isEmpty()) {
 			return persistedScopeAliases;
 		}
 
@@ -148,14 +156,13 @@ public class UnresolvedScopeAliasReconcilerImpl
 								));
 					}
 
-					for (Map.Entry<String, String> entry :
-							stillResolvingScopeAliases.entrySet()) {
+					for (Map.Entry<String, Collection<LiferayOAuth2Scope>>
+							entry : resolvedLiferayOAuth2Scopes.entrySet()) {
 
 						String declaredScopeAlias = entry.getKey();
 
 						for (LiferayOAuth2Scope liferayOAuth2Scope :
-								_scopeLocator.getLiferayOAuth2Scopes(
-									companyId, entry.getValue())) {
+								entry.getValue()) {
 
 							Bundle bundle = liferayOAuth2Scope.getBundle();
 
@@ -296,14 +303,13 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		remainingScopeAliasesList.removeAll(boundScopeAliasesList);
 
-		if (remainingScopeAliasesList.isEmpty()) {
-			_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
-				companyId, oAuth2ApplicationId);
-		}
-		else {
-			_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-				companyId, oAuth2ApplicationId, remainingScopeAliasesList);
-		}
+		// Remove only the aliases this pass actually bound, atomically, rather
+		// than overwriting the whole entry from the snapshot read at the top of
+		// the pass. A configuration update that recorded a new alias while the
+		// pass ran is then preserved instead of being clobbered.
+
+		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			companyId, oAuth2ApplicationId, boundScopeAliasesList);
 
 		if (!persistedScopeAliases.isEmpty() && _log.isInfoEnabled()) {
 			_log.info(

@@ -64,6 +64,44 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 	}
 
 	@Test
+	public void testRemoveUnresolvedScopeAliasesKeepsOthers() {
+		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList("C_Foo.everything", "C_Bar.everything"));
+
+		// A configuration update records another alias while a reconcile pass,
+		// holding an earlier snapshot, is still running
+
+		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100,
+			Arrays.asList(
+				"C_Foo.everything", "C_Bar.everything", "C_Baz.everything"));
+
+		// The pass removes only what it bound; the newly recorded alias must
+		// survive rather than being overwritten from the stale snapshot
+
+		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			1, 100, Arrays.asList("C_Foo.everything"));
+
+		Collection<String> scopeAliases =
+			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
+
+		Assert.assertFalse(scopeAliases.contains("C_Foo.everything"));
+		Assert.assertTrue(scopeAliases.contains("C_Bar.everything"));
+		Assert.assertTrue(scopeAliases.contains("C_Baz.everything"));
+	}
+
+	@Test
+	public void testRemoveUnresolvedScopeAliasesRemovesEmptyApplication() {
+		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList("C_Foo.everything", "C_Bar.everything"));
+
+		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			1, 100, Arrays.asList("C_Foo.everything", "C_Bar.everything"));
+
+		Assert.assertTrue(_unresolvedScopeAliasesRegistry.isEmpty());
+	}
+
+	@Test
 	public void testSameApplicationIdIsolatedAcrossCompanies() {
 		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList("C_Foo.everything"));
