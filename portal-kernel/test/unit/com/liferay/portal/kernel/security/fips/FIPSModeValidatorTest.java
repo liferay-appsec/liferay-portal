@@ -6,7 +6,6 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.internal.security.fips.FIPSModeHelperUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -14,11 +13,6 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
-import com.liferay.portal.kernel.util.StringUtil;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import java.security.Provider;
 import java.security.Security;
@@ -223,72 +217,51 @@ public class FIPSModeValidatorTest {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validateClusterLinkChannelAuthElement",
 			new Class<?>[] {Element.class, String.class},
-			_getElement(FIPSModeTestUtil.XML_AUTH, "AUTH"),
+			_getElement("cluster-link-channel-properties.xml", "AUTH"),
 			RandomTestUtil.randomString());
 
-		_assertSecurityException(
-			"must authenticate cluster members with \"" +
-				FIPSModeTestUtil.AUTH_CLASS_NAME + "\"",
-			"_validateClusterLinkChannelAuthElement",
-			new Class<?>[] {Element.class, String.class},
-			_getElement("<AUTH />", "AUTH"), RandomTestUtil.randomString());
 		_assertSecurityException(
 			"must authenticate cluster members with \"" +
 				FIPSModeTestUtil.AUTH_CLASS_NAME + "\"",
 			"_validateClusterLinkChannelAuthElement",
 			new Class<?>[] {Element.class, String.class},
 			_getElement(
-				StringUtil.replace(
-					FIPSModeTestUtil.XML_AUTH, FIPSModeTestUtil.AUTH_CLASS_NAME,
-					RandomTestUtil.randomString()),
+				"cluster-link-channel-properties-auth-class-missing.xml",
+				"AUTH"),
+			RandomTestUtil.randomString());
+		_assertSecurityException(
+			"must authenticate cluster members with \"" +
+				FIPSModeTestUtil.AUTH_CLASS_NAME + "\"",
+			"_validateClusterLinkChannelAuthElement",
+			new Class<?>[] {Element.class, String.class},
+			_getElement(
+				"cluster-link-channel-properties-auth-class-md5-token.xml",
 				"AUTH"),
 			RandomTestUtil.randomString());
 	}
 
 	@Test
 	public void testValidateClusterLinkChannelConfiguration() throws Exception {
-		Path path = Files.createTempFile(null, ".xml");
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validateClusterLinkChannelConfiguration",
+			new Class<?>[] {String.class},
+			FIPSModeTestUtil.getChannelPropertiesLocation(
+				"cluster-link-channel-properties.xml"));
 
-		try {
-			String channelPropertiesXML1 = StringBundler.concat(
-				"<config>", FIPSModeTestUtil.XML_AUTH,
-				FIPSModeTestUtil.XML_SYM_ENCRYPT, "</config>");
-
-			Files.write(
-				path, channelPropertiesXML1.getBytes(StandardCharsets.UTF_8));
-
-			ReflectionTestUtil.invoke(
-				FIPSModeValidator.class,
-				"_validateClusterLinkChannelConfiguration",
-				new Class<?>[] {String.class}, String.valueOf(path));
-
-			String channelPropertiesXML2 = StringBundler.concat(
-				"<config>", FIPSModeTestUtil.XML_AUTH,
-				FIPSModeTestUtil.XML_ASYM_ENCRYPT, "</config>");
-
-			Files.write(
-				path, channelPropertiesXML2.getBytes(StandardCharsets.UTF_8));
-
-			_assertSecurityException(
-				"must encrypt intracluster traffic with \"SYM_ENCRYPT\" in " +
-					"FIPS mode",
-				"_validateClusterLinkChannelConfiguration",
-				new Class<?>[] {String.class}, String.valueOf(path));
-
-			Files.write(
-				path,
-				"<config><FUTURE_ENCRYPT /></config>".getBytes(
-					StandardCharsets.UTF_8));
-
-			_assertSecurityException(
-				"must encrypt intracluster traffic with \"SYM_ENCRYPT\" in " +
-					"FIPS mode",
-				"_validateClusterLinkChannelConfiguration",
-				new Class<?>[] {String.class}, String.valueOf(path));
-		}
-		finally {
-			Files.delete(path);
-		}
+		_assertSecurityException(
+			"must encrypt intracluster traffic with \"SYM_ENCRYPT\" in FIPS " +
+				"mode",
+			"_validateClusterLinkChannelConfiguration",
+			new Class<?>[] {String.class},
+			FIPSModeTestUtil.getChannelPropertiesLocation(
+				"cluster-link-channel-properties-asym-encrypt.xml"));
+		_assertSecurityException(
+			"must encrypt intracluster traffic with \"SYM_ENCRYPT\" in FIPS " +
+				"mode",
+			"_validateClusterLinkChannelConfiguration",
+			new Class<?>[] {String.class},
+			FIPSModeTestUtil.getChannelPropertiesLocation(
+				"cluster-link-channel-properties-future-encrypt.xml"));
 	}
 
 	@Test
@@ -303,84 +276,65 @@ public class FIPSModeValidatorTest {
 				FIPSModeValidator.class,
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
-				_getElement(FIPSModeTestUtil.XML_SYM_ENCRYPT, "SYM_ENCRYPT"));
+				_getElement(
+					"cluster-link-channel-properties.xml", "SYM_ENCRYPT"));
 
 			_assertSecurityException(
 				"Initialization vector size 0 is not allowed in FIPS mode",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.removeSubstring(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT,
-						"sym_iv_length=\"16\" "),
+					"cluster-link-channel-properties-sym-iv-length-missing.xml",
 					"SYM_ENCRYPT"));
 			_assertSecurityException(
 				"Initialization vector size 12 is not allowed in FIPS mode",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.replace(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT,
-						"sym_iv_length=\"16\"", "sym_iv_length=\"12\""),
+					"cluster-link-channel-properties-sym-iv-length-12.xml",
 					"SYM_ENCRYPT"));
 			_assertSecurityException(
 				"Key size 64 is not allowed in FIPS mode",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.replace(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT,
-						"sym_keylength=\"128\"", "sym_keylength=\"64\""),
+					"cluster-link-channel-properties-sym-keylength-64.xml",
 					"SYM_ENCRYPT"));
-
-			String providerName = RandomTestUtil.randomString();
-
 			_assertSecurityException(
-				"Security provider \"" + providerName +
-					"\" is not allowed in FIPS mode",
+				"Security provider \"SunJCE\" is not allowed in FIPS mode",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.replace(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT, "<SYM_ENCRYPT ",
-						"<SYM_ENCRYPT provider=\"" + providerName + "\" "),
+					"cluster-link-channel-properties-provider-sun-jce.xml",
 					"SYM_ENCRYPT"));
-
 			_assertSecurityException(
 				"Transformation \"\" is not allowed",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.removeSubstring(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT,
-						"sym_algorithm=\"" +
-							FIPSModeTestUtil.TRANSFORMATION_SYM + "\" "),
+					"cluster-link-channel-properties-sym-algorithm-missing.xml",
 					"SYM_ENCRYPT"));
 			_assertSecurityException(
 				"Transformation \"AES/ECB/NoPadding\" is not allowed",
 				"_validateClusterLinkChannelSymEncryptElement",
 				new Class<?>[] {Element.class},
 				_getElement(
-					StringUtil.replace(
-						FIPSModeTestUtil.XML_SYM_ENCRYPT,
-						"sym_algorithm=\"" +
-							FIPSModeTestUtil.TRANSFORMATION_SYM + "\"",
-						"sym_algorithm=\"AES/ECB/NoPadding\""),
+					"cluster-link-channel-properties-sym-algorithm-ecb.xml",
 					"SYM_ENCRYPT"));
 		}
 	}
 
 	@Test
 	public void testValidateClusterLinkConfiguration() throws Exception {
-		Path controlPath = Files.createTempFile(null, ".xml");
-		Path transportPath = Files.createTempFile(null, ".xml");
-
 		String transportKey =
 			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT + ".0";
 
-		String transportValue = PropsUtil.get(transportKey);
+		String originalTransportValue = PropsUtil.get(transportKey);
 
-		PropsUtil.set(transportKey, String.valueOf(transportPath));
+		PropsUtil.set(
+			transportKey,
+			FIPSModeTestUtil.getChannelPropertiesLocation(
+				"cluster-link-channel-properties.xml"));
 
 		try (SafeCloseable safeCloseable1 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -388,7 +342,9 @@ public class FIPSModeValidatorTest {
 			SafeCloseable safeCloseable2 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL",
-					String.valueOf(controlPath), false);
+					FIPSModeTestUtil.getChannelPropertiesLocation(
+						"cluster-link-channel-properties.xml"),
+					false);
 			SafeCloseable safeCloseable3 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"CLUSTER_LINK_ENABLED", true);
@@ -396,43 +352,30 @@ public class FIPSModeValidatorTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			String channelPropertiesXML = StringBundler.concat(
-				"<config>", FIPSModeTestUtil.XML_AUTH,
-				FIPSModeTestUtil.XML_SYM_ENCRYPT, "</config>");
-
-			Files.write(
-				controlPath,
-				channelPropertiesXML.getBytes(StandardCharsets.UTF_8));
-			Files.write(
-				transportPath,
-				channelPropertiesXML.getBytes(StandardCharsets.UTF_8));
-
 			ReflectionTestUtil.invoke(
 				FIPSModeValidator.class, "_validateClusterLinkConfiguration",
 				new Class<?>[0]);
 
 			_assertClusterLinkConfigurationSecurityException(
-				StringUtil.replace(
-					channelPropertiesXML, "sym_keylength=\"128\"",
-					"sym_keylength=\"64\""),
-				"Key size 64 is not allowed in FIPS mode", transportPath);
+				"Key size 64 is not allowed in FIPS mode",
+				"cluster-link-channel-properties-sym-keylength-64.xml",
+				transportKey);
 			_assertClusterLinkConfigurationSecurityException(
-				StringBundler.concat(
-					"<config>", FIPSModeTestUtil.XML_AUTH,
-					FIPSModeTestUtil.XML_ASYM_ENCRYPT, "</config>"),
 				"must encrypt intracluster traffic with \"SYM_ENCRYPT\" in " +
 					"FIPS mode",
-				transportPath);
+				"cluster-link-channel-properties-asym-encrypt.xml",
+				transportKey);
 
-			Files.write(
-				transportPath,
-				channelPropertiesXML.getBytes(StandardCharsets.UTF_8));
+			PropsUtil.set(
+				transportKey,
+				FIPSModeTestUtil.getChannelPropertiesLocation(
+					"cluster-link-channel-properties.xml"));
 
 			_assertClusterLinkConfigurationSecurityException(
-				StringUtil.replace(
-					channelPropertiesXML, FIPSModeTestUtil.AUTH_CLASS_NAME,
-					RandomTestUtil.randomString()),
-				String.valueOf(controlPath), controlPath);
+				"must authenticate cluster members with \"" +
+					FIPSModeTestUtil.AUTH_CLASS_NAME + "\"",
+				"cluster-link-channel-properties-auth-class-md5-token.xml",
+				PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL);
 
 			try (SafeCloseable safeCloseable5 =
 					PropsValuesTestUtil.swapWithSafeCloseable(
@@ -446,10 +389,7 @@ public class FIPSModeValidatorTest {
 			}
 		}
 		finally {
-			Files.delete(controlPath);
-			Files.delete(transportPath);
-
-			PropsUtil.set(transportKey, transportValue);
+			PropsUtil.set(transportKey, originalTransportValue);
 		}
 	}
 
@@ -684,7 +624,7 @@ public class FIPSModeValidatorTest {
 	public void testValidateTransformation() {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validateTransformation",
-			new Class<?>[] {String.class}, FIPSModeTestUtil.TRANSFORMATION_SYM);
+			new Class<?>[] {String.class}, "AES/CBC/PKCS5Padding");
 
 		_assertSecurityException(
 			"is not allowed in FIPS mode", "_validateTransformation",
@@ -728,11 +668,11 @@ public class FIPSModeValidatorTest {
 	}
 
 	private void _assertClusterLinkConfigurationSecurityException(
-			String channelPropertiesXML, String expectedMessage, Path path)
+			String expectedMessage, String fileName, String key)
 		throws Exception {
 
-		Files.write(
-			path, channelPropertiesXML.getBytes(StandardCharsets.UTF_8));
+		PropsUtil.set(
+			key, FIPSModeTestUtil.getChannelPropertiesLocation(fileName));
 
 		_assertSecurityException(
 			expectedMessage, "_validateClusterLinkConfiguration",
@@ -757,25 +697,15 @@ public class FIPSModeValidatorTest {
 		};
 	}
 
-	private Element _getElement(String channelPropertiesXML, String tagName)
+	private Element _getElement(String fileName, String tagName)
 		throws Exception {
 
-		Path path = Files.createTempFile(null, ".xml");
+		Document document = FIPSModeHelperUtil.readDocument(
+			FIPSModeTestUtil.getChannelPropertiesLocation(fileName));
 
-		try {
-			Files.write(
-				path, channelPropertiesXML.getBytes(StandardCharsets.UTF_8));
+		NodeList nodeList = document.getElementsByTagName(tagName);
 
-			Document document = FIPSModeHelperUtil.readDocument(
-				String.valueOf(path));
-
-			NodeList nodeList = document.getElementsByTagName(tagName);
-
-			return (Element)nodeList.item(0);
-		}
-		finally {
-			Files.delete(path);
-		}
+		return (Element)nodeList.item(0);
 	}
 
 }
