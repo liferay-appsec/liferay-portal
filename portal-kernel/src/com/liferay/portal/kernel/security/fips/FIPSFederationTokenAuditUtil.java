@@ -1,0 +1,41 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.kernel.security.fips;
+
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsValues;
+
+/**
+ * @author Jorge García Jiménez
+ */
+public class FIPSFederationTokenAuditUtil {
+
+	public static void writeRejected(
+		String offendingValue, String receivingEndpoint, String tokenIssuer,
+		String tokenType) {
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return;
+		}
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"federation-token-rejected", FIPSAuditEvent.Severity.WARNING);
+
+		FIPSApplicationState fipsApplicationState =
+			FIPSApplicationStateMachineUtil.getFIPSApplicationState();
+
+		fipsAuditEvent.put("fips-state", fipsApplicationState.name());
+
+		fipsAuditEvent.put(
+			"offending-value", GetterUtil.getString(offendingValue));
+		fipsAuditEvent.put("receiving-endpoint", receivingEndpoint);
+		fipsAuditEvent.put("token-issuer", GetterUtil.getString(tokenIssuer));
+		fipsAuditEvent.put("token-type", tokenType);
+
+		FIPSAuditUtil.write(fipsAuditEvent);
+	}
+
+}

@@ -9,7 +9,7 @@ import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDataProvider;
-import com.liferay.oauth2.provider.rest.internal.endpoint.util.FIPSFederationTokenAuditUtil;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2RequestUtil;
 import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.fips.FIPSFederationTokenAuditUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -264,7 +265,9 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 				}
 				catch (SecurityException securityException) {
 					FIPSFederationTokenAuditUtil.writeRejected(
-						jwsHeaders.getAlgorithm(), jwtClaims.getIssuer());
+						jwsHeaders.getAlgorithm(),
+						OAuth2RequestUtil.getRequestURI(),
+						jwtClaims.getIssuer(), "JWT");
 
 					throw securityException;
 				}
