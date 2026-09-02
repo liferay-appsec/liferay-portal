@@ -6,9 +6,11 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.access.token.authentication.handler;
 
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.FIPSFederationTokenAuditUtil;
 import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -117,8 +119,20 @@ public class LiferayJWTBearerAuthenticationHandler
 		String tokenEndpointAuthMethod = client.getTokenEndpointAuthMethod();
 
 		try {
-			OAuth2JWKValidatorUtil.validateJWSAlgorithm(
-				(String)jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM));
+			String algorithm = GetterUtil.getString(
+				jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM), null);
+
+			try {
+				OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
+			}
+			catch (SecurityException securityException) {
+				FIPSFederationTokenAuditUtil.writeRejected(
+					algorithm,
+					GetterUtil.getString(
+						jwtToken.getClaim(JwtConstants.CLAIM_ISSUER), null));
+
+				throw securityException;
+			}
 
 			if (tokenEndpointAuthMethod.equals("client_secret_jwt")) {
 				String clientSecret = client.getClientSecret();
