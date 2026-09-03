@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
+import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -178,23 +179,36 @@ public class OpenIdConnectTokenRequestUtil {
 			OIDCProviderMetadata oidcProviderMetadata, OIDCTokens oidcTokens)
 		throws OpenIdConnectServiceException.TokenException {
 
+		String algorithmName = null;
+
+		JWSAlgorithm jwsAlgorithm = oidcClientMetadata.getIDTokenJWSAlg();
+
+		if (jwsAlgorithm != null) {
+			algorithmName = jwsAlgorithm.getName();
+		}
+
+		try {
+			OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithmName);
+		}
+		catch (SecurityException securityException) {
+			throw new OpenIdConnectServiceException.TokenException(
+				securityException.getMessage(), securityException);
+		}
+
 		IDTokenValidator idTokenValidator = null;
 
-		if (JWSAlgorithm.Family.HMAC_SHA.contains(
-				oidcClientMetadata.getIDTokenJWSAlg())) {
-
+		if (JWSAlgorithm.Family.HMAC_SHA.contains(jwsAlgorithm)) {
 			idTokenValidator = new IDTokenValidator(
-				oidcProviderMetadata.getIssuer(), clientID,
-				oidcClientMetadata.getIDTokenJWSAlg(), clientSecret);
+				oidcProviderMetadata.getIssuer(), clientID, jwsAlgorithm,
+				clientSecret);
 		}
 		else {
 			URI uri = oidcProviderMetadata.getJWKSetURI();
 
 			try {
 				idTokenValidator = new IDTokenValidator(
-					oidcProviderMetadata.getIssuer(), clientID,
-					oidcClientMetadata.getIDTokenJWSAlg(), uri.toURL(),
-					new DefaultResourceRetriever(1000, 1000));
+					oidcProviderMetadata.getIssuer(), clientID, jwsAlgorithm,
+					uri.toURL(), new DefaultResourceRetriever(1000, 1000));
 			}
 			catch (MalformedURLException malformedURLException) {
 				throw new OpenIdConnectServiceException.TokenException(
