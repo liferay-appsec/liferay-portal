@@ -159,6 +159,7 @@ import org.opensaml.xmlsec.impl.BasicDecryptionParametersResolver;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
+import org.opensaml.xmlsec.signature.support.SignatureValidationParametersCriterion;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -2338,6 +2339,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			criteriaSet.add(
 				new EntityRoleCriterion(IDPSSODescriptor.DEFAULT_ELEMENT_NAME));
 			criteriaSet.add(new ProtocolCriterion(SAMLConstants.SAML20P_NS));
+			criteriaSet.add(
+				new SignatureValidationParametersCriterion(
+					getSignatureValidationParameters()));
 			criteriaSet.add(new UsageCriterion(UsageType.SIGNING));
 
 			if (!trustEngine.validate(signature, criteriaSet)) {

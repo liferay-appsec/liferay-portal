@@ -232,22 +232,8 @@ public abstract class BaseProfile {
 			inboundMessageContext.getSubcontext(
 				SecurityParametersContext.class, true);
 
-		BasicSignatureValidationParametersResolver
-			basicSignatureValidationParametersResolver =
-				new BasicSignatureValidationParametersResolver();
-
-		SignatureValidationParameters signatureValidationParameters =
-			basicSignatureValidationParametersResolver.resolveSingle(
-				new CriteriaSet(
-					new SignatureValidationConfigurationCriterion(
-						ConfigurationServiceBootstrapUtil.get(
-							SignatureValidationConfiguration.class))));
-
-		signatureValidationParameters.setSignatureTrustEngine(
-			getSignatureTrustEngine());
-
 		securityParametersContext.setSignatureValidationParameters(
-			signatureValidationParameters);
+			getSignatureValidationParameters());
 
 		inboundMessageContext.addSubcontext(
 			messageContext.getSubcontext(SAMLProtocolContext.class));
@@ -636,6 +622,26 @@ public abstract class BaseProfile {
 
 		return _chainingSignatureTrustEngineDCLSingleton.getSingleton(
 			this::_createChainingSignatureTrustEngine);
+	}
+
+	protected SignatureValidationParameters getSignatureValidationParameters()
+		throws ResolverException, SamlException {
+
+		BasicSignatureValidationParametersResolver
+			basicSignatureValidationParametersResolver =
+				new BasicSignatureValidationParametersResolver();
+
+		SignatureValidationParameters signatureValidationParameters =
+			basicSignatureValidationParametersResolver.resolveSingle(
+				new CriteriaSet(
+					new SignatureValidationConfigurationCriterion(
+						ConfigurationServiceBootstrapUtil.get(
+							SignatureValidationConfiguration.class))));
+
+		signatureValidationParameters.setSignatureTrustEngine(
+			getSignatureTrustEngine());
+
+		return signatureValidationParameters;
 	}
 
 	protected Credential getSigningCredential() throws SamlException {
