@@ -18,7 +18,8 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.security.fips.FIPSFederationTokenAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -264,10 +265,11 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 						jwsHeaders.getAlgorithm());
 				}
 				catch (SecurityException securityException) {
-					FIPSFederationTokenAuditUtil.writeRejected(
-						OAuth2RequestUtil.getRequestURI(),
-						jwsHeaders.getAlgorithm(), jwtClaims.getIssuer(),
-						"JWT");
+					FIPSAuditUtil.write(
+						FIPSAuditEventFactory.createFederationTokenRejected(
+							OAuth2RequestUtil.getRequestURI(),
+							jwsHeaders.getAlgorithm(), jwtClaims.getIssuer(),
+							"JWT"));
 
 					throw securityException;
 				}

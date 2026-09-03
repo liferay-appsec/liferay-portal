@@ -34,7 +34,7 @@ import org.osgi.framework.BundleActivator;
 public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 
 	@Test
-	public void testWriteRejected() throws Exception {
+	public void testFederationTokenRejected() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil",
 				LoggerTestUtil.WARN)) {

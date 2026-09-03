@@ -6,20 +6,15 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 
 /**
  * @author Jorge García Jiménez
  */
-public class FIPSFederationTokenAuditUtil {
+public class FIPSAuditEventFactory {
 
-	public static void writeRejected(
+	public static FIPSAuditEvent createFederationTokenRejected(
 		String receivingEndpoint, String rejectedValue, String tokenIssuer,
 		String tokenType) {
-
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
-		}
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			"federation-token-rejected", FIPSAuditEvent.Severity.WARNING);
@@ -31,7 +26,7 @@ public class FIPSFederationTokenAuditUtil {
 		fipsAuditEvent.put("token-issuer", GetterUtil.getString(tokenIssuer));
 		fipsAuditEvent.put("token-type", GetterUtil.getString(tokenType));
 
-		FIPSAuditUtil.write(fipsAuditEvent);
+		return fipsAuditEvent;
 	}
 
 }
