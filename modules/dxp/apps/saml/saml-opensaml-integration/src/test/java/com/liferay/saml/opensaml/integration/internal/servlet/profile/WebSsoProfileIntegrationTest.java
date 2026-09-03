@@ -9,6 +9,8 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.cookies.CookiesManager;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -76,6 +78,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import org.opensaml.core.criterion.EntityIdCriterion;
@@ -303,6 +307,93 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		Assert.assertNotEquals(
 			"http://www.w3.org/2000/09/xmldsig#rsa-sha1",
 			signature.getSignatureAlgorithm());
+	}
+
+	@Test
+	public void testDecodeAuthnRequestBlacklistedAlgorithmIsAudited()
+		throws Exception {
+
+		SamlSpIdpConnection samlSpIdpConnection = new SamlSpIdpConnectionImpl();
+
+		samlSpIdpConnection.setSamlIdpEntityId(IDP_ENTITY_ID);
+
+		_setUpWebSsoProfilerImpl(samlSpIdpConnection);
+
+		ReflectionTestUtil.invoke(
+			_webSsoProfileImpl.getMetadataResolver(), "doDestroy",
+			new Class<?>[0]);
+
+		CachingChainingMetadataResolver cachingChainingMetadataResolver =
+			(CachingChainingMetadataResolver)
+				_webSsoProfileImpl.getMetadataResolver();
+
+		cachingChainingMetadataResolver.addMetadataResolver(
+			new MockMetadataResolver(true));
+
+		MockHttpServletRequest loginMockHttpServletRequest =
+			getMockHttpServletRequest(LOGIN_URL);
+
+		loginMockHttpServletRequest.setAttribute(
+			SamlWebKeys.SAML_SP_IDP_CONNECTION, samlSpIdpConnection);
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		_webSsoProfileImpl.doSendAuthnRequest(
+			loginMockHttpServletRequest, mockHttpServletResponse, RELAY_STATE);
+
+		prepareIdentityProvider(IDP_ENTITY_ID);
+
+		MockHttpServletRequest mockHttpServletRequest =
+			getMockHttpServletRequest(
+				mockHttpServletResponse.getRedirectedUrl());
+
+		Mockito.when(
+			samlProviderConfiguration.authnRequestSignatureRequired()
+		).thenReturn(
+			true
+		);
+
+		// Blacklist the algorithm the redirect binding actually signed with
+
+		String signatureAlgorithm = mockHttpServletRequest.getParameter(
+			"SigAlg");
+
+		Map<String, Object> properties = HashMapBuilder.<String, Object>put(
+			"blacklisted.algorithms", new String[] {signatureAlgorithm}
+		).build();
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			// An operator blacklist rejects the algorithm whether or not FIPS
+			// mode is on, but only FIPS mode records the rejection
+
+			try (SafeCloseable safeCloseable =
+					_activateSecurityConfigurationBootstrap(
+						false, properties)) {
+
+				Assert.assertThrows(
+					MessageHandlerException.class,
+					() -> _webSsoProfileImpl.decodeAuthnRequest(
+						mockHttpServletRequest, new MockHttpServletResponse()));
+
+				fipsAuditUtilMockedStatic.verifyNoInteractions();
+			}
+
+			try (SafeCloseable safeCloseable =
+					_activateSecurityConfigurationBootstrap(true, properties)) {
+
+				Assert.assertThrows(
+					MessageHandlerException.class,
+					() -> _webSsoProfileImpl.decodeAuthnRequest(
+						mockHttpServletRequest, new MockHttpServletResponse()));
+			}
+
+			_assertFederationTokenRejected(
+				fipsAuditUtilMockedStatic, "/c/portal/saml/sso",
+				signatureAlgorithm, SP_ENTITY_ID);
+		}
 	}
 
 	@Test
@@ -783,6 +874,23 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 	}
 
 	@Test
+	public void testVerifyAssertionSignatureInvalidSignatureIsNotAudited()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(true);
+			MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			Assert.assertThrows(
+				SignatureException.class,
+				() -> _testVerifyAssertionSignature(UNKNOWN_ENTITY_ID));
+
+			fipsAuditUtilMockedStatic.verifyNoInteractions();
+		}
+	}
+
+	@Test
 	public void testVerifyAssertionSignatureNoSignatureNotRequired()
 		throws Exception {
 
@@ -854,37 +962,82 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
-	@Test(expected = SignatureException.class)
-	public void testVerifyAssertionSignatureSHA1AlgorithmWithFIPSMode()
-		throws Exception {
+	@Test
+	public void testVerifyAssertionSignatureSHA1IsAudited() throws Exception {
+		try (SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(true)) {
 
-		_activateSecurityConfigurationBootstrap(true);
+			// SHA1 signature method
 
-		_testVerifyAssertionSignature(
-			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
-			SignatureConstants.ALGO_ID_DIGEST_SHA256);
+			try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+					Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+				Assert.assertThrows(
+					SignatureException.class,
+					() -> _testVerifyAssertionSignature(
+						SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+						SignatureConstants.ALGO_ID_DIGEST_SHA256));
+
+				_assertFederationTokenRejected(
+					fipsAuditUtilMockedStatic, _ACS_REQUEST_URI,
+					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+					IDP_ENTITY_ID);
+			}
+
+			// SHA1 reference digest method
+
+			try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+					Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+				Assert.assertThrows(
+					SignatureException.class,
+					() -> _testVerifyAssertionSignature(
+						SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256,
+						SignatureConstants.ALGO_ID_DIGEST_SHA1));
+
+				_assertFederationTokenRejected(
+					fipsAuditUtilMockedStatic, _ACS_REQUEST_URI,
+					SignatureConstants.ALGO_ID_DIGEST_SHA1, IDP_ENTITY_ID);
+			}
+		}
 	}
 
 	@Test
-	public void testVerifyAssertionSignatureSHA1AlgorithmWithoutFIPSMode()
+	public void testVerifyAssertionSignatureSHA1WithFIPSMode()
 		throws Exception {
 
-		_activateSecurityConfigurationBootstrap(false);
+		try (SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(true)) {
 
-		_testVerifyAssertionSignature(
-			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
-			SignatureConstants.ALGO_ID_DIGEST_SHA256);
+			// SHA1 signature method
+
+			Assert.assertThrows(
+				SignatureException.class,
+				() -> _testVerifyAssertionSignature(
+					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+					SignatureConstants.ALGO_ID_DIGEST_SHA256));
+
+			// SHA1 reference digest method
+
+			Assert.assertThrows(
+				SignatureException.class,
+				() -> _testVerifyAssertionSignature(
+					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256,
+					SignatureConstants.ALGO_ID_DIGEST_SHA1));
+		}
 	}
 
-	@Test(expected = SignatureException.class)
-	public void testVerifyAssertionSignatureSHA1DigestMethodWithFIPSMode()
+	@Test
+	public void testVerifyAssertionSignatureSHA1WithoutFIPSMode()
 		throws Exception {
 
-		_activateSecurityConfigurationBootstrap(true);
+		try (SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(false)) {
 
-		_testVerifyAssertionSignature(
-			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256,
-			SignatureConstants.ALGO_ID_DIGEST_SHA1);
+			_testVerifyAssertionSignature(
+				SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+				SignatureConstants.ALGO_ID_DIGEST_SHA256);
+		}
 	}
 
 	@Test
@@ -1325,15 +1478,24 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			nameID, subjectConfirmationData);
 	}
 
-	private void _activateSecurityConfigurationBootstrap(boolean fipsEnabled) {
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", fipsEnabled)) {
+	private SafeCloseable _activateSecurityConfigurationBootstrap(
+		boolean fipsEnabled) {
 
-			ReflectionTestUtil.invoke(
-				new SecurityConfigurationBootstrap(), "activate",
-				new Class<?>[] {Map.class}, Collections.emptyMap());
-		}
+		return _activateSecurityConfigurationBootstrap(
+			fipsEnabled, Collections.emptyMap());
+	}
+
+	private SafeCloseable _activateSecurityConfigurationBootstrap(
+		boolean fipsEnabled, Map<String, Object> properties) {
+
+		SafeCloseable safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
+			"FIPS_ENABLED", fipsEnabled);
+
+		ReflectionTestUtil.invoke(
+			new SecurityConfigurationBootstrap(), "activate",
+			new Class<?>[] {Map.class}, properties);
+
+		return safeCloseable;
 	}
 
 	private void _assertAbstractSAMLEntityContext(
@@ -1351,6 +1513,33 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		Assert.assertTrue(
 			expectedRoleDescriptorClass.isInstance(
 				samlMetadataContext.getRoleDescriptor()));
+	}
+
+	private void _assertFederationTokenRejected(
+		MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic,
+		String receivingEndpoint, String rejectedValue, String tokenIssuer) {
+
+		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
+			FIPSAuditEvent.class);
+
+		fipsAuditUtilMockedStatic.verify(
+			() -> FIPSAuditUtil.write(argumentCaptor.capture()));
+
+		FIPSAuditEvent fipsAuditEvent = argumentCaptor.getValue();
+
+		Assert.assertEquals(
+			"federation-token-rejected", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"receiving-endpoint", receivingEndpoint
+			).put(
+				"rejected-value", rejectedValue
+			).put(
+				"token-issuer", tokenIssuer
+			).put(
+				"token-type", _TOKEN_TYPE_SAML
+			).build(),
+			fipsAuditEvent.getFields());
 	}
 
 	private void _assertInboundMessageContext(
@@ -1511,6 +1700,10 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			mockHttpServletRequest, assertion.getSignature(), messageContext,
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
+
+	private static final String _ACS_REQUEST_URI = "/c/portal/saml/acs";
+
+	private static final String _TOKEN_TYPE_SAML = "SAML";
 
 	private static final BundleContext _bundleContext =
 		SystemBundleUtil.getBundleContext();
