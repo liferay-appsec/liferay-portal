@@ -561,7 +561,6 @@ public class FIPSModeValidator {
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
 		_validatePlaintextSecrets();
-
 		validateSessionTimeout(PropsValues.SESSION_TIMEOUT);
 	}
 
