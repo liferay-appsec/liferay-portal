@@ -9,6 +9,8 @@ import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 
 import com.nimbusds.jose.JOSEException;
@@ -27,6 +29,7 @@ import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
@@ -191,6 +194,9 @@ public class OpenIdConnectTokenRequestUtil {
 			OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithmName);
 		}
 		catch (SecurityException securityException) {
+			_writeRejectedFederationToken(
+				algorithmName, oidcProviderMetadata.getIssuer());
+
 			throw new OpenIdConnectServiceException.TokenException(
 				securityException.getMessage(), securityException);
 		}
@@ -232,6 +238,28 @@ public class OpenIdConnectTokenRequestUtil {
 				StringBundler.concat(
 					"Unable to validate tokens for client \"", clientID, "\": ",
 					exception.getMessage()),
+				exception);
+		}
+	}
+
+	private static void _writeRejectedFederationToken(
+		String algorithmName, Issuer issuer) {
+
+		try {
+			String tokenIssuer = null;
+
+			if (issuer != null) {
+				tokenIssuer = issuer.getValue();
+			}
+
+			FIPSAuditUtil.write(
+				FIPSAuditEventFactory.createFederationTokenRejected(
+					"backchannel", algorithmName, tokenIssuer, "OIDC"));
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to write the rejected federation token FIPS audit " +
+					"event",
 				exception);
 		}
 	}
