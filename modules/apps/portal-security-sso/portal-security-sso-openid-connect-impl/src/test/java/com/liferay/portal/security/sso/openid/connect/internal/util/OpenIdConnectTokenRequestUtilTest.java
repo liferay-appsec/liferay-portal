@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
+import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -200,6 +201,54 @@ public class OpenIdConnectTokenRequestUtilTest {
 		}
 		catch (OpenIdConnectServiceException.TokenException tokenException) {
 			Assert.assertNotNull(tokenException);
+		}
+	}
+
+	@Test
+	public void testRequestWithDisallowedIDTokenJWSAlgorithm()
+		throws Exception {
+
+		OIDCClientMetadata oidcClientMetadata = Mockito.mock(
+			OIDCClientMetadata.class);
+
+		String algorithmName = "HS256";
+
+		Mockito.when(
+			oidcClientMetadata.getIDTokenJWSAlg()
+		).thenReturn(
+			new JWSAlgorithm(algorithmName)
+		);
+
+		Mockito.when(
+			_oidcClientInformation.getOIDCMetadata()
+		).thenReturn(
+			oidcClientMetadata
+		);
+
+		try (MockedStatic<OAuth2JWKValidatorUtil>
+				oAuth2JWKValidatorUtilMockedStatic = Mockito.mockStatic(
+					OAuth2JWKValidatorUtil.class)) {
+
+			String message = RandomTestUtil.randomString();
+
+			oAuth2JWKValidatorUtilMockedStatic.when(
+				() -> OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithmName)
+			).thenThrow(
+				new SecurityException(message)
+			);
+
+			OpenIdConnectServiceException.TokenException tokenException =
+				Assert.assertThrows(
+					OpenIdConnectServiceException.TokenException.class,
+					() -> OpenIdConnectTokenRequestUtil.request(
+						_oidcClientInformation, _oidcProviderMetadata,
+						_refreshToken, 1000, _TOKEN_REQUEST_PARAMETERS));
+
+			Assert.assertEquals(message, tokenException.getMessage());
+
+			oAuth2JWKValidatorUtilMockedStatic.verify(
+				() -> OAuth2JWKValidatorUtil.validateJWSAlgorithm(
+					algorithmName));
 		}
 	}
 
