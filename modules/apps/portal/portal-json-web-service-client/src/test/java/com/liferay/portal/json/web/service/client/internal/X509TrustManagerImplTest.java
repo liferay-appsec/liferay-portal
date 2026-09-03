@@ -26,14 +26,14 @@ public class X509TrustManagerImplTest {
 
 	@Test
 	public void testConstructor() {
-		Assert.assertNotNull(new X509TrustManagerImpl());
-		Assert.assertNotNull(new X509TrustManagerImpl(null, true));
+		new X509TrustManagerImpl();
+		new X509TrustManagerImpl(null, true);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			Assert.assertNotNull(new X509TrustManagerImpl(null, false));
+			new X509TrustManagerImpl(null, false);
 
 			SecurityException securityException1 = Assert.assertThrows(
 				SecurityException.class, () -> new X509TrustManagerImpl());

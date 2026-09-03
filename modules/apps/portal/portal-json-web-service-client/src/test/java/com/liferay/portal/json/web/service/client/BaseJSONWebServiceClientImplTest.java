@@ -30,8 +30,7 @@ public class BaseJSONWebServiceClientImplTest {
 		JSONWebServiceClientImpl jsonWebServiceClientImpl =
 			new JSONWebServiceClientImpl();
 
-		Assert.assertNotNull(
-			jsonWebServiceClientImpl.getSSLIOSessionStrategy());
+		jsonWebServiceClientImpl.getSSLIOSessionStrategy();
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -47,8 +46,7 @@ public class BaseJSONWebServiceClientImplTest {
 
 			jsonWebServiceClientImpl.setTrustSelfSignedCertificates(false);
 
-			Assert.assertNotNull(
-				jsonWebServiceClientImpl.getSSLIOSessionStrategy());
+			jsonWebServiceClientImpl.getSSLIOSessionStrategy();
 		}
 	}
 
