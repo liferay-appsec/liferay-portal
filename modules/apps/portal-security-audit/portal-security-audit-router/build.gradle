@@ -16,4 +16,9 @@ dependencies {
 	compileOnly project(":core:petra:petra-function")
 	compileOnly project(":core:petra:petra-string")
 	testCompileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testImplementation project(":core:petra:petra-concurrent")
+	testImplementation project(":core:petra:petra-io")
+	testImplementation project(":core:petra:petra-lang")
+	testImplementation project(":core:petra:petra-memory")
+	testImplementation project(":core:petra:petra-process")
 }
