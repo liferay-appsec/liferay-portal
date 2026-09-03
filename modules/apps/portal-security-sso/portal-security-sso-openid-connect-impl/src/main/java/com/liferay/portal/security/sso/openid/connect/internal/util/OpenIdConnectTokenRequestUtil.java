@@ -5,12 +5,12 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
-import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 
 import com.nimbusds.jose.JOSEException;
@@ -191,7 +191,7 @@ public class OpenIdConnectTokenRequestUtil {
 		}
 
 		try {
-			OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithmName);
+			FIPSModeValidator.validateJWSAlgorithm(algorithmName);
 		}
 		catch (SecurityException securityException) {
 			_writeRejectedFederationToken(

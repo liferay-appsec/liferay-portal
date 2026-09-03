@@ -5,9 +5,9 @@
 
 package com.liferay.portal.security.sso.openid.connect.internal.util;
 
-import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
@@ -239,14 +239,13 @@ public class OpenIdConnectTokenRequestUtilTest {
 
 		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
 				Mockito.mockStatic(FIPSAuditUtil.class);
-			MockedStatic<OAuth2JWKValidatorUtil>
-				oAuth2JWKValidatorUtilMockedStatic = Mockito.mockStatic(
-					OAuth2JWKValidatorUtil.class)) {
+			MockedStatic<FIPSModeValidator> fipsModeValidatorMockedStatic =
+				Mockito.mockStatic(FIPSModeValidator.class)) {
 
 			String message = RandomTestUtil.randomString();
 
-			oAuth2JWKValidatorUtilMockedStatic.when(
-				() -> OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithmName)
+			fipsModeValidatorMockedStatic.when(
+				() -> FIPSModeValidator.validateJWSAlgorithm(algorithmName)
 			).thenThrow(
 				new SecurityException(message)
 			);
@@ -260,9 +259,8 @@ public class OpenIdConnectTokenRequestUtilTest {
 
 			Assert.assertEquals(message, tokenException.getMessage());
 
-			oAuth2JWKValidatorUtilMockedStatic.verify(
-				() -> OAuth2JWKValidatorUtil.validateJWSAlgorithm(
-					algorithmName));
+			fipsModeValidatorMockedStatic.verify(
+				() -> FIPSModeValidator.validateJWSAlgorithm(algorithmName));
 
 			ArgumentCaptor<FIPSAuditEvent> argumentCaptor =
 				ArgumentCaptor.forClass(FIPSAuditEvent.class);

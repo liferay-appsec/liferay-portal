@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.PropsValues;
 
@@ -67,15 +68,7 @@ public class OAuth2JWKValidatorUtil {
 	}
 
 	public static void validateJWSAlgorithm(String algorithm) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
-		}
-
-		if ((algorithm == null) || !_allowedJWSAlgorithms.contains(algorithm)) {
-			throw new SecurityException(
-				"JWS algorithm \"" + algorithm +
-					"\" is not allowed in FIPS mode");
-		}
+		FIPSModeValidator.validateJWSAlgorithm(algorithm);
 	}
 
 	private static int _decodeBase64URLBitLength(String base64) {
@@ -143,9 +136,6 @@ public class OAuth2JWKValidatorUtil {
 
 	private static final Set<String> _allowedECCurves = Set.of(
 		"P-256", "P-384", "P-521");
-	private static final Set<String> _allowedJWSAlgorithms = Set.of(
-		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
-		"RS384", "RS512");
 	private static final Set<String> _allowedOKPCurves = Set.of(
 		"Ed25519", "Ed448");
 
