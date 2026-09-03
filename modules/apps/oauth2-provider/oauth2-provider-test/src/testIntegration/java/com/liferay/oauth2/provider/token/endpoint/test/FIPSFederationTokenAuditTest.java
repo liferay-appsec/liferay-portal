@@ -36,34 +36,8 @@ public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 	@Test
 	public void testWriteRejected() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_LOGGER_NAME, LoggerTestUtil.WARN);
-			SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true)) {
-
-			Response response = _getTokenResponse();
-
-			Assert.assertEquals(401, response.getStatus());
-
-			List<String> messages = _getFederationTokenRejectedMessages(
-				logCapture);
-
-			Assert.assertEquals(messages.toString(), 1, messages.size());
-
-			String message = messages.get(0);
-
-			_assertField("fips-state=", message);
-			_assertField("offending-value=HS256", message);
-			_assertField("receiving-endpoint=/o/oauth2/token", message);
-			_assertField("token-issuer=" + TEST_CLIENT_ID_2, message);
-			_assertField("token-type=JWT", message);
-		}
-	}
-
-	@Test
-	public void testWriteRejectedWithoutFIPSMode() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_LOGGER_NAME, LoggerTestUtil.WARN)) {
+				"com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil",
+				LoggerTestUtil.WARN)) {
 
 			Response response = _getTokenResponse();
 
@@ -73,6 +47,29 @@ public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 				logCapture);
 
 			Assert.assertTrue(messages.isEmpty());
+
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				response = _getTokenResponse();
+
+				Assert.assertEquals(401, response.getStatus());
+
+				messages = _getFederationTokenRejectedMessages(logCapture);
+
+				Assert.assertEquals(messages.toString(), 1, messages.size());
+
+				String message = messages.get(0);
+
+				Assert.assertTrue(message.contains("fips-state="));
+				Assert.assertTrue(
+					message.contains("receiving-endpoint=/o/oauth2/token"));
+				Assert.assertTrue(message.contains("rejected-value=HS256"));
+				Assert.assertTrue(
+					message.contains("token-issuer=" + TEST_CLIENT_ID_2));
+				Assert.assertTrue(message.contains("token-type=JWT"));
+			}
 		}
 	}
 
@@ -80,10 +77,6 @@ public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 	protected BundleActivator getBundleActivator() {
 		return new TestPreparatorBundleActivator() {
 		};
-	}
-
-	private void _assertField(String field, String message) {
-		Assert.assertTrue(message.contains(field));
 	}
 
 	private List<String> _getFederationTokenRejectedMessages(
@@ -104,8 +97,5 @@ public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 				user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD),
 			clientAuthentications.get(TEST_CLIENT_ID_2));
 	}
-
-	private static final String _LOGGER_NAME =
-		"com.liferay.portal.kernel.internal.log4j.FIPSLog4jUtil";
 
 }

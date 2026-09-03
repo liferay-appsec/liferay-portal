@@ -265,9 +265,9 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 				}
 				catch (SecurityException securityException) {
 					FIPSFederationTokenAuditUtil.writeRejected(
-						jwsHeaders.getAlgorithm(),
 						OAuth2RequestUtil.getRequestURI(),
-						jwtClaims.getIssuer(), "JWT");
+						jwsHeaders.getAlgorithm(), jwtClaims.getIssuer(),
+						"JWT");
 
 					throw securityException;
 				}

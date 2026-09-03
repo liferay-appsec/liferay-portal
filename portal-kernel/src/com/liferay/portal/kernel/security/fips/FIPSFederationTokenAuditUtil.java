@@ -14,7 +14,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 public class FIPSFederationTokenAuditUtil {
 
 	public static void writeRejected(
-		String offendingValue, String receivingEndpoint, String tokenIssuer,
+		String receivingEndpoint, String rejectedValue, String tokenIssuer,
 		String tokenType) {
 
 		if (!PropsValues.FIPS_ENABLED) {
@@ -24,16 +24,12 @@ public class FIPSFederationTokenAuditUtil {
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			"federation-token-rejected", FIPSAuditEvent.Severity.WARNING);
 
-		FIPSApplicationState fipsApplicationState =
-			FIPSApplicationStateMachineUtil.getFIPSApplicationState();
-
-		fipsAuditEvent.put("fips-state", fipsApplicationState.name());
-
 		fipsAuditEvent.put(
-			"offending-value", GetterUtil.getString(offendingValue));
-		fipsAuditEvent.put("receiving-endpoint", receivingEndpoint);
+			"receiving-endpoint", GetterUtil.getString(receivingEndpoint));
+		fipsAuditEvent.put(
+			"rejected-value", GetterUtil.getString(rejectedValue));
 		fipsAuditEvent.put("token-issuer", GetterUtil.getString(tokenIssuer));
-		fipsAuditEvent.put("token-type", tokenType);
+		fipsAuditEvent.put("token-type", GetterUtil.getString(tokenType));
 
 		FIPSAuditUtil.write(fipsAuditEvent);
 	}

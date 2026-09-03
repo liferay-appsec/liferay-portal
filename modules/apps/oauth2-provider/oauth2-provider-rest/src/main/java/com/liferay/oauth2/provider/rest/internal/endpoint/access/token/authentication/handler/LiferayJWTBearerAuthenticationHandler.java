@@ -128,7 +128,7 @@ public class LiferayJWTBearerAuthenticationHandler
 			}
 			catch (SecurityException securityException) {
 				FIPSFederationTokenAuditUtil.writeRejected(
-					algorithm, OAuth2RequestUtil.getRequestURI(),
+					OAuth2RequestUtil.getRequestURI(), algorithm,
 					GetterUtil.getString(
 						jwtToken.getClaim(JwtConstants.CLAIM_ISSUER), null),
 					"JWT");
