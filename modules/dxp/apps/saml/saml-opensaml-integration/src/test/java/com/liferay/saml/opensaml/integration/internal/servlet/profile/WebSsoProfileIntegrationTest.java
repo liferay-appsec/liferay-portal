@@ -5,12 +5,14 @@
 
 package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.cookies.CookiesManager;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -50,6 +52,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.ByteArrayOutputStream;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -108,7 +111,10 @@ import org.opensaml.saml.saml2.metadata.Extensions;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.security.credential.Credential;
+import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
+import org.opensaml.xmlsec.signature.support.SignatureSupport;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -840,6 +846,39 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			null, messageContext, _webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
+	@Test(expected = SignatureException.class)
+	public void testVerifyAssertionSignatureSHA1AlgorithmWithFIPSMode()
+		throws Exception {
+
+		_activateSecurityConfigurationBootstrap(true);
+
+		_testVerifyAssertionSignature(
+			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+			SignatureConstants.ALGO_ID_DIGEST_SHA256);
+	}
+
+	@Test
+	public void testVerifyAssertionSignatureSHA1AlgorithmWithoutFIPSMode()
+		throws Exception {
+
+		_activateSecurityConfigurationBootstrap(false);
+
+		_testVerifyAssertionSignature(
+			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
+			SignatureConstants.ALGO_ID_DIGEST_SHA256);
+	}
+
+	@Test(expected = SignatureException.class)
+	public void testVerifyAssertionSignatureSHA1DigestMethodWithFIPSMode()
+		throws Exception {
+
+		_activateSecurityConfigurationBootstrap(true);
+
+		_testVerifyAssertionSignature(
+			SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256,
+			SignatureConstants.ALGO_ID_DIGEST_SHA1);
+	}
+
 	@Test
 	public void testVerifyAssertionSignatureValidSignature() throws Exception {
 		_testVerifyAssertionSignature(IDP_ENTITY_ID);
@@ -1278,6 +1317,17 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			nameID, subjectConfirmationData);
 	}
 
+	private void _activateSecurityConfigurationBootstrap(boolean fipsEnabled) {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", fipsEnabled)) {
+
+			ReflectionTestUtil.invoke(
+				new SecurityConfigurationBootstrap(), "activate",
+				new Class<?>[] {Map.class}, Collections.emptyMap());
+		}
+	}
+
 	private void _assertAbstractSAMLEntityContext(
 		AbstractSAMLEntityContext abstractSAMLEntityContext,
 		String expectedEntityId, Class<?> expectedRoleDescriptorClass) {
@@ -1402,6 +1452,38 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		Assertion assertion = OpenSamlUtil.buildAssertion();
 
 		OpenSamlUtil.signObject(assertion, getCredential(entityId), null);
+
+		MessageContext<?> messageContext = _webSsoProfileImpl.getMessageContext(
+			getMockHttpServletRequest(ACS_URL), new MockHttpServletResponse());
+
+		SAMLPeerEntityContext samlPeerEntityContext =
+			messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
+		samlPeerEntityContext.setEntityId(IDP_ENTITY_ID);
+
+		_webSsoProfileImpl.verifyAssertionSignature(
+			assertion.getSignature(), messageContext,
+			_webSsoProfileImpl.getSignatureTrustEngine());
+	}
+
+	private void _testVerifyAssertionSignature(
+			String signatureAlgorithm, String signatureReferenceDigestMethod)
+		throws Exception {
+
+		Assertion assertion = OpenSamlUtil.buildAssertion();
+
+		SignatureSigningParameters signatureSigningParameters =
+			new SignatureSigningParameters();
+
+		signatureSigningParameters.setSignatureAlgorithm(signatureAlgorithm);
+		signatureSigningParameters.setSignatureCanonicalizationAlgorithm(
+			SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+		signatureSigningParameters.setSignatureReferenceDigestMethod(
+			signatureReferenceDigestMethod);
+		signatureSigningParameters.setSigningCredential(
+			getCredential(IDP_ENTITY_ID));
+
+		SignatureSupport.signObject(assertion, signatureSigningParameters);
 
 		MessageContext<?> messageContext = _webSsoProfileImpl.getMessageContext(
 			getMockHttpServletRequest(ACS_URL), new MockHttpServletResponse());
