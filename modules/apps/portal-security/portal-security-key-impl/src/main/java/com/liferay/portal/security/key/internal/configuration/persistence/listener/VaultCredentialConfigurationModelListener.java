@@ -12,9 +12,6 @@ import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeInf
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.cache.PortalCache;
-import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
-import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -24,7 +21,6 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
-import com.liferay.portal.security.key.internal.secret.SecretCacheUtil;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretManager;
 
@@ -109,10 +105,6 @@ public class VaultCredentialConfigurationModelListener
 	@Activate
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
-
-		_portalCache = PortalCacheHelperUtil.getPortalCache(
-			PortalCacheManagerNames.SINGLE_VM,
-			SecretCacheUtil.PORTAL_CACHE_NAME);
 	}
 
 	private void _checkKeyReference(String identifier, String pid, String value)
@@ -183,13 +175,8 @@ public class VaultCredentialConfigurationModelListener
 					identifier, StringPool.STAR, KeyReference.Type.SECRET),
 				value)) {
 
-			String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
+			return KeyReferenceUtil.toKeyReferenceString(
 				_secretManager.putSecret(companyId, secret));
-
-			_portalCache.remove(
-				SecretCacheUtil.getKey(companyId, keyReferenceString));
-
-			return keyReferenceString;
 		}
 	}
 
@@ -202,8 +189,6 @@ public class VaultCredentialConfigurationModelListener
 
 	@Reference
 	private ExtendedMetaTypeService _extendedMetaTypeService;
-
-	private PortalCache<String, String> _portalCache;
 
 	@Reference
 	private SecretManager _secretManager;
