@@ -12,7 +12,6 @@ import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeInf
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -20,7 +19,6 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
-import com.liferay.portal.security.key.internal.secret.SecretCacheUtil;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -122,9 +120,6 @@ public class VaultCredentialConfigurationModelListenerTest {
 			_vaultCredentialConfigurationModelListener,
 			"_extendedMetaTypeService", _extendedMetaTypeService);
 		ReflectionTestUtil.setFieldValue(
-			_vaultCredentialConfigurationModelListener, "_portalCache",
-			_portalCache);
-		ReflectionTestUtil.setFieldValue(
 			_vaultCredentialConfigurationModelListener, "_secretManager",
 			_secretManager);
 	}
@@ -166,12 +161,6 @@ public class VaultCredentialConfigurationModelListenerTest {
 
 		Assert.assertEquals(host, properties.get("host"));
 		Assert.assertEquals(keyReferenceString, properties.get("credential"));
-
-		Mockito.verify(
-			_portalCache
-		).remove(
-			SecretCacheUtil.getKey(CompanyConstants.SYSTEM, keyReferenceString)
-		);
 
 		Secret secret = atomicReference.get();
 
@@ -312,9 +301,6 @@ public class VaultCredentialConfigurationModelListenerTest {
 
 	@Mock
 	private ExtendedObjectClassDefinition _objectClassDefinition;
-
-	@Mock
-	private PortalCache<String, String> _portalCache;
 
 	@Mock
 	private SecretManager _secretManager;
