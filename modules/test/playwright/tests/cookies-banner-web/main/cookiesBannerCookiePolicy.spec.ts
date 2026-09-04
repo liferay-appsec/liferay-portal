@@ -109,6 +109,80 @@ test('LPD-30561 Cookie Banner Cookie Policy Page', async ({
 });
 
 test(
+	'Cookie Policy Page Is Readable by a Guest',
+	{tag: '@LPD-101999'},
+	async ({browser, consentManagerConfigurationPage}) => {
+		await test.step('Enable Consent Manager with Explicit Cookie Consent Mode', async () => {
+			await updateConsentManagerConfiguration(
+				consentManagerConfigurationPage.page,
+				{
+					enabled: true,
+					explicitCookieConsentMode: true,
+					forceReload: true,
+				}
+			);
+		});
+
+		const guestContext = await browser.newContext({
+			storageState: {cookies: [], origins: []},
+		});
+
+		const guestPage = await guestContext.newPage();
+
+		try {
+			await test.step('Go to Cookie Policy page as a guest', async () => {
+				await guestPage.goto('/');
+
+				const cookiesBannerContainer = guestPage.locator(
+					'div[role="dialog"][aria-modal="true"]'
+				);
+
+				await expect(cookiesBannerContainer).toBeVisible();
+
+				await cookiesBannerContainer.locator('p.mb-0 a').click();
+
+				await expect(guestPage.getByText('Cookies List')).toBeVisible({
+					timeout: 100 * 1000,
+				});
+			});
+
+			await test.step('Assert the guest reads every cookie table', async () => {
+				await expect(
+					guestPage.getByText(
+						'You do not have the roles required to access this portlet.'
+					)
+				).toHaveCount(0);
+
+				const objectDefinitionPortlets = await guestPage
+					.locator(
+						'[id^="portlet_com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet_"]'
+					)
+					.all();
+
+				expect(objectDefinitionPortlets.length).toBe(4);
+
+				for (const objectDefinitionPortlet of objectDefinitionPortlets) {
+					await expect(
+						objectDefinitionPortlet.locator('.fds thead')
+					).toBeVisible({
+						timeout: 100 * 1000,
+					});
+
+					const tableRows = await objectDefinitionPortlet
+						.locator('.fds tbody tr')
+						.all();
+
+					expect(tableRows.length).toBeGreaterThan(0);
+				}
+			});
+		}
+		finally {
+			await guestContext.close();
+		}
+	}
+);
+
+test(
 	'Consent Manager Adjustments',
 	{tag: '@LPD-60002'},
 	async ({browser, page, systemSettingsPage}) => {
