@@ -6,7 +6,9 @@
 package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -19,10 +21,15 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 
 import java.lang.reflect.Method;
 
 import java.net.URL;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import java.security.Provider;
 import java.security.Security;
@@ -34,8 +41,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import org.xml.sax.InputSource;
 
 /**
  * @author Caio Farias
@@ -96,7 +114,12 @@ public class FIPSModeValidator {
 		_validateFIPSProvider(providers);
 		_validateProviders(providers);
 
-		_validateProperties();
+		_validateAllowedPropertyValues(System::getProperty);
+		_validatePortalProperties();
+		_validateRequiredPropertyValues(
+			Security::getProperty, _requiredSecurityProperties);
+		_validateRequiredPropertyValues(
+			System::getProperty, _requiredSystemProperties);
 	}
 
 	public static void validateAlgorithm(String algorithm) {
@@ -113,10 +136,12 @@ public class FIPSModeValidator {
 
 		validateAlgorithm(algorithm);
 
-		if ((keySize != 0) && !_allowedKeySizes.contains(keySize)) {
-			throw new SecurityException(
-				"AES key must be 128, 192, or 256 bits");
+		if ((keySize == 0) || _allowedSymmetricKeySizes.contains(keySize)) {
+			return;
 		}
+
+		throw new SecurityException(
+			"Key size " + keySize + " is not allowed in FIPS mode");
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {
@@ -164,6 +189,198 @@ public class FIPSModeValidator {
 		return plaintextSecretProperties;
 	}
 
+	private static boolean _isNotAllowedProviderName(String name) {
+		if (Validator.isNull(name)) {
+			return true;
+		}
+
+		return !_allowedProviderNames.containsKey(name);
+	}
+
+	private static Document _readChannelPropertiesDocument(
+		String channelPropertiesLocation) {
+
+		String channelPropertiesXML;
+
+		try (InputStream inputStream = Files.newInputStream(
+				Paths.get(channelPropertiesLocation))) {
+
+			channelPropertiesXML = StringUtil.read(inputStream);
+		}
+		catch (IOException ioException) {
+			throw new SecurityException(
+				"Unable to read the cluster link channel properties \"" +
+					channelPropertiesLocation + "\" in FIPS mode",
+				ioException);
+		}
+
+		try {
+			DocumentBuilderFactory documentBuilderFactory =
+				DocumentBuilderFactory.newInstance();
+
+			documentBuilderFactory.setExpandEntityReferences(false);
+			documentBuilderFactory.setFeature(
+				XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			documentBuilderFactory.setFeature(
+				"http://apache.org/xml/features/disallow-doctype-decl", true);
+			documentBuilderFactory.setFeature(
+				"http://xml.org/sax/features/external-general-entities", false);
+			documentBuilderFactory.setFeature(
+				"http://xml.org/sax/features/external-parameter-entities",
+				false);
+			documentBuilderFactory.setXIncludeAware(false);
+
+			DocumentBuilder documentBuilder =
+				documentBuilderFactory.newDocumentBuilder();
+
+			documentBuilder.setEntityResolver(
+				(publicId, systemId) -> new InputSource(
+					new StringReader(StringPool.BLANK)));
+
+			return documentBuilder.parse(
+				new InputSource(new StringReader(channelPropertiesXML)));
+		}
+		catch (Exception exception) {
+			throw new SecurityException(
+				"Unable to parse the cluster link channel properties \"" +
+					channelPropertiesLocation + "\" in FIPS mode",
+				exception);
+		}
+	}
+
+	private static void _validateAllowedPropertyValues(
+		Function<String, String> function) {
+
+		for (Map.Entry<String, String[]> entry :
+				_allowedSystemProperties.entrySet()) {
+
+			_validateAllowedPropertyValues(
+				entry.getValue(), entry.getKey(),
+				StringUtil.removeChar(
+					function.apply(entry.getKey()), CharPool.SPACE));
+		}
+	}
+
+	private static void _validateAllowedPropertyValues(
+		String[] allowedValues, String key, String value) {
+
+		if (ArrayUtil.containsAll(
+				allowedValues, StringUtil.split(value, CharPool.COMMA))) {
+
+			return;
+		}
+
+		throw new SecurityException(
+			StringBundler.concat(
+				"FIPS mode requires the property \"", key,
+				"\" to be set to only ", Arrays.toString(allowedValues)));
+	}
+
+	private static void _validateClusterLinkChannelAuthElement(
+		Element authElement, String channelPropertiesLocation) {
+
+		String authClassName = authElement.getAttribute("auth_class");
+
+		if (authClassName.equals(_CLUSTER_LINK_CHANNEL_AUTH_CLASS_NAME)) {
+			return;
+		}
+
+		throw new SecurityException(
+			StringBundler.concat(
+				"The cluster link channel properties \"",
+				channelPropertiesLocation,
+				"\" must authenticate cluster members with \"",
+				_CLUSTER_LINK_CHANNEL_AUTH_CLASS_NAME, "\" in FIPS mode"));
+	}
+
+	private static void _validateClusterLinkChannelConfiguration(
+		String channelPropertiesLocation) {
+
+		Document document = _readChannelPropertiesDocument(
+			channelPropertiesLocation);
+
+		NodeList nodeList = document.getElementsByTagName(StringPool.STAR);
+
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			Element element = (Element)nodeList.item(i);
+
+			String tagName = element.getTagName();
+
+			if (!(tagName.equals("AUTH") || tagName.contains("ENCRYPT"))) {
+				continue;
+			}
+
+			if (tagName.equals("AUTH")) {
+				_validateClusterLinkChannelAuthElement(
+					element, channelPropertiesLocation);
+			}
+			else if (tagName.equals("SYM_ENCRYPT")) {
+				_validateClusterLinkChannelSymEncryptElement(element);
+			}
+			else {
+				throw new SecurityException(
+					StringBundler.concat(
+						"The cluster link channel properties \"",
+						channelPropertiesLocation,
+						"\" must encrypt intracluster traffic with ",
+						"\"SYM_ENCRYPT\" in FIPS mode"));
+			}
+		}
+	}
+
+	private static void _validateClusterLinkChannelSymEncryptElement(
+		Element symEncryptElement) {
+
+		String symAlgorithm = symEncryptElement.getAttribute("sym_algorithm");
+
+		_validateTransformation(symAlgorithm);
+
+		String[] symAlgorithmParts = StringUtil.split(
+			symAlgorithm, CharPool.SLASH);
+
+		validateKey(
+			symAlgorithmParts[0],
+			GetterUtil.getInteger(
+				symEncryptElement.getAttribute("sym_keylength")));
+
+		_validateIVSize(
+			GetterUtil.getInteger(
+				symEncryptElement.getAttribute("sym_iv_length")));
+
+		String providerName = symEncryptElement.getAttribute("provider");
+
+		if (Validator.isNotNull(providerName) &&
+			_isNotAllowedProviderName(providerName)) {
+
+			throw new SecurityException(
+				"Security provider \"" + providerName +
+					"\" is not allowed in FIPS mode");
+		}
+	}
+
+	private static void _validateClusterLinkConfiguration() {
+		if (!PropsValues.CLUSTER_LINK_ENABLED) {
+			return;
+		}
+
+		_validateAllowedPropertyValues(
+			new String[] {"PKCS12"}, PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE,
+			PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE));
+
+		_validateClusterLinkChannelConfiguration(
+			GetterUtil.getString(
+				PropsUtil.get(
+					PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL)));
+
+		Properties properties = PropsUtil.getProperties(
+			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT, true);
+
+		for (Object channelPropertiesLocation : properties.values()) {
+			_validateClusterLinkChannelConfiguration(
+				GetterUtil.getString(channelPropertiesLocation));
+		}
+	}
+
 	private static void _validateFIPSProvider(Provider[] providers) {
 		if (ArrayUtil.isEmpty(providers)) {
 			throw new SecurityException("There are no security providers");
@@ -173,7 +390,7 @@ public class FIPSModeValidator {
 
 		String name = provider.getName();
 
-		if (!_allowedProviderNames.containsKey(name)) {
+		if (_isNotAllowedProviderName(name)) {
 			throw new SecurityException(
 				"The first security provider must be an allowed FIPS provider");
 		}
@@ -262,6 +479,16 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validateIVSize(int ivSize) {
+		if (ivSize == 16) {
+			return;
+		}
+
+		throw new SecurityException(
+			"Initialization vector size " + ivSize +
+				" is not allowed in FIPS mode");
+	}
+
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
@@ -272,9 +499,7 @@ public class FIPSModeValidator {
 			!upperCaseAlgorithm.contains("SHA256")) {
 
 			throw new SecurityException(
-				StringBundler.concat(
-					"Algorithm \"", algorithm,
-					"\" is not allowed in FIPS mode"));
+				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
 		}
 
 		int keySize = _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN;
@@ -334,13 +559,12 @@ public class FIPSModeValidator {
 
 		if (!messages.isEmpty()) {
 			throw new SecurityException(
-				StringBundler.concat(
-					"A plaintext value for ", StringUtil.merge(messages, ", "),
-					" is not allowed in FIPS mode"));
+				"A plaintext value for " + StringUtil.merge(messages, ", ") +
+					" is not allowed in FIPS mode");
 		}
 	}
 
-	private static void _validateProperties() {
+	private static void _validatePortalProperties() {
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
 			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
 		}
@@ -348,6 +572,17 @@ public class FIPSModeValidator {
 		validateAlgorithm(
 			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
 		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+
+		if (!GetterUtil.getBoolean(
+				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
+
+			throw new SecurityException(
+				"FIPS mode requires the property \"" +
+					PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME +
+						"\" to be enabled");
+		}
+
+		_validateClusterLinkConfiguration();
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
 		_validatePlaintextSecrets();
@@ -376,6 +611,38 @@ public class FIPSModeValidator {
 				" are not allowed in FIPS mode for ", provider.getName()));
 	}
 
+	private static void _validateRequiredPropertyValues(
+		Function<String, String> function,
+		Map<String, String[]> propertiesMap) {
+
+		for (Map.Entry<String, String[]> entry : propertiesMap.entrySet()) {
+			String value = StringUtil.removeChar(
+				function.apply(entry.getKey()), CharPool.SPACE);
+
+			for (String requiredValue : entry.getValue()) {
+				if (StringUtil.containsIgnoreCase(value, requiredValue)) {
+					continue;
+				}
+
+				throw new SecurityException(
+					StringBundler.concat(
+						"FIPS mode requires the property \"", entry.getKey(),
+						"\" to include \"", requiredValue, "\""));
+			}
+		}
+	}
+
+	private static void _validateTransformation(String transformation) {
+		if (!Objects.equals(transformation, "AES/CBC/PKCS5Padding")) {
+			throw new SecurityException(
+				"Transformation \"" + transformation +
+					"\" is not allowed in FIPS mode");
+		}
+	}
+
+	private static final String _CLUSTER_LINK_CHANNEL_AUTH_CLASS_NAME =
+		"org.jgroups.auth.X509Token";
+
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
@@ -385,7 +652,6 @@ public class FIPSModeValidator {
 		"AES", "HmacSHA256", "HmacSHA384", "HmacSHA512", "PBKDF2WithHmacSHA256",
 		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
 		"SHA-512");
-	private static final Set<Integer> _allowedKeySizes = Set.of(128, 192, 256);
 	private static final Map<String, List<String>> _allowedProviderNames =
 		Map.of(
 			"AmazonCorrettoCryptoProvider",
@@ -396,6 +662,10 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
+	private static final Set<Integer> _allowedSymmetricKeySizes = Set.of(
+		128, 192, 256);
+	private static final Map<String, String[]> _allowedSystemProperties =
+		Map.of("jdk.tls.client.protocols", new String[] {"TLSv1.2", "TLSv1.3"});
 	private static final Set<String> _allowedTLSCipherSuites = Set.of(
 		"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384",
 		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
@@ -406,5 +676,15 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
+	private static final Map<String, String[]> _requiredSecurityProperties =
+		Map.of(
+			"jdk.tls.disabledAlgorithms",
+			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
+			"ocsp.enable", new String[] {"true"},
+			"ssl.TrustManagerFactory.algorithm", new String[] {"PKIX"});
+	private static final Map<String, String[]> _requiredSystemProperties =
+		Map.of(
+			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
+			"com.sun.security.enableCRLDP", new String[] {"true"});
 
 }

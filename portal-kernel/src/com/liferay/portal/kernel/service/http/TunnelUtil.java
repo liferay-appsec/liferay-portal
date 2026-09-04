@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.util.MethodHandler;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.EOFException;
 import java.io.ObjectInputStream;
@@ -120,6 +121,11 @@ public class TunnelUtil {
 		if (!_VERIFY_SSL_HOSTNAME &&
 			(httpURLConnection instanceof HttpsURLConnection)) {
 
+			if (PropsValues.FIPS_ENABLED) {
+				throw new SecurityException(
+					"SSL hostname verification must be enabled in FIPS mode");
+			}
+
 			HttpsURLConnection httpsURLConnection =
 				(HttpsURLConnection)httpURLConnection;
 
@@ -144,7 +150,7 @@ public class TunnelUtil {
 	}
 
 	private static final boolean _VERIFY_SSL_HOSTNAME = GetterUtil.getBoolean(
-		PropsUtil.get(TunnelUtil.class.getName() + ".verify.ssl.hostname"));
+		PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME));
 
 	private static final Log _log = LogFactoryUtil.getLog(TunnelUtil.class);
 

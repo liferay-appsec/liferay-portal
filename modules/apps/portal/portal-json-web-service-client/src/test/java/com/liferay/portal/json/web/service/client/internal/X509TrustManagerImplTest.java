@@ -1,0 +1,55 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.json.web.service.client.internal;
+
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
+import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+
+/**
+ * @author Caio Farias
+ */
+public class X509TrustManagerImplTest {
+
+	@ClassRule
+	@Rule
+	public static final LiferayUnitTestRule liferayUnitTestRule =
+		LiferayUnitTestRule.INSTANCE;
+
+	@Test
+	public void testConstructor() {
+		new X509TrustManagerImpl();
+		new X509TrustManagerImpl(null, true);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			new X509TrustManagerImpl(null, false);
+
+			SecurityException securityException1 = Assert.assertThrows(
+				SecurityException.class, () -> new X509TrustManagerImpl());
+
+			Assert.assertEquals(
+				"Self signed certificates are not allowed in FIPS mode",
+				securityException1.getMessage());
+
+			SecurityException securityException2 = Assert.assertThrows(
+				SecurityException.class,
+				() -> new X509TrustManagerImpl(null, true));
+
+			Assert.assertEquals(
+				"Self signed certificates are not allowed in FIPS mode",
+				securityException2.getMessage());
+		}
+	}
+
+}
