@@ -7,8 +7,7 @@ package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-
-import java.util.Map;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,9 +20,9 @@ public class FIPSAuditEventFactoryTest {
 	@Test
 	public void testCreateFederationTokenRejected() {
 		String receivingEndpoint = "/o/" + RandomTestUtil.randomString();
-		String rejectedValue = "HS256";
+		String rejectedValue = RandomTestUtil.randomString();
 		String tokenIssuer = RandomTestUtil.randomString();
-		String tokenType = "JWT";
+		String tokenType = RandomTestUtil.randomString();
 
 		FIPSAuditEvent fipsAuditEvent =
 			FIPSAuditEventFactory.createFederationTokenRejected(
@@ -49,14 +48,17 @@ public class FIPSAuditEventFactoryTest {
 		FIPSAuditEvent fipsAuditEvent, String receivingEndpoint,
 		String rejectedValue, String tokenIssuer, String tokenType) {
 
-		Map<String, Object> fields = fipsAuditEvent.getFields();
-
-		Assert.assertEquals(fields.toString(), 4, fields.size());
 		Assert.assertEquals(
-			receivingEndpoint, fields.get("receiving-endpoint"));
-		Assert.assertEquals(rejectedValue, fields.get("rejected-value"));
-		Assert.assertEquals(tokenIssuer, fields.get("token-issuer"));
-		Assert.assertEquals(tokenType, fields.get("token-type"));
+			HashMapBuilder.<String, Object>put(
+				"receiving-endpoint", receivingEndpoint
+			).put(
+				"rejected-value", rejectedValue
+			).put(
+				"token-issuer", tokenIssuer
+			).put(
+				"token-type", tokenType
+			).build(),
+			fipsAuditEvent.getFields());
 	}
 
 }

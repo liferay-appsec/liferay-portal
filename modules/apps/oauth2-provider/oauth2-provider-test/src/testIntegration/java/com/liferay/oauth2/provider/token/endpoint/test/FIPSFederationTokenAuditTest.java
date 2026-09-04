@@ -10,6 +10,8 @@ import com.liferay.oauth2.provider.internal.test.PasswordAuthorizationGrant;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.fips.FIPSApplicationState;
+import com.liferay.portal.kernel.security.fips.FIPSApplicationStateMachineUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -62,7 +64,13 @@ public class FIPSFederationTokenAuditTest extends BaseTokenEndpointTestCase {
 
 				String message = messages.get(0);
 
-				Assert.assertTrue(message.contains("fips-state="));
+				FIPSApplicationState fipsApplicationState =
+					FIPSApplicationStateMachineUtil.getFIPSApplicationState();
+
+				Assert.assertTrue(
+					message.contains(
+						"fips-state=" + fipsApplicationState.name()));
+
 				Assert.assertTrue(
 					message.contains("receiving-endpoint=/o/oauth2/token"));
 				Assert.assertTrue(message.contains("rejected-value=HS256"));
