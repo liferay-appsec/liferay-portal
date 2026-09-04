@@ -926,7 +926,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		samlPeerEntityContext.setEntityId(IDP_ENTITY_ID);
 
 		_webSsoProfileImpl.verifyAssertionSignature(
-			mockHttpServletRequest, null, messageContext,
+			mockHttpServletRequest, messageContext, null,
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
@@ -962,7 +962,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		samlPeerEntityContext.setEntityId(IDP_ENTITY_ID);
 
 		_webSsoProfileImpl.verifyAssertionSignature(
-			mockHttpServletRequest, null, messageContext,
+			mockHttpServletRequest, messageContext, null,
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
@@ -1663,7 +1663,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		samlPeerEntityContext.setEntityId(IDP_ENTITY_ID);
 
 		_webSsoProfileImpl.verifyAssertionSignature(
-			mockHttpServletRequest, assertion.getSignature(), messageContext,
+			mockHttpServletRequest, messageContext, assertion.getSignature(),
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
@@ -1698,7 +1698,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		samlPeerEntityContext.setEntityId(IDP_ENTITY_ID);
 
 		_webSsoProfileImpl.verifyAssertionSignature(
-			mockHttpServletRequest, assertion.getSignature(), messageContext,
+			mockHttpServletRequest, messageContext, assertion.getSignature(),
 			_webSsoProfileImpl.getSignatureTrustEngine());
 	}
 
