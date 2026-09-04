@@ -47,7 +47,6 @@ import jakarta.servlet.http.HttpSession;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
@@ -862,29 +861,13 @@ public abstract class BaseProfile {
 			return signatureAlgorithm;
 		}
 
-		AtomicReference<String> rejectedAlgorithmURI = new AtomicReference<>();
-
-		SignatureAlgorithmValidator signatureAlgorithmValidator =
-			new SignatureAlgorithmValidator(signatureValidationParameters) {
-
-				@Override
-				protected void validateAlgorithmURI(String algorithmURI)
-					throws SignatureException {
-
-					try {
-						super.validateAlgorithmURI(algorithmURI);
-					}
-					catch (SignatureException signatureException) {
-						rejectedAlgorithmURI.set(algorithmURI);
-
-						throw signatureException;
-					}
-				}
-
-			};
+		RejectedValueSignatureAlgorithmValidator
+			rejectedValueSignatureAlgorithmValidator =
+				new RejectedValueSignatureAlgorithmValidator(
+					signatureValidationParameters);
 
 		try {
-			signatureAlgorithmValidator.validate(signature);
+			rejectedValueSignatureAlgorithmValidator.validate(signature);
 
 			return null;
 		}
@@ -893,7 +876,8 @@ public abstract class BaseProfile {
 				_log.debug(signatureException);
 			}
 
-			return rejectedAlgorithmURI.get();
+			return rejectedValueSignatureAlgorithmValidator.
+				_rejectedAlgorithmURI;
 		}
 	}
 
@@ -993,5 +977,32 @@ public abstract class BaseProfile {
 		_metadataCredentialResolverDCLSingleton = new DCLSingleton<>();
 	private final DCLSingleton<PredicateRoleDescriptorResolver>
 		_predicateRoleDescriptorResolverDCLSingleton = new DCLSingleton<>();
+
+	private static class RejectedValueSignatureAlgorithmValidator
+		extends SignatureAlgorithmValidator {
+
+		@Override
+		protected void validateAlgorithmURI(String algorithmURI)
+			throws SignatureException {
+
+			try {
+				super.validateAlgorithmURI(algorithmURI);
+			}
+			catch (SignatureException signatureException) {
+				_rejectedAlgorithmURI = algorithmURI;
+
+				throw signatureException;
+			}
+		}
+
+		private RejectedValueSignatureAlgorithmValidator(
+			SignatureValidationParameters signatureValidationParameters) {
+
+			super(signatureValidationParameters);
+		}
+
+		private String _rejectedAlgorithmURI;
+
+	}
 
 }
