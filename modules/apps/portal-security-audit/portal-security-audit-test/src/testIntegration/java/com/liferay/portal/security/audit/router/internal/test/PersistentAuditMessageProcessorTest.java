@@ -9,8 +9,10 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
+import com.liferay.portal.kernel.audit.AuditCorrelationThreadLocal;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
@@ -19,11 +21,15 @@ import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration;
+import com.liferay.portal.security.audit.storage.model.AuditEvent;
 import com.liferay.portal.security.audit.storage.service.AuditEventLocalService;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -166,6 +172,49 @@ public class PersistentAuditMessageProcessorTest {
 
 	@FeatureFlag("LPD-6417")
 	@Test
+	public void testProcessPersistsFrozenCorrelationIdAfterContextCloses()
+		throws Exception {
+
+		String correlationId = RandomTestUtil.randomString();
+		String eventType1 = _createEventType();
+		String eventType2 = _createEventType();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						_company1.getCompanyId(),
+						PersistentAuditMessageProcessorConfiguration.class.
+							getName(),
+						HashMapDictionaryBuilder.<String, Object>put(
+							"bufferSize", 2
+						).put(
+							"flushInterval", _FLUSH_INTERVAL
+						).build())) {
+
+			try (SafeCloseable safeCloseable =
+					AuditCorrelationThreadLocal.
+						setCorrelationIdWithSafeCloseable(correlationId)) {
+
+				_route(_company1.getCompanyId(), eventType1);
+			}
+
+			Assert.assertEquals(
+				0, _getAuditEventsCount(_company1.getCompanyId(), eventType1));
+
+			_route(_company1.getCompanyId(), eventType2);
+
+			AuditEvent auditEvent1 = _getAuditEvent(
+				_company1.getCompanyId(), eventType1);
+			AuditEvent auditEvent2 = _getAuditEvent(
+				_company1.getCompanyId(), eventType2);
+
+			Assert.assertEquals(correlationId, auditEvent1.getCorrelationId());
+			Assert.assertTrue(Validator.isNull(auditEvent2.getCorrelationId()));
+		}
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
 	public void testProcessWhenBufferSizesAreDifferent() throws Exception {
 		try (CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper1 =
@@ -273,6 +322,20 @@ public class PersistentAuditMessageProcessorTest {
 
 	private String _createEventType() {
 		return StringUtil.toUpperCase(RandomTestUtil.randomString());
+	}
+
+	private AuditEvent _getAuditEvent(long companyId, String eventType) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			List<AuditEvent> auditEvents =
+				_auditEventLocalService.getAuditEvents(
+					companyId, 0, 0, null, null, null, null, null, null, null,
+					null, null, eventType, null, 0, null, false,
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			return auditEvents.get(0);
+		}
 	}
 
 	private int _getAuditEventsCount(long companyId, String eventType) {

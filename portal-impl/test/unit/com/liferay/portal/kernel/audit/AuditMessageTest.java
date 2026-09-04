@@ -41,6 +41,11 @@ public class AuditMessageTest {
 
 		auditRequestThreadLocal.setRequestIdGenerated(true);
 
+		String correlationId = RandomTestUtil.randomString();
+
+		AuditCorrelationThreadLocal.setCorrelationIdWithSafeCloseable(
+			correlationId);
+
 		AuditMessage auditMessage = new AuditMessage(
 			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
 			RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
@@ -48,6 +53,7 @@ public class AuditMessageTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
+		Assert.assertEquals(correlationId, auditMessage.getCorrelationId());
 		Assert.assertEquals(requestId, auditMessage.getRequestId());
 		Assert.assertTrue(auditMessage.isRequestIdGenerated());
 
