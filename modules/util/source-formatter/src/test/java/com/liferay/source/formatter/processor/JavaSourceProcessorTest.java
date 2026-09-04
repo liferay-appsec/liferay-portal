@@ -1160,6 +1160,109 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testTLSVerification() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"TLSVerification1.testjava"
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				35
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"ALLOW_ALL_HOSTNAME_VERIFIER\", see " +
+						"LPD-93649",
+				42
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"AllowAllHostnameVerifier\", see " +
+						"LPD-93649",
+				49
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"new HostnameVerifier(\", see LPD-93649",
+				54
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Call \"FIPSModeValidator.validateTLSVerification\" in ",
+					"the same method as ",
+					"\"setEndpointIdentificationAlgorithm(\"\")\", see ",
+					"LPD-93649"),
+				67
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				81
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Call \"FIPSModeValidator.validateTLSVerification\" in ",
+					"the same method as ",
+					"\"setEndpointIdentificationAlgorithm(null)\", see ",
+					"LPD-93649"),
+				94
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"new X509ExtendedTrustManager(\", see " +
+						"LPD-93649",
+				106
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"new X509TrustManager(\", see LPD-93649",
+				151
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				172
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				183
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				190
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"TrustSelfSignedStrategy\", see LPD-93649",
+				196
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"TrustAllStrategy\", see LPD-93649",
+				209
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				213
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				217
+			));
+		test(
+			SourceProcessorTestParameters.create(
+				"TLSVerification2.testjava"
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				42
+			).addExpectedMessage(
+				"Call \"FIPSModeValidator.validateTLSVerification\" in the " +
+					"same method as \"NoopHostnameVerifier\", see LPD-93649",
+				52
+			));
+		test(
+			"TLSVerification3.testjava",
+			"Call \"FIPSModeValidator.validateTLSVerification\" in the same " +
+				"class as a trust manager, see LPD-93649",
+			15);
+		test(
+			"TLSVerification4.testjava",
+			"Call \"FIPSModeValidator.validateTLSVerification\" in the same " +
+				"class as a trust manager, see LPD-93649",
+			15);
+	}
+
+	@Test
 	public void testToJSONStringMethodCalls() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(
