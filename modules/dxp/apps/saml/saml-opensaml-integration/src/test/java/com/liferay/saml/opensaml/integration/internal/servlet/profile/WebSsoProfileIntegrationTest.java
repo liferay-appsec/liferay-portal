@@ -354,8 +354,6 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			true
 		);
 
-		// Blacklist the algorithm the redirect binding actually signed with
-
 		String signatureAlgorithm = mockHttpServletRequest.getParameter(
 			"SigAlg");
 
@@ -967,8 +965,6 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		try (SafeCloseable safeCloseable =
 				_activateSecurityConfigurationBootstrap(true)) {
 
-			// SHA1 signature method
-
 			try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
 					Mockito.mockStatic(FIPSAuditUtil.class)) {
 
@@ -983,8 +979,6 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
 					IDP_ENTITY_ID);
 			}
-
-			// SHA1 reference digest method
 
 			try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
 					Mockito.mockStatic(FIPSAuditUtil.class)) {
@@ -1009,15 +1003,11 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		try (SafeCloseable safeCloseable =
 				_activateSecurityConfigurationBootstrap(true)) {
 
-			// SHA1 signature method
-
 			Assert.assertThrows(
 				SignatureException.class,
 				() -> _testVerifyAssertionSignature(
 					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
 					SignatureConstants.ALGO_ID_DIGEST_SHA256));
-
-			// SHA1 reference digest method
 
 			Assert.assertThrows(
 				SignatureException.class,

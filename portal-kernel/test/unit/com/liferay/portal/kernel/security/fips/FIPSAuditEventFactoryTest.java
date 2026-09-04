@@ -21,11 +21,13 @@ public class FIPSAuditEventFactoryTest {
 	@Test
 	public void testCreateFederationTokenRejected() {
 		String receivingEndpoint = "/o/" + RandomTestUtil.randomString();
+		String rejectedValue = "HS256";
 		String tokenIssuer = RandomTestUtil.randomString();
+		String tokenType = "JWT";
 
 		FIPSAuditEvent fipsAuditEvent =
 			FIPSAuditEventFactory.createFederationTokenRejected(
-				receivingEndpoint, "HS256", tokenIssuer, "JWT");
+				receivingEndpoint, rejectedValue, tokenIssuer, tokenType);
 
 		Assert.assertEquals(
 			"federation-token-rejected", fipsAuditEvent.getEventType());
@@ -33,7 +35,8 @@ public class FIPSAuditEventFactoryTest {
 			FIPSAuditEvent.Severity.WARNING, fipsAuditEvent.getSeverity());
 
 		_assertFields(
-			fipsAuditEvent, receivingEndpoint, "HS256", tokenIssuer, "JWT");
+			fipsAuditEvent, receivingEndpoint, rejectedValue, tokenIssuer,
+			tokenType);
 
 		_assertFields(
 			FIPSAuditEventFactory.createFederationTokenRejected(
