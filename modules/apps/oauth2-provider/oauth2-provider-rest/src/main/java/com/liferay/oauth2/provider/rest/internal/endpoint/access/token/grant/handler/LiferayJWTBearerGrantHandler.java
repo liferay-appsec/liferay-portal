@@ -258,25 +258,24 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 
 				JwsHeaders jwsHeaders = jwtToken.getJwsHeaders();
 
+				String algorithm = jwsHeaders.getAlgorithm();
+
 				JwtClaims jwtClaims = jwtToken.getClaims();
 
 				try {
-					OAuth2JWKValidatorUtil.validateJWSAlgorithm(
-						jwsHeaders.getAlgorithm());
+					OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
 				}
 				catch (SecurityException securityException) {
 					FIPSAuditUtil.write(
 						FIPSAuditEventFactory.createFederationTokenRejected(
-							OAuth2RequestUtil.getRequestURI(),
-							jwsHeaders.getAlgorithm(), jwtClaims.getIssuer(),
-							"JWT"));
+							OAuth2RequestUtil.getRequestURI(), algorithm,
+							jwtClaims.getIssuer(), "JWT"));
 
 					throw securityException;
 				}
 
 				if (StringUtil.equals(
-						jwsHeaders.getAlgorithm(),
-						SignatureAlgorithm.RS256.getJwaName())) {
+						algorithm, SignatureAlgorithm.RS256.getJwaName())) {
 
 					_initGrantHandler(companyId, jwtClaims, jwsHeaders);
 				}
