@@ -16,7 +16,7 @@ import org.apache.cxf.transport.http.AbstractHTTPDestination;
 /**
  * @author Jorge García Jiménez
  */
-public class OAuth2RequestUtil {
+public class OAuth2HttpRequestUtil {
 
 	public static HttpServletRequest getHttpServletRequest() {
 		return getHttpServletRequest(JAXRSUtils.getCurrentMessage());

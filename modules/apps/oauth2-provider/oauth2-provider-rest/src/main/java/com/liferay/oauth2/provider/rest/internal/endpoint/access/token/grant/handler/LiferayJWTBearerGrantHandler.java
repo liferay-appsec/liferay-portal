@@ -9,7 +9,7 @@ import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDataProvider;
-import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2RequestUtil;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2HttpRequestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -268,7 +268,7 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 				catch (SecurityException securityException) {
 					FIPSAuditUtil.write(
 						FIPSAuditEventFactory.createFederationTokenRejected(
-							OAuth2RequestUtil.getRequestURI(), algorithm,
+							OAuth2HttpRequestUtil.getRequestURI(), algorithm,
 							jwtClaims.getIssuer(), "JWT"));
 
 					throw securityException;

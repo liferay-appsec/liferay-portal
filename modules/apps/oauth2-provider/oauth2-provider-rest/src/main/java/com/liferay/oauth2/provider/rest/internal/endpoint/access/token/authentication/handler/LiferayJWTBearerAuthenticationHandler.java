@@ -6,7 +6,7 @@
 package com.liferay.oauth2.provider.rest.internal.endpoint.access.token.authentication.handler;
 
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
-import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2RequestUtil;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2HttpRequestUtil;
 import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -67,7 +67,7 @@ public class LiferayJWTBearerAuthenticationHandler
 		Message message = JAXRSUtils.getCurrentMessage();
 
 		HttpServletRequest httpServletRequest =
-			OAuth2RequestUtil.getHttpServletRequest(message);
+			OAuth2HttpRequestUtil.getHttpServletRequest(message);
 
 		if (!_isUsingJWTAssertionForClientAuthentication(httpServletRequest)) {
 			return;
@@ -130,7 +130,7 @@ public class LiferayJWTBearerAuthenticationHandler
 			catch (SecurityException securityException) {
 				FIPSAuditUtil.write(
 					FIPSAuditEventFactory.createFederationTokenRejected(
-						OAuth2RequestUtil.getRequestURI(), algorithm,
+						OAuth2HttpRequestUtil.getRequestURI(), algorithm,
 						GetterUtil.getString(
 							jwtToken.getClaim(JwtConstants.CLAIM_ISSUER), null),
 						"JWT"));

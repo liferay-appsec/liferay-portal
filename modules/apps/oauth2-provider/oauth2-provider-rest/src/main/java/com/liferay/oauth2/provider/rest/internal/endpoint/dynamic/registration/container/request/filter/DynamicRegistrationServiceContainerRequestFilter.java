@@ -14,7 +14,7 @@ import com.liferay.oauth2.provider.rest.internal.constants.OAuth2ProviderRESTWeb
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.DynamicRegistrationUtil;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2ErrorUtil;
-import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2RequestUtil;
+import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2HttpRequestUtil;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.StringBundler;
@@ -103,7 +103,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		}
 
 		HttpServletRequest httpServletRequest =
-			OAuth2RequestUtil.getHttpServletRequest();
+			OAuth2HttpRequestUtil.getHttpServletRequest();
 
 		long companyId = _portal.getCompanyId(httpServletRequest);
 
