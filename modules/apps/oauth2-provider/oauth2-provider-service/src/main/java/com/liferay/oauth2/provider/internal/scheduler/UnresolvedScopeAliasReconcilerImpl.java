@@ -43,38 +43,18 @@ import org.osgi.service.component.annotations.Reference;
  * once the scope sources they name become resolvable.
  *
  * <p>
- * Binding is additive. Rather than passing the full alias list back through
- * {@code updateScopeAliases}, which rebuilds the whole scope-aliases snapshot
- * and re-resolves every alias, {@link #_addScopeAliases} feeds every existing
- * grant plus the grants for the aliases that resolve now to
- * {@code OAuth2ApplicationScopeAliasesLocalService.addOAuth2ApplicationScopeAliasesAndUpdateApplication}.
- * That service method persists the new snapshot and its grant rows and repoints
- * the application at it, both writes running inside the single transaction
- * Service Builder wraps around the method, against an application re-fetched in
- * that transaction, so a failure leaves no orphan snapshot and the window for
- * losing a concurrent edit of the application shrinks to that transaction. The
- * application has no optimistic-lock column, so a configuration redeploy or
- * scope update interleaving on the same node can still drop one write's
- * aliases; that is a known limitation. Existing grants are never re-resolved,
- * so an already-granted alias whose source is momentarily unavailable can never
- * be revoked, and there is no need to guard against transient churn. A recorded
- * alias is looked up under its registered casing, matching what the
- * headless-server configuration factory does when the scope source is present,
- * and its grant is persisted under the declared alias the client holds. Tokens
- * issued against the old snapshot keep referencing it and are unaffected. An
- * alias that already resolves and is already granted is skipped, so a redundant
- * reconcile writes nothing; because the registry is node-local while
- * reconciling is master-only, this keeps a new master from rewriting an
- * already-bound alias after a cluster failover.
+ * Binding is additive: {@link #_addScopeAliases} copies every existing grant and
+ * adds the grants for the aliases that resolve now, so an already-granted alias
+ * is never revoked and a redundant pass writes nothing. The new snapshot and the
+ * application repoint share the single transaction Service Builder wraps around
+ * {@code addOAuth2ApplicationScopeAliasesAndUpdateApplication}, so a failure
+ * leaves no orphan snapshot. Reconciling is master-only, matching the clustered
+ * scheduler that owns the fallback pass.
  * </p>
  *
  * <p>
- * Reconciling may be requested from several threads at once (the periodic
- * scheduler and the scope finder trigger). {@link #reconcile()} serializes on a
- * lock and runs one pass per call, so a caller only returns after its own pass
- * has completed and its return value reflects that pass. Concurrent callers run
- * their passes in turn rather than sharing one; a pass that finds nothing to
- * bind is cheap, so the redundancy is immaterial.
+ * {@link #reconcile()} serializes on a lock and runs one pass per call, so a
+ * caller returns only after its own pass has completed.
  * </p>
  *
  * @author Allen Ziegenfus
