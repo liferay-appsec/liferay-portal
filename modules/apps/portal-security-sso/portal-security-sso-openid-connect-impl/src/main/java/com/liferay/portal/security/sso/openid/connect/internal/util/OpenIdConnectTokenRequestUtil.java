@@ -194,8 +194,17 @@ public class OpenIdConnectTokenRequestUtil {
 			FIPSModeValidator.validateJWSAlgorithm(algorithmName);
 		}
 		catch (SecurityException securityException) {
-			_writeFederationTokenRejected(
-				algorithmName, oidcProviderMetadata.getIssuer());
+			String tokenIssuer = null;
+
+			Issuer issuer = oidcProviderMetadata.getIssuer();
+
+			if (issuer != null) {
+				tokenIssuer = issuer.getValue();
+			}
+
+			FIPSAuditUtil.write(
+				FIPSAuditEventFactory.createFederationTokenRejected(
+					"backchannel", algorithmName, tokenIssuer, "OIDC"));
 
 			throw new OpenIdConnectServiceException.TokenException(
 				securityException.getMessage(), securityException);
@@ -238,28 +247,6 @@ public class OpenIdConnectTokenRequestUtil {
 				StringBundler.concat(
 					"Unable to validate tokens for client \"", clientID, "\": ",
 					exception.getMessage()),
-				exception);
-		}
-	}
-
-	private static void _writeFederationTokenRejected(
-		String algorithmName, Issuer issuer) {
-
-		try {
-			String tokenIssuer = null;
-
-			if (issuer != null) {
-				tokenIssuer = issuer.getValue();
-			}
-
-			FIPSAuditUtil.write(
-				FIPSAuditEventFactory.createFederationTokenRejected(
-					"backchannel", algorithmName, tokenIssuer, "OIDC"));
-		}
-		catch (Exception exception) {
-			_log.error(
-				"Unable to write the rejected federation token FIPS audit " +
-					"event",
 				exception);
 		}
 	}
