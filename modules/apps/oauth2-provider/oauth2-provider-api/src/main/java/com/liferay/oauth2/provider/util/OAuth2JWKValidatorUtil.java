@@ -67,10 +67,6 @@ public class OAuth2JWKValidatorUtil {
 		}
 	}
 
-	public static void validateJWSAlgorithm(String algorithm) {
-		FIPSModeValidator.validateJWSAlgorithm(algorithm);
-	}
-
 	private static int _decodeBase64URLBitLength(String base64) {
 		try {
 			BigInteger bigInteger = new BigInteger(
@@ -93,7 +89,7 @@ public class OAuth2JWKValidatorUtil {
 			throw new SecurityException("Unable to read JWK");
 		}
 
-		validateJWSAlgorithm(jsonObject.getString("alg"));
+		FIPSModeValidator.validateJWSAlgorithm(jsonObject.getString("alg"));
 
 		String keyType = jsonObject.getString("kty");
 

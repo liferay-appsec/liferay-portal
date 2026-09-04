@@ -188,8 +188,9 @@ public class FIPSModeValidatorTest {
 
 			for (String algorithm :
 					new String[] {
-						StringPool.BLANK, "ES256K", "HS256", "RSA1_5", "none",
-						"rs256", null
+						StringPool.BLANK, "ES256K", "HS1", "HS256", "HS384",
+						"HS512", "RS1", "RSA1_5", "garbage", "none", "rs256",
+						null
 					}) {
 
 				_assertSecurityException(
