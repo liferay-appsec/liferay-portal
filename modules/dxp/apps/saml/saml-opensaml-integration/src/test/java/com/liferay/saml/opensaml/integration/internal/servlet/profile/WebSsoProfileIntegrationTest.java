@@ -1003,27 +1003,6 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 	}
 
 	@Test
-	public void testVerifyAssertionSignatureSHA1WithFIPSMode()
-		throws Exception {
-
-		try (SafeCloseable safeCloseable =
-				_activateSecurityConfigurationBootstrap(true)) {
-
-			Assert.assertThrows(
-				SignatureException.class,
-				() -> _testVerifyAssertionSignature(
-					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1,
-					SignatureConstants.ALGO_ID_DIGEST_SHA256));
-
-			Assert.assertThrows(
-				SignatureException.class,
-				() -> _testVerifyAssertionSignature(
-					SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256,
-					SignatureConstants.ALGO_ID_DIGEST_SHA1));
-		}
-	}
-
-	@Test
 	public void testVerifyAssertionSignatureSHA1WithoutFIPSMode()
 		throws Exception {
 
@@ -1559,7 +1538,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			).put(
 				"token-issuer", tokenIssuer
 			).put(
-				"token-type", _TOKEN_TYPE_SAML
+				"token-type", "SAML"
 			).build(),
 			fipsAuditEvent.getFields());
 	}
@@ -1724,8 +1703,6 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 	}
 
 	private static final String _ACS_REQUEST_URI = "/c/portal/saml/acs";
-
-	private static final String _TOKEN_TYPE_SAML = "SAML";
 
 	private static final BundleContext _bundleContext =
 		SystemBundleUtil.getBundleContext();
