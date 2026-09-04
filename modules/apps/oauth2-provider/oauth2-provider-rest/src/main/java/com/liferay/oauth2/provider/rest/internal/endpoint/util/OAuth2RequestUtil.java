@@ -18,15 +18,21 @@ import org.apache.cxf.transport.http.AbstractHTTPDestination;
  */
 public class OAuth2RequestUtil {
 
-	public static String getRequestURI() {
-		Message message = JAXRSUtils.getCurrentMessage();
+	public static HttpServletRequest getHttpServletRequest() {
+		return getHttpServletRequest(JAXRSUtils.getCurrentMessage());
+	}
 
+	public static HttpServletRequest getHttpServletRequest(Message message) {
 		if (message == null) {
-			return StringPool.BLANK;
+			return null;
 		}
 
-		HttpServletRequest httpServletRequest = (HttpServletRequest)message.get(
+		return (HttpServletRequest)message.get(
 			AbstractHTTPDestination.HTTP_REQUEST);
+	}
+
+	public static String getRequestURI() {
+		HttpServletRequest httpServletRequest = getHttpServletRequest();
 
 		if (httpServletRequest == null) {
 			return StringPool.BLANK;

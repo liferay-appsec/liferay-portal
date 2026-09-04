@@ -47,7 +47,6 @@ import org.apache.cxf.rs.security.oauth2.grants.jwt.JwtBearerAuthHandler;
 import org.apache.cxf.rs.security.oauth2.provider.ClientRegistrationProvider;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.security.SecurityContext;
-import org.apache.cxf.transport.http.AbstractHTTPDestination;
 
 /**
  * @author Arthur Chan
@@ -66,8 +65,8 @@ public class LiferayJWTBearerAuthenticationHandler
 
 		Message message = JAXRSUtils.getCurrentMessage();
 
-		HttpServletRequest httpServletRequest = (HttpServletRequest)message.get(
-			AbstractHTTPDestination.HTTP_REQUEST);
+		HttpServletRequest httpServletRequest =
+			OAuth2RequestUtil.getHttpServletRequest(message);
 
 		if (!_isUsingJWTAssertionForClientAuthentication(httpServletRequest)) {
 			return;
