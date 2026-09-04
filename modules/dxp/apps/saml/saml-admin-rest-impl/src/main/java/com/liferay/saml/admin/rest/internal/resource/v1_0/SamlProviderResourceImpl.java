@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.saml.admin.rest.dto.v1_0.Idp;
@@ -260,6 +262,16 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 		return false;
 	}
 
+	private String _resolve(String value) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(CompanyThreadLocal.getCompanyId(), value);
+	}
+
 	private void _setIdpProperties(
 		Idp idp, SamlProviderConfiguration samlProviderConfiguration,
 		UnicodeProperties unicodeProperties) {
@@ -411,7 +423,9 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 			_authenticateLocalEntityCertificate(
 				GetterUtil.getString(
 					samlProvider.getKeyStoreCredentialPassword(),
-					samlProviderConfiguration.keyStoreCredentialPassword()),
+					_resolve(
+						samlProviderConfiguration.
+							keyStoreCredentialPassword())),
 				LocalEntityManager.CertificateUsage.SIGNING, entityId);
 		}
 
@@ -456,6 +470,10 @@ public class SamlProviderResourceImpl extends BaseSamlProviderResourceImpl {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SamlProviderResourceImpl.class);
+
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			SamlProviderResourceImpl.class, SecretResolver.class, null, true);
 
 	private SamlProviderConfiguration _defaultCompanySamlProviderConfiguration =
 		ConfigurableUtil.createConfigurable(
