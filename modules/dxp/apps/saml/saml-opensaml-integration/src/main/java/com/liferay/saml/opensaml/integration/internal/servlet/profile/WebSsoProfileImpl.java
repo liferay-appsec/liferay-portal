@@ -704,8 +704,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected void verifyAssertionSignature(
-			HttpServletRequest httpServletRequest, Signature signature,
-			MessageContext<?> messageContext,
+			HttpServletRequest httpServletRequest,
+			MessageContext<?> messageContext, Signature signature,
 			TrustEngine<Signature> trustEngine)
 		throws PortalException {
 
@@ -1231,7 +1231,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		for (Assertion curAssertion : assertions) {
 			try {
 				_verifyAssertion(
-					httpServletRequest, curAssertion, messageContext,
+					curAssertion, httpServletRequest, messageContext,
 					signatureTrustEngine);
 			}
 			catch (SamlException samlException) {
@@ -2312,7 +2312,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	private void _verifyAssertion(
-			HttpServletRequest httpServletRequest, Assertion assertion,
+			Assertion assertion, HttpServletRequest httpServletRequest,
 			MessageContext<?> messageContext,
 			TrustEngine<Signature> trustEngine)
 		throws PortalException {
@@ -2320,7 +2320,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		verifyReplay(messageContext, assertion);
 		verifyIssuer(messageContext, assertion.getIssuer());
 		verifyAssertionSignature(
-			httpServletRequest, assertion.getSignature(), messageContext,
+			httpServletRequest, messageContext, assertion.getSignature(),
 			trustEngine);
 		verifyConditions(messageContext, assertion.getConditions());
 		verifySubject(messageContext, assertion.getSubject());
