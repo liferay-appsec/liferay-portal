@@ -26,6 +26,7 @@ import com.liferay.saml.opensaml.integration.internal.BaseSamlTestCase;
 import com.liferay.saml.opensaml.integration.internal.bootstrap.SecurityConfigurationBootstrap;
 import com.liferay.saml.opensaml.integration.internal.identifier.IdentifierGeneratorStrategyFactory;
 import com.liferay.saml.opensaml.integration.internal.provider.CachingChainingMetadataResolver;
+import com.liferay.saml.opensaml.integration.internal.util.ConfigurationServiceBootstrapUtil;
 import com.liferay.saml.opensaml.integration.internal.util.OpenSamlUtil;
 import com.liferay.saml.opensaml.integration.internal.util.SamlUtil;
 import com.liferay.saml.persistence.model.SamlSpAuthRequest;
@@ -115,7 +116,11 @@ import org.opensaml.saml.saml2.metadata.Extensions;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.security.credential.Credential;
+import org.opensaml.xmlsec.DecryptionConfiguration;
+import org.opensaml.xmlsec.EncryptionConfiguration;
+import org.opensaml.xmlsec.SignatureSigningConfiguration;
 import org.opensaml.xmlsec.SignatureSigningParameters;
+import org.opensaml.xmlsec.SignatureValidationConfiguration;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.SignatureSupport;
@@ -260,38 +265,39 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		// Blacklist SHA512 and check that it is not used even though it is the
 		// only one signaled by the peer
 
-		ReflectionTestUtil.invoke(
-			new SecurityConfigurationBootstrap(), "activate",
-			new Class<?>[] {Map.class},
-			HashMapBuilder.<String, Object>put(
-				"blacklisted.algorithms",
-				new String[] {
-					"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
-				}
-			).build());
+		try (SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(
+					false,
+					HashMapBuilder.<String, Object>put(
+						"blacklisted.algorithms",
+						new String[] {
+							"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+						}
+					).build())) {
 
-		assertion = OpenSamlUtil.buildAssertion();
+			assertion = OpenSamlUtil.buildAssertion();
 
-		OpenSamlUtil.signObject(assertion, credential, spSSODescriptor);
+			OpenSamlUtil.signObject(assertion, credential, spSSODescriptor);
 
-		signature = assertion.getSignature();
+			signature = assertion.getSignature();
 
-		Assert.assertNotEquals(
-			"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512",
-			signature.getSignatureAlgorithm());
+			Assert.assertNotEquals(
+				"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512",
+				signature.getSignatureAlgorithm());
 
-		// Check that SHA512 was actually negotiated and that the default is
-		// different
+			// Check that SHA512 was actually negotiated and that the default
+			// is different
 
-		assertion = OpenSamlUtil.buildAssertion();
+			assertion = OpenSamlUtil.buildAssertion();
 
-		OpenSamlUtil.signObject(assertion, credential, null);
+			OpenSamlUtil.signObject(assertion, credential, null);
 
-		signature = assertion.getSignature();
+			signature = assertion.getSignature();
 
-		Assert.assertEquals(
-			"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
-			signature.getSignatureAlgorithm());
+			Assert.assertEquals(
+				"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+				signature.getSignatureAlgorithm());
+		}
 	}
 
 	@Test
@@ -1478,6 +1484,19 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 	private SafeCloseable _activateSecurityConfigurationBootstrap(
 		boolean fipsEnabled, Map<String, Object> properties) {
 
+		DecryptionConfiguration decryptionConfiguration =
+			ConfigurationServiceBootstrapUtil.get(
+				DecryptionConfiguration.class);
+		EncryptionConfiguration encryptionConfiguration =
+			ConfigurationServiceBootstrapUtil.get(
+				EncryptionConfiguration.class);
+		SignatureSigningConfiguration signatureSigningConfiguration =
+			ConfigurationServiceBootstrapUtil.get(
+				SignatureSigningConfiguration.class);
+		SignatureValidationConfiguration signatureValidationConfiguration =
+			ConfigurationServiceBootstrapUtil.get(
+				SignatureValidationConfiguration.class);
+
 		SafeCloseable safeCloseable = PropsValuesTestUtil.swapWithSafeCloseable(
 			"FIPS_ENABLED", fipsEnabled);
 
@@ -1485,7 +1504,20 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 			new SecurityConfigurationBootstrap(), "activate",
 			new Class<?>[] {Map.class}, properties);
 
-		return safeCloseable;
+		return () -> {
+			ConfigurationServiceBootstrapUtil.register(
+				DecryptionConfiguration.class, decryptionConfiguration);
+			ConfigurationServiceBootstrapUtil.register(
+				EncryptionConfiguration.class, encryptionConfiguration);
+			ConfigurationServiceBootstrapUtil.register(
+				SignatureSigningConfiguration.class,
+				signatureSigningConfiguration);
+			ConfigurationServiceBootstrapUtil.register(
+				SignatureValidationConfiguration.class,
+				signatureValidationConfiguration);
+
+			safeCloseable.close();
+		};
 	}
 
 	private void _assertAbstractSAMLEntityContext(
