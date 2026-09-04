@@ -194,7 +194,7 @@ public class OpenIdConnectTokenRequestUtil {
 			FIPSModeValidator.validateJWSAlgorithm(algorithmName);
 		}
 		catch (SecurityException securityException) {
-			_writeRejectedFederationToken(
+			_writeFederationTokenRejected(
 				algorithmName, oidcProviderMetadata.getIssuer());
 
 			throw new OpenIdConnectServiceException.TokenException(
@@ -242,7 +242,7 @@ public class OpenIdConnectTokenRequestUtil {
 		}
 	}
 
-	private static void _writeRejectedFederationToken(
+	private static void _writeFederationTokenRejected(
 		String algorithmName, Issuer issuer) {
 
 		try {

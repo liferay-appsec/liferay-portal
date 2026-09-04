@@ -2351,7 +2351,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			criteriaSet.add(new UsageCriterion(UsageType.SIGNING));
 
 			if (!trustEngine.validate(signature, criteriaSet)) {
-				writeRejectedFederationToken(
+				writeFederationTokenRejected(
 					httpServletRequest, signature,
 					samlPeerEntityContext.getEntityId());
 

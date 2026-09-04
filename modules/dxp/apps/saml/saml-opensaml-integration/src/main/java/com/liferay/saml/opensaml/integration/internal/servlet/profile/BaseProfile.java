@@ -262,7 +262,7 @@ public abstract class BaseProfile {
 				signature = signableSAMLObject.getSignature();
 			}
 
-			writeRejectedFederationToken(
+			writeFederationTokenRejected(
 				httpServletRequest, signature,
 				samlPeerEntityContext.getEntityId());
 
@@ -691,7 +691,7 @@ public abstract class BaseProfile {
 		}
 	}
 
-	protected void writeRejectedFederationToken(
+	protected void writeFederationTokenRejected(
 		HttpServletRequest httpServletRequest, Signature signature,
 		String tokenIssuer) {
 
