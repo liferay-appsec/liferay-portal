@@ -14,12 +14,15 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
 
@@ -36,9 +39,11 @@ public class JiraUtil {
 
 		options.addHeader(HttpHeaders.ACCEPT, ContentTypes.APPLICATION_JSON);
 
+		String jiraAPIToken = _resolve(patcherConfiguration.jiraAPIToken());
+
 		String credentials =
 			patcherConfiguration.jiraEmailAddress() + StringPool.COLON +
-				patcherConfiguration.jiraAPIToken();
+				jiraAPIToken;
 
 		options.addHeader(
 			"Authorization", "Basic " + Base64.encode(credentials.getBytes()));
@@ -74,6 +79,19 @@ public class JiraUtil {
 			"?fields=issuelinks");
 	}
 
+	private static String _resolve(String value) throws Exception {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(CompanyThreadLocal.getCompanyId(), value);
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(JiraUtil.class);
+
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(JiraUtil.class, SecretResolver.class, null, true);
 
 }
