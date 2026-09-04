@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -124,7 +125,7 @@ public class LiferayJWTBearerAuthenticationHandler
 				jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM), null);
 
 			try {
-				OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
+				FIPSModeValidator.validateJWSAlgorithm(algorithm);
 			}
 			catch (SecurityException securityException) {
 				FIPSAuditUtil.write(

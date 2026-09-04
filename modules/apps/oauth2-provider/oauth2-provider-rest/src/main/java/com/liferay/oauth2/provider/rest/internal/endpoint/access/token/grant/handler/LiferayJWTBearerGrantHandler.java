@@ -10,7 +10,6 @@ import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertion
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
 import com.liferay.oauth2.provider.rest.internal.endpoint.liferay.LiferayOAuthDataProvider;
 import com.liferay.oauth2.provider.rest.internal.endpoint.util.OAuth2RequestUtil;
-import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -20,6 +19,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -263,7 +263,7 @@ public class LiferayJWTBearerGrantHandler extends BaseAccessTokenGrantHandler {
 				JwtClaims jwtClaims = jwtToken.getClaims();
 
 				try {
-					OAuth2JWKValidatorUtil.validateJWSAlgorithm(algorithm);
+					FIPSModeValidator.validateJWSAlgorithm(algorithm);
 				}
 				catch (SecurityException securityException) {
 					FIPSAuditUtil.write(
