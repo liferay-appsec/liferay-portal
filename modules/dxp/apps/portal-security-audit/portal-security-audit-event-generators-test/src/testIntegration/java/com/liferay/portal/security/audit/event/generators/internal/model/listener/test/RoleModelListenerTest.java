@@ -53,6 +53,10 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
 	}
 
 	@Test
