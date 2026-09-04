@@ -168,35 +168,37 @@ public class FIPSModeValidatorTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", false)) {
 
-			for (String algorithm : new String[] {"HS256", null}) {
-				FIPSModeValidator.validateJWSAlgorithm(algorithm);
-			}
+			FIPSModeValidator.validateJWSAlgorithm("HS256");
+			FIPSModeValidator.validateJWSAlgorithm(null);
 		}
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			for (String algorithm :
-					new String[] {
-						"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384",
-						"PS512", "RS256", "RS384", "RS512"
-					}) {
+			FIPSModeValidator.validateJWSAlgorithm("ES256");
+			FIPSModeValidator.validateJWSAlgorithm("ES384");
+			FIPSModeValidator.validateJWSAlgorithm("ES512");
+			FIPSModeValidator.validateJWSAlgorithm("EdDSA");
+			FIPSModeValidator.validateJWSAlgorithm("PS256");
+			FIPSModeValidator.validateJWSAlgorithm("PS384");
+			FIPSModeValidator.validateJWSAlgorithm("PS512");
+			FIPSModeValidator.validateJWSAlgorithm("RS256");
+			FIPSModeValidator.validateJWSAlgorithm("RS384");
+			FIPSModeValidator.validateJWSAlgorithm("RS512");
 
-				FIPSModeValidator.validateJWSAlgorithm(algorithm);
-			}
-
-			for (String algorithm :
-					new String[] {
-						StringPool.BLANK, "ES256K", "HS1", "HS256", "HS384",
-						"HS512", "RS1", "RSA1_5", "garbage", "none", "rs256",
-						null
-					}) {
-
-				_assertSecurityException(
-					"is not allowed in FIPS mode",
-					() -> FIPSModeValidator.validateJWSAlgorithm(algorithm));
-			}
+			_assertJWSAlgorithmNotAllowed(StringPool.BLANK);
+			_assertJWSAlgorithmNotAllowed("ES256K");
+			_assertJWSAlgorithmNotAllowed("HS1");
+			_assertJWSAlgorithmNotAllowed("HS256");
+			_assertJWSAlgorithmNotAllowed("HS384");
+			_assertJWSAlgorithmNotAllowed("HS512");
+			_assertJWSAlgorithmNotAllowed("RS1");
+			_assertJWSAlgorithmNotAllowed("RSA1_5");
+			_assertJWSAlgorithmNotAllowed("garbage");
+			_assertJWSAlgorithmNotAllowed("none");
+			_assertJWSAlgorithmNotAllowed("rs256");
+			_assertJWSAlgorithmNotAllowed(null);
 		}
 	}
 
@@ -336,6 +338,12 @@ public class FIPSModeValidatorTest {
 					() -> FIPSModeValidator.validateURL(url));
 			}
 		}
+	}
+
+	private void _assertJWSAlgorithmNotAllowed(String algorithm) {
+		_assertSecurityException(
+			"is not allowed in FIPS mode",
+			() -> FIPSModeValidator.validateJWSAlgorithm(algorithm));
 	}
 
 	private void _assertSecurityException(

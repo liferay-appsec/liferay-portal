@@ -881,10 +881,10 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 	public void testVerifyAssertionSignatureInvalidSignatureIsNotAudited()
 		throws Exception {
 
-		try (SafeCloseable safeCloseable =
-				_activateSecurityConfigurationBootstrap(true);
-			MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
-				Mockito.mockStatic(FIPSAuditUtil.class)) {
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				_activateSecurityConfigurationBootstrap(true)) {
 
 			Assert.assertThrows(
 				SignatureException.class,
