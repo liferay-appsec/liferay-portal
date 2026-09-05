@@ -163,6 +163,44 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testValidateJWSAlgorithm() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", false)) {
+
+			for (String algorithm : new String[] {"HS256", null}) {
+				FIPSModeValidator.validateJWSAlgorithm(algorithm);
+			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			for (String algorithm :
+					new String[] {
+						"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384",
+						"PS512", "RS256", "RS384", "RS512"
+					}) {
+
+				FIPSModeValidator.validateJWSAlgorithm(algorithm);
+			}
+
+			for (String algorithm :
+					new String[] {
+						StringPool.BLANK, "ES256K", "HS1", "HS256", "HS384",
+						"HS512", "RS1", "RSA1_5", "garbage", "none", "rs256",
+						null
+					}) {
+
+				_assertSecurityException(
+					"is not allowed in FIPS mode",
+					() -> FIPSModeValidator.validateJWSAlgorithm(algorithm));
+			}
+		}
+	}
+
+	@Test
 	public void testValidateKey() {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
