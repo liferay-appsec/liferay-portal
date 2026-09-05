@@ -13,6 +13,7 @@ import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeSer
 import com.liferay.portal.configuration.metatype.definitions.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -21,6 +22,7 @@ import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretManager;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Dictionary;
@@ -77,6 +79,14 @@ public class VaultCredentialConfigurationModelListenerTest {
 			new Bundle[] {_bundle}
 		);
 
+		Mockito.doReturn(
+			SecretResolver.class
+		).when(
+			_bundle
+		).loadClass(
+			Mockito.anyString()
+		);
+
 		Mockito.when(
 			_extendedMetaTypeService.getMetaTypeInformation(_bundle)
 		).thenReturn(
@@ -119,9 +129,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 		ReflectionTestUtil.setFieldValue(
 			_vaultCredentialConfigurationModelListener,
 			"_extendedMetaTypeService", _extendedMetaTypeService);
-		ReflectionTestUtil.setFieldValue(
-			_vaultCredentialConfigurationModelListener, "_secretManager",
-			_secretManager);
+		_setUpSecretManagerSnapshot(_secretManager);
 	}
 
 	@Test
@@ -173,6 +181,33 @@ public class VaultCredentialConfigurationModelListenerTest {
 			StringPool.STAR, secretKeyReference.getProviderId());
 
 		Assert.assertTrue(secret.isDestroyed());
+	}
+
+	@Test
+	public void testOnBeforeSaveWhenBundleCannotResolveKeyReference()
+		throws Exception {
+
+		Mockito.doThrow(
+			ClassNotFoundException.class
+		).when(
+			_bundle
+		).loadClass(
+			Mockito.anyString()
+		);
+
+		String value = RandomTestUtil.randomString();
+
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"credential", value
+			).build();
+
+		_vaultCredentialConfigurationModelListener.onBeforeSave(
+			_PID, properties);
+
+		Assert.assertEquals(value, properties.get("credential"));
+
+		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	@Test
@@ -246,6 +281,25 @@ public class VaultCredentialConfigurationModelListenerTest {
 	}
 
 	@Test
+	public void testOnBeforeSaveWhenSecretManagerIsUnavailable()
+		throws Exception {
+
+		_setUpSecretManagerSnapshot(null);
+
+		String value = RandomTestUtil.randomString();
+
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"credential", value
+			).build();
+
+		_vaultCredentialConfigurationModelListener.onBeforeSave(
+			_PID, properties);
+
+		Assert.assertEquals(value, properties.get("credential"));
+	}
+
+	@Test
 	public void testOnBeforeSaveWhenValueIsAlreadyVaulted() throws Exception {
 		String value = "${secretRef:provider:config:" + _PID + ":0:credential}";
 
@@ -260,6 +314,22 @@ public class VaultCredentialConfigurationModelListenerTest {
 		Assert.assertEquals(value, properties.get("credential"));
 
 		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _setUpSecretManagerSnapshot(SecretManager secretManager) {
+		ReflectionTestUtil.setFieldValue(
+			VaultCredentialConfigurationModelListener.class,
+			"_secretManagerSnapshot",
+			new Snapshot<SecretManager>(
+				VaultCredentialConfigurationModelListener.class,
+				SecretManager.class) {
+
+				@Override
+				public SecretManager get() {
+					return secretManager;
+				}
+
+			});
 	}
 
 	private ExtendedAttributeDefinition _toAttributeDefinition(

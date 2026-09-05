@@ -22,11 +22,9 @@ import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
 import com.liferay.portal.kernel.cluster.ClusterNode;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.key.secret.SecretResolver;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -99,7 +97,6 @@ public class AgentPortalK8sConfigMapModifier
 			List
 				<PortalK8sConfigurationPropertiesMutator>
 					portalK8sConfigurationPropertiesMutators,
-			@Reference SecretResolver secretResolver,
 			Map<String, Object> properties)
 		throws Exception {
 
@@ -112,7 +109,6 @@ public class AgentPortalK8sConfigMapModifier
 		_configurationAdmin = configurationAdmin;
 		_portalK8sConfigurationPropertiesMutators =
 			portalK8sConfigurationPropertiesMutators;
-		_secretResolver = secretResolver;
 
 		_bundle = bundleContext.getBundle();
 		_portalK8sAgentConfiguration = ConfigurableUtil.createConfigurable(
@@ -773,10 +769,7 @@ public class AgentPortalK8sConfigMapModifier
 				portalK8sAgentConfiguration.apiServerPort(), StringPool.SLASH));
 
 		config.setNamespace(portalK8sAgentConfiguration.namespace());
-		config.setOauthToken(
-			_secretResolver.resolve(
-				CompanyConstants.SYSTEM,
-				portalK8sAgentConfiguration.saToken()));
+		config.setOauthToken(portalK8sAgentConfiguration.saToken());
 
 		Config.configFromSysPropsOrEnvVars(config);
 
@@ -1000,7 +993,6 @@ public class AgentPortalK8sConfigMapModifier
 	private final List<PortalK8sConfigurationPropertiesMutator>
 		_portalK8sConfigurationPropertiesMutators;
 	private final ScheduledExecutorService _scheduledExecutorService;
-	private final SecretResolver _secretResolver;
 	private final SharedIndexInformer<ConfigMap> _sharedIndexInformer;
 
 }

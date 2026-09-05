@@ -9,6 +9,7 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.Secret;
@@ -19,7 +20,6 @@ import com.liferay.portal.security.key.secret.exception.SecretException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pedro Victor Silvestre
@@ -54,7 +54,14 @@ public class SecretResolverImpl implements SecretResolver {
 				return resolvedValue;
 			}
 
-			try (Secret secret = _secretManager.getSecret(
+			SecretManager secretManager = _secretManagerSnapshot.get();
+
+			if (secretManager == null) {
+				throw new IllegalStateException(
+					"Secret manager is unavailable");
+			}
+
+			try (Secret secret = secretManager.getSecret(
 					companyId, keyReference)) {
 
 				resolvedValue = new String(secret.getChars());
@@ -83,9 +90,10 @@ public class SecretResolverImpl implements SecretResolver {
 			SecretCacheUtil.PORTAL_CACHE_NAME);
 	}
 
-	private PortalCache<String, String> _portalCache;
+	private static final Snapshot<SecretManager> _secretManagerSnapshot =
+		new Snapshot<>(
+			SecretResolverImpl.class, SecretManager.class, null, true);
 
-	@Reference
-	private SecretManager _secretManager;
+	private PortalCache<String, String> _portalCache;
 
 }
