@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
@@ -48,6 +49,7 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.text.DateFormat;
 
@@ -681,9 +683,12 @@ public class JenkinsUtil {
 
 		Http.Options options = new Http.Options();
 
+		String jenkinsAdminUserToken = _resolve(
+			user.getCompanyId(), patcherConfiguration.jenkinsAdminUserToken());
+
 		String credentials =
 			patcherConfiguration.jenkinsAdminUserName() + StringPool.COLON +
-				patcherConfiguration.jenkinsAdminUserToken();
+				jenkinsAdminUserToken;
 
 		options.addHeader(
 			"Authorization", "Basic " + Base64.encode(credentials.getBytes()));
@@ -932,5 +937,20 @@ public class JenkinsUtil {
 			throw new Exception(sb.toString());
 		}
 	}
+
+	private static String _resolve(long companyId, String value)
+		throws Exception {
+
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(companyId, value);
+	}
+
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(JenkinsUtil.class, SecretResolver.class, null, true);
 
 }

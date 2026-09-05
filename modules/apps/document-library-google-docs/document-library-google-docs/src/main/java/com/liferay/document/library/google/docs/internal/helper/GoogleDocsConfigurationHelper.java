@@ -8,6 +8,8 @@ package com.liferay.document.library.google.docs.internal.helper;
 import com.liferay.document.library.google.drive.configuration.DLGoogleDriveCompanyConfiguration;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 /**
  * @author Iván Zaera
@@ -17,19 +19,34 @@ public class GoogleDocsConfigurationHelper {
 	public GoogleDocsConfigurationHelper(long companyId)
 		throws ConfigurationException {
 
+		_companyId = companyId;
+
 		_dlGoogleDriveCompanyConfiguration =
 			ConfigurationProviderUtil.getCompanyConfiguration(
 				DLGoogleDriveCompanyConfiguration.class, companyId);
 	}
 
 	public String getGoogleAppsAPIKey() {
-		return _dlGoogleDriveCompanyConfiguration.pickerAPIKey();
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(
+			_companyId, _dlGoogleDriveCompanyConfiguration.pickerAPIKey());
 	}
 
 	public String getGoogleClientId() {
 		return _dlGoogleDriveCompanyConfiguration.clientId();
 	}
 
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			GoogleDocsConfigurationHelper.class, SecretResolver.class, null,
+			true);
+
+	private final long _companyId;
 	private final DLGoogleDriveCompanyConfiguration
 		_dlGoogleDriveCompanyConfiguration;
 

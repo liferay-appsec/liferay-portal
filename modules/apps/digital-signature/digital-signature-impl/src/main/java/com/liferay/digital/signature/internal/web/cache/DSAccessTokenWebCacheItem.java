@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -19,6 +20,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -35,25 +37,27 @@ import net.oauth.signature.pem.PKCS1EncodedKeySpec;
 public class DSAccessTokenWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
-		String apiUsername, String environment, String integrationKey,
-		String rsaPrivateKey) {
+		String apiUsername, long companyId, String environment,
+		String integrationKey, String rsaPrivateKey) {
 
 		return (JSONObject)WebCachePoolUtil.get(
 			StringBundler.concat(
 				DSAccessTokenWebCacheItem.class.getName(), StringPool.POUND,
-				apiUsername, StringPool.POUND, environment, StringPool.POUND,
-				integrationKey, StringPool.POUND, rsaPrivateKey),
+				companyId, StringPool.POUND, apiUsername, StringPool.POUND,
+				environment, StringPool.POUND, integrationKey, StringPool.POUND,
+				rsaPrivateKey),
 			new DSAccessTokenWebCacheItem(
-				apiUsername, environment, integrationKey, rsaPrivateKey));
+				apiUsername, companyId, environment, integrationKey,
+				rsaPrivateKey));
 	}
 
 	public DSAccessTokenWebCacheItem(
-		String apiUsername, String environment, String integrationKey,
-		String rsaPrivateKey) {
+		String apiUsername, long companyId, String environment,
+		String integrationKey, String rsaPrivateKey) {
 
 		_apiUsername = apiUsername;
 		_environment = environment;
-		_integrationKey = integrationKey;
+		_integrationKey = _resolve(companyId, integrationKey);
 
 		if (environment.equals("production")) {
 			_environmentBaseURI = "account.docusign.com";
@@ -66,7 +70,7 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 			_rsaPrivateKeyBytes = new byte[0];
 		}
 		else {
-			String pem = _getPEM(rsaPrivateKey);
+			String pem = _getPEM(_resolve(companyId, rsaPrivateKey));
 
 			_rsaPrivateKeyBytes = pem.getBytes();
 		}
@@ -199,6 +203,16 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 		return keyFactory.generatePrivate(pkcs1EncodedKeySpec.getKeySpec());
 	}
 
+	private String _resolve(long companyId, String value) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(companyId, value);
+	}
+
 	private static final String _PEM_MARKER_BEGIN =
 		"-----BEGIN RSA PRIVATE KEY-----";
 
@@ -209,6 +223,10 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DSAccessTokenWebCacheItem.class);
+
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			DSAccessTokenWebCacheItem.class, SecretResolver.class, null, true);
 
 	private final String _apiUsername;
 	private final String _environment;

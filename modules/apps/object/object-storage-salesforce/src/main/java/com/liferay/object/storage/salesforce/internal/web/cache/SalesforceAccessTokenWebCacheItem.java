@@ -12,12 +12,14 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
 
@@ -27,26 +29,35 @@ import java.net.HttpURLConnection;
 public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
-		SalesforceConfiguration salesforceConfiguration) {
+		long companyId, SalesforceConfiguration salesforceConfiguration) {
 
 		return (JSONObject)WebCachePoolUtil.get(
 			StringBundler.concat(
 				SalesforceAccessTokenWebCacheItem.class.getName(),
-				StringPool.POUND, salesforceConfiguration.consumerKey(),
-				StringPool.POUND, salesforceConfiguration.consumerSecret(),
-				StringPool.POUND, salesforceConfiguration.password(),
-				StringPool.POUND, salesforceConfiguration.username()),
-			new SalesforceAccessTokenWebCacheItem(salesforceConfiguration));
+				StringPool.POUND, companyId, StringPool.POUND,
+				salesforceConfiguration.consumerKey(), StringPool.POUND,
+				salesforceConfiguration.consumerSecret(), StringPool.POUND,
+				salesforceConfiguration.password(), StringPool.POUND,
+				salesforceConfiguration.username()),
+			new SalesforceAccessTokenWebCacheItem(
+				companyId, salesforceConfiguration));
 	}
 
 	public SalesforceAccessTokenWebCacheItem(
-		SalesforceConfiguration salesforceConfiguration) {
+		long companyId, SalesforceConfiguration salesforceConfiguration) {
 
+		_companyId = companyId;
 		_salesforceConfiguration = salesforceConfiguration;
 	}
 
 	@Override
 	public JSONObject convert(String key) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
 		try {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
@@ -60,11 +71,15 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 				HashMapBuilder.put(
 					"client_id", _salesforceConfiguration.consumerKey()
 				).put(
-					"client_secret", _salesforceConfiguration.consumerSecret()
+					"client_secret",
+					secretResolver.resolve(
+						_companyId, _salesforceConfiguration.consumerSecret())
 				).put(
 					"grant_type", "password"
 				).put(
-					"password", _salesforceConfiguration.password()
+					"password",
+					secretResolver.resolve(
+						_companyId, _salesforceConfiguration.password())
 				).put(
 					"username", _salesforceConfiguration.username()
 				).build());
@@ -108,6 +123,12 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SalesforceAccessTokenWebCacheItem.class);
 
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			SalesforceAccessTokenWebCacheItem.class, SecretResolver.class, null,
+			true);
+
+	private final long _companyId;
 	private final SalesforceConfiguration _salesforceConfiguration;
 
 }

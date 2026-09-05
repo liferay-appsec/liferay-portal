@@ -5,6 +5,9 @@
 
 package com.liferay.saml.opensaml.integration.internal.credential;
 
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.saml.opensaml.integration.internal.util.KeyStoreUtil;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfigurationHelper;
@@ -71,8 +74,9 @@ public class KeyStoreCredentialResolver extends AbstractCredentialResolver {
 						keyStoreEncryptionCredentialPassword();
 			}
 			else {
-				keyStoreCredentialPassword =
-					samlProviderConfiguration.keyStoreCredentialPassword();
+				keyStoreCredentialPassword = _resolve(
+					CompanyThreadLocal.getCompanyId(),
+					samlProviderConfiguration.keyStoreCredentialPassword());
 			}
 		}
 
@@ -166,6 +170,20 @@ public class KeyStoreCredentialResolver extends AbstractCredentialResolver {
 
 		return basicX509Credential;
 	}
+
+	private String _resolve(long companyId, String value) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(companyId, value);
+	}
+
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			KeyStoreCredentialResolver.class, SecretResolver.class, null, true);
 
 	@Reference(name = "KeyStoreManager", target = "(default=true)")
 	private KeyStoreManager _keyStoreManager;

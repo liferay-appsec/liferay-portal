@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -25,6 +27,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
 
@@ -45,10 +48,13 @@ public class HelpCenterUtil {
 
 		String downloadURL = PatcherBuildUtil.getDownloadURL(patcherBuild);
 
+		String jiraServiceManagementUserToken = _resolve(
+			patcherBuild.getCompanyId(),
+			patcherConfiguration.jiraServiceManagementUserToken());
+
 		String credentials =
 			patcherConfiguration.jiraServiceManagementUserEmailAddress() +
-				StringPool.COLON +
-					patcherConfiguration.jiraServiceManagementUserToken();
+				StringPool.COLON + jiraServiceManagementUserToken;
 
 		Http.Options options = new Http.Options();
 
@@ -138,7 +144,7 @@ public class HelpCenterUtil {
 			"client_id", patcherConfiguration.supportLiferayAPIClientId());
 		options.addPart(
 			"client_secret",
-			patcherConfiguration.supportLiferayAPIClientSecret());
+			_resolve(patcherConfiguration.supportLiferayAPIClientSecret()));
 		options.addPart("grant_type", "client_credentials");
 		options.setLocation(
 			patcherConfiguration.supportLiferayURL() + "/o/oauth2/token");
@@ -229,6 +235,22 @@ public class HelpCenterUtil {
 		return options;
 	}
 
+	private static String _resolve(long companyId, String value)
+		throws Exception {
+
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
+		return secretResolver.resolve(companyId, value);
+	}
+
+	private static String _resolve(String value) throws Exception {
+		return _resolve(CompanyThreadLocal.getCompanyId(), value);
+	}
+
 	private static String _sendRequest(Http.Options options) throws Exception {
 		String responseString = HttpUtil.URLtoString(options);
 
@@ -256,6 +278,8 @@ public class HelpCenterUtil {
 	private static final Log _log = LogFactoryUtil.getLog(HelpCenterUtil.class);
 
 	private static String _accessToken;
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(HelpCenterUtil.class, SecretResolver.class, null, true);
 	private static long _tokenExpirationTime;
 
 }
