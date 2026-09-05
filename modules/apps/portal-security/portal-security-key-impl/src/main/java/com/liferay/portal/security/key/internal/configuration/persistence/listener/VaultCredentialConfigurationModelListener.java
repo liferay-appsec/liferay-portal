@@ -15,6 +15,7 @@ import com.liferay.portal.configuration.persistence.listener.ConfigurationModelL
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -23,6 +24,7 @@ import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretManager;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Dictionary;
 
@@ -107,6 +109,21 @@ public class VaultCredentialConfigurationModelListener
 		_bundleContext = bundleContext;
 	}
 
+	private boolean _canResolveSecrets(Bundle bundle) {
+		try {
+			bundle.loadClass(SecretResolver.class.getName());
+
+			return true;
+		}
+		catch (ClassNotFoundException classNotFoundException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(classNotFoundException);
+			}
+
+			return false;
+		}
+	}
+
 	private void _checkKeyReference(String identifier, String pid, String value)
 		throws ConfigurationModelListenerException {
 
@@ -160,6 +177,18 @@ public class VaultCredentialConfigurationModelListener
 				continue;
 			}
 
+			if (!_canResolveSecrets(bundle)) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Not vaulting configuration \"", pid,
+							"\" because bundle \"", bundle.getSymbolicName(),
+							"\" cannot resolve a key reference"));
+				}
+
+				return null;
+			}
+
 			return extendedMetaTypeInformation.getObjectClassDefinition(
 				metaTypePid, null);
 		}
@@ -170,13 +199,19 @@ public class VaultCredentialConfigurationModelListener
 	private String _vault(long companyId, String identifier, String value)
 		throws Exception {
 
+		SecretManager secretManager = _secretManagerSnapshot.get();
+
+		if (secretManager == null) {
+			throw new IllegalStateException("Secret manager is unavailable");
+		}
+
 		try (Secret secret = new Secret(
 				new KeyReference(
 					identifier, StringPool.STAR, KeyReference.Type.SECRET),
 				value)) {
 
 			return KeyReferenceUtil.toKeyReferenceString(
-				_secretManager.putSecret(companyId, secret));
+				secretManager.putSecret(companyId, secret));
 		}
 	}
 
@@ -185,12 +220,14 @@ public class VaultCredentialConfigurationModelListener
 	private static final Log _log = LogFactoryUtil.getLog(
 		VaultCredentialConfigurationModelListener.class);
 
+	private static final Snapshot<SecretManager> _secretManagerSnapshot =
+		new Snapshot<>(
+			VaultCredentialConfigurationModelListener.class,
+			SecretManager.class, null, true);
+
 	private BundleContext _bundleContext;
 
 	@Reference
 	private ExtendedMetaTypeService _extendedMetaTypeService;
-
-	@Reference
-	private SecretManager _secretManager;
 
 }
