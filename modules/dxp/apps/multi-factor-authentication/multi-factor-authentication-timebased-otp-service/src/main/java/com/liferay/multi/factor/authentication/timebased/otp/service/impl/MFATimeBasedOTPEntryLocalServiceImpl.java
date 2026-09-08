@@ -193,7 +193,7 @@ public class MFATimeBasedOTPEntryLocalServiceImpl
 		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry) {
 
 		return StringBundler.concat(
-			MFATimeBasedOTPEntry.class.getSimpleName(), StringPool.POUND,
+			MFATimeBasedOTPEntry.class.getSimpleName(), StringPool.SLASH,
 			mfaTimeBasedOTPEntry.getMfaTimeBasedOTPEntryId());
 	}
 
