@@ -145,7 +145,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 			).build();
 
 		KeyReference keyReference = new KeyReference(
-			"config:" + _PID + ":0:credential", "provider",
+			"config/" + _PID + "/0/credential", "provider",
 			KeyReference.Type.SECRET);
 
 		AtomicReference<Secret> atomicReference = new AtomicReference<>();
@@ -175,7 +175,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 		KeyReference secretKeyReference = secret.getKeyReference();
 
 		Assert.assertEquals(
-			"config:" + _PID + ":0:credential",
+			"config/" + _PID + "/0/credential",
 			secretKeyReference.getIdentifier());
 		Assert.assertEquals(
 			StringPool.STAR, secretKeyReference.getProviderId());
@@ -235,7 +235,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(
 				"credential",
-				"${secretRef:provider:config:com.liferay.other:0:credential}"
+				"${secretRef:provider:config/com.liferay.other/0/credential}"
 			).build();
 
 		Assert.assertThrows(
@@ -276,7 +276,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 
 		Assert.assertEquals(
 			StringBundler.concat(
-				"config:", _PID, ":", companyId, ":credential"),
+				"config/", _PID, StringPool.SLASH, companyId, "/credential"),
 			keyReference.getIdentifier());
 	}
 
@@ -301,7 +301,7 @@ public class VaultCredentialConfigurationModelListenerTest {
 
 	@Test
 	public void testOnBeforeSaveWhenValueIsAlreadyVaulted() throws Exception {
-		String value = "${secretRef:provider:config:" + _PID + ":0:credential}";
+		String value = "${secretRef:provider:config/" + _PID + "/0/credential}";
 
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(

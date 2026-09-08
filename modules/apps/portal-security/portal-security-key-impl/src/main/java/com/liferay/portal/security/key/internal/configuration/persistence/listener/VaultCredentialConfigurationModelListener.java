@@ -148,7 +148,8 @@ public class VaultCredentialConfigurationModelListener
 
 	private String _getIdentifier(long companyId, String id, String pid) {
 		return StringBundler.concat(
-			_IDENTIFIER_PREFIX, pid, ":", companyId, ":", id);
+			_IDENTIFIER_PREFIX, pid, StringPool.SLASH, companyId,
+			StringPool.SLASH, id);
 	}
 
 	private ObjectClassDefinition _getObjectClassDefinition(
@@ -215,7 +216,7 @@ public class VaultCredentialConfigurationModelListener
 		}
 	}
 
-	private static final String _IDENTIFIER_PREFIX = "config:";
+	private static final String _IDENTIFIER_PREFIX = "config/";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		VaultCredentialConfigurationModelListener.class);
