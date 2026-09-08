@@ -10,7 +10,9 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.fips.FIPSApplicationState;
 import com.liferay.portal.kernel.security.fips.FIPSApplicationStateMachineUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.fips.rest.dto.v1_0.FIPSHealthVerification;
 import com.liferay.portal.security.fips.util.FIPSUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -82,6 +84,8 @@ public class FIPSHealthVerificationResourceImplTest {
 			MockedStatic<FIPSApplicationStateMachineUtil>
 				fipsApplicationStateMachineUtilMockedStatic =
 					Mockito.mockStatic(FIPSApplicationStateMachineUtil.class);
+			MockedStatic<FIPSModeValidator> fipsModeValidatorMockedStatic =
+				Mockito.mockStatic(FIPSModeValidator.class);
 			MockedStatic<FIPSUtil> fipsUtilMockedStatic = Mockito.mockStatic(
 				FIPSUtil.class)) {
 
@@ -108,16 +112,19 @@ public class FIPSHealthVerificationResourceImplTest {
 			_testPostFIPSHealthVerification(
 				FIPSApplicationState.ERROR,
 				fipsApplicationStateMachineUtilMockedStatic,
+				fipsModeValidatorMockedStatic,
 				fipsHealthVerificationResourceImpl, new SecurityException(),
 				FIPSHealthVerification.Status.ERROR);
 			_testPostFIPSHealthVerification(
 				FIPSApplicationState.POWER_OFF,
 				fipsApplicationStateMachineUtilMockedStatic,
+				fipsModeValidatorMockedStatic,
 				fipsHealthVerificationResourceImpl, new IllegalStateException(),
 				FIPSHealthVerification.Status.POWER_OFF);
 			_testPostFIPSHealthVerification(
 				FIPSApplicationState.SELF_TEST,
 				fipsApplicationStateMachineUtilMockedStatic,
+				fipsModeValidatorMockedStatic,
 				fipsHealthVerificationResourceImpl, new IllegalStateException(),
 				FIPSHealthVerification.Status.SELF_TEST);
 
@@ -127,8 +134,8 @@ public class FIPSHealthVerificationResourceImplTest {
 				FIPSApplicationState.OPERATIONAL
 			);
 
-			fipsApplicationStateMachineUtilMockedStatic.when(
-				() -> FIPSApplicationStateMachineUtil.selfTest(Mockito.any())
+			fipsModeValidatorMockedStatic.when(
+				FIPSModeValidator::verifyHealth
 			).thenAnswer(
 				invocation -> null
 			);
@@ -139,13 +146,27 @@ public class FIPSHealthVerificationResourceImplTest {
 			Assert.assertEquals(
 				FIPSHealthVerification.Status.OPERATIONAL,
 				fipsHealthVerification.getStatus());
+
+			String message = RandomTestUtil.randomString();
+
+			fipsHealthVerification = _testPostFIPSHealthVerification(
+				FIPSApplicationState.OPERATIONAL,
+				fipsApplicationStateMachineUtilMockedStatic,
+				fipsModeValidatorMockedStatic,
+				fipsHealthVerificationResourceImpl,
+				new SecurityException(message),
+				FIPSHealthVerification.Status.OPERATIONAL);
+
+			Assert.assertEquals(
+				message, fipsHealthVerification.getErrorMessage());
 		}
 	}
 
-	private void _testPostFIPSHealthVerification(
+	private FIPSHealthVerification _testPostFIPSHealthVerification(
 		FIPSApplicationState fipsApplicationState,
 		MockedStatic<FIPSApplicationStateMachineUtil>
 			fipsApplicationStateMachineUtilMockedStatic,
+		MockedStatic<FIPSModeValidator> fipsModeValidatorMockedStatic,
 		FIPSHealthVerificationResourceImpl fipsHealthVerificationResourceImpl,
 		RuntimeException runtimeException,
 		FIPSHealthVerification.Status status) {
@@ -158,8 +179,8 @@ public class FIPSHealthVerificationResourceImplTest {
 			fipsApplicationState
 		);
 
-		fipsApplicationStateMachineUtilMockedStatic.when(
-			() -> FIPSApplicationStateMachineUtil.selfTest(Mockito.any())
+		fipsModeValidatorMockedStatic.when(
+			FIPSModeValidator::verifyHealth
 		).thenThrow(
 			runtimeException
 		);
@@ -187,6 +208,8 @@ public class FIPSHealthVerificationResourceImplTest {
 			argumentCaptor.getValue();
 
 		Assert.assertEquals(status, fipsHealthVerification.getStatus());
+
+		return fipsHealthVerification;
 	}
 
 	private Response.ResponseBuilder _responseBuilder;
