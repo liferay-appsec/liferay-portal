@@ -9,6 +9,8 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderApplicationHeadlessServerConfiguration;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderApplicationUserAgentConfiguration;
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
+import com.liferay.oauth2.provider.scope.liferay.UnresolvedScopeAliasesRegistry;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
@@ -22,6 +24,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -34,9 +37,13 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import jakarta.ws.rs.core.Application;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -170,6 +177,99 @@ public class BaseConfigurationFactoryTest {
 			companyId, properties, _user);
 	}
 
+	@Test
+	public void testUpdateScopes() throws Exception {
+		long companyId = TestPropsValues.getCompanyId();
+
+		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
+			companyId);
+
+		Assert.assertFalse(scopeAliases.isEmpty());
+
+		String scopeAlias = Collections.min(scopeAliases);
+
+		String unresolvableScopeAlias = RandomTestUtil.randomString();
+
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"_portalK8sConfigMapModifier.cardinality.minimum", 0
+			).put(
+				"baseURL", "http://foo.me"
+			).put(
+				"companyId", companyId
+			).put(
+				"scopes", new String[] {scopeAlias, unresolvableScopeAlias}
+			).build();
+
+		Configuration configuration = _createFactoryConfiguration(
+			OAuth2ProviderApplicationHeadlessServerConfiguration.class.
+				getName(),
+			properties);
+
+		OAuth2Application oAuth2Application = _fetchOAuthApplication(companyId);
+
+		Assert.assertNotNull(oAuth2Application);
+
+		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
+
+		try {
+
+			// The alias with no scope source is recorded as unresolved
+
+			_assertUnresolvedScopeAliases(
+				companyId, oAuth2ApplicationId,
+				Collections.singleton(unresolvableScopeAlias));
+
+			// Dropping it from the configuration clears the record
+
+			properties.put("scopes", new String[] {scopeAlias});
+
+			ConfigurationTestUtil.saveConfiguration(configuration, properties);
+
+			_assertUnresolvedScopeAliases(
+				companyId, oAuth2ApplicationId, Collections.emptySet());
+
+			properties.put("scopes", new String[] {unresolvableScopeAlias});
+
+			ConfigurationTestUtil.saveConfiguration(configuration, properties);
+
+			_assertUnresolvedScopeAliases(
+				companyId, oAuth2ApplicationId,
+				Collections.singleton(unresolvableScopeAlias));
+		}
+		finally {
+
+			// Deleting the configuration clears the record with the application
+
+			ConfigurationTestUtil.deleteConfiguration(configuration);
+		}
+
+		_assertUnresolvedScopeAliases(
+			companyId, oAuth2ApplicationId, Collections.emptySet());
+	}
+
+	private void _assertUnresolvedScopeAliases(
+			long companyId, long oAuth2ApplicationId, Set<String> scopeAliases)
+		throws Exception {
+
+		Collection<String> unresolvedScopeAliases = null;
+
+		for (int i = 0; i < 100; i++) {
+			unresolvedScopeAliases =
+				_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
+					companyId, oAuth2ApplicationId);
+
+			if (scopeAliases.equals(new HashSet<>(unresolvedScopeAliases))) {
+				return;
+			}
+
+			Thread.sleep(50);
+		}
+
+		Assert.assertEquals(
+			scopeAliases, new HashSet<>(unresolvedScopeAliases));
+	}
+
 	private Configuration _createFactoryConfiguration(
 			String className, Dictionary<String, Object> properties)
 		throws Exception {
@@ -257,6 +357,12 @@ public class BaseConfigurationFactoryTest {
 
 	@Inject
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
+
+	@Inject
+	private ScopeLocator _scopeLocator;
+
+	@Inject
+	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
 
 	@DeleteAfterTestRun
 	private User _user;
