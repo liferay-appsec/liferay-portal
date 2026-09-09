@@ -19,18 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * In-memory {@link UnresolvedScopeAliasesRegistry} backed by a nested map of
- * company ID to application ID to aliases.
- *
- * <p>
- * The state is node-local and rebuilt as configurations are applied, so it is
- * not persisted. Reads and writes are concurrent: the outer map is a {@link
- * ConcurrentHashMap}, and {@link #setUnresolvedScopeAliases} and {@link
- * #removeUnresolvedScopeAliases} mutate a company's inner map under a single
- * {@code compute} on the outer key so an entry is never left behind after its
- * last application is removed, nor lost to a concurrent removal.
- * </p>
- *
  * @author Allen Ziegenfus
  */
 @Component(service = UnresolvedScopeAliasesRegistry.class)
