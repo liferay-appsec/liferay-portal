@@ -39,24 +39,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * Binds the scope aliases tracked in the {@link UnresolvedScopeAliasesRegistry}
- * once the scope sources they name become resolvable.
- *
- * <p>
- * Binding is additive: {@link #_addScopeAliases} copies every existing grant and
- * adds the grants for the aliases that resolve now, so an already-granted alias
- * is never revoked and a redundant pass writes nothing. The new snapshot and the
- * application repoint share the single transaction Service Builder wraps around
- * {@code addOAuth2ApplicationScopeAliasesAndUpdateApplication}, so a failure
- * leaves no orphan snapshot. Reconciling is master-only, matching the clustered
- * scheduler that owns the fallback pass.
- * </p>
- *
- * <p>
- * {@link #reconcile()} serializes on a lock and runs one pass per call, so a
- * caller returns only after its own pass has completed.
- * </p>
- *
  * @author Allen Ziegenfus
  */
 @Component(service = UnresolvedScopeAliasReconciler.class)
