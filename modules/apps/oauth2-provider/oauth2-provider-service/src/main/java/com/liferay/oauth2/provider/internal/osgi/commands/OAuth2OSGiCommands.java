@@ -24,12 +24,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * Diagnostic Gogo commands for the unresolved-scope-alias reconcile feature.
- * They live here, alongside the reconciler, rather than in the
- * <code>oauth2-provider-scope-impl</code> command component, so their mandatory
- * references to this bundle's services do not take down the pre-existing
- * <code>oauth2:listScopes</code> command when this bundle is unsatisfied.
- *
  * @author Allen Ziegenfus
  */
 @Component(
