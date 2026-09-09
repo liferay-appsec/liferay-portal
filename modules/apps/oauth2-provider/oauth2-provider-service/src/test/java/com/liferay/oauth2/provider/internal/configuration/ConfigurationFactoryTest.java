@@ -291,6 +291,9 @@ public class ConfigurationFactoryTest {
 		oa2pahscf.userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
+			oa2pahscf, "_oAuth2ApplicationLocalService",
+			_oAuth2ApplicationLocalService);
+		ReflectionTestUtil.setFieldValue(
 			oa2pahscf, "_scopeLocator", _scopeLocator);
 
 		ReflectionTestUtil.setFieldValue(
