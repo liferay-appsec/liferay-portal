@@ -157,7 +157,6 @@ public class VaultCredentialConfigurationModelListener
 
 		String factoryPid = GetterUtil.getString(
 			properties.get(ConfigurationAdmin.SERVICE_FACTORYPID));
-
 		String metaTypePid = pid;
 
 		if (Validator.isNotNull(factoryPid)) {

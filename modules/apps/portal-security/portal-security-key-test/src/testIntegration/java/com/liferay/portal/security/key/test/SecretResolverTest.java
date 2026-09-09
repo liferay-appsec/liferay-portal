@@ -77,7 +77,6 @@ public class SecretResolverTest {
 	@Test
 	public void testResolve() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
-
 		String identifier = RandomTestUtil.randomString();
 		String value = RandomTestUtil.randomString();
 

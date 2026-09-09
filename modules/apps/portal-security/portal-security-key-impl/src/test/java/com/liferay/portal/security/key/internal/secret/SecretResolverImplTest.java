@@ -165,7 +165,6 @@ public class SecretResolverImplTest {
 			_secretResolverImpl.resolve(
 				companyId,
 				KeyReferenceUtil.toKeyReferenceString(keyReference)));
-
 		Assert.assertTrue(secret.isDestroyed());
 
 		Mockito.verify(
