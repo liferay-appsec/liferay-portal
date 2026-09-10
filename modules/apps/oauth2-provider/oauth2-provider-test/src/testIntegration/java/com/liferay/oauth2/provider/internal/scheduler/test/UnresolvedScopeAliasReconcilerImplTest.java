@@ -83,9 +83,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				oAuth2ApplicationScopeAliasesLocalService.
 					getOAuth2ApplicationScopeAliasesesCount();
 
-			// Two reconciles released at once must serialize, so exactly one
-			// binds the alias and writes one snapshot
-
 			CountDownLatch startCountDownLatch = new CountDownLatch(1);
 			CountDownLatch doneCountDownLatch = new CountDownLatch(2);
 
@@ -180,8 +177,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 
 			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 
-			// A stale entry, as a node keeps after another node bound the alias
-
 			unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId,
 				Collections.singletonList(scopeAlias));
@@ -228,8 +223,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 			long oAuth2ApplicationId =
 				oAuth2Application.getOAuth2ApplicationId();
 
-			// Declare the alias in a different case than it is registered
-
 			String declaredScopeAlias = StringUtil.toUpperCase(scopeAlias);
 
 			unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
@@ -237,9 +230,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				Collections.singletonList(declaredScopeAlias));
 
 			Assert.assertTrue(_unresolvedScopeAliasReconciler.reconcile());
-
-			// The alias resolves under its registered case and the grant is
-			// persisted under the declared case the client holds
 
 			Assert.assertTrue(
 				hasScopeAlias(oAuth2ApplicationId, declaredScopeAlias));
@@ -286,9 +276,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 					companyId, oAuth2ApplicationId,
 					Collections.singletonList(scopeAlias));
 
-				// Take the granted alias's scope source away, so the reconcile
-				// must copy a grant it can no longer resolve
-
 				serviceRegistration.unregister();
 
 				serviceRegistration = null;
@@ -320,9 +307,6 @@ public class UnresolvedScopeAliasReconcilerImplTest
 
 			long oAuth2ApplicationId =
 				oAuth2Application.getOAuth2ApplicationId();
-
-			// The configuration factory recorded an alias that never resolves,
-			// so nothing binds, no snapshot is written, and the entry stays
 
 			_unresolvedScopeAliasReconciler.reconcile();
 

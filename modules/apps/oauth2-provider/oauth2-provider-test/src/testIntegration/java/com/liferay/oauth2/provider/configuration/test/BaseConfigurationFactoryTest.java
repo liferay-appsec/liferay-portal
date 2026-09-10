@@ -213,14 +213,9 @@ public class BaseConfigurationFactoryTest {
 		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 
 		try {
-
-			// The alias with no scope source is recorded as unresolved
-
 			_assertUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId,
 				Collections.singleton(unresolvableScopeAlias));
-
-			// Dropping it from the configuration clears the record
 
 			properties.put("scopes", new String[] {scopeAlias});
 
@@ -238,9 +233,6 @@ public class BaseConfigurationFactoryTest {
 				Collections.singleton(unresolvableScopeAlias));
 		}
 		finally {
-
-			// Deleting the configuration clears the record with the application
-
 			ConfigurationTestUtil.deleteConfiguration(configuration);
 		}
 
