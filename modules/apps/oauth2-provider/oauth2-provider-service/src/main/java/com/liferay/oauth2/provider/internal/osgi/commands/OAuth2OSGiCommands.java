@@ -12,6 +12,7 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.osgi.util.configuration.ConfigurationFactoryUtil;
 import com.liferay.osgi.util.osgi.commands.OSGiCommands;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -62,7 +63,7 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 							_oAuth2ApplicationLocalService.
 								fetchOAuth2Application(oAuth2ApplicationId);
 
-						String name = "";
+						String name = StringPool.BLANK;
 
 						if (oAuth2Application != null) {
 							name = oAuth2Application.getName();
@@ -71,7 +72,7 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 						System.out.println(
 							StringBundler.concat(
 								"company ", companyId, " application ",
-								oAuth2ApplicationId, " (", name, "): ",
+								oAuth2ApplicationId, " named \"", name, "\": ",
 								ListUtil.sort(
 									new ArrayList<>(
 										_unresolvedScopeAliasesRegistry.
