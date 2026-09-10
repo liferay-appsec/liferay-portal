@@ -275,8 +275,8 @@ public abstract class BaseConfigurationFactory {
 				(grantedScopeAliasesList.size() == scopeAliasesList.size())) {
 
 				_updateUnresolvedScopeAliases(
-					oAuth2Application, scopeAliasesList,
-					grantedScopeAliasesList);
+					grantedScopeAliasesList, oAuth2Application,
+					scopeAliasesList);
 
 				return;
 			}
@@ -292,9 +292,9 @@ public abstract class BaseConfigurationFactory {
 				oAuth2ApplicationId, scopeAliasesList);
 
 		_updateUnresolvedScopeAliases(
-			oAuth2Application, scopeAliasesList,
 			oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
-				updatedOAuth2Application.getOAuth2ApplicationScopeAliasesId()));
+				updatedOAuth2Application.getOAuth2ApplicationScopeAliasesId()),
+			oAuth2Application, scopeAliasesList);
 	}
 
 	@Reference
@@ -322,18 +322,18 @@ public abstract class BaseConfigurationFactory {
 	protected UserLocalService userLocalService;
 
 	private void _updateUnresolvedScopeAliases(
-		OAuth2Application oAuth2Application, List<String> scopeAliasesList,
-		List<String> grantedScopeAliasesList) {
-
-		List<String> unresolvedScopeAliasesList = new ArrayList<>(
-			scopeAliasesList);
-
-		unresolvedScopeAliasesList.removeAll(grantedScopeAliasesList);
+		List<String> grantedScopeAliasesList,
+		OAuth2Application oAuth2Application, List<String> scopeAliasesList) {
 
 		long companyId = oAuth2Application.getCompanyId();
 		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 
 		Log log = getLog();
+
+		List<String> unresolvedScopeAliasesList = new ArrayList<>(
+			scopeAliasesList);
+
+		unresolvedScopeAliasesList.removeAll(grantedScopeAliasesList);
 
 		if (unresolvedScopeAliasesList.isEmpty()) {
 			unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
@@ -342,9 +342,9 @@ public abstract class BaseConfigurationFactory {
 			if (log.isInfoEnabled()) {
 				log.info(
 					StringBundler.concat(
-						"OAuth 2 application ", oAuth2ApplicationId, " (",
-						oAuth2Application.getName(),
-						") resolved all declared scope aliases: ",
+						"OAuth 2 application ", oAuth2ApplicationId,
+						" named \"", oAuth2Application.getName(),
+						"\" resolved all declared scope aliases: ",
 						grantedScopeAliasesList));
 			}
 
@@ -354,9 +354,9 @@ public abstract class BaseConfigurationFactory {
 		if (log.isWarnEnabled()) {
 			log.warn(
 				StringBundler.concat(
-					"OAuth 2 application ", oAuth2ApplicationId, " (",
+					"OAuth 2 application ", oAuth2ApplicationId, " named \"",
 					oAuth2Application.getName(),
-					") declared scope aliases that resolved to no scopes: ",
+					"\" declared scope aliases that resolved to no scopes: ",
 					unresolvedScopeAliasesList));
 		}
 
