@@ -489,6 +489,9 @@ public interface PropsKeys {
 	public static final String COMPANY_ENCRYPTION_ALGORITHM =
 		"company.encryption.algorithm";
 
+	public static final String COMPANY_ENCRYPTION_KEY_RESOLUTION_TIMEOUT =
+		"company.encryption.key.resolution.timeout";
+
 	public static final String COMPANY_ENCRYPTION_KEY_SIZE =
 		"company.encryption.key.size";
 
