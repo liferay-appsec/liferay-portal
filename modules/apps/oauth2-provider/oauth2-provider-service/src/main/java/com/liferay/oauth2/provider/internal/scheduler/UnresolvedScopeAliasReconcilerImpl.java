@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -63,12 +64,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 		throws Exception {
 
 		Set<String> persistedScopeAliases = new HashSet<>();
-
-		// Resolve each alias once, here, and reuse the result when building the
-		// snapshot. Resolving again inside the builder let a scope source that
-		// deregistered between the two calls leave a no-op snapshot behind
-		// (copied grants, nothing new), orphaning the prior snapshot on every
-		// pass. Guarding on a nonempty resolution keeps the write additive.
 
 		Map<String, Collection<LiferayOAuth2Scope>>
 			resolvedLiferayOAuth2Scopes = new LinkedHashMap<>();
@@ -265,11 +260,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		remainingScopeAliasesList.removeAll(boundScopeAliasesList);
 
-		// Remove only the aliases this pass actually bound, atomically, rather
-		// than overwriting the whole entry from the snapshot read at the top of
-		// the pass. A configuration update that recorded a new alias while the
-		// pass ran is then preserved instead of being clobbered.
-
 		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
 			companyId, oAuth2ApplicationId, boundScopeAliasesList);
 
@@ -278,15 +268,15 @@ public class UnresolvedScopeAliasReconcilerImpl
 				StringBundler.concat(
 					"Bound previously unresolved scope aliases ",
 					persistedScopeAliases, " for OAuth 2 application ",
-					oAuth2ApplicationId, " (", oAuth2Application.getName(),
-					")"));
+					oAuth2ApplicationId, " named \"",
+					oAuth2Application.getName(), "\""));
 
 			if (remainingScopeAliasesList.isEmpty()) {
 				_log.info(
 					StringBundler.concat(
-						"OAuth 2 application ", oAuth2ApplicationId, " (",
-						oAuth2Application.getName(),
-						") resolved all previously unresolved scope aliases"));
+						"OAuth 2 application ", oAuth2ApplicationId,
+						" named \"", oAuth2Application.getName(),
+						"\" resolved all previously unresolved scope aliases"));
 			}
 		}
 
@@ -308,7 +298,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 					oAuth2ApplicationIdsByCompanyId.size() + " companies");
 		}
 
-		boolean[] bound = {false};
+		AtomicBoolean bound = new AtomicBoolean();
 
 		for (Map.Entry<Long, Set<Long>> entry :
 				oAuth2ApplicationIdsByCompanyId.entrySet()) {
@@ -324,7 +314,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 					).build(),
 					curCompanyId -> {
 						if (_reconcile(curCompanyId, oAuth2ApplicationIds)) {
-							bound[0] = true;
+							bound.set(true);
 						}
 					});
 			}
@@ -338,7 +328,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 			}
 		}
 
-		return bound[0];
+		return bound.get();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
