@@ -57,6 +57,18 @@ public class ScopeFinderReconcileTrigger {
 			try {
 				reconcileFuture.get(1, TimeUnit.MINUTES);
 			}
+			catch (InterruptedException interruptedException) {
+				reconcileFuture.cancel(true);
+
+				Thread.currentThread(
+				).interrupt();
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to wait for the in-flight reconcile to finish",
+						interruptedException);
+				}
+			}
 			catch (Exception exception) {
 				reconcileFuture.cancel(true);
 
