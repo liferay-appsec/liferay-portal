@@ -304,8 +304,8 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		if (_log.isDebugEnabled()) {
 			_log.debug(
-				"Reconciling unresolved scope aliases for OAuth 2 " +
-					"applications " + oAuth2ApplicationIdsByCompanyId);
+				"Reconciling unresolved scope aliases for " +
+					oAuth2ApplicationIdsByCompanyId.size() + " companies");
 		}
 
 		boolean[] bound = {false};
