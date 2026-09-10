@@ -145,7 +145,7 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 
 			Assert.fail();
 		}
-		catch (Exception exception) {
+		catch (ModelListenerException modelListenerException) {
 		}
 		finally {
 			serviceRegistration.unregister();
