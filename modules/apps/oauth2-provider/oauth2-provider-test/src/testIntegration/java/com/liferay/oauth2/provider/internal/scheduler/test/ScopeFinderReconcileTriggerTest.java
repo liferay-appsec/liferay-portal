@@ -35,10 +35,6 @@ public class ScopeFinderReconcileTriggerTest
 			Collection<String> scopeAliases = scopeLocator.getScopeAliases(
 				companyId);
 
-			// Register the scope source once to learn the alias it exposes,
-			// then take it away again so the alias is declared before its
-			// source exists
-
 			ServiceRegistration<ScopeFinder> serviceRegistration =
 				registerScopeFinder();
 

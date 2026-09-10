@@ -113,9 +113,6 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 
 		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
-		// Fail the application update, so the new snapshot and the update must
-		// roll back together
-
 		ServiceRegistration<ModelListener<OAuth2Application>>
 			serviceRegistration = bundleContext.registerService(
 				(Class<ModelListener<OAuth2Application>>)
