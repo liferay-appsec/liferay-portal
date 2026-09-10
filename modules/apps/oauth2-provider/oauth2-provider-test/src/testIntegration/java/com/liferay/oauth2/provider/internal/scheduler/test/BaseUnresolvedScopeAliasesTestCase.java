@@ -60,10 +60,6 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 		OAuth2Application oAuth2Application = saveConfiguration(
 			companyId, RandomTestUtil.randomString());
 
-		// Wait until the configuration factory has recorded the unresolvable
-		// alias, so its own scope update cannot land after the test stages the
-		// registry
-
 		Assert.assertTrue(
 			waitFor(
 				() -> isUnresolved(
