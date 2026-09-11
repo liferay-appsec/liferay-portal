@@ -140,32 +140,28 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 				"scopes", scopeAliases
 			).build());
 
-		for (int i = 0; i < 200; i++) {
-			OAuth2Application oAuth2Application =
+		OAuth2Application oAuth2Application = waitForValue(
+			() ->
 				oAuth2ApplicationLocalService.
 					fetchOAuth2ApplicationByExternalReferenceCode(
-						_EXTERNAL_REFERENCE_CODE, companyId);
+						_EXTERNAL_REFERENCE_CODE, companyId));
 
-			if (oAuth2Application != null) {
-				return oAuth2Application;
-			}
+		Assert.assertNotNull(
+			"The configuration factory did not create the OAuth 2 application",
+			oAuth2Application);
 
-			Thread.sleep(50);
-		}
-
-		throw new AssertionError(
-			"The configuration factory did not create the OAuth 2 application");
+		return oAuth2Application;
 	}
 
 	protected boolean waitFor(UnsafeSupplier<Boolean, Exception> unsafeSupplier)
 		throws Exception {
 
-		for (int i = 0; i < 200; i++) {
+		for (int i = 0; i < _WAIT_ATTEMPT_COUNT; i++) {
 			if (unsafeSupplier.get()) {
 				return true;
 			}
 
-			Thread.sleep(50);
+			Thread.sleep(_WAIT_ATTEMPT_DELAY);
 		}
 
 		return unsafeSupplier.get();
@@ -175,17 +171,18 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 			long companyId, Collection<String> scopeAliases)
 		throws Exception {
 
-		for (int i = 0; i < 200; i++) {
-			for (String scopeAlias : scopeLocator.getScopeAliases(companyId)) {
-				if (!scopeAliases.contains(scopeAlias)) {
-					return scopeAlias;
+		return waitForValue(
+			() -> {
+				for (String scopeAlias :
+						scopeLocator.getScopeAliases(companyId)) {
+
+					if (!scopeAliases.contains(scopeAlias)) {
+						return scopeAlias;
+					}
 				}
-			}
 
-			Thread.sleep(50);
-		}
-
-		return null;
+				return null;
+			});
 	}
 
 	protected void waitForUnresolvableScopeAlias(
@@ -201,6 +198,22 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 
 					return liferayOAuth2Scopes.isEmpty();
 				}));
+	}
+
+	protected <T> T waitForValue(UnsafeSupplier<T, Exception> unsafeSupplier)
+		throws Exception {
+
+		for (int i = 0; i < _WAIT_ATTEMPT_COUNT; i++) {
+			T value = unsafeSupplier.get();
+
+			if (value != null) {
+				return value;
+			}
+
+			Thread.sleep(_WAIT_ATTEMPT_DELAY);
+		}
+
+		return unsafeSupplier.get();
 	}
 
 	@Inject
@@ -226,6 +239,10 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 		RandomTestUtil.randomString();
 
 	private static final String _SCOPE = "everything";
+
+	private static final int _WAIT_ATTEMPT_COUNT = 200;
+
+	private static final long _WAIT_ATTEMPT_DELAY = 50;
 
 	private Configuration _configuration;
 
