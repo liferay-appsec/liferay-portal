@@ -329,12 +329,11 @@ public abstract class BaseConfigurationFactory {
 		Log log = getLog();
 		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 
-		List<String> unresolvedScopeAliasesList = new ArrayList<>(
-			scopeAliasesList);
+		List<String> unresolvedScopeAliases = new ArrayList<>(scopeAliasesList);
 
-		unresolvedScopeAliasesList.removeAll(grantedScopeAliasesList);
+		unresolvedScopeAliases.removeAll(grantedScopeAliasesList);
 
-		if (unresolvedScopeAliasesList.isEmpty()) {
+		if (unresolvedScopeAliases.isEmpty()) {
 			unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId);
 
@@ -356,11 +355,11 @@ public abstract class BaseConfigurationFactory {
 					"OAuth 2 application ", oAuth2ApplicationId, " named \"",
 					oAuth2Application.getName(),
 					"\" declared scope aliases that resolved to no scopes: ",
-					unresolvedScopeAliasesList));
+					unresolvedScopeAliases));
 		}
 
 		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			companyId, oAuth2ApplicationId, unresolvedScopeAliasesList);
+			companyId, oAuth2ApplicationId, unresolvedScopeAliases);
 	}
 
 	private static final Snapshot<PortalK8sConfigMapModifier>
