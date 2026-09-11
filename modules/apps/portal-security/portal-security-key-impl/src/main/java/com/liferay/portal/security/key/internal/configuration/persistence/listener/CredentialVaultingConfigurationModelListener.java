@@ -43,7 +43,7 @@ import org.osgi.service.metatype.ObjectClassDefinition;
 @Component(
 	property = "model.class.name=*", service = ConfigurationModelListener.class
 )
-public class VaultCredentialConfigurationModelListener
+public class CredentialVaultingConfigurationModelListener
 	implements ConfigurationModelListener {
 
 	@Override
@@ -92,7 +92,9 @@ public class VaultCredentialConfigurationModelListener
 
 			try {
 				properties.put(
-					id, _vault(companyId, identifier, (String)value));
+					id,
+					_getVaultedKeyReferenceString(
+						companyId, identifier, (String)value));
 			}
 			catch (Exception exception) {
 				_log.error(
@@ -142,7 +144,7 @@ public class VaultCredentialConfigurationModelListener
 				"Configuration \"", pid,
 				"\" cannot reference a value belonging to another ",
 				"configuration"),
-			Object.class, VaultCredentialConfigurationModelListener.class,
+			Object.class, CredentialVaultingConfigurationModelListener.class,
 			null);
 	}
 
@@ -196,7 +198,8 @@ public class VaultCredentialConfigurationModelListener
 		return null;
 	}
 
-	private String _vault(long companyId, String identifier, String value)
+	private String _getVaultedKeyReferenceString(
+			long companyId, String identifier, String value)
 		throws Exception {
 
 		SecretManager secretManager = _secretManagerSnapshot.get();
@@ -218,11 +221,11 @@ public class VaultCredentialConfigurationModelListener
 	private static final String _IDENTIFIER_PREFIX = "config/";
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		VaultCredentialConfigurationModelListener.class);
+		CredentialVaultingConfigurationModelListener.class);
 
 	private static final Snapshot<SecretManager> _secretManagerSnapshot =
 		new Snapshot<>(
-			VaultCredentialConfigurationModelListener.class,
+			CredentialVaultingConfigurationModelListener.class,
 			SecretManager.class, null, true);
 
 	private BundleContext _bundleContext;

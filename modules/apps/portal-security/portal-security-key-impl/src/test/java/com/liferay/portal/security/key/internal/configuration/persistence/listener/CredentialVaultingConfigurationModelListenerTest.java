@@ -48,7 +48,7 @@ import org.osgi.service.metatype.ObjectClassDefinition;
 /**
  * @author Pedro Victor Silvestre
  */
-public class VaultCredentialConfigurationModelListenerTest {
+public class CredentialVaultingConfigurationModelListenerTest {
 
 	@ClassRule
 	@Rule
@@ -318,10 +318,10 @@ public class VaultCredentialConfigurationModelListenerTest {
 
 	private void _setUpSecretManagerSnapshot(SecretManager secretManager) {
 		ReflectionTestUtil.setFieldValue(
-			VaultCredentialConfigurationModelListener.class,
+			CredentialVaultingConfigurationModelListener.class,
 			"_secretManagerSnapshot",
 			new Snapshot<SecretManager>(
-				VaultCredentialConfigurationModelListener.class,
+				CredentialVaultingConfigurationModelListener.class,
 				SecretManager.class) {
 
 				@Override
@@ -375,8 +375,8 @@ public class VaultCredentialConfigurationModelListenerTest {
 	@Mock
 	private SecretManager _secretManager;
 
-	private final VaultCredentialConfigurationModelListener
+	private final CredentialVaultingConfigurationModelListener
 		_vaultCredentialConfigurationModelListener =
-			new VaultCredentialConfigurationModelListener();
+			new CredentialVaultingConfigurationModelListener();
 
 }

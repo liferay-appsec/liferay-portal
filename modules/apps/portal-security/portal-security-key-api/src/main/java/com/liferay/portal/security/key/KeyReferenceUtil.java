@@ -62,20 +62,25 @@ public class KeyReferenceUtil {
 			return null;
 		}
 
-		String prefix = _KEY_REFERENCE_PREFIX_SECRET;
-		KeyReference.Type type = KeyReference.Type.SECRET;
+		String keyReferencePrefix = null;
+		KeyReference.Type type = null;
 
 		if (keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_CRYPTO)) {
-			prefix = _KEY_REFERENCE_PREFIX_CRYPTO;
+			keyReferencePrefix = _KEY_REFERENCE_PREFIX_CRYPTO;
 			type = KeyReference.Type.CRYPTO;
 		}
-		else if (!keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_SECRET)) {
+		else if (keyReferenceString.startsWith(_KEY_REFERENCE_PREFIX_SECRET)) {
+			keyReferencePrefix = _KEY_REFERENCE_PREFIX_SECRET;
+			type = KeyReference.Type.SECRET;
+		}
+
+		if (keyReferencePrefix == null) {
 			return null;
 		}
 
 		int length = keyReferenceString.length();
 
-		if ((length <= prefix.length()) ||
+		if ((length <= keyReferencePrefix.length()) ||
 			(keyReferenceString.charAt(length - 1) !=
 				CharPool.CLOSE_CURLY_BRACE)) {
 
@@ -83,7 +88,7 @@ public class KeyReferenceUtil {
 		}
 
 		String value = keyReferenceString.substring(
-			prefix.length(), length - 1);
+			keyReferencePrefix.length(), length - 1);
 
 		int index = value.indexOf(CharPool.COLON);
 
