@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,6 +39,16 @@ public class UnresolvedScopeAliasReconcilerImplTest
 
 	@Test
 	public void testReconcile() throws Exception {
+		_testReconcile();
+		_testReconcileConcurrently();
+		_testReconcileRetainsUnresolvedScopeAliasAfterPartialBind();
+		_testReconcileSkipsGrantedScopeAlias();
+		_testReconcileWithDeclaredCase();
+		_testReconcileWithoutRevokingUnresolvableGrant();
+		_testReconcileWritesOnlyOnProgress();
+	}
+
+	private void _testReconcile() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
@@ -61,8 +70,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileConcurrently() throws Exception {
+	private void _testReconcileConcurrently() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
@@ -120,8 +128,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileRetainsUnresolvedScopeAliasAfterPartialBind()
+	private void _testReconcileRetainsUnresolvedScopeAliasAfterPartialBind()
 		throws Exception {
 
 		long companyId = TestPropsValues.getCompanyId();
@@ -151,8 +158,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileSkipsGrantedScopeAlias() throws Exception {
+	private void _testReconcileSkipsGrantedScopeAlias() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
@@ -191,8 +197,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileWithDeclaredCase() throws Exception {
+	private void _testReconcileWithDeclaredCase() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
@@ -210,7 +215,9 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				}
 			}
 
-			Assume.assumeNotNull(scopeAlias);
+			if (scopeAlias == null) {
+				return;
+			}
 
 			OAuth2Application oAuth2Application = addOAuth2Application(
 				companyId);
@@ -230,8 +237,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileWithoutRevokingUnresolvableGrant()
+	private void _testReconcileWithoutRevokingUnresolvableGrant()
 		throws Exception {
 
 		long companyId = TestPropsValues.getCompanyId();
@@ -288,8 +294,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 		}
 	}
 
-	@Test
-	public void testReconcileWritesOnlyOnProgress() throws Exception {
+	private void _testReconcileWritesOnlyOnProgress() throws Exception {
 		long companyId = TestPropsValues.getCompanyId();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {

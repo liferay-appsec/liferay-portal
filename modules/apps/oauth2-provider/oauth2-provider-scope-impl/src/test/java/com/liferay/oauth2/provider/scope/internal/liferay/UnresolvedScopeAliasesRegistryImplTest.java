@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,22 +29,18 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() {
-		_unresolvedScopeAliasesRegistry =
-			new UnresolvedScopeAliasesRegistryImpl();
-	}
-
 	@Test
 	public void testGetOAuth2ApplicationIdsByCompanyId() {
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(RandomTestUtil.randomString()));
 
 		Map<Long, Set<Long>> oAuth2ApplicationIdsByCompanyId =
-			_unresolvedScopeAliasesRegistry.
-				getOAuth2ApplicationIdsByCompanyId();
+			unresolvedScopeAliasesRegistry.getOAuth2ApplicationIdsByCompanyId();
 
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 200, Arrays.asList(RandomTestUtil.randomString()));
 
 		Set<Long> oAuth2ApplicationIds = oAuth2ApplicationIdsByCompanyId.get(
@@ -56,106 +51,32 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 
 	@Test
 	public void testGetUnresolvedScopeAliases() {
-		String scopeAlias1 = RandomTestUtil.randomString();
-		String scopeAlias2 = RandomTestUtil.randomString();
-
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1));
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			2, 100, Arrays.asList(scopeAlias2));
-
-		Collection<String> company1ScopeAliases =
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
-		Collection<String> company2ScopeAliases =
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(2, 100);
-
-		Assert.assertTrue(company1ScopeAliases.contains(scopeAlias1));
-		Assert.assertFalse(company1ScopeAliases.contains(scopeAlias2));
-		Assert.assertTrue(company2ScopeAliases.contains(scopeAlias2));
-		Assert.assertFalse(company2ScopeAliases.contains(scopeAlias1));
-	}
-
-	@Test
-	public void testGetUnresolvedScopeAliasesWithUnknownOAuth2ApplicationId() {
-		Assert.assertTrue(
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
-				1, 999
-			).isEmpty());
+		_testGetUnresolvedScopeAliases();
+		_testGetUnresolvedScopeAliasesWithUnknownOAuth2ApplicationId();
 	}
 
 	@Test
 	public void testIsEmpty() {
-		Assert.assertTrue(_unresolvedScopeAliasesRegistry.isEmpty());
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
 
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+		Assert.assertTrue(unresolvedScopeAliasesRegistry.isEmpty());
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(RandomTestUtil.randomString()));
 
-		Assert.assertFalse(_unresolvedScopeAliasesRegistry.isEmpty());
+		Assert.assertFalse(unresolvedScopeAliasesRegistry.isEmpty());
 
-		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(1, 100);
+		unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(1, 100);
 
-		Assert.assertTrue(_unresolvedScopeAliasesRegistry.isEmpty());
+		Assert.assertTrue(unresolvedScopeAliasesRegistry.isEmpty());
 	}
 
 	@Test
 	public void testRemoveUnresolvedScopeAliases() {
-		String scopeAlias1 = RandomTestUtil.randomString();
-		String scopeAlias2 = RandomTestUtil.randomString();
-
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1));
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			2, 100, Arrays.asList(scopeAlias2));
-
-		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(1, 100);
-
-		Assert.assertTrue(
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
-				1, 100
-			).isEmpty());
-		Assert.assertTrue(
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
-				2, 100
-			).contains(
-				scopeAlias2
-			));
-	}
-
-	@Test
-	public void testRemoveUnresolvedScopeAliasesKeepsOthers() {
-		String scopeAlias1 = RandomTestUtil.randomString();
-		String scopeAlias2 = RandomTestUtil.randomString();
-		String scopeAlias3 = RandomTestUtil.randomString();
-
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
-
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1, scopeAlias2, scopeAlias3));
-
-		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1));
-
-		Collection<String> scopeAliases =
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
-
-		Assert.assertFalse(scopeAliases.contains(scopeAlias1));
-		Assert.assertTrue(scopeAliases.contains(scopeAlias2));
-		Assert.assertTrue(scopeAliases.contains(scopeAlias3));
-	}
-
-	@Test
-	public void testRemoveUnresolvedScopeAliasesRemovesEmptyApplication() {
-		String scopeAlias1 = RandomTestUtil.randomString();
-		String scopeAlias2 = RandomTestUtil.randomString();
-
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
-
-		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
-			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
-
-		Assert.assertTrue(_unresolvedScopeAliasesRegistry.isEmpty());
+		_testRemoveUnresolvedScopeAliases();
+		_testRemoveUnresolvedScopeAliasesKeepsOthers();
+		_testRemoveUnresolvedScopeAliasesRemovesEmptyApplication();
 	}
 
 	@Test
@@ -164,35 +85,135 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 		String scopeAlias2 = RandomTestUtil.randomString();
 		String scopeAlias3 = RandomTestUtil.randomString();
 
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
 
 		Collection<String> scopeAliases =
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
 
 		Assert.assertTrue(scopeAliases.contains(scopeAlias1));
 		Assert.assertTrue(scopeAliases.contains(scopeAlias2));
 
 		Map<Long, Set<Long>> oAuth2ApplicationIdsByCompanyId =
-			_unresolvedScopeAliasesRegistry.
-				getOAuth2ApplicationIdsByCompanyId();
+			unresolvedScopeAliasesRegistry.getOAuth2ApplicationIdsByCompanyId();
 
 		Set<Long> oAuth2ApplicationIds = oAuth2ApplicationIdsByCompanyId.get(
 			1L);
 
 		Assert.assertTrue(oAuth2ApplicationIds.contains(100L));
 
-		_unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(scopeAlias3));
 
-		scopeAliases =
-			_unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
+		scopeAliases = unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
+			1, 100);
 
 		Assert.assertFalse(scopeAliases.contains(scopeAlias1));
 		Assert.assertFalse(scopeAliases.contains(scopeAlias2));
 		Assert.assertTrue(scopeAliases.contains(scopeAlias3));
 	}
 
-	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
+	private void _testGetUnresolvedScopeAliases() {
+		String scopeAlias1 = RandomTestUtil.randomString();
+		String scopeAlias2 = RandomTestUtil.randomString();
+
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1));
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			2, 100, Arrays.asList(scopeAlias2));
+
+		Collection<String> company1ScopeAliases =
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
+		Collection<String> company2ScopeAliases =
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(2, 100);
+
+		Assert.assertTrue(company1ScopeAliases.contains(scopeAlias1));
+		Assert.assertFalse(company1ScopeAliases.contains(scopeAlias2));
+		Assert.assertTrue(company2ScopeAliases.contains(scopeAlias2));
+		Assert.assertFalse(company2ScopeAliases.contains(scopeAlias1));
+	}
+
+	private void _testGetUnresolvedScopeAliasesWithUnknownOAuth2ApplicationId() {
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		Assert.assertTrue(
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
+				1, 999
+			).isEmpty());
+	}
+
+	private void _testRemoveUnresolvedScopeAliases() {
+		String scopeAlias1 = RandomTestUtil.randomString();
+		String scopeAlias2 = RandomTestUtil.randomString();
+
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1));
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			2, 100, Arrays.asList(scopeAlias2));
+
+		unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(1, 100);
+
+		Assert.assertTrue(
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
+				1, 100
+			).isEmpty());
+		Assert.assertTrue(
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
+				2, 100
+			).contains(
+				scopeAlias2
+			));
+	}
+
+	private void _testRemoveUnresolvedScopeAliasesKeepsOthers() {
+		String scopeAlias1 = RandomTestUtil.randomString();
+		String scopeAlias2 = RandomTestUtil.randomString();
+		String scopeAlias3 = RandomTestUtil.randomString();
+
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1, scopeAlias2, scopeAlias3));
+
+		unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1));
+
+		Collection<String> scopeAliases =
+			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(1, 100);
+
+		Assert.assertFalse(scopeAliases.contains(scopeAlias1));
+		Assert.assertTrue(scopeAliases.contains(scopeAlias2));
+		Assert.assertTrue(scopeAliases.contains(scopeAlias3));
+	}
+
+	private void _testRemoveUnresolvedScopeAliasesRemovesEmptyApplication() {
+		String scopeAlias1 = RandomTestUtil.randomString();
+		String scopeAlias2 = RandomTestUtil.randomString();
+
+		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
+			new UnresolvedScopeAliasesRegistryImpl();
+
+		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
+
+		unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
+			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
+
+		Assert.assertTrue(unresolvedScopeAliasesRegistry.isEmpty());
+	}
 
 }

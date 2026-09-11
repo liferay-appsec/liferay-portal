@@ -57,13 +57,22 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 	protected OAuth2Application addOAuth2Application(long companyId)
 		throws Exception {
 
+		String scopeAlias = RandomTestUtil.randomString();
+
 		OAuth2Application oAuth2Application = saveConfiguration(
-			companyId, RandomTestUtil.randomString());
+			companyId, scopeAlias);
 
 		Assert.assertTrue(
 			waitFor(
-				() -> isUnresolved(
-					companyId, oAuth2Application.getOAuth2ApplicationId())));
+				() -> {
+					Collection<String> scopeAliases =
+						unresolvedScopeAliasesRegistry.
+							getUnresolvedScopeAliases(
+								companyId,
+								oAuth2Application.getOAuth2ApplicationId());
+
+					return scopeAliases.contains(scopeAlias);
+				}));
 
 		return oAuth2Application;
 	}
