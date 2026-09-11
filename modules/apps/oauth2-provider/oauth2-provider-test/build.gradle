@@ -30,6 +30,7 @@ dependencies {
 	testIntegrationImplementation project(":apps:portal-security:portal-security-key-api")
 	testIntegrationImplementation project(":apps:portal-security:portal-security-key-spi")
 	testIntegrationImplementation project(":apps:portal:portal-upgrade-test-util")
+	testIntegrationImplementation project(":apps:static:osgi:osgi-util")
 	testIntegrationImplementation project(":apps:static:portal:portal-upgrade-api")
 	testIntegrationImplementation project(":test:arquillian-extension-junit-bridge")
 }
