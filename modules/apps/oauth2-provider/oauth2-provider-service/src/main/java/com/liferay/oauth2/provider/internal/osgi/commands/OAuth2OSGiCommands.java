@@ -59,11 +59,10 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 				).build(),
 				curCompanyId -> {
 					for (long oAuth2ApplicationId : entry.getValue()) {
+						String name = StringPool.BLANK;
 						OAuth2Application oAuth2Application =
 							_oAuth2ApplicationLocalService.
 								fetchOAuth2Application(oAuth2ApplicationId);
-
-						String name = StringPool.BLANK;
 
 						if (oAuth2Application != null) {
 							name = oAuth2Application.getName();
