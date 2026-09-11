@@ -211,7 +211,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 			return false;
 		}
 
-		List<String> alreadyGrantedScopeAliasesList = new ArrayList<>();
+		List<String> alreadyGrantedScopeAliases = new ArrayList<>();
 		List<String> grantedScopeAliasesList =
 			_oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId());
@@ -219,7 +219,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 
 		for (String scopeAlias : unresolvedScopeAliases) {
 			if (grantedScopeAliasesList.contains(scopeAlias)) {
-				alreadyGrantedScopeAliasesList.add(scopeAlias);
+				alreadyGrantedScopeAliases.add(scopeAlias);
 
 				continue;
 			}
@@ -244,22 +244,22 @@ public class UnresolvedScopeAliasReconcilerImpl
 				companyId, oAuth2ApplicationId, resolvedScopeAliases);
 		}
 
-		List<String> boundScopeAliasesList = new ArrayList<>(
-			alreadyGrantedScopeAliasesList);
+		List<String> boundScopeAliases = new ArrayList<>(
+			alreadyGrantedScopeAliases);
 
-		boundScopeAliasesList.addAll(persistedScopeAliases);
+		boundScopeAliases.addAll(persistedScopeAliases);
 
-		if (boundScopeAliasesList.isEmpty()) {
+		if (boundScopeAliases.isEmpty()) {
 			return false;
 		}
 
-		List<String> remainingScopeAliasesList = new ArrayList<>(
+		List<String> remainingScopeAliases = new ArrayList<>(
 			unresolvedScopeAliases);
 
-		remainingScopeAliasesList.removeAll(boundScopeAliasesList);
+		remainingScopeAliases.removeAll(boundScopeAliases);
 
 		_unresolvedScopeAliasesRegistry.removeUnresolvedScopeAliases(
-			companyId, oAuth2ApplicationId, boundScopeAliasesList);
+			companyId, oAuth2ApplicationId, boundScopeAliases);
 
 		if (!persistedScopeAliases.isEmpty() && _log.isInfoEnabled()) {
 			_log.info(
@@ -269,7 +269,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 					oAuth2ApplicationId, " named \"",
 					oAuth2Application.getName(), "\""));
 
-			if (remainingScopeAliasesList.isEmpty()) {
+			if (remainingScopeAliases.isEmpty()) {
 				_log.info(
 					StringBundler.concat(
 						"OAuth 2 application ", oAuth2ApplicationId,
