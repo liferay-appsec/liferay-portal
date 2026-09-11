@@ -110,7 +110,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 			startCountDownLatch.countDown();
 
 			Assert.assertTrue(doneCountDownLatch.await(1, TimeUnit.MINUTES));
-			Assert.assertEquals(throwables.toString(), 0, throwables.size());
+			Assert.assertEquals(Collections.emptyList(), throwables);
 			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 			Assert.assertFalse(isUnresolved(companyId, oAuth2ApplicationId));
 			Assert.assertEquals(
