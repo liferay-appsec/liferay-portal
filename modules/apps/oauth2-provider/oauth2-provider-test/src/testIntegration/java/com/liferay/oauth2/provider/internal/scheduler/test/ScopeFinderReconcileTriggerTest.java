@@ -37,7 +37,6 @@ public class ScopeFinderReconcileTriggerTest
 
 			ServiceRegistration<ScopeFinder> serviceRegistration =
 				registerScopeFinder();
-
 			String scopeAlias;
 
 			try {

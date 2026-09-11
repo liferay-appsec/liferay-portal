@@ -101,7 +101,6 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 
 	protected ServiceRegistration<ScopeFinder> registerScopeFinder() {
 		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
-
 		ScopeFinder scopeFinder = () -> Collections.singletonList(_SCOPE);
 
 		return bundleContext.registerService(
