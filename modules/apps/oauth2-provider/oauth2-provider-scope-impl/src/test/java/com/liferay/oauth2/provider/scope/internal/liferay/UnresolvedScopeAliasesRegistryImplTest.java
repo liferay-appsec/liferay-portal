@@ -83,7 +83,6 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 	public void testSetUnresolvedScopeAliases() {
 		String scopeAlias1 = RandomTestUtil.randomString();
 		String scopeAlias2 = RandomTestUtil.randomString();
-		String scopeAlias3 = RandomTestUtil.randomString();
 
 		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
 			new UnresolvedScopeAliasesRegistryImpl();
@@ -104,6 +103,8 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 			1L);
 
 		Assert.assertTrue(oAuth2ApplicationIds.contains(100L));
+
+		String scopeAlias3 = RandomTestUtil.randomString();
 
 		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(scopeAlias3));
@@ -133,10 +134,10 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 		Collection<String> company2ScopeAliases =
 			unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(2, 100);
 
-		Assert.assertTrue(company1ScopeAliases.contains(scopeAlias1));
 		Assert.assertFalse(company1ScopeAliases.contains(scopeAlias2));
-		Assert.assertTrue(company2ScopeAliases.contains(scopeAlias2));
 		Assert.assertFalse(company2ScopeAliases.contains(scopeAlias1));
+		Assert.assertTrue(company1ScopeAliases.contains(scopeAlias1));
+		Assert.assertTrue(company2ScopeAliases.contains(scopeAlias2));
 	}
 
 	private void _testGetUnresolvedScopeAliasesWithUnknownOAuth2ApplicationId() {
@@ -178,13 +179,14 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 	private void _testRemoveUnresolvedScopeAliasesKeepsOthers() {
 		String scopeAlias1 = RandomTestUtil.randomString();
 		String scopeAlias2 = RandomTestUtil.randomString();
-		String scopeAlias3 = RandomTestUtil.randomString();
 
 		UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry =
 			new UnresolvedScopeAliasesRegistryImpl();
 
 		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(scopeAlias1, scopeAlias2));
+
+		String scopeAlias3 = RandomTestUtil.randomString();
 
 		unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 			1, 100, Arrays.asList(scopeAlias1, scopeAlias2, scopeAlias3));
