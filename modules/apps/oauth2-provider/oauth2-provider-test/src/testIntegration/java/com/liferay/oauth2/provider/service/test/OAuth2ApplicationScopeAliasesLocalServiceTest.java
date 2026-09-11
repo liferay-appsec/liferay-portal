@@ -83,18 +83,18 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 					companyId, _user.getUserId(), _user.getFullName(),
 					_oAuth2Application.getOAuth2ApplicationId(),
 					oAuth2ScopeBuilder -> _assignScope(
-						oAuth2ScopeBuilder, companyId, scopeAlias));
+						companyId, oAuth2ScopeBuilder, scopeAlias));
 
 		long oAuth2ApplicationScopeAliasesId =
 			oAuth2Application.getOAuth2ApplicationScopeAliasesId();
 
-		Assert.assertNotEquals(
-			_oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
-			oAuth2ApplicationScopeAliasesId);
-
 		List<String> scopeAliasesList =
 			_oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 				oAuth2ApplicationScopeAliasesId);
+
+		Assert.assertNotEquals(
+			_oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
+			oAuth2ApplicationScopeAliasesId);
 
 		Assert.assertTrue(scopeAliasesList.contains(scopeAlias));
 	}
@@ -103,15 +103,13 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 	public void testAddOAuth2ApplicationScopeAliasesAndUpdateApplicationWithFailedUpdate()
 		throws Exception {
 
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 		long companyId = _oAuth2Application.getCompanyId();
-
-		String scopeAlias = _getScopeAlias(companyId);
-
 		int count =
 			_oAuth2ApplicationScopeAliasesLocalService.
 				getOAuth2ApplicationScopeAliasesesCount();
 
-		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+		String scopeAlias = _getScopeAlias(companyId);
 
 		ServiceRegistration<ModelListener<OAuth2Application>>
 			serviceRegistration = bundleContext.registerService(
@@ -138,7 +136,7 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 					companyId, _user.getUserId(), _user.getFullName(),
 					_oAuth2Application.getOAuth2ApplicationId(),
 					oAuth2ScopeBuilder -> _assignScope(
-						oAuth2ScopeBuilder, companyId, scopeAlias));
+						companyId, oAuth2ScopeBuilder, scopeAlias));
 
 			Assert.fail();
 		}
@@ -163,7 +161,7 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 	}
 
 	private void _assignScope(
-		OAuth2ScopeBuilder oAuth2ScopeBuilder, long companyId,
+		long companyId, OAuth2ScopeBuilder oAuth2ScopeBuilder,
 		String scopeAlias) {
 
 		for (LiferayOAuth2Scope liferayOAuth2Scope :
