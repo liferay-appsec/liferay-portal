@@ -264,10 +264,10 @@ public class UnresolvedScopeAliasReconcilerImpl
 		if (!persistedScopeAliases.isEmpty() && _log.isInfoEnabled()) {
 			_log.info(
 				StringBundler.concat(
-					"Bound previously unresolved scope aliases ",
-					persistedScopeAliases, " for OAuth 2 application ",
-					oAuth2ApplicationId, " named \"",
-					oAuth2Application.getName(), "\""));
+					"Previously unresolved scope aliases ",
+					persistedScopeAliases,
+					" were bound for OAuth 2 application ", oAuth2ApplicationId,
+					" named \"", oAuth2Application.getName(), "\""));
 
 			if (remainingScopeAliases.isEmpty()) {
 				_log.info(
