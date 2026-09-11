@@ -282,8 +282,6 @@ public abstract class BaseConfigurationFactory {
 			}
 		}
 
-		// Make sure all scopes are registered
-
 		scopeLocator.getLiferayOAuth2Scopes(oAuth2Application.getCompanyId());
 
 		OAuth2Application updatedOAuth2Application =
@@ -342,7 +340,7 @@ public abstract class BaseConfigurationFactory {
 					StringBundler.concat(
 						"OAuth 2 application ", oAuth2ApplicationId,
 						" named \"", oAuth2Application.getName(),
-						"\" resolved all declared scope aliases: ",
+						"\" resolved all declared scope aliases ",
 						grantedScopeAliasesList));
 			}
 
@@ -354,7 +352,7 @@ public abstract class BaseConfigurationFactory {
 				StringBundler.concat(
 					"OAuth 2 application ", oAuth2ApplicationId, " named \"",
 					oAuth2Application.getName(),
-					"\" declared scope aliases that resolved to no scopes: ",
+					"\" declared scope aliases that resolved to no scopes ",
 					unresolvedScopeAliases));
 		}
 
