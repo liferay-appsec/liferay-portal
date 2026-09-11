@@ -326,9 +326,8 @@ public abstract class BaseConfigurationFactory {
 		OAuth2Application oAuth2Application, List<String> scopeAliasesList) {
 
 		long companyId = oAuth2Application.getCompanyId();
-		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
-
 		Log log = getLog();
+		long oAuth2ApplicationId = oAuth2Application.getOAuth2ApplicationId();
 
 		List<String> unresolvedScopeAliasesList = new ArrayList<>(
 			scopeAliasesList);
