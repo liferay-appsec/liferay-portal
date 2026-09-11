@@ -124,10 +124,8 @@ public class ScopeFinderReconcileTrigger {
 				return;
 			}
 
-			boolean bound = false;
-
 			try {
-				bound = _unresolvedScopeAliasReconciler.reconcile();
+				_unresolvedScopeAliasReconciler.reconcile();
 			}
 			catch (Exception exception) {
 				if (_log.isWarnEnabled()) {
@@ -137,7 +135,7 @@ public class ScopeFinderReconcileTrigger {
 				}
 			}
 
-			if (bound || _unresolvedScopeAliasesRegistry.isEmpty() ||
+			if (_unresolvedScopeAliasesRegistry.isEmpty() ||
 				(i == (_RECONCILE_ATTEMPT_COUNT - 1))) {
 
 				return;
@@ -161,9 +159,9 @@ public class ScopeFinderReconcileTrigger {
 		}
 	}
 
-	private static final int _RECONCILE_ATTEMPT_COUNT = 3;
+	private static final int _RECONCILE_ATTEMPT_COUNT = 10;
 
-	private static final long _RECONCILE_ATTEMPT_DELAY = 250;
+	private static final long _RECONCILE_ATTEMPT_DELAY = 500;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ScopeFinderReconcileTrigger.class);
