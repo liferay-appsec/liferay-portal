@@ -55,18 +55,17 @@ public class UnresolvedScopeAliasReconcilerImplTest
 			OAuth2Application oAuth2Application = addOAuth2Application(
 				companyId);
 
+			String scopeAlias = getResolvableScopeAlias(companyId);
 			long oAuth2ApplicationId =
 				oAuth2Application.getOAuth2ApplicationId();
-
-			String scopeAlias = getResolvableScopeAlias(companyId);
 
 			unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId,
 				Collections.singletonList(scopeAlias));
 
 			Assert.assertTrue(_unresolvedScopeAliasReconciler.reconcile());
-			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 			Assert.assertFalse(isUnresolved(companyId, oAuth2ApplicationId));
+			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 		}
 	}
 
@@ -77,10 +76,9 @@ public class UnresolvedScopeAliasReconcilerImplTest
 			OAuth2Application oAuth2Application = addOAuth2Application(
 				companyId);
 
+			String scopeAlias = getResolvableScopeAlias(companyId);
 			long oAuth2ApplicationId =
 				oAuth2Application.getOAuth2ApplicationId();
-
-			String scopeAlias = getResolvableScopeAlias(companyId);
 
 			unresolvedScopeAliasesRegistry.setUnresolvedScopeAliases(
 				companyId, oAuth2ApplicationId,
@@ -90,7 +88,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				oAuth2ApplicationScopeAliasesLocalService.
 					getOAuth2ApplicationScopeAliasesesCount();
 
-			CountDownLatch doneCountDownLatch = new CountDownLatch(2);
+			CountDownLatch endCountDownLatch = new CountDownLatch(2);
 			CountDownLatch startCountDownLatch = new CountDownLatch(1);
 			List<Throwable> throwables = Collections.synchronizedList(
 				new ArrayList<>());
@@ -105,7 +103,7 @@ public class UnresolvedScopeAliasReconcilerImplTest
 					throwables.add(throwable);
 				}
 				finally {
-					doneCountDownLatch.countDown();
+					endCountDownLatch.countDown();
 				}
 			};
 
@@ -117,14 +115,14 @@ public class UnresolvedScopeAliasReconcilerImplTest
 
 			startCountDownLatch.countDown();
 
-			Assert.assertTrue(doneCountDownLatch.await(1, TimeUnit.MINUTES));
+			Assert.assertTrue(endCountDownLatch.await(1, TimeUnit.MINUTES));
 			Assert.assertEquals(Collections.emptyList(), throwables);
-			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
-			Assert.assertFalse(isUnresolved(companyId, oAuth2ApplicationId));
 			Assert.assertEquals(
 				count + 1,
 				oAuth2ApplicationScopeAliasesLocalService.
 					getOAuth2ApplicationScopeAliasesesCount());
+			Assert.assertFalse(isUnresolved(companyId, oAuth2ApplicationId));
+			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 		}
 	}
 
@@ -148,13 +146,13 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				Arrays.asList(scopeAlias, unresolvableScopeAlias));
 
 			Assert.assertTrue(_unresolvedScopeAliasReconciler.reconcile());
-			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
-			Assert.assertFalse(
-				hasScopeAlias(oAuth2ApplicationId, unresolvableScopeAlias));
 			Assert.assertEquals(
 				Collections.singleton(unresolvableScopeAlias),
 				unresolvedScopeAliasesRegistry.getUnresolvedScopeAliases(
 					companyId, oAuth2ApplicationId));
+			Assert.assertFalse(
+				hasScopeAlias(oAuth2ApplicationId, unresolvableScopeAlias));
+			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 		}
 	}
 
@@ -232,8 +230,8 @@ public class UnresolvedScopeAliasReconcilerImplTest
 				Collections.singletonList(scopeAlias));
 
 			Assert.assertTrue(_unresolvedScopeAliasReconciler.reconcile());
-			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 			Assert.assertFalse(isUnresolved(companyId, oAuth2ApplicationId));
+			Assert.assertTrue(hasScopeAlias(oAuth2ApplicationId, scopeAlias));
 		}
 	}
 
