@@ -211,15 +211,15 @@ public class UnresolvedScopeAliasReconcilerImpl
 			return false;
 		}
 
-		List<String> alreadyGrantedScopeAliases = new ArrayList<>();
-		List<String> grantedScopeAliasesList =
+		List<String> previouslyGrantedScopeAliases = new ArrayList<>();
+		Map<String, String> resolvedScopeAliases = new LinkedHashMap<>();
+		List<String> scopeAliasesList =
 			_oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId());
-		Map<String, String> resolvedScopeAliases = new LinkedHashMap<>();
 
 		for (String scopeAlias : unresolvedScopeAliases) {
-			if (grantedScopeAliasesList.contains(scopeAlias)) {
-				alreadyGrantedScopeAliases.add(scopeAlias);
+			if (scopeAliasesList.contains(scopeAlias)) {
+				previouslyGrantedScopeAliases.add(scopeAlias);
 
 				continue;
 			}
@@ -245,7 +245,7 @@ public class UnresolvedScopeAliasReconcilerImpl
 		}
 
 		List<String> boundScopeAliases = new ArrayList<>(
-			alreadyGrantedScopeAliases);
+			previouslyGrantedScopeAliases);
 
 		boundScopeAliases.addAll(persistedScopeAliases);
 
