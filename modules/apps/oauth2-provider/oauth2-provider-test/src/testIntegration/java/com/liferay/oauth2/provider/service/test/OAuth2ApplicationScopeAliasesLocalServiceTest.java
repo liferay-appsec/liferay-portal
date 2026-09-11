@@ -73,6 +73,43 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 	public void testAddOAuth2ApplicationScopeAliasesAndUpdateApplication()
 		throws Exception {
 
+		_testAddOAuth2ApplicationScopeAliasesAndUpdateApplication();
+		_testAddOAuth2ApplicationScopeAliasesAndUpdateApplicationWithFailedUpdate();
+	}
+
+	private void _assignScope(
+		long companyId, OAuth2ScopeBuilder oAuth2ScopeBuilder,
+		String scopeAlias) {
+
+		for (LiferayOAuth2Scope liferayOAuth2Scope :
+				_scopeLocator.getLiferayOAuth2Scopes(companyId, scopeAlias)) {
+
+			Bundle bundle = liferayOAuth2Scope.getBundle();
+
+			oAuth2ScopeBuilder.forApplication(
+				liferayOAuth2Scope.getApplicationName(),
+				bundle.getSymbolicName(),
+				applicationScopeAssigner ->
+					applicationScopeAssigner.assignScope(
+						liferayOAuth2Scope.getScope()
+					).mapToScopeAlias(
+						scopeAlias
+					));
+		}
+	}
+
+	private String _getScopeAlias(long companyId) {
+		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
+			companyId);
+
+		Assert.assertFalse(scopeAliases.isEmpty());
+
+		return Collections.min(scopeAliases);
+	}
+
+	private void _testAddOAuth2ApplicationScopeAliasesAndUpdateApplication()
+		throws Exception {
+
 		long companyId = _oAuth2Application.getCompanyId();
 
 		String scopeAlias = _getScopeAlias(companyId);
@@ -99,15 +136,20 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 		Assert.assertTrue(scopeAliasesList.contains(scopeAlias));
 	}
 
-	@Test
-	public void testAddOAuth2ApplicationScopeAliasesAndUpdateApplicationWithFailedUpdate()
+	private void _testAddOAuth2ApplicationScopeAliasesAndUpdateApplicationWithFailedUpdate()
 		throws Exception {
 
+		OAuth2Application oAuth2Application =
+			_oAuth2ApplicationLocalService.getOAuth2Application(
+				_oAuth2Application.getOAuth2ApplicationId());
+
 		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
-		long companyId = _oAuth2Application.getCompanyId();
+		long companyId = oAuth2Application.getCompanyId();
 		int count =
 			_oAuth2ApplicationScopeAliasesLocalService.
 				getOAuth2ApplicationScopeAliasesesCount();
+		long oAuth2ApplicationScopeAliasesId =
+			oAuth2Application.getOAuth2ApplicationScopeAliasesId();
 
 		String scopeAlias = _getScopeAlias(companyId);
 
@@ -146,48 +188,17 @@ public class OAuth2ApplicationScopeAliasesLocalServiceTest {
 			serviceRegistration.unregister();
 		}
 
-		OAuth2Application oAuth2Application =
-			_oAuth2ApplicationLocalService.getOAuth2Application(
-				_oAuth2Application.getOAuth2ApplicationId());
+		oAuth2Application = _oAuth2ApplicationLocalService.getOAuth2Application(
+			_oAuth2Application.getOAuth2ApplicationId());
 
 		Assert.assertEquals(
-			_oAuth2Application.getOAuth2ApplicationScopeAliasesId(),
+			oAuth2ApplicationScopeAliasesId,
 			oAuth2Application.getOAuth2ApplicationScopeAliasesId());
 
 		Assert.assertEquals(
 			count,
 			_oAuth2ApplicationScopeAliasesLocalService.
 				getOAuth2ApplicationScopeAliasesesCount());
-	}
-
-	private void _assignScope(
-		long companyId, OAuth2ScopeBuilder oAuth2ScopeBuilder,
-		String scopeAlias) {
-
-		for (LiferayOAuth2Scope liferayOAuth2Scope :
-				_scopeLocator.getLiferayOAuth2Scopes(companyId, scopeAlias)) {
-
-			Bundle bundle = liferayOAuth2Scope.getBundle();
-
-			oAuth2ScopeBuilder.forApplication(
-				liferayOAuth2Scope.getApplicationName(),
-				bundle.getSymbolicName(),
-				applicationScopeAssigner ->
-					applicationScopeAssigner.assignScope(
-						liferayOAuth2Scope.getScope()
-					).mapToScopeAlias(
-						scopeAlias
-					));
-		}
-	}
-
-	private String _getScopeAlias(long companyId) {
-		Collection<String> scopeAliases = _scopeLocator.getScopeAliases(
-			companyId);
-
-		Assert.assertFalse(scopeAliases.isEmpty());
-
-		return Collections.min(scopeAliases);
 	}
 
 	@DeleteAfterTestRun
