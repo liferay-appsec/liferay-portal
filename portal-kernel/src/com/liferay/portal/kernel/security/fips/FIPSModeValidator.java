@@ -91,10 +91,7 @@ public class FIPSModeValidator {
 	}
 
 	public static void validate() {
-		Provider[] providers = Security.getProviders();
-
-		_validateFIPSProvider(providers);
-		_validateProviders(providers);
+		_validateSecurityProviders();
 
 		_validateProperties();
 	}
@@ -129,6 +126,13 @@ public class FIPSModeValidator {
 
 		throw new SecurityException(
 			"URL protocol scheme is not allowed in FIPS mode");
+	}
+
+	public static void verifyHealth() {
+		FIPSApplicationStateMachineUtil.selfTest(
+			FIPSModeValidator::_validateSecurityProviders);
+
+		_validateProperties();
 	}
 
 	private static List<String> _getPlaintextSecretProperties(
@@ -365,6 +369,13 @@ public class FIPSModeValidator {
 			StringBundler.concat(
 				"The security providers ", Arrays.toString(notAllowedProviders),
 				" are not allowed in FIPS mode for ", provider.getName()));
+	}
+
+	private static void _validateSecurityProviders() {
+		Provider[] providers = Security.getProviders();
+
+		_validateFIPSProvider(providers);
+		_validateProviders(providers);
 	}
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;

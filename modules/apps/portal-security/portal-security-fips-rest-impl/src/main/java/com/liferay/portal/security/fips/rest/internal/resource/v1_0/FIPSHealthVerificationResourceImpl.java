@@ -53,11 +53,14 @@ public class FIPSHealthVerificationResourceImpl
 
 		fipsHealthVerification.setDateVerified(Date::new);
 
+		boolean verificationFailed = false;
+
 		try {
-			FIPSApplicationStateMachineUtil.selfTest(
-				FIPSModeValidator::validate);
+			FIPSModeValidator.verifyHealth();
 		}
 		catch (Exception exception) {
+			verificationFailed = true;
+
 			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to complete the FIPS health verification",
@@ -74,7 +77,9 @@ public class FIPSHealthVerificationResourceImpl
 			() -> FIPSHealthVerification.Status.create(
 				fipsApplicationState.name()));
 
-		if (fipsApplicationState != FIPSApplicationState.OPERATIONAL) {
+		if ((fipsApplicationState != FIPSApplicationState.OPERATIONAL) ||
+			verificationFailed) {
+
 			throw new WebApplicationException(
 				Response.status(
 					Response.Status.SERVICE_UNAVAILABLE
