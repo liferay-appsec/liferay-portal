@@ -71,7 +71,6 @@ public class UnresolvedScopeAliasesRegistryImplTest {
 
 		Assert.assertTrue(company1ScopeAliases.contains(scopeAlias1));
 		Assert.assertFalse(company1ScopeAliases.contains(scopeAlias2));
-
 		Assert.assertTrue(company2ScopeAliases.contains(scopeAlias2));
 		Assert.assertFalse(company2ScopeAliases.contains(scopeAlias1));
 	}
