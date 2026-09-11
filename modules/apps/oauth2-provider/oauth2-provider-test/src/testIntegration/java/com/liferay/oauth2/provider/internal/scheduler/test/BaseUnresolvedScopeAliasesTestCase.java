@@ -29,6 +29,7 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 
@@ -46,6 +47,12 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
+
+	@Before
+	public void setUp() {
+		_applicationName = RandomTestUtil.randomString();
+		_externalReferenceCode = RandomTestUtil.randomString();
+	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -115,7 +122,7 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 		return bundleContext.registerService(
 			ScopeFinder.class, scopeFinder,
 			HashMapDictionaryBuilder.<String, Object>put(
-				"osgi.jaxrs.name", _APPLICATION_NAME
+				"osgi.jaxrs.name", _applicationName
 			).build());
 	}
 
@@ -126,7 +133,7 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 		_configuration = configurationAdmin.getFactoryConfiguration(
 			OAuth2ProviderApplicationHeadlessServerConfiguration.class.
 				getName(),
-			_EXTERNAL_REFERENCE_CODE, StringPool.QUESTION);
+			_externalReferenceCode, StringPool.QUESTION);
 
 		ConfigurationTestUtil.saveConfiguration(
 			_configuration,
@@ -144,7 +151,7 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 			() ->
 				oAuth2ApplicationLocalService.
 					fetchOAuth2ApplicationByExternalReferenceCode(
-						_EXTERNAL_REFERENCE_CODE, companyId));
+						_externalReferenceCode, companyId));
 
 		Assert.assertNotNull(
 			"The configuration factory did not create the OAuth 2 application",
@@ -232,18 +239,14 @@ public abstract class BaseUnresolvedScopeAliasesTestCase {
 	@Inject
 	protected UnresolvedScopeAliasesRegistry unresolvedScopeAliasesRegistry;
 
-	private static final String _APPLICATION_NAME =
-		RandomTestUtil.randomString();
-
-	private static final String _EXTERNAL_REFERENCE_CODE =
-		RandomTestUtil.randomString();
-
 	private static final String _SCOPE = "everything";
 
 	private static final int _WAIT_ATTEMPT_COUNT = 200;
 
 	private static final long _WAIT_ATTEMPT_DELAY = 50;
 
+	private String _applicationName;
 	private Configuration _configuration;
+	private String _externalReferenceCode;
 
 }
