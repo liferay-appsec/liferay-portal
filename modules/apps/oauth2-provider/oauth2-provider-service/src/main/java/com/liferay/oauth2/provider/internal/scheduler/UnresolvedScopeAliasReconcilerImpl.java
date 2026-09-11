@@ -160,10 +160,9 @@ public class UnresolvedScopeAliasReconcilerImpl
 	private boolean _reconcile(long companyId, Set<Long> oAuth2ApplicationIds)
 		throws Exception {
 
+		boolean bound = false;
 		Collection<String> registeredScopeAliases =
 			_scopeLocator.getScopeAliases(companyId);
-
-		boolean bound = false;
 
 		for (long oAuth2ApplicationId : oAuth2ApplicationIds) {
 			try {
@@ -212,11 +211,10 @@ public class UnresolvedScopeAliasReconcilerImpl
 			return false;
 		}
 
+		List<String> alreadyGrantedScopeAliasesList = new ArrayList<>();
 		List<String> grantedScopeAliasesList =
 			_oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
 				oAuth2Application.getOAuth2ApplicationScopeAliasesId());
-
-		List<String> alreadyGrantedScopeAliasesList = new ArrayList<>();
 		Map<String, String> resolvedScopeAliases = new LinkedHashMap<>();
 
 		for (String scopeAlias : unresolvedScopeAliases) {
@@ -288,6 +286,8 @@ public class UnresolvedScopeAliasReconcilerImpl
 			return false;
 		}
 
+		AtomicBoolean bound = new AtomicBoolean();
+
 		Map<Long, Set<Long>> oAuth2ApplicationIdsByCompanyId =
 			_unresolvedScopeAliasesRegistry.
 				getOAuth2ApplicationIdsByCompanyId();
@@ -297,8 +297,6 @@ public class UnresolvedScopeAliasReconcilerImpl
 				"Reconciling unresolved scope aliases for " +
 					oAuth2ApplicationIdsByCompanyId.size() + " companies");
 		}
-
-		AtomicBoolean bound = new AtomicBoolean();
 
 		for (Map.Entry<Long, Set<Long>> entry :
 				oAuth2ApplicationIdsByCompanyId.entrySet()) {
