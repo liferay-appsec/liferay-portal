@@ -12,7 +12,6 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.osgi.util.configuration.ConfigurationFactoryUtil;
 import com.liferay.osgi.util.osgi.commands.OSGiCommands;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -59,25 +58,32 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 				).build(),
 				curCompanyId -> {
 					for (long oAuth2ApplicationId : entry.getValue()) {
-						String name = StringPool.BLANK;
 						OAuth2Application oAuth2Application =
 							_oAuth2ApplicationLocalService.
 								fetchOAuth2Application(oAuth2ApplicationId);
 
+						StringBundler sb = new StringBundler(9);
+
+						sb.append("company ");
+						sb.append(companyId);
+						sb.append(" application ");
+						sb.append(oAuth2ApplicationId);
+
 						if (oAuth2Application != null) {
-							name = oAuth2Application.getName();
+							sb.append(" named \"");
+							sb.append(oAuth2Application.getName());
+							sb.append("\"");
 						}
 
-						System.out.println(
-							StringBundler.concat(
-								"company ", companyId, " application ",
-								oAuth2ApplicationId, " named \"", name, "\": ",
-								ListUtil.sort(
-									new ArrayList<>(
-										_unresolvedScopeAliasesRegistry.
-											getUnresolvedScopeAliases(
-												companyId,
-												oAuth2ApplicationId)))));
+						sb.append(" has unresolved scope aliases ");
+						sb.append(
+							ListUtil.sort(
+								new ArrayList<>(
+									_unresolvedScopeAliasesRegistry.
+										getUnresolvedScopeAliases(
+											companyId, oAuth2ApplicationId))));
+
+						System.out.println(sb.toString());
 					}
 				});
 		}
@@ -85,7 +91,8 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 
 	public void reconcile() throws Exception {
 		if (_unresolvedScopeAliasReconciler.reconcile()) {
-			System.out.println("Bound previously unresolved scope aliases");
+			System.out.println(
+				"Previously unresolved scope aliases were bound");
 		}
 		else {
 			System.out.println("No unresolved scope aliases were bound");
