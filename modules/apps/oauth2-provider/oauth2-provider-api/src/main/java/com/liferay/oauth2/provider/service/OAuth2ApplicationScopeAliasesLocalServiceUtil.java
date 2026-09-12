@@ -77,6 +77,21 @@ public class OAuth2ApplicationScopeAliasesLocalServiceUtil {
 			oAuth2ApplicationScopeAliases);
 	}
 
+	public static com.liferay.oauth2.provider.model.OAuth2Application
+			addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+				long companyId, long userId, String userName,
+				long oAuth2ApplicationId,
+				java.util.function.Consumer
+					<com.liferay.oauth2.provider.util.builder.
+						OAuth2ScopeBuilder> builderConsumer)
+		throws PortalException {
+
+		return getService().
+			addOAuth2ApplicationScopeAliasesAndUpdateApplication(
+				companyId, userId, userName, oAuth2ApplicationId,
+				builderConsumer);
+	}
+
 	/**
 	 * Creates a new o auth2 application scope aliases with the primary key. Does not add the o auth2 application scope aliases to the database.
 	 *
@@ -368,4 +383,4 @@ public class OAuth2ApplicationScopeAliasesLocalServiceUtil {
 			OAuth2ApplicationScopeAliasesLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1000544962
+// LIFERAY-SERVICE-BUILDER-HASH:1493915198
