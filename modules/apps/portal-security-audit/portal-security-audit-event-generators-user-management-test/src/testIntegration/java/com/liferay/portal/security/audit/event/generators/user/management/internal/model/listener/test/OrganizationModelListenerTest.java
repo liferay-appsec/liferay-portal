@@ -53,6 +53,10 @@ public class OrganizationModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		Assert.assertEquals(
+			"system.organization.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("organization", auditMessage.getResourceType());
 	}
 
 	@Test

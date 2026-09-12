@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfigurationUtil;
 import com.liferay.portal.security.audit.router.internal.constants.AuditConstants;
+import com.liferay.portal.security.audit.router.internal.util.AuditResourceActionUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -55,6 +56,8 @@ public class DefaultAuditRouter implements AuditRouter {
 
 			return;
 		}
+
+		AuditResourceActionUtil.resolve(auditMessage);
 
 		List<AuditMessageProcessor> globalAuditMessageProcessors =
 			_serviceTrackerMap.getService(StringPool.STAR);

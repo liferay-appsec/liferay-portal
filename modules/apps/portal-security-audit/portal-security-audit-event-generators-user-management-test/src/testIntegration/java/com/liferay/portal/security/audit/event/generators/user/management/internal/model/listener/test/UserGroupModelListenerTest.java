@@ -52,6 +52,10 @@ public class UserGroupModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		Assert.assertEquals(
+			"system.usergroup.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("usergroup", auditMessage.getResourceType());
 	}
 
 	@Test
