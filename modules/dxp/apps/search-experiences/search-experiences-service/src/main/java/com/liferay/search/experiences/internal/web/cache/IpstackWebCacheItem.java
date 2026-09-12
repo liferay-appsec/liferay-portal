@@ -12,9 +12,11 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.search.experiences.blueprint.exception.InvalidWebCacheItemException;
 import com.liferay.search.experiences.blueprint.exception.PrivateIPAddressException;
 import com.liferay.search.experiences.internal.configuration.IpstackConfiguration;
@@ -30,7 +32,7 @@ import java.net.InetAddress;
 public class IpstackWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
-		ExceptionListener exceptionListener, String ipAddress,
+		long companyId, ExceptionListener exceptionListener, String ipAddress,
 		IpstackConfiguration ipstackConfiguration) {
 
 		try {
@@ -43,9 +45,11 @@ public class IpstackWebCacheItem implements WebCacheItem {
 			return (JSONObject)WebCachePoolUtil.get(
 				StringBundler.concat(
 					IpstackWebCacheItem.class.getName(), StringPool.POUND,
-					ipstackConfiguration.apiKey(), StringPool.POUND,
-					ipstackConfiguration.apiURL(), StringPool.POUND, ipAddress),
-				new IpstackWebCacheItem(ipAddress, ipstackConfiguration));
+					companyId, StringPool.POUND, ipstackConfiguration.apiKey(),
+					StringPool.POUND, ipstackConfiguration.apiURL(),
+					StringPool.POUND, ipAddress),
+				new IpstackWebCacheItem(
+					companyId, ipAddress, ipstackConfiguration));
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -59,14 +63,22 @@ public class IpstackWebCacheItem implements WebCacheItem {
 	}
 
 	public IpstackWebCacheItem(
-		String ipAddress, IpstackConfiguration ipstackConfiguration) {
+		long companyId, String ipAddress,
+		IpstackConfiguration ipstackConfiguration) {
 
+		_companyId = companyId;
 		_ipAddress = ipAddress;
 		_ipstackConfiguration = ipstackConfiguration;
 	}
 
 	@Override
 	public JSONObject convert(String key) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
 		try {
 			String apiURL = _ipstackConfiguration.apiURL();
 
@@ -74,13 +86,15 @@ public class IpstackWebCacheItem implements WebCacheItem {
 				apiURL += "/";
 			}
 
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					StringBundler.concat("Reading ", apiURL, _ipAddress));
+			}
+
 			String url = StringBundler.concat(
 				apiURL, _ipAddress, "?access_key=",
-				_ipstackConfiguration.apiKey());
-
-			if (_log.isDebugEnabled()) {
-				_log.debug("Reading " + url);
-			}
+				secretResolver.resolve(
+					_companyId, _ipstackConfiguration.apiKey()));
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 				HttpUtil.URLtoString(url));
@@ -143,6 +157,11 @@ public class IpstackWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		IpstackWebCacheItem.class);
 
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			IpstackWebCacheItem.class, SecretResolver.class, null, true);
+
+	private final long _companyId;
 	private final String _ipAddress;
 	private final IpstackConfiguration _ipstackConfiguration;
 

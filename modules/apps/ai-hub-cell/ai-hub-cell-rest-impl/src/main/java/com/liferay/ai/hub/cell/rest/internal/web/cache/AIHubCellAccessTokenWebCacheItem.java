@@ -12,9 +12,11 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 /**
  * @author Manuele Castro
@@ -30,7 +32,9 @@ public class AIHubCellAccessTokenWebCacheItem extends BaseWebCacheItem {
 			StringPool.POUND, aiHubCellConfiguration.serviceURL());
 
 		JSONObject jsonObject = (JSONObject)WebCachePoolUtil.get(
-			key, new AIHubCellAccessTokenWebCacheItem(aiHubCellConfiguration));
+			key,
+			new AIHubCellAccessTokenWebCacheItem(
+				aiHubCellConfiguration, companyId));
 
 		if (!isExpired(jsonObject.getString("access_token"))) {
 			return jsonObject;
@@ -39,23 +43,34 @@ public class AIHubCellAccessTokenWebCacheItem extends BaseWebCacheItem {
 		WebCachePoolUtil.remove(key);
 
 		return (JSONObject)WebCachePoolUtil.get(
-			key, new AIHubCellAccessTokenWebCacheItem(aiHubCellConfiguration));
+			key,
+			new AIHubCellAccessTokenWebCacheItem(
+				aiHubCellConfiguration, companyId));
 	}
 
 	public AIHubCellAccessTokenWebCacheItem(
-		AIHubCellConfiguration aiHubCellConfiguration) {
+		AIHubCellConfiguration aiHubCellConfiguration, long companyId) {
 
 		_aiHubCellConfiguration = aiHubCellConfiguration;
+		_companyId = companyId;
 	}
 
 	@Override
 	public Object convert(String key) {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
+
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
+		}
+
 		try {
 			Http.Options options = new Http.Options();
 
 			options.addPart("client_id", _aiHubCellConfiguration.clientId());
 			options.addPart(
-				"client_secret", _aiHubCellConfiguration.clientSecret());
+				"client_secret",
+				secretResolver.resolve(
+					_companyId, _aiHubCellConfiguration.clientSecret()));
 			options.addPart("grant_type", "client_credentials");
 			options.setLocation(
 				_aiHubCellConfiguration.serviceURL() + "/o/oauth2/token");
@@ -87,7 +102,13 @@ public class AIHubCellAccessTokenWebCacheItem extends BaseWebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		AIHubCellAccessTokenWebCacheItem.class);
 
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(
+			AIHubCellAccessTokenWebCacheItem.class, SecretResolver.class, null,
+			true);
+
 	private final AIHubCellConfiguration _aiHubCellConfiguration;
+	private final long _companyId;
 	private long _refreshTime;
 
 }

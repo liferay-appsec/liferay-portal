@@ -15,6 +15,7 @@ import org.junit.Test;
 
 /**
  * @author Christopher Kian
+ * @author Pedro Victor Silvestre
  */
 public class KeyReferenceUtilTest {
 
@@ -36,22 +37,146 @@ public class KeyReferenceUtilTest {
 	}
 
 	@Test
-	public void testToKeyReference() {
-		_testToKeyReference("${keyRef:", KeyReference.Type.CRYPTO);
-		_testToKeyReference("${secretRef:", KeyReference.Type.SECRET);
+	public void testIsValidKeyReferenceWithInvalidKeyReference() {
+		Assert.assertFalse(KeyReferenceUtil.isValidKeyReference(null));
+		Assert.assertFalse(KeyReferenceUtil.isValidKeyReference(""));
+		Assert.assertFalse(KeyReferenceUtil.isValidKeyReference("abc"));
+		Assert.assertFalse(KeyReferenceUtil.isValidKeyReference("${}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef::identifier}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:provider}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:provider:}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:provider:   }"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference(
+				"${secretRef:provider:identifier"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference(
+				"${secretRef:provider:identifier}trailing"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference("${secretRef:provider:null}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference(
+				"${secretRef:pro}vider:identifier}"));
+		Assert.assertFalse(
+			KeyReferenceUtil.isValidKeyReference(
+				"${SecretRef:provider:identifier}"));
 	}
 
-	private void _testToKeyReference(String prefix, KeyReference.Type type) {
-		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(), type);
+	@Test
+	public void testToKeyReference() {
+		_assertKeyReference(
+			"identifier", "${keyRef:provider:identifier}", "provider",
+			KeyReference.Type.CRYPTO);
+		_assertKeyReference(
+			"identifier", "${secretRef:*:identifier}", "*",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"arn:aws:kms:us-east-1:123:key/abc",
+			"${secretRef:aws-kms:arn:aws:kms:us-east-1:123:key/abc}", "aws-kms",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"identifier", "${secretRef:provider:identifier}", "provider",
+			KeyReference.Type.SECRET);
+		_assertKeyReference(
+			"identi}fier", "${secretRef:provider:identi}fier}", "provider",
+			KeyReference.Type.SECRET);
 
-		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
-			keyReference);
+		for (KeyReference.Type type : KeyReference.Type.values()) {
+			KeyReference keyReference = new KeyReference(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				type);
 
-		Assert.assertEquals(
-			keyReference, KeyReferenceUtil.toKeyReference(keyReferenceString));
+			Assert.assertEquals(
+				keyReference,
+				KeyReferenceUtil.toKeyReference(
+					KeyReferenceUtil.toKeyReferenceString(keyReference)));
+		}
+	}
+
+	@Test
+	public void testToKeyReferenceWithInvalidKeyReference() {
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(null));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(""));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("abc"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef:}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef:"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef::identifier}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef:provider}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef:provider:}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference("${secretRef:provider:   }"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(
+				"${secretRef:provider:identifier"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(
+				"${secretRef:provider:identifier}trailing"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(
+				"${secretRef:provider:null}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(
+				"${secretRef:pro}vider:identifier}"));
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> KeyReferenceUtil.toKeyReference(
+				"${SecretRef:provider:identifier}"));
+	}
+
+	private void _assertKeyReference(
+		String identifier, String keyReferenceString, String providerId,
+		KeyReference.Type type) {
+
 		Assert.assertTrue(
-			keyReferenceString, keyReferenceString.startsWith(prefix));
+			keyReferenceString,
+			KeyReferenceUtil.isValidKeyReference(keyReferenceString));
+
+		KeyReference keyReference = KeyReferenceUtil.toKeyReference(
+			keyReferenceString);
+
+		Assert.assertEquals(identifier, keyReference.getIdentifier());
+		Assert.assertEquals(
+			keyReferenceString,
+			KeyReferenceUtil.toKeyReferenceString(keyReference));
+		Assert.assertEquals(providerId, keyReference.getProviderId());
+		Assert.assertEquals(type, keyReference.getType());
 	}
 
 }
