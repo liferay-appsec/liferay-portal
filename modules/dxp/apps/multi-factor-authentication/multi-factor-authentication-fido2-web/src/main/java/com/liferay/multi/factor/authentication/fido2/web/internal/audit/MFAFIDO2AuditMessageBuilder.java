@@ -6,6 +6,7 @@
 package com.liferay.multi.factor.authentication.fido2.web.internal.audit;
 
 import com.liferay.multi.factor.authentication.fido2.web.internal.constants.MFAFIDO2EventTypes;
+import com.liferay.multi.factor.authentication.spi.audit.MFAResourceActionUtil;
 import com.liferay.portal.kernel.audit.AuditException;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
@@ -26,49 +27,60 @@ public class MFAFIDO2AuditMessageBuilder {
 	public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 		long companyId, long userId, String checkerClassName) {
 
-		return new AuditMessage(
-			companyId, userId, "Nonexistent",
-			JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
-			String.valueOf(userId),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+		return MFAResourceActionUtil.setResourceActionAndType(
+			new AuditMessage(
+				companyId, userId, "Nonexistent",
+				JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
+				String.valueOf(userId),
+				MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null),
+			MFAResourceActionUtil.ACTION_VERIFY_FAILURE);
 	}
 
 	public AuditMessage buildNotVerifiedAuditMessage(
 		User user, String checkerClassName, String reason) {
 
-		return new AuditMessage(
-			user.getCompanyId(), user.getUserId(), user.getFullName(),
-			JSONUtil.put("reason", reason), checkerClassName,
-			String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_NOT_VERIFIED, null);
+		return MFAResourceActionUtil.setResourceActionAndType(
+			new AuditMessage(
+				user.getCompanyId(), user.getUserId(), user.getFullName(),
+				JSONUtil.put("reason", reason), checkerClassName,
+				String.valueOf(user.getPrimaryKey()),
+				MFAFIDO2EventTypes.MFA_FIDO2_NOT_VERIFIED, null),
+			MFAResourceActionUtil.ACTION_VERIFY_FAILURE);
 	}
 
 	public AuditMessage buildUnconfiguredUserVerificationFailureAuditMessage(
 		long companyId, User user, String checkerClassName) {
 
-		return new AuditMessage(
-			companyId, user.getUserId(), "Unconfigured",
-			JSONUtil.put("reason", "Unconfigured for User"), checkerClassName,
-			null, MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+		return MFAResourceActionUtil.setResourceActionAndType(
+			new AuditMessage(
+				companyId, user.getUserId(), "Unconfigured",
+				JSONUtil.put("reason", "Unconfigured for User"),
+				checkerClassName, null,
+				MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null),
+			MFAResourceActionUtil.ACTION_VERIFY_FAILURE);
 	}
 
 	public AuditMessage buildVerificationFailureAuditMessage(
 		User user, String checkerClassName, String reason) {
 
-		return new AuditMessage(
-			user.getCompanyId(), user.getUserId(), user.getFullName(),
-			JSONUtil.put("reason", reason), checkerClassName,
-			String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+		return MFAResourceActionUtil.setResourceActionAndType(
+			new AuditMessage(
+				user.getCompanyId(), user.getUserId(), user.getFullName(),
+				JSONUtil.put("reason", reason), checkerClassName,
+				String.valueOf(user.getPrimaryKey()),
+				MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null),
+			MFAResourceActionUtil.ACTION_VERIFY_FAILURE);
 	}
 
 	public AuditMessage buildVerifiedAuditMessage(
 		User user, String checkerClassName) {
 
-		return new AuditMessage(
-			user.getCompanyId(), user.getUserId(), user.getFullName(), null,
-			checkerClassName, String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFIED, null);
+		return MFAResourceActionUtil.setResourceActionAndType(
+			new AuditMessage(
+				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
+				checkerClassName, String.valueOf(user.getPrimaryKey()),
+				MFAFIDO2EventTypes.MFA_FIDO2_VERIFIED, null),
+			MFAResourceActionUtil.ACTION_VERIFY);
 	}
 
 	public void routeAuditMessage(AuditMessage auditMessage) {

@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 
@@ -49,6 +50,10 @@ public class UserGroupRoleModelListener
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				User.class.getName(), userGroupRole.getUserId(), eventType,
 				null);
+
+			auditMessage.setResourceAction(
+				"system.role." + StringUtil.toLowerCase(eventType));
+			auditMessage.setResourceType("role");
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();

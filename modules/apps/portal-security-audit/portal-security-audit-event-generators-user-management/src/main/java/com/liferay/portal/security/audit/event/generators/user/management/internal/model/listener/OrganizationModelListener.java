@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -102,6 +103,10 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				associationClassName, (Long)associationClassPK, eventType,
 				null);
+
+			auditMessage.setResourceAction(
+				"system.organization." + StringUtil.toLowerCase(eventType));
+			auditMessage.setResourceType("organization");
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();

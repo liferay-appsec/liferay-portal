@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -124,6 +125,10 @@ public class RoleModelListener extends BaseModelListener<Role> {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				associationClassName, (Long)associationClassPK, eventType,
 				null);
+
+			auditMessage.setResourceAction(
+				"system.role." + StringUtil.toLowerCase(eventType));
+			auditMessage.setResourceType("role");
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
