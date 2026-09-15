@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Locator, expect, mergeTests} from '@playwright/test';
+import {
+	FrameLocator,
+	Locator,
+	Page,
+	expect,
+	mergeTests,
+} from '@playwright/test';
 import path from 'path';
 
 import {accountSettingsPagesTest} from '../../../fixtures/accountSettingsPagesTest';
@@ -226,6 +232,73 @@ test(
 
 				await expect(cookieHeading).toBeVisible();
 			}
+		});
+	}
+);
+
+test(
+	'Verify Consent Panel keeps previously accepted cookies when saving again',
+	{tag: '@LPD-101997'},
+	async ({page}) => {
+		const configurationFrame = page.frameLocator(
+			'#cookiesBannerConfiguration iframe'
+		);
+
+		const [functionalCookieKey, performanceCookieKey] = cookieKeys;
+
+		await test.step('Accept only Functional Cookies', async () => {
+			await page.goto('/');
+
+			const cookiesBanner = page.locator(
+				'div[role="dialog"][aria-modal="true"]'
+			);
+
+			await cookiesBanner.waitFor();
+
+			await cookiesBanner
+				.getByRole('button', {name: 'Configuration'})
+				.click();
+
+			await checkConsentPanelToggle(
+				configurationFrame,
+				functionalCookieKey
+			);
+
+			await page.getByRole('button', {name: 'Accept Selected'}).click();
+		});
+
+		await test.step('Verify the Consent Panel reflects the accepted cookie', async () => {
+			await openConsentPanelFromFloatingIcon(page);
+
+			await expect(
+				configurationFrame.locator(
+					`[data-cookie-key="${functionalCookieKey}"]`
+				)
+			).toBeChecked();
+		});
+
+		await test.step('Accept Performance Cookies as well', async () => {
+			await checkConsentPanelToggle(
+				configurationFrame,
+				performanceCookieKey
+			);
+
+			await page.getByRole('button', {name: 'Accept Selected'}).click();
+		});
+
+		await test.step('Verify both cookies remain accepted', async () => {
+			await openConsentPanelFromFloatingIcon(page);
+
+			await expectCookieAccepted(
+				configurationFrame,
+				functionalCookieKey,
+				page
+			);
+			await expectCookieAccepted(
+				configurationFrame,
+				performanceCookieKey,
+				page
+			);
 		});
 	}
 );
@@ -755,6 +828,43 @@ test(
 	}
 );
 
+async function checkConsentPanelToggle(
+	configurationFrame: FrameLocator,
+	cookieKey: string
+) {
+	const toggleSwitch = configurationFrame.locator(
+		`[data-cookie-key="${cookieKey}"]`
+	);
+
+	// The panel enables a toggle only once it has restored its state from the
+	// stored consent cookies
+
+	await expect(toggleSwitch).toBeEnabled();
+
+	await configurationFrame
+		.locator(`label.toggle-switch:has([data-cookie-key="${cookieKey}"])`)
+		.click();
+
+	await expect(toggleSwitch).toBeChecked();
+}
+
+async function expectCookieAccepted(
+	configurationFrame: FrameLocator,
+	cookieKey: string,
+	page: Page
+) {
+	await expect(
+		configurationFrame.locator(`[data-cookie-key="${cookieKey}"]`)
+	).toBeChecked();
+
+	const actualCookie = (await page.context().cookies()).find(
+		(cookie) => cookie.name === cookieKey
+	);
+
+	expect(actualCookie).toBeDefined();
+	expect(actualCookie.value).toEqual('true');
+}
+
 async function expectCookieConsentPanelButtons(locator: Locator) {
 	await locator.waitFor();
 
@@ -764,4 +874,16 @@ async function expectCookieConsentPanelButtons(locator: Locator) {
 	await expect(buttons[0]).toContainText('Use Necessary Cookies Only');
 	await expect(buttons[1]).toContainText('Accept Selected');
 	await expect(buttons[2]).toContainText('Accept All');
+}
+
+async function openConsentPanelFromFloatingIcon(page: Page) {
+	await page
+		.locator(
+			'#_com_liferay_cookies_banner_web_portlet_CookiesBannerPortlet_floatingIconButton'
+		)
+		.click();
+
+	await expect(
+		page.getByRole('dialog', {name: 'Cookie Configuration'})
+	).toBeVisible();
 }

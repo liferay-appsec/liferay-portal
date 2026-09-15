@@ -124,25 +124,17 @@ export default function ({
 			setBannerVisibility(cookieBanner, modifiedDate);
 		}
 
-		const cookiePreferences = {};
-
 		optionalConsentCookieTypeNames.forEach(
 			(optionalConsentCookieTypeName) => {
-				cookiePreferences[optionalConsentCookieTypeName] =
-					getCookie(optionalConsentCookieTypeName) || 'false';
+				getCookie(optionalConsentCookieTypeName);
 			}
 		);
 
 		requiredConsentCookieTypeNames.forEach(
 			(requiredConsentCookieTypeName) => {
-				cookiePreferences[requiredConsentCookieTypeName] =
-					getCookie(requiredConsentCookieTypeName) || 'true';
+				getCookie(requiredConsentCookieTypeName);
 			}
 		);
-
-		Liferay.on('cookiePreferenceUpdate', (event) => {
-			cookiePreferences[event.key] = event.value;
-		});
 
 		Liferay.on('storeCookiesConsentPreferenceUpdate', (event) => {
 			storeConsentCheckbox.checked = event.value;
@@ -183,6 +175,15 @@ export default function ({
 			dissentRenewalPeriodTimeUnit = consentRenewalPeriodTimeUnit;
 		}
 
+		let configurationIframeWindow;
+
+		const configurationNamespacePrefix = `_${configurationNamespace}_`;
+
+		const isConfigurationStoreConsentChecked = () =>
+			configurationIframeWindow?.document.getElementById(
+				`${configurationNamespacePrefix}storeConsent`
+			)?.checked;
+
 		openCookieConsentModal = ({
 			alertDisplayType,
 			alertMessage,
@@ -192,11 +193,11 @@ export default function ({
 			let url = configurationURL;
 
 			if (alertDisplayType) {
-				url = `${url}&_${configurationNamespace}_alertDisplayType=${alertDisplayType}`;
+				url = `${url}&${configurationNamespacePrefix}alertDisplayType=${alertDisplayType}`;
 			}
 
 			if (alertMessage) {
-				url = `${url}&_${configurationNamespace}_alertMessage=${alertMessage}`;
+				url = `${url}&${configurationNamespacePrefix}alertMessage=${alertMessage}`;
 			}
 
 			openModal({
@@ -212,6 +213,9 @@ export default function ({
 								return;
 							}
 
+							const storeConsent =
+								isConfigurationStoreConsentChecked();
+
 							declineAllCookies(
 								consentRenewalPeriod,
 								consentRenewalPeriodTimeUnit,
@@ -219,12 +223,12 @@ export default function ({
 								dissentRenewalPeriodTimeUnit,
 								optionalConsentCookieTypeNames,
 								requiredConsentCookieTypeNames,
-								storeConsentCheckbox?.checked
+								storeConsent
 							);
 
 							setUserConfigCookie(
 								consentRenewalPeriod,
-								storeConsentCheckbox?.checked,
+								storeConsent,
 								consentRenewalPeriodTimeUnit
 							);
 
@@ -237,36 +241,41 @@ export default function ({
 						displayType: 'secondary',
 						label: Liferay.Language.get('accept-selected'),
 						onClick() {
-							if (previewMode) {
+							if (previewMode || !configurationIframeWindow) {
 								return;
 							}
 
-							Object.entries(cookiePreferences).forEach(
-								([key, value]) => {
-									let renewalPeriod = consentRenewalPeriod;
-									let timeUnit = consentRenewalPeriodTimeUnit;
+							const storeConsent =
+								isConfigurationStoreConsentChecked();
 
-									if (value !== 'true') {
-										renewalPeriod = dissentRenewalPeriod;
-										timeUnit = dissentRenewalPeriodTimeUnit;
-									}
+							Array.from(
+								configurationIframeWindow?.document.querySelectorAll(
+									`#${configurationNamespacePrefix}cookiesBannerConfigurationForm [data-cookie-key]`
+								) || []
+							).forEach((toggleSwitch) => {
+								let renewalPeriod = consentRenewalPeriod;
+								let timeUnit = consentRenewalPeriodTimeUnit;
 
-									setCookie(
-										renewalPeriod,
-										key,
-										storeConsentCheckbox?.checked,
-										timeUnit,
-										value
-									);
+								if (!toggleSwitch.checked) {
+									renewalPeriod = dissentRenewalPeriod;
+									timeUnit = dissentRenewalPeriodTimeUnit;
 								}
-							);
+
+								setCookie(
+									renewalPeriod,
+									toggleSwitch.dataset.cookieKey,
+									storeConsent,
+									timeUnit,
+									toggleSwitch.checked ? 'true' : 'false'
+								);
+							});
 
 							requiredConsentCookieTypeNames.forEach(
 								(requiredConsentCookieTypeName) => {
 									setCookie(
 										consentRenewalPeriod,
 										requiredConsentCookieTypeName,
-										storeConsentCheckbox?.checked,
+										storeConsent,
 										consentRenewalPeriodTimeUnit,
 										'true'
 									);
@@ -275,7 +284,7 @@ export default function ({
 
 							setUserConfigCookie(
 								consentRenewalPeriod,
-								storeConsentCheckbox?.checked,
+								storeConsent,
 								consentRenewalPeriodTimeUnit
 							);
 
@@ -292,17 +301,20 @@ export default function ({
 								return;
 							}
 
+							const storeConsent =
+								isConfigurationStoreConsentChecked();
+
 							acceptAllCookies(
 								consentRenewalPeriod,
 								optionalConsentCookieTypeNames,
 								requiredConsentCookieTypeNames,
-								storeConsentCheckbox?.checked,
+								storeConsent,
 								consentRenewalPeriodTimeUnit
 							);
 
 							setUserConfigCookie(
 								consentRenewalPeriod,
-								storeConsentCheckbox?.checked,
+								storeConsent,
 								consentRenewalPeriodTimeUnit
 							);
 
@@ -317,6 +329,9 @@ export default function ({
 				id: 'cookiesBannerConfiguration',
 				iframeBodyCssClass: '',
 				onClose: onCloseFunction || undefined,
+				onOpen: ({iframeWindow}) => {
+					configurationIframeWindow = iframeWindow;
+				},
 				size: 'lg',
 				title: customTitle || title,
 				url,
