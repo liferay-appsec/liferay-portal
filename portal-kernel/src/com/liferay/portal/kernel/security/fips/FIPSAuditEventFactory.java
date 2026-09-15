@@ -12,6 +12,27 @@ import com.liferay.portal.kernel.util.GetterUtil;
  */
 public class FIPSAuditEventFactory {
 
+	public static FIPSAuditEvent createAuthAttemptFailure(
+		String attemptedUserId, String authenticationMethod, String clientIP,
+		int consecutiveFailureCount, String failureReason) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"auth-attempt-failure", FIPSAuditEvent.Severity.WARNING);
+
+		fipsAuditEvent.put(
+			"attempted-user-id", GetterUtil.getString(attemptedUserId));
+		fipsAuditEvent.put(
+			"authentication-method",
+			GetterUtil.getString(authenticationMethod));
+		fipsAuditEvent.put("client-ip", GetterUtil.getString(clientIP));
+		fipsAuditEvent.put(
+			"consecutive-failure-count", consecutiveFailureCount);
+		fipsAuditEvent.put(
+			"failure-reason", GetterUtil.getString(failureReason));
+
+		return fipsAuditEvent;
+	}
+
 	public static FIPSAuditEvent createFederationTokenRejected(
 		String receivingEndpoint, String rejectedValue, String tokenIssuer,
 		String tokenType) {

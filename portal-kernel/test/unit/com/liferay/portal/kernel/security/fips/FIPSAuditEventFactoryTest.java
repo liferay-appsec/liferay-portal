@@ -18,6 +18,35 @@ import org.junit.Test;
 public class FIPSAuditEventFactoryTest {
 
 	@Test
+	public void testCreateAuthAttemptFailure() {
+		String attemptedUserId = RandomTestUtil.randomString();
+		String authenticationMethod = RandomTestUtil.randomString();
+		String clientIP = RandomTestUtil.randomString();
+		int consecutiveFailureCount = RandomTestUtil.randomInt();
+		String failureReason = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createAuthAttemptFailure(
+				attemptedUserId, authenticationMethod, clientIP,
+				consecutiveFailureCount, failureReason);
+
+		Assert.assertEquals(
+			"auth-attempt-failure", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.WARNING, fipsAuditEvent.getSeverity());
+
+		_assertFields(
+			attemptedUserId, authenticationMethod, clientIP,
+			consecutiveFailureCount, failureReason, fipsAuditEvent);
+
+		_assertFields(
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK, 0,
+			StringPool.BLANK,
+			FIPSAuditEventFactory.createAuthAttemptFailure(
+				null, null, null, 0, null));
+	}
+
+	@Test
 	public void testCreateFederationTokenRejected() {
 		String receivingEndpoint = RandomTestUtil.randomString();
 		String rejectedValue = RandomTestUtil.randomString();
@@ -57,6 +86,26 @@ public class FIPSAuditEventFactoryTest {
 				"token-issuer", tokenIssuer
 			).put(
 				"token-type", tokenType
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
+	private void _assertFields(
+		String attemptedUserId, String authenticationMethod, String clientIP,
+		int consecutiveFailureCount, String failureReason,
+		FIPSAuditEvent fipsAuditEvent) {
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"attempted-user-id", attemptedUserId
+			).put(
+				"authentication-method", authenticationMethod
+			).put(
+				"client-ip", clientIP
+			).put(
+				"consecutive-failure-count", consecutiveFailureCount
+			).put(
+				"failure-reason", failureReason
 			).build(),
 			fipsAuditEvent.getFields());
 	}
