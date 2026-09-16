@@ -6,6 +6,10 @@
 package com.liferay.portal.kernel.audit;
 
 import com.liferay.petra.lang.CentralizedThreadLocal;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 
 /**
  * @author Michael C. Han
@@ -26,6 +30,11 @@ public class AuditRequestThreadLocal {
 
 	public static void removeAuditThreadLocal() {
 		_auditRequest.remove();
+	}
+
+	public static SafeCloseable setNewAuditThreadLocalWithSafeCloseable() {
+		return _auditRequest.setWithSafeCloseable(
+			new AuditRequestThreadLocal());
 	}
 
 	public String getClientHost() {
@@ -80,6 +89,17 @@ public class AuditRequestThreadLocal {
 		return _requestIdGenerated;
 	}
 
+	public String resolveRequestId(long companyId) {
+		if ((_requestId == null) && (companyId > CompanyConstants.SYSTEM) &&
+			FeatureFlagManagerUtil.isEnabled(companyId, "LPD-6417")) {
+
+			_requestId = PortalUUIDUtil.generate();
+			_requestIdGenerated = true;
+		}
+
+		return _requestId;
+	}
+
 	public void setClientHost(String clientHost) {
 		_clientHost = clientHost;
 	}
@@ -132,8 +152,8 @@ public class AuditRequestThreadLocal {
 		_sessionID = sessionID;
 	}
 
-	private static final ThreadLocal<AuditRequestThreadLocal> _auditRequest =
-		new CentralizedThreadLocal<>(
+	private static final CentralizedThreadLocal<AuditRequestThreadLocal>
+		_auditRequest = new CentralizedThreadLocal<>(
 			AuditRequestThreadLocal.class + "._auditRequest");
 
 	private String _clientHost;
