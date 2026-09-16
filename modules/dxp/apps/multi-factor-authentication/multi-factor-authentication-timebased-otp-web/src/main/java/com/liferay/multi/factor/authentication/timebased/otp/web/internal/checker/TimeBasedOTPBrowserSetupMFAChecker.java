@@ -559,68 +559,92 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, userId, "Nonexistent",
 				JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
 				String.valueOf(userId),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildNotVerifiedAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_NOT_VERIFIED, null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage
 			buildUnconfiguredUserVerificationFailureAuditMessage(
 				long companyId, User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, user.getUserId(), "Unconfigured",
 				JSONUtil.put("reason", "Unconfigured for User"),
 				checkerClassName, null,
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_SUCCESS,
 				null);
+
+			auditMessage.setResourceAction("mfa", "verify");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerifiedAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_VERIFIED, null);
+
+			auditMessage.setResourceAction("mfa", "verify");
+
+			return auditMessage;
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {

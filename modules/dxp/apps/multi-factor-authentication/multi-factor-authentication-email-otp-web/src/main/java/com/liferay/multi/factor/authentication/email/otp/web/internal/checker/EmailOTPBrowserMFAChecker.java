@@ -411,49 +411,69 @@ public class EmailOTPBrowserMFAChecker implements BrowserMFAChecker {
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, userId, "Nonexistent",
 				JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
 				String.valueOf(userId),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_FAILURE, null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildNotVerifiedAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_NOT_VERIFIED, null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_FAILURE, null);
+
+			auditMessage.setResourceAction("mfa", "verify_failure");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_SUCCESS, null);
+
+			auditMessage.setResourceAction("mfa", "verify");
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerifiedAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFIED, null);
+
+			auditMessage.setResourceAction("mfa", "verify");
+
+			return auditMessage;
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {

@@ -5,6 +5,8 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -17,6 +19,8 @@ import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalRunMode;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -63,6 +67,13 @@ public class AuditMessage implements Serializable {
 		_contextName = contextName;
 		_eventType = eventType;
 		_message = message;
+
+		String simpleClassName = StringUtil.extractLast(
+			className, CharPool.PERIOD);
+		String resourceType = Validator.isNull(simpleClassName) ?
+			_UNKNOWN_RESOURCE_TYPE : StringUtil.toLowerCase(simpleClassName);
+
+		setResourceAction(resourceType, StringUtil.toLowerCase(eventType));
 
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
@@ -477,6 +488,13 @@ public class AuditMessage implements Serializable {
 		_resourceAction = resourceAction;
 	}
 
+	public void setResourceAction(String resourceType, String action) {
+		_resourceType = resourceType;
+		_resourceAction = StringBundler.concat(
+			_RESOURCE_ACTION_NAMESPACE, StringPool.PERIOD, resourceType,
+			StringPool.PERIOD, action);
+	}
+
 	public void setResourceType(String resourceType) {
 		_resourceType = resourceType;
 	}
@@ -643,6 +661,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _RESOURCE_ACTION = "resourceAction";
 
+	private static final String _RESOURCE_ACTION_NAMESPACE = "system";
+
 	private static final String _RESOURCE_TYPE = "resourceType";
 
 	private static final String _ROLES = "roles";
@@ -654,6 +674,8 @@ public class AuditMessage implements Serializable {
 	private static final String _SESSION_ID = "sessionID";
 
 	private static final String _TIMESTAMP = "timestamp";
+
+	private static final String _UNKNOWN_RESOURCE_TYPE = "unknown";
 
 	private static final String _USER_AGENT = "userAgent";
 

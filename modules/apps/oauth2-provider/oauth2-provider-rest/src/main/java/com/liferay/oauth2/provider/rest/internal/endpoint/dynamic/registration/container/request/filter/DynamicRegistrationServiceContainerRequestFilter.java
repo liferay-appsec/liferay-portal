@@ -437,7 +437,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		String errorDescription, HttpServletRequest httpServletRequest,
 		String mode) {
 
-		return new AuditMessage(
+		AuditMessage auditMessage = new AuditMessage(
 			0, companyId, 0, StringPool.BLANK, null,
 			JSONUtil.put(
 				"clientHost", clientHost
@@ -455,6 +455,10 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
 			StringPool.BLANK);
+
+		auditMessage.setResourceAction("oauth2application", "register_reject");
+
+		return auditMessage;
 	}
 
 	private String _normalizeHost(String host) {

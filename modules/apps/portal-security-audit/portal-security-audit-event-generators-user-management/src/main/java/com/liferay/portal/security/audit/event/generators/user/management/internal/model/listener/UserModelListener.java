@@ -146,6 +146,7 @@ public class UserModelListener extends BaseModelListener<User> {
 				EventTypes.AGREED_TO_TERMS_OF_USE, null);
 
 			auditMessage.setCompanyId(user.getCompanyId());
+			auditMessage.setResourceAction("user", "agree_to_terms_of_use");
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
