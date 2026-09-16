@@ -38,12 +38,6 @@ public class BatchEngineTaskExecutorUtil {
 			UnsafeSupplier<T, Throwable> unsafeSupplier, User user)
 		throws Throwable {
 
-		AuditRequestThreadLocal auditRequestThreadLocal =
-			AuditRequestThreadLocal.getAuditThreadLocal();
-
-		auditRequestThreadLocal.setRealUserEmailAddress(user.getEmailAddress());
-		auditRequestThreadLocal.setRealUserId(user.getUserId());
-
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
@@ -60,8 +54,18 @@ public class BatchEngineTaskExecutorUtil {
 
 		PrincipalThreadLocal.setName(user.getUserId());
 
-		try (SafeCloseable safeCloseable =
+		try (SafeCloseable safeCloseable1 =
+				AuditRequestThreadLocal.
+					setNewAuditThreadLocalWithSafeCloseable();
+			SafeCloseable safeCloseable2 =
 				ItemIndexThreadLocal.pushIndexQueueWithSafeCloseable()) {
+
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			auditRequestThreadLocal.setRealUserEmailAddress(
+				user.getEmailAddress());
+			auditRequestThreadLocal.setRealUserId(user.getUserId());
 
 			return unsafeSupplier.get();
 		}
