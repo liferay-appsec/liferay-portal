@@ -31,6 +31,43 @@ import org.junit.runner.RunWith;
 public class UserModelListenerTest extends BaseModelListenerTestCase {
 
 	@Test
+	public void testOnBeforeCreate() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			auditMessages.clear();
+
+			_user = UserTestUtil.addUser();
+
+			_testResourceAction(
+				fetchAuditMessage(User.class.getName(), EventTypes.ADD),
+				"system.user.add", "user");
+		}
+	}
+
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+		_user = UserTestUtil.addUser();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			auditMessages.clear();
+
+			_userLocalService.deleteUser(_user);
+
+			_testResourceAction(
+				fetchAuditMessage(User.class.getName(), EventTypes.DELETE),
+				"system.user.delete", "user");
+		}
+	}
+
+	@Test
 	public void testOnBeforeUpdate() throws Exception {
 		_company = CompanyTestUtil.addCompany();
 
@@ -73,10 +110,24 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 
 		_user = _userLocalService.updateUser(_user);
 
+		_testResourceAction(
+			fetchAuditMessage(User.class.getName(), EventTypes.UPDATE),
+			"system.user.update", "user");
+
 		for (AuditMessage auditMessage : auditMessages) {
 			Assert.assertNotEquals(
 				EventTypes.AGREED_TO_TERMS_OF_USE, auditMessage.getEventType());
 		}
+	}
+
+	private void _testResourceAction(
+		AuditMessage auditMessage, String expectedResourceAction,
+		String expectedResourceType) {
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals(
+			expectedResourceType, auditMessage.getResourceType());
 	}
 
 	@DeleteAfterTestRun

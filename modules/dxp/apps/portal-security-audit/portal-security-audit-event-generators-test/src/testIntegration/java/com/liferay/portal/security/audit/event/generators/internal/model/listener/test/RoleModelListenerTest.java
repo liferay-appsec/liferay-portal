@@ -9,14 +9,18 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -53,6 +57,36 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
+	}
+
+	@Test
+	public void testOnBeforeAddAssociationWithOrganizationGroup()
+		throws Exception {
+
+		_company = CompanyTestUtil.addCompany();
+		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+		_organization = OrganizationTestUtil.addOrganization();
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			_groupLocalService.addRoleGroups(
+				_role.getRoleId(), new long[] {_organization.getGroupId()});
+		}
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			Group.class.getName(), EventTypes.ASSIGN);
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
 	}
 
 	@Test
@@ -79,6 +113,12 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 
 	@DeleteAfterTestRun
 	private Company _company;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@DeleteAfterTestRun
+	private Organization _organization;
 
 	@DeleteAfterTestRun
 	private Role _role;
