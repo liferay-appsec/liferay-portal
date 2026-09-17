@@ -50,6 +50,19 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                impersonated:
+                    readOnly: true
+                    type: boolean
+                impersonatedUserEmailAddress:
+                    readOnly: true
+                    type: string
+                impersonatedUserId:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                impersonatedUserName:
+                    readOnly: true
+                    type: string
                 objectName:
                     readOnly: true
                     type: string
