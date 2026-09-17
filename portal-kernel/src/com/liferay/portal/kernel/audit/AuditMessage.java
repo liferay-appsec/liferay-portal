@@ -70,8 +70,10 @@ public class AuditMessage implements Serializable {
 
 		String simpleClassName = StringUtil.extractLast(
 			className, CharPool.PERIOD);
-		String resourceType = Validator.isNull(simpleClassName) ?
-			_UNKNOWN_RESOURCE_TYPE : StringUtil.toLowerCase(simpleClassName);
+
+		String resourceType =
+			Validator.isNull(simpleClassName) ? _UNKNOWN_RESOURCE_TYPE :
+				StringUtil.toLowerCase(simpleClassName);
 
 		setResourceAction(resourceType, StringUtil.toLowerCase(eventType));
 
