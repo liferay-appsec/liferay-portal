@@ -202,6 +202,20 @@ public class LoginPostActionTest {
 		}
 	}
 
+	@Test
+	public void testRunSetsResourceAction() throws Exception {
+		MockHttpServletRequest mockHttpServletRequest =
+			_createMockHttpServletRequest();
+
+		_run(mockHttpServletRequest);
+
+		AuditMessage auditMessage = _fetchAuditMessage(EventTypes.LOGIN);
+
+		Assert.assertEquals(
+			"system.user.login", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
+
 	private MockHttpServletRequest _createMockHttpServletRequest()
 		throws Exception {
 

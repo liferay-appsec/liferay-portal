@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.scheduler.SchedulerException;
 import com.liferay.portal.kernel.scheduler.TriggerState;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.scheduler.internal.configuration.SchedulerEngineHelperConfiguration;
 
 import java.util.Date;
@@ -61,6 +62,12 @@ public class SchedulerEngineAuditorImpl implements SchedulerEngineAuditor {
 				_jsonFactory.createJSONObject(_jsonFactory.serialize(message)),
 				SchedulerEngine.class.getName(), "0", SchedulerEngine.SCHEDULER,
 				triggerState.toString());
+
+			// "scheduler," not the class-derived "schedulerengine," is the
+			// established resource type name for scheduler audit events.
+
+			auditMessage.setResource(
+				"scheduler", StringUtil.toLowerCase(triggerState.name()));
 
 			auditMessage.setServerName(InetAddressUtil.getLocalHostName());
 			auditMessage.setServerPort(_portal.getPortalLocalPort(false));

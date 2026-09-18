@@ -52,6 +52,29 @@ public class AuditMessageTest {
 		Assert.assertTrue(auditMessage.isRequestIdGenerated());
 
 		AuditRequestThreadLocal.removeAuditThreadLocal();
+
+		_testConstructorResourceAction(
+			"User", "ADD", "system.unknown.add", "unknown");
+		_testConstructorResourceAction(
+			"com.liferay.object.model.ObjectDefinition", "ADD",
+			"system.objectdefinition.add", "objectdefinition");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "ADD", "system.user.add",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "LOGIN",
+			"system.user.login", "user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", null, "system.user.unknown",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User.", "ADD",
+			"system.unknown.add", "unknown");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.UserGroup", "ADD",
+			"system.usergroup.add", "usergroup");
+		_testConstructorResourceAction(
+			null, "ADD", "system.unknown.add", "unknown");
 	}
 
 	@Test
@@ -86,6 +109,22 @@ public class AuditMessageTest {
 
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
+	}
+
+	private void _testConstructorResourceAction(
+		String className, String eventType, String expectedResourceAction,
+		String expectedResourceType) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null,
+			JSONFactoryUtil.createJSONObject(), className,
+			RandomTestUtil.randomString(), eventType, null);
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals(
+			expectedResourceType, auditMessage.getResourceType());
 	}
 
 }

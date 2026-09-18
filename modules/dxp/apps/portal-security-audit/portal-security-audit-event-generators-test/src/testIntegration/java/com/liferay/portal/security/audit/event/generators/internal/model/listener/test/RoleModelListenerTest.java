@@ -6,17 +6,22 @@
 package com.liferay.portal.security.audit.event.generators.internal.model.listener.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -36,23 +41,23 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 	@Test
 	public void testOnBeforeAddAssociation() throws Exception {
 		_company = CompanyTestUtil.addCompany();
+
 		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 		_user = UserTestUtil.addUser();
 
-		auditMessages.clear();
-
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-					_company.getCompanyId())) {
-
-			_userLocalService.addRoleUsers(
-				_role.getRoleId(), new long[] {_user.getUserId()});
-		}
-
-		AuditMessage auditMessage = fetchAuditMessage(
-			User.class.getName(), EventTypes.ASSIGN);
+		AuditMessage auditMessage = _testOnBeforeAddAssociation(
+			User.class.getName(),
+			() -> _userLocalService.addRoleUsers(
+				_role.getRoleId(), new long[] {_user.getUserId()}));
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		_organization = OrganizationTestUtil.addOrganization();
+
+		_testOnBeforeAddAssociation(
+			Group.class.getName(),
+			() -> _groupLocalService.addRoleGroups(
+				_role.getRoleId(), new long[] {_organization.getGroupId()}));
 	}
 
 	@Test
@@ -77,8 +82,37 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 		Assert.assertEquals(_role.getCompanyId(), auditMessage.getCompanyId());
 	}
 
+	private AuditMessage _testOnBeforeAddAssociation(
+			String className, UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			unsafeRunnable.run();
+		}
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			className, EventTypes.ASSIGN);
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
+
+		return auditMessage;
+	}
+
 	@DeleteAfterTestRun
 	private Company _company;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@DeleteAfterTestRun
+	private Organization _organization;
 
 	@DeleteAfterTestRun
 	private Role _role;

@@ -11,6 +11,7 @@ import com.liferay.multi.factor.authentication.email.otp.service.MFAEmailOTPEntr
 import com.liferay.multi.factor.authentication.email.otp.web.internal.constants.MFAEmailOTPEventTypes;
 import com.liferay.multi.factor.authentication.email.otp.web.internal.constants.MFAEmailOTPWebKeys;
 import com.liferay.multi.factor.authentication.spi.checker.browser.BrowserMFAChecker;
+import com.liferay.multi.factor.authentication.spi.constants.MFAAuditConstants;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.audit.AuditException;
 import com.liferay.portal.kernel.audit.AuditMessage;
@@ -411,49 +412,79 @@ public class EmailOTPBrowserMFAChecker implements BrowserMFAChecker {
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, userId, "Nonexistent",
 				JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
 				String.valueOf(userId),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_FAILURE, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildNotVerifiedAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_NOT_VERIFIED, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_FAILURE, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFICATION_SUCCESS, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerifiedAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAEmailOTPEventTypes.MFA_EMAIL_OTP_VERIFIED, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY);
+
+			return auditMessage;
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {
