@@ -10,6 +10,7 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -71,6 +72,7 @@ import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.security.key.secret.SecretVaultUtil;
 import com.liferay.portlet.configuration.kernel.util.PortletConfigurationUtil;
 import com.liferay.portlet.configuration.web.internal.constants.PortletConfigurationPortletKeys;
 import com.liferay.portlet.configuration.web.internal.constants.PortletConfigurationWebKeys;
@@ -1008,7 +1010,16 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		boolean facebookShowAddAppLink = ParamUtil.getBoolean(
 			actionRequest, "facebookShowAddAppLink");
 
-		portletPreferences.setValue("lfrFacebookApiKey", facebookAPIKey);
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		portletPreferences.setValue(
+			"lfrFacebookApiKey",
+			_vault(
+				"lfrFacebookApiKey",
+				ParamUtil.getString(actionRequest, "portletResource"),
+				themeDisplay, facebookAPIKey));
+
 		portletPreferences.setValue(
 			"lfrFacebookCanvasPageUrl", facebookCanvasPageURL);
 		portletPreferences.setValue(
@@ -1120,6 +1131,21 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 			portletConfigurationListener.onUpdateScope(
 				portlet.getPortletId(), portletPreferences);
 		}
+	}
+
+	private String _vault(
+			String name, String portletId, ThemeDisplay themeDisplay,
+			String value)
+		throws Exception {
+
+		return SecretVaultUtil.vault(
+			themeDisplay.getCompanyId(),
+			SecretVaultUtil.getIdentifier(
+				name,
+				StringBundler.concat(
+					"portlet/", themeDisplay.getPlid(), StringPool.SLASH,
+					portletId)),
+			value);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

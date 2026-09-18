@@ -8,13 +8,18 @@ package com.liferay.iframe.web.internal.portlet.action;
 import com.liferay.iframe.web.internal.constants.IFramePortletKeys;
 import com.liferay.iframe.web.internal.util.IFrameUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretVaultUtil;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -98,6 +103,40 @@ public class IFrameConfigurationAction extends DefaultConfigurationAction {
 			catch (ReadOnlyException readOnlyException) {
 				throw new PortalException(readOnlyException);
 			}
+		}
+
+		_vault(companyId, "basicPassword", portletPreferences, portletRequest);
+		_vault(companyId, "formPassword", portletPreferences, portletRequest);
+	}
+
+	private void _vault(
+			long companyId, String name, PortletPreferences portletPreferences,
+			PortletRequest portletRequest)
+		throws PortalException {
+
+		String value = portletPreferences.getValue(name, StringPool.BLANK);
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		String vaultedValue = SecretVaultUtil.vault(
+			companyId,
+			SecretVaultUtil.getIdentifier(
+				name,
+				StringBundler.concat(
+					"portlet/", themeDisplay.getPlid(), StringPool.SLASH,
+					ParamUtil.getString(portletRequest, "portletResource"))),
+			value);
+
+		if (vaultedValue.equals(value)) {
+			return;
+		}
+
+		try {
+			portletPreferences.setValue(name, vaultedValue);
+		}
+		catch (ReadOnlyException readOnlyException) {
+			throw new PortalException(readOnlyException);
 		}
 	}
 
