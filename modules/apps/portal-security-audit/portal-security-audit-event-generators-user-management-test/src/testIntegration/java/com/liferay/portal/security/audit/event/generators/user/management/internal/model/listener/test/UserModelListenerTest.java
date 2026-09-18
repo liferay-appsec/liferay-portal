@@ -31,6 +31,49 @@ import org.junit.runner.RunWith;
 public class UserModelListenerTest extends BaseModelListenerTestCase {
 
 	@Test
+	public void testOnBeforeCreate() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			_user = UserTestUtil.addUser();
+
+			AuditMessage auditMessage = fetchAuditMessage(
+				User.class.getName(), EventTypes.ADD);
+
+			Assert.assertEquals(
+				"system.user.add", auditMessage.getResourceAction());
+			Assert.assertEquals("user", auditMessage.getResourceType());
+		}
+	}
+
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		_company = CompanyTestUtil.addCompany();
+		_user = UserTestUtil.addUser();
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company.getCompanyId())) {
+
+			_userLocalService.deleteUser(_user);
+
+			AuditMessage auditMessage = fetchAuditMessage(
+				User.class.getName(), EventTypes.DELETE);
+
+			Assert.assertEquals(
+				"system.user.delete", auditMessage.getResourceAction());
+			Assert.assertEquals("user", auditMessage.getResourceType());
+		}
+	}
+
+	@Test
 	public void testOnBeforeUpdate() throws Exception {
 		_company = CompanyTestUtil.addCompany();
 
@@ -72,6 +115,13 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		_user.setComments(RandomTestUtil.randomString());
 
 		_user = _userLocalService.updateUser(_user);
+
+		AuditMessage updateAuditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.UPDATE);
+
+		Assert.assertEquals(
+			"system.user.update", updateAuditMessage.getResourceAction());
+		Assert.assertEquals("user", updateAuditMessage.getResourceType());
 
 		for (AuditMessage auditMessage : auditMessages) {
 			Assert.assertNotEquals(
