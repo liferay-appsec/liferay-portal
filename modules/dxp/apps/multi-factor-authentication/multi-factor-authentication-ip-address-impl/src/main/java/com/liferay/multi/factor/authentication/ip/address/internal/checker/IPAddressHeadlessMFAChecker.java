@@ -8,6 +8,7 @@ package com.liferay.multi.factor.authentication.ip.address.internal.checker;
 import com.liferay.multi.factor.authentication.ip.address.internal.configuration.MFAIPAddressConfiguration;
 import com.liferay.multi.factor.authentication.ip.address.internal.constants.MFAIPAddressEventTypes;
 import com.liferay.multi.factor.authentication.spi.checker.headless.HeadlessMFAChecker;
+import com.liferay.multi.factor.authentication.spi.constants.MFAAuditConstants;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.audit.AuditException;
 import com.liferay.portal.kernel.audit.AuditMessage;
@@ -138,33 +139,51 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String mfaCheckerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, userId, "Nonexistent",
 				JSONUtil.put("reason", "Nonexistent User"), mfaCheckerClassName,
 				String.valueOf(userId),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String mfaCheckerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), mfaCheckerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String mfaCheckerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				mfaCheckerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_SUCCESS,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY);
+
+			return auditMessage;
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {

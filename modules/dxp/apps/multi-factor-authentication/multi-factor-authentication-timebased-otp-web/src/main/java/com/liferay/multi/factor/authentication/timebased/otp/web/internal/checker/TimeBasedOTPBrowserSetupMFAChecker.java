@@ -13,6 +13,7 @@ import com.liferay.mail.kernel.template.MailTemplateContextBuilder;
 import com.liferay.mail.kernel.template.MailTemplateFactoryUtil;
 import com.liferay.multi.factor.authentication.spi.checker.browser.BrowserMFAChecker;
 import com.liferay.multi.factor.authentication.spi.checker.setup.SetupMFAChecker;
+import com.liferay.multi.factor.authentication.spi.constants.MFAAuditConstants;
 import com.liferay.multi.factor.authentication.timebased.otp.model.MFATimeBasedOTPEntry;
 import com.liferay.multi.factor.authentication.timebased.otp.service.MFATimeBasedOTPEntryLocalService;
 import com.liferay.multi.factor.authentication.timebased.otp.web.internal.configuration.MFATimeBasedOTPConfiguration;
@@ -559,68 +560,104 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, userId, "Nonexistent",
 				JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
 				String.valueOf(userId),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildNotVerifiedAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_NOT_VERIFIED, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage
 			buildUnconfiguredUserVerificationFailureAuditMessage(
 				long companyId, User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				companyId, user.getUserId(), "Unconfigured",
 				JSONUtil.put("reason", "Unconfigured for User"),
 				checkerClassName, null,
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String checkerClassName, String reason) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY_FAILURE);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_SUCCESS,
 				null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY);
+
+			return auditMessage;
 		}
 
 		public AuditMessage buildVerifiedAuditMessage(
 			User user, String checkerClassName) {
 
-			return new AuditMessage(
+			AuditMessage auditMessage = new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_VERIFIED, null);
+
+			auditMessage.setResource(
+				MFAAuditConstants.RESOURCE_TYPE,
+				MFAAuditConstants.RESOURCE_ACTION_VERIFY);
+
+			return auditMessage;
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {
