@@ -224,6 +224,19 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 	}
 
 	@Test
+	public void testOnBeforeSaveWhenReferenceIsNotAConfiguration() {
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"credential", "${secretRef:provider:oauth2/1234/clientSecret}"
+			).build();
+
+		Assert.assertThrows(
+			ConfigurationModelListenerException.class,
+			() -> _configurationSecretConfigurationModelListener.onBeforeSave(
+				_PID, properties));
+	}
+
+	@Test
 	public void testOnBeforeSaveWhenReferenceNamesAnotherConfiguration() {
 		Dictionary<String, Object> properties =
 			HashMapDictionaryBuilder.<String, Object>put(

@@ -29,6 +29,7 @@ import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
 import java.util.Dictionary;
+import java.util.Objects;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -195,19 +196,14 @@ public class ConfigurationSecretConfigurationModelListener
 			String identifier, KeyReference keyReference, String pid)
 		throws ConfigurationModelListenerException {
 
-		String valueIdentifier = keyReference.getIdentifier();
-
-		if (!valueIdentifier.startsWith(_IDENTIFIER_PREFIX) ||
-			valueIdentifier.equals(identifier)) {
-
+		if (Objects.equals(keyReference.getIdentifier(), identifier)) {
 			return;
 		}
 
 		throw new ConfigurationModelListenerException(
 			StringBundler.concat(
-				"Configuration \"", pid,
-				"\" cannot reference a value belonging to another ",
-				"configuration"),
+				"Configuration ", pid,
+				" cannot reference a value it does not own"),
 			Object.class, ConfigurationSecretConfigurationModelListener.class,
 			null);
 	}
