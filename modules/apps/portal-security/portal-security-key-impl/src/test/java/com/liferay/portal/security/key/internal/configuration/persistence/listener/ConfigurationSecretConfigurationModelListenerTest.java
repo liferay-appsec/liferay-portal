@@ -43,6 +43,7 @@ import org.mockito.MockitoAnnotations;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.ObjectClassDefinition;
@@ -118,10 +119,45 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 			_bundleContext);
 		ReflectionTestUtil.setFieldValue(
 			_configurationSecretConfigurationModelListener,
+			"_configurationAdmin", _configurationAdmin);
+		ReflectionTestUtil.setFieldValue(
+			_configurationSecretConfigurationModelListener,
 			"_extendedMetaTypeService", _extendedMetaTypeService);
 		ReflectionTestUtil.setFieldValue(
 			_configurationSecretConfigurationModelListener, "_secretManager",
 			_secretManager);
+	}
+
+	@Test
+	public void testOnBeforeDelete() throws Exception {
+		KeyReference keyReference = new KeyReference(
+			"config/" + _PID + "/0/credential", "provider",
+			KeyReference.Type.SECRET);
+
+		Mockito.when(
+			_configuration.getProperties()
+		).thenReturn(
+			HashMapDictionaryBuilder.<String, Object>put(
+				"credential",
+				KeyReferenceUtil.toKeyReferenceString(keyReference)
+			).put(
+				"host", RandomTestUtil.randomString()
+			).build()
+		);
+
+		Mockito.when(
+			_configurationAdmin.listConfigurations("(service.pid=" + _PID + ")")
+		).thenReturn(
+			new Configuration[] {_configuration}
+		);
+
+		_configurationSecretConfigurationModelListener.onBeforeDelete(_PID);
+
+		Mockito.verify(
+			_secretManager
+		).deleteSecret(
+			CompanyConstants.SYSTEM, keyReference
+		);
 	}
 
 	@Test
@@ -399,6 +435,12 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 
 	@Mock
 	private BundleContext _bundleContext;
+
+	@Mock
+	private Configuration _configuration;
+
+	@Mock
+	private ConfigurationAdmin _configurationAdmin;
 
 	private final ConfigurationSecretConfigurationModelListener
 		_configurationSecretConfigurationModelListener =

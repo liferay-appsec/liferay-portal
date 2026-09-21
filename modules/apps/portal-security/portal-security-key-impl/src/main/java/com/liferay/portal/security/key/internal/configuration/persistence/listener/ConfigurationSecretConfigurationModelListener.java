@@ -31,10 +31,12 @@ import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Objects;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -50,6 +52,70 @@ import org.osgi.service.metatype.ObjectClassDefinition;
 )
 public class ConfigurationSecretConfigurationModelListener
 	implements ConfigurationModelListener {
+
+	@Override
+	public void onBeforeDelete(String pid)
+		throws ConfigurationModelListenerException {
+
+		if (_keyManagerProfileRegistry.getActiveKeyManagerProfile() == null) {
+			return;
+		}
+
+		try {
+			Configuration[] configurations =
+				_configurationAdmin.listConfigurations(
+					"(service.pid=" + pid + ")");
+
+			if (configurations == null) {
+				return;
+			}
+
+			for (Configuration configuration : configurations) {
+				Dictionary<String, Object> properties =
+					configuration.getProperties();
+
+				if (properties == null) {
+					continue;
+				}
+
+				long companyId = GetterUtil.getLong(
+					properties.get(
+						ExtendedObjectClassDefinition.Scope.COMPANY.
+							getPropertyKey()),
+					CompanyConstants.SYSTEM);
+
+				Enumeration<String> enumeration = properties.keys();
+
+				while (enumeration.hasMoreElements()) {
+					String key = enumeration.nextElement();
+
+					if (!(properties.get(key) instanceof String value)) {
+						continue;
+					}
+
+					KeyReference keyReference =
+						KeyReferenceUtil.parseKeyReference(value);
+
+					if (keyReference == null) {
+						continue;
+					}
+
+					String identifier = keyReference.getIdentifier();
+
+					if (!identifier.startsWith(_IDENTIFIER_PREFIX)) {
+						continue;
+					}
+
+					_secretManager.deleteSecret(companyId, keyReference);
+				}
+			}
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to delete the vaulted secrets of configuration " + pid,
+				exception);
+		}
+	}
 
 	@Override
 	public void onBeforeSave(String pid, Dictionary<String, Object> properties)
@@ -226,6 +292,9 @@ public class ConfigurationSecretConfigurationModelListener
 		ConfigurationSecretConfigurationModelListener.class);
 
 	private BundleContext _bundleContext;
+
+	@Reference
+	private ConfigurationAdmin _configurationAdmin;
 
 	@Reference
 	private ExtendedMetaTypeService _extendedMetaTypeService;
