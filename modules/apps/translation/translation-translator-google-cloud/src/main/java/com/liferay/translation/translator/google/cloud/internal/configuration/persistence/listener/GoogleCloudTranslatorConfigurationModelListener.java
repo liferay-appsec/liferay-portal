@@ -5,6 +5,7 @@
 
 package com.liferay.translation.translator.google.cloud.internal.configuration.persistence.listener;
 
+import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -12,9 +13,10 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
-import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.translation.translator.google.cloud.internal.configuration.GoogleCloudTranslatorConfiguration;
 
 import java.util.Dictionary;
@@ -41,9 +43,13 @@ public class GoogleCloudTranslatorConfigurationModelListener
 		String serviceAccountPrivateKey = GetterUtil.getString(
 			properties.get("serviceAccountPrivateKey"));
 
-		if (KeyReferenceUtil.isKeyReference(serviceAccountPrivateKey)) {
-			return;
-		}
+		long companyId = GetterUtil.getLong(
+			properties.get(
+				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey()),
+			CompanyConstants.SYSTEM);
+
+		serviceAccountPrivateKey = _secretResolver.resolve(
+			companyId, serviceAccountPrivateKey);
 
 		if (enabled && !_isValid(serviceAccountPrivateKey)) {
 			throw new ConfigurationModelListenerException(
@@ -83,5 +89,8 @@ public class GoogleCloudTranslatorConfigurationModelListener
 
 	@Reference
 	private Language _language;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
