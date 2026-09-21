@@ -78,7 +78,7 @@ public class SecretResolverImpl implements SecretResolver {
 				resolvedValue = new String(secret.getChars());
 			}
 
-			_portalCache.put(key, resolvedValue);
+			_portalCache.put(key, resolvedValue, 600);
 
 			return resolvedValue;
 		}
