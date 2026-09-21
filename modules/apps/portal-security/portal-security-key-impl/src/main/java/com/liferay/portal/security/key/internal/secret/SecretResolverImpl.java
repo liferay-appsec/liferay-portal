@@ -32,6 +32,8 @@ public class SecretResolverImpl implements SecretResolver {
 	public static final String PORTAL_CACHE_NAME =
 		SecretResolverImpl.class.getName();
 
+	public static final int TIME_TO_LIVE = 600;
+
 	public static String getKey(long companyId, String keyReferenceString) {
 		return StringBundler.concat(
 			companyId, StringPool.POUND, keyReferenceString);
@@ -78,7 +80,7 @@ public class SecretResolverImpl implements SecretResolver {
 				resolvedValue = new String(secret.getChars());
 			}
 
-			_portalCache.put(key, resolvedValue);
+			_portalCache.put(key, resolvedValue, TIME_TO_LIVE);
 
 			return resolvedValue;
 		}

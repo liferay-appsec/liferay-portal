@@ -188,7 +188,7 @@ public class SecretResolverImplTest {
 		).put(
 			companyId + StringPool.POUND +
 				KeyReferenceUtil.toKeyReferenceString(keyReference),
-			value
+			value, SecretResolverImpl.TIME_TO_LIVE
 		);
 	}
 
