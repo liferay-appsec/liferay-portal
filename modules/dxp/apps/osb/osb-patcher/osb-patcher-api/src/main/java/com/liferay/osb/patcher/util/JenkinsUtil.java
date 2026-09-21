@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
@@ -684,8 +683,7 @@ public class JenkinsUtil {
 		Http.Options options = new Http.Options();
 
 		String jenkinsAdminUserToken = SecretResolverUtil.resolve(
-			CompanyThreadLocal.getCompanyId(),
-			patcherConfiguration.jenkinsAdminUserToken());
+			user.getCompanyId(), patcherConfiguration.jenkinsAdminUserToken());
 
 		String credentials =
 			patcherConfiguration.jenkinsAdminUserName() + StringPool.COLON +
