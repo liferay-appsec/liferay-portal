@@ -7,15 +7,18 @@ package com.liferay.oauth2.provider.rest.internal.configuration.persistence.list
 
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2InAssertionConfiguration;
 import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
+import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Dictionary;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pedro Victor Silvestre
@@ -34,9 +37,16 @@ public class OAuth2InAssertionConfigurationModelListener
 		String jwks = GetterUtil.getString(
 			properties.get("oauth2.in.assertion.signature.json.web.key.set"));
 
-		if (Validator.isNull(jwks) || KeyReferenceUtil.isKeyReference(jwks)) {
+		if (Validator.isNull(jwks)) {
 			return;
 		}
+
+		long companyId = GetterUtil.getLong(
+			properties.get(
+				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey()),
+			CompanyConstants.SYSTEM);
+
+		jwks = _secretResolver.resolve(companyId, jwks);
 
 		try {
 			OAuth2JWKValidatorUtil.validateJWKS(jwks);
@@ -47,5 +57,8 @@ public class OAuth2InAssertionConfigurationModelListener
 				OAuth2InAssertionConfigurationModelListener.class, properties);
 		}
 	}
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
