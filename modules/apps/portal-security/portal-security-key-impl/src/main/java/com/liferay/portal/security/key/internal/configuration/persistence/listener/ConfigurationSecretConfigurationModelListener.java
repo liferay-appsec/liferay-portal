@@ -17,6 +17,8 @@ import com.liferay.portal.configuration.persistence.listener.ConfigurationModelL
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -104,6 +106,16 @@ public class ConfigurationSecretConfigurationModelListener
 					id, _getKeyReferenceString(companyId, identifier, value));
 			}
 			catch (Exception exception) {
+				FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+					"configuration-vaulting-failure",
+					FIPSAuditEvent.Severity.CRITICAL);
+
+				fipsAuditEvent.put(
+					"configuration-pid", GetterUtil.getString(pid));
+				fipsAuditEvent.put("property-id", GetterUtil.getString(id));
+
+				FIPSAuditUtil.write(fipsAuditEvent);
+
 				throw new ConfigurationModelListenerException(
 					exception, Object.class,
 					ConfigurationSecretConfigurationModelListener.class,
