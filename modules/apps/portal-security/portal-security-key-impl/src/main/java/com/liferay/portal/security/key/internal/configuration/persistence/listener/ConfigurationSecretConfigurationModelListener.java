@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.key.internal.configuration.persistence.listener;
 
+import com.liferay.configuration.admin.util.ConfigurationPidUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
@@ -17,6 +19,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
@@ -82,8 +85,9 @@ public class ConfigurationSecretConfigurationModelListener
 			}
 
 			String identifier = StringBundler.concat(
-				_IDENTIFIER_PREFIX, pid, StringPool.SLASH, companyId,
-				StringPool.SLASH, id);
+				_IDENTIFIER_PREFIX,
+				StringUtil.replace(pid, CharPool.TILDE, CharPool.SLASH),
+				StringPool.SLASH, companyId, StringPool.SLASH, id);
 
 			KeyReference keyReference = KeyReferenceUtil.parseKeyReference(
 				value);
@@ -136,6 +140,8 @@ public class ConfigurationSecretConfigurationModelListener
 		if (Validator.isNotNull(factoryPid)) {
 			metaTypePid = factoryPid;
 		}
+
+		metaTypePid = ConfigurationPidUtil.getRawPid(metaTypePid);
 
 		for (Bundle bundle : _bundleContext.getBundles()) {
 			ExtendedMetaTypeInformation extendedMetaTypeInformation =

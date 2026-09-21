@@ -28,6 +28,8 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Dictionary;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +43,7 @@ import org.mockito.MockitoAnnotations;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.ObjectClassDefinition;
 
@@ -255,8 +258,10 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 		);
 
 		_configurationSecretConfigurationModelListener.onBeforeSave(
-			_PID,
+			_PID + ".scoped~" + _FACTORY_SUFFIX,
 			HashMapDictionaryBuilder.<String, Object>put(
+				ConfigurationAdmin.SERVICE_FACTORYPID, _PID + ".scoped"
+			).put(
 				"companyId", companyId
 			).put(
 				"credential", RandomTestUtil.randomString()
@@ -278,10 +283,17 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 
 		KeyReference keyReference = secret.getKeyReference();
 
+		String identifier = keyReference.getIdentifier();
+
 		Assert.assertEquals(
 			StringBundler.concat(
-				"config/", _PID, StringPool.SLASH, companyId, "/credential"),
-			keyReference.getIdentifier());
+				"config/", _PID, ".scoped/", _FACTORY_SUFFIX, StringPool.SLASH,
+				companyId, "/credential"),
+			identifier);
+
+		Matcher matcher = _portableIdentifierPattern.matcher(identifier);
+
+		Assert.assertTrue(identifier, matcher.matches());
 	}
 
 	@Test
@@ -362,7 +374,12 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 		return attributeDefinition;
 	}
 
+	private static final String _FACTORY_SUFFIX = "a1b2c3";
+
 	private static final String _PID = "com.liferay.test.Configuration";
+
+	private static final Pattern _portableIdentifierPattern = Pattern.compile(
+		"[\\p{Alnum}\\-/_+=.@]+");
 
 	@Mock
 	private Bundle _bundle;
