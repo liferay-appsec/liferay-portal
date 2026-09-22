@@ -56,6 +56,12 @@ public class DefaultAuditRouter implements AuditRouter {
 			return;
 		}
 
+		if (AuditConfigurationUtil.isPseudonymizationEnabled(
+				auditMessage.getCompanyId())) {
+
+			_auditMessagePseudonymizer.pseudonymize(auditMessage);
+		}
+
 		List<AuditMessageProcessor> globalAuditMessageProcessors =
 			_serviceTrackerMap.getService(StringPool.STAR);
 
@@ -94,6 +100,8 @@ public class DefaultAuditRouter implements AuditRouter {
 	private static final Log _log = LogFactoryUtil.getLog(
 		DefaultAuditRouter.class);
 
+	private final AuditMessagePseudonymizer _auditMessagePseudonymizer =
+		new AuditMessagePseudonymizer();
 	private ServiceTrackerMap<String, List<AuditMessageProcessor>>
 		_serviceTrackerMap;
 
