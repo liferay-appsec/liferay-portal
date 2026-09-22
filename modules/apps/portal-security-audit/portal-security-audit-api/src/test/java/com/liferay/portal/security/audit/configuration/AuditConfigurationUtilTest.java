@@ -105,6 +105,23 @@ public class AuditConfigurationUtilTest {
 		_testIsEnabledWhenFeatureFlagIsDisabled(true);
 	}
 
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testIsPseudonymizationEnabled() {
+		_testIsPseudonymizationEnabled(RandomTestUtil.randomLong(), false);
+		_testIsPseudonymizationEnabled(RandomTestUtil.randomLong(), true);
+		_testIsPseudonymizationEnabledWhenConfigurationIsNotRead(-1);
+		_testIsPseudonymizationEnabledWhenConfigurationIsNotRead(
+			CompanyConstants.SYSTEM);
+	}
+
+	@FeatureFlag(enable = false, value = "LPD-6417")
+	@Test
+	public void testIsPseudonymizationEnabledWhenFeatureFlagIsDisabled() {
+		_testIsPseudonymizationEnabledWhenConfigurationIsNotRead(
+			RandomTestUtil.randomLong());
+	}
+
 	private AuditConfiguration _createAuditConfiguration(boolean enabled) {
 		AuditConfiguration auditConfiguration = Mockito.mock(
 			AuditConfiguration.class);
@@ -240,6 +257,49 @@ public class AuditConfigurationUtilTest {
 			Assert.assertEquals(
 				enabled,
 				AuditConfigurationUtil.isEnabled(RandomTestUtil.randomLong()));
+		}
+	}
+
+	private void _testIsPseudonymizationEnabled(
+		long companyId, boolean pseudonymizationEnabled) {
+
+		try (MockedStatic<ConfigurationProviderUtil>
+				configurationProviderUtilMockedStatic = Mockito.mockStatic(
+					ConfigurationProviderUtil.class)) {
+
+			AuditConfiguration auditConfiguration = Mockito.mock(
+				AuditConfiguration.class);
+
+			Mockito.when(
+				auditConfiguration.pseudonymizationEnabled()
+			).thenReturn(
+				pseudonymizationEnabled
+			);
+
+			configurationProviderUtilMockedStatic.when(
+				() -> ConfigurationProviderUtil.getCompanyConfiguration(
+					AuditConfiguration.class, companyId)
+			).thenReturn(
+				auditConfiguration
+			);
+
+			Assert.assertEquals(
+				pseudonymizationEnabled,
+				AuditConfigurationUtil.isPseudonymizationEnabled(companyId));
+		}
+	}
+
+	private void _testIsPseudonymizationEnabledWhenConfigurationIsNotRead(
+		long companyId) {
+
+		try (MockedStatic<ConfigurationProviderUtil>
+				configurationProviderUtilMockedStatic = Mockito.mockStatic(
+					ConfigurationProviderUtil.class)) {
+
+			Assert.assertFalse(
+				AuditConfigurationUtil.isPseudonymizationEnabled(companyId));
+
+			configurationProviderUtilMockedStatic.verifyNoInteractions();
 		}
 	}
 
