@@ -5,13 +5,18 @@
 
 package com.liferay.users.admin.internal.workflow;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
@@ -49,14 +54,44 @@ public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
 			return;
 		}
 
+		if (FeatureFlagManagerUtil.isEnabled(
+				serviceContext.getCompanyId(), "LPD-6417") &&
+			_workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
+				GetterUtil.getLong(
+					(String)workflowContext.get(
+						WorkflowConstants.CONTEXT_COMPANY_ID)),
+				GetterUtil.getLong(
+					(String)workflowContext.get(
+						WorkflowConstants.CONTEXT_GROUP_ID)),
+				getClassName(), 0, 0)) {
+
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			String correlationId = auditRequestThreadLocal.getCorrelationId();
+
+			if (correlationId == null) {
+				correlationId = PortalUUIDUtil.generate();
+
+				auditRequestThreadLocal.setCorrelationId(correlationId);
+			}
+
+			serviceContext.setAttribute("auditCorrelationId", correlationId);
+		}
+
+		HttpSession httpSession = httpServletRequest.getSession();
+
+		String auditSessionId = (String)httpSession.getAttribute(
+			WebKeys.AUDIT_SESSION_ID);
+
+		if (auditSessionId != null) {
+			serviceContext.setAttribute("auditSessionId", auditSessionId);
+		}
+
 		serviceContext.setAttribute(
 			"serverName", httpServletRequest.getServerName());
 		serviceContext.setAttribute(
 			"serverPort", httpServletRequest.getServerPort());
-
-		HttpSession httpSession = httpServletRequest.getSession();
-
-		serviceContext.setAttribute("sessionId", httpSession.getId());
 
 		serviceContext.setRequest(httpServletRequest);
 	}
@@ -96,19 +131,39 @@ public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
 
 			_userLocalService.completeUserRegistration(user, serviceContext);
 
-			_updateAuditRequestThreadLocal(workflowContext);
-
 			user = _userLocalService.getUser(userId);
+
+			AuditRequestThreadLocal auditRequestThreadLocal =
+				AuditRequestThreadLocal.getAuditThreadLocal();
+
+			String requestId = auditRequestThreadLocal.getRequestId();
+			boolean requestIdGenerated =
+				auditRequestThreadLocal.isRequestIdGenerated();
+
+			try (SafeCloseable safeCloseable =
+					AuditRequestThreadLocal.
+						setNewAuditThreadLocalWithSafeCloseable()) {
+
+				_updateAuditRequestThreadLocal(
+					requestId, requestIdGenerated, workflowContext);
+
+				return _userLocalService.updateStatus(
+					user, status, serviceContext);
+			}
 		}
 
 		return _userLocalService.updateStatus(user, status, serviceContext);
 	}
 
 	private void _updateAuditRequestThreadLocal(
+		String requestId, boolean requestIdGenerated,
 		Map<String, Serializable> workflowContext) {
 
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
+
+		auditRequestThreadLocal.setRequestId(requestId);
+		auditRequestThreadLocal.setRequestIdGenerated(requestIdGenerated);
 
 		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
 			WorkflowConstants.CONTEXT_SERVICE_CONTEXT);
@@ -123,6 +178,21 @@ public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
 			auditRequestThreadLocal.setRealUserId(userId);
 		}
 
+		Serializable auditCorrelationId = serviceContext.getAttribute(
+			"auditCorrelationId");
+
+		if (auditCorrelationId != null) {
+			auditRequestThreadLocal.setCorrelationId(
+				(String)auditCorrelationId);
+		}
+
+		Serializable auditSessionId = serviceContext.getAttribute(
+			"auditSessionId");
+
+		if (auditSessionId != null) {
+			auditRequestThreadLocal.setSessionID((String)auditSessionId);
+		}
+
 		Serializable serverName = serviceContext.getAttribute("serverName");
 
 		if (serverName == null) {
@@ -132,17 +202,13 @@ public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
 		auditRequestThreadLocal.setServerName((String)serverName);
 		auditRequestThreadLocal.setServerPort(
 			(int)serviceContext.getAttribute("serverPort"));
-
-		Serializable sessionId = serviceContext.getAttribute("sessionId");
-
-		if (sessionId == null) {
-			return;
-		}
-
-		auditRequestThreadLocal.setSessionID((String)sessionId);
 	}
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }
