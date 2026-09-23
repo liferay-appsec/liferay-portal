@@ -79,6 +79,12 @@ renderResponse.setTitle((auditEvent == null) ? "audit-event" : auditEvent.getEve
 				<%= auditEvent.getUserName() %>
 			</aui:field-wrapper>
 
+			<c:if test="<%= auditEvent.isPseudonymized() %>">
+				<aui:field-wrapper label="pseudonymization-failed">
+					<liferay-ui:message key='<%= auditEvent.isPseudonymizationFailed() ? "yes" : "no" %>' />
+				</aui:field-wrapper>
+			</c:if>
+
 			<aui:field-wrapper label="client-host">
 				<%= Validator.isNotNull(auditEvent.getClientHost()) ? auditEvent.getClientHost() : LanguageUtil.get(request, "none") %>
 			</aui:field-wrapper>
