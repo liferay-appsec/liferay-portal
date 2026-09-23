@@ -53,6 +53,9 @@ components:
                 objectName:
                     readOnly: true
                     type: string
+                pseudonymizationFailed:
+                    readOnly: true
+                    type: boolean
                 requestId:
                     readOnly: true
                     type: string
