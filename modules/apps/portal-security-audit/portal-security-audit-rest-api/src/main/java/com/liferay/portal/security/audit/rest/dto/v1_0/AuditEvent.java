@@ -673,6 +673,48 @@ public class AuditEvent implements Serializable {
 	private Supplier<String> _objectNameSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
+	public Boolean getPseudonymizationFailed() {
+		if (_pseudonymizationFailedSupplier != null) {
+			pseudonymizationFailed = _pseudonymizationFailedSupplier.get();
+
+			_pseudonymizationFailedSupplier = null;
+		}
+
+		return pseudonymizationFailed;
+	}
+
+	public void setPseudonymizationFailed(Boolean pseudonymizationFailed) {
+		this.pseudonymizationFailed = pseudonymizationFailed;
+
+		_pseudonymizationFailedSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setPseudonymizationFailed(
+		UnsafeSupplier<Boolean, Exception>
+			pseudonymizationFailedUnsafeSupplier) {
+
+		_pseudonymizationFailedSupplier = () -> {
+			try {
+				return pseudonymizationFailedUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Boolean pseudonymizationFailed;
+
+	@JsonIgnore
+	private Supplier<Boolean> _pseudonymizationFailedSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getRequestId() {
 		if (_requestIdSupplier != null) {
 			requestId = _requestIdSupplier.get();
@@ -1205,6 +1247,18 @@ public class AuditEvent implements Serializable {
 			sb.append("\"");
 		}
 
+		Boolean pseudonymizationFailed = getPseudonymizationFailed();
+
+		if (pseudonymizationFailed != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"pseudonymizationFailed\": ");
+
+			sb.append(pseudonymizationFailed);
+		}
+
 		String requestId = getRequestId();
 
 		if (requestId != null) {
@@ -1435,4 +1489,4 @@ public class AuditEvent implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1658166726
+// LIFERAY-REST-BUILDER-HASH:1824323755
