@@ -72,7 +72,8 @@ public class ExportAuditEventsMVCResourceCommand
 		_columns = GetterUtil.getStringValues(properties.get("columns"));
 
 		if (ArrayUtil.isEmpty(_columns)) {
-			_columns = _getDefaultColumns();
+			_columns = ArrayUtil.remove(
+				_getDefaultColumns(), "pseudonymizationFailed");
 		}
 	}
 
@@ -244,6 +245,14 @@ public class ExportAuditEventsMVCResourceCommand
 		return user.getEmailAddress();
 	}
 
+	private String _getPseudonymizationFailed(AuditEvent auditEvent) {
+		if (!auditEvent.isPseudonymized()) {
+			return null;
+		}
+
+		return String.valueOf(auditEvent.isPseudonymizationFailed());
+	}
+
 	private String _getScreenName(AuditEvent auditEvent) {
 		if (auditEvent.isPseudonymized() || (auditEvent.getUserId() <= 0)) {
 			return StringPool.BLANK;
@@ -281,6 +290,8 @@ public class ExportAuditEventsMVCResourceCommand
 				"eventType", AuditEvent::getEventType
 			).put(
 				"message", AuditEvent::getMessage
+			).put(
+				"pseudonymizationFailed", this::_getPseudonymizationFailed
 			).put(
 				"serverName", AuditEvent::getServerName
 			).put(
