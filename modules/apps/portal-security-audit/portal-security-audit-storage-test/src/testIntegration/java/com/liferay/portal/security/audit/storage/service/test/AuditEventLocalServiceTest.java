@@ -6,9 +6,14 @@
 package com.liferay.portal.security.audit.storage.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
 import com.liferay.portal.security.audit.storage.service.AuditEventLocalService;
@@ -16,7 +21,10 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -33,6 +41,13 @@ public class AuditEventLocalServiceTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
+
+	@After
+	public void tearDown() {
+		for (AuditEvent auditEvent : _auditEvents) {
+			_auditEventLocalService.deleteAuditEvent(auditEvent);
+		}
+	}
 
 	@Test
 	public void testAddAuditEvent() {
@@ -111,7 +126,79 @@ public class AuditEventLocalServiceTest {
 		Assert.assertEquals(companyId, persistedAuditEvent.getCompanyId());
 	}
 
+	@Test
+	public void testGetAuditEvents() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String userName = RandomTestUtil.randomString();
+
+		AuditEvent auditEvent1 = _addAuditEvent(companyId, true, userName);
+
+		_addAuditEvent(
+			companyId, true, userName + RandomTestUtil.randomString());
+
+		AuditEvent auditEvent2 = _addAuditEvent(
+			companyId, false,
+			RandomTestUtil.randomString() + userName +
+				RandomTestUtil.randomString());
+		AuditEvent auditEvent3 = _addAuditEvent(
+			companyId, false, userName + RandomTestUtil.randomString());
+
+		DB db = DBManagerUtil.getDB();
+
+		db.runSQL(
+			"update Audit_AuditEvent set pseudonymized = null where " +
+				"auditEventId = " + auditEvent3.getAuditEventId());
+
+		_testGetAuditEvents(
+			false, companyId, userName, auditEvent1, auditEvent2, auditEvent3);
+		_testGetAuditEvents(
+			true, companyId, userName, auditEvent1, auditEvent2, auditEvent3);
+	}
+
+	private AuditEvent _addAuditEvent(
+		long companyId, boolean pseudonymized, String userName) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			companyId, RandomTestUtil.randomLong(), userName,
+			RandomTestUtil.randomString());
+
+		auditMessage.setPseudonymized(pseudonymized);
+
+		AuditEvent auditEvent = _auditEventLocalService.addAuditEvent(
+			auditMessage);
+
+		_auditEvents.add(auditEvent);
+
+		return auditEvent;
+	}
+
+	private void _testGetAuditEvents(
+		boolean andSearch, long companyId, String userName,
+		AuditEvent... expectedAuditEvents) {
+
+		Set<Long> expectedAuditEventIds = SetUtil.fromList(
+			TransformUtil.transformToList(
+				expectedAuditEvents, AuditEvent::getAuditEventId));
+
+		Assert.assertEquals(
+			expectedAuditEventIds,
+			SetUtil.fromList(
+				TransformUtil.transform(
+					_auditEventLocalService.getAuditEvents(
+						companyId, 0, 0, userName, null, null, null, null, null,
+						null, null, null, null, null, 0, null, andSearch,
+						QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+					AuditEvent::getAuditEventId)));
+		Assert.assertEquals(
+			expectedAuditEventIds.size(),
+			_auditEventLocalService.getAuditEventsCount(
+				companyId, 0, 0, userName, null, null, null, null, null, null,
+				null, null, null, null, 0, null, andSearch));
+	}
+
 	@Inject
 	private AuditEventLocalService _auditEventLocalService;
+
+	private final List<AuditEvent> _auditEvents = new ArrayList<>();
 
 }
