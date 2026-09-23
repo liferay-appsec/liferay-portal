@@ -48,16 +48,6 @@ public class AuditPseudonymLocalServiceWrapper
 		return _auditPseudonymLocalService.addAuditPseudonym(auditPseudonym);
 	}
 
-	@Override
-	public com.liferay.portal.security.audit.storage.model.AuditPseudonym
-		addAuditPseudonym(
-			long companyId, String contextName, String fieldCategory,
-			String value) {
-
-		return _auditPseudonymLocalService.addAuditPseudonym(
-			companyId, contextName, fieldCategory, value);
-	}
-
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
 	 *
@@ -372,4 +362,4 @@ public class AuditPseudonymLocalServiceWrapper
 	private AuditPseudonymLocalService _auditPseudonymLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:513455036
+// LIFERAY-SERVICE-BUILDER-HASH:853023557
