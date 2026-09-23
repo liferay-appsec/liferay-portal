@@ -14,7 +14,9 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
+import com.liferay.portal.security.audit.storage.model.AuditPseudonym;
 import com.liferay.portal.security.audit.storage.service.AuditEventLocalService;
+import com.liferay.portal.security.audit.storage.service.AuditPseudonymLocalService;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -30,6 +32,7 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		TransactionCallbackUtil.registerCommitCallback(
 			() -> {
 				_deleteAuditEvents(company);
+				_deleteAuditPseudonyms(company);
 
 				return null;
 			});
@@ -50,7 +53,27 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		actionableDynamicQuery.performActions();
 	}
 
+	private void _deleteAuditPseudonyms(Company company)
+		throws PortalException {
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			_auditPseudonymLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> dynamicQuery.add(
+				RestrictionsFactoryUtil.eq(
+					"companyId", company.getCompanyId())));
+		actionableDynamicQuery.setPerformActionMethod(
+			auditPseudonym -> _auditPseudonymLocalService.deleteAuditPseudonym(
+				(AuditPseudonym)auditPseudonym));
+
+		actionableDynamicQuery.performActions();
+	}
+
 	@Reference
 	private AuditEventLocalService _auditEventLocalService;
+
+	@Reference
+	private AuditPseudonymLocalService _auditPseudonymLocalService;
 
 }
