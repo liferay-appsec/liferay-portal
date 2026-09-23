@@ -77,14 +77,15 @@
 		<column name="contextName" type="String" />
 		<column name="fieldCategory" type="String" />
 		<column name="value" type="String" />
+		<column name="valueHash" type="String" />
 
 		<!-- Finder methods -->
 
-		<finder name="C_C_FC_V" return-type="AuditPseudonym" unique="true">
+		<finder name="C_C_FC_VH" return-type="AuditPseudonym" unique="true">
 			<finder-column name="companyId" />
 			<finder-column name="contextName" />
 			<finder-column name="fieldCategory" />
-			<finder-column name="value" />
+			<finder-column name="valueHash" />
 		</finder>
 	</entity>
 </service-builder>

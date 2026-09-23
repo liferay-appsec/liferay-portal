@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.audit.storage.model.AuditPseudonym;
 import com.liferay.portal.security.audit.storage.service.base.AuditPseudonymLocalServiceBaseImpl;
@@ -44,6 +45,8 @@ public class AuditPseudonymLocalServiceImpl
 		auditPseudonym.setContextName(contextName);
 		auditPseudonym.setFieldCategory(fieldCategory);
 		auditPseudonym.setValue(value);
+		auditPseudonym.setValueHash(
+			DigesterUtil.digestHex(DigesterUtil.SHA_256, value));
 
 		return auditPseudonymPersistence.update(auditPseudonym);
 	}
@@ -54,9 +57,11 @@ public class AuditPseudonymLocalServiceImpl
 
 		contextName = GetterUtil.getString(contextName);
 
+		String valueHash = DigesterUtil.digestHex(DigesterUtil.SHA_256, value);
+
 		AuditPseudonym auditPseudonym =
-			auditPseudonymPersistence.fetchByC_C_FC_V(
-				companyId, contextName, fieldCategory, value);
+			auditPseudonymPersistence.fetchByC_C_FC_VH(
+				companyId, contextName, fieldCategory, valueHash);
 
 		if (auditPseudonym != null) {
 			return auditPseudonym;
@@ -71,8 +76,8 @@ public class AuditPseudonymLocalServiceImpl
 				_log.debug(exception);
 			}
 
-			auditPseudonym = auditPseudonymPersistence.fetchByC_C_FC_V(
-				companyId, contextName, fieldCategory, value, false);
+			auditPseudonym = auditPseudonymPersistence.fetchByC_C_FC_VH(
+				companyId, contextName, fieldCategory, valueHash, false);
 
 			if (auditPseudonym == null) {
 				return ReflectionUtil.throwException(exception);
