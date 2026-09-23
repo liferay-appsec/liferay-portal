@@ -7,14 +7,17 @@ package com.liferay.portal.kernel.audit;
 
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.text.DateFormat;
 
 import java.util.Date;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -29,6 +32,11 @@ public class AuditMessageTest {
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
+
+	@After
+	public void tearDown() {
+		AuditRequestThreadLocal.removeAuditThreadLocal();
+	}
 
 	@Test
 	public void testConstructor() throws Exception {
@@ -55,8 +63,45 @@ public class AuditMessageTest {
 		Assert.assertEquals(correlationId, auditMessage.getCorrelationId());
 		Assert.assertEquals(requestId, auditMessage.getRequestId());
 		Assert.assertTrue(auditMessage.isRequestIdGenerated());
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testConstructorResolvesOneRequestIdPerThread()
+		throws Exception {
+
+		AuditMessage auditMessage1 = _createAuditMessage(
+			RandomTestUtil.randomLong());
+		AuditMessage auditMessage2 = _createAuditMessage(
+			RandomTestUtil.randomLong());
+
+		Assert.assertTrue(auditMessage1.isRequestIdGenerated());
+		Assert.assertTrue(auditMessage2.isRequestIdGenerated());
+
+		String requestId = auditMessage1.getRequestId();
+
+		Assert.assertNotNull(requestId);
+		Assert.assertEquals(requestId, auditMessage2.getRequestId());
 
 		AuditRequestThreadLocal.removeAuditThreadLocal();
+
+		AuditMessage auditMessage3 = _createAuditMessage(
+			CompanyConstants.SYSTEM);
+
+		Assert.assertNull(auditMessage3.getRequestId());
+		Assert.assertFalse(auditMessage3.isRequestIdGenerated());
+	}
+
+	@FeatureFlag(enable = false, value = "LPD-6417")
+	@Test
+	public void testConstructorResolvesRequestIdWhenFeatureFlagIsDisabled()
+		throws Exception {
+
+		AuditMessage auditMessage = _createAuditMessage(
+			RandomTestUtil.randomLong());
+
+		Assert.assertNull(auditMessage.getRequestId());
+		Assert.assertFalse(auditMessage.isRequestIdGenerated());
 	}
 
 	@Test
@@ -91,6 +136,15 @@ public class AuditMessageTest {
 
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
+	}
+
+	private AuditMessage _createAuditMessage(long companyId) {
+		return new AuditMessage(
+			RandomTestUtil.randomLong(), companyId, RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.nextDate(),
+			JSONFactoryUtil.createJSONObject(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString());
 	}
 
 }
