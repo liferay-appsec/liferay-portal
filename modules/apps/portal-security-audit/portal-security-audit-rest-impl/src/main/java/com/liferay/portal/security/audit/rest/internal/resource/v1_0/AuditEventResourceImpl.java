@@ -95,6 +95,15 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 				setHttpMethod(serviceBuilderAuditEvent::getHttpMethod);
 				setId(serviceBuilderAuditEvent::getAuditEventId);
 				setObjectName(serviceBuilderAuditEvent::getObjectName);
+				setPseudonymizationFailed(
+					() -> {
+						if (!serviceBuilderAuditEvent.isPseudonymized()) {
+							return null;
+						}
+
+						return serviceBuilderAuditEvent.
+							isPseudonymizationFailed();
+					});
 				setRequestId(serviceBuilderAuditEvent::getRequestId);
 				setRequestIdGenerated(
 					serviceBuilderAuditEvent::isRequestIdGenerated);
