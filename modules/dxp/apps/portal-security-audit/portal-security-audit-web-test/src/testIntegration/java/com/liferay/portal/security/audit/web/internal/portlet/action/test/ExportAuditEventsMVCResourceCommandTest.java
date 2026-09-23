@@ -15,6 +15,8 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ProgressTracker;
@@ -48,19 +50,26 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 	@Test
 	public void testBuildCSV() throws Exception {
-		AuditEvent auditEvent = _createAuditEvent(0, false, null, 0);
-
 		String csv = ReflectionTestUtil.invoke(
 			_mvcResourceCommand, "_buildCSV",
 			new Class<?>[] {List.class, String[].class, ProgressTracker.class},
-			ListUtil.fromArray(auditEvent),
+			ListUtil.fromArray(
+				_createAuditEvent(0, false, false, null, 0),
+				_createAuditEvent(0, true, true, null, 0)),
 			_getColumns(TestPropsValues.getCompanyId()), null);
 
 		String[] lines = StringUtil.split(csv, CharPool.NEW_LINE);
 
-		Assert.assertEquals(Arrays.toString(lines), 2, lines.length);
+		Assert.assertEquals(Arrays.toString(lines), 3, lines.length);
 		Assert.assertEquals(
 			StringUtil.merge(_COLUMNS_DEFAULT, StringPool.COMMA), lines[0]);
+
+		List<String> columns = Arrays.asList(_COLUMNS_DEFAULT);
+
+		int index = columns.indexOf("pseudonymizationFailed");
+
+		Assert.assertEquals(StringPool.BLANK, _getColumnValue(lines[1], index));
+		Assert.assertEquals("true", _getColumnValue(lines[2], index));
 	}
 
 	@Test
@@ -94,6 +103,15 @@ public class ExportAuditEventsMVCResourceCommandTest {
 			Assert.assertArrayEquals(
 				columns, _getColumns(TestPropsValues.getCompanyId()));
 		}
+
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					_CONFIGURATION_PID, new HashMapDictionary<>())) {
+
+			Assert.assertArrayEquals(
+				ArrayUtil.remove(_COLUMNS_DEFAULT, "pseudonymizationFailed"),
+				_getColumns(TestPropsValues.getCompanyId()));
+		}
 	}
 
 	@Test
@@ -101,7 +119,7 @@ public class ExportAuditEventsMVCResourceCommandTest {
 		User user = TestPropsValues.getUser();
 
 		AuditEvent auditEvent = _createAuditEvent(
-			user.getCompanyId(), false, null, user.getUserId());
+			user.getCompanyId(), false, false, null, user.getUserId());
 
 		Assert.assertEquals(
 			user.getEmailAddress(), _getEmailAddress(auditEvent));
@@ -110,15 +128,16 @@ public class ExportAuditEventsMVCResourceCommandTest {
 		String userEmailAddress = RandomTestUtil.randomString();
 
 		auditEvent = _createAuditEvent(
-			user.getCompanyId(), true, userEmailAddress, user.getUserId());
+			user.getCompanyId(), false, true, userEmailAddress,
+			user.getUserId());
 
 		Assert.assertEquals(userEmailAddress, _getEmailAddress(auditEvent));
 		Assert.assertEquals(StringPool.BLANK, _getScreenName(auditEvent));
 	}
 
 	private AuditEvent _createAuditEvent(
-		long companyId, boolean pseudonymized, String userEmailAddress,
-		long userId) {
+		long companyId, boolean pseudonymizationFailed, boolean pseudonymized,
+		String userEmailAddress, long userId) {
 
 		return (AuditEvent)ProxyUtil.newProxyInstance(
 			AuditEvent.class.getClassLoader(),
@@ -136,6 +155,10 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 				if (methodName.equals("getUserId")) {
 					return userId;
+				}
+
+				if (methodName.equals("isPseudonymizationFailed")) {
+					return pseudonymizationFailed;
 				}
 
 				if (methodName.equals("isPseudonymized")) {
@@ -160,6 +183,16 @@ public class ExportAuditEventsMVCResourceCommandTest {
 			});
 	}
 
+	private String _getColumnValue(String line, int index) {
+		String[] values = StringUtil.split(line, CharPool.COMMA);
+
+		if (index < values.length) {
+			return values[index];
+		}
+
+		return StringPool.BLANK;
+	}
+
 	private String[] _getColumns(long companyId) {
 		return ReflectionTestUtil.invoke(
 			_mvcResourceCommand, "_getColumns", new Class<?>[] {long.class},
@@ -180,9 +213,9 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 	private static final String[] _COLUMNS_DEFAULT = {
 		"additionalInfo", "className", "classPK", "clientHost", "clientIP",
-		"companyId", "eventType", "message", "serverName", "serverPort",
-		"sessionID", "timestamp", "userEmailAddress", "userId", "userLogin",
-		"userName"
+		"companyId", "eventType", "message", "pseudonymizationFailed",
+		"serverName", "serverPort", "sessionID", "timestamp",
+		"userEmailAddress", "userId", "userLogin", "userName"
 	};
 
 	private static final String _CONFIGURATION_PID =
