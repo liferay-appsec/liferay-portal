@@ -15,6 +15,8 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ProgressTracker;
@@ -48,7 +50,8 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 	@Test
 	public void testBuildCSV() throws Exception {
-		AuditEvent auditEvent = _createAuditEvent(false, null, 0);
+		AuditEvent auditEvent = _createAuditEvent(
+			RandomTestUtil.randomBoolean(), false, null, 0);
 
 		String csv = ReflectionTestUtil.invoke(
 			_mvcResourceCommand, "_buildCSV",
@@ -94,6 +97,15 @@ public class ExportAuditEventsMVCResourceCommandTest {
 			Assert.assertArrayEquals(
 				columns, _getColumns(TestPropsValues.getCompanyId()));
 		}
+
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					_CONFIGURATION_PID, new HashMapDictionary<>())) {
+
+			Assert.assertArrayEquals(
+				ArrayUtil.remove(_COLUMNS_DEFAULT, "pseudonymizationFailed"),
+				_getColumns(TestPropsValues.getCompanyId()));
+		}
 	}
 
 	@Test
@@ -102,15 +114,36 @@ public class ExportAuditEventsMVCResourceCommandTest {
 		String userEmailAddress = RandomTestUtil.randomString();
 
 		AuditEvent auditEvent = _createAuditEvent(
-			false, userEmailAddress, user.getUserId());
+			RandomTestUtil.randomBoolean(), false, userEmailAddress,
+			user.getUserId());
 
 		Assert.assertEquals(
 			user.getEmailAddress(), _getEmailAddress(auditEvent));
 
 		auditEvent = _createAuditEvent(
-			true, userEmailAddress, user.getUserId());
+			RandomTestUtil.randomBoolean(), true, userEmailAddress,
+			user.getUserId());
 
 		Assert.assertEquals(userEmailAddress, _getEmailAddress(auditEvent));
+	}
+
+	@Test
+	public void testGetPseudonymizationFailed() {
+		AuditEvent auditEvent = _createAuditEvent(
+			true, false, null, RandomTestUtil.randomLong());
+
+		Assert.assertEquals(
+			StringPool.BLANK, _getPseudonymizationFailed(auditEvent));
+
+		auditEvent = _createAuditEvent(
+			false, true, null, RandomTestUtil.randomLong());
+
+		Assert.assertEquals("false", _getPseudonymizationFailed(auditEvent));
+
+		auditEvent = _createAuditEvent(
+			true, true, null, RandomTestUtil.randomLong());
+
+		Assert.assertEquals("true", _getPseudonymizationFailed(auditEvent));
 	}
 
 	@Test
@@ -118,17 +151,19 @@ public class ExportAuditEventsMVCResourceCommandTest {
 		User user = TestPropsValues.getUser();
 
 		AuditEvent auditEvent = _createAuditEvent(
-			false, null, user.getUserId());
+			RandomTestUtil.randomBoolean(), false, null, user.getUserId());
 
 		Assert.assertEquals(user.getScreenName(), _getScreenName(auditEvent));
 
-		auditEvent = _createAuditEvent(true, null, user.getUserId());
+		auditEvent = _createAuditEvent(
+			RandomTestUtil.randomBoolean(), true, null, user.getUserId());
 
 		Assert.assertEquals(StringPool.BLANK, _getScreenName(auditEvent));
 	}
 
 	private AuditEvent _createAuditEvent(
-		boolean pseudonymized, String userEmailAddress, long userId) {
+		boolean pseudonymizationFailed, boolean pseudonymized,
+		String userEmailAddress, long userId) {
 
 		return (AuditEvent)ProxyUtil.newProxyInstance(
 			AuditEvent.class.getClassLoader(),
@@ -142,6 +177,10 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 				if (methodName.equals("getUserId")) {
 					return userId;
+				}
+
+				if (methodName.equals("isPseudonymizationFailed")) {
+					return pseudonymizationFailed;
 				}
 
 				if (methodName.equals("isPseudonymized")) {
@@ -174,6 +213,12 @@ public class ExportAuditEventsMVCResourceCommandTest {
 			new Class<?>[] {AuditEvent.class}, auditEvent);
 	}
 
+	private String _getPseudonymizationFailed(AuditEvent auditEvent) {
+		return ReflectionTestUtil.invoke(
+			_mvcResourceCommand, "_getPseudonymizationFailed",
+			new Class<?>[] {AuditEvent.class}, auditEvent);
+	}
+
 	private String _getScreenName(AuditEvent auditEvent) {
 		return ReflectionTestUtil.invoke(
 			_mvcResourceCommand, "_getScreenName",
@@ -182,9 +227,9 @@ public class ExportAuditEventsMVCResourceCommandTest {
 
 	private static final String[] _COLUMNS_DEFAULT = {
 		"additionalInfo", "className", "classPK", "clientHost", "clientIP",
-		"companyId", "eventType", "message", "serverName", "serverPort",
-		"sessionID", "timestamp", "userEmailAddress", "userId", "userLogin",
-		"userName"
+		"companyId", "eventType", "message", "pseudonymizationFailed",
+		"serverName", "serverPort", "sessionID", "timestamp",
+		"userEmailAddress", "userId", "userLogin", "userName"
 	};
 
 	private static final String _CONFIGURATION_PID =
