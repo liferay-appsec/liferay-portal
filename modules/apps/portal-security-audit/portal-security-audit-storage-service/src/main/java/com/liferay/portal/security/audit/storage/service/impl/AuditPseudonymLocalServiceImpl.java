@@ -12,7 +12,8 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.DigesterUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.audit.storage.constants.AuditPseudonymConstants;
 import com.liferay.portal.security.audit.storage.model.AuditPseudonym;
 import com.liferay.portal.security.audit.storage.service.base.AuditPseudonymLocalServiceBaseImpl;
 
@@ -55,7 +56,9 @@ public class AuditPseudonymLocalServiceImpl
 		long companyId, String contextName, String fieldCategory,
 		String value) {
 
-		contextName = GetterUtil.getString(contextName);
+		if (Validator.isBlank(contextName)) {
+			contextName = AuditPseudonymConstants.CONTEXT_NAME_DEFAULT;
+		}
 
 		String valueHash = DigesterUtil.digestHex(DigesterUtil.SHA_256, value);
 
