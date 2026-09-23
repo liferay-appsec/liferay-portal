@@ -190,7 +190,7 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 				},
 				contextName, null, null, null, Pagination.of(1, 10), null));
 
-		_testGetAuditEventsPageCreator();
+		_testGetAuditEventsPagePseudonymized();
 	}
 
 	@Override
@@ -248,8 +248,8 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 
 	private void _addAuditEvent(
 		String contextName, long impersonatedUserId,
-		String impersonatedUserName, boolean pseudonymized, long userId,
-		String userName) {
+		String impersonatedUserName, boolean pseudonymizationFailed,
+		boolean pseudonymized, long userId, String userName) {
 
 		com.liferay.portal.security.audit.storage.model.AuditEvent
 			serviceBuilderAuditEvent = _auditEventLocalService.createAuditEvent(
@@ -261,6 +261,8 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		serviceBuilderAuditEvent.setContextName(contextName);
 		serviceBuilderAuditEvent.setImpersonatedUserId(impersonatedUserId);
 		serviceBuilderAuditEvent.setImpersonatedUserName(impersonatedUserName);
+		serviceBuilderAuditEvent.setPseudonymizationFailed(
+			pseudonymizationFailed);
 		serviceBuilderAuditEvent.setPseudonymized(pseudonymized);
 
 		_serviceBuilderAuditEvents.add(
@@ -306,13 +308,13 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		return auditEvent;
 	}
 
-	private void _testGetAuditEventsPageCreator() throws Exception {
+	private void _testGetAuditEventsPagePseudonymized() throws Exception {
 		String contextName = RandomTestUtil.randomString();
 		User user = TestPropsValues.getUser();
 
 		_addAuditEvent(
-			contextName, user.getUserId(), RandomTestUtil.randomString(), false,
-			user.getUserId(), RandomTestUtil.randomString());
+			contextName, user.getUserId(), RandomTestUtil.randomString(), true,
+			false, user.getUserId(), RandomTestUtil.randomString());
 
 		AuditEvent auditEvent = _getAuditEvent(contextName);
 
@@ -330,14 +332,16 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 			Long.valueOf(user.getUserId()), impersonatedCreator.getId());
 		Assert.assertEquals(user.getFullName(), impersonatedCreator.getName());
 
+		Assert.assertNull(auditEvent.getPseudonymizationFailed());
+
 		contextName = RandomTestUtil.randomString();
 		String impersonatedUserName = RandomTestUtil.randomString();
 		long userId = RandomTestUtil.randomLong();
 		String userName = RandomTestUtil.randomString();
 
 		_addAuditEvent(
-			contextName, user.getUserId(), impersonatedUserName, true, userId,
-			userName);
+			contextName, user.getUserId(), impersonatedUserName, false, true,
+			userId, userName);
 
 		auditEvent = _getAuditEvent(contextName);
 
@@ -355,15 +359,18 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		Assert.assertEquals(
 			impersonatedUserName, impersonatedCreator.getName());
 
+		Assert.assertFalse(auditEvent.getPseudonymizationFailed());
+
 		contextName = RandomTestUtil.randomString();
 
 		_addAuditEvent(
-			contextName, 0, StringPool.BLANK, true, 0, StringPool.BLANK);
+			contextName, 0, StringPool.BLANK, true, true, 0, StringPool.BLANK);
 
 		auditEvent = _getAuditEvent(contextName);
 
 		Assert.assertNull(auditEvent.getCreator());
 		Assert.assertNull(auditEvent.getImpersonatedCreator());
+		Assert.assertTrue(auditEvent.getPseudonymizationFailed());
 	}
 
 	private static final List
