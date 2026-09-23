@@ -105,6 +105,15 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 						serviceBuilderAuditEvent.getImpersonatedUserId(),
 						serviceBuilderAuditEvent.getImpersonatedUserName()));
 				setObjectName(serviceBuilderAuditEvent::getObjectName);
+				setPseudonymizationFailed(
+					() -> {
+						if (!serviceBuilderAuditEvent.isPseudonymized()) {
+							return null;
+						}
+
+						return serviceBuilderAuditEvent.
+							isPseudonymizationFailed();
+					});
 				setRequestId(serviceBuilderAuditEvent::getRequestId);
 				setRequestIdGenerated(
 					serviceBuilderAuditEvent::isRequestIdGenerated);
