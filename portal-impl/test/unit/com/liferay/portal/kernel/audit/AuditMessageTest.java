@@ -88,4 +88,23 @@ public class AuditMessageTest {
 		Assert.assertNotNull(auditMessage.getTimestampDate());
 	}
 
+	@Test
+	public void testToJSONObjectWhenPseudonymized() throws Exception {
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		JSONObject jsonObject = auditMessage.toJSONObject();
+
+		Assert.assertFalse(jsonObject.has("pseudonymized"));
+
+		auditMessage.setPseudonymized(true);
+
+		jsonObject = auditMessage.toJSONObject();
+
+		auditMessage = new AuditMessage(jsonObject.toString());
+
+		Assert.assertTrue(auditMessage.isPseudonymized());
+	}
+
 }
