@@ -60,6 +60,42 @@ public class AuditMessageTest {
 	}
 
 	@Test
+	public void testConstructorResourceAction() throws Exception {
+		_testConstructorResourceAction(
+			"User", "ADD", "system.user.add", "user");
+		_testConstructorResourceAction(
+			"com.liferay.object.model.ObjectDefinition", "ADD",
+			"system.objectdefinition.add", "objectdefinition");
+		_testConstructorResourceAction(
+			"com.liferay.object.model.ObjectDefinition#CMPProject", "ADD",
+			"system.objectdefinition.add", "objectdefinition");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "ADD", "system.user.add",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "LOGIN",
+			"system.user.login", "user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", null, "system.user.unknown",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User.", "ADD",
+			"system.unknown.add", "unknown");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.UserGroup", "ADD",
+			"system.usergroup.add", "usergroup");
+		_testConstructorResourceAction(
+			null, "ADD", "system.unknown.add", "unknown");
+	}
+
+	@Test
+	public void testSetResourceAction() throws Exception {
+		_testSetResourceAction("", "system");
+		_testSetResourceAction("AI_HUB", "ai_hub");
+		_testSetResourceAction(null, "system");
+	}
+
+	@Test
 	public void testToJSONObject() throws Exception {
 		long groupId = RandomTestUtil.randomLong();
 		Date timestampDate = RandomTestUtil.nextDate();
@@ -71,12 +107,19 @@ public class AuditMessageTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString());
 
+		auditMessage.setResourceAction("verify_pending");
+		auditMessage.setResourceType("mfa");
+
 		JSONObject jsonObject = auditMessage.toJSONObject();
 
 		DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyyMMddkkmmssSSS");
 
 		Assert.assertEquals(groupId, jsonObject.getLong("groupId"));
+		Assert.assertEquals(
+			"system.mfa.verify_pending",
+			jsonObject.getString("resourceAction"));
+		Assert.assertEquals("mfa", jsonObject.getString("resourceType"));
 		Assert.assertEquals(
 			dateFormat.format(timestampDate),
 			jsonObject.getString("timestamp"));
@@ -90,7 +133,50 @@ public class AuditMessageTest {
 		auditMessage = new AuditMessage(jsonObject.toString());
 
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
+		Assert.assertEquals(
+			"system.mfa.verify_pending", auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
+	}
+
+	private void _testConstructorResourceAction(
+		String className, String eventType, String expectedResourceAction,
+		String expectedResourceType) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null,
+			JSONFactoryUtil.createJSONObject(), className,
+			RandomTestUtil.randomString(), eventType, null);
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals(
+			expectedResourceType, auditMessage.getResourceType());
+	}
+
+	private void _testSetResourceAction(
+		String contextName, String expectedContextName) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null, 0,
+			JSONFactoryUtil.createJSONObject(),
+			"com.liferay.portal.kernel.model.User",
+			RandomTestUtil.randomString(), contextName, "ADD", null);
+
+		Assert.assertEquals(
+			expectedContextName + ".user.add",
+			auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+
+		auditMessage.setResourceAction("verify_pending");
+		auditMessage.setResourceType("mfa");
+
+		Assert.assertEquals(
+			expectedContextName + ".mfa.verify_pending",
+			auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
 	}
 
 }
