@@ -58,6 +58,8 @@ public interface AuditEvent {
 
 	public String getUserUuid();
 
+	public boolean isPseudonymizationFailed();
+
 	public boolean isPseudonymized();
 
 	public void setAccountEntryId(long accountEntryId);
