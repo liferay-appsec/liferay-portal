@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.rest.client.dto.v1_0.AuditEvent;
+import com.liferay.portal.security.audit.rest.client.dto.v1_0.Creator;
 import com.liferay.portal.security.audit.rest.client.pagination.Page;
 import com.liferay.portal.security.audit.rest.client.pagination.Pagination;
 import com.liferay.portal.security.audit.rest.client.problem.Problem;
@@ -164,6 +165,8 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 					accountEntry2.getAccountEntryId()
 				},
 				contextName, null, null, null, Pagination.of(1, 10), null));
+
+		_testGetAuditEventsPageCreator();
 	}
 
 	@Override
@@ -198,6 +201,22 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		};
 	}
 
+	private void _addAuditEvent(
+		String contextName, String eventType, boolean pseudonymized,
+		long userId, String userName) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			0L, testCompany.getCompanyId(), userId, userName, null, 0L, null,
+			RandomTestUtil.randomString(),
+			String.valueOf(RandomTestUtil.randomLong()), contextName, eventType,
+			null);
+
+		auditMessage.setPseudonymized(pseudonymized);
+
+		_serviceBuilderAuditEvents.add(
+			_auditEventLocalService.addAuditEvent(auditMessage));
+	}
+
 	private void _addUserToAccount(
 			AccountEntry accountEntry, Role role, User user)
 		throws Exception {
@@ -213,6 +232,22 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 			user.getUserId());
 	}
 
+	private Creator _getCreator(String contextName, String eventType)
+		throws Exception {
+
+		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
+			null, contextName, null, eventType, null, Pagination.of(1, 10),
+			null);
+
+		Assert.assertEquals(1, page.getTotalCount());
+
+		List<AuditEvent> auditEvents = (List<AuditEvent>)page.getItems();
+
+		AuditEvent auditEvent = auditEvents.get(0);
+
+		return auditEvent.getCreator();
+	}
+
 	private AuditEvent _randomAuditEvent(
 			long accountId, String contextName, String eventType)
 		throws Exception {
@@ -224,6 +259,33 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		auditEvent.setEventType(eventType);
 
 		return auditEvent;
+	}
+
+	private void _testGetAuditEventsPageCreator() throws Exception {
+		String contextName = RandomTestUtil.randomString();
+
+		_addAuditEvent(
+			contextName, EventTypes.ADD, false, TestPropsValues.getUserId(),
+			RandomTestUtil.randomString());
+
+		Creator creator = _getCreator(contextName, EventTypes.ADD);
+
+		User user = TestPropsValues.getUser();
+
+		Assert.assertEquals("UserAccount", creator.getContentType());
+		Assert.assertEquals(Long.valueOf(user.getUserId()), creator.getId());
+		Assert.assertEquals(user.getFullName(), creator.getName());
+
+		long userId = RandomTestUtil.randomLong();
+		String userName = RandomTestUtil.randomString();
+
+		_addAuditEvent(contextName, EventTypes.UPDATE, true, userId, userName);
+
+		creator = _getCreator(contextName, EventTypes.UPDATE);
+
+		Assert.assertNull(creator.getContentType());
+		Assert.assertEquals(Long.valueOf(userId), creator.getId());
+		Assert.assertEquals(userName, creator.getName());
 	}
 
 	private static final List
