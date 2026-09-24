@@ -124,6 +124,8 @@ public class AuditPseudonymPersistenceTest {
 
 		newAuditPseudonym.setValue(RandomTestUtil.randomString());
 
+		newAuditPseudonym.setValueHash(RandomTestUtil.randomString());
+
 		newAuditPseudonym = _persistence.update(newAuditPseudonym);
 
 		_auditPseudonyms.add(newAuditPseudonym);
@@ -148,15 +150,18 @@ public class AuditPseudonymPersistenceTest {
 			newAuditPseudonym.getFieldCategory());
 		Assert.assertEquals(
 			existingAuditPseudonym.getValue(), newAuditPseudonym.getValue());
+		Assert.assertEquals(
+			existingAuditPseudonym.getValueHash(),
+			newAuditPseudonym.getValueHash());
 	}
 
 	@Test
-	public void testCountByC_C_FC_V() throws Exception {
-		_persistence.countByC_C_FC_V(RandomTestUtil.nextLong(), "", "", "");
+	public void testCountByC_C_FC_VH() throws Exception {
+		_persistence.countByC_C_FC_VH(RandomTestUtil.nextLong(), "", "", "");
 
-		_persistence.countByC_C_FC_V(0L, "null", "null", "null");
+		_persistence.countByC_C_FC_VH(0L, "null", "null", "null");
 
-		_persistence.countByC_C_FC_V(
+		_persistence.countByC_C_FC_VH(
 			0L, (String)null, (String)null, (String)null);
 	}
 
@@ -187,7 +192,7 @@ public class AuditPseudonymPersistenceTest {
 		return OrderByComparatorFactoryUtil.create(
 			"Audit_AuditPseudonym", "auditPseudonymId", true, "companyId", true,
 			"createDate", true, "contextName", true, "fieldCategory", true,
-			"value", true);
+			"value", true, "valueHash", true);
 	}
 
 	@Test
@@ -471,10 +476,10 @@ public class AuditPseudonymPersistenceTest {
 				auditPseudonym, "getColumnOriginalValue",
 				new Class<?>[] {String.class}, "fieldCategory"));
 		Assert.assertEquals(
-			auditPseudonym.getValue(),
+			auditPseudonym.getValueHash(),
 			ReflectionTestUtil.invoke(
 				auditPseudonym, "getColumnOriginalValue",
-				new Class<?>[] {String.class}, "value"));
+				new Class<?>[] {String.class}, "valueHash"));
 	}
 
 	protected AuditPseudonym addAuditPseudonym() throws Exception {
@@ -492,6 +497,8 @@ public class AuditPseudonymPersistenceTest {
 
 		auditPseudonym.setValue(RandomTestUtil.randomString());
 
+		auditPseudonym.setValueHash(RandomTestUtil.randomString());
+
 		_auditPseudonyms.add(_persistence.update(auditPseudonym));
 
 		return auditPseudonym;
@@ -503,4 +510,4 @@ public class AuditPseudonymPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1420985214
+// LIFERAY-SERVICE-BUILDER-HASH:-1645036872

@@ -33,59 +33,60 @@ public interface AuditPseudonymPersistence
 	 */
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the matching audit pseudonym
 	 * @throws NoSuchPseudonymException if a matching audit pseudonym could not be found
 	 */
-	public AuditPseudonym findByC_C_FC_V(
+	public AuditPseudonym findByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws NoSuchPseudonymException;
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching audit pseudonym, or <code>null</code> if a matching audit pseudonym could not be found
 	 */
-	public AuditPseudonym fetchByC_C_FC_V(
-		long companyId, String contextName, String fieldCategory, String value,
-		boolean useFinderCache);
+	public AuditPseudonym fetchByC_C_FC_VH(
+		long companyId, String contextName, String fieldCategory,
+		String valueHash, boolean useFinderCache);
 
 	/**
-	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; from the database.
+	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; from the database.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the audit pseudonym that was removed
 	 */
-	public AuditPseudonym removeByC_C_FC_V(
+	public AuditPseudonym removeByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws NoSuchPseudonymException;
 
 	/**
-	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63;.
+	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the number of matching audit pseudonyms
 	 */
-	public int countByC_C_FC_V(
-		long companyId, String contextName, String fieldCategory, String value);
+	public int countByC_C_FC_VH(
+		long companyId, String contextName, String fieldCategory,
+		String valueHash);
 
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
@@ -126,21 +127,21 @@ public interface AuditPseudonymPersistence
 	public AuditPseudonym fetchByPrimaryKey(long auditPseudonymId);
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the matching audit pseudonym, or <code>null</code> if a matching audit pseudonym could not be found
 	 */
-	public default AuditPseudonym fetchByC_C_FC_V(
+	public default AuditPseudonym fetchByC_C_FC_VH(
 		long companyId, String contextName, String fieldCategory,
-		String value) {
+		String valueHash) {
 
-		return fetchByC_C_FC_V(
-			companyId, contextName, fieldCategory, value, true);
+		return fetchByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash, true);
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-394380477
+// LIFERAY-SERVICE-BUILDER-HASH:2139554203

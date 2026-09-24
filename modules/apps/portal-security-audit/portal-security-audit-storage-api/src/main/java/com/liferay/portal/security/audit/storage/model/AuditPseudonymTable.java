@@ -38,10 +38,12 @@ public class AuditPseudonymTable extends BaseTable<AuditPseudonymTable> {
 			"fieldCategory", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<AuditPseudonymTable, String> value = createColumn(
 		"value", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<AuditPseudonymTable, String> valueHash = createColumn(
+		"valueHash", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 
 	private AuditPseudonymTable() {
 		super("Audit_AuditPseudonym", AuditPseudonymTable::new);
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1324090938
+// LIFERAY-SERVICE-BUILDER-HASH:-970624073

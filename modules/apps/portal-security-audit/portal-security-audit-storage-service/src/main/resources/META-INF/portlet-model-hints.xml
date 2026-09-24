@@ -66,5 +66,6 @@
 		<field name="value" type="String">
 			<hint name="max-length">255</hint>
 		</field>
+		<field name="valueHash" type="String" />
 	</model>
 </model-hints>

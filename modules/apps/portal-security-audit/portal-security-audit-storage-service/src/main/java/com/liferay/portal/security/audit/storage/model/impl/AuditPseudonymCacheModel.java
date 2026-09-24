@@ -53,7 +53,7 @@ public class AuditPseudonymCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(13);
+		StringBundler sb = new StringBundler(15);
 
 		sb.append("{auditPseudonymId=");
 		sb.append(auditPseudonymId);
@@ -67,6 +67,8 @@ public class AuditPseudonymCacheModel
 		sb.append(fieldCategory);
 		sb.append(", value=");
 		sb.append(value);
+		sb.append(", valueHash=");
+		sb.append(valueHash);
 		sb.append("}");
 
 		return sb.toString();
@@ -107,6 +109,13 @@ public class AuditPseudonymCacheModel
 			auditPseudonymImpl.setValue(value);
 		}
 
+		if (valueHash == null) {
+			auditPseudonymImpl.setValueHash("");
+		}
+		else {
+			auditPseudonymImpl.setValueHash(valueHash);
+		}
+
 		auditPseudonymImpl.resetOriginalValues();
 
 		return auditPseudonymImpl;
@@ -121,6 +130,7 @@ public class AuditPseudonymCacheModel
 		contextName = objectInput.readUTF();
 		fieldCategory = objectInput.readUTF();
 		value = objectInput.readUTF();
+		valueHash = objectInput.readUTF();
 	}
 
 	@Override
@@ -150,6 +160,13 @@ public class AuditPseudonymCacheModel
 		else {
 			objectOutput.writeUTF(value);
 		}
+
+		if (valueHash == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(valueHash);
+		}
 	}
 
 	public long auditPseudonymId;
@@ -158,6 +175,7 @@ public class AuditPseudonymCacheModel
 	public String contextName;
 	public String fieldCategory;
 	public String value;
+	public String valueHash;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1625291552
+// LIFERAY-SERVICE-BUILDER-HASH:1615478028
