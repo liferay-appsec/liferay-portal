@@ -83,6 +83,11 @@ public class AuditStorageServiceUpgradeStepRegistrator
 			"2.5.0", "2.6.0",
 			UpgradeProcessFactory.addColumns(
 				"Audit_AuditEvent", "pseudonymized BOOLEAN"));
+
+		registry.register(
+			"2.6.0", "2.7.0",
+			UpgradeProcessFactory.addColumns(
+				"Audit_AuditEvent", "pseudonymizationFailed BOOLEAN"));
 	}
 
 	@Reference

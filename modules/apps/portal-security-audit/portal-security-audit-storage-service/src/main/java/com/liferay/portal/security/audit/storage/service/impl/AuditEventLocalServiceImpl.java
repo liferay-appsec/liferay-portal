@@ -330,6 +330,8 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			auditMessage.getImpersonatedUserName());
 		auditEvent.setMessage(auditMessage.getMessage());
 		auditEvent.setObjectName(auditMessage.getObjectName());
+		auditEvent.setPseudonymizationFailed(
+			auditMessage.isPseudonymizationFailed());
 		auditEvent.setPseudonymized(auditMessage.isPseudonymized());
 		auditEvent.setRequestId(auditMessage.getRequestId());
 		auditEvent.setRequestIdGenerated(auditMessage.isRequestIdGenerated());
