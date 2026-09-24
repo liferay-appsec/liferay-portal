@@ -91,6 +91,7 @@ public class AuditMessageTest {
 			dateFormat.format(timestampDate),
 			jsonObject.getString("timestamp"));
 
+		auditMessage.setPseudonymizationFailed(true);
 		auditMessage.setPseudonymized(true);
 		auditMessage.setTimestampDate(null);
 
@@ -102,6 +103,7 @@ public class AuditMessageTest {
 
 		Assert.assertEquals(action, auditMessage.getAction());
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
+		Assert.assertTrue(auditMessage.isPseudonymizationFailed());
 		Assert.assertTrue(auditMessage.isPseudonymized());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
 	}
