@@ -48,6 +48,10 @@ public class AuditEventTable extends BaseTable<AuditEventTable> {
 		"clientHost", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, String> clientIP = createColumn(
 		"clientIP", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<AuditEventTable, String> clientIPReference =
+		createColumn(
+			"clientIPReference", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, String> contextName = createColumn(
 		"contextName", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<AuditEventTable, String> correlationId = createColumn(
@@ -110,4 +114,4 @@ public class AuditEventTable extends BaseTable<AuditEventTable> {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-503446299
+// LIFERAY-SERVICE-BUILDER-HASH:-435839840

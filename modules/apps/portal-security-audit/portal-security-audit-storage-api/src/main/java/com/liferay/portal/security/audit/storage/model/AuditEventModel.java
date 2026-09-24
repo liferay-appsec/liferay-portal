@@ -238,6 +238,21 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	public void setClientIP(String clientIP);
 
 	/**
+	 * Returns the client ip reference of this audit event.
+	 *
+	 * @return the client ip reference of this audit event
+	 */
+	@AutoEscape
+	public String getClientIPReference();
+
+	/**
+	 * Sets the client ip reference of this audit event.
+	 *
+	 * @param clientIPReference the client ip reference of this audit event
+	 */
+	public void setClientIPReference(String clientIPReference);
+
+	/**
 	 * Returns the context name of this audit event.
 	 *
 	 * @return the context name of this audit event
@@ -612,4 +627,4 @@ public interface AuditEventModel extends BaseModel<AuditEvent>, ShardedModel {
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1764289682
+// LIFERAY-SERVICE-BUILDER-HASH:887780022

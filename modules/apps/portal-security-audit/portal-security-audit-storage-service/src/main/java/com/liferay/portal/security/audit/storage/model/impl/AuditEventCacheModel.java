@@ -53,7 +53,7 @@ public class AuditEventCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(69);
+		StringBundler sb = new StringBundler(71);
 
 		sb.append("{auditEventId=");
 		sb.append(auditEventId);
@@ -79,6 +79,8 @@ public class AuditEventCacheModel
 		sb.append(clientHost);
 		sb.append(", clientIP=");
 		sb.append(clientIP);
+		sb.append(", clientIPReference=");
+		sb.append(clientIPReference);
 		sb.append(", contextName=");
 		sb.append(contextName);
 		sb.append(", correlationId=");
@@ -186,6 +188,13 @@ public class AuditEventCacheModel
 		}
 		else {
 			auditEventImpl.setClientIP(clientIP);
+		}
+
+		if (clientIPReference == null) {
+			auditEventImpl.setClientIPReference("");
+		}
+		else {
+			auditEventImpl.setClientIPReference(clientIPReference);
 		}
 
 		if (contextName == null) {
@@ -337,6 +346,7 @@ public class AuditEventCacheModel
 		classPK = objectInput.readUTF();
 		clientHost = objectInput.readUTF();
 		clientIP = objectInput.readUTF();
+		clientIPReference = objectInput.readUTF();
 		contextName = objectInput.readUTF();
 		correlationId = objectInput.readUTF();
 		eventType = objectInput.readUTF();
@@ -421,6 +431,13 @@ public class AuditEventCacheModel
 		}
 		else {
 			objectOutput.writeUTF(clientIP);
+		}
+
+		if (clientIPReference == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(clientIPReference);
 		}
 
 		if (contextName == null) {
@@ -560,6 +577,7 @@ public class AuditEventCacheModel
 	public String classPK;
 	public String clientHost;
 	public String clientIP;
+	public String clientIPReference;
 	public String contextName;
 	public String correlationId;
 	public String eventType;
@@ -584,4 +602,4 @@ public class AuditEventCacheModel
 	public String userEmailAddress;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1112287542
+// LIFERAY-SERVICE-BUILDER-HASH:-854665557

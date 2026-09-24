@@ -300,6 +300,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		auditEvent.setClassPK(auditMessage.getClassPK());
 		auditEvent.setClientHost(auditMessage.getClientHost());
 		auditEvent.setClientIP(auditMessage.getClientIP());
+		auditEvent.setClientIPReference(auditMessage.getClientIPReference());
 		auditEvent.setContextName(auditMessage.getContextName());
 		auditEvent.setCorrelationId(auditMessage.getCorrelationId());
 		auditEvent.setEventType(auditMessage.getEventType());

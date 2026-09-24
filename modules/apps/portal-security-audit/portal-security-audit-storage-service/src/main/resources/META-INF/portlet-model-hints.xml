@@ -24,6 +24,7 @@
 		<field name="clientIP" type="String">
 			<hint name="max-length">255</hint>
 		</field>
+		<field name="clientIPReference" type="String" />
 		<field name="contextName" type="String" />
 		<field name="correlationId" type="String" />
 		<field name="eventType" type="String" />

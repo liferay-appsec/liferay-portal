@@ -134,6 +134,8 @@ public class AuditEventPersistenceTest {
 
 		newAuditEvent.setClientIP(RandomTestUtil.randomString());
 
+		newAuditEvent.setClientIPReference(RandomTestUtil.randomString());
+
 		newAuditEvent.setContextName(RandomTestUtil.randomString());
 
 		newAuditEvent.setCorrelationId(RandomTestUtil.randomString());
@@ -214,6 +216,9 @@ public class AuditEventPersistenceTest {
 			existingAuditEvent.getClientHost(), newAuditEvent.getClientHost());
 		Assert.assertEquals(
 			existingAuditEvent.getClientIP(), newAuditEvent.getClientIP());
+		Assert.assertEquals(
+			existingAuditEvent.getClientIPReference(),
+			newAuditEvent.getClientIPReference());
 		Assert.assertEquals(
 			existingAuditEvent.getContextName(),
 			newAuditEvent.getContextName());
@@ -307,15 +312,15 @@ public class AuditEventPersistenceTest {
 			"Audit_AuditEvent", "auditEventId", true, "groupId", true,
 			"companyId", true, "userId", true, "userName", true, "createDate",
 			true, "accountEntryId", true, "className", true, "classPK", true,
-			"clientHost", true, "clientIP", true, "contextName", true,
-			"correlationId", true, "eventType", true, "httpMethod", true,
-			"impersonated", true, "impersonatedUserEmailAddress", true,
-			"impersonatedUserId", true, "impersonatedUserName", true, "message",
-			true, "objectName", true, "pseudonymizationFailed", true,
-			"pseudonymized", true, "requestId", true, "requestIdGenerated",
-			true, "resourceAction", true, "resourceType", true, "serverName",
-			true, "serverPort", true, "sessionID", true, "userAgent", true,
-			"userEmailAddress", true);
+			"clientHost", true, "clientIP", true, "clientIPReference", true,
+			"contextName", true, "correlationId", true, "eventType", true,
+			"httpMethod", true, "impersonated", true,
+			"impersonatedUserEmailAddress", true, "impersonatedUserId", true,
+			"impersonatedUserName", true, "message", true, "objectName", true,
+			"pseudonymizationFailed", true, "pseudonymized", true, "requestId",
+			true, "requestIdGenerated", true, "resourceAction", true,
+			"resourceType", true, "serverName", true, "serverPort", true,
+			"sessionID", true, "userAgent", true, "userEmailAddress", true);
 	}
 
 	@Test
@@ -554,6 +559,8 @@ public class AuditEventPersistenceTest {
 
 		auditEvent.setClientIP(RandomTestUtil.randomString());
 
+		auditEvent.setClientIPReference(RandomTestUtil.randomString());
+
 		auditEvent.setContextName(RandomTestUtil.randomString());
 
 		auditEvent.setCorrelationId(RandomTestUtil.randomString());
@@ -609,4 +616,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-569417671
+// LIFERAY-SERVICE-BUILDER-HASH:-1627069373

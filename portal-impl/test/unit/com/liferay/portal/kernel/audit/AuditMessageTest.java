@@ -96,8 +96,13 @@ public class AuditMessageTest {
 
 		JSONObject jsonObject = auditMessage.toJSONObject();
 
+		Assert.assertFalse(jsonObject.has("clientIPReference"));
 		Assert.assertFalse(jsonObject.has("pseudonymizationFailed"));
 		Assert.assertFalse(jsonObject.has("pseudonymized"));
+
+		String clientIPReference = RandomTestUtil.randomString();
+
+		auditMessage.setClientIPReference(clientIPReference);
 
 		auditMessage.setPseudonymizationFailed(true);
 		auditMessage.setPseudonymized(true);
@@ -106,6 +111,8 @@ public class AuditMessageTest {
 
 		auditMessage = new AuditMessage(jsonObject.toString());
 
+		Assert.assertEquals(
+			clientIPReference, auditMessage.getClientIPReference());
 		Assert.assertTrue(auditMessage.isPseudonymizationFailed());
 		Assert.assertTrue(auditMessage.isPseudonymized());
 	}

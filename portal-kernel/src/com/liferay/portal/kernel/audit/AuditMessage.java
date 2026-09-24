@@ -173,6 +173,10 @@ public class AuditMessage implements Serializable {
 			_clientIP = jsonObject.getString(_CLIENT_IP);
 		}
 
+		if (jsonObject.has(_CLIENT_IP_REFERENCE)) {
+			_clientIPReference = jsonObject.getString(_CLIENT_IP_REFERENCE);
+		}
+
 		_companyId = jsonObject.getLong(_COMPANY_ID);
 
 		if (jsonObject.has(_CONTEXT_NAME)) {
@@ -290,6 +294,10 @@ public class AuditMessage implements Serializable {
 
 	public String getClientIP() {
 		return _clientIP;
+	}
+
+	public String getClientIPReference() {
+		return _clientIPReference;
 	}
 
 	public long getCompanyId() {
@@ -432,6 +440,10 @@ public class AuditMessage implements Serializable {
 		_clientIP = clientIP;
 	}
 
+	public void setClientIPReference(String clientIPReference) {
+		_clientIPReference = clientIPReference;
+	}
+
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
@@ -562,6 +574,8 @@ public class AuditMessage implements Serializable {
 		).put(
 			_CLIENT_IP, _clientIP
 		).put(
+			_CLIENT_IP_REFERENCE, _clientIPReference
+		).put(
 			_COMPANY_ID, _companyId
 		).put(
 			_CONTEXT_NAME, _contextName
@@ -652,6 +666,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _CLIENT_IP = "clientIP";
 
+	private static final String _CLIENT_IP_REFERENCE = "clientIPReference";
+
 	private static final String _COMPANY_ID = "companyId";
 
 	private static final String _CONTEXT_NAME = "contextName";
@@ -721,6 +737,7 @@ public class AuditMessage implements Serializable {
 	private String _classPK;
 	private String _clientHost;
 	private String _clientIP;
+	private String _clientIPReference;
 	private long _companyId = -1;
 	private String _contextName;
 	private String _correlationId;

@@ -47,6 +47,19 @@ public class AuditConfigurationUtil {
 		return auditConfiguration.enabled();
 	}
 
+	public static boolean isPseudonymizationEnabled(long companyId) {
+		long configurationCompanyId = getCompanyId(companyId);
+
+		if (configurationCompanyId == CompanyConstants.SYSTEM) {
+			return false;
+		}
+
+		AuditConfiguration auditConfiguration = getScopedConfiguration(
+			AuditConfiguration.class, configurationCompanyId);
+
+		return auditConfiguration.pseudonymizationEnabled();
+	}
+
 	private static <T> T _getConfiguration(
 		Class<T> clazz, long companyId, long configurationCompanyId) {
 
