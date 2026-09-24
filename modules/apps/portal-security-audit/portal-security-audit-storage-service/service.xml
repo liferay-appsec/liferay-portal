@@ -28,6 +28,7 @@
 		<column name="classPK" type="String" />
 		<column name="clientHost" type="String" />
 		<column name="clientIP" type="String" />
+		<column name="clientIPReference" type="String" />
 		<column name="contextName" type="String" />
 		<column name="correlationId" type="String" />
 		<column name="eventType" type="String" />

@@ -81,6 +81,11 @@ public class AuditStorageServiceUpgradeStepRegistrator
 			"2.5.0", "2.6.0",
 			UpgradeProcessFactory.addColumns(
 				"Audit_AuditEvent", "pseudonymizationFailed BOOLEAN"));
+
+		registry.register(
+			"2.6.0", "2.7.0",
+			UpgradeProcessFactory.addColumns(
+				"Audit_AuditEvent", "clientIPReference VARCHAR(75) null"));
 	}
 
 	@Reference
