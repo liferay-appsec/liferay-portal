@@ -59,6 +59,7 @@ public class AuditEventLocalServiceTest {
 
 		auditMessage.setCompanyId(companyId);
 
+		auditMessage.setClientIPReference(RandomTestUtil.randomString());
 		auditMessage.setCorrelationId(RandomTestUtil.randomString());
 		auditMessage.setHttpMethod(RandomTestUtil.randomString());
 		auditMessage.setImpersonated(RandomTestUtil.randomBoolean());
@@ -82,6 +83,9 @@ public class AuditEventLocalServiceTest {
 
 		Assert.assertEquals(
 			auditEvent.getAccountEntryId(), auditMessage.getAccountEntryId());
+		Assert.assertEquals(
+			auditEvent.getClientIPReference(),
+			auditMessage.getClientIPReference());
 		Assert.assertEquals(
 			auditEvent.getContextName(), auditMessage.getContextName());
 		Assert.assertEquals(
