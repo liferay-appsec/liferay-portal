@@ -30,7 +30,8 @@ public class MFAFIDO2AuditMessageBuilder {
 			companyId, userId, "Nonexistent",
 			JSONUtil.put("reason", "Nonexistent User"), checkerClassName,
 			String.valueOf(userId),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null,
+			"verify_failure", "mfa");
 	}
 
 	public AuditMessage buildNotVerifiedAuditMessage(
@@ -40,7 +41,8 @@ public class MFAFIDO2AuditMessageBuilder {
 			user.getCompanyId(), user.getUserId(), user.getFullName(),
 			JSONUtil.put("reason", reason), checkerClassName,
 			String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_NOT_VERIFIED, null);
+			MFAFIDO2EventTypes.MFA_FIDO2_NOT_VERIFIED, null, "verify_pending",
+			"mfa");
 	}
 
 	public AuditMessage buildUnconfiguredUserVerificationFailureAuditMessage(
@@ -49,7 +51,8 @@ public class MFAFIDO2AuditMessageBuilder {
 		return new AuditMessage(
 			companyId, user.getUserId(), "Unconfigured",
 			JSONUtil.put("reason", "Unconfigured for User"), checkerClassName,
-			null, MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+			null, MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null,
+			"verify_failure", "mfa");
 	}
 
 	public AuditMessage buildVerificationFailureAuditMessage(
@@ -59,7 +62,8 @@ public class MFAFIDO2AuditMessageBuilder {
 			user.getCompanyId(), user.getUserId(), user.getFullName(),
 			JSONUtil.put("reason", reason), checkerClassName,
 			String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null);
+			MFAFIDO2EventTypes.MFA_FIDO2_VERIFICATION_FAILURE, null,
+			"verify_failure", "mfa");
 	}
 
 	public AuditMessage buildVerifiedAuditMessage(
@@ -68,7 +72,7 @@ public class MFAFIDO2AuditMessageBuilder {
 		return new AuditMessage(
 			user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 			checkerClassName, String.valueOf(user.getPrimaryKey()),
-			MFAFIDO2EventTypes.MFA_FIDO2_VERIFIED, null);
+			MFAFIDO2EventTypes.MFA_FIDO2_VERIFIED, null, "verify", "mfa");
 	}
 
 	public void routeAuditMessage(AuditMessage auditMessage) {

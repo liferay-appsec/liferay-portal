@@ -143,7 +143,7 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 				JSONUtil.put("reason", "Nonexistent User"), mfaCheckerClassName,
 				String.valueOf(userId),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
-				null);
+				null, "verify_failure", "mfa");
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
@@ -154,7 +154,7 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 				JSONUtil.put("reason", reason), mfaCheckerClassName,
 				String.valueOf(user.getPrimaryKey()),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
-				null);
+				null, "verify_failure", "mfa");
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
@@ -164,7 +164,7 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				mfaCheckerClassName, String.valueOf(user.getPrimaryKey()),
 				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_SUCCESS,
-				null);
+				null, "verify", "mfa");
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {

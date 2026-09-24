@@ -93,7 +93,7 @@ public class CTOnDemandUserTicketGeneratorImpl
 			CTCollection.class.getName(), ctCollectionId,
 			CTOnDemandUserConstants.
 				AUDIT_EVENT_TYPE_CT_ON_DEMAND_USER_TICKET_GENERATED,
-			null);
+			null, "grant_on_demand_access");
 
 		auditMessage.setAdditionalInfo(
 			JSONUtil.put(

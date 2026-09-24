@@ -111,12 +111,13 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 				Group group = _groupLocalService.getGroup(groupId);
 
 				auditMessage = AuditMessageBuilder.buildAuditMessage(
-					group.getClassName(), group.getClassPK(), eventType, null);
+					group.getClassName(), group.getClassPK(), eventType, null,
+					null, "usergroup");
 			}
 			else {
 				auditMessage = AuditMessageBuilder.buildAuditMessage(
 					associationClassName, (Long)associationClassPK, eventType,
-					null);
+					null, null, "usergroup");
 			}
 
 			JSONObject additionalInfoJSONObject =

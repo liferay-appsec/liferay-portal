@@ -5,6 +5,8 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -17,6 +19,8 @@ import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalRunMode;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
@@ -45,9 +49,34 @@ public class AuditMessage implements Serializable {
 
 	public AuditMessage(
 		long groupId, long companyId, long userId, String userName,
+		Date timestampDate, JSONObject additionalInfoJSONObject,
+		String className, String classPK, String eventType, String message,
+		String resourceAction) {
+
+		this(
+			groupId, companyId, userId, userName, timestampDate, 0,
+			additionalInfoJSONObject, className, classPK, null, eventType,
+			message, resourceAction, null);
+	}
+
+	public AuditMessage(
+		long groupId, long companyId, long userId, String userName,
 		Date timestampDate, long accountEntryId,
 		JSONObject additionalInfoJSONObject, String className, String classPK,
 		String contextName, String eventType, String message) {
+
+		this(
+			groupId, companyId, userId, userName, timestampDate, accountEntryId,
+			additionalInfoJSONObject, className, classPK, contextName,
+			eventType, message, null, null);
+	}
+
+	public AuditMessage(
+		long groupId, long companyId, long userId, String userName,
+		Date timestampDate, long accountEntryId,
+		JSONObject additionalInfoJSONObject, String className, String classPK,
+		String contextName, String eventType, String message,
+		String resourceAction, String resourceType) {
 
 		_groupId = groupId;
 		_companyId = companyId;
@@ -63,6 +92,32 @@ public class AuditMessage implements Serializable {
 		_contextName = contextName;
 		_eventType = eventType;
 		_message = message;
+
+		if (Validator.isNull(resourceAction)) {
+			resourceAction = Validator.isNull(eventType) ? "unknown" :
+				StringUtil.toLowerCase(eventType);
+		}
+
+		_resourceAction = resourceAction;
+
+		if (Validator.isNull(resourceType)) {
+			if (className != null) {
+				String rootClassName = StringUtil.extractFirst(
+					className, CharPool.POUND);
+
+				if (rootClassName != null) {
+					className = rootClassName;
+				}
+
+				className = className.substring(
+					className.lastIndexOf(CharPool.PERIOD) + 1);
+			}
+
+			resourceType = Validator.isNull(className) ? "unknown" :
+				StringUtil.toLowerCase(className);
+		}
+
+		_resourceType = resourceType;
 
 		AuditRequestThreadLocal auditRequestThreadLocal =
 			AuditRequestThreadLocal.getAuditThreadLocal();
@@ -123,6 +178,18 @@ public class AuditMessage implements Serializable {
 	}
 
 	public AuditMessage(
+		long companyId, long userId, String userName, Date timestampDate,
+		JSONObject additionalInfoJSONObject, String className, String classPK,
+		String eventType, String message, String resourceAction,
+		String resourceType) {
+
+		this(
+			0, companyId, userId, userName, timestampDate, 0,
+			additionalInfoJSONObject, className, classPK, null, eventType,
+			message, resourceAction, resourceType);
+	}
+
+	public AuditMessage(
 		long companyId, long userId, String userName,
 		JSONObject additionalInfoJSONObject, String className, String classPK,
 		String eventType, String message) {
@@ -130,6 +197,18 @@ public class AuditMessage implements Serializable {
 		this(
 			0, companyId, userId, userName, null, 0, additionalInfoJSONObject,
 			className, classPK, null, eventType, message);
+	}
+
+	public AuditMessage(
+		long companyId, long userId, String userName,
+		JSONObject additionalInfoJSONObject, String className, String classPK,
+		String eventType, String message, String resourceAction,
+		String resourceType) {
+
+		this(
+			0, companyId, userId, userName, null, 0, additionalInfoJSONObject,
+			className, classPK, null, eventType, message, resourceAction,
+			resourceType);
 	}
 
 	public AuditMessage(
@@ -224,7 +303,8 @@ public class AuditMessage implements Serializable {
 		}
 
 		if (jsonObject.has(_RESOURCE_ACTION)) {
-			_resourceAction = jsonObject.getString(_RESOURCE_ACTION);
+			_resourceAction = StringUtil.extractLast(
+				jsonObject.getString(_RESOURCE_ACTION), CharPool.PERIOD);
 		}
 
 		if (jsonObject.has(_RESOURCE_TYPE)) {
@@ -333,7 +413,16 @@ public class AuditMessage implements Serializable {
 	}
 
 	public String getResourceAction() {
-		return _resourceAction;
+		if ((_resourceAction == null) || (_resourceType == null)) {
+			return null;
+		}
+
+		String contextName = Validator.isNull(_contextName) ? "system" :
+			StringUtil.toLowerCase(_contextName);
+
+		return StringBundler.concat(
+			contextName, StringPool.PERIOD, _resourceType, StringPool.PERIOD,
+			_resourceAction);
 	}
 
 	public String getResourceType() {
@@ -566,7 +655,7 @@ public class AuditMessage implements Serializable {
 		).put(
 			_REQUEST_ID_GENERATED, _requestIdGenerated
 		).put(
-			_RESOURCE_ACTION, _resourceAction
+			_RESOURCE_ACTION, getResourceAction()
 		).put(
 			_RESOURCE_TYPE, _resourceType
 		).put(

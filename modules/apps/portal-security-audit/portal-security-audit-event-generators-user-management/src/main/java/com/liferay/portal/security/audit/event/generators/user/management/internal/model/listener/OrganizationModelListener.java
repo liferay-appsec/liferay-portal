@@ -100,8 +100,8 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
-				associationClassName, (Long)associationClassPK, eventType,
-				null);
+				associationClassName, (Long)associationClassPK, eventType, null,
+				null, "organization");
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
