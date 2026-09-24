@@ -70,88 +70,88 @@ public class AuditPseudonymPersistenceImpl
 		FINDER_CLASS_NAME_ENTITY + ".List2";
 
 	private UniquePersistenceFinder<AuditPseudonym, NoSuchPseudonymException>
-		_uniquePersistenceFinderByC_C_FC_V;
+		_uniquePersistenceFinderByC_C_FC_VH;
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the matching audit pseudonym
 	 * @throws NoSuchPseudonymException if a matching audit pseudonym could not be found
 	 */
 	@Override
-	public AuditPseudonym findByC_C_FC_V(
+	public AuditPseudonym findByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws NoSuchPseudonymException {
 
-		return _uniquePersistenceFinderByC_C_FC_V.find(
+		return _uniquePersistenceFinderByC_C_FC_VH.find(
 			finderCache,
-			new Object[] {companyId, contextName, fieldCategory, value});
+			new Object[] {companyId, contextName, fieldCategory, valueHash});
 	}
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching audit pseudonym, or <code>null</code> if a matching audit pseudonym could not be found
 	 */
 	@Override
-	public AuditPseudonym fetchByC_C_FC_V(
-		long companyId, String contextName, String fieldCategory, String value,
-		boolean useFinderCache) {
+	public AuditPseudonym fetchByC_C_FC_VH(
+		long companyId, String contextName, String fieldCategory,
+		String valueHash, boolean useFinderCache) {
 
-		return _uniquePersistenceFinderByC_C_FC_V.fetch(
+		return _uniquePersistenceFinderByC_C_FC_VH.fetch(
 			finderCache,
-			new Object[] {companyId, contextName, fieldCategory, value},
+			new Object[] {companyId, contextName, fieldCategory, valueHash},
 			useFinderCache);
 	}
 
 	/**
-	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; from the database.
+	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; from the database.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the audit pseudonym that was removed
 	 */
 	@Override
-	public AuditPseudonym removeByC_C_FC_V(
+	public AuditPseudonym removeByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws NoSuchPseudonymException {
 
-		AuditPseudonym auditPseudonym = findByC_C_FC_V(
-			companyId, contextName, fieldCategory, value);
+		AuditPseudonym auditPseudonym = findByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash);
 
 		return remove(auditPseudonym);
 	}
 
 	/**
-	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63;.
+	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the number of matching audit pseudonyms
 	 */
 	@Override
-	public int countByC_C_FC_V(
+	public int countByC_C_FC_VH(
 		long companyId, String contextName, String fieldCategory,
-		String value) {
+		String valueHash) {
 
-		return _uniquePersistenceFinderByC_C_FC_V.count(
+		return _uniquePersistenceFinderByC_C_FC_VH.count(
 			finderCache,
-			new Object[] {companyId, contextName, fieldCategory, value});
+			new Object[] {companyId, contextName, fieldCategory, valueHash});
 	}
 
 	public AuditPseudonymPersistenceImpl() {
@@ -345,21 +345,21 @@ public class AuditPseudonymPersistenceImpl
 	 */
 	@Activate
 	public void activate() {
-		_uniquePersistenceFinderByC_C_FC_V = new UniquePersistenceFinder<>(
+		_uniquePersistenceFinderByC_C_FC_VH = new UniquePersistenceFinder<>(
 			this,
 			createUniqueFinderPath(
-				FINDER_CLASS_NAME_ENTITY, "fetchByC_C_FC_V",
+				FINDER_CLASS_NAME_ENTITY, "fetchByC_C_FC_VH",
 				new String[] {
 					Long.class.getName(), String.class.getName(),
 					String.class.getName(), String.class.getName()
 				},
 				new String[] {
-					"companyId", "contextName", "fieldCategory", "value"
+					"companyId", "contextName", "fieldCategory", "valueHash"
 				},
 				0, 14, false, AuditPseudonym::getCompanyId,
 				convertNullFunction(AuditPseudonym::getContextName),
 				convertNullFunction(AuditPseudonym::getFieldCategory),
-				convertNullFunction(AuditPseudonym::getValue)),
+				convertNullFunction(AuditPseudonym::getValueHash)),
 			_SQL_SELECT_AUDITPSEUDONYM_WHERE, "",
 			new FinderColumn<>(
 				"auditPseudonym.", "companyId", FinderColumn.Type.LONG, "=",
@@ -371,8 +371,8 @@ public class AuditPseudonymPersistenceImpl
 				"auditPseudonym.", "fieldCategory", FinderColumn.Type.STRING,
 				"=", true, true, AuditPseudonym::getFieldCategory),
 			new FinderColumn<>(
-				"auditPseudonym.", "value", FinderColumn.Type.STRING, "=", true,
-				true, AuditPseudonym::getValue));
+				"auditPseudonym.", "valueHash", FinderColumn.Type.STRING, "=",
+				true, true, AuditPseudonym::getValueHash));
 
 		AuditPseudonymUtil.setPersistence(this);
 	}
@@ -428,4 +428,4 @@ public class AuditPseudonymPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:334804606
+// LIFERAY-SERVICE-BUILDER-HASH:63297712

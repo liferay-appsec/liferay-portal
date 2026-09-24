@@ -66,6 +66,10 @@ public interface AuditPseudonymLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public AuditPseudonym addAuditPseudonym(AuditPseudonym auditPseudonym);
 
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public AuditPseudonym addAuditPseudonym(
+		long companyId, String contextName, String fieldCategory, String value);
+
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
 	 *
@@ -230,6 +234,10 @@ public interface AuditPseudonymLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public IndexableActionableDynamicQuery getIndexableActionableDynamicQuery();
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public AuditPseudonym getOrAddAuditPseudonym(
+		long companyId, String contextName, String fieldCategory, String value);
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -259,4 +267,4 @@ public interface AuditPseudonymLocalService
 	public AuditPseudonym updateAuditPseudonym(AuditPseudonym auditPseudonym);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2052239499
+// LIFERAY-SERVICE-BUILDER-HASH:492961953

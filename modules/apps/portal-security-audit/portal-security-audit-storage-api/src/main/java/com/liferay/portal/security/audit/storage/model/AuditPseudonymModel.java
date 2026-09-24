@@ -137,6 +137,21 @@ public interface AuditPseudonymModel
 	 */
 	public void setValue(String value);
 
+	/**
+	 * Returns the value hash of this audit pseudonym.
+	 *
+	 * @return the value hash of this audit pseudonym
+	 */
+	@AutoEscape
+	public String getValueHash();
+
+	/**
+	 * Sets the value hash of this audit pseudonym.
+	 *
+	 * @param valueHash the value hash of this audit pseudonym
+	 */
+	public void setValueHash(String valueHash);
+
 	@Override
 	public AuditPseudonym cloneWithOriginalValues();
 
@@ -145,4 +160,4 @@ public interface AuditPseudonymModel
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-940874974
+// LIFERAY-SERVICE-BUILDER-HASH:-901059230

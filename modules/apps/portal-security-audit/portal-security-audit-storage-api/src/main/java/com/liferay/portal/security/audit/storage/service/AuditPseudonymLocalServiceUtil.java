@@ -53,6 +53,14 @@ public class AuditPseudonymLocalServiceUtil {
 		return getService().addAuditPseudonym(auditPseudonym);
 	}
 
+	public static AuditPseudonym addAuditPseudonym(
+		long companyId, String contextName, String fieldCategory,
+		String value) {
+
+		return getService().addAuditPseudonym(
+			companyId, contextName, fieldCategory, value);
+	}
+
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
 	 *
@@ -255,6 +263,14 @@ public class AuditPseudonymLocalServiceUtil {
 		return getService().getIndexableActionableDynamicQuery();
 	}
 
+	public static AuditPseudonym getOrAddAuditPseudonym(
+		long companyId, String contextName, String fieldCategory,
+		String value) {
+
+		return getService().getOrAddAuditPseudonym(
+			companyId, contextName, fieldCategory, value);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -299,4 +315,4 @@ public class AuditPseudonymLocalServiceUtil {
 			AuditPseudonymLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1771739895
+// LIFERAY-SERVICE-BUILDER-HASH:563462573

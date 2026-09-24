@@ -125,77 +125,77 @@ public class AuditPseudonymUtil {
 	}
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or throws a <code>NoSuchPseudonymException</code> if it could not be found.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the matching audit pseudonym
 	 * @throws NoSuchPseudonymException if a matching audit pseudonym could not be found
 	 */
-	public static AuditPseudonym findByC_C_FC_V(
+	public static AuditPseudonym findByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws com.liferay.portal.security.audit.storage.exception.
 			NoSuchPseudonymException {
 
-		return getPersistence().findByC_C_FC_V(
-			companyId, contextName, fieldCategory, value);
+		return getPersistence().findByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash);
 	}
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching audit pseudonym, or <code>null</code> if a matching audit pseudonym could not be found
 	 */
-	public static AuditPseudonym fetchByC_C_FC_V(
-		long companyId, String contextName, String fieldCategory, String value,
-		boolean useFinderCache) {
+	public static AuditPseudonym fetchByC_C_FC_VH(
+		long companyId, String contextName, String fieldCategory,
+		String valueHash, boolean useFinderCache) {
 
-		return getPersistence().fetchByC_C_FC_V(
-			companyId, contextName, fieldCategory, value, useFinderCache);
+		return getPersistence().fetchByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash, useFinderCache);
 	}
 
 	/**
-	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; from the database.
+	 * Removes the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; from the database.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the audit pseudonym that was removed
 	 */
-	public static AuditPseudonym removeByC_C_FC_V(
+	public static AuditPseudonym removeByC_C_FC_VH(
 			long companyId, String contextName, String fieldCategory,
-			String value)
+			String valueHash)
 		throws com.liferay.portal.security.audit.storage.exception.
 			NoSuchPseudonymException {
 
-		return getPersistence().removeByC_C_FC_V(
-			companyId, contextName, fieldCategory, value);
+		return getPersistence().removeByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash);
 	}
 
 	/**
-	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63;.
+	 * Returns the number of audit pseudonyms where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63;.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the number of matching audit pseudonyms
 	 */
-	public static int countByC_C_FC_V(
+	public static int countByC_C_FC_VH(
 		long companyId, String contextName, String fieldCategory,
-		String value) {
+		String valueHash) {
 
-		return getPersistence().countByC_C_FC_V(
-			companyId, contextName, fieldCategory, value);
+		return getPersistence().countByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash);
 	}
 
 	/**
@@ -251,20 +251,20 @@ public class AuditPseudonymUtil {
 	}
 
 	/**
-	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and value = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the audit pseudonym where companyId = &#63; and contextName = &#63; and fieldCategory = &#63; and valueHash = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
 	 * @param companyId the company ID
 	 * @param contextName the context name
 	 * @param fieldCategory the field category
-	 * @param value the value
+	 * @param valueHash the value hash
 	 * @return the matching audit pseudonym, or <code>null</code> if a matching audit pseudonym could not be found
 	 */
-	public static AuditPseudonym fetchByC_C_FC_V(
+	public static AuditPseudonym fetchByC_C_FC_VH(
 		long companyId, String contextName, String fieldCategory,
-		String value) {
+		String valueHash) {
 
-		return getPersistence().fetchByC_C_FC_V(
-			companyId, contextName, fieldCategory, value);
+		return getPersistence().fetchByC_C_FC_VH(
+			companyId, contextName, fieldCategory, valueHash);
 	}
 
 	public static AuditPseudonymPersistence getPersistence() {
@@ -278,4 +278,4 @@ public class AuditPseudonymUtil {
 	private static volatile AuditPseudonymPersistence _persistence;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:862718988
+// LIFERAY-SERVICE-BUILDER-HASH:-865085096

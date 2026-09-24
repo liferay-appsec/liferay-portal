@@ -59,7 +59,8 @@ public class AuditPseudonymModelImpl
 	public static final Object[][] TABLE_COLUMNS = {
 		{"auditPseudonymId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"createDate", Types.TIMESTAMP}, {"contextName", Types.VARCHAR},
-		{"fieldCategory", Types.VARCHAR}, {"value", Types.VARCHAR}
+		{"fieldCategory", Types.VARCHAR}, {"value", Types.VARCHAR},
+		{"valueHash", Types.VARCHAR}
 	};
 
 	public static final Map<String, Integer> TABLE_COLUMNS_MAP =
@@ -72,10 +73,11 @@ public class AuditPseudonymModelImpl
 		TABLE_COLUMNS_MAP.put("contextName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("fieldCategory", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("value", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("valueHash", Types.VARCHAR);
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Audit_AuditPseudonym (auditPseudonymId LONG not null primary key,companyId LONG,createDate DATE null,contextName VARCHAR(75) null,fieldCategory VARCHAR(75) null,value VARCHAR(255) null)";
+		"create table Audit_AuditPseudonym (auditPseudonymId LONG not null primary key,companyId LONG,createDate DATE null,contextName VARCHAR(75) null,fieldCategory VARCHAR(75) null,value VARCHAR(255) null,valueHash VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP =
 		"drop table Audit_AuditPseudonym";
@@ -116,7 +118,7 @@ public class AuditPseudonymModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long VALUE_COLUMN_BITMASK = 8L;
+	public static final long VALUEHASH_COLUMN_BITMASK = 8L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
@@ -246,6 +248,8 @@ public class AuditPseudonymModelImpl
 			attributeGetterFunctions.put(
 				"fieldCategory", AuditPseudonym::getFieldCategory);
 			attributeGetterFunctions.put("value", AuditPseudonym::getValue);
+			attributeGetterFunctions.put(
+				"valueHash", AuditPseudonym::getValueHash);
 
 			_attributeGetterFunctions = Collections.unmodifiableMap(
 				attributeGetterFunctions);
@@ -285,6 +289,10 @@ public class AuditPseudonymModelImpl
 			attributeSetterBiConsumers.put(
 				"value",
 				(BiConsumer<AuditPseudonym, String>)AuditPseudonym::setValue);
+			attributeSetterBiConsumers.put(
+				"valueHash",
+				(BiConsumer<AuditPseudonym, String>)
+					AuditPseudonym::setValueHash);
 
 			_attributeSetterBiConsumers = Collections.unmodifiableMap(
 				(Map)attributeSetterBiConsumers);
@@ -419,13 +427,32 @@ public class AuditPseudonymModelImpl
 		_value = value;
 	}
 
+	@Override
+	public String getValueHash() {
+		if (_valueHash == null) {
+			return "";
+		}
+		else {
+			return _valueHash;
+		}
+	}
+
+	@Override
+	public void setValueHash(String valueHash) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_valueHash = valueHash;
+	}
+
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *             #getColumnOriginalValue(String)}
 	 */
 	@Deprecated
-	public String getOriginalValue() {
-		return getColumnOriginalValue("value");
+	public String getOriginalValueHash() {
+		return getColumnOriginalValue("valueHash");
 	}
 
 	public long getColumnBitmask() {
@@ -490,6 +517,7 @@ public class AuditPseudonymModelImpl
 		auditPseudonymImpl.setContextName(getContextName());
 		auditPseudonymImpl.setFieldCategory(getFieldCategory());
 		auditPseudonymImpl.setValue(getValue());
+		auditPseudonymImpl.setValueHash(getValueHash());
 
 		auditPseudonymImpl.resetOriginalValues();
 
@@ -512,6 +540,8 @@ public class AuditPseudonymModelImpl
 			this.<String>getColumnOriginalValue("fieldCategory"));
 		auditPseudonymImpl.setValue(
 			this.<String>getColumnOriginalValue("value"));
+		auditPseudonymImpl.setValueHash(
+			this.<String>getColumnOriginalValue("valueHash"));
 
 		return auditPseudonymImpl;
 	}
@@ -625,6 +655,14 @@ public class AuditPseudonymModelImpl
 			auditPseudonymCacheModel.value = null;
 		}
 
+		auditPseudonymCacheModel.valueHash = getValueHash();
+
+		String valueHash = auditPseudonymCacheModel.valueHash;
+
+		if ((valueHash != null) && (valueHash.length() == 0)) {
+			auditPseudonymCacheModel.valueHash = null;
+		}
+
 		return auditPseudonymCacheModel;
 	}
 
@@ -692,6 +730,7 @@ public class AuditPseudonymModelImpl
 	private String _contextName;
 	private String _fieldCategory;
 	private String _value;
+	private String _valueHash;
 
 	public <T> T getColumnValue(String columnName) {
 		Function<AuditPseudonym, Object> function =
@@ -727,6 +766,7 @@ public class AuditPseudonymModelImpl
 		_columnOriginalValues.put("contextName", _contextName);
 		_columnOriginalValues.put("fieldCategory", _fieldCategory);
 		_columnOriginalValues.put("value", _value);
+		_columnOriginalValues.put("valueHash", _valueHash);
 	}
 
 	private transient Map<String, Object> _columnOriginalValues;
@@ -752,6 +792,8 @@ public class AuditPseudonymModelImpl
 
 		columnBitmasks.put("value", 32L);
 
+		columnBitmasks.put("valueHash", 64L);
+
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
 
@@ -759,4 +801,4 @@ public class AuditPseudonymModelImpl
 	private AuditPseudonym _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1519830501
+// LIFERAY-SERVICE-BUILDER-HASH:-1048944472

@@ -39,6 +39,7 @@ public class AuditPseudonymWrapper
 		attributes.put("contextName", getContextName());
 		attributes.put("fieldCategory", getFieldCategory());
 		attributes.put("value", getValue());
+		attributes.put("valueHash", getValueHash());
 
 		return attributes;
 	}
@@ -79,6 +80,12 @@ public class AuditPseudonymWrapper
 
 		if (value != null) {
 			setValue(value);
+		}
+
+		String valueHash = (String)attributes.get("valueHash");
+
+		if (valueHash != null) {
+			setValueHash(valueHash);
 		}
 	}
 
@@ -157,6 +164,16 @@ public class AuditPseudonymWrapper
 		return model.getValue();
 	}
 
+	/**
+	 * Returns the value hash of this audit pseudonym.
+	 *
+	 * @return the value hash of this audit pseudonym
+	 */
+	@Override
+	public String getValueHash() {
+		return model.getValueHash();
+	}
+
 	@Override
 	public void persist() {
 		model.persist();
@@ -232,6 +249,16 @@ public class AuditPseudonymWrapper
 		model.setValue(value);
 	}
 
+	/**
+	 * Sets the value hash of this audit pseudonym.
+	 *
+	 * @param valueHash the value hash of this audit pseudonym
+	 */
+	@Override
+	public void setValueHash(String valueHash) {
+		model.setValueHash(valueHash);
+	}
+
 	@Override
 	public String toXmlString() {
 		return model.toXmlString();
@@ -243,4 +270,4 @@ public class AuditPseudonymWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-370146191
+// LIFERAY-SERVICE-BUILDER-HASH:423282585
