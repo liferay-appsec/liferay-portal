@@ -45,6 +45,7 @@ public class AuditEventWrapper
 		attributes.put("classPK", getClassPK());
 		attributes.put("clientHost", getClientHost());
 		attributes.put("clientIP", getClientIP());
+		attributes.put("clientIPReference", getClientIPReference());
 		attributes.put("contextName", getContextName());
 		attributes.put("correlationId", getCorrelationId());
 		attributes.put("eventType", getEventType());
@@ -144,6 +145,12 @@ public class AuditEventWrapper
 
 		if (clientIP != null) {
 			setClientIP(clientIP);
+		}
+
+		String clientIPReference = (String)attributes.get("clientIPReference");
+
+		if (clientIPReference != null) {
+			setClientIPReference(clientIPReference);
 		}
 
 		String contextName = (String)attributes.get("contextName");
@@ -356,6 +363,16 @@ public class AuditEventWrapper
 	@Override
 	public String getClientIP() {
 		return model.getClientIP();
+	}
+
+	/**
+	 * Returns the client ip reference of this audit event.
+	 *
+	 * @return the client ip reference of this audit event
+	 */
+	@Override
+	public String getClientIPReference() {
+		return model.getClientIPReference();
 	}
 
 	/**
@@ -774,6 +791,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Sets the client ip reference of this audit event.
+	 *
+	 * @param clientIPReference the client ip reference of this audit event
+	 */
+	@Override
+	public void setClientIPReference(String clientIPReference) {
+		model.setClientIPReference(clientIPReference);
+	}
+
+	/**
 	 * Sets the company ID of this audit event.
 	 *
 	 * @param companyId the company ID of this audit event
@@ -1086,4 +1113,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2116816038
+// LIFERAY-SERVICE-BUILDER-HASH:-836521792

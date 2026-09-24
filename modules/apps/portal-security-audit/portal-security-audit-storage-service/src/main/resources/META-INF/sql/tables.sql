@@ -11,6 +11,7 @@ create table Audit_AuditEvent (
 	classPK VARCHAR(75) null,
 	clientHost VARCHAR(255) null,
 	clientIP VARCHAR(255) null,
+	clientIPReference VARCHAR(75) null,
 	contextName VARCHAR(75) null,
 	correlationId VARCHAR(75) null,
 	eventType VARCHAR(75) null,
