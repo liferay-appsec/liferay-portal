@@ -96,14 +96,17 @@ public class AuditMessageTest {
 
 		JSONObject jsonObject = auditMessage.toJSONObject();
 
+		Assert.assertFalse(jsonObject.has("pseudonymizationFailed"));
 		Assert.assertFalse(jsonObject.has("pseudonymized"));
 
+		auditMessage.setPseudonymizationFailed(true);
 		auditMessage.setPseudonymized(true);
 
 		jsonObject = auditMessage.toJSONObject();
 
 		auditMessage = new AuditMessage(jsonObject.toString());
 
+		Assert.assertTrue(auditMessage.isPseudonymizationFailed());
 		Assert.assertTrue(auditMessage.isPseudonymized());
 	}
 
