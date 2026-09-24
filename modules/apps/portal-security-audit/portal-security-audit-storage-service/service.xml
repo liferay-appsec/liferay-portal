@@ -61,4 +61,34 @@
 			<finder-column name="companyId" />
 		</finder>
 	</entity>
+	<entity local-service="true" name="AuditPseudonym" remote-service="false">
+
+		<!-- PK fields -->
+
+		<column name="auditPseudonymId" primary="true" type="long" />
+
+		<!-- Audit fields -->
+
+		<column name="companyId" type="long" />
+		<column name="createDate" type="Date" />
+
+		<!-- Other fields -->
+
+		<column name="contextName" type="String" />
+		<column name="fieldCategory" type="String" />
+		<column name="identityValue" type="String" />
+		<column name="identityValueHash" type="String" />
+
+		<!-- Finder methods -->
+
+		<finder name="C_CN_FC_IVH" return-type="AuditPseudonym" unique="true">
+			<finder-column name="companyId" />
+			<finder-column name="contextName" />
+			<finder-column name="fieldCategory" />
+			<finder-column name="identityValueHash" />
+		</finder>
+	</entity>
+	<exceptions>
+		<exception>AuditPseudonymIdentityValue</exception>
+	</exceptions>
 </service-builder>
