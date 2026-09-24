@@ -32,3 +32,13 @@ create table Audit_AuditEvent (
 	userAgent VARCHAR(255) null,
 	userEmailAddress VARCHAR(75) null
 );
+
+create table Audit_AuditPseudonym (
+	auditPseudonymId LONG not null primary key,
+	companyId LONG,
+	createDate DATE null,
+	contextName VARCHAR(75) null,
+	fieldCategory VARCHAR(75) null,
+	identityValue VARCHAR(255) null,
+	identityValueHash VARCHAR(75) null
+);
