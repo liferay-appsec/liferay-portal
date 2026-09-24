@@ -11,6 +11,7 @@ import com.liferay.multi.factor.authentication.spi.checker.headless.HeadlessMFAC
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.audit.AuditException;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditResourceConstants;
 import com.liferay.portal.kernel.audit.AuditRouterUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -138,33 +139,40 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 		public AuditMessage buildNonexistentUserVerificationFailureAuditMessage(
 			long companyId, long userId, String mfaCheckerClassName) {
 
-			return new AuditMessage(
-				companyId, userId, "Nonexistent",
-				JSONUtil.put("reason", "Nonexistent User"), mfaCheckerClassName,
-				String.valueOf(userId),
-				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
-				null);
+			return _populateAuditMessage(
+				new AuditMessage(
+					companyId, userId, "Nonexistent",
+					JSONUtil.put("reason", "Nonexistent User"),
+					mfaCheckerClassName, String.valueOf(userId),
+					MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
+					null),
+				AuditResourceConstants.RESOURCE_ACTION_VERIFY_FAILURE);
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
 			User user, String mfaCheckerClassName, String reason) {
 
-			return new AuditMessage(
-				user.getCompanyId(), user.getUserId(), user.getFullName(),
-				JSONUtil.put("reason", reason), mfaCheckerClassName,
-				String.valueOf(user.getPrimaryKey()),
-				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
-				null);
+			return _populateAuditMessage(
+				new AuditMessage(
+					user.getCompanyId(), user.getUserId(), user.getFullName(),
+					JSONUtil.put("reason", reason), mfaCheckerClassName,
+					String.valueOf(user.getPrimaryKey()),
+					MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_FAILURE,
+					null),
+				AuditResourceConstants.RESOURCE_ACTION_VERIFY_FAILURE);
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
 			User user, String mfaCheckerClassName) {
 
-			return new AuditMessage(
-				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
-				mfaCheckerClassName, String.valueOf(user.getPrimaryKey()),
-				MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_SUCCESS,
-				null);
+			return _populateAuditMessage(
+				new AuditMessage(
+					user.getCompanyId(), user.getUserId(), user.getFullName(),
+					null, mfaCheckerClassName,
+					String.valueOf(user.getPrimaryKey()),
+					MFAIPAddressEventTypes.MFA_IP_ADDRESS_VERIFICATION_SUCCESS,
+					null),
+				AuditResourceConstants.RESOURCE_ACTION_VERIFY);
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {
@@ -181,6 +189,16 @@ public class IPAddressHeadlessMFAChecker implements HeadlessMFAChecker {
 					_log.debug(exception);
 				}
 			}
+		}
+
+		private AuditMessage _populateAuditMessage(
+			AuditMessage auditMessage, String action) {
+
+			auditMessage.setResourceType(
+				AuditResourceConstants.RESOURCE_TYPE_MFA);
+			auditMessage.setResourceAction(action);
+
+			return auditMessage;
 		}
 
 		private final Log _log = LogFactoryUtil.getLog(

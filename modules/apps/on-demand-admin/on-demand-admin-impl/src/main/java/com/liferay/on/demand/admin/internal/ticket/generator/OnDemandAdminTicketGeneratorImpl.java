@@ -14,6 +14,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditResourceConstants;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -84,6 +85,9 @@ public class OnDemandAdminTicketGeneratorImpl
 			).put(
 				"requestedCompanyWebId", company.getWebId()
 			));
+
+		auditMessage.setResourceAction(
+			AuditResourceConstants.RESOURCE_ACTION_GRANT_ON_DEMAND_ACCESS);
 
 		_auditRouter.route(auditMessage);
 

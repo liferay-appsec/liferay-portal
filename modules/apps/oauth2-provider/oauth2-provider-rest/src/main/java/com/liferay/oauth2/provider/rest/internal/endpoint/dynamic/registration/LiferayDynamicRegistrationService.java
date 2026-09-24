@@ -19,6 +19,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditResourceConstants;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -468,7 +469,7 @@ public class LiferayDynamicRegistrationService
 			"scope", liferayClientRegistrationResponse.getScope()
 		);
 
-		return new AuditMessage(
+		AuditMessage auditMessage = new AuditMessage(
 			0, _getCompanyId(), 0, StringPool.BLANK, null,
 			additionalInfoJSONObject, OAuth2Application.class.getName(),
 			GetterUtil.getString(
@@ -476,6 +477,11 @@ public class LiferayDynamicRegistrationService
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_ADD,
 			StringPool.BLANK);
+
+		auditMessage.setResourceAction(
+			AuditResourceConstants.RESOURCE_ACTION_REGISTER);
+
+		return auditMessage;
 	}
 
 	private String _getApplicationType(ClientRegistration clientRegistration) {
@@ -598,13 +604,18 @@ public class LiferayDynamicRegistrationService
 			"scope", scope
 		);
 
-		return new AuditMessage(
+		AuditMessage auditMessage = new AuditMessage(
 			0, _getCompanyId(), 0, StringPool.BLANK, null,
 			additionalInfoJSONObject, OAuth2Application.class.getName(),
 			StringPool.BLANK,
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
 			StringPool.BLANK);
+
+		auditMessage.setResourceAction(
+			AuditResourceConstants.RESOURCE_ACTION_REGISTER_REJECT);
+
+		return auditMessage;
 	}
 
 	private boolean _isOpenRegistration(Client client) {

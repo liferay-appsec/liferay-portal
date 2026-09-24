@@ -21,6 +21,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditResourceConstants;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
@@ -437,7 +438,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		String errorDescription, HttpServletRequest httpServletRequest,
 		String mode) {
 
-		return new AuditMessage(
+		AuditMessage auditMessage = new AuditMessage(
 			0, companyId, 0, StringPool.BLANK, null,
 			JSONUtil.put(
 				"clientHost", clientHost
@@ -455,6 +456,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
 			StringPool.BLANK);
+
+		auditMessage.setResourceAction(
+			AuditResourceConstants.RESOURCE_ACTION_REGISTER_REJECT);
+
+		return auditMessage;
 	}
 
 	private String _normalizeHost(String host) {

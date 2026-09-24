@@ -6,6 +6,7 @@
 package com.liferay.portal.security.audit.event.generators.user.management.internal.model.listener;
 
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditResourceConstants;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.change.tracking.CTTransactionException;
 import com.liferay.portal.kernel.exception.ModelListenerException;
@@ -17,6 +18,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AttributesBuilder;
@@ -118,6 +120,10 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 					associationClassName, (Long)associationClassPK, eventType,
 					null);
 			}
+
+			auditMessage.setResourceType(
+				AuditResourceConstants.RESOURCE_TYPE_USER_GROUP);
+			auditMessage.setResourceAction(StringUtil.toLowerCase(eventType));
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
