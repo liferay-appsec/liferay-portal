@@ -214,6 +214,11 @@ public class AuditMessage implements Serializable {
 			_objectName = jsonObject.getString(_OBJECT_NAME);
 		}
 
+		if (jsonObject.has(_PSEUDONYMIZATION_FAILED)) {
+			_pseudonymizationFailed = jsonObject.getBoolean(
+				_PSEUDONYMIZATION_FAILED);
+		}
+
 		if (jsonObject.has(_PSEUDONYMIZED)) {
 			_pseudonymized = jsonObject.getBoolean(_PSEUDONYMIZED);
 		}
@@ -387,6 +392,10 @@ public class AuditMessage implements Serializable {
 		return _impersonated;
 	}
 
+	public boolean isPseudonymizationFailed() {
+		return _pseudonymizationFailed;
+	}
+
 	public boolean isPseudonymized() {
 		return _pseudonymized;
 	}
@@ -471,6 +480,10 @@ public class AuditMessage implements Serializable {
 
 	public void setObjectName(String objectName) {
 		_objectName = objectName;
+	}
+
+	public void setPseudonymizationFailed(boolean pseudonymizationFailed) {
+		_pseudonymizationFailed = pseudonymizationFailed;
 	}
 
 	public void setPseudonymized(boolean pseudonymized) {
@@ -573,6 +586,15 @@ public class AuditMessage implements Serializable {
 		).put(
 			_OBJECT_NAME, _objectName
 		).put(
+			_PSEUDONYMIZATION_FAILED,
+			() -> {
+				if (_pseudonymizationFailed) {
+					return true;
+				}
+
+				return null;
+			}
+		).put(
 			_PSEUDONYMIZED,
 			() -> {
 				if (_pseudonymized) {
@@ -658,6 +680,9 @@ public class AuditMessage implements Serializable {
 
 	private static final String _OBJECT_NAME = "objectName";
 
+	private static final String _PSEUDONYMIZATION_FAILED =
+		"pseudonymizationFailed";
+
 	private static final String _PSEUDONYMIZED = "pseudonymized";
 
 	private static final String _REQUEST_ID = "requestId";
@@ -708,6 +733,7 @@ public class AuditMessage implements Serializable {
 	private String _impersonatedUserName;
 	private String _message;
 	private String _objectName;
+	private boolean _pseudonymizationFailed;
 	private boolean _pseudonymized;
 	private String _requestId;
 	private boolean _requestIdGenerated;
