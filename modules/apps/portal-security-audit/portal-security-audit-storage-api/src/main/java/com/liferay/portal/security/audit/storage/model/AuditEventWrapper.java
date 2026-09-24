@@ -56,6 +56,7 @@ public class AuditEventWrapper
 		attributes.put("impersonatedUserName", getImpersonatedUserName());
 		attributes.put("message", getMessage());
 		attributes.put("objectName", getObjectName());
+		attributes.put("pseudonymizationFailed", isPseudonymizationFailed());
 		attributes.put("pseudonymized", isPseudonymized());
 		attributes.put("requestId", getRequestId());
 		attributes.put("requestIdGenerated", isRequestIdGenerated());
@@ -205,6 +206,13 @@ public class AuditEventWrapper
 
 		if (objectName != null) {
 			setObjectName(objectName);
+		}
+
+		Boolean pseudonymizationFailed = (Boolean)attributes.get(
+			"pseudonymizationFailed");
+
+		if (pseudonymizationFailed != null) {
+			setPseudonymizationFailed(pseudonymizationFailed);
 		}
 
 		Boolean pseudonymized = (Boolean)attributes.get("pseudonymized");
@@ -501,6 +509,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Returns the pseudonymization failed of this audit event.
+	 *
+	 * @return the pseudonymization failed of this audit event
+	 */
+	@Override
+	public boolean getPseudonymizationFailed() {
+		return model.getPseudonymizationFailed();
+	}
+
+	/**
 	 * Returns the pseudonymized of this audit event.
 	 *
 	 * @return the pseudonymized of this audit event
@@ -648,6 +666,16 @@ public class AuditEventWrapper
 	@Override
 	public boolean isImpersonated() {
 		return model.isImpersonated();
+	}
+
+	/**
+	 * Returns <code>true</code> if this audit event is pseudonymization failed.
+	 *
+	 * @return <code>true</code> if this audit event is pseudonymization failed; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPseudonymizationFailed() {
+		return model.isPseudonymizationFailed();
 	}
 
 	/**
@@ -898,6 +926,16 @@ public class AuditEventWrapper
 	}
 
 	/**
+	 * Sets whether this audit event is pseudonymization failed.
+	 *
+	 * @param pseudonymizationFailed the pseudonymization failed of this audit event
+	 */
+	@Override
+	public void setPseudonymizationFailed(boolean pseudonymizationFailed) {
+		model.setPseudonymizationFailed(pseudonymizationFailed);
+	}
+
+	/**
 	 * Sets whether this audit event is pseudonymized.
 	 *
 	 * @param pseudonymized the pseudonymized of this audit event
@@ -1048,4 +1086,4 @@ public class AuditEventWrapper
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-2072993607
+// LIFERAY-SERVICE-BUILDER-HASH:2116816038

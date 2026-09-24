@@ -21,6 +21,7 @@ create table Audit_AuditEvent (
 	impersonatedUserName VARCHAR(75) null,
 	message STRING null,
 	objectName VARCHAR(75) null,
+	pseudonymizationFailed BOOLEAN,
 	pseudonymized BOOLEAN,
 	requestId VARCHAR(200) null,
 	requestIdGenerated BOOLEAN,
