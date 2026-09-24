@@ -247,7 +247,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			DBPartitionUtil.setDefaultCompanyId(company.getCompanyId());
 		}
 
-		String key = _generateKey(companyId);
+		String keyString = _generateKey(companyId);
 
 		boolean newDBPartitionAdded = DBPartitionUtil.addDBPartition(companyId);
 
@@ -281,7 +281,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			// Company info
 
-			updatedCompany.setKey(key);
+			updatedCompany.setKey(keyString);
 
 			_companyInfoPersistence.update(updatedCompany.getCompanyInfo());
 
