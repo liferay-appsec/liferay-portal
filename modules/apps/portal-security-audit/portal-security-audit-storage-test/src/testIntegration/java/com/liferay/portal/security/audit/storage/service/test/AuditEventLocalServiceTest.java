@@ -67,6 +67,7 @@ public class AuditEventLocalServiceTest {
 		auditMessage.setImpersonatedUserId(RandomTestUtil.randomLong());
 		auditMessage.setImpersonatedUserName(RandomTestUtil.randomString());
 		auditMessage.setObjectName(RandomTestUtil.randomString());
+		auditMessage.setPseudonymizationFailed(RandomTestUtil.randomBoolean());
 		auditMessage.setPseudonymized(RandomTestUtil.randomBoolean());
 		auditMessage.setRequestId(RandomTestUtil.randomString());
 		auditMessage.setRequestIdGenerated(RandomTestUtil.randomBoolean());
@@ -100,6 +101,9 @@ public class AuditEventLocalServiceTest {
 			auditMessage.getImpersonatedUserName());
 		Assert.assertEquals(
 			auditEvent.getObjectName(), auditMessage.getObjectName());
+		Assert.assertEquals(
+			auditEvent.isPseudonymizationFailed(),
+			auditMessage.isPseudonymizationFailed());
 		Assert.assertEquals(
 			auditEvent.isPseudonymized(), auditMessage.isPseudonymized());
 		Assert.assertEquals(
