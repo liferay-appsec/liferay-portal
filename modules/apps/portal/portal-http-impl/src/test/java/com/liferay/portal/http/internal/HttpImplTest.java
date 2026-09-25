@@ -7,15 +7,23 @@ package com.liferay.portal.http.internal;
 
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Tuple;
+import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalImpl;
 
 import java.net.URI;
+
+import java.security.Principal;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +35,9 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.NTCredentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
@@ -101,6 +112,87 @@ public class HttpImplTest {
 				_httpImpl, "_createCloseableHttpClient",
 				new Class<?>[] {PoolingHttpClientConnectionManager.class},
 				_poolingHttpClientConnectionManager));
+	}
+
+	@Test
+	public void testGetProxyCredentials() throws Exception {
+		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
+			new KeyReference(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				KeyReference.Type.SECRET));
+		String proxyPassword = RandomTestUtil.randomString();
+		String proxyUserName = RandomTestUtil.randomString();
+
+		Snapshot<SecretResolver> secretResolverSnapshot =
+			ReflectionTestUtil.getAndSetFieldValue(
+				SecretResolverUtil.class, "_secretResolverSnapshot",
+				new Snapshot<SecretResolver>(
+					SecretResolverUtil.class, SecretResolver.class) {
+
+					@Override
+					public SecretResolver get() {
+						return (companyId, value) -> {
+							Assert.assertEquals(
+								CompanyConstants.SYSTEM, companyId);
+							Assert.assertEquals(keyReferenceString, value);
+
+							return proxyPassword;
+						};
+					}
+
+				});
+
+		try (AutoCloseable autoCloseable1 =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					HttpImpl.class, "_PROXY_PASSWORD", keyReferenceString);
+			AutoCloseable autoCloseable2 =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					HttpImpl.class, "_PROXY_USERNAME", proxyUserName)) {
+
+			try (AutoCloseable autoCloseable3 =
+					ReflectionTestUtil.setFieldValueWithAutoCloseable(
+						HttpImpl.class, "_PROXY_AUTH_TYPE",
+						"username-password")) {
+
+				Credentials credentials = ReflectionTestUtil.invoke(
+					_httpImpl, "_getProxyCredentials", new Class<?>[0]);
+
+				Assert.assertTrue(
+					credentials instanceof UsernamePasswordCredentials);
+				Assert.assertEquals(proxyPassword, credentials.getPassword());
+
+				Principal principal = credentials.getUserPrincipal();
+
+				Assert.assertEquals(proxyUserName, principal.getName());
+			}
+
+			try (AutoCloseable autoCloseable3 =
+					ReflectionTestUtil.setFieldValueWithAutoCloseable(
+						HttpImpl.class, "_PROXY_AUTH_TYPE", "ntlm")) {
+
+				Credentials credentials = ReflectionTestUtil.invoke(
+					_httpImpl, "_getProxyCredentials", new Class<?>[0]);
+
+				Assert.assertTrue(credentials instanceof NTCredentials);
+				Assert.assertEquals(proxyPassword, credentials.getPassword());
+			}
+		}
+		finally {
+			ReflectionTestUtil.setFieldValue(
+				SecretResolverUtil.class, "_secretResolverSnapshot",
+				secretResolverSnapshot);
+		}
+
+		Credentials credentials = new UsernamePasswordCredentials(
+			proxyUserName, proxyPassword);
+
+		ReflectionTestUtil.setFieldValue(
+			_httpImpl, "_proxyCredentials", credentials);
+
+		Assert.assertSame(
+			credentials,
+			ReflectionTestUtil.invoke(
+				_httpImpl, "_getProxyCredentials", new Class<?>[0]));
 	}
 
 	@Test

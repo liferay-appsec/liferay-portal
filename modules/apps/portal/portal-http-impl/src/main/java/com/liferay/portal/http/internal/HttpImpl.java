@@ -18,6 +18,7 @@ import com.liferay.portal.http.internal.configuration.HttpConfiguration;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -32,6 +33,8 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import jakarta.servlet.http.Cookie;
 
@@ -733,7 +736,7 @@ public class HttpImpl implements Http {
 		}
 
 		credentialsProvider.setCredentials(
-			new AuthScope(_PROXY_HOST, _PROXY_PORT), _proxyCredentials);
+			new AuthScope(_PROXY_HOST, _PROXY_PORT), _getProxyCredentials());
 	}
 
 	@Deactivate
@@ -1027,6 +1030,23 @@ public class HttpImpl implements Http {
 		poolingHttpClientConnectionManager.setMaxTotal(_MAX_TOTAL_CONNECTIONS);
 
 		return poolingHttpClientConnectionManager;
+	}
+
+	private Credentials _getProxyCredentials() {
+		if (!KeyReferenceUtil.isKeyReference(_PROXY_PASSWORD)) {
+			return _proxyCredentials;
+		}
+
+		String proxyPassword = SecretResolverUtil.resolve(
+			CompanyConstants.SYSTEM, _PROXY_PASSWORD);
+
+		if (_PROXY_AUTH_TYPE.equals("ntlm")) {
+			return new NTCredentials(
+				_PROXY_USERNAME, proxyPassword, _PROXY_NTLM_HOST,
+				_PROXY_NTLM_DOMAIN);
+		}
+
+		return new UsernamePasswordCredentials(_PROXY_USERNAME, proxyPassword);
 	}
 
 	private RequestConfig.Builder _getRequestConfigBuilder(
