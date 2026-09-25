@@ -9,11 +9,16 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
 import com.liferay.portal.search.configuration.SemanticSearchConfiguration;
 import com.liferay.portal.search.rest.dto.v1_0.EmbeddingProviderConfiguration;
 import com.liferay.portal.search.rest.text.embeddings.configuration.TextEmbeddingProvider;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
+
+import java.util.Map;
 
 /**
  * @author Petteri Karttunen
@@ -21,6 +26,7 @@ import com.liferay.portal.search.rest.text.embeddings.configuration.TextEmbeddin
 public class TextEmbeddingProviderWebCacheItem implements WebCacheItem {
 
 	public static Double[] get(
+		long companyId,
 		EmbeddingProviderConfiguration embeddingProviderConfiguration,
 		SemanticSearchConfiguration semanticSearchConfiguration, String text,
 		TextEmbeddingProvider textEmbeddingProvider) {
@@ -33,8 +39,8 @@ public class TextEmbeddingProviderWebCacheItem implements WebCacheItem {
 					embeddingProviderConfiguration.getProviderName(),
 					StringPool.POUND, text),
 				new TextEmbeddingProviderWebCacheItem(
-					embeddingProviderConfiguration, semanticSearchConfiguration,
-					text, textEmbeddingProvider));
+					companyId, embeddingProviderConfiguration,
+					semanticSearchConfiguration, text, textEmbeddingProvider));
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -46,10 +52,12 @@ public class TextEmbeddingProviderWebCacheItem implements WebCacheItem {
 	}
 
 	public TextEmbeddingProviderWebCacheItem(
+		long companyId,
 		EmbeddingProviderConfiguration embeddingProviderConfiguration,
 		SemanticSearchConfiguration semanticSearchConfiguration, String text,
 		TextEmbeddingProvider textEmbeddingProvider) {
 
+		_companyId = companyId;
 		_embeddingProviderConfiguration = embeddingProviderConfiguration;
 		_semanticSearchConfiguration = semanticSearchConfiguration;
 		_text = text;
@@ -59,6 +67,19 @@ public class TextEmbeddingProviderWebCacheItem implements WebCacheItem {
 	@Override
 	public Double[] convert(String key) {
 		try {
+			Map<String, Object> attributes =
+				(Map<String, Object>)
+					_embeddingProviderConfiguration.getAttributes();
+			String credentialAttributeName = _credentialAttributeNames.get(
+				_embeddingProviderConfiguration.getProviderName());
+
+			if ((attributes != null) && (credentialAttributeName != null)) {
+				attributes.computeIfPresent(
+					credentialAttributeName,
+					(name, value) -> SecretResolverUtil.resolve(
+						_companyId, GetterUtil.getString(value)));
+			}
+
 			return _textEmbeddingProvider.getEmbedding(
 				_embeddingProviderConfiguration, _text);
 		}
@@ -75,6 +96,14 @@ public class TextEmbeddingProviderWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		TextEmbeddingProviderWebCacheItem.class);
 
+	private static final Map<String, String> _credentialAttributeNames =
+		HashMapBuilder.put(
+			"hugging-face-inference-api", "accessToken"
+		).put(
+			"openai", "apiKey"
+		).build();
+
+	private final long _companyId;
 	private final EmbeddingProviderConfiguration
 		_embeddingProviderConfiguration;
 	private final SemanticSearchConfiguration _semanticSearchConfiguration;

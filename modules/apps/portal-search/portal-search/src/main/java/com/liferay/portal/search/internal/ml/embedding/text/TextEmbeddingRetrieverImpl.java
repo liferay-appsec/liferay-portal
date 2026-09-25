@@ -160,7 +160,7 @@ public class TextEmbeddingRetrieverImpl implements TextEmbeddingRetriever {
 		}
 
 		return TextEmbeddingProviderWebCacheItem.get(
-			embeddingProviderConfiguration,
+			CompanyThreadLocal.getCompanyId(), embeddingProviderConfiguration,
 			_semanticSearchConfigurationProvider.getCompanyConfiguration(
 				CompanyThreadLocal.getCompanyId()),
 			textExcerpt, textEmbeddingProvider);
