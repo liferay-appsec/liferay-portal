@@ -51,7 +51,7 @@ public class GetAuthorizationMVCResourceCommand extends BaseMVCResourceCommand {
 			themeDisplay.getPermissionChecker(), MarketplacePortletKeys.GENERAL,
 			MarketplaceActionKeys.GET_AUTHORIZATION);
 
-		String accessToken = PrefsPropsUtil.getString(
+		String accessToken = MarketplaceUtil.getToken(
 			themeDisplay.getCompanyId(), "marketplaceAccessToken");
 		long accessTokenExpirationTime = PrefsPropsUtil.getLong(
 			themeDisplay.getCompanyId(),
@@ -63,7 +63,7 @@ public class GetAuthorizationMVCResourceCommand extends BaseMVCResourceCommand {
 				PrefsPropsUtil.getString(
 					themeDisplay.getCompanyId(), "marketplaceCode"),
 				null,
-				PrefsPropsUtil.getString(
+				MarketplaceUtil.getToken(
 					themeDisplay.getCompanyId(), "marketplaceRefreshToken"),
 				PrefsPropsUtil.getString(
 					themeDisplay.getCompanyId(), "marketplaceServiceURL"),
