@@ -60,6 +60,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -537,7 +538,9 @@ public class LiferayOAuthDataProvider
 
 			refreshToken.setAccessTokens(
 				Collections.singletonList(
-					oAuth2Authorization.getAccessTokenContent()));
+					_secretResolver.resolve(
+						oAuth2Authorization.getCompanyId(),
+						oAuth2Authorization.getAccessTokenContent())));
 			refreshToken.setAudiences(oAuth2Authorization.getAudiencesList());
 			refreshToken.setScopes(
 				convertScopeToPermissions(
@@ -1225,15 +1228,16 @@ public class LiferayOAuthDataProvider
 	private OAuthJoseJwtProducer _createJwtAccessTokenProducer() {
 		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
 
-		OAuth2JWKValidatorUtil.validateJWK(
+		String jwtAccessTokenSigningJSONWebKey = _secretResolver.resolve(
+			CompanyConstants.SYSTEM,
 			_oAuth2AuthorizationServerConfiguration.
 				jwtAccessTokenSigningJSONWebKey());
 
+		OAuth2JWKValidatorUtil.validateJWK(jwtAccessTokenSigningJSONWebKey);
+
 		oAuthJoseJwtProducer.setSignatureProvider(
 			JwsUtils.getSignatureProvider(
-				JwkUtils.readJwkKey(
-					_oAuth2AuthorizationServerConfiguration.
-						jwtAccessTokenSigningJSONWebKey())));
+				JwkUtils.readJwkKey(jwtAccessTokenSigningJSONWebKey)));
 
 		return oAuthJoseJwtProducer;
 	}
@@ -1519,8 +1523,11 @@ public class LiferayOAuthDataProvider
 		long lifetime = expires - issuedAt;
 
 		ServerAccessToken serverAccessToken = new BearerAccessToken(
-			client, oAuth2Authorization.getAccessTokenContent(), lifetime,
-			issuedAt);
+			client,
+			_secretResolver.resolve(
+				oAuth2Authorization.getCompanyId(),
+				oAuth2Authorization.getAccessTokenContent()),
+			lifetime, issuedAt);
 
 		List<String> audiencesList = oAuth2Authorization.getAudiencesList();
 
@@ -1856,6 +1863,9 @@ public class LiferayOAuthDataProvider
 
 	@Reference
 	private ScopeLocator _scopeLocator;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	@Reference
 	private ServerAuthorizationCodeGrantProvider

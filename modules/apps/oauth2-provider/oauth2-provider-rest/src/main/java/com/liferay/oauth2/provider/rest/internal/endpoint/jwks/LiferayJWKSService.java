@@ -7,6 +7,8 @@ package com.liferay.oauth2.provider.rest.internal.endpoint.jwks;
 
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -15,8 +17,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKeys;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
 import org.apache.cxf.rs.security.oauth2.services.JwksService;
@@ -24,6 +28,7 @@ import org.apache.cxf.rs.security.oauth2.services.JwksService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Raymond Augé
@@ -59,14 +64,39 @@ public class LiferayJWKSService extends JwksService {
 				ConfigurableUtil.createConfigurable(
 					OAuth2AuthorizationServerConfiguration.class, properties);
 
+		JsonWebKey jsonWebKey = JwkUtils.readJwkKey(
+			_secretResolver.resolve(
+				CompanyConstants.SYSTEM,
+				oAuth2AuthorizationServerConfiguration.
+					jwtAccessTokenSigningJSONWebKey()));
+
+		Map<String, Object> jsonWebKeyProperties = new HashMap<>();
+
+		for (String publicPropertyName : _PUBLIC_PROPERTY_NAMES) {
+			Object value = jsonWebKey.getKeyProperty(publicPropertyName);
+
+			if (value != null) {
+				jsonWebKeyProperties.put(publicPropertyName, value);
+			}
+		}
+
 		_jsonWebKeys = new JsonWebKeys(
-			JwkUtils.stripPrivateParameters(
-				Collections.singletonList(
-					JwkUtils.readJwkKey(
-						oAuth2AuthorizationServerConfiguration.
-							jwtAccessTokenSigningJSONWebKey()))));
+			Collections.singletonList(new JsonWebKey(jsonWebKeyProperties)));
 	}
 
+	private static final String[] _PUBLIC_PROPERTY_NAMES = {
+		JsonWebKey.EC_CURVE, JsonWebKey.EC_X_COORDINATE,
+		JsonWebKey.EC_Y_COORDINATE, JsonWebKey.KEY_ALGO, JsonWebKey.KEY_ID,
+		JsonWebKey.KEY_OPERATIONS, JsonWebKey.KEY_TYPE,
+		JsonWebKey.PUBLIC_KEY_USE, JsonWebKey.RSA_MODULUS,
+		JsonWebKey.RSA_PUBLIC_EXP, JsonWebKey.X509_CHAIN,
+		JsonWebKey.X509_THUMBPRINT, JsonWebKey.X509_THUMBPRINT_SHA256,
+		JsonWebKey.X509_URL
+	};
+
 	private JsonWebKeys _jsonWebKeys;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }

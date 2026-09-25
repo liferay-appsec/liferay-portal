@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.User;
@@ -43,7 +44,9 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
 import com.liferay.scim.rest.util.ScimClientUtil;
 import com.liferay.scim.rest.util.ScimThreadLocal;
@@ -115,6 +118,10 @@ public class SaveScimConfigurationMVCActionCommand
 
 			String accessToken = jsonObject.getString("access_token");
 
+			if (Validator.isNull(accessToken)) {
+				throw new PortalException("Unable to generate an access token");
+			}
+
 			List<OAuth2Authorization> oAuth2Authorizations =
 				_oAuth2AuthorizationLocalService.getOAuth2Authorizations(
 					oAuth2Application.getOAuth2ApplicationId(),
@@ -123,11 +130,11 @@ public class SaveScimConfigurationMVCActionCommand
 			for (OAuth2Authorization oAuth2Authorization :
 					oAuth2Authorizations) {
 
-				String accessTokenContent =
-					oAuth2Authorization.getAccessTokenContent();
+				String accessTokenContent = _secretResolver.resolve(
+					oAuth2Authorization.getCompanyId(),
+					oAuth2Authorization.getAccessTokenContent());
 
-				if ((accessToken != null) &&
-					MessageDigest.isEqual(
+				if (MessageDigest.isEqual(
 						accessToken.getBytes(StandardCharsets.UTF_8),
 						accessTokenContent.getBytes(StandardCharsets.UTF_8))) {
 
@@ -352,6 +359,9 @@ public class SaveScimConfigurationMVCActionCommand
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	@Reference
 	private UserGroupLocalService _userGroupLocalService;
