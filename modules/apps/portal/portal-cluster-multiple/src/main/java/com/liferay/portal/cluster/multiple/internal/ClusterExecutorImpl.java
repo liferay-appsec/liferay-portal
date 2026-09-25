@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.Serializable;
 
@@ -441,7 +442,7 @@ public class ClusterExecutorImpl implements ClusterExecutor {
 			ClusterExecutorConfiguration.class, properies);
 
 		_clusterChannelFactory = new JGroupsClusterChannelFactory(
-			clusterExecutorConfiguration);
+			clusterExecutorConfiguration, _secretResolver);
 	}
 
 	protected void sendNotifyRequest() {
@@ -572,6 +573,9 @@ public class ClusterExecutorImpl implements ClusterExecutor {
 
 	@Reference
 	private PortalExecutorManager _portalExecutorManager;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	private ServiceRegistration<PortalInetSocketAddressEventListener>
 		_serviceRegistration;
