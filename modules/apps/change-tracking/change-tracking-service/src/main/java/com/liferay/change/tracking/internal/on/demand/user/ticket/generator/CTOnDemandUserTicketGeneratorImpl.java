@@ -14,6 +14,7 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditMessageConstants;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -101,6 +102,9 @@ public class CTOnDemandUserTicketGeneratorImpl
 			).put(
 				"onDemandUserId", user.getUserId()
 			));
+
+		auditMessage.setResourceAction(
+			AuditMessageConstants.RESOURCE_ACTION_GRANT_ON_DEMAND_ACCESS);
 
 		_auditRouter.route(auditMessage);
 

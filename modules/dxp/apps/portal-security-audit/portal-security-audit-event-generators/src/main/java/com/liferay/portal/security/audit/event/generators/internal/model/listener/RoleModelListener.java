@@ -6,6 +6,7 @@
 package com.liferay.portal.security.audit.event.generators.internal.model.listener;
 
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditMessageConstants;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -124,6 +125,9 @@ public class RoleModelListener extends BaseModelListener<Role> {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 				associationClassName, (Long)associationClassPK, eventType,
 				null);
+
+			auditMessage.setResourceType(
+				AuditMessageConstants.RESOURCE_TYPE_ROLE);
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();

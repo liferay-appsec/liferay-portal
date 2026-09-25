@@ -8,6 +8,7 @@ package com.liferay.portal.scheduler.internal;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditMessageConstants;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.scheduler.SchedulerException;
 import com.liferay.portal.kernel.scheduler.TriggerState;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.scheduler.internal.configuration.SchedulerEngineHelperConfiguration;
 
 import java.util.Date;
@@ -61,6 +63,11 @@ public class SchedulerEngineAuditorImpl implements SchedulerEngineAuditor {
 				_jsonFactory.createJSONObject(_jsonFactory.serialize(message)),
 				SchedulerEngine.class.getName(), "0", SchedulerEngine.SCHEDULER,
 				triggerState.toString());
+
+			auditMessage.setResourceAction(
+				StringUtil.toLowerCase(triggerState.name()));
+			auditMessage.setResourceType(
+				AuditMessageConstants.RESOURCE_TYPE_SCHEDULER);
 
 			auditMessage.setServerName(InetAddressUtil.getLocalHostName());
 			auditMessage.setServerPort(_portal.getPortalLocalPort(false));
