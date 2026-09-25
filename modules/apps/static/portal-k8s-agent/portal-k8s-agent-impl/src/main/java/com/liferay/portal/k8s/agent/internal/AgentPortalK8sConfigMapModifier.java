@@ -22,9 +22,11 @@ import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
 import com.liferay.portal.kernel.cluster.ClusterNode;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
@@ -97,7 +99,8 @@ public class AgentPortalK8sConfigMapModifier
 			List
 				<PortalK8sConfigurationPropertiesMutator>
 					portalK8sConfigurationPropertiesMutators,
-			Map<String, Object> properties)
+			Map<String, Object> properties,
+			@Reference SecretResolver secretResolver)
 		throws Exception {
 
 		if (_log.isInfoEnabled()) {
@@ -117,7 +120,7 @@ public class AgentPortalK8sConfigMapModifier
 			Executors.newSingleThreadScheduledExecutor();
 
 		_kubernetesClient = new DefaultKubernetesClient(
-			_toConfig(_portalK8sAgentConfiguration));
+			_toConfig(_portalK8sAgentConfiguration, secretResolver));
 
 		_sharedIndexInformer = _toSharedIndexInformer(
 			_kubernetesClient, _portalK8sAgentConfiguration);
@@ -745,7 +748,8 @@ public class AgentPortalK8sConfigMapModifier
 	}
 
 	private Config _toConfig(
-		PortalK8sAgentConfiguration portalK8sAgentConfiguration) {
+		PortalK8sAgentConfiguration portalK8sAgentConfiguration,
+		SecretResolver secretResolver) {
 
 		Config config = Config.empty();
 
@@ -769,7 +773,10 @@ public class AgentPortalK8sConfigMapModifier
 				portalK8sAgentConfiguration.apiServerPort(), StringPool.SLASH));
 
 		config.setNamespace(portalK8sAgentConfiguration.namespace());
-		config.setOauthToken(portalK8sAgentConfiguration.saToken());
+		config.setOauthToken(
+			secretResolver.resolve(
+				CompanyConstants.SYSTEM,
+				portalK8sAgentConfiguration.saToken()));
 
 		Config.configFromSysPropsOrEnvVars(config);
 
