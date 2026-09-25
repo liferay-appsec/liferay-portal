@@ -11,11 +11,15 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NestableRuntimeException;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.MockHttp;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.segments.asah.connector.internal.client.model.DXPVariant;
 import com.liferay.segments.asah.connector.internal.client.model.DXPVariants;
@@ -33,8 +37,10 @@ import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,6 +57,37 @@ public class AsahFaroBackendClientImplTest {
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
+
+	@BeforeClass
+	public static void setUpClass() {
+		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
+
+		Mockito.when(
+			secretResolver.resolve(
+				Mockito.anyLong(), Mockito.nullable(String.class))
+		).thenAnswer(
+			invocationOnMock -> invocationOnMock.getArgument(1)
+		);
+
+		_secretResolverSnapshot = ReflectionTestUtil.getAndSetFieldValue(
+			SecretResolverUtil.class, "_secretResolverSnapshot",
+			new Snapshot<SecretResolver>(
+				SecretResolverUtil.class, SecretResolver.class) {
+
+				@Override
+				public SecretResolver get() {
+					return secretResolver;
+				}
+
+			});
+	}
+
+	@AfterClass
+	public static void tearDownClass() {
+		ReflectionTestUtil.setFieldValue(
+			SecretResolverUtil.class, "_secretResolverSnapshot",
+			_secretResolverSnapshot);
+	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -581,6 +618,8 @@ public class AsahFaroBackendClientImplTest {
 
 		portalUtil.setPortal(portal);
 	}
+
+	private static Snapshot<SecretResolver> _secretResolverSnapshot;
 
 	private AnalyticsConfiguration _analyticsConfiguration;
 	private AnalyticsSettingsManager _analyticsSettingsManager;

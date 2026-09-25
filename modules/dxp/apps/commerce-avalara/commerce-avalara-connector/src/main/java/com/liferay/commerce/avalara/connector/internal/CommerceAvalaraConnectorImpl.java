@@ -15,6 +15,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.text.SimpleDateFormat;
 
@@ -22,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import net.avalara.avatax.rest.client.AvaTaxClient;
 import net.avalara.avatax.rest.client.FetchResult;
@@ -128,13 +132,38 @@ public class CommerceAvalaraConnectorImpl implements CommerceAvalaraConnector {
 			"LiferayCommerceAvalaraConnector", "1.0", "Liferay", serviceURL);
 
 		String securityHeader = StringBundler.concat(
-			accountNumber, StringPool.COLON, licenseKey);
+			accountNumber, StringPool.COLON, _getLicenseKey(licenseKey));
 
 		return avaTaxClient.withSecurity(
 			Base64.encode(securityHeader.getBytes()));
 	}
 
+	private String _getLicenseKey(String licenseKey) {
+		KeyReference keyReference = KeyReferenceUtil.parseKeyReference(
+			licenseKey);
+
+		if (keyReference == null) {
+			return licenseKey;
+		}
+
+		long companyId = CompanyThreadLocal.getCompanyId();
+
+		if (!Objects.equals(
+				keyReference.getIdentifier(),
+				StringBundler.concat(
+					CommerceAvalaraConnectorConfiguration.class.getSimpleName(),
+					StringPool.SLASH, companyId, "/licenseKey"))) {
+
+			return licenseKey;
+		}
+
+		return _secretResolver.resolve(companyId, licenseKey);
+	}
+
 	@Reference
 	private ConfigurationProvider _configurationProvider;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
