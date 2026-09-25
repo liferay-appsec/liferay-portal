@@ -7,12 +7,19 @@ package com.liferay.object.internal.action.executor;
 
 import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
+import com.liferay.object.model.ObjectAction;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
+
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -35,7 +42,10 @@ public class WebhookObjectActionExecutorImpl implements ObjectActionExecutor {
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.addHeader(
-			"x-api-key", parametersUnicodeProperties.get("secret"));
+			"x-api-key",
+			_getSecret(
+				companyId, objectActionId,
+				parametersUnicodeProperties.get("secret")));
 		options.setBody(
 			payloadJSONObject.toString(), ContentTypes.APPLICATION_JSON,
 			StringPool.UTF8);
@@ -48,6 +58,24 @@ public class WebhookObjectActionExecutorImpl implements ObjectActionExecutor {
 	@Override
 	public String getKey() {
 		return ObjectActionExecutorConstants.KEY_WEBHOOK;
+	}
+
+	private String _getSecret(
+		long companyId, long objectActionId, String secret) {
+
+		KeyReference keyReference = KeyReferenceUtil.parseKeyReference(secret);
+
+		if ((keyReference == null) ||
+			!Objects.equals(
+				keyReference.getIdentifier(),
+				StringBundler.concat(
+					ObjectAction.class.getSimpleName(), StringPool.SLASH,
+					companyId, StringPool.SLASH, objectActionId))) {
+
+			return secret;
+		}
+
+		return SecretResolverUtil.resolve(companyId, secret);
 	}
 
 	@Reference
