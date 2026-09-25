@@ -28,8 +28,10 @@ import java.net.InetAddress;
 
 import java.nio.ByteBuffer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import org.jgroups.JChannel;
@@ -49,7 +51,8 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 		ProtocolStackConfigurator protocolStackConfigurator, String clusterName,
 		ClusterReceiver clusterReceiver, InetAddress bindInetAddress,
 		ClusterExecutorConfiguration clusterExecutorConfiguration,
-		Map<ClassLoader, ClassLoader> classLoaders) {
+		Map<ClassLoader, ClassLoader> classLoaders,
+		Set<String> resolvedValues) {
 
 		super(executorService);
 
@@ -97,8 +100,8 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 						_clusterName, ", localAddress: ",
 						_localAddress.getDescription(), ", properties: ",
 						_getJChannelProperties(
-							clusterExecutorConfiguration.
-								excludedPropertyKeys()),
+							clusterExecutorConfiguration.excludedPropertyKeys(),
+							resolvedValues),
 						"}"));
 			}
 
@@ -226,7 +229,8 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 		}
 	}
 
-	private String _getJChannelProperties(String[] excludedPropertyKeys)
+	private String _getJChannelProperties(
+			String[] excludedPropertyKeys, Set<String> resolvedValues)
 		throws ReflectiveOperationException {
 
 		StringBundler sb = new StringBundler();
@@ -246,6 +250,10 @@ public class JGroupsClusterChannel extends BaseClusterChannel {
 			for (String excludedPropertyKey : excludedPropertyKeys) {
 				properties.remove(excludedPropertyKey);
 			}
+
+			Collection<String> values = properties.values();
+
+			values.removeIf(resolvedValues::contains);
 
 			if (!properties.isEmpty()) {
 				sb.append(StringPool.OPEN_PARENTHESIS);

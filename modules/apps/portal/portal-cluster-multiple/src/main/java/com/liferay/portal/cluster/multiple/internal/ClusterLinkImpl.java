@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -154,7 +155,8 @@ public class ClusterLinkImpl implements ClusterLink {
 	protected void modified(Map<String, Object> properties) {
 		_clusterChannelFactory = new JGroupsClusterChannelFactory(
 			ConfigurableUtil.createConfigurable(
-				ClusterExecutorConfiguration.class, properties));
+				ClusterExecutorConfiguration.class, properties),
+			_secretResolver);
 	}
 
 	protected void sendLocalMessage(Message message) {
@@ -261,5 +263,8 @@ public class ClusterLinkImpl implements ClusterLink {
 
 	@Reference
 	private PortalExecutorManager _portalExecutorManager;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }

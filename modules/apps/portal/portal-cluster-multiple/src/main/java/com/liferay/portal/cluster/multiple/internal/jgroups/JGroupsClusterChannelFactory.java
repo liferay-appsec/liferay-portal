@@ -19,6 +19,7 @@ import com.liferay.portal.cluster.multiple.internal.ClusterReceiver;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -26,6 +27,8 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SocketUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,6 +37,8 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -46,9 +51,11 @@ import org.jgroups.conf.ProtocolStackConfigurator;
 public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 
 	public JGroupsClusterChannelFactory(
-		ClusterExecutorConfiguration clusterExecutorConfiguration) {
+		ClusterExecutorConfiguration clusterExecutorConfiguration,
+		SecretResolver secretResolver) {
 
 		_clusterExecutorConfiguration = clusterExecutorConfiguration;
+		_secretResolver = secretResolver;
 
 		_initSystemProperties(
 			PropsUtil.getArray(
@@ -66,11 +73,14 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 		ClusterReceiver clusterReceiver) {
 
 		try {
+			Set<String> resolvedValues = new HashSet<>();
+
 			return new JGroupsClusterChannel(
 				executorService, channleLogicName,
-				_parseChannelProperties(channelPropertiesLocation), clusterName,
-				clusterReceiver, _bindInetAddress,
-				_clusterExecutorConfiguration, _classLoaders);
+				_parseChannelProperties(
+					channelPropertiesLocation, resolvedValues),
+				clusterName, clusterReceiver, _bindInetAddress,
+				_clusterExecutorConfiguration, _classLoaders, resolvedValues);
 		}
 		catch (Exception exception) {
 			throw new SystemException(
@@ -195,7 +205,7 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 	}
 
 	private ProtocolStackConfigurator _parseChannelProperties(
-			String channelPropertiesLocation)
+			String channelPropertiesLocation, Set<String> resolvedValues)
 		throws Exception {
 
 		if (channelPropertiesLocation.startsWith("jgroups/secure/md5/") &&
@@ -260,10 +270,19 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 				}
 
 				if (value instanceof String) {
+					String valueString = (String)value;
+
+					if (KeyReferenceUtil.isKeyReference(valueString)) {
+						valueString = _secretResolver.resolve(
+							CompanyConstants.SYSTEM, valueString);
+
+						resolvedValues.add(valueString);
+					}
+
 					sb.append(configXML.substring(index, startIndex));
 					sb.append(
 						StringUtil.replace(
-							(String)value, _ORIGINAL_CHARACTERS,
+							valueString, _ORIGINAL_CHARACTERS,
 							_ENCODED_CHARACTERS));
 				}
 				else {
@@ -309,5 +328,6 @@ public class JGroupsClusterChannelFactory implements ClusterChannelFactory {
 		new ConcurrentReferenceKeyHashMap<>(
 			FinalizeManager.WEAK_REFERENCE_FACTORY);
 	private volatile ClusterExecutorConfiguration _clusterExecutorConfiguration;
+	private final SecretResolver _secretResolver;
 
 }
