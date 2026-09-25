@@ -13,6 +13,7 @@ import com.liferay.oauth2.provider.service.base.OAuth2ScopeGrantLocalServiceBase
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.nio.charset.StandardCharsets;
 
@@ -26,6 +27,7 @@ import java.util.Objects;
 
 import org.osgi.framework.Bundle;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -126,8 +128,9 @@ public class OAuth2ScopeGrantLocalServiceImpl
 				oAuth2AuthorizationPersistence.findByC_ATCH(
 					companyId, accessTokenContent.hashCode())) {
 
-			String currentAccessTokenContent =
-				oAuth2Authorization.getAccessTokenContent();
+			String currentAccessTokenContent = _secretResolver.resolve(
+				oAuth2Authorization.getCompanyId(),
+				oAuth2Authorization.getAccessTokenContent());
 
 			if (!MessageDigest.isEqual(
 					accessTokenContent.getBytes(StandardCharsets.UTF_8),
@@ -214,5 +217,8 @@ public class OAuth2ScopeGrantLocalServiceImpl
 		return Objects.equals(
 			oAuth2ScopeGrant.getBundleSymbolicName(), bundleSymbolicName);
 	}
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
