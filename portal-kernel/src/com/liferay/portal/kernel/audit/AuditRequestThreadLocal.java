@@ -6,6 +6,7 @@
 package com.liferay.portal.kernel.audit;
 
 import com.liferay.petra.lang.CentralizedThreadLocal;
+import com.liferay.petra.lang.SafeCloseable;
 
 /**
  * @author Michael C. Han
@@ -20,7 +21,13 @@ public class AuditRequestThreadLocal {
 		_auditRequest.remove();
 	}
 
-	private static final ThreadLocal<AuditRequest> _auditRequest =
+	public static SafeCloseable setAuditRequestWithSafeCloseable(
+		AuditRequest auditRequest) {
+
+		return _auditRequest.setWithSafeCloseable(auditRequest);
+	}
+
+	private static final CentralizedThreadLocal<AuditRequest> _auditRequest =
 		new CentralizedThreadLocal<>(
 			AuditRequestThreadLocal.class + "._auditRequest",
 			AuditRequest::new);
