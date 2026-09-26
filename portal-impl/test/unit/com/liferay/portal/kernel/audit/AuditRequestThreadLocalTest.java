@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
@@ -33,6 +34,39 @@ public class AuditRequestThreadLocalTest {
 
 		Assert.assertNotSame(
 			auditRequest, AuditRequestThreadLocal.getAuditRequest());
+
+		AuditRequestThreadLocal.removeAuditRequest();
+	}
+
+	@Test
+	public void testSetAuditRequestWithSafeCloseable() {
+		AuditRequestThreadLocal.removeAuditRequest();
+
+		AuditRequest auditRequest1 = new AuditRequest();
+
+		try (SafeCloseable safeCloseable =
+				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
+					auditRequest1)) {
+
+			Assert.assertSame(
+				auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+		}
+
+		Assert.assertNotSame(
+			auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+
+		AuditRequest auditRequest2 = AuditRequestThreadLocal.getAuditRequest();
+
+		try (SafeCloseable safeCloseable =
+				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
+					auditRequest1)) {
+
+			Assert.assertSame(
+				auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+		}
+
+		Assert.assertSame(
+			auditRequest2, AuditRequestThreadLocal.getAuditRequest());
 
 		AuditRequestThreadLocal.removeAuditRequest();
 	}
