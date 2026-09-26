@@ -5,7 +5,7 @@
 
 package com.liferay.portal.kernel.audit;
 
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
@@ -24,27 +24,51 @@ public class AuditRequestThreadLocalTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
-	public void testGetCorrelationId() {
-		AuditRequestThreadLocal auditRequestThreadLocal =
-			AuditRequestThreadLocal.getAuditThreadLocal();
+	public void testGetAuditRequest() {
+		AuditRequest auditRequest = AuditRequestThreadLocal.getAuditRequest();
 
-		Assert.assertNull(auditRequestThreadLocal.getCorrelationId());
+		Assert.assertSame(
+			auditRequest, AuditRequestThreadLocal.getAuditRequest());
 
-		String correlationId = RandomTestUtil.randomString();
+		AuditRequestThreadLocal.removeAuditRequest();
 
-		auditRequestThreadLocal.setCorrelationId(correlationId);
+		Assert.assertNotSame(
+			auditRequest, AuditRequestThreadLocal.getAuditRequest());
 
-		Assert.assertEquals(
-			correlationId, auditRequestThreadLocal.getCorrelationId());
+		AuditRequestThreadLocal.removeAuditRequest();
+	}
 
-		String newCorrelationId = RandomTestUtil.randomString();
+	@Test
+	public void testSetAuditRequestWithSafeCloseable() {
+		AuditRequestThreadLocal.removeAuditRequest();
 
-		auditRequestThreadLocal.setCorrelationId(newCorrelationId);
+		AuditRequest auditRequest1 = new AuditRequest();
 
-		Assert.assertEquals(
-			newCorrelationId, auditRequestThreadLocal.getCorrelationId());
+		try (SafeCloseable safeCloseable =
+				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
+					auditRequest1)) {
 
-		AuditRequestThreadLocal.removeAuditThreadLocal();
+			Assert.assertSame(
+				auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+		}
+
+		Assert.assertNotSame(
+			auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+
+		AuditRequest auditRequest2 = AuditRequestThreadLocal.getAuditRequest();
+
+		try (SafeCloseable safeCloseable =
+				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
+					auditRequest1)) {
+
+			Assert.assertSame(
+				auditRequest1, AuditRequestThreadLocal.getAuditRequest());
+		}
+
+		Assert.assertSame(
+			auditRequest2, AuditRequestThreadLocal.getAuditRequest());
+
+		AuditRequestThreadLocal.removeAuditRequest();
 	}
 
 }
