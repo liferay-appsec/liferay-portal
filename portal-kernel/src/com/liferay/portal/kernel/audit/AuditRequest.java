@@ -5,6 +5,10 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+
 /**
  * @author Michael C. Han
  */
@@ -70,6 +74,17 @@ public class AuditRequest implements Cloneable {
 
 	public boolean isRequestIdGenerated() {
 		return _requestIdGenerated;
+	}
+
+	public String resolveRequestId(long companyId) {
+		if ((_requestId == null) && (companyId > CompanyConstants.SYSTEM) &&
+			FeatureFlagManagerUtil.isEnabled(companyId, "LPD-6417")) {
+
+			_requestId = PortalUUIDUtil.generate();
+			_requestIdGenerated = true;
+		}
+
+		return _requestId;
 	}
 
 	public void setClientHost(String clientHost) {
