@@ -9,6 +9,8 @@ import com.liferay.osgi.util.ServiceTrackerFactory;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.audit.AuditRequestContext;
+import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.cluster.ClusterableContextThreadLocal;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
@@ -406,7 +408,11 @@ public class SchedulerEngineHelperImpl implements SchedulerEngineHelper {
 				return;
 			}
 
-			try (SafeCloseable safeCloseable =
+			try (SafeCloseable safeCloseable1 =
+					AuditRequestContextThreadLocal.
+						setAuditRequestContextWithSafeCloseable(
+							new AuditRequestContext());
+				SafeCloseable safeCloseable2 =
 					CTCollectionThreadLocal.
 						setProductionModeWithSafeCloseable()) {
 
