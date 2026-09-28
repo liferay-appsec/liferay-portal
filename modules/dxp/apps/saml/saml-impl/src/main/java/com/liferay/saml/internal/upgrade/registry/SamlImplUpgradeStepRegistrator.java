@@ -9,6 +9,7 @@ import com.liferay.document.library.kernel.store.Store;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.PrefsProps;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlConfigurationPreferencesUpgradeProcess;
 import com.liferay.saml.internal.upgrade.v1_0_0.SamlIdpSsoSessionMaxAgePropertyUpgradeProcess;
@@ -56,7 +57,7 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 			"1.0.0", "2.0.0",
 			new SamlConfigurationUpgradeProcess(
 				_companyLocalService, _configurationAdmin,
-				_configurationProvider, _store));
+				_configurationProvider, _secretResolver, _store));
 	}
 
 	@Reference
@@ -73,6 +74,9 @@ public class SamlImplUpgradeStepRegistrator implements UpgradeStepRegistrator {
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	@Reference(target = "(default=true)")
 	private Store _store;
