@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.configuration.SamlProviderConfiguration;
 
@@ -48,11 +49,13 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 	public SamlConfigurationUpgradeProcess(
 		CompanyLocalService companyLocalService,
 		ConfigurationAdmin configurationAdmin,
-		ConfigurationProvider configurationProvider, Store store) {
+		ConfigurationProvider configurationProvider,
+		SecretResolver secretResolver, Store store) {
 
 		_companyLocalService = companyLocalService;
 		_configurationAdmin = configurationAdmin;
 		_configurationProvider = configurationProvider;
+		_secretResolver = secretResolver;
 		_store = store;
 	}
 
@@ -168,7 +171,8 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 			_configurationProvider.getSystemConfiguration(
 				SamlConfiguration.class);
 
-		String keyStorePassword = samlConfiguration.keyStorePassword();
+		String keyStorePassword = _secretResolver.resolve(
+			CompanyConstants.SYSTEM, samlConfiguration.keyStorePassword());
 
 		if (Validator.isNull(keyStorePassword)) {
 			return new char[0];
@@ -367,6 +371,7 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 	private final CompanyLocalService _companyLocalService;
 	private final ConfigurationAdmin _configurationAdmin;
 	private final ConfigurationProvider _configurationProvider;
+	private final SecretResolver _secretResolver;
 	private final Store _store;
 
 }
