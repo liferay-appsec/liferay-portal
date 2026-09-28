@@ -10,6 +10,7 @@ import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -19,6 +20,13 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.KeyReference;
+import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.Secret;
+import com.liferay.portal.security.key.secret.SecretManager;
+import com.liferay.portal.security.key.secret.exception.SecretException;
+import com.liferay.portal.security.key.spi.ProviderStatus;
+import com.liferay.portal.security.key.spi.secret.SecretProvider;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -40,18 +48,24 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
@@ -67,8 +81,30 @@ public class SamlConfigurationUpgradeProcessTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
+	@Before
+	public void setUp() throws Exception {
+		_serviceRegistration = _bundleContext.registerService(
+			SecretProvider.class, new TestSecretProvider(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"secret.provider.id", _SECRET_PROVIDER_ID
+			).build());
+
+		ConfigurationTestUtil.saveConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companySecretProviderId", _SECRET_PROVIDER_ID
+			).put(
+				"systemSecretProviderId", _SECRET_PROVIDER_ID
+			).build());
+	}
+
 	@After
 	public void tearDown() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
+
+		_serviceRegistration.unregister();
+
 		_deleteDLKeyStores();
 		_deleteFileSystemKeyStores();
 
@@ -83,92 +119,32 @@ public class SamlConfigurationUpgradeProcessTest {
 
 	@Test
 	public void testUpgrade() throws Exception {
-		String entityId = RandomTestUtil.randomString();
+		String keyStorePassword = RandomTestUtil.randomString();
 
-		String encryptionAlias = entityId + "-encryption";
+		_testUpgrade(keyStorePassword, keyStorePassword);
+	}
 
-		String encryptionCredentialPassword = RandomTestUtil.randomString();
+	@Test
+	public void testUpgradeWhenKeyStorePasswordIsKeyReference()
+		throws Exception {
 
-		String credentialPassword = RandomTestUtil.randomString();
+		KeyReference keyReference = null;
 
 		String keyStorePassword = RandomTestUtil.randomString();
 
-		byte[] bytes = _createJKSKeyStoreBytes(
-			HashMapBuilder.put(
-				encryptionAlias, encryptionCredentialPassword
-			).put(
-				entityId, credentialPassword
-			).build(),
+		try (Secret secret = new Secret(
+				new KeyReference(
+					RandomTestUtil.randomString(), StringPool.STAR,
+					KeyReference.Type.SECRET),
+				keyStorePassword)) {
+
+			keyReference = _secretManager.putSecret(
+				CompanyConstants.SYSTEM, secret);
+		}
+
+		_testUpgrade(
+			KeyReferenceUtil.toKeyReferenceString(keyReference),
 			keyStorePassword);
-
-		long companyId = TestPropsValues.getCompanyId();
-
-		_store.addFile(
-			companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
-			Store.VERSION_DEFAULT, new ByteArrayInputStream(bytes));
-
-		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
-
-		File jksFile = new File(liferayHome + "/data/keystore.jks");
-
-		try (FileOutputStream fileOutputStream = new FileOutputStream(
-				jksFile)) {
-
-			fileOutputStream.write(bytes);
-		}
-
-		_pid = ConfigurationTestUtil.createFactoryConfiguration(
-			SamlProviderConfiguration.class.getName(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"companyId", RandomTestUtil.randomLong()
-			).put(
-				"saml.entity.id", entityId
-			).put(
-				"saml.keystore.credential.password", credentialPassword
-			).put(
-				"saml.keystore.encryption.credential.password",
-				encryptionCredentialPassword
-			).build());
-
-		_updateSamlConfiguration(keyStorePassword);
-
-		UpgradeProcess upgradeProcess = UpgradeTestUtil.getUpgradeStep(
-			_upgradeStepRegistrator, _CLASS_NAME);
-
-		upgradeProcess.upgrade();
-
-		_assertSamlConfiguration(
-			keyStorePassword, "${liferay.home}/data/keystore.p12", "PKCS12");
-
-		Assert.assertTrue(
-			_store.hasFile(
-				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT));
-
-		KeyStore keyStore = KeyStore.getInstance("PKCS12");
-
-		try (InputStream inputStream = _store.getFileAsStream(
-				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
-				Store.VERSION_DEFAULT)) {
-
-			keyStore.load(inputStream, keyStorePassword.toCharArray());
-
-			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
-			Assert.assertTrue(keyStore.containsAlias(entityId));
-		}
-
-		File pkcs12File = new File(liferayHome + "/data/keystore.p12");
-
-		Assert.assertTrue(pkcs12File.exists());
-
-		try (FileInputStream fileInputStream = new FileInputStream(
-				pkcs12File)) {
-
-			keyStore.load(fileInputStream, keyStorePassword.toCharArray());
-
-			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
-			Assert.assertTrue(keyStore.containsAlias(entityId));
-		}
 	}
 
 	private void _assertSamlConfiguration(
@@ -277,6 +253,97 @@ public class SamlConfigurationUpgradeProcessTest {
 		}
 	}
 
+	private void _testUpgrade(
+			String configuredKeyStorePassword, String keyStorePassword)
+		throws Exception {
+
+		String entityId = RandomTestUtil.randomString();
+
+		String encryptionAlias = entityId + "-encryption";
+
+		String encryptionCredentialPassword = RandomTestUtil.randomString();
+
+		String credentialPassword = RandomTestUtil.randomString();
+
+		byte[] bytes = _createJKSKeyStoreBytes(
+			HashMapBuilder.put(
+				encryptionAlias, encryptionCredentialPassword
+			).put(
+				entityId, credentialPassword
+			).build(),
+			keyStorePassword);
+
+		long companyId = TestPropsValues.getCompanyId();
+
+		_store.addFile(
+			companyId, CompanyConstants.SYSTEM, _JKS_DL_KEYSTORE_PATH,
+			Store.VERSION_DEFAULT, new ByteArrayInputStream(bytes));
+
+		String liferayHome = PropsUtil.get(PropsKeys.LIFERAY_HOME);
+
+		File jksFile = new File(liferayHome + "/data/keystore.jks");
+
+		try (FileOutputStream fileOutputStream = new FileOutputStream(
+				jksFile)) {
+
+			fileOutputStream.write(bytes);
+		}
+
+		_pid = ConfigurationTestUtil.createFactoryConfiguration(
+			SamlProviderConfiguration.class.getName(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companyId", RandomTestUtil.randomLong()
+			).put(
+				"saml.entity.id", entityId
+			).put(
+				"saml.keystore.credential.password", credentialPassword
+			).put(
+				"saml.keystore.encryption.credential.password",
+				encryptionCredentialPassword
+			).build());
+
+		_updateSamlConfiguration(configuredKeyStorePassword);
+
+		UpgradeProcess upgradeProcess = UpgradeTestUtil.getUpgradeStep(
+			_upgradeStepRegistrator, _CLASS_NAME);
+
+		upgradeProcess.upgrade();
+
+		_assertSamlConfiguration(
+			configuredKeyStorePassword, "${liferay.home}/data/keystore.p12",
+			"PKCS12");
+
+		Assert.assertTrue(
+			_store.hasFile(
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT));
+
+		KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+		try (InputStream inputStream = _store.getFileAsStream(
+				companyId, CompanyConstants.SYSTEM, _PKCS12_DL_KEYSTORE_PATH,
+				Store.VERSION_DEFAULT)) {
+
+			keyStore.load(inputStream, keyStorePassword.toCharArray());
+
+			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
+			Assert.assertTrue(keyStore.containsAlias(entityId));
+		}
+
+		File pkcs12File = new File(liferayHome + "/data/keystore.p12");
+
+		Assert.assertTrue(pkcs12File.exists());
+
+		try (FileInputStream fileInputStream = new FileInputStream(
+				pkcs12File)) {
+
+			keyStore.load(fileInputStream, keyStorePassword.toCharArray());
+
+			Assert.assertTrue(keyStore.containsAlias(encryptionAlias));
+			Assert.assertTrue(keyStore.containsAlias(entityId));
+		}
+	}
+
 	private void _updateSamlConfiguration(String keyStorePassword)
 		throws Exception {
 
@@ -306,7 +373,17 @@ public class SamlConfigurationUpgradeProcessTest {
 
 	private static final String _JKS_DL_KEYSTORE_PATH = "saml/keystore.jks";
 
+	private static final String _KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID =
+		"com.liferay.portal.security.key.internal.profile.configuration." +
+			"KeyManagerCustomProfileConfiguration";
+
 	private static final String _PKCS12_DL_KEYSTORE_PATH = "saml/keystore.p12";
+
+	private static final String _SECRET_PROVIDER_ID =
+		RandomTestUtil.randomString();
+
+	private static final BundleContext _bundleContext =
+		SystemBundleUtil.getBundleContext();
 
 	@Inject
 	private CertificateTool _certificateTool;
@@ -318,6 +395,11 @@ public class SamlConfigurationUpgradeProcessTest {
 
 	private String _pid;
 
+	@Inject
+	private SecretManager _secretManager;
+
+	private ServiceRegistration<SecretProvider> _serviceRegistration;
+
 	@Inject(
 		filter = "(&(objectClass=com.liferay.document.library.kernel.store.Store)(default=true))"
 	)
@@ -327,5 +409,73 @@ public class SamlConfigurationUpgradeProcessTest {
 		filter = "(&(component.name=com.liferay.saml.internal.upgrade.registry.SamlImplUpgradeStepRegistrator))"
 	)
 	private UpgradeStepRegistrator _upgradeStepRegistrator;
+
+	private static class TestSecretProvider implements SecretProvider {
+
+		@Override
+		public void deleteSecret(long companyId, String secretIdentifier) {
+			_secrets.remove(_getKey(companyId, secretIdentifier));
+		}
+
+		@Override
+		public ProviderStatus getProviderStatus() {
+			return ProviderStatus.OPERATIONAL;
+		}
+
+		@Override
+		public Secret getSecret(long companyId, String secretIdentifier)
+			throws SecretException {
+
+			String value = _secrets.get(_getKey(companyId, secretIdentifier));
+
+			if (value == null) {
+				throw new SecretException(
+					"No secret was found for identifier \"" + secretIdentifier +
+						"\"");
+			}
+
+			return new Secret(
+				new KeyReference(
+					secretIdentifier, _SECRET_PROVIDER_ID,
+					KeyReference.Type.SECRET),
+				value);
+		}
+
+		@Override
+		public List<String> getSecretIdentifiers(long companyId) {
+			List<String> secretIdentifiers = new ArrayList<>();
+
+			String prefix = companyId + StringPool.SLASH;
+
+			for (String key : _secrets.keySet()) {
+				if (key.startsWith(prefix)) {
+					secretIdentifiers.add(key.substring(prefix.length()));
+				}
+			}
+
+			return secretIdentifiers;
+		}
+
+		@Override
+		public boolean isAllowedCompany(long companyId) {
+			return true;
+		}
+
+		@Override
+		public void putSecret(long companyId, Secret secret) {
+			KeyReference keyReference = secret.getKeyReference();
+
+			_secrets.put(
+				_getKey(companyId, keyReference.getIdentifier()),
+				new String(secret.getChars()));
+		}
+
+		private String _getKey(long companyId, String secretIdentifier) {
+			return companyId + StringPool.SLASH + secretIdentifier;
+		}
+
+		private final Map<String, String> _secrets = new ConcurrentHashMap<>();
+
+	}
 
 }
