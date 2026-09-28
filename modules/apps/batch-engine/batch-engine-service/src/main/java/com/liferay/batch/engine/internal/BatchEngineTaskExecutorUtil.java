@@ -11,6 +11,8 @@ import com.liferay.batch.engine.internal.util.ItemIndexThreadLocal;
 import com.liferay.batch.engine.jaxrs.uri.BatchEngineUriInfo;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.audit.AuditRequest;
 import com.liferay.portal.kernel.audit.AuditRequest;
 import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusMessageSender;
@@ -39,11 +41,6 @@ public class BatchEngineTaskExecutorUtil {
 			UnsafeSupplier<T, Throwable> unsafeSupplier, User user)
 		throws Throwable {
 
-		AuditRequest auditRequest = AuditRequestThreadLocal.getAuditRequest();
-
-		auditRequest.setRealUserEmailAddress(user.getEmailAddress());
-		auditRequest.setRealUserId(user.getUserId());
-
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
@@ -60,7 +57,15 @@ public class BatchEngineTaskExecutorUtil {
 
 		PrincipalThreadLocal.setName(user.getUserId());
 
-		try (SafeCloseable safeCloseable =
+		AuditRequest auditRequest = new AuditRequest();
+
+		auditRequest.setRealUserEmailAddress(user.getEmailAddress());
+		auditRequest.setRealUserId(user.getUserId());
+
+		try (SafeCloseable safeCloseable1 =
+				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
+					auditRequest);
+			SafeCloseable safeCloseable2 =
 				ItemIndexThreadLocal.pushIndexQueueWithSafeCloseable()) {
 
 			return unsafeSupplier.get();
