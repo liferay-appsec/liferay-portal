@@ -56,8 +56,7 @@ public class SchedulerEngineAuditorImplTest {
 	@FeatureFlag("LPD-6417")
 	@Test
 	public void testAuditSchedulerJobs() throws Exception {
-		AuditRequest auditRequest =
-			AuditRequestThreadLocal.getAuditRequest();
+		AuditRequest auditRequest = AuditRequestThreadLocal.getAuditRequest();
 
 		String clientIP = RandomTestUtil.randomString();
 		String sessionID = RandomTestUtil.randomString();

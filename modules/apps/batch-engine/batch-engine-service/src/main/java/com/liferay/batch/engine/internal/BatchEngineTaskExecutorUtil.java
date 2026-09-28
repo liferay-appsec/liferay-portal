@@ -11,8 +11,6 @@ import com.liferay.batch.engine.internal.util.ItemIndexThreadLocal;
 import com.liferay.batch.engine.jaxrs.uri.BatchEngineUriInfo;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.audit.AuditRequest;
 import com.liferay.portal.kernel.audit.AuditRequest;
 import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusMessageSender;
