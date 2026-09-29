@@ -72,10 +72,12 @@ public class AuditMessageTest {
 			"yyyyMMddkkmmssSSS");
 
 		Assert.assertEquals(groupId, jsonObject.getLong("groupId"));
+		Assert.assertFalse(jsonObject.getBoolean("pseudonymized"));
 		Assert.assertEquals(
 			dateFormat.format(timestampDate),
 			jsonObject.getString("timestamp"));
 
+		auditMessage.setPseudonymized(true);
 		auditMessage.setTimestampDate(null);
 
 		jsonObject = auditMessage.toJSONObject();
@@ -85,6 +87,7 @@ public class AuditMessageTest {
 		auditMessage = new AuditMessage(jsonObject.toString());
 
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
+		Assert.assertTrue(auditMessage.isPseudonymized());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
 	}
 

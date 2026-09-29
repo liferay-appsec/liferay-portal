@@ -175,10 +175,21 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNotNull(userName)) {
+			Property pseudonymizedProperty = PropertyFactoryUtil.forName(
+				"pseudonymized");
+			Property userNameProperty = PropertyFactoryUtil.forName("userName");
+
 			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"userName",
-					StringPool.PERCENT + userName + StringPool.PERCENT));
+				RestrictionsFactoryUtil.or(
+					RestrictionsFactoryUtil.and(
+						RestrictionsFactoryUtil.or(
+							pseudonymizedProperty.isNull(),
+							pseudonymizedProperty.eq(false)),
+						RestrictionsFactoryUtil.ilike(
+							"userName",
+							StringPool.PERCENT + userName +
+								StringPool.PERCENT)),
+					userNameProperty.eq(userName)));
 		}
 
 		if (Validator.isNotNull(eventType)) {
@@ -300,6 +311,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			auditMessage.getImpersonatedUserName());
 		auditEvent.setMessage(auditMessage.getMessage());
 		auditEvent.setObjectName(auditMessage.getObjectName());
+		auditEvent.setPseudonymized(auditMessage.isPseudonymized());
 		auditEvent.setRequestId(auditMessage.getRequestId());
 		auditEvent.setRequestIdGenerated(auditMessage.isRequestIdGenerated());
 		auditEvent.setResourceAction(auditMessage.getResourceAction());

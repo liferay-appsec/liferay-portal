@@ -50,11 +50,15 @@ public interface AuditEvent {
 
 	public String getSessionID();
 
+	public String getUserEmailAddress();
+
 	public long getUserId();
 
 	public String getUserName();
 
 	public String getUserUuid();
+
+	public boolean isPseudonymized();
 
 	public void setAccountEntryId(long accountEntryId);
 
@@ -82,11 +86,15 @@ public interface AuditEvent {
 
 	public void setPrimaryKey(long primaryKey);
 
+	public void setPseudonymized(boolean pseudonymized);
+
 	public void setServerName(String serverName);
 
 	public void setServerPort(int serverPort);
 
 	public void setSessionID(String sessionID);
+
+	public void setUserEmailAddress(String userEmailAddress);
 
 	public void setUserId(long userId);
 
