@@ -5,7 +5,9 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
@@ -15,6 +17,7 @@ import org.junit.Test;
 
 /**
  * @author Rafael Praxedes
+ * @author Álvaro Saugar
  */
 public class AuditRequestTest {
 
@@ -54,6 +57,44 @@ public class AuditRequestTest {
 		clonedAuditRequest.setClientIP(RandomTestUtil.randomString());
 
 		Assert.assertEquals(clientIP, auditRequest.getClientIP());
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testResolveRequestId() {
+		AuditRequest auditRequest = new AuditRequest();
+
+		Assert.assertNull(auditRequest.getRequestId());
+		Assert.assertFalse(auditRequest.isRequestIdGenerated());
+
+		String requestId1 = auditRequest.resolveRequestId(
+			RandomTestUtil.randomLong());
+
+		Assert.assertNotNull(requestId1);
+
+		Assert.assertEquals(requestId1, auditRequest.getRequestId());
+		Assert.assertEquals(
+			requestId1,
+			auditRequest.resolveRequestId(RandomTestUtil.randomLong()));
+
+		Assert.assertTrue(auditRequest.isRequestIdGenerated());
+
+		auditRequest = new AuditRequest();
+
+		String requestId2 = RandomTestUtil.randomString();
+
+		auditRequest.setRequestId(requestId2);
+
+		Assert.assertEquals(
+			requestId2,
+			auditRequest.resolveRequestId(RandomTestUtil.randomLong()));
+
+		Assert.assertFalse(auditRequest.isRequestIdGenerated());
+
+		auditRequest = new AuditRequest();
+
+		Assert.assertNull(
+			auditRequest.resolveRequestId(CompanyConstants.SYSTEM));
 	}
 
 	private void _assertEquals(
