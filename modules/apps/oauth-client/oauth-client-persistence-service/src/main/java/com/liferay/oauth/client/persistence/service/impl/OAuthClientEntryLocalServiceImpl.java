@@ -326,7 +326,16 @@ public class OAuthClientEntryLocalServiceImpl
 		throws PortalException {
 
 		try {
-			_validateRequestParametersJSON(authRequestParametersJSON);
+			JSONObject authRequestParametersJSONObject =
+				_validateRequestParametersJSON(authRequestParametersJSON);
+
+			if (authRequestParametersJSONObject.containsKey(
+					"allow_upstream_token_forwarding")) {
+
+				throw new ParseException(
+					"The \"allow_upstream_token_forwarding\" parameter is " +
+						"supported only in the token request parameters");
+			}
 		}
 		catch (Exception exception) {
 			throw new OAuthClientEntryAuthRequestParametersJSONException(
@@ -476,7 +485,8 @@ public class OAuthClientEntryLocalServiceImpl
 		}
 	}
 
-	private void _validateRequestParametersJSON(String requestParametersJSON)
+	private JSONObject _validateRequestParametersJSON(
+			String requestParametersJSON)
 		throws Exception {
 
 		JSONObject requestParametersJSONObject = JSONObjectUtils.parse(
@@ -485,6 +495,8 @@ public class OAuthClientEntryLocalServiceImpl
 		_validateSpecsRequestParameters(requestParametersJSONObject);
 
 		_validateCustomRequestParameters(requestParametersJSONObject);
+
+		return requestParametersJSONObject;
 	}
 
 	private void _validateSpecsRequestParameters(
@@ -529,11 +541,24 @@ public class OAuthClientEntryLocalServiceImpl
 		throws PortalException {
 
 		try {
-			_validateRequestParametersJSON(tokenRequestParametersJSON);
+			_validateUpstreamTokenForwardingRequestParameters(
+				_validateRequestParametersJSON(tokenRequestParametersJSON));
 		}
 		catch (Exception exception) {
 			throw new OAuthClientEntryTokenRequestParametersJSONException(
 				exception.getMessage(), exception);
+		}
+	}
+
+	private void _validateUpstreamTokenForwardingRequestParameters(
+			JSONObject requestParametersJSONObject)
+		throws Exception {
+
+		if (requestParametersJSONObject.containsKey(
+				"allow_upstream_token_forwarding")) {
+
+			JSONObjectUtils.getBoolean(
+				requestParametersJSONObject, "allow_upstream_token_forwarding");
 		}
 	}
 
