@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -25,6 +26,7 @@ import org.junit.Test;
 
 /**
  * @author Regisson Aguiar
+ * @author Álvaro Saugar
  */
 public class AuditMessageTest {
 
@@ -35,7 +37,7 @@ public class AuditMessageTest {
 
 	@After
 	public void tearDown() {
-		AuditRequestThreadLocal.removeAuditRequestContext();
+		AuditRequestContextThreadLocal.removeAuditRequestContext();
 	}
 
 	@Test
@@ -75,6 +77,36 @@ public class AuditMessageTest {
 
 		Assert.assertNull(auditMessage.getRequestId());
 		Assert.assertFalse(auditMessage.isRequestIdGenerated());
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testConstructorResolvesOneRequestIdPerScope() {
+		long companyId = RandomTestUtil.randomLong();
+
+		AuditMessage auditMessage1 = _createAuditMessage(companyId);
+
+		String requestId = auditMessage1.getRequestId();
+
+		Assert.assertNotNull(requestId);
+
+		AuditMessage auditMessage2 = null;
+
+		try (SafeCloseable safeCloseable =
+				AuditRequestContextThreadLocal.
+					setAuditRequestContextWithSafeCloseable(
+						new AuditRequestContext())) {
+
+			auditMessage2 = _createAuditMessage(companyId);
+		}
+
+		Assert.assertNotNull(auditMessage2.getRequestId());
+		Assert.assertNotEquals(requestId, auditMessage2.getRequestId());
+		Assert.assertTrue(auditMessage2.isRequestIdGenerated());
+
+		AuditMessage auditMessage3 = _createAuditMessage(companyId);
+
+		Assert.assertEquals(requestId, auditMessage3.getRequestId());
 	}
 
 	@FeatureFlag("LPD-6417")
