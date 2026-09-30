@@ -155,6 +155,8 @@ public class AuditEventPersistenceTest {
 
 		newAuditEvent.setObjectName(RandomTestUtil.randomString());
 
+		newAuditEvent.setPseudonymizationFailed(RandomTestUtil.randomBoolean());
+
 		newAuditEvent.setPseudonymized(RandomTestUtil.randomBoolean());
 
 		newAuditEvent.setRequestId(RandomTestUtil.randomString());
@@ -239,6 +241,9 @@ public class AuditEventPersistenceTest {
 		Assert.assertEquals(
 			existingAuditEvent.getObjectName(), newAuditEvent.getObjectName());
 		Assert.assertEquals(
+			existingAuditEvent.isPseudonymizationFailed(),
+			newAuditEvent.isPseudonymizationFailed());
+		Assert.assertEquals(
 			existingAuditEvent.isPseudonymized(),
 			newAuditEvent.isPseudonymized());
 		Assert.assertEquals(
@@ -306,10 +311,11 @@ public class AuditEventPersistenceTest {
 			"correlationId", true, "eventType", true, "httpMethod", true,
 			"impersonated", true, "impersonatedUserEmailAddress", true,
 			"impersonatedUserId", true, "impersonatedUserName", true, "message",
-			true, "objectName", true, "pseudonymized", true, "requestId", true,
-			"requestIdGenerated", true, "resourceAction", true, "resourceType",
-			true, "serverName", true, "serverPort", true, "sessionID", true,
-			"userAgent", true, "userEmailAddress", true);
+			true, "objectName", true, "pseudonymizationFailed", true,
+			"pseudonymized", true, "requestId", true, "requestIdGenerated",
+			true, "resourceAction", true, "resourceType", true, "serverName",
+			true, "serverPort", true, "sessionID", true, "userAgent", true,
+			"userEmailAddress", true);
 	}
 
 	@Test
@@ -569,6 +575,8 @@ public class AuditEventPersistenceTest {
 
 		auditEvent.setObjectName(RandomTestUtil.randomString());
 
+		auditEvent.setPseudonymizationFailed(RandomTestUtil.randomBoolean());
+
 		auditEvent.setPseudonymized(RandomTestUtil.randomBoolean());
 
 		auditEvent.setRequestId(RandomTestUtil.randomString());
@@ -601,4 +609,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-821878091
+// LIFERAY-SERVICE-BUILDER-HASH:-569417671

@@ -75,8 +75,10 @@ public class AuditEventModelImpl
 		{"impersonatedUserEmailAddress", Types.VARCHAR},
 		{"impersonatedUserId", Types.BIGINT},
 		{"impersonatedUserName", Types.VARCHAR}, {"message", Types.VARCHAR},
-		{"objectName", Types.VARCHAR}, {"pseudonymized", Types.BOOLEAN},
-		{"requestId", Types.VARCHAR}, {"requestIdGenerated", Types.BOOLEAN},
+		{"objectName", Types.VARCHAR},
+		{"pseudonymizationFailed", Types.BOOLEAN},
+		{"pseudonymized", Types.BOOLEAN}, {"requestId", Types.VARCHAR},
+		{"requestIdGenerated", Types.BOOLEAN},
 		{"resourceAction", Types.VARCHAR}, {"resourceType", Types.VARCHAR},
 		{"roles", Types.CLOB}, {"serverName", Types.VARCHAR},
 		{"serverPort", Types.INTEGER}, {"sessionID", Types.VARCHAR},
@@ -109,6 +111,7 @@ public class AuditEventModelImpl
 		TABLE_COLUMNS_MAP.put("impersonatedUserName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("message", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("objectName", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("pseudonymizationFailed", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("pseudonymized", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("requestId", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("requestIdGenerated", Types.BOOLEAN);
@@ -123,7 +126,7 @@ public class AuditEventModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(200) null,createDate DATE null,accountEntryId LONG,additionalInfo TEXT null,className VARCHAR(200) null,classPK VARCHAR(75) null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,contextName VARCHAR(75) null,correlationId VARCHAR(75) null,eventType VARCHAR(75) null,httpMethod VARCHAR(75) null,impersonated BOOLEAN,impersonatedUserEmailAddress VARCHAR(75) null,impersonatedUserId LONG,impersonatedUserName VARCHAR(75) null,message STRING null,objectName VARCHAR(75) null,pseudonymized BOOLEAN,requestId VARCHAR(200) null,requestIdGenerated BOOLEAN,resourceAction VARCHAR(75) null,resourceType VARCHAR(75) null,roles TEXT null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,userAgent VARCHAR(255) null,userEmailAddress VARCHAR(75) null)";
+		"create table Audit_AuditEvent (auditEventId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(200) null,createDate DATE null,accountEntryId LONG,additionalInfo TEXT null,className VARCHAR(200) null,classPK VARCHAR(75) null,clientHost VARCHAR(255) null,clientIP VARCHAR(255) null,contextName VARCHAR(75) null,correlationId VARCHAR(75) null,eventType VARCHAR(75) null,httpMethod VARCHAR(75) null,impersonated BOOLEAN,impersonatedUserEmailAddress VARCHAR(75) null,impersonatedUserId LONG,impersonatedUserName VARCHAR(75) null,message STRING null,objectName VARCHAR(75) null,pseudonymizationFailed BOOLEAN,pseudonymized BOOLEAN,requestId VARCHAR(200) null,requestIdGenerated BOOLEAN,resourceAction VARCHAR(75) null,resourceType VARCHAR(75) null,roles TEXT null,serverName VARCHAR(255) null,serverPort INTEGER,sessionID VARCHAR(255) null,userAgent VARCHAR(255) null,userEmailAddress VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP = "drop table Audit_AuditEvent";
 
@@ -298,6 +301,9 @@ public class AuditEventModelImpl
 			attributeGetterFunctions.put(
 				"objectName", AuditEvent::getObjectName);
 			attributeGetterFunctions.put(
+				"pseudonymizationFailed",
+				AuditEvent::getPseudonymizationFailed);
+			attributeGetterFunctions.put(
 				"pseudonymized", AuditEvent::getPseudonymized);
 			attributeGetterFunctions.put("requestId", AuditEvent::getRequestId);
 			attributeGetterFunctions.put(
@@ -399,6 +405,10 @@ public class AuditEventModelImpl
 			attributeSetterBiConsumers.put(
 				"objectName",
 				(BiConsumer<AuditEvent, String>)AuditEvent::setObjectName);
+			attributeSetterBiConsumers.put(
+				"pseudonymizationFailed",
+				(BiConsumer<AuditEvent, Boolean>)
+					AuditEvent::setPseudonymizationFailed);
 			attributeSetterBiConsumers.put(
 				"pseudonymized",
 				(BiConsumer<AuditEvent, Boolean>)AuditEvent::setPseudonymized);
@@ -893,6 +903,27 @@ public class AuditEventModelImpl
 
 	@JSON
 	@Override
+	public boolean getPseudonymizationFailed() {
+		return _pseudonymizationFailed;
+	}
+
+	@JSON
+	@Override
+	public boolean isPseudonymizationFailed() {
+		return _pseudonymizationFailed;
+	}
+
+	@Override
+	public void setPseudonymizationFailed(boolean pseudonymizationFailed) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_pseudonymizationFailed = pseudonymizationFailed;
+	}
+
+	@JSON
+	@Override
 	public boolean getPseudonymized() {
 		return _pseudonymized;
 	}
@@ -1187,6 +1218,7 @@ public class AuditEventModelImpl
 		auditEventImpl.setImpersonatedUserName(getImpersonatedUserName());
 		auditEventImpl.setMessage(getMessage());
 		auditEventImpl.setObjectName(getObjectName());
+		auditEventImpl.setPseudonymizationFailed(isPseudonymizationFailed());
 		auditEventImpl.setPseudonymized(isPseudonymized());
 		auditEventImpl.setRequestId(getRequestId());
 		auditEventImpl.setRequestIdGenerated(isRequestIdGenerated());
@@ -1251,6 +1283,8 @@ public class AuditEventModelImpl
 			this.<String>getColumnOriginalValue("message"));
 		auditEventImpl.setObjectName(
 			this.<String>getColumnOriginalValue("objectName"));
+		auditEventImpl.setPseudonymizationFailed(
+			this.<Boolean>getColumnOriginalValue("pseudonymizationFailed"));
 		auditEventImpl.setPseudonymized(
 			this.<Boolean>getColumnOriginalValue("pseudonymized"));
 		auditEventImpl.setRequestId(
@@ -1488,6 +1522,9 @@ public class AuditEventModelImpl
 			auditEventCacheModel.objectName = null;
 		}
 
+		auditEventCacheModel.pseudonymizationFailed =
+			isPseudonymizationFailed();
+
 		auditEventCacheModel.pseudonymized = isPseudonymized();
 
 		auditEventCacheModel.requestId = getRequestId();
@@ -1641,6 +1678,7 @@ public class AuditEventModelImpl
 	private String _impersonatedUserName;
 	private String _message;
 	private String _objectName;
+	private boolean _pseudonymizationFailed;
 	private boolean _pseudonymized;
 	private String _requestId;
 	private boolean _requestIdGenerated;
@@ -1705,6 +1743,8 @@ public class AuditEventModelImpl
 			"impersonatedUserName", _impersonatedUserName);
 		_columnOriginalValues.put("message", _message);
 		_columnOriginalValues.put("objectName", _objectName);
+		_columnOriginalValues.put(
+			"pseudonymizationFailed", _pseudonymizationFailed);
 		_columnOriginalValues.put("pseudonymized", _pseudonymized);
 		_columnOriginalValues.put("requestId", _requestId);
 		_columnOriginalValues.put("requestIdGenerated", _requestIdGenerated);
@@ -1773,27 +1813,29 @@ public class AuditEventModelImpl
 
 		columnBitmasks.put("objectName", 2097152L);
 
-		columnBitmasks.put("pseudonymized", 4194304L);
+		columnBitmasks.put("pseudonymizationFailed", 4194304L);
 
-		columnBitmasks.put("requestId", 8388608L);
+		columnBitmasks.put("pseudonymized", 8388608L);
 
-		columnBitmasks.put("requestIdGenerated", 16777216L);
+		columnBitmasks.put("requestId", 16777216L);
 
-		columnBitmasks.put("resourceAction", 33554432L);
+		columnBitmasks.put("requestIdGenerated", 33554432L);
 
-		columnBitmasks.put("resourceType", 67108864L);
+		columnBitmasks.put("resourceAction", 67108864L);
 
-		columnBitmasks.put("roles", 134217728L);
+		columnBitmasks.put("resourceType", 134217728L);
 
-		columnBitmasks.put("serverName", 268435456L);
+		columnBitmasks.put("roles", 268435456L);
 
-		columnBitmasks.put("serverPort", 536870912L);
+		columnBitmasks.put("serverName", 536870912L);
 
-		columnBitmasks.put("sessionID", 1073741824L);
+		columnBitmasks.put("serverPort", 1073741824L);
 
-		columnBitmasks.put("userAgent", 2147483648L);
+		columnBitmasks.put("sessionID", 2147483648L);
 
-		columnBitmasks.put("userEmailAddress", 4294967296L);
+		columnBitmasks.put("userAgent", 4294967296L);
+
+		columnBitmasks.put("userEmailAddress", 8589934592L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}
@@ -1802,4 +1844,4 @@ public class AuditEventModelImpl
 	private AuditEvent _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2005829764
+// LIFERAY-SERVICE-BUILDER-HASH:-1653707167
