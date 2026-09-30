@@ -75,17 +75,13 @@ public class ScopeFinderReconcileTrigger {
 	}
 
 	private void _drainReconcile() {
-		while (_reconcilePending.compareAndSet(true, false)) {
-			try {
+		try {
+			while (_reconcilePending.compareAndSet(true, false)) {
 				_retryReconcile();
 			}
-			finally {
-				_reconcileRunning.set(false);
-			}
-
-			if (!_reconcileRunning.compareAndSet(false, true)) {
-				return;
-			}
+		}
+		finally {
+			_reconcileRunning.set(false);
 		}
 	}
 
