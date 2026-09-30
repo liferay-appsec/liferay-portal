@@ -395,9 +395,6 @@ public class ConfigurationFactoryTest {
 		oa2pahscf.userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
-			oa2pahscf, "_scopeLocator", _scopeLocator);
-
-		ReflectionTestUtil.setFieldValue(
 			oa2pahscf, "_portalK8sConfigMapModifierSnapshot", _snapshot);
 
 		oa2pahscf.activate(
