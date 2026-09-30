@@ -12,8 +12,8 @@ import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.aop.AopService;
-import com.liferay.portal.kernel.audit.AuditRequest;
-import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
+import com.liferay.portal.kernel.audit.AuditRequestContext;
+import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -182,9 +182,11 @@ public class DefaultKaleoSignaler
 			return;
 		}
 
-		AuditRequest auditRequest = AuditRequestThreadLocal.getAuditRequest();
+		AuditRequestContext auditRequestContext =
+			AuditRequestContextThreadLocal.getAuditRequestContext();
 
-		AuditRequest clonedAuditRequest = auditRequest.clone();
+		AuditRequestContext clonedAuditRequestContext =
+			auditRequestContext.clone();
 
 		long ctCollectionId = CTCollectionThreadLocal.getCTCollectionId();
 
@@ -192,9 +194,9 @@ public class DefaultKaleoSignaler
 			new CompanyInheritableThreadLocalCallable<>(
 				() -> {
 					try (SafeCloseable safeCloseable1 =
-							AuditRequestThreadLocal.
-								setAuditRequestWithSafeCloseable(
-									clonedAuditRequest);
+							AuditRequestContextThreadLocal.
+								setAuditRequestContextWithSafeCloseable(
+									clonedAuditRequestContext);
 						SafeCloseable safeCloseable2 =
 							CTCollectionThreadLocal.
 								setCTCollectionIdWithSafeCloseable(

@@ -9,8 +9,8 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
-import com.liferay.portal.kernel.audit.AuditRequest;
-import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
+import com.liferay.portal.kernel.audit.AuditRequestContext;
+import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Company;
@@ -127,9 +127,10 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 
 		WorkflowTask workflowTask = _addPendingUser();
 
-		AuditRequest auditRequest = _createAuditRequest();
+		AuditRequestContext auditRequestContext = _createAuditRequestContext();
 
-		AuditRequest expectedAuditRequest = auditRequest.clone();
+		AuditRequestContext expectedAuditRequestContext =
+			auditRequestContext.clone();
 
 		List<Thread> threads = new CopyOnWriteArrayList<>();
 
@@ -150,8 +151,9 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		SystemProperties.set("liferay.mode", StringPool.BLANK);
 
 		try (SafeCloseable safeCloseable =
-				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
-					auditRequest)) {
+				AuditRequestContextThreadLocal.
+					setAuditRequestContextWithSafeCloseable(
+						auditRequestContext)) {
 
 			_workflowTaskManager.completeWorkflowTask(
 				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
@@ -166,8 +168,9 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 			serviceRegistration.unregister();
 		}
 
-		_assertAuditRequest(expectedAuditRequest, auditRequest);
-		_assertUpdateAuditMessages(expectedAuditRequest);
+		_assertAuditRequestContext(
+			expectedAuditRequestContext, auditRequestContext);
+		_assertUpdateAuditMessages(expectedAuditRequestContext);
 
 		Assert.assertFalse(threads.isEmpty());
 
@@ -180,13 +183,15 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 	public void testOnBeforeUpdateWhenApprovalIsInline() throws Exception {
 		WorkflowTask workflowTask = _addPendingUser();
 
-		AuditRequest auditRequest = _createAuditRequest();
+		AuditRequestContext auditRequestContext = _createAuditRequestContext();
 
-		AuditRequest expectedAuditRequest = auditRequest.clone();
+		AuditRequestContext expectedAuditRequestContext =
+			auditRequestContext.clone();
 
 		try (SafeCloseable safeCloseable =
-				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
-					auditRequest)) {
+				AuditRequestContextThreadLocal.
+					setAuditRequestContextWithSafeCloseable(
+						auditRequestContext)) {
 
 			_workflowTaskManager.completeWorkflowTask(
 				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
@@ -194,18 +199,21 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 				null, true);
 
 			Assert.assertSame(
-				auditRequest, AuditRequestThreadLocal.getAuditRequest());
+				auditRequestContext,
+				AuditRequestContextThreadLocal.getAuditRequestContext());
 		}
 
-		_assertAuditRequest(expectedAuditRequest, auditRequest);
-		_assertUpdateAuditMessages(expectedAuditRequest);
+		_assertAuditRequestContext(
+			expectedAuditRequestContext, auditRequestContext);
+		_assertUpdateAuditMessages(expectedAuditRequestContext);
 	}
 
 	@Test
 	public void testOnBeforeUpdateWhenWorkflowIsDisabled() throws Exception {
-		AuditRequest auditRequest = _createAuditRequest();
+		AuditRequestContext auditRequestContext = _createAuditRequestContext();
 
-		AuditRequest expectedAuditRequest = auditRequest.clone();
+		AuditRequestContext expectedAuditRequestContext =
+			auditRequestContext.clone();
 
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
@@ -220,8 +228,9 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		auditMessages.clear();
 
 		try (SafeCloseable safeCloseable =
-				AuditRequestThreadLocal.setAuditRequestWithSafeCloseable(
-					auditRequest)) {
+				AuditRequestContextThreadLocal.
+					setAuditRequestContextWithSafeCloseable(
+						auditRequestContext)) {
 
 			_user = UserTestUtil.addUser(
 				TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
@@ -233,8 +242,9 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_APPROVED, _user.getStatus());
 
-		_assertAuditRequest(expectedAuditRequest, auditRequest);
-		_assertUpdateAuditMessages(expectedAuditRequest);
+		_assertAuditRequestContext(
+			expectedAuditRequestContext, auditRequestContext);
+		_assertUpdateAuditMessages(expectedAuditRequestContext);
 	}
 
 	private WorkflowTask _addPendingUser() throws Exception {
@@ -284,24 +294,33 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 			StringPool.BLANK, null, null);
 	}
 
-	private void _assertAuditRequest(
-		AuditRequest expectedAuditRequest, AuditRequest auditRequest) {
+	private void _assertAuditRequestContext(
+		AuditRequestContext expectedAuditRequestContext,
+		AuditRequestContext auditRequestContext) {
 
 		Assert.assertEquals(
-			expectedAuditRequest.getClientHost(), auditRequest.getClientHost());
+			expectedAuditRequestContext.getClientHost(),
+			auditRequestContext.getClientHost());
 		Assert.assertEquals(
-			expectedAuditRequest.getClientIP(), auditRequest.getClientIP());
+			expectedAuditRequestContext.getClientIP(),
+			auditRequestContext.getClientIP());
 		Assert.assertEquals(
-			expectedAuditRequest.getRealUserId(), auditRequest.getRealUserId());
+			expectedAuditRequestContext.getRealUserId(),
+			auditRequestContext.getRealUserId());
 		Assert.assertEquals(
-			expectedAuditRequest.getServerName(), auditRequest.getServerName());
+			expectedAuditRequestContext.getServerName(),
+			auditRequestContext.getServerName());
 		Assert.assertEquals(
-			expectedAuditRequest.getServerPort(), auditRequest.getServerPort());
+			expectedAuditRequestContext.getServerPort(),
+			auditRequestContext.getServerPort());
 		Assert.assertEquals(
-			expectedAuditRequest.getSessionID(), auditRequest.getSessionID());
+			expectedAuditRequestContext.getSessionID(),
+			auditRequestContext.getSessionID());
 	}
 
-	private void _assertUpdateAuditMessages(AuditRequest expectedAuditRequest) {
+	private void _assertUpdateAuditMessages(
+		AuditRequestContext expectedAuditRequestContext) {
+
 		boolean found = false;
 
 		for (AuditMessage auditMessage : auditMessages) {
@@ -319,21 +338,23 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 			found = true;
 
 			Assert.assertEquals(
-				expectedAuditRequest.getClientHost(),
+				expectedAuditRequestContext.getClientHost(),
 				auditMessage.getClientHost());
 			Assert.assertEquals(
-				expectedAuditRequest.getClientIP(), auditMessage.getClientIP());
+				expectedAuditRequestContext.getClientIP(),
+				auditMessage.getClientIP());
 			Assert.assertEquals(
-				expectedAuditRequest.getServerName(),
+				expectedAuditRequestContext.getServerName(),
 				auditMessage.getServerName());
 			Assert.assertEquals(
-				expectedAuditRequest.getServerPort(),
+				expectedAuditRequestContext.getServerPort(),
 				auditMessage.getServerPort());
 			Assert.assertEquals(
-				expectedAuditRequest.getSessionID(),
+				expectedAuditRequestContext.getSessionID(),
 				auditMessage.getSessionID());
 			Assert.assertEquals(
-				expectedAuditRequest.getRealUserId(), auditMessage.getUserId());
+				expectedAuditRequestContext.getRealUserId(),
+				auditMessage.getUserId());
 
 			JSONObject additionalInfoJSONObject =
 				auditMessage.getAdditionalInfo();
@@ -344,19 +365,19 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 		Assert.assertTrue(auditMessages.toString(), found);
 	}
 
-	private AuditRequest _createAuditRequest() throws Exception {
-		AuditRequest auditRequest = new AuditRequest();
+	private AuditRequestContext _createAuditRequestContext() throws Exception {
+		AuditRequestContext auditRequestContext = new AuditRequestContext();
 
-		auditRequest.setClientHost(RandomTestUtil.randomString());
-		auditRequest.setClientIP(RandomTestUtil.randomString());
-		auditRequest.setRealUserId(TestPropsValues.getUserId());
-		auditRequest.setRequestURL(
+		auditRequestContext.setClientHost(RandomTestUtil.randomString());
+		auditRequestContext.setClientIP(RandomTestUtil.randomString());
+		auditRequestContext.setRealUserId(TestPropsValues.getUserId());
+		auditRequestContext.setRequestURL(
 			"http://" + RandomTestUtil.randomString() + "/path");
-		auditRequest.setServerName(RandomTestUtil.randomString());
-		auditRequest.setServerPort(RandomTestUtil.randomInt());
-		auditRequest.setSessionID(RandomTestUtil.randomString());
+		auditRequestContext.setServerName(RandomTestUtil.randomString());
+		auditRequestContext.setServerPort(RandomTestUtil.randomInt());
+		auditRequestContext.setSessionID(RandomTestUtil.randomString());
 
-		return auditRequest;
+		return auditRequestContext;
 	}
 
 	private void _waitForApproval() throws Exception {

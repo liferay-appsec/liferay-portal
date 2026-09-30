@@ -8,12 +8,12 @@ package com.liferay.portal.kernel.audit;
 /**
  * @author Michael C. Han
  */
-public class AuditRequest implements Cloneable {
+public class AuditRequestContext implements Cloneable {
 
 	@Override
-	public AuditRequest clone() {
+	public AuditRequestContext clone() {
 		try {
-			return (AuditRequest)super.clone();
+			return (AuditRequestContext)super.clone();
 		}
 		catch (CloneNotSupportedException cloneNotSupportedException) {
 			throw new RuntimeException(cloneNotSupportedException);
