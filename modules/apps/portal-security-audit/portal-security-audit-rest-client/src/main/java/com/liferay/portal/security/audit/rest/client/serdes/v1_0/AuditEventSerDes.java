@@ -258,6 +258,16 @@ public class AuditEventSerDes {
 			sb.append("\"");
 		}
 
+		if (auditEvent.getPseudonymizationFailed() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"pseudonymizationFailed\": ");
+
+			sb.append(auditEvent.getPseudonymizationFailed());
+		}
+
 		if (auditEvent.getRequestId() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -500,6 +510,15 @@ public class AuditEventSerDes {
 			map.put("objectName", String.valueOf(auditEvent.getObjectName()));
 		}
 
+		if (auditEvent.getPseudonymizationFailed() == null) {
+			map.put("pseudonymizationFailed", null);
+		}
+		else {
+			map.put(
+				"pseudonymizationFailed",
+				String.valueOf(auditEvent.getPseudonymizationFailed()));
+		}
+
 		if (auditEvent.getRequestId() == null) {
 			map.put("requestId", null);
 		}
@@ -623,6 +642,11 @@ public class AuditEventSerDes {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "objectName")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "pseudonymizationFailed")) {
+
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "requestId")) {
@@ -752,6 +776,14 @@ public class AuditEventSerDes {
 					auditEvent.setObjectName((String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "pseudonymizationFailed")) {
+
+				if (jsonParserFieldValue != null) {
+					auditEvent.setPseudonymizationFailed(
+						(Boolean)jsonParserFieldValue);
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "requestId")) {
 				if (jsonParserFieldValue != null) {
 					auditEvent.setRequestId((String)jsonParserFieldValue);
@@ -877,4 +909,4 @@ public class AuditEventSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:245183244
+// LIFERAY-REST-BUILDER-HASH:1007962436

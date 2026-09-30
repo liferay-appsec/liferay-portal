@@ -383,6 +383,28 @@ public class AuditEvent implements Cloneable, Serializable {
 
 	protected String objectName;
 
+	public Boolean getPseudonymizationFailed() {
+		return pseudonymizationFailed;
+	}
+
+	public void setPseudonymizationFailed(Boolean pseudonymizationFailed) {
+		this.pseudonymizationFailed = pseudonymizationFailed;
+	}
+
+	public void setPseudonymizationFailed(
+		UnsafeSupplier<Boolean, Exception>
+			pseudonymizationFailedUnsafeSupplier) {
+
+		try {
+			pseudonymizationFailed = pseudonymizationFailedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean pseudonymizationFailed;
+
 	public String getRequestId() {
 		return requestId;
 	}
@@ -562,4 +584,4 @@ public class AuditEvent implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:428980568
+// LIFERAY-REST-BUILDER-HASH:-896480106

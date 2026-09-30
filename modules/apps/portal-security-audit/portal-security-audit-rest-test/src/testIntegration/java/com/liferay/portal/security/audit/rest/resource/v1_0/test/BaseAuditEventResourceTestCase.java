@@ -668,6 +668,16 @@ public abstract class BaseAuditEventResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"pseudonymizationFailed", additionalAssertFieldName)) {
+
+				if (auditEvent.getPseudonymizationFailed() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("requestId", additionalAssertFieldName)) {
 				if (auditEvent.getRequestId() == null) {
 					valid = false;
@@ -1022,6 +1032,19 @@ public abstract class BaseAuditEventResourceTestCase {
 				if (!Objects.deepEquals(
 						auditEvent1.getObjectName(),
 						auditEvent2.getObjectName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"pseudonymizationFailed", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						auditEvent1.getPseudonymizationFailed(),
+						auditEvent2.getPseudonymizationFailed())) {
 
 					return false;
 				}
@@ -1651,6 +1674,11 @@ public abstract class BaseAuditEventResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("pseudonymizationFailed")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("requestId")) {
 			Object object = auditEvent.getRequestId();
 
@@ -2001,6 +2029,7 @@ public abstract class BaseAuditEventResourceTestCase {
 				impersonated = RandomTestUtil.randomBoolean();
 				objectName = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
+				pseudonymizationFailed = RandomTestUtil.randomBoolean();
 				requestId = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				requestIdGenerated = RandomTestUtil.randomBoolean();
@@ -2238,4 +2267,4 @@ public abstract class BaseAuditEventResourceTestCase {
 			_auditEventResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-219272632
+// LIFERAY-REST-BUILDER-HASH:1838383423
