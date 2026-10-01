@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<suppressions>
+	<checkstyle>
+		<suppress checks="FIPSAlgorithmCheck" files="portal-url-builder-impl/src/main/java/com/liferay/portal/url/builder/internal/util/CacheHelper\.java" />
+	</checkstyle>
+</suppressions>

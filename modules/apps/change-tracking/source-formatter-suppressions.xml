@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<suppressions>
+	<checkstyle>
+		<suppress checks="FIPSAlgorithmCheck" files="change-tracking-service/src/main/java/com/liferay/change/tracking/service/impl/CTCollectionTemplateLocalServiceImpl\.java" />
+	</checkstyle>
+</suppressions>
