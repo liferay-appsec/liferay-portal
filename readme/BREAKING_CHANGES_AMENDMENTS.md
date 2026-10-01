@@ -829,3 +829,27 @@ Removed updateLatestObjectEntryVersionModifiedDate(Date, long).
 
 Its only caller was ObjectEntryLocalService.updateModifiedDate.
 ```
+
+----
+
+# 6d2d20427ddcf0da9cf7dafc2223d285901bdca8
+
+The commit message is missing a breaking change. The correct message is:
+
+```
+LPD-105254 Unify the responses of the application endpoint
+
+# breaking
+
+## What modules/apps/oauth2-provider/oauth2-provider-rest/src/main/java/com/liferay/oauth2/provider/rest/internal/endpoint/info/OAuth2ProviderApplicationInfo.java
+
+GET /o/oauth2/application now serves an application whose client authentication method is not none only to a caller holding the VIEW permission on it. An unauthenticated caller receives HTTP 400 where it previously received the application.
+
+This narrows the anonymous fallback in LiferayOAuth2ClientConfiguration, which resolves <erc>.oauth2.headless.server.client.id from the environment and, when that property is absent, reads the client ID from this endpoint through LiferayOAuth2Util.getClientId. A headless server application is provisioned with client_secret_post, so a pod started without that property in its configuration tree no longer recovers the client ID and fails to authenticate instead. Provision the property, or grant the caller the VIEW permission.
+
+LiferayOAuth2ResourceServerEnableWebSecurity is unaffected. It resolves <erc>.oauth2.user.agent.client.id, provisioned none, and reads the headless server property only to compose a log message.
+
+## Why
+
+The endpoint served every application to every caller, whatever the permissions on it. An application whose client authentication method is not none is only usable by a caller that holds a credential for it, so the response now follows the permission model the application already carries.
+```
