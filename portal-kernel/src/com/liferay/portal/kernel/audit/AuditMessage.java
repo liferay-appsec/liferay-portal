@@ -70,12 +70,13 @@ public class AuditMessage implements Serializable {
 		_clientHost = auditRequestContext.getClientHost();
 		_clientIP = auditRequestContext.getClientIP();
 		_correlationId = auditRequestContext.getCorrelationId();
-		_requestId = auditRequestContext.getRequestId();
-		_requestIdGenerated = auditRequestContext.isRequestIdGenerated();
 		_serverName = auditRequestContext.getServerName();
 		_serverPort = auditRequestContext.getServerPort();
 		_sessionID = auditRequestContext.getSessionID();
 		_userEmailAddress = auditRequestContext.getRealUserEmailAddress();
+
+		_requestId = auditRequestContext.resolveRequestId(companyId);
+		_requestIdGenerated = auditRequestContext.isRequestIdGenerated();
 
 		long realUserId = auditRequestContext.getRealUserId();
 
