@@ -5,8 +5,6 @@
 
 package com.liferay.users.admin.internal.workflow;
 
-import com.liferay.portal.kernel.audit.AuditRequestContext;
-import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
@@ -16,9 +14,6 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.BaseWorkflowHandler;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandler;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.Serializable;
 
@@ -36,31 +31,6 @@ import org.osgi.service.component.annotations.Reference;
 	service = WorkflowHandler.class
 )
 public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
-
-	@Override
-	public void contributeWorkflowContext(
-		Map<String, Serializable> workflowContext) {
-
-		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
-			WorkflowConstants.CONTEXT_SERVICE_CONTEXT);
-
-		HttpServletRequest httpServletRequest = serviceContext.getRequest();
-
-		if (httpServletRequest == null) {
-			return;
-		}
-
-		serviceContext.setAttribute(
-			"serverName", httpServletRequest.getServerName());
-		serviceContext.setAttribute(
-			"serverPort", httpServletRequest.getServerPort());
-
-		HttpSession httpSession = httpServletRequest.getSession();
-
-		serviceContext.setAttribute("sessionId", httpSession.getId());
-
-		serviceContext.setRequest(httpServletRequest);
-	}
 
 	@Override
 	public String getClassName() {
@@ -97,50 +67,10 @@ public class UserWorkflowHandler extends BaseWorkflowHandler<User> {
 
 			_userLocalService.completeUserRegistration(user, serviceContext);
 
-			_updateAuditRequestContextThreadLocal(workflowContext);
-
 			user = _userLocalService.getUser(userId);
 		}
 
 		return _userLocalService.updateStatus(user, status, serviceContext);
-	}
-
-	private void _updateAuditRequestContextThreadLocal(
-		Map<String, Serializable> workflowContext) {
-
-		AuditRequestContext auditRequestContext =
-			AuditRequestContextThreadLocal.getAuditRequestContext();
-
-		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
-			WorkflowConstants.CONTEXT_SERVICE_CONTEXT);
-
-		auditRequestContext.setClientHost(serviceContext.getRemoteHost());
-		auditRequestContext.setClientIP(serviceContext.getRemoteAddr());
-
-		long userId = GetterUtil.getLong(
-			(String)workflowContext.get(WorkflowConstants.CONTEXT_USER_ID));
-
-		if (userId != 0) {
-			auditRequestContext.setRealUserId(userId);
-		}
-
-		Serializable serverName = serviceContext.getAttribute("serverName");
-
-		if (serverName == null) {
-			return;
-		}
-
-		auditRequestContext.setServerName((String)serverName);
-		auditRequestContext.setServerPort(
-			(int)serviceContext.getAttribute("serverPort"));
-
-		Serializable sessionId = serviceContext.getAttribute("sessionId");
-
-		if (sessionId == null) {
-			return;
-		}
-
-		auditRequestContext.setSessionID((String)sessionId);
 	}
 
 	@Reference
