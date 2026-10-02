@@ -45,7 +45,7 @@ public class HttpAuthManagerUtilTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
-	public void testGenerateChallenge() throws Exception {
+	public void testGenerateChallengeDigest() throws Exception {
 		try (MockedStatic<CompanyLocalServiceUtil>
 				companyLocalServiceUtilMockedStatic = Mockito.mockStatic(
 					CompanyLocalServiceUtil.class)) {
@@ -64,18 +64,18 @@ public class HttpAuthManagerUtilTest {
 				company
 			);
 
-			String digestChallenge = _generateDigestChallenge();
+			String wwwAuthenticate = _getWWWAuthenticate();
 
-			Assert.assertFalse(digestChallenge.contains("algorithm="));
+			Assert.assertFalse(wwwAuthenticate.contains("algorithm="));
 
 			try (SafeCloseable safeCloseable =
 					PropsValuesTestUtil.swapWithSafeCloseable(
 						"FIPS_ENABLED", true)) {
 
-				digestChallenge = _generateDigestChallenge();
+				wwwAuthenticate = _getWWWAuthenticate();
 
 				Assert.assertTrue(
-					digestChallenge.endsWith(", algorithm=SHA-256"));
+					wwwAuthenticate.endsWith(", algorithm=SHA-256"));
 			}
 		}
 	}
@@ -237,7 +237,7 @@ public class HttpAuthManagerUtilTest {
 		HttpAuthManagerUtil.parse(mockHttpServletRequest);
 	}
 
-	private String _generateDigestChallenge() {
+	private String _getWWWAuthenticate() {
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
