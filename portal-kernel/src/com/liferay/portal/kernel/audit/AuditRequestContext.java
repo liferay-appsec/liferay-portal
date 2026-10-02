@@ -1,31 +1,23 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.portal.kernel.audit;
 
-import com.liferay.petra.lang.CentralizedThreadLocal;
-
 /**
  * @author Michael C. Han
  */
-public class AuditRequestThreadLocal {
+public class AuditRequestContext implements Cloneable {
 
-	public static AuditRequestThreadLocal getAuditThreadLocal() {
-		AuditRequestThreadLocal auditRequestThreadLocal = _auditRequest.get();
-
-		if (auditRequestThreadLocal == null) {
-			auditRequestThreadLocal = new AuditRequestThreadLocal();
-
-			_auditRequest.set(auditRequestThreadLocal);
+	@Override
+	public AuditRequestContext clone() {
+		try {
+			return (AuditRequestContext)super.clone();
 		}
-
-		return auditRequestThreadLocal;
-	}
-
-	public static void removeAuditThreadLocal() {
-		_auditRequest.remove();
+		catch (CloneNotSupportedException cloneNotSupportedException) {
+			throw new RuntimeException(cloneNotSupportedException);
+		}
 	}
 
 	public String getClientHost() {
@@ -131,10 +123,6 @@ public class AuditRequestThreadLocal {
 	public void setSessionID(String sessionID) {
 		_sessionID = sessionID;
 	}
-
-	private static final ThreadLocal<AuditRequestThreadLocal> _auditRequest =
-		new CentralizedThreadLocal<>(
-			AuditRequestThreadLocal.class + "._auditRequest");
 
 	private String _clientHost;
 	private String _clientIP;
