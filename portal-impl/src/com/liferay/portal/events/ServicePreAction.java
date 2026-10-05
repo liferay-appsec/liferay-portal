@@ -50,6 +50,7 @@ import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.ChecksumUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -2073,7 +2074,8 @@ public class ServicePreAction extends Action {
 		httpServletResponse.setHeader(
 			"X-Liferay-Request-User",
 			DigesterUtil.digestHex(
-				DigesterUtil.MD5, String.valueOf(user.getUserId())));
+				CryptoFunctionApprovalType.ALLOWED, DigesterUtil.MD5,
+				String.valueOf(user.getUserId())));
 	}
 
 	private void _updateUserLayouts(User user) throws Exception {
