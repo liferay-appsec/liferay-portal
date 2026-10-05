@@ -472,6 +472,12 @@
 			<property name="description" value="Finds missing and unnecessary whitespace in the value of the filter string in `ServiceTrackerFactory.open` or `WaiterUtil.waitForFilter`." />
 			<message key="whitespace.incorrect" value="The value of &quot;{0}&quot; should not have spaces around &quot;=&quot;, see LPS-70526" />
 		</module>
+		<module name="com.liferay.source.formatter.checkstyle.check.FIPSAlgorithmCheck">
+			<property name="category" value="Security" />
+			<property name="description" value="Finds algorithms outside the FIPS allow list that are passed to JCA engines or digest helpers when `PropsValues.FIPS_ENABLED` is true, see LPD-XXXXXX." />
+			<property name="enabled" value="false" />
+			<message key="algorithm.not.allowed" value="Use a FIPS approved algorithm instead of &quot;{0}&quot; when &quot;PropsValues.FIPS_ENABLED&quot; is true, see LPD-XXXXXX" />
+		</module>
 		<module name="com.liferay.source.formatter.checkstyle.check.FIPSTLSVerificationCheck">
 			<property name="category" value="Security" />
 			<property name="description" value="Finds outbound TLS verification bypasses that are not guarded by `PropsValues.FIPS_ENABLED`, see LPD-93649." />

@@ -259,6 +259,44 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testFIPSAlgorithm() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"FIPSAlgorithm.testjava"
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"MD5\" when " +
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				35
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"MD5\" when " +
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				54
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"SHA1withRSA\" " +
+					"when \"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				58
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Use a FIPS approved algorithm instead of ",
+					"\"DESede/CBC/PKCS5Padding\" when ",
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX"),
+				64
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"DSA\" when " +
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				88
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"MD5\" when " +
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				97
+			).addExpectedMessage(
+				"Use a FIPS approved algorithm instead of \"MD5\" when " +
+					"\"PropsValues.FIPS_ENABLED\" is true, see LPD-XXXXXX",
+				107
+			));
+	}
+
+	@Test
 	public void testFIPSTLSVerification() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(

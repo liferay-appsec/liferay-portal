@@ -1,0 +1,113 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.source.formatter.dependencies;
+
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
+import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.PropsValues;
+
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.Signature;
+
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
+
+import org.apache.commons.codec.digest.DigestUtils;
+
+/**
+ * @author Caio Farias
+ */
+public class FIPSAlgorithm {
+
+	public void approvedLiteral() throws Exception {
+		MessageDigest.getInstance("SHA-256");
+	}
+
+	public void approvedTransformation() throws Exception {
+		Cipher.getInstance("AES/GCM/NoPadding");
+	}
+
+	public String constant() {
+		return DigesterUtil.digestHex(DigesterUtil.MD5, "text");
+	}
+
+	public void fipsDisabledIf() throws Exception {
+		if (!PropsValues.FIPS_ENABLED) {
+			Mac.getInstance("HmacSHA1");
+		}
+	}
+
+	public void fipsEnabledElse() throws Exception {
+		if (PropsValues.FIPS_ENABLED) {
+			Mac.getInstance("HmacSHA256");
+		}
+		else {
+			Mac.getInstance("HmacSHA1");
+		}
+	}
+
+	public String implicitAlgorithm() {
+		return DigestUtils.md5Hex("text");
+	}
+
+	public void literal() throws Exception {
+		Signature.getInstance("SHA1withRSA");
+	}
+
+	public void localVariable() throws Exception {
+		String transformation = "DESede/CBC/PKCS5Padding";
+
+		Cipher.getInstance(transformation);
+	}
+
+	public void negatedTernary() throws Exception {
+		MessageDigest.getInstance(
+			!PropsValues.FIPS_ENABLED ? DigesterUtil.MD5 :
+				DigesterUtil.SHA_256);
+	}
+
+	public void parameter(String algorithm) throws Exception {
+		MessageDigest.getInstance(algorithm);
+	}
+
+	public void reassignedVariable() throws Exception {
+		String algorithm = "MD5";
+
+		if (PropsValues.FIPS_ENABLED) {
+			algorithm = "SHA-256";
+		}
+
+		MessageDigest.getInstance(algorithm);
+	}
+
+	public void staticConstant() throws Exception {
+		KeyPairGenerator.getInstance(_KEY_PAIR_GENERATOR_ALGORITHM);
+	}
+
+	public void ternary() throws Exception {
+		MessageDigest.getInstance(
+			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
+	}
+
+	public void unguardedTernary(boolean enabled) throws Exception {
+		MessageDigest.getInstance(enabled ? "SHA-256" : "MD5");
+	}
+
+	public void validatedAlgorithm() throws Exception {
+		FIPSModeValidator.validateAlgorithm(DigesterUtil.SHA_1);
+
+		MessageDigest.getInstance(DigesterUtil.SHA_1);
+	}
+
+	public void wrongTernaryBranch() throws Exception {
+		MessageDigest.getInstance(
+			PropsValues.FIPS_ENABLED ? DigesterUtil.MD5 : DigesterUtil.SHA_256);
+	}
+
+	private static final String _KEY_PAIR_GENERATOR_ALGORITHM = "DSA";
+
+}
