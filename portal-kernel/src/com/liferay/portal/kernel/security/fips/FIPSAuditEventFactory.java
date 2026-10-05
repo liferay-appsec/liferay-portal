@@ -12,6 +12,28 @@ import com.liferay.portal.kernel.util.GetterUtil;
  */
 public class FIPSAuditEventFactory {
 
+	public static FIPSAuditEvent createAlgorithmRejected(
+		boolean enforced, String factoryClassName, String providerName,
+		String providerVersion, String rejectionReason,
+		String requestedAlgorithm) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"algorithm-rejected", FIPSAuditEvent.Severity.WARNING);
+
+		fipsAuditEvent.put("enforced", enforced);
+		fipsAuditEvent.put(
+			"factory-class-name", GetterUtil.getString(factoryClassName));
+		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
+		fipsAuditEvent.put(
+			"provider-version", GetterUtil.getString(providerVersion));
+		fipsAuditEvent.put(
+			"rejection-reason", GetterUtil.getString(rejectionReason));
+		fipsAuditEvent.put(
+			"requested-algorithm", GetterUtil.getString(requestedAlgorithm));
+
+		return fipsAuditEvent;
+	}
+
 	public static FIPSAuditEvent createAuthAttemptFailure(
 		String attemptedUserId, String authenticationMethod, String clientIP,
 		int consecutiveFailureCount, String failureReason) {
