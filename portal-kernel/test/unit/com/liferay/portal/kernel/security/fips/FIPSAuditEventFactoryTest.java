@@ -18,6 +18,36 @@ import org.junit.Test;
 public class FIPSAuditEventFactoryTest {
 
 	@Test
+	public void testCreateAlgorithmRejected() {
+		boolean enforced = RandomTestUtil.randomBoolean();
+		String factoryClassName = RandomTestUtil.randomString();
+		String providerName = RandomTestUtil.randomString();
+		String providerVersion = RandomTestUtil.randomString();
+		String rejectionReason = RandomTestUtil.randomString();
+		String requestedAlgorithm = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createAlgorithmRejected(
+				enforced, factoryClassName, providerName, providerVersion,
+				rejectionReason, requestedAlgorithm);
+
+		Assert.assertEquals(
+			"algorithm-rejected", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.WARNING, fipsAuditEvent.getSeverity());
+
+		_assertFields(
+			false, StringPool.BLANK,
+			FIPSAuditEventFactory.createAlgorithmRejected(
+				false, null, null, null, null, null),
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+			StringPool.BLANK);
+		_assertFields(
+			enforced, factoryClassName, fipsAuditEvent, providerName,
+			providerVersion, rejectionReason, requestedAlgorithm);
+	}
+
+	@Test
 	public void testCreateAuthAttemptFailure() {
 		String attemptedUserId = RandomTestUtil.randomString();
 		String authenticationMethod = RandomTestUtil.randomString();
@@ -69,6 +99,29 @@ public class FIPSAuditEventFactoryTest {
 		_assertFields(
 			fipsAuditEvent, receivingEndpoint, rejectedValue, tokenIssuer,
 			tokenType);
+	}
+
+	private void _assertFields(
+		boolean enforced, String factoryClassName,
+		FIPSAuditEvent fipsAuditEvent, String providerName,
+		String providerVersion, String rejectionReason,
+		String requestedAlgorithm) {
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"enforced", enforced
+			).put(
+				"factory-class-name", factoryClassName
+			).put(
+				"provider-name", providerName
+			).put(
+				"provider-version", providerVersion
+			).put(
+				"rejection-reason", rejectionReason
+			).put(
+				"requested-algorithm", requestedAlgorithm
+			).build(),
+			fipsAuditEvent.getFields());
 	}
 
 	private void _assertFields(

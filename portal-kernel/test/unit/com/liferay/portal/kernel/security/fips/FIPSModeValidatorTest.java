@@ -25,7 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+
+import javax.crypto.Cipher;
+
+import javax.net.ssl.SSLContext;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -60,6 +65,22 @@ public class FIPSModeValidatorTest {
 
 		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
 			secureXMLFactoryProvider);
+	}
+
+	@Test
+	public void testFetchApprovedModeProvider() {
+		AtomicReference<Provider> atomicReference =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class,
+				"_approvedModeProviderAtomicReference");
+
+		atomicReference.set(_createProvider(RandomTestUtil.randomString()));
+
+		FIPSModeTestUtil.assertSecurityException(
+			"The first security provider must be an allowed FIPS provider",
+			FIPSModeValidator::validate);
+
+		Assert.assertNull(FIPSModeValidator.fetchApprovedModeProvider());
 	}
 
 	@Test
@@ -100,6 +121,17 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testGetKeySizes() {
+		Assert.assertArrayEquals(
+			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("AES"));
+		Assert.assertArrayEquals(
+			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("aes"));
+		Assert.assertArrayEquals(
+			new int[0],
+			FIPSModeValidator.getKeySizes(RandomTestUtil.randomString()));
+	}
+
+	@Test
 	public void testGetPlaintextSecretProperties() {
 		String obfuscatedKey1 = RandomTestUtil.randomString();
 		String obfuscatedKey2 = RandomTestUtil.randomString();
@@ -133,6 +165,45 @@ public class FIPSModeValidatorTest {
 			Assert.assertTrue(
 				plaintextSecretProperties.contains(obfuscatedKey1));
 		}
+	}
+
+	@Test
+	public void testIsAllowedAlgorithm() {
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				Cipher.class, "AES/GCM/NoPadding"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				Cipher.class, "aes/gcm/nopadding"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				Cipher.class, "AES/ECB/PKCS5Padding"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(Cipher.class, null));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				SSLContext.class, "AES/GCM/NoPadding"));
+	}
+
+	@Test
+	public void testIsAllowedKeyAlgorithm() {
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "aes"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "DES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(SSLContext.class, "AES"));
+	}
+
+	@Test
+	public void testIsAllowedKeySize() {
+		Assert.assertFalse(FIPSModeValidator.isAllowedKeySize("AES", 64));
+		Assert.assertTrue(FIPSModeValidator.isAllowedKeySize("AES", 256));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeySize(
+				RandomTestUtil.randomString(), 256));
 	}
 
 	@Test
