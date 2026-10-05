@@ -217,6 +217,7 @@ import com.liferay.portal.kernel.search.ReindexCacheThreadLocal;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelper;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -289,6 +290,7 @@ import java.io.StringReader;
 
 import java.math.BigDecimal;
 
+import java.security.InvalidKeyException;
 import java.security.Key;
 
 import java.sql.Blob;
@@ -320,8 +322,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -4936,9 +4936,14 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private Key _getKey() throws PortalException {
-		return new SecretKeySpec(
-			Base64.decode(PropsValues.OBJECT_ENCRYPTION_KEY),
-			PropsValues.OBJECT_ENCRYPTION_ALGORITHM);
+		try {
+			return CryptoUtil.createSecretKey(
+				PropsValues.OBJECT_ENCRYPTION_ALGORITHM,
+				Base64.decode(PropsValues.OBJECT_ENCRYPTION_KEY));
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			throw new PortalException(invalidKeyException);
+		}
 	}
 
 	private Predicate _getLeftJoinRootObjectDefinitionTablePredicate(

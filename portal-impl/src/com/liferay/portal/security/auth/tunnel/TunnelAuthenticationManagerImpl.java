@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.RemoteAuthException;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
 import com.liferay.portal.kernel.security.auth.tunnel.TunnelAuthenticationManager;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -30,10 +31,9 @@ import java.net.HttpURLConnection;
 
 import java.nio.charset.StandardCharsets;
 
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.MessageDigest;
-
-import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author Tomas Polesovsky
@@ -230,8 +230,22 @@ public class TunnelAuthenticationManagerImpl
 			throw authException;
 		}
 
-		return new SecretKeySpec(
-			key, PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+		try {
+			return CryptoUtil.createSecretKey(
+				PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM, key);
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(invalidKeyException);
+			}
+
+			AuthException authException = new AuthException(
+				invalidKeyException.getMessage());
+
+			authException.setType(AuthException.INVALID_SHARED_SECRET);
+
+			throw authException;
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
