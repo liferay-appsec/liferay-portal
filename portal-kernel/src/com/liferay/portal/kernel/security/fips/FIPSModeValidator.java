@@ -138,6 +138,17 @@ public class FIPSModeValidator {
 		return ArrayUtil.contains(getKeySizes(keyAlgorithm), keySize);
 	}
 
+	public static boolean isHealthyProvider(Provider provider) {
+		try {
+			_validateFIPSProvider(new Provider[] {provider});
+
+			return true;
+		}
+		catch (SecurityException securityException) {
+			return false;
+		}
+	}
+
 	public static boolean isNotAllowedAlgorithm(String algorithm) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return false;
