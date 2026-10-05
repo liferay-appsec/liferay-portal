@@ -30,6 +30,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.spec.GCMParameterSpec;
 
 import org.junit.Assert;
@@ -165,6 +166,27 @@ public class CryptoUtilTest {
 		}
 
 		Assert.assertTrue(callerSuppliedParameters);
+	}
+
+	@Test
+	public void testCreateKeyGenerator() throws Exception {
+		KeyGenerator keyGenerator = CryptoUtil.createKeyGenerator("AES", 128);
+
+		Assert.assertSame(_approvedModeProvider, keyGenerator.getProvider());
+
+		Key key = keyGenerator.generateKey();
+
+		byte[] encodedBytes = key.getEncoded();
+
+		Assert.assertEquals(
+			Arrays.toString(encodedBytes), 32, encodedBytes.length);
+
+		key = EncryptorUtil.generateKey();
+
+		encodedBytes = key.getEncoded();
+
+		Assert.assertEquals(
+			Arrays.toString(encodedBytes), 32, encodedBytes.length);
 	}
 
 	private static final String _GCM_TRANSFORMATION = "AES/GCM/NoPadding";

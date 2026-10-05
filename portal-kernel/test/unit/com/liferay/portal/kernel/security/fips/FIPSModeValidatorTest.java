@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.SSLContext;
 
@@ -180,6 +182,10 @@ public class FIPSModeValidatorTest {
 				Cipher.class, "AES/ECB/PKCS5Padding"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(Cipher.class, null));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(KeyGenerator.class, "AES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(KeyGenerator.class, "DESede"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				SSLContext.class, "AES/GCM/NoPadding"));
@@ -193,8 +199,14 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "aes"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "DES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(KeyGenerator.class, "AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				SecretKeySpec.class, "AES"));
 		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(SSLContext.class, "AES"));
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				SecretKeySpec.class, "Blowfish"));
 	}
 
 	@Test

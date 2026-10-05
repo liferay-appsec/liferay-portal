@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.crypto.Cipher;
 import javax.crypto.CipherSpi;
 import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -315,6 +316,98 @@ public class CryptoUtilTest {
 		}
 	}
 
+	@Test
+	public void testCreateKeyGenerator() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			KeyGenerator keyGenerator = CryptoUtil.createKeyGenerator(
+				"AES", 128);
+
+			_assertKeySize(128, keyGenerator.generateKey());
+
+			keyGenerator = CryptoUtil.createKeyGenerator("DESede", 168);
+
+			Assert.assertEquals("DESede", keyGenerator.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			KeyGenerator keyGenerator = CryptoUtil.createKeyGenerator(
+				"AES", 128);
+
+			_assertKeySize(256, keyGenerator.generateKey());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createKeyGenerator("DESede", 168));
+
+			_assertAlgorithmRejected(
+				true, KeyGenerator.class, mockedStatic, "algorithm-not-allowed",
+				"DESede");
+		}
+	}
+
+	@Test
+	public void testCreateSecretKey() throws Exception {
+		String algorithm = RandomTestUtil.randomString();
+		byte[] keyBytes = RandomTestUtil.randomBytes();
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			SecretKey secretKey = CryptoUtil.createSecretKey(
+				algorithm, keyBytes);
+
+			Assert.assertEquals(algorithm, secretKey.getAlgorithm());
+			Assert.assertArrayEquals(keyBytes, secretKey.getEncoded());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			String aesKeyBytesString = RandomTestUtil.randomString(16);
+
+			byte[] aesKeyBytes = aesKeyBytesString.getBytes();
+
+			SecretKey secretKey = CryptoUtil.createSecretKey(
+				"AES", aesKeyBytes);
+
+			Assert.assertArrayEquals(aesKeyBytes, secretKey.getEncoded());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createSecretKey("Blowfish", aesKeyBytes));
+
+			_assertAlgorithmRejected(
+				true, SecretKeySpec.class, mockedStatic,
+				"key-algorithm-not-allowed", "Blowfish");
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createSecretKey("AES", keyBytes));
+
+			_assertAlgorithmRejected(
+				true, SecretKeySpec.class, mockedStatic, "key-size-not-allowed",
+				"AES");
+		}
+	}
+
 	public static class FailingCipherSpi extends CipherSpi {
 
 		public FailingCipherSpi() {
@@ -399,8 +492,9 @@ public class CryptoUtilTest {
 	}
 
 	private Map<String, Object> _assertAlgorithmRejected(
-		boolean enforced, MockedStatic<FIPSAuditUtil> mockedStatic,
-		String rejectionReason, String requestedAlgorithm) {
+		boolean enforced, Class<?> factoryClass,
+		MockedStatic<FIPSAuditUtil> mockedStatic, String rejectionReason,
+		String requestedAlgorithm) {
 
 		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
 			FIPSAuditEvent.class);
@@ -419,12 +513,27 @@ public class CryptoUtilTest {
 
 		Assert.assertEquals(enforced, fields.get("enforced"));
 		Assert.assertEquals(
-			Cipher.class.getName(), fields.get("factory-class-name"));
+			factoryClass.getName(), fields.get("factory-class-name"));
 		Assert.assertEquals(rejectionReason, fields.get("rejection-reason"));
 		Assert.assertEquals(
 			requestedAlgorithm, fields.get("requested-algorithm"));
 
 		return fields;
+	}
+
+	private Map<String, Object> _assertAlgorithmRejected(
+		boolean enforced, MockedStatic<FIPSAuditUtil> mockedStatic,
+		String rejectionReason, String requestedAlgorithm) {
+
+		return _assertAlgorithmRejected(
+			enforced, Cipher.class, mockedStatic, rejectionReason,
+			requestedAlgorithm);
+	}
+
+	private void _assertKeySize(int keySize, SecretKey secretKey) {
+		byte[] encodedBytes = secretKey.getEncoded();
+
+		Assert.assertEquals(keySize, encodedBytes.length * 8);
 	}
 
 	private GCMParameterSpec _createGCMParameterSpec() {

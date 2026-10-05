@@ -16,6 +16,8 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.security.Key;
 
+import java.util.Arrays;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -183,6 +185,27 @@ public class EncryptorImplTest {
 		Assert.assertEquals(
 			_PLAINTEXT,
 			encryptor.decrypt(key2, encryptor.encrypt(key2, _PLAINTEXT)));
+	}
+
+	@Test
+	public void testGenerateKey() throws Exception {
+		Encryptor encryptor = new EncryptorImpl();
+
+		FIPSModeTestUtil.assertAlgorithm("AES", encryptor::generateKey);
+		FIPSModeTestUtil.assertAlgorithm(
+			"AES", () -> encryptor.deserializeKey(_GOLDEN_KEY_AES_256));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Key key = encryptor.generateKey();
+
+			byte[] encodedBytes = key.getEncoded();
+
+			Assert.assertEquals(
+				Arrays.toString(encodedBytes), 32, encodedBytes.length);
+		}
 	}
 
 	@Test
