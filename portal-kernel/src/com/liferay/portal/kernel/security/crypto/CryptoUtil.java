@@ -30,7 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * @author Rafael Praxedes
@@ -88,6 +91,35 @@ public class CryptoUtil {
 		return cipher;
 	}
 
+	public static KeyGenerator createKeyGenerator(String algorithm, int keySize)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(algorithm, KeyGenerator.class);
+
+			keySize = _getGenerationKeySize(algorithm);
+		}
+
+		KeyGenerator keyGenerator = _getKeyGenerator(algorithm);
+
+		keyGenerator.init(keySize);
+
+		_recordProvider(
+			algorithm, KeyGenerator.class, keyGenerator.getProvider());
+
+		return keyGenerator;
+	}
+
+	public static SecretKey createSecretKey(String algorithm, byte[] keyBytes)
+		throws InvalidKeyException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateKey(algorithm, SecretKeySpec.class, keyBytes.length * 8);
+		}
+
+		return new SecretKeySpec(keyBytes, algorithm);
+	}
+
 	private static Throwable _fetchErrorThrowable(Throwable throwable) {
 		while (throwable != null) {
 			if (throwable instanceof Error) {
@@ -125,6 +157,35 @@ public class CryptoUtil {
 				transformation, exception, Cipher.class, provider);
 
 			throw exception;
+		}
+	}
+
+	private static int _getGenerationKeySize(String algorithm) {
+		if (StringUtil.equalsIgnoreCase(algorithm, "AES")) {
+			return 256;
+		}
+
+		return 0;
+	}
+
+	private static KeyGenerator _getKeyGenerator(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider();
+
+		if (provider == null) {
+			return KeyGenerator.getInstance(algorithm);
+		}
+
+		try {
+			return KeyGenerator.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, noSuchAlgorithmException, KeyGenerator.class,
+				provider);
+
+			throw noSuchAlgorithmException;
 		}
 	}
 

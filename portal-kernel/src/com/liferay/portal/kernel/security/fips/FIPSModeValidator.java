@@ -50,6 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -117,17 +118,26 @@ public class FIPSModeValidator {
 	public static boolean isAllowedKeyAlgorithm(
 		Class<?> factoryClass, String keyAlgorithm) {
 
-		String[] algorithms = _approvedAlgorithms.get(factoryClass);
+		Class<?>[] factoryClasses = {factoryClass};
 
-		if (algorithms == null) {
-			return false;
+		if (!_approvedAlgorithms.containsKey(factoryClass)) {
+			factoryClasses = _KEY_FACTORY_CLASSES;
 		}
 
-		for (String algorithm : algorithms) {
-			if (StringUtil.equalsIgnoreCase(
-					keyAlgorithm, _getKeyAlgorithm(factoryClass, algorithm))) {
+		for (Class<?> currentFactoryClass : factoryClasses) {
+			String[] algorithms = _approvedAlgorithms.get(currentFactoryClass);
 
-				return true;
+			if (algorithms == null) {
+				continue;
+			}
+
+			for (String algorithm : algorithms) {
+				if (StringUtil.equalsIgnoreCase(
+						keyAlgorithm,
+						_getKeyAlgorithm(currentFactoryClass, algorithm))) {
+
+					return true;
+				}
 			}
 		}
 
@@ -735,6 +745,10 @@ public class FIPSModeValidator {
 
 	private static final int[] _AES_KEY_SIZES = {128, 192, 256};
 
+	private static final Class<?>[] _KEY_FACTORY_CLASSES = {
+		Cipher.class, KeyGenerator.class
+	};
+
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
@@ -770,7 +784,8 @@ public class FIPSModeValidator {
 	private static final Set<String> _allowedTLSProtocols = Set.of(
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
-		Cipher.class, new String[] {"AES/GCM/NoPadding"});
+		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
+		new String[] {"AES"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
