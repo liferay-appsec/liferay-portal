@@ -133,6 +133,8 @@ public class UserGroupModelListener extends BaseModelListener<UserGroup> {
 
 			auditMessage.setCompanyId(userGroup.getCompanyId());
 
+			auditMessage.setResourceType("usergroup");
+
 			_auditRouter.route(auditMessage);
 		}
 		catch (Exception exception) {

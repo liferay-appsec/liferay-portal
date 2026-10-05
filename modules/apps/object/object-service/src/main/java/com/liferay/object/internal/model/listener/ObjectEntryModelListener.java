@@ -576,22 +576,26 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 		long accountEntryId = _getAccountEntryId(objectDefinition, values);
 
+		AuditMessage auditMessage = null;
+
 		if (StringUtil.equals(EventTypes.UPDATE, eventType)) {
-			_auditRouter.route(
-				AuditMessageBuilder.buildAuditMessage(
-					objectEntry.getGroupId(), accountEntryId,
-					objectEntry.getModelClassName(),
-					String.valueOf(objectEntry.getPrimaryKeyObj()), null,
-					EventTypes.UPDATE,
-					_getModifiedAttributes(
-						_getDefaultLanguageId(objectEntry), objectDefinition,
-						originalObjectEntry.getValues(), values)));
+			auditMessage = AuditMessageBuilder.buildAuditMessage(
+				objectEntry.getGroupId(), accountEntryId,
+				objectEntry.getModelClassName(),
+				String.valueOf(objectEntry.getPrimaryKeyObj()), null,
+				EventTypes.UPDATE,
+				_getModifiedAttributes(
+					_getDefaultLanguageId(objectEntry), objectDefinition,
+					originalObjectEntry.getValues(), values));
 		}
 		else {
-			_auditRouter.route(
-				_getAuditMessage(
-					accountEntryId, eventType, objectDefinition, objectEntry));
+			auditMessage = _getAuditMessage(
+				accountEntryId, eventType, objectDefinition, objectEntry);
 		}
+
+		auditMessage.setResourceType("objectentry");
+
+		_auditRouter.route(auditMessage);
 	}
 
 	private void _runRelevantObjectEntryModelListeners(

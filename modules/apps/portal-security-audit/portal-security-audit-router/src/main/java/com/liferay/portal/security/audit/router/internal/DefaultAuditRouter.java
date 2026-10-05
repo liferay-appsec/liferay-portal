@@ -7,13 +7,18 @@ package com.liferay.portal.security.audit.router.internal;
 
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditException;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfigurationUtil;
 import com.liferay.portal.security.audit.router.internal.constants.AuditConstants;
@@ -56,6 +61,8 @@ public class DefaultAuditRouter implements AuditRouter {
 			return;
 		}
 
+		_setResourceActionAndResourceType(auditMessage);
+
 		List<AuditMessageProcessor> globalAuditMessageProcessors =
 			_serviceTrackerMap.getService(StringPool.STAR);
 
@@ -89,6 +96,54 @@ public class DefaultAuditRouter implements AuditRouter {
 	@Deactivate
 	protected void deactivate() {
 		_serviceTrackerMap.close();
+	}
+
+	private void _setResourceActionAndResourceType(AuditMessage auditMessage) {
+		long companyId = auditMessage.getCompanyId();
+
+		if ((companyId == CompanyConstants.SYSTEM) ||
+			!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-6417")) {
+
+			auditMessage.setResourceAction(null);
+			auditMessage.setResourceType(null);
+
+			return;
+		}
+
+		String resourceType = auditMessage.getResourceType();
+
+		if (Validator.isNull(resourceType)) {
+			String className = auditMessage.getClassName();
+
+			if (Validator.isNull(className)) {
+				resourceType = "unknown";
+			}
+			else {
+				resourceType = StringUtil.toLowerCase(
+					className.substring(
+						className.lastIndexOf(CharPool.PERIOD) + 1));
+			}
+
+			auditMessage.setResourceType(resourceType);
+		}
+
+		String resourceAction = auditMessage.getResourceAction();
+
+		if (Validator.isNull(resourceAction)) {
+			String eventType = auditMessage.getEventType();
+
+			resourceAction = Validator.isNull(eventType) ? "unknown" :
+				StringUtil.toLowerCase(eventType);
+		}
+
+		String contextName = auditMessage.getContextName();
+
+		auditMessage.setResourceAction(
+			StringBundler.concat(
+				Validator.isNull(contextName) ? "system" :
+					StringUtil.toLowerCase(contextName),
+				StringPool.PERIOD, resourceType, StringPool.PERIOD,
+				resourceAction));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

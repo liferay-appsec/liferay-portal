@@ -68,6 +68,7 @@ public class UserGroupRoleModelListener
 			);
 
 			auditMessage.setCompanyId(role.getCompanyId());
+			auditMessage.setResourceType("role");
 
 			_auditRouter.route(auditMessage);
 		}
