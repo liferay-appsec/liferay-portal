@@ -72,4 +72,26 @@ public class FIPSAuditEventFactory {
 		return fipsAuditEvent;
 	}
 
+	public static FIPSAuditEvent createProviderFailure(
+		String factoryClassName, String providerErrorMessage,
+		String providerName, String providerVersion,
+		String requestedAlgorithm) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"provider-failure", FIPSAuditEvent.Severity.CRITICAL);
+
+		fipsAuditEvent.put(
+			"factory-class-name", GetterUtil.getString(factoryClassName));
+		fipsAuditEvent.put(
+			"provider-error-message",
+			GetterUtil.getString(providerErrorMessage));
+		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
+		fipsAuditEvent.put(
+			"provider-version", GetterUtil.getString(providerVersion));
+		fipsAuditEvent.put(
+			"requested-algorithm", GetterUtil.getString(requestedAlgorithm));
+
+		return fipsAuditEvent;
+	}
+
 }
