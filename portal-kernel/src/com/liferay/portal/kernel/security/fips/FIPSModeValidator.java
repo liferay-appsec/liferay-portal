@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,6 +64,10 @@ import org.xml.sax.InputSource;
  * @author Caio Farias
  */
 public class FIPSModeValidator {
+
+	public static Provider fetchApprovedModeProvider() {
+		return _approvedModeProviderAtomicReference.get();
+	}
 
 	public static Provider fetchProvider() {
 		Provider[] providers = Security.getProviders();
@@ -152,18 +157,27 @@ public class FIPSModeValidator {
 	}
 
 	public static void validate() {
-		Provider[] providers = Security.getProviders();
+		Provider approvedModeProvider = null;
 
-		_validateFIPSProvider(providers);
-		_validateProviders(providers);
+		try {
+			Provider[] providers = Security.getProviders();
 
-		_validateAllowedPropertyValues(System::getProperty);
-		_validatePortalProperties();
-		_validateRequiredPropertyValues(
-			Security::getProperty, _requiredSecurityProperties);
-		_validateRequiredPropertyValues(
-			System::getProperty, _requiredSystemProperties);
-		_validateSecureRandomProvider();
+			_validateFIPSProvider(providers);
+			_validateProviders(providers);
+
+			_validateAllowedPropertyValues(System::getProperty);
+			_validatePortalProperties();
+			_validateRequiredPropertyValues(
+				Security::getProperty, _requiredSecurityProperties);
+			_validateRequiredPropertyValues(
+				System::getProperty, _requiredSystemProperties);
+			_validateSecureRandomProvider();
+
+			approvedModeProvider = providers[0];
+		}
+		finally {
+			_approvedModeProviderAtomicReference.set(approvedModeProvider);
+		}
 	}
 
 	public static void validateAlgorithm(String algorithm) {
@@ -746,6 +760,8 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
 		Cipher.class, new String[] {"AES/GCM/NoPadding"});
+	private static final AtomicReference<Provider>
+		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =
