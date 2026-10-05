@@ -18,6 +18,9 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 
 import java.security.MessageDigest;
 import java.security.Provider;
@@ -209,6 +212,14 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
 				"MD5"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				"HmacSHA256"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				"SHA-512"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
@@ -683,11 +694,21 @@ public class FIPSModeValidatorTest {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
 			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA256/256/1300000");
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA384/384/1300000");
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA512/512/1300000");
 
 		_assertSecurityException(
 			"is not allowed in FIPS mode",
 			"_validatePasswordsEncryptionAlgorithm",
 			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA1/160/1300000");
+		_assertSecurityException(
+			"is not allowed in FIPS mode",
+			"_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA256X/256/1300000");
 		_assertSecurityException(
 			"is not allowed in FIPS mode",
 			"_validatePasswordsEncryptionAlgorithm",
@@ -722,6 +743,35 @@ public class FIPSModeValidatorTest {
 				ReflectionTestUtil.invoke(
 					FIPSModeValidator.class, "_validatePortalProperties",
 					new Class<?>[0]);
+
+				try (LogCapture logCapture =
+						LoggerTestUtil.configureLog4JLogger(
+							FIPSModeValidator.class.getName(),
+							LoggerTestUtil.WARN);
+					SafeCloseable safeCloseable6 =
+						PropsValuesTestUtil.swapWithSafeCloseable(
+							"AUTH_MAC_ALGORITHM", "HmacSHA256", false);
+					SafeCloseable safeCloseable7 =
+						PropsValuesTestUtil.swapWithSafeCloseable(
+							"AUTH_MAC_ALLOW", "true", false)) {
+
+					ReflectionTestUtil.invoke(
+						FIPSModeValidator.class, "_validatePortalProperties",
+						new Class<?>[0]);
+
+					List<LogEntry> logEntries = logCapture.getLogEntries();
+
+					Assert.assertEquals(
+						logEntries.toString(), 1, logEntries.size());
+
+					LogEntry logEntry = logEntries.get(0);
+
+					Assert.assertEquals(
+						"Auth MAC is disabled in FIPS mode because the " +
+							"property \"auth.mac.algorithm\" is set to " +
+								"\"HmacSHA256\"",
+						logEntry.getMessage());
+				}
 			}
 
 			try (SafeCloseable safeCloseable5 =

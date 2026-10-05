@@ -20,6 +20,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 
 import java.util.ArrayList;
@@ -205,6 +206,14 @@ public class CryptoUtilTest {
 					algorithm, CryptoFunctionApprovalType.ALLOWED,
 					"algorithm-served", provider.getName()));
 		}
+
+		MessageDigest messageDigest = CryptoUtil.createMessageDigest("SHA-256");
+
+		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
+
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createMessageDigest("MD5"));
 	}
 
 	private boolean _hasAuditLogJSONObject(
