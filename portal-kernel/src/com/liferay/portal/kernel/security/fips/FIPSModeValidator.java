@@ -9,9 +9,10 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
-import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -602,8 +603,12 @@ public class FIPSModeValidator {
 		String upperCaseAlgorithm = StringUtil.toUpperCase(
 			GetterUtil.getString(algorithm));
 
-		if (!upperCaseAlgorithm.startsWith(PasswordEncryptor.TYPE_PBKDF2) ||
-			!upperCaseAlgorithm.contains("SHA256")) {
+		String[] upperCaseAlgorithmParts = StringUtil.split(
+			upperCaseAlgorithm, CharPool.SLASH);
+
+		if (ArrayUtil.isEmpty(upperCaseAlgorithmParts) ||
+			!_allowedPasswordsEncryptionAlgorithms.contains(
+				upperCaseAlgorithmParts[0])) {
 
 			throw new SecurityException(
 				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
@@ -673,7 +678,20 @@ public class FIPSModeValidator {
 
 	private static void _validatePortalProperties() {
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
-			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
+			String authMACAlgorithm = PropsUtil.get(
+				PropsKeys.AUTH_MAC_ALGORITHM);
+
+			if (!isAllowedAlgorithm(
+					CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+					authMACAlgorithm) &&
+				_log.isWarnEnabled()) {
+
+				_log.warn(
+					StringBundler.concat(
+						"Auth MAC is disabled in FIPS mode because the ",
+						"property \"", PropsKeys.AUTH_MAC_ALGORITHM,
+						"\" is set to \"", authMACAlgorithm, "\""));
+			}
 		}
 
 		validateAlgorithm(
@@ -783,6 +801,9 @@ public class FIPSModeValidator {
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
 		1300000;
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		FIPSModeValidator.class);
+
 	private static final Set<String> _allowedAlgorithmPrefixes = Set.of(
 		"AES", "HmacSHA256", "HmacSHA384", "HmacSHA512", "PBKDF2WithHmacSHA256",
 		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
@@ -792,6 +813,10 @@ public class FIPSModeValidator {
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
+	private static final Set<String> _allowedPasswordsEncryptionAlgorithms =
+		Set.of(
+			"PBKDF2WITHHMACSHA256", "PBKDF2WITHHMACSHA384",
+			"PBKDF2WITHHMACSHA512");
 	private static final Map<String, List<String>> _allowedProviderNames =
 		Map.of(
 			"AmazonCorrettoCryptoProvider",
