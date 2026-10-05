@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -129,8 +130,12 @@ public class ConfigurationFactoryTest {
 				AdditionalMatchers.or(
 					Mockito.any(Consumer.class), Mockito.isNull()),
 				Mockito.any())
-		).thenReturn(
-			_oAuth2Application
+		).thenAnswer(
+			invocation -> {
+				_featuresList = invocation.getArgument(10);
+
+				return _oAuth2Application;
+			}
 		);
 
 		Mockito.when(
@@ -273,49 +278,7 @@ public class ConfigurationFactoryTest {
 	public void testOAuth2ProviderApplicationHeadlessServerConfigurationFactory()
 		throws Exception {
 
-		OAuth2ProviderApplicationHeadlessServerConfigurationFactory oa2pahscf =
-			new OAuth2ProviderApplicationHeadlessServerConfigurationFactory();
-
-		oa2pahscf.companyLocalService = _companyLocalService;
-		oa2pahscf.oAuth2ApplicationLocalService =
-			_oAuth2ApplicationLocalService;
-		oa2pahscf.oAuth2ApplicationScopeAliasesLocalService =
-			_oAuth2ApplicationScopeAliasesLocalService;
-		oa2pahscf.scopeLocator = _scopeLocator;
-		oa2pahscf.userLocalService = _userLocalService;
-
-		ReflectionTestUtil.setFieldValue(
-			oa2pahscf, "_scopeLocator", _scopeLocator);
-
-		ReflectionTestUtil.setFieldValue(
-			oa2pahscf, "_portalK8sConfigMapModifierSnapshot", _snapshot);
-
-		oa2pahscf.activate(
-			HashMapBuilder.<String, Object>put(
-				"baseURL", "http://localhost"
-			).put(
-				"companyId", _companyId
-			).put(
-				"dxp.lxc.liferay.com/virtualInstanceId", _webId
-			).put(
-				"ext.lxc.liferay.com/projectId", _projectId
-			).put(
-				"ext.lxc.liferay.com/projectName", _projectName
-			).put(
-				"ext.lxc.liferay.com/projectUid", _projectUid
-			).put(
-				"ext.lxc.liferay.com/serviceId", _serviceId
-			).put(
-				"ext.lxc.liferay.com/serviceUid", _serviceUid
-			).put(
-				"lxc.liferay.com/metadataType", "ext-init"
-			).put(
-				"projectName", _projectName
-			).put(
-				"service.factoryPid", "foo"
-			).put(
-				"service.pid", "foo~" + _externalReferenceCode
-			).build());
+		_activateHeadlessServerConfigurationFactory(false);
 
 		Assert.assertEquals(
 			_webId, _labels.get("dxp.lxc.liferay.com/virtualInstanceId"));
@@ -331,6 +294,16 @@ public class ConfigurationFactoryTest {
 			_serviceUid, _labels.get("ext.lxc.liferay.com/serviceUid"));
 		Assert.assertEquals(
 			"ext-init", _labels.get("lxc.liferay.com/metadataType"));
+		Assert.assertFalse(_featuresList.contains("upstream.token.forwarding"));
+	}
+
+	@Test
+	public void testOAuth2ProviderApplicationHeadlessServerConfigurationFactoryWithForwardUpstreamToken()
+		throws Exception {
+
+		_activateHeadlessServerConfigurationFactory(true);
+
+		Assert.assertTrue(_featuresList.contains("upstream.token.forwarding"));
 	}
 
 	@Test
@@ -406,10 +379,59 @@ public class ConfigurationFactoryTest {
 			"ext-init", _labels.get("lxc.liferay.com/metadataType"));
 	}
 
+	private void _activateHeadlessServerConfigurationFactory(
+			boolean forwardUpstreamToken)
+		throws Exception {
+
+		OAuth2ProviderApplicationHeadlessServerConfigurationFactory oa2pahscf =
+			new OAuth2ProviderApplicationHeadlessServerConfigurationFactory();
+
+		oa2pahscf.companyLocalService = _companyLocalService;
+		oa2pahscf.oAuth2ApplicationLocalService =
+			_oAuth2ApplicationLocalService;
+		oa2pahscf.oAuth2ApplicationScopeAliasesLocalService =
+			_oAuth2ApplicationScopeAliasesLocalService;
+		oa2pahscf.scopeLocator = _scopeLocator;
+		oa2pahscf.userLocalService = _userLocalService;
+
+		ReflectionTestUtil.setFieldValue(
+			oa2pahscf, "_portalK8sConfigMapModifierSnapshot", _snapshot);
+
+		oa2pahscf.activate(
+			HashMapBuilder.<String, Object>put(
+				"baseURL", "http://localhost"
+			).put(
+				"companyId", _companyId
+			).put(
+				"dxp.lxc.liferay.com/virtualInstanceId", _webId
+			).put(
+				"ext.lxc.liferay.com/projectId", _projectId
+			).put(
+				"ext.lxc.liferay.com/projectName", _projectName
+			).put(
+				"ext.lxc.liferay.com/projectUid", _projectUid
+			).put(
+				"ext.lxc.liferay.com/serviceId", _serviceId
+			).put(
+				"ext.lxc.liferay.com/serviceUid", _serviceUid
+			).put(
+				"forwardUpstreamToken", forwardUpstreamToken
+			).put(
+				"lxc.liferay.com/metadataType", "ext-init"
+			).put(
+				"projectName", _projectName
+			).put(
+				"service.factoryPid", "foo"
+			).put(
+				"service.pid", "foo~" + _externalReferenceCode
+			).build());
+	}
+
 	private Company _company;
 	private long _companyId;
 	private CompanyLocalService _companyLocalService;
 	private String _externalReferenceCode;
+	private List<String> _featuresList;
 	private Map<String, String> _labels;
 	private OAuth2Application _oAuth2Application;
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
