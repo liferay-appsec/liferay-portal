@@ -10,11 +10,13 @@ import com.liferay.portal.kernel.exception.PwdEncryptorException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.UnsupportedEncodingException;
@@ -70,7 +72,7 @@ public class PwdAuthenticator {
 					PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
 
 			try {
-				MessageDigest digester = MessageDigest.getInstance(
+				MessageDigest digester = CryptoUtil.createMessageDigest(
 					PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
 
 				digester.update(login.getBytes(StringPool.UTF8));
@@ -95,7 +97,17 @@ public class PwdAuthenticator {
 					encryptedPassword.getBytes(StandardCharsets.UTF_8));
 			}
 			catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-				throw new SystemException(noSuchAlgorithmException);
+				if (!PropsValues.FIPS_ENABLED) {
+					throw new SystemException(noSuchAlgorithmException);
+				}
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Auth MAC is disabled in FIPS mode",
+						noSuchAlgorithmException);
+				}
+
+				return false;
 			}
 			catch (UnsupportedEncodingException unsupportedEncodingException) {
 				throw new SystemException(unsupportedEncodingException);
