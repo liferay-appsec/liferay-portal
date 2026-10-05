@@ -15,13 +15,19 @@ import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.security.MessageDigest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -143,6 +149,62 @@ public class CryptoHashGeneratorTest {
 		Assert.assertTrue(
 			_cryptoHashVerifierImpl.verify(
 				_INPUT, hash, cryptoHashVerificationContexts));
+
+		MessageDigestCryptoHashProviderFactory
+			messageDigestCryptoHashProviderFactory =
+				new MessageDigestCryptoHashProviderFactory();
+
+		CryptoHashGenerator cryptoHashGenerator = new CryptoHashGeneratorImpl(
+			messageDigestCryptoHashProviderFactory.create(
+				Collections.singletonMap(
+					"message.digest.algorithm", DigesterUtil.SHA_256)));
+
+		List<Future<Boolean>> futures = new ArrayList<>();
+
+		ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+		try {
+			for (int i = 0; i < 8; i++) {
+				futures.add(
+					executorService.submit(
+						() -> {
+							MessageDigest messageDigest =
+								MessageDigest.getInstance(DigesterUtil.SHA_256);
+
+							for (int j = 0; j < 250; j++) {
+								byte[] input = RandomTestUtil.randomBytes();
+
+								CryptoHashResponse cryptoHashResponse =
+									cryptoHashGenerator.generate(input);
+
+								CryptoHashVerificationContext
+									cryptoHashVerificationContext =
+										cryptoHashResponse.
+											getCryptoHashVerificationContext();
+
+								if (!Arrays.equals(
+										messageDigest.digest(
+											ArrayUtil.append(
+												cryptoHashVerificationContext.
+													getSalt(),
+												input)),
+										cryptoHashResponse.getHash())) {
+
+									return false;
+								}
+							}
+
+							return true;
+						}));
+			}
+
+			for (Future<Boolean> future : futures) {
+				Assert.assertTrue(future.get());
+			}
+		}
+		finally {
+			executorService.shutdownNow();
+		}
 	}
 
 	private static final byte[] _INPUT = RandomTestUtil.randomBytes();
