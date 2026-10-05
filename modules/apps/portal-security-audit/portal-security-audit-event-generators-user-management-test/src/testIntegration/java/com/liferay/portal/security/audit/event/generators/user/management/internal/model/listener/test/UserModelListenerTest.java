@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 
 import org.junit.Assert;
@@ -29,6 +30,36 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class UserModelListenerTest extends BaseModelListenerTestCase {
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testOnBeforeCreate() throws Exception {
+		_user = UserTestUtil.addUser();
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.ADD);
+
+		Assert.assertEquals(
+			"system.user.add", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		auditMessages.clear();
+
+		_userLocalService.deleteUser(user);
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.DELETE);
+
+		Assert.assertEquals(
+			"system.user.delete", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
 
 	@Test
 	public void testOnBeforeUpdate() throws Exception {
@@ -77,6 +108,38 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 			Assert.assertNotEquals(
 				EventTypes.AGREED_TO_TERMS_OF_USE, auditMessage.getEventType());
 		}
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testOnBeforeUpdateWhenFeatureFlagIsEnabled() throws Exception {
+		_user = UserTestUtil.addUser();
+
+		auditMessages.clear();
+
+		_userLocalService.updateAgreedToTermsOfUse(_user.getUserId(), true);
+
+		_user = _userLocalService.getUser(_user.getUserId());
+
+		_user.setComments(RandomTestUtil.randomString());
+
+		_user = _userLocalService.updateUser(_user);
+
+		AuditMessage agreedToTermsOfUseAuditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.AGREED_TO_TERMS_OF_USE);
+
+		Assert.assertEquals(
+			"system.user.agree_to_terms_of_use",
+			agreedToTermsOfUseAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"user", agreedToTermsOfUseAuditMessage.getResourceType());
+
+		AuditMessage updateAuditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.UPDATE);
+
+		Assert.assertEquals(
+			"system.user.update", updateAuditMessage.getResourceAction());
+		Assert.assertEquals("user", updateAuditMessage.getResourceType());
 	}
 
 	@DeleteAfterTestRun

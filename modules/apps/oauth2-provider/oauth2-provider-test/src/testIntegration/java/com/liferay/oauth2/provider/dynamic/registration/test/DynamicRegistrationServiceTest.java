@@ -722,6 +722,51 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		}
 	}
 
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testRegisterWhenFeatureFlagIsEnabled() throws Exception {
+		WebTarget registerWebTarget = getRegisterWebTarget();
+
+		Invocation.Builder invocationBuilder = authorize(
+			registerWebTarget.request(),
+			_getToken(_getDynamicRegistratorOAuth2Application()));
+
+		JSONObject jsonObject = _createAuthenticatedRegistrationJSONObject(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		Response response = invocationBuilder.method(
+			"post", Entity.json(jsonObject.toString()));
+
+		Assert.assertEquals(201, response.getStatus());
+
+		jsonObject.put(
+			"response_types",
+			Collections.singletonList(OAuthConstants.CODE_RESPONSE_TYPE));
+
+		response = invocationBuilder.method(
+			"post", Entity.json(jsonObject.toString()));
+
+		Assert.assertEquals(400, response.getStatus());
+
+		AuditMessage addAuditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_ADD");
+
+		Assert.assertEquals(
+			"system.oauth2application.register",
+			addAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", addAuditMessage.getResourceType());
+
+		AuditMessage rejectAuditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_REJECT");
+
+		Assert.assertEquals(
+			"system.oauth2application.register_reject",
+			rejectAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", rejectAuditMessage.getResourceType());
+	}
+
 	@Test
 	public void testRegisterWithAuthenticationInOpenMode() throws Exception {
 		WebTarget registerWebTarget = getRegisterWebTarget();
@@ -781,6 +826,23 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 		_testRegisterWithInvalidBearerToken(
 			jwsJwtCompactProducer.signWith(new NoneJwsSignatureProvider()));
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testRegisterWithInvalidBearerTokenWhenFeatureFlagIsEnabled()
+		throws Exception {
+
+		_testRegisterWithInvalidBearerToken(RandomTestUtil.randomString());
+
+		AuditMessage auditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_REJECT");
+
+		Assert.assertEquals(
+			"system.oauth2application.register_reject",
+			auditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", auditMessage.getResourceType());
 	}
 
 	@Test

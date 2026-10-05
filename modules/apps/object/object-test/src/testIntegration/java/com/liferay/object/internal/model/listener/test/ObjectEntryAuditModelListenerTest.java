@@ -116,6 +116,10 @@ public class ObjectEntryAuditModelListenerTest {
 	public void testOnAfterCreateWithLocalizedValues() throws Exception {
 		_addObjectEntry("en_US", "Description", "Descrição");
 
+		AuditMessage auditMessage = _auditMessages.peek();
+
+		Assert.assertEquals("objectentry", auditMessage.getResourceType());
+
 		_assertLocalizedValues(
 			TreeMapBuilder.put(
 				"description", "Description"
@@ -293,6 +297,10 @@ public class ObjectEntryAuditModelListenerTest {
 		_auditMessages.clear();
 
 		_updateObjectEntry("Description 2", objectEntry, "Descrição");
+
+		AuditMessage auditMessage = _auditMessages.peek();
+
+		Assert.assertEquals("objectentry", auditMessage.getResourceType());
 
 		_assertModifiedAttributes("description=Description>Description 2");
 	}

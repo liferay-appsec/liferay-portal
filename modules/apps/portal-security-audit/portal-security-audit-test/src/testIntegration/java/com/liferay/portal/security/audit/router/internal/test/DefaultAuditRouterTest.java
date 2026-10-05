@@ -11,6 +11,8 @@ import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
@@ -122,6 +124,53 @@ public class DefaultAuditRouterTest {
 			Assert.assertTrue(
 				_auditMessages.contains(_route(_company.getCompanyId())));
 		}
+
+		_testRoute(
+			User.class.getName(), "AI_HUB", "ADD", "ai_hub.user.add", "user");
+		_testRoute(
+			User.class.getName(), null, "LOGIN", "system.user.login", "user");
+		_testRoute(null, null, "ADD", "system.unknown.add", "unknown");
+
+		AuditMessage auditMessage = _getAuditMessage(
+			RandomTestUtil.randomString(), null, "ASSIGN");
+
+		auditMessage.setResourceType("organization");
+
+		_auditRouter.route(auditMessage);
+
+		Assert.assertEquals(
+			"system.organization.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("organization", auditMessage.getResourceType());
+
+		auditMessage = _getAuditMessage(
+			User.class.getName(), "AI_HUB", RandomTestUtil.randomString());
+
+		auditMessage.setResourceAction("submit");
+
+		_auditRouter.route(auditMessage);
+
+		Assert.assertEquals(
+			"ai_hub.user.submit", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+
+		auditMessage = _getAuditMessage(
+			RandomTestUtil.randomString(), "AI_HUB",
+			RandomTestUtil.randomString());
+
+		auditMessage.setResourceAction("submit");
+		auditMessage.setResourceType("prompt");
+
+		_auditRouter.route(auditMessage);
+
+		Assert.assertEquals(
+			"ai_hub.prompt.submit", auditMessage.getResourceAction());
+		Assert.assertEquals("prompt", auditMessage.getResourceType());
+
+		auditMessage = _route(CompanyConstants.SYSTEM);
+
+		Assert.assertTrue(_auditMessages.contains(auditMessage));
+		Assert.assertNull(auditMessage.getResourceAction());
+		Assert.assertNull(auditMessage.getResourceType());
 	}
 
 	@FeatureFlag(enable = false, value = "LPD-6417")
@@ -158,6 +207,26 @@ public class DefaultAuditRouterTest {
 			Assert.assertFalse(
 				_auditMessages.contains(_route(_company.getCompanyId())));
 		}
+
+		AuditMessage auditMessage = _getAuditMessage(
+			User.class.getName(), null, RandomTestUtil.randomString());
+
+		auditMessage.setResourceType(RandomTestUtil.randomString());
+
+		_auditRouter.route(auditMessage);
+
+		Assert.assertNull(auditMessage.getResourceAction());
+		Assert.assertNull(auditMessage.getResourceType());
+	}
+
+	private AuditMessage _getAuditMessage(
+			String className, String contextName, String eventType)
+		throws Exception {
+
+		return new AuditMessage(
+			0, TestPropsValues.getCompanyId(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), null, 0, null, className,
+			RandomTestUtil.randomString(), contextName, eventType, null);
 	}
 
 	private AuditMessage _route(long companyId) throws Exception {
@@ -168,6 +237,22 @@ public class DefaultAuditRouterTest {
 		_auditRouter.route(auditMessage);
 
 		return auditMessage;
+	}
+
+	private void _testRoute(
+			String className, String contextName, String eventType,
+			String expectedResourceAction, String expectedResourceType)
+		throws Exception {
+
+		AuditMessage auditMessage = _getAuditMessage(
+			className, contextName, eventType);
+
+		_auditRouter.route(auditMessage);
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals(
+			expectedResourceType, auditMessage.getResourceType());
 	}
 
 	private static Company _company;

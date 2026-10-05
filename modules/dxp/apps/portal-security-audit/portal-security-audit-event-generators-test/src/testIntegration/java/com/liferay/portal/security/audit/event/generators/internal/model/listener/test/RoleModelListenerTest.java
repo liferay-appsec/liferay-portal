@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 
 import org.junit.Assert;
@@ -53,6 +54,27 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+	}
+
+	@FeatureFlag("LPD-6417")
+	@Test
+	public void testOnBeforeAddAssociationWhenFeatureFlagIsEnabled()
+		throws Exception {
+
+		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+		_user = UserTestUtil.addUser();
+
+		auditMessages.clear();
+
+		_userLocalService.addRoleUsers(
+			_role.getRoleId(), new long[] {_user.getUserId()});
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.ASSIGN);
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
 	}
 
 	@Test
