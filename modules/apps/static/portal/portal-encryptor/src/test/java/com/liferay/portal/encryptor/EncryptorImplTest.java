@@ -8,6 +8,7 @@ package com.liferay.portal.encryptor;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Base64;
@@ -15,6 +16,8 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.security.Key;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Assert;
@@ -55,6 +58,28 @@ public class EncryptorImplTest {
 	}
 
 	@Test
+	public void testDecryptAuthenticated() throws Exception {
+		Encryptor encryptor = new EncryptorImpl();
+
+		Key key = encryptor.deserializeKey(_GOLDEN_KEY_AES_256);
+
+		Assert.assertEquals(
+			_GOLDEN_PLAINTEXT,
+			encryptor.decryptAuthenticated(
+				key, _GOLDEN_ENCRYPTED_STRING_AES_GCM));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				_GOLDEN_PLAINTEXT,
+				encryptor.decryptAuthenticated(
+					key, _GOLDEN_ENCRYPTED_STRING_AES_GCM));
+		}
+	}
+
+	@Test
 	public void testEncrypt() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -85,6 +110,32 @@ public class EncryptorImplTest {
 					new SecretKeySpec(new byte[8], "AES"),
 					_PLAINTEXT.getBytes()));
 		}
+	}
+
+	@Test
+	public void testEncryptAuthenticated() throws Exception {
+		Encryptor encryptor = new EncryptorImpl();
+
+		Key key = encryptor.deserializeKey(_GOLDEN_KEY_AES_256);
+
+		byte[] encryptedBytes = Base64.decode(
+			encryptor.encryptAuthenticated(key, _PLAINTEXT));
+
+		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+		cipher.init(
+			Cipher.DECRYPT_MODE, key,
+			new GCMParameterSpec(128, encryptedBytes, 0, 12));
+
+		Assert.assertEquals(
+			_PLAINTEXT,
+			new String(
+				cipher.doFinal(encryptedBytes, 12, encryptedBytes.length - 12),
+				EncryptorImpl.ENCODING));
+
+		FIPSModeTestUtil.assertAlgorithm(
+			"AES/GCM/NoPadding",
+			() -> encryptor.encryptAuthenticated(key, _PLAINTEXT));
 	}
 
 	@Test
