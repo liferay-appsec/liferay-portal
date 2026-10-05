@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
@@ -47,28 +48,35 @@ public class CryptoUtil {
 			   NoSuchAlgorithmException, NoSuchPaddingException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateAlgorithm(transformation, Cipher.class);
+			_validateAlgorithm(
+				transformation, CryptoFunctionApprovalType.APPROVED,
+				Cipher.class);
 
 			if ((mode == Cipher.ENCRYPT_MODE) &&
 				_isAuthenticatedEncryption(transformation)) {
 
 				_writeAlgorithmRejected(
-					transformation, true, Cipher.class, null,
-					"caller-supplied-parameters");
+					transformation, CryptoFunctionApprovalType.APPROVED, true,
+					Cipher.class, null, "caller-supplied-parameters");
 
 				throw new InvalidAlgorithmParameterException(
 					"Caller supplied parameters are not allowed in FIPS mode " +
 						"for authenticated encryption");
 			}
 
-			_validateKey(key.getAlgorithm(), Cipher.class, _getKeySize(key));
+			_validateKey(
+				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				Cipher.class, _getKeySize(key));
 		}
 
-		Cipher cipher = _getCipher(transformation);
+		Cipher cipher = _getCipher(
+			CryptoFunctionApprovalType.APPROVED, transformation);
 
 		cipher.init(mode, key, algorithmParameterSpec);
 
-		_recordProvider(transformation, Cipher.class, cipher.getProvider());
+		_recordProvider(
+			transformation, CryptoFunctionApprovalType.APPROVED, Cipher.class,
+			cipher.getProvider());
 
 		return cipher;
 	}
@@ -78,15 +86,22 @@ public class CryptoUtil {
 			   NoSuchPaddingException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateAlgorithm(transformation, Cipher.class);
-			_validateKey(key.getAlgorithm(), Cipher.class, _getKeySize(key));
+			_validateAlgorithm(
+				transformation, CryptoFunctionApprovalType.APPROVED,
+				Cipher.class);
+			_validateKey(
+				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				Cipher.class, _getKeySize(key));
 		}
 
-		Cipher cipher = _getCipher(transformation);
+		Cipher cipher = _getCipher(
+			CryptoFunctionApprovalType.APPROVED, transformation);
 
 		cipher.init(mode, key);
 
-		_recordProvider(transformation, Cipher.class, cipher.getProvider());
+		_recordProvider(
+			transformation, CryptoFunctionApprovalType.APPROVED, Cipher.class,
+			cipher.getProvider());
 
 		return cipher;
 	}
@@ -95,7 +110,9 @@ public class CryptoUtil {
 		throws NoSuchAlgorithmException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateAlgorithm(algorithm, KeyGenerator.class);
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				KeyGenerator.class);
 
 			keySize = _getGenerationKeySize(algorithm);
 		}
@@ -105,16 +122,44 @@ public class CryptoUtil {
 		keyGenerator.init(keySize);
 
 		_recordProvider(
-			algorithm, KeyGenerator.class, keyGenerator.getProvider());
+			algorithm, CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
+			keyGenerator.getProvider());
 
 		return keyGenerator;
+	}
+
+	public static MessageDigest createMessageDigest(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		return createMessageDigest(
+			algorithm, CryptoFunctionApprovalType.APPROVED);
+	}
+
+	public static MessageDigest createMessageDigest(
+			String algorithm, CryptoFunctionApprovalType approvalType)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(algorithm, approvalType, MessageDigest.class);
+		}
+
+		MessageDigest messageDigest = _getMessageDigest(
+			algorithm, approvalType);
+
+		_recordProvider(
+			algorithm, approvalType, MessageDigest.class,
+			messageDigest.getProvider());
+
+		return messageDigest;
 	}
 
 	public static SecretKey createSecretKey(String algorithm, byte[] keyBytes)
 		throws InvalidKeyException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateKey(algorithm, SecretKeySpec.class, keyBytes.length * 8);
+			_validateKey(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				SecretKeySpec.class, keyBytes.length * 8);
 		}
 
 		return new SecretKeySpec(keyBytes, algorithm);
@@ -132,18 +177,23 @@ public class CryptoUtil {
 		return null;
 	}
 
-	private static Provider _fetchPinnedProvider() {
-		if (!PropsValues.FIPS_ENABLED) {
+	private static Provider _fetchPinnedProvider(
+		CryptoFunctionApprovalType approvalType) {
+
+		if (!PropsValues.FIPS_ENABLED ||
+			(approvalType == CryptoFunctionApprovalType.ALLOWED)) {
+
 			return null;
 		}
 
 		return FIPSModeValidator.fetchApprovedModeProvider();
 	}
 
-	private static Cipher _getCipher(String transformation)
+	private static Cipher _getCipher(
+			CryptoFunctionApprovalType approvalType, String transformation)
 		throws NoSuchAlgorithmException, NoSuchPaddingException {
 
-		Provider provider = _fetchPinnedProvider();
+		Provider provider = _fetchPinnedProvider(approvalType);
 
 		if (provider == null) {
 			return Cipher.getInstance(transformation);
@@ -154,7 +204,8 @@ public class CryptoUtil {
 		}
 		catch (NoSuchAlgorithmException | NoSuchPaddingException exception) {
 			_writeProviderException(
-				transformation, exception, Cipher.class, provider);
+				transformation, approvalType, exception, Cipher.class,
+				provider);
 
 			throw exception;
 		}
@@ -171,7 +222,8 @@ public class CryptoUtil {
 	private static KeyGenerator _getKeyGenerator(String algorithm)
 		throws NoSuchAlgorithmException {
 
-		Provider provider = _fetchPinnedProvider();
+		Provider provider = _fetchPinnedProvider(
+			CryptoFunctionApprovalType.APPROVED);
 
 		if (provider == null) {
 			return KeyGenerator.getInstance(algorithm);
@@ -182,8 +234,8 @@ public class CryptoUtil {
 		}
 		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
 			_writeProviderException(
-				algorithm, noSuchAlgorithmException, KeyGenerator.class,
-				provider);
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				noSuchAlgorithmException, KeyGenerator.class, provider);
 
 			throw noSuchAlgorithmException;
 		}
@@ -201,6 +253,28 @@ public class CryptoUtil {
 		return encodedBytes.length * 8;
 	}
 
+	private static MessageDigest _getMessageDigest(
+			String algorithm, CryptoFunctionApprovalType approvalType)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider(approvalType);
+
+		if (provider == null) {
+			return MessageDigest.getInstance(algorithm);
+		}
+
+		try {
+			return MessageDigest.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, approvalType, noSuchAlgorithmException,
+				MessageDigest.class, provider);
+
+			throw noSuchAlgorithmException;
+		}
+	}
+
 	private static boolean _isAuthenticatedEncryption(String transformation) {
 		String[] segments = StringUtil.split(transformation, CharPool.SLASH);
 
@@ -214,12 +288,13 @@ public class CryptoUtil {
 	}
 
 	private static boolean _isNewRecord(
-		String algorithm, Class<?> factoryClass, String providerName,
-		String reason) {
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		Class<?> factoryClass, String providerName, String reason) {
 
 		String memoKey = StringBundler.concat(
-			algorithm, StringPool.POUND, factoryClass.getName(),
-			StringPool.POUND, providerName, StringPool.POUND, reason);
+			algorithm, StringPool.POUND, approvalType.name(), StringPool.POUND,
+			factoryClass.getName(), StringPool.POUND, providerName,
+			StringPool.POUND, reason);
 
 		if (_memoKeys.size() < _MEMO_KEYS_MAX_SIZE) {
 			return _memoKeys.add(memoKey);
@@ -233,14 +308,15 @@ public class CryptoUtil {
 
 		_writeFIPSAuditEvent(
 			FIPSAuditEventFactory.createAlgorithmRejected(
-				false, factoryClass.getName(), StringPool.BLANK,
-				StringPool.BLANK, "memo-saturated", null));
+				approvalType.name(), false, factoryClass.getName(),
+				StringPool.BLANK, StringPool.BLANK, "memo-saturated", null));
 
 		return false;
 	}
 
 	private static void _recordProvider(
-		String algorithm, Class<?> factoryClass, Provider provider) {
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		Class<?> factoryClass, Provider provider) {
 
 		if (!PropsValues.FIPS_ENABLED) {
 			return;
@@ -249,25 +325,54 @@ public class CryptoUtil {
 		Provider approvedModeProvider =
 			FIPSModeValidator.fetchApprovedModeProvider();
 
-		if ((approvedModeProvider != null) &&
-			(approvedModeProvider != provider)) {
+		if (approvedModeProvider == null) {
+			return;
+		}
 
+		if (approvalType == CryptoFunctionApprovalType.ALLOWED) {
+			_recordServed(algorithm, approvalType, factoryClass, provider);
+
+			return;
+		}
+
+		if (approvedModeProvider != provider) {
 			_writeAlgorithmRejected(
-				algorithm, false, factoryClass, provider,
+				algorithm, approvalType, false, factoryClass, provider,
 				"served-outside-module");
 		}
 	}
 
+	private static void _recordServed(
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		Class<?> factoryClass, Provider provider) {
+
+		if (!_isNewRecord(
+				algorithm, approvalType, factoryClass, provider.getName(),
+				"algorithm-served")) {
+
+			return;
+		}
+
+		_writeFIPSAuditEvent(
+			FIPSAuditEventFactory.createAlgorithmServed(
+				approvalType.name(), factoryClass.getName(), provider.getName(),
+				provider.getVersionStr(), algorithm));
+	}
+
 	private static void _validateAlgorithm(
-			String algorithm, Class<?> factoryClass)
+			String algorithm, CryptoFunctionApprovalType approvalType,
+			Class<?> factoryClass)
 		throws NoSuchAlgorithmException {
 
-		if (FIPSModeValidator.isAllowedAlgorithm(factoryClass, algorithm)) {
+		if (FIPSModeValidator.isAllowedAlgorithm(
+				approvalType, factoryClass, algorithm)) {
+
 			return;
 		}
 
 		_writeAlgorithmRejected(
-			algorithm, true, factoryClass, null, "algorithm-not-allowed");
+			algorithm, approvalType, true, factoryClass, null,
+			"algorithm-not-allowed");
 
 		throw new NoSuchAlgorithmException(
 			StringBundler.concat(
@@ -275,14 +380,15 @@ public class CryptoUtil {
 	}
 
 	private static void _validateKey(
-			String keyAlgorithm, Class<?> factoryClass, int keySize)
+			String keyAlgorithm, CryptoFunctionApprovalType approvalType,
+			Class<?> factoryClass, int keySize)
 		throws InvalidKeyException {
 
 		if (!FIPSModeValidator.isAllowedKeyAlgorithm(
-				factoryClass, keyAlgorithm)) {
+				approvalType, factoryClass, keyAlgorithm)) {
 
 			_writeAlgorithmRejected(
-				keyAlgorithm, true, factoryClass, null,
+				keyAlgorithm, approvalType, true, factoryClass, null,
 				"key-algorithm-not-allowed");
 
 			throw new InvalidKeyException(
@@ -295,7 +401,8 @@ public class CryptoUtil {
 			!FIPSModeValidator.isAllowedKeySize(keyAlgorithm, keySize)) {
 
 			_writeAlgorithmRejected(
-				keyAlgorithm, true, factoryClass, null, "key-size-not-allowed");
+				keyAlgorithm, approvalType, true, factoryClass, null,
+				"key-size-not-allowed");
 
 			throw new InvalidKeyException(
 				StringBundler.concat(
@@ -305,8 +412,9 @@ public class CryptoUtil {
 	}
 
 	private static void _writeAlgorithmRejected(
-		String algorithm, boolean enforced, Class<?> factoryClass,
-		Provider provider, String rejectionReason) {
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		boolean enforced, Class<?> factoryClass, Provider provider,
+		String rejectionReason) {
 
 		String providerName = StringPool.BLANK;
 		String providerVersion = StringPool.BLANK;
@@ -323,15 +431,16 @@ public class CryptoUtil {
 		}
 
 		if (!_isNewRecord(
-				algorithm, factoryClass, providerName, rejectionReason)) {
+				algorithm, approvalType, factoryClass, providerName,
+				rejectionReason)) {
 
 			return;
 		}
 
 		_writeFIPSAuditEvent(
 			FIPSAuditEventFactory.createAlgorithmRejected(
-				enforced, factoryClass.getName(), providerName, providerVersion,
-				rejectionReason, algorithm));
+				approvalType.name(), enforced, factoryClass.getName(),
+				providerName, providerVersion, rejectionReason, algorithm));
 	}
 
 	private static void _writeFIPSAuditEvent(FIPSAuditEvent fipsAuditEvent) {
@@ -348,8 +457,8 @@ public class CryptoUtil {
 	}
 
 	private static void _writeProviderException(
-		String algorithm, Exception exception, Class<?> factoryClass,
-		Provider provider) {
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		Exception exception, Class<?> factoryClass, Provider provider) {
 
 		Throwable throwable = _fetchErrorThrowable(exception);
 
@@ -357,13 +466,14 @@ public class CryptoUtil {
 			FIPSModeValidator.isHealthyProvider(provider)) {
 
 			_writeAlgorithmRejected(
-				algorithm, true, factoryClass, provider, "provider-refused");
+				algorithm, approvalType, true, factoryClass, provider,
+				"provider-refused");
 
 			return;
 		}
 
 		if (!_isNewRecord(
-				algorithm, factoryClass, provider.getName(),
+				algorithm, approvalType, factoryClass, provider.getName(),
 				"provider-failure")) {
 
 			return;
@@ -375,8 +485,9 @@ public class CryptoUtil {
 
 		_writeFIPSAuditEvent(
 			FIPSAuditEventFactory.createProviderFailure(
-				factoryClass.getName(), String.valueOf(throwable),
-				provider.getName(), provider.getVersionStr(), algorithm));
+				approvalType.name(), factoryClass.getName(),
+				String.valueOf(throwable), provider.getName(),
+				provider.getVersionStr(), algorithm));
 	}
 
 	private static final int _MEMO_KEYS_MAX_SIZE = 1024;

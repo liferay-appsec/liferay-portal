@@ -10,6 +10,7 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -34,6 +35,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
 
@@ -109,39 +111,36 @@ public class FIPSModeValidator {
 	}
 
 	public static boolean isAllowedAlgorithm(
-		Class<?> factoryClass, String algorithm) {
+		CryptoFunctionApprovalType approvalType, Class<?> factoryClass,
+		String algorithm) {
+
+		if (ArrayUtil.contains(
+				_approvedAlgorithms.get(factoryClass), algorithm, true)) {
+
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.APPROVED) {
+			return false;
+		}
 
 		return ArrayUtil.contains(
-			_approvedAlgorithms.get(factoryClass), algorithm, true);
+			_allowedAlgorithms.get(factoryClass), algorithm, true);
 	}
 
 	public static boolean isAllowedKeyAlgorithm(
-		Class<?> factoryClass, String keyAlgorithm) {
+		CryptoFunctionApprovalType approvalType, Class<?> factoryClass,
+		String keyAlgorithm) {
 
-		Class<?>[] factoryClasses = {factoryClass};
-
-		if (!_approvedAlgorithms.containsKey(factoryClass)) {
-			factoryClasses = _KEY_FACTORY_CLASSES;
+		if (_isKeyAlgorithm(_approvedAlgorithms, factoryClass, keyAlgorithm)) {
+			return true;
 		}
 
-		for (Class<?> currentFactoryClass : factoryClasses) {
-			String[] algorithms = _approvedAlgorithms.get(currentFactoryClass);
-
-			if (algorithms == null) {
-				continue;
-			}
-
-			for (String algorithm : algorithms) {
-				if (StringUtil.equalsIgnoreCase(
-						keyAlgorithm,
-						_getKeyAlgorithm(currentFactoryClass, algorithm))) {
-
-					return true;
-				}
-			}
+		if (approvalType == CryptoFunctionApprovalType.APPROVED) {
+			return false;
 		}
 
-		return false;
+		return _isKeyAlgorithm(_allowedAlgorithms, factoryClass, keyAlgorithm);
 	}
 
 	public static boolean isAllowedKeySize(String keyAlgorithm, int keySize) {
@@ -168,7 +167,7 @@ public class FIPSModeValidator {
 			return true;
 		}
 
-		for (String allowedAlgorithm : _allowedAlgorithms) {
+		for (String allowedAlgorithm : _allowedAlgorithmPrefixes) {
 			if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
 				return false;
 			}
@@ -290,6 +289,36 @@ public class FIPSModeValidator {
 		}
 
 		return plaintextSecretProperties;
+	}
+
+	private static boolean _isKeyAlgorithm(
+		Map<Class<?>, String[]> algorithms, Class<?> factoryClass,
+		String keyAlgorithm) {
+
+		Class<?>[] factoryClasses = {factoryClass};
+
+		if (!_approvedAlgorithms.containsKey(factoryClass)) {
+			factoryClasses = _KEY_FACTORY_CLASSES;
+		}
+
+		for (Class<?> currentFactoryClass : factoryClasses) {
+			String[] currentAlgorithms = algorithms.get(currentFactoryClass);
+
+			if (currentAlgorithms == null) {
+				continue;
+			}
+
+			for (String algorithm : currentAlgorithms) {
+				if (StringUtil.equalsIgnoreCase(
+						keyAlgorithm,
+						_getKeyAlgorithm(currentFactoryClass, algorithm))) {
+
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private static Document _readChannelPropertiesDocument(
@@ -754,10 +783,12 @@ public class FIPSModeValidator {
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
 		1300000;
 
-	private static final Set<String> _allowedAlgorithms = Set.of(
+	private static final Set<String> _allowedAlgorithmPrefixes = Set.of(
 		"AES", "HmacSHA256", "HmacSHA384", "HmacSHA512", "PBKDF2WithHmacSHA256",
 		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
 		"SHA-512");
+	private static final Map<Class<?>, String[]> _allowedAlgorithms = Map.of(
+		MessageDigest.class, new String[] {"MD5", "SHA-1"});
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
@@ -785,7 +816,8 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
 		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
-		new String[] {"AES"});
+		new String[] {"AES"}, MessageDigest.class,
+		new String[] {"SHA-256", "SHA-384", "SHA-512"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(

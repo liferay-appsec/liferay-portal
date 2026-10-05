@@ -13,13 +13,16 @@ import com.liferay.portal.kernel.util.GetterUtil;
 public class FIPSAuditEventFactory {
 
 	public static FIPSAuditEvent createAlgorithmRejected(
-		boolean enforced, String factoryClassName, String providerName,
-		String providerVersion, String rejectionReason,
+		String approvalType, boolean enforced, String factoryClassName,
+		String providerName, String providerVersion, String rejectionReason,
 		String requestedAlgorithm) {
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			"algorithm-rejected", FIPSAuditEvent.Severity.WARNING);
 
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
 		fipsAuditEvent.put("enforced", enforced);
 		fipsAuditEvent.put(
 			"factory-class-name", GetterUtil.getString(factoryClassName));
@@ -35,12 +38,15 @@ public class FIPSAuditEventFactory {
 	}
 
 	public static FIPSAuditEvent createAlgorithmServed(
-		String factoryClassName, String providerName, String providerVersion,
-		String requestedAlgorithm) {
+		String approvalType, String factoryClassName, String providerName,
+		String providerVersion, String requestedAlgorithm) {
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			"algorithm-served", FIPSAuditEvent.Severity.INFO);
 
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
 		fipsAuditEvent.put(
 			"factory-class-name", GetterUtil.getString(factoryClassName));
 		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
@@ -91,13 +97,16 @@ public class FIPSAuditEventFactory {
 	}
 
 	public static FIPSAuditEvent createProviderFailure(
-		String factoryClassName, String providerErrorMessage,
-		String providerName, String providerVersion,
-		String requestedAlgorithm) {
+		String approvalType, String factoryClassName,
+		String providerErrorMessage, String providerName,
+		String providerVersion, String requestedAlgorithm) {
 
 		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
 			"provider-failure", FIPSAuditEvent.Severity.CRITICAL);
 
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
 		fipsAuditEvent.put(
 			"factory-class-name", GetterUtil.getString(factoryClassName));
 		fipsAuditEvent.put(
