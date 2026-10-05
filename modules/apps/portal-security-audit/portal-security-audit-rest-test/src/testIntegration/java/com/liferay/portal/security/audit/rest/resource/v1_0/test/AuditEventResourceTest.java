@@ -15,6 +15,8 @@ import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -22,6 +24,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -54,6 +57,8 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 	@Override
 	public void tearDown() throws Exception {
 		super.tearDown();
+
+		AuditRequestThreadLocal.removeAuditThreadLocal();
 
 		for (com.liferay.portal.security.audit.storage.model.AuditEvent
 				serviceBuilderAuditEvent : _serviceBuilderAuditEvents) {
@@ -109,6 +114,11 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		Assert.assertEquals(1, page.getTotalCount());
 
 		assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
+
+		AuditEvent auditEvent3 = page.fetchFirstItem();
+
+		Assert.assertEquals(
+			auditEvent1.getAdditionalInfo(), auditEvent3.getAdditionalInfo());
 
 		page = auditEventResource.getAuditEventsPage(
 			new Long[] {
@@ -171,6 +181,10 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		AuditEvent auditEvent = super.randomAuditEvent();
 
 		auditEvent.setAccountId(0L);
+		auditEvent.setAdditionalInfo(
+			HashMapBuilder.<String, Object>put(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString()
+			).build());
 		auditEvent.setContextName((String)null);
 
 		return auditEvent;
@@ -184,7 +198,10 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 			serviceBuilderAuditEvent = _auditEventLocalService.addAuditEvent(
 				new AuditMessage(
 					0L, testCompany.getCompanyId(), 0L, null, null,
-					auditEvent.getAccountId(), null, auditEvent.getEntityType(),
+					auditEvent.getAccountId(),
+					JSONFactoryUtil.createJSONObject(
+						auditEvent.getAdditionalInfo()),
+					auditEvent.getEntityType(),
 					String.valueOf(auditEvent.getEntityId()),
 					auditEvent.getContextName(), auditEvent.getEventType(),
 					null));
@@ -193,6 +210,7 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 
 		return new AuditEvent() {
 			{
+				additionalInfo = auditEvent.getAdditionalInfo();
 				id = serviceBuilderAuditEvent.getAuditEventId();
 			}
 		};

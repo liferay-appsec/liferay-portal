@@ -32,6 +32,8 @@ import java.util.Date;
  */
 public class AuditMessage implements Serializable {
 
+	public static final String SCHEMA_VERSION = "2.3";
+
 	public AuditMessage(
 		long groupId, long companyId, long userId, String userName,
 		Date timestampDate, JSONObject additionalInfoJSONObject,
