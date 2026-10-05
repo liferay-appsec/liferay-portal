@@ -66,6 +66,11 @@ public interface AuditPseudonymLocalService
 	@Indexable(type = IndexableType.REINDEX)
 	public AuditPseudonym addAuditPseudonym(AuditPseudonym auditPseudonym);
 
+	public AuditPseudonym addAuditPseudonym(
+			long companyId, String contextName, String fieldCategory,
+			String value)
+		throws PortalException;
+
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
 	 *
@@ -259,4 +264,4 @@ public interface AuditPseudonymLocalService
 	public AuditPseudonym updateAuditPseudonym(AuditPseudonym auditPseudonym);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2052239499
+// LIFERAY-SERVICE-BUILDER-HASH:-1758398267

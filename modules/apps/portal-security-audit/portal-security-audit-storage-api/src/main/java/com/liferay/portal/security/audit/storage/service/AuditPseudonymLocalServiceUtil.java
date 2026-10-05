@@ -53,6 +53,15 @@ public class AuditPseudonymLocalServiceUtil {
 		return getService().addAuditPseudonym(auditPseudonym);
 	}
 
+	public static AuditPseudonym addAuditPseudonym(
+			long companyId, String contextName, String fieldCategory,
+			String value)
+		throws PortalException {
+
+		return getService().addAuditPseudonym(
+			companyId, contextName, fieldCategory, value);
+	}
+
 	/**
 	 * Creates a new audit pseudonym with the primary key. Does not add the audit pseudonym to the database.
 	 *
@@ -299,4 +308,4 @@ public class AuditPseudonymLocalServiceUtil {
 			AuditPseudonymLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1771739895
+// LIFERAY-SERVICE-BUILDER-HASH:-2056246559
