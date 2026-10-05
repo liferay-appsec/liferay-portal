@@ -167,8 +167,7 @@ public class CryptoUtil {
 			!FIPSModeValidator.isAllowedKeySize(keyAlgorithm, keySize)) {
 
 			_writeAlgorithmRejected(
-				keyAlgorithm, true, factoryClass, null,
-				"key-size-not-allowed");
+				keyAlgorithm, true, factoryClass, null, "key-size-not-allowed");
 
 			throw new InvalidKeyException(
 				StringBundler.concat(

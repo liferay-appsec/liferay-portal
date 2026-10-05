@@ -5,11 +5,12 @@
 
 package com.liferay.portal.encryptor;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
@@ -19,6 +20,8 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.security.AlgorithmParameters;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
 
 import java.util.Arrays;
@@ -195,12 +198,10 @@ public class EncryptorImpl implements Encryptor {
 			byte[] initializationVector = Arrays.copyOfRange(
 				encryptedBytes, 0, _GCM_INITIALIZATION_VECTOR_LENGTH);
 
-			Cipher cipher = Cipher.getInstance(_AES_GCM_NOPADDING);
-
-			cipher.init(
-				Cipher.DECRYPT_MODE, key,
+			Cipher cipher = CryptoUtil.createCipher(
 				new GCMParameterSpec(
-					_GCM_TAG_LENGTH_BITS, initializationVector));
+					_GCM_TAG_LENGTH_BITS, initializationVector),
+				key, Cipher.DECRYPT_MODE, _GCM_TRANSFORMATION);
 
 			return cipher.doFinal(cipherBytes);
 		}
@@ -226,20 +227,27 @@ public class EncryptorImpl implements Encryptor {
 	private byte[] _encryptGCM(Key key, byte[] plainBytes)
 		throws EncryptorException {
 
-		byte[] initializationVector =
-			new byte[_GCM_INITIALIZATION_VECTOR_LENGTH];
-
-		for (int i = 0; i < initializationVector.length; i++) {
-			initializationVector[i] = SecureRandomUtil.nextByte();
-		}
-
 		try {
-			Cipher cipher = Cipher.getInstance(_AES_GCM_NOPADDING);
+			Cipher cipher = CryptoUtil.createCipher(
+				key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION);
 
-			cipher.init(
-				Cipher.ENCRYPT_MODE, key,
-				new GCMParameterSpec(
-					_GCM_TAG_LENGTH_BITS, initializationVector));
+			byte[] initializationVector = cipher.getIV();
+
+			AlgorithmParameters algorithmParameters = cipher.getParameters();
+
+			GCMParameterSpec gcmParameterSpec =
+				algorithmParameters.getParameterSpec(GCMParameterSpec.class);
+
+			if ((initializationVector.length !=
+					_GCM_INITIALIZATION_VECTOR_LENGTH) ||
+				(gcmParameterSpec.getTLen() != _GCM_TAG_LENGTH_BITS)) {
+
+				throw new InvalidAlgorithmParameterException(
+					StringBundler.concat(
+						"Initialization vector length ",
+						initializationVector.length, " and tag length ",
+						gcmParameterSpec.getTLen(), " are not supported"));
+			}
 
 			byte[] cipherBytes = cipher.doFinal(plainBytes);
 
@@ -274,13 +282,13 @@ public class EncryptorImpl implements Encryptor {
 		}
 	}
 
-	private static final String _AES_GCM_NOPADDING = "AES/GCM/NoPadding";
-
 	private static final int _AES_KEY_SIZE = 256;
 
 	private static final int _GCM_INITIALIZATION_VECTOR_LENGTH = 12;
 
 	private static final int _GCM_TAG_LENGTH_BITS = 128;
+
+	private static final String _GCM_TRANSFORMATION = "AES/GCM/NoPadding";
 
 	private static final Log _log = LogFactoryUtil.getLog(EncryptorImpl.class);
 
