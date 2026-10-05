@@ -19,6 +19,7 @@ public class FIPSAuditEventFactoryTest {
 
 	@Test
 	public void testCreateAlgorithmRejected() {
+		String approvalType = RandomTestUtil.randomString();
 		boolean enforced = RandomTestUtil.randomBoolean();
 		String factoryClassName = RandomTestUtil.randomString();
 		String providerName = RandomTestUtil.randomString();
@@ -28,8 +29,8 @@ public class FIPSAuditEventFactoryTest {
 
 		FIPSAuditEvent fipsAuditEvent =
 			FIPSAuditEventFactory.createAlgorithmRejected(
-				enforced, factoryClassName, providerName, providerVersion,
-				rejectionReason, requestedAlgorithm);
+				approvalType, enforced, factoryClassName, providerName,
+				providerVersion, rejectionReason, requestedAlgorithm);
 
 		Assert.assertEquals(
 			"algorithm-rejected", fipsAuditEvent.getEventType());
@@ -37,14 +38,45 @@ public class FIPSAuditEventFactoryTest {
 			FIPSAuditEvent.Severity.WARNING, fipsAuditEvent.getSeverity());
 
 		_assertFields(
-			false, StringPool.BLANK,
+			StringPool.BLANK, false, StringPool.BLANK,
 			FIPSAuditEventFactory.createAlgorithmRejected(
-				false, null, null, null, null, null),
+				null, false, null, null, null, null, null),
 			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
 			StringPool.BLANK);
 		_assertFields(
-			enforced, factoryClassName, fipsAuditEvent, providerName,
-			providerVersion, rejectionReason, requestedAlgorithm);
+			approvalType, enforced, factoryClassName, fipsAuditEvent,
+			providerName, providerVersion, rejectionReason, requestedAlgorithm);
+	}
+
+	@Test
+	public void testCreateAlgorithmServed() {
+		String approvalType = RandomTestUtil.randomString();
+		String factoryClassName = RandomTestUtil.randomString();
+		String providerName = RandomTestUtil.randomString();
+		String providerVersion = RandomTestUtil.randomString();
+		String requestedAlgorithm = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createAlgorithmServed(
+				approvalType, factoryClassName, providerName, providerVersion,
+				requestedAlgorithm);
+
+		Assert.assertEquals("algorithm-served", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.INFO, fipsAuditEvent.getSeverity());
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"crypto-function-approval-type", approvalType
+			).put(
+				"factory-class-name", factoryClassName
+			).put(
+				"provider-name", providerName
+			).put(
+				"provider-version", providerVersion
+			).put(
+				"requested-algorithm", requestedAlgorithm
+			).build(),
+			fipsAuditEvent.getFields());
 	}
 
 	@Test
@@ -103,6 +135,7 @@ public class FIPSAuditEventFactoryTest {
 
 	@Test
 	public void testCreateProviderFailure() {
+		String approvalType = RandomTestUtil.randomString();
 		String factoryClassName = RandomTestUtil.randomString();
 		String providerErrorMessage = RandomTestUtil.randomString();
 		String providerName = RandomTestUtil.randomString();
@@ -111,45 +144,23 @@ public class FIPSAuditEventFactoryTest {
 
 		FIPSAuditEvent fipsAuditEvent =
 			FIPSAuditEventFactory.createProviderFailure(
-				factoryClassName, providerErrorMessage, providerName,
-				providerVersion, requestedAlgorithm);
+				approvalType, factoryClassName, providerErrorMessage,
+				providerName, providerVersion, requestedAlgorithm);
 
 		Assert.assertEquals("provider-failure", fipsAuditEvent.getEventType());
 		Assert.assertEquals(
 			FIPSAuditEvent.Severity.CRITICAL, fipsAuditEvent.getSeverity());
 
 		_assertFields(
-			StringPool.BLANK,
+			StringPool.BLANK, StringPool.BLANK,
 			FIPSAuditEventFactory.createProviderFailure(
-				null, null, null, null, null),
+				null, null, null, null, null, null),
 			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
 			StringPool.BLANK);
 		_assertFields(
-			factoryClassName, fipsAuditEvent, providerErrorMessage,
-			providerName, providerVersion, requestedAlgorithm);
-	}
-
-	private void _assertFields(
-		boolean enforced, String factoryClassName,
-		FIPSAuditEvent fipsAuditEvent, String providerName,
-		String providerVersion, String rejectionReason,
-		String requestedAlgorithm) {
-
-		Assert.assertEquals(
-			HashMapBuilder.<String, Object>put(
-				"enforced", enforced
-			).put(
-				"factory-class-name", factoryClassName
-			).put(
-				"provider-name", providerName
-			).put(
-				"provider-version", providerVersion
-			).put(
-				"rejection-reason", rejectionReason
-			).put(
-				"requested-algorithm", requestedAlgorithm
-			).build(),
-			fipsAuditEvent.getFields());
+			approvalType, factoryClassName, fipsAuditEvent,
+			providerErrorMessage, providerName, providerVersion,
+			requestedAlgorithm);
 	}
 
 	private void _assertFields(
@@ -170,12 +181,40 @@ public class FIPSAuditEventFactoryTest {
 	}
 
 	private void _assertFields(
-		String factoryClassName, FIPSAuditEvent fipsAuditEvent,
-		String providerErrorMessage, String providerName,
-		String providerVersion, String requestedAlgorithm) {
+		String approvalType, boolean enforced, String factoryClassName,
+		FIPSAuditEvent fipsAuditEvent, String providerName,
+		String providerVersion, String rejectionReason,
+		String requestedAlgorithm) {
 
 		Assert.assertEquals(
 			HashMapBuilder.<String, Object>put(
+				"crypto-function-approval-type", approvalType
+			).put(
+				"enforced", enforced
+			).put(
+				"factory-class-name", factoryClassName
+			).put(
+				"provider-name", providerName
+			).put(
+				"provider-version", providerVersion
+			).put(
+				"rejection-reason", rejectionReason
+			).put(
+				"requested-algorithm", requestedAlgorithm
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
+	private void _assertFields(
+		String approvalType, String factoryClassName,
+		FIPSAuditEvent fipsAuditEvent, String providerErrorMessage,
+		String providerName, String providerVersion,
+		String requestedAlgorithm) {
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"crypto-function-approval-type", approvalType
+			).put(
 				"factory-class-name", factoryClassName
 			).put(
 				"provider-error-message", providerErrorMessage

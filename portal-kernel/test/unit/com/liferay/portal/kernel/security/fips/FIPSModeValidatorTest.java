@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.security.fips;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProvider;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -18,6 +19,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 
+import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
 
@@ -173,40 +175,92 @@ public class FIPSModeValidatorTest {
 	public void testIsAllowedAlgorithm() {
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
-				Cipher.class, "AES/GCM/NoPadding"));
+				CryptoFunctionApprovalType.APPROVED, Cipher.class,
+				"AES/GCM/NoPadding"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
-				Cipher.class, "aes/gcm/nopadding"));
+				CryptoFunctionApprovalType.APPROVED, Cipher.class,
+				"aes/gcm/nopadding"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
-				Cipher.class, "AES/ECB/PKCS5Padding"));
+				CryptoFunctionApprovalType.APPROVED, Cipher.class,
+				"AES/ECB/PKCS5Padding"));
 		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(Cipher.class, null));
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, null));
 		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(KeyGenerator.class, "AES"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(KeyGenerator.class, "DESede"));
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
+				"AES"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
-				SSLContext.class, "AES/GCM/NoPadding"));
+				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
+				"DESede"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SSLContext.class,
+				"AES/GCM/NoPadding"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				"SHA-256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				"MD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"MD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"SHA-1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"SHA-256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				RandomTestUtil.randomString()));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class,
+				"AES/ECB/PKCS5Padding"));
 	}
 
 	@Test
 	public void testIsAllowedKeyAlgorithm() {
 		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "AES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "aes"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(Cipher.class, "DES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(KeyGenerator.class, "AES"));
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, "AES"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
-				SecretKeySpec.class, "AES"));
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, "aes"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
-				SecretKeySpec.class, "Blowfish"));
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, "DES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
+				"AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
+				"AES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
+				"Blowfish"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "AES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "DES"));
 	}
 
 	@Test

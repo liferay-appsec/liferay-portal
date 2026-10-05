@@ -8,6 +8,7 @@ package com.liferay.portal.security.fips.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -18,6 +19,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.Provider;
 
 import java.util.ArrayList;
@@ -187,6 +189,48 @@ public class CryptoUtilTest {
 
 		Assert.assertEquals(
 			Arrays.toString(encodedBytes), 32, encodedBytes.length);
+	}
+
+	@Test
+	public void testCreateMessageDigest() throws Exception {
+		for (String algorithm : new String[] {"MD5", "SHA-1"}) {
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+				algorithm, CryptoFunctionApprovalType.ALLOWED);
+
+			Provider provider = messageDigest.getProvider();
+
+			Assert.assertTrue(
+				provider.getName(),
+				_hasAuditLogJSONObject(
+					algorithm, CryptoFunctionApprovalType.ALLOWED,
+					"algorithm-served", provider.getName()));
+		}
+	}
+
+	private boolean _hasAuditLogJSONObject(
+			String algorithm, CryptoFunctionApprovalType approvalType,
+			String eventType, String providerName)
+		throws Exception {
+
+		for (JSONObject jsonObject : FIPSTestUtil.getAuditLogJSONObjects()) {
+			JSONObject fieldsJSONObject = jsonObject.getJSONObject("fields");
+
+			if (Objects.equals(jsonObject.getString("event-type"), eventType) &&
+				Objects.equals(
+					fieldsJSONObject.getString("requested-algorithm"),
+					algorithm) &&
+				Objects.equals(
+					fieldsJSONObject.getString("crypto-function-approval-type"),
+					approvalType.name()) &&
+				Objects.equals(
+					fieldsJSONObject.getString("provider-name"),
+					providerName)) {
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static final String _GCM_TRANSFORMATION = "AES/GCM/NoPadding";

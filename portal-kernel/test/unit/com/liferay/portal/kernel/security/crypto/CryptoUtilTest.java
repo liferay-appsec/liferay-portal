@@ -20,6 +20,7 @@ import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
@@ -274,6 +275,8 @@ public class CryptoUtilTest {
 			Map<String, Object> fields = fipsAuditEvent.getFields();
 
 			Assert.assertEquals(
+				"APPROVED", fields.get("crypto-function-approval-type"));
+			Assert.assertEquals(
 				provider.getName(), fields.get("provider-name"));
 			Assert.assertEquals(
 				"java.lang.AssertionError: Self test failed",
@@ -351,8 +354,85 @@ public class CryptoUtilTest {
 				() -> CryptoUtil.createKeyGenerator("DESede", 168));
 
 			_assertAlgorithmRejected(
-				true, KeyGenerator.class, mockedStatic, "algorithm-not-allowed",
-				"DESede");
+				CryptoFunctionApprovalType.APPROVED, true, KeyGenerator.class,
+				mockedStatic, "algorithm-not-allowed", "DESede");
+		}
+	}
+
+	@Test
+	public void testCreateMessageDigest() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest("MD5");
+
+			Assert.assertEquals("MD5", messageDigest.getAlgorithm());
+
+			messageDigest = CryptoUtil.createMessageDigest(
+				"MD5", CryptoFunctionApprovalType.ALLOWED);
+
+			Assert.assertEquals("MD5", messageDigest.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+				"SHA-1", CryptoFunctionApprovalType.ALLOWED);
+
+			Assert.assertEquals("SHA-1", messageDigest.getAlgorithm());
+
+			messageDigest = CryptoUtil.createMessageDigest("SHA-256");
+
+			Assert.assertEquals("SHA-256", messageDigest.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMessageDigest("MD5"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, MessageDigest.class,
+				mockedStatic, "algorithm-not-allowed", "MD5");
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMessageDigest("SHA-1"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, MessageDigest.class,
+				mockedStatic, "algorithm-not-allowed", "SHA-1");
+
+			String algorithm = RandomTestUtil.randomString();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMessageDigest(
+					algorithm, CryptoFunctionApprovalType.ALLOWED));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.ALLOWED, true, MessageDigest.class,
+				mockedStatic, "algorithm-not-allowed", algorithm);
+
+			_setApprovedModeProvider(_createProvider());
+
+			messageDigest = CryptoUtil.createMessageDigest(
+				"MD5", CryptoFunctionApprovalType.ALLOWED);
+
+			_assertAlgorithmServed(
+				CryptoFunctionApprovalType.ALLOWED, mockedStatic,
+				messageDigest.getProvider(), "MD5");
+
+			CryptoUtil.createMessageDigest(
+				"MD5", CryptoFunctionApprovalType.ALLOWED);
+
+			mockedStatic.verifyNoInteractions();
 		}
 	}
 
@@ -395,16 +475,16 @@ public class CryptoUtilTest {
 				() -> CryptoUtil.createSecretKey("Blowfish", aesKeyBytes));
 
 			_assertAlgorithmRejected(
-				true, SecretKeySpec.class, mockedStatic,
-				"key-algorithm-not-allowed", "Blowfish");
+				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
+				mockedStatic, "key-algorithm-not-allowed", "Blowfish");
 
 			Assert.assertThrows(
 				InvalidKeyException.class,
 				() -> CryptoUtil.createSecretKey("AES", keyBytes));
 
 			_assertAlgorithmRejected(
-				true, SecretKeySpec.class, mockedStatic, "key-size-not-allowed",
-				"AES");
+				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
+				mockedStatic, "key-size-not-allowed", "AES");
 		}
 	}
 
@@ -492,9 +572,18 @@ public class CryptoUtilTest {
 	}
 
 	private Map<String, Object> _assertAlgorithmRejected(
-		boolean enforced, Class<?> factoryClass,
-		MockedStatic<FIPSAuditUtil> mockedStatic, String rejectionReason,
-		String requestedAlgorithm) {
+		boolean enforced, MockedStatic<FIPSAuditUtil> mockedStatic,
+		String rejectionReason, String requestedAlgorithm) {
+
+		return _assertAlgorithmRejected(
+			CryptoFunctionApprovalType.APPROVED, enforced, Cipher.class,
+			mockedStatic, rejectionReason, requestedAlgorithm);
+	}
+
+	private Map<String, Object> _assertAlgorithmRejected(
+		CryptoFunctionApprovalType approvalType, boolean enforced,
+		Class<?> factoryClass, MockedStatic<FIPSAuditUtil> mockedStatic,
+		String rejectionReason, String requestedAlgorithm) {
 
 		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
 			FIPSAuditEvent.class);
@@ -511,6 +600,8 @@ public class CryptoUtilTest {
 
 		Map<String, Object> fields = fipsAuditEvent.getFields();
 
+		Assert.assertEquals(
+			approvalType.name(), fields.get("crypto-function-approval-type"));
 		Assert.assertEquals(enforced, fields.get("enforced"));
 		Assert.assertEquals(
 			factoryClass.getName(), fields.get("factory-class-name"));
@@ -521,13 +612,30 @@ public class CryptoUtilTest {
 		return fields;
 	}
 
-	private Map<String, Object> _assertAlgorithmRejected(
-		boolean enforced, MockedStatic<FIPSAuditUtil> mockedStatic,
-		String rejectionReason, String requestedAlgorithm) {
+	private void _assertAlgorithmServed(
+		CryptoFunctionApprovalType approvalType,
+		MockedStatic<FIPSAuditUtil> mockedStatic, Provider provider,
+		String requestedAlgorithm) {
 
-		return _assertAlgorithmRejected(
-			enforced, Cipher.class, mockedStatic, rejectionReason,
-			requestedAlgorithm);
+		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
+			FIPSAuditEvent.class);
+
+		mockedStatic.verify(
+			() -> FIPSAuditUtil.write(argumentCaptor.capture()));
+
+		mockedStatic.clearInvocations();
+
+		FIPSAuditEvent fipsAuditEvent = argumentCaptor.getValue();
+
+		Assert.assertEquals("algorithm-served", fipsAuditEvent.getEventType());
+
+		Map<String, Object> fields = fipsAuditEvent.getFields();
+
+		Assert.assertEquals(
+			approvalType.name(), fields.get("crypto-function-approval-type"));
+		Assert.assertEquals(provider.getName(), fields.get("provider-name"));
+		Assert.assertEquals(
+			requestedAlgorithm, fields.get("requested-algorithm"));
 	}
 
 	private void _assertKeySize(int keySize, SecretKey secretKey) {
