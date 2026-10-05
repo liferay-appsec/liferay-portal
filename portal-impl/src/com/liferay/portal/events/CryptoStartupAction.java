@@ -6,34 +6,16 @@
 package com.liferay.portal.events;
 
 import com.liferay.portal.kernel.events.SimpleAction;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.PropsValues;
-
-import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.Mac;
 
 /**
  * @author Mika Koivisto
+ * @deprecated As of Cavanaugh (7.4.x), with no direct replacement
  */
+@Deprecated
 public class CryptoStartupAction extends SimpleAction {
 
 	@Override
 	public void run(String[] ids) {
-		String algorithm = PropsValues.FIPS_ENABLED ? "HmacSHA256" : "HmacSHA1";
-
-		try {
-			Mac.getInstance(algorithm);
-		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_log.error(
-				"Unable to get Mac instance for algorithm " + algorithm,
-				noSuchAlgorithmException);
-		}
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		CryptoStartupAction.class);
 
 }
