@@ -3,7 +3,10 @@ dependencies {
 	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
 	compileOnly project(":apps:portal-search:portal-search-api")
 	compileOnly project(":apps:portal-search:portal-search-rest-api")
+	compileOnly project(":apps:portal-security:portal-security-key-api")
 	compileOnly project(":core:petra:petra-function")
 	compileOnly project(":core:petra:petra-reflect")
 	compileOnly project(":core:petra:petra-string")
+	testCompileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testImplementation project(":core:petra:petra-lang")
 }
