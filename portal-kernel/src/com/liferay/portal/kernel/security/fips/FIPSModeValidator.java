@@ -48,6 +48,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.crypto.Cipher;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -90,6 +92,45 @@ public class FIPSModeValidator {
 		return ArrayUtil.toStringArray(
 			SetUtil.intersect(
 				_allowedTLSProtocols, SetUtil.fromArray(tlsProtocols)));
+	}
+
+	public static int[] getKeySizes(String keyAlgorithm) {
+		if (StringUtil.equalsIgnoreCase(keyAlgorithm, "AES")) {
+			return ArrayUtil.clone(_AES_KEY_SIZES);
+		}
+
+		return new int[0];
+	}
+
+	public static boolean isAllowedAlgorithm(
+		Class<?> factoryClass, String algorithm) {
+
+		return ArrayUtil.contains(
+			_approvedAlgorithms.get(factoryClass), algorithm, true);
+	}
+
+	public static boolean isAllowedKeyAlgorithm(
+		Class<?> factoryClass, String keyAlgorithm) {
+
+		String[] algorithms = _approvedAlgorithms.get(factoryClass);
+
+		if (algorithms == null) {
+			return false;
+		}
+
+		for (String algorithm : algorithms) {
+			if (StringUtil.equalsIgnoreCase(
+					keyAlgorithm, _getKeyAlgorithm(factoryClass, algorithm))) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static boolean isAllowedKeySize(String keyAlgorithm, int keySize) {
+		return ArrayUtil.contains(getKeySizes(keyAlgorithm), keySize);
 	}
 
 	public static boolean isNotAllowedAlgorithm(String algorithm) {
@@ -178,6 +219,18 @@ public class FIPSModeValidator {
 
 		throw new SecurityException(
 			"URL protocol scheme is not allowed in FIPS mode");
+	}
+
+	private static String _getKeyAlgorithm(
+		Class<?> factoryClass, String algorithm) {
+
+		if (factoryClass == Cipher.class) {
+			String[] segments = StringUtil.split(algorithm, CharPool.SLASH);
+
+			return segments[0];
+		}
+
+		return algorithm;
 	}
 
 	private static List<String> _getPlaintextSecretProperties(
@@ -655,6 +708,8 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static final int[] _AES_KEY_SIZES = {128, 192, 256};
+
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
@@ -689,6 +744,8 @@ public class FIPSModeValidator {
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384");
 	private static final Set<String> _allowedTLSProtocols = Set.of(
 		"TLSv1.2", "TLSv1.3");
+	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
+		Cipher.class, new String[] {"AES/GCM/NoPadding"});
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =
