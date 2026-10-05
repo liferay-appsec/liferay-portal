@@ -97,6 +97,13 @@ public class AuditEventResourceImpl extends BaseAuditEventResourceImpl {
 				setGroupId(serviceBuilderAuditEvent::getGroupId);
 				setHttpMethod(serviceBuilderAuditEvent::getHttpMethod);
 				setId(serviceBuilderAuditEvent::getAuditEventId);
+				setImpersonated(serviceBuilderAuditEvent::isImpersonated);
+				setImpersonatedUserEmailAddress(
+					serviceBuilderAuditEvent::getImpersonatedUserEmailAddress);
+				setImpersonatedUserId(
+					serviceBuilderAuditEvent::getImpersonatedUserId);
+				setImpersonatedUserName(
+					serviceBuilderAuditEvent::getImpersonatedUserName);
 				setObjectName(serviceBuilderAuditEvent::getObjectName);
 				setRequestId(serviceBuilderAuditEvent::getRequestId);
 				setRequestIdGenerated(

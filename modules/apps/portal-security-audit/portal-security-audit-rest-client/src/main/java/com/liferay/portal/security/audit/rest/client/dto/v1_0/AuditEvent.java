@@ -320,6 +320,94 @@ public class AuditEvent implements Cloneable, Serializable {
 
 	protected Long id;
 
+	public Boolean getImpersonated() {
+		return impersonated;
+	}
+
+	public void setImpersonated(Boolean impersonated) {
+		this.impersonated = impersonated;
+	}
+
+	public void setImpersonated(
+		UnsafeSupplier<Boolean, Exception> impersonatedUnsafeSupplier) {
+
+		try {
+			impersonated = impersonatedUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Boolean impersonated;
+
+	public String getImpersonatedUserEmailAddress() {
+		return impersonatedUserEmailAddress;
+	}
+
+	public void setImpersonatedUserEmailAddress(
+		String impersonatedUserEmailAddress) {
+
+		this.impersonatedUserEmailAddress = impersonatedUserEmailAddress;
+	}
+
+	public void setImpersonatedUserEmailAddress(
+		UnsafeSupplier<String, Exception>
+			impersonatedUserEmailAddressUnsafeSupplier) {
+
+		try {
+			impersonatedUserEmailAddress =
+				impersonatedUserEmailAddressUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String impersonatedUserEmailAddress;
+
+	public Long getImpersonatedUserId() {
+		return impersonatedUserId;
+	}
+
+	public void setImpersonatedUserId(Long impersonatedUserId) {
+		this.impersonatedUserId = impersonatedUserId;
+	}
+
+	public void setImpersonatedUserId(
+		UnsafeSupplier<Long, Exception> impersonatedUserIdUnsafeSupplier) {
+
+		try {
+			impersonatedUserId = impersonatedUserIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected Long impersonatedUserId;
+
+	public String getImpersonatedUserName() {
+		return impersonatedUserName;
+	}
+
+	public void setImpersonatedUserName(String impersonatedUserName) {
+		this.impersonatedUserName = impersonatedUserName;
+	}
+
+	public void setImpersonatedUserName(
+		UnsafeSupplier<String, Exception> impersonatedUserNameUnsafeSupplier) {
+
+		try {
+			impersonatedUserName = impersonatedUserNameUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String impersonatedUserName;
+
 	public String getObjectName() {
 		return objectName;
 	}
@@ -520,4 +608,4 @@ public class AuditEvent implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-477295016
+// LIFERAY-REST-BUILDER-HASH:-613467537

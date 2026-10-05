@@ -110,6 +110,20 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 
 		assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
 
+		AuditEvent auditEvent3 = page.fetchFirstItem();
+
+		Assert.assertEquals(
+			auditEvent1.getImpersonated(), auditEvent3.getImpersonated());
+		Assert.assertEquals(
+			auditEvent1.getImpersonatedUserEmailAddress(),
+			auditEvent3.getImpersonatedUserEmailAddress());
+		Assert.assertEquals(
+			auditEvent1.getImpersonatedUserId(),
+			auditEvent3.getImpersonatedUserId());
+		Assert.assertEquals(
+			auditEvent1.getImpersonatedUserName(),
+			auditEvent3.getImpersonatedUserName());
+
 		page = auditEventResource.getAuditEventsPage(
 			new Long[] {
 				accountEntry1.getAccountEntryId(),
@@ -180,20 +194,33 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 	protected AuditEvent testGetAuditEventsPage_addAuditEvent(
 		AuditEvent auditEvent) {
 
+		AuditMessage auditMessage = new AuditMessage(
+			0L, testCompany.getCompanyId(), 0L, null, null,
+			auditEvent.getAccountId(), null, auditEvent.getEntityType(),
+			String.valueOf(auditEvent.getEntityId()),
+			auditEvent.getContextName(), auditEvent.getEventType(), null);
+
+		auditMessage.setImpersonated(auditEvent.getImpersonated());
+		auditMessage.setImpersonatedUserEmailAddress(
+			auditEvent.getImpersonatedUserEmailAddress());
+		auditMessage.setImpersonatedUserId(auditEvent.getImpersonatedUserId());
+		auditMessage.setImpersonatedUserName(
+			auditEvent.getImpersonatedUserName());
+
 		com.liferay.portal.security.audit.storage.model.AuditEvent
 			serviceBuilderAuditEvent = _auditEventLocalService.addAuditEvent(
-				new AuditMessage(
-					0L, testCompany.getCompanyId(), 0L, null, null,
-					auditEvent.getAccountId(), null, auditEvent.getEntityType(),
-					String.valueOf(auditEvent.getEntityId()),
-					auditEvent.getContextName(), auditEvent.getEventType(),
-					null));
+				auditMessage);
 
 		_serviceBuilderAuditEvents.add(serviceBuilderAuditEvent);
 
 		return new AuditEvent() {
 			{
 				id = serviceBuilderAuditEvent.getAuditEventId();
+				impersonated = auditEvent.getImpersonated();
+				impersonatedUserEmailAddress =
+					auditEvent.getImpersonatedUserEmailAddress();
+				impersonatedUserId = auditEvent.getImpersonatedUserId();
+				impersonatedUserName = auditEvent.getImpersonatedUserName();
 			}
 		};
 	}

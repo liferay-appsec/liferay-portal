@@ -632,6 +632,174 @@ public class AuditEvent implements Serializable {
 	private Supplier<Long> _idSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema
+	public Boolean getImpersonated() {
+		if (_impersonatedSupplier != null) {
+			impersonated = _impersonatedSupplier.get();
+
+			_impersonatedSupplier = null;
+		}
+
+		return impersonated;
+	}
+
+	public void setImpersonated(Boolean impersonated) {
+		this.impersonated = impersonated;
+
+		_impersonatedSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setImpersonated(
+		UnsafeSupplier<Boolean, Exception> impersonatedUnsafeSupplier) {
+
+		_impersonatedSupplier = () -> {
+			try {
+				return impersonatedUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Boolean impersonated;
+
+	@JsonIgnore
+	private Supplier<Boolean> _impersonatedSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public String getImpersonatedUserEmailAddress() {
+		if (_impersonatedUserEmailAddressSupplier != null) {
+			impersonatedUserEmailAddress =
+				_impersonatedUserEmailAddressSupplier.get();
+
+			_impersonatedUserEmailAddressSupplier = null;
+		}
+
+		return impersonatedUserEmailAddress;
+	}
+
+	public void setImpersonatedUserEmailAddress(
+		String impersonatedUserEmailAddress) {
+
+		this.impersonatedUserEmailAddress = impersonatedUserEmailAddress;
+
+		_impersonatedUserEmailAddressSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setImpersonatedUserEmailAddress(
+		UnsafeSupplier<String, Exception>
+			impersonatedUserEmailAddressUnsafeSupplier) {
+
+		_impersonatedUserEmailAddressSupplier = () -> {
+			try {
+				return impersonatedUserEmailAddressUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String impersonatedUserEmailAddress;
+
+	@JsonIgnore
+	private Supplier<String> _impersonatedUserEmailAddressSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public Long getImpersonatedUserId() {
+		if (_impersonatedUserIdSupplier != null) {
+			impersonatedUserId = _impersonatedUserIdSupplier.get();
+
+			_impersonatedUserIdSupplier = null;
+		}
+
+		return impersonatedUserId;
+	}
+
+	public void setImpersonatedUserId(Long impersonatedUserId) {
+		this.impersonatedUserId = impersonatedUserId;
+
+		_impersonatedUserIdSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setImpersonatedUserId(
+		UnsafeSupplier<Long, Exception> impersonatedUserIdUnsafeSupplier) {
+
+		_impersonatedUserIdSupplier = () -> {
+			try {
+				return impersonatedUserIdUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected Long impersonatedUserId;
+
+	@JsonIgnore
+	private Supplier<Long> _impersonatedUserIdSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	public String getImpersonatedUserName() {
+		if (_impersonatedUserNameSupplier != null) {
+			impersonatedUserName = _impersonatedUserNameSupplier.get();
+
+			_impersonatedUserNameSupplier = null;
+		}
+
+		return impersonatedUserName;
+	}
+
+	public void setImpersonatedUserName(String impersonatedUserName) {
+		this.impersonatedUserName = impersonatedUserName;
+
+		_impersonatedUserNameSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setImpersonatedUserName(
+		UnsafeSupplier<String, Exception> impersonatedUserNameUnsafeSupplier) {
+
+		_impersonatedUserNameSupplier = () -> {
+			try {
+				return impersonatedUserNameUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
+	protected String impersonatedUserName;
+
+	@JsonIgnore
+	private Supplier<String> _impersonatedUserNameSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getObjectName() {
 		if (_objectNameSupplier != null) {
 			objectName = _objectNameSupplier.get();
@@ -1189,6 +1357,62 @@ public class AuditEvent implements Serializable {
 			sb.append(id);
 		}
 
+		Boolean impersonated = getImpersonated();
+
+		if (impersonated != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"impersonated\": ");
+
+			sb.append(impersonated);
+		}
+
+		String impersonatedUserEmailAddress = getImpersonatedUserEmailAddress();
+
+		if (impersonatedUserEmailAddress != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"impersonatedUserEmailAddress\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(impersonatedUserEmailAddress));
+
+			sb.append("\"");
+		}
+
+		Long impersonatedUserId = getImpersonatedUserId();
+
+		if (impersonatedUserId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"impersonatedUserId\": ");
+
+			sb.append(impersonatedUserId);
+		}
+
+		String impersonatedUserName = getImpersonatedUserName();
+
+		if (impersonatedUserName != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"impersonatedUserName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(impersonatedUserName));
+
+			sb.append("\"");
+		}
+
 		String objectName = getObjectName();
 
 		if (objectName != null) {
@@ -1435,4 +1659,4 @@ public class AuditEvent implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1658166726
+// LIFERAY-REST-BUILDER-HASH:-1561001708
