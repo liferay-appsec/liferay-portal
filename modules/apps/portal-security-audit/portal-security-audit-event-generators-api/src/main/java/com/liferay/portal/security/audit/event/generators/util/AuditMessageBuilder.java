@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.List;
 
@@ -113,6 +114,33 @@ public class AuditMessageBuilder {
 
 		return buildAuditMessage(
 			0, 0, className, classPK, null, eventType, attributes);
+	}
+
+	public static AuditMessage buildAuditMessage(
+		String className, long classPK, String eventType,
+		List<Attribute> attributes, String resourceAction) {
+
+		return buildAuditMessage(
+			className, classPK, eventType, attributes, resourceAction, null);
+	}
+
+	public static AuditMessage buildAuditMessage(
+		String className, long classPK, String eventType,
+		List<Attribute> attributes, String resourceAction,
+		String resourceType) {
+
+		AuditMessage auditMessage = buildAuditMessage(
+			className, classPK, eventType, attributes);
+
+		if (Validator.isNotNull(resourceAction)) {
+			auditMessage.setResourceAction(resourceAction);
+		}
+
+		if (Validator.isNotNull(resourceType)) {
+			auditMessage.setResourceType(resourceType);
+		}
+
+		return auditMessage;
 	}
 
 	private static JSONArray _getAttributesJSONArray(

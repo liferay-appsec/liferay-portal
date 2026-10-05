@@ -443,7 +443,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			OAuth2Application.class.getName(), StringPool.BLANK,
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
-			StringPool.BLANK);
+			StringPool.BLANK, "register_reject");
 	}
 
 	private String _normalizeHost(String host) {

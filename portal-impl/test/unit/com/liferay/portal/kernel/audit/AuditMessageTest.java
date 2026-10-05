@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.audit;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -60,16 +61,88 @@ public class AuditMessageTest {
 	}
 
 	@Test
+	public void testConstructorResourceAction() throws Exception {
+		_testConstructorResourceAction(
+			null, "ADD", "system.unknown.add", "unknown");
+		_testConstructorResourceAction(
+			"User", "ADD", "system.user.add", "user");
+		_testConstructorResourceAction(
+			"com.liferay.object.model.ObjectDefinition", "ADD",
+			"system.objectdefinition.add", "objectdefinition");
+		_testConstructorResourceAction(
+			"com.liferay.object.model.ObjectDefinition#CMPProject", "ADD",
+			"system.objectdefinition.add", "objectdefinition");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", null, "system.user.unknown",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "ADD", "system.user.add",
+			"user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User", "LOGIN",
+			"system.user.login", "user");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.User.", "ADD",
+			"system.unknown.add", "unknown");
+		_testConstructorResourceAction(
+			"com.liferay.portal.kernel.model.UserGroup", "ADD",
+			"system.usergroup.add", "usergroup");
+	}
+
+	@Test
+	public void testConstructorWithResourceAction() throws Exception {
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null,
+			JSONFactoryUtil.createJSONObject(),
+			"com.liferay.portal.kernel.model.User",
+			RandomTestUtil.randomString(), "ADD", null, "register");
+
+		Assert.assertEquals(
+			"system.user.register", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+
+		auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), null,
+			JSONFactoryUtil.createJSONObject(),
+			"com.liferay.portal.kernel.model.User",
+			RandomTestUtil.randomString(), "ADD", null, "verify_pending",
+			"mfa");
+
+		Assert.assertEquals(
+			"system.mfa.verify_pending", auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
+
+		auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), JSONFactoryUtil.createJSONObject(),
+			"com.liferay.portal.kernel.model.User",
+			RandomTestUtil.randomString(), "ADD", null, "verify", "mfa");
+
+		Assert.assertEquals(
+			"system.mfa.verify", auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
+	}
+
+	@Test
+	public void testGetResourceAction() throws Exception {
+		_testGetResourceAction(StringPool.BLANK, "system");
+		_testGetResourceAction("AI_HUB", "ai_hub");
+		_testGetResourceAction(null, "system");
+	}
+
+	@Test
 	public void testToJSONObject() throws Exception {
 		long groupId = RandomTestUtil.randomLong();
 		Date timestampDate = RandomTestUtil.nextDate();
 
 		AuditMessage auditMessage = new AuditMessage(
 			groupId, RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
-			RandomTestUtil.randomString(), timestampDate,
+			RandomTestUtil.randomString(), timestampDate, 0,
 			JSONFactoryUtil.createJSONObject(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString());
+			RandomTestUtil.randomString(), null, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), "verify_pending", "mfa");
 
 		JSONObject jsonObject = auditMessage.toJSONObject();
 
@@ -77,6 +150,10 @@ public class AuditMessageTest {
 			"yyyyMMddkkmmssSSS");
 
 		Assert.assertEquals(groupId, jsonObject.getLong("groupId"));
+		Assert.assertEquals(
+			"system.mfa.verify_pending",
+			jsonObject.getString("resourceAction"));
+		Assert.assertEquals("mfa", jsonObject.getString("resourceType"));
 		Assert.assertEquals(
 			dateFormat.format(timestampDate),
 			jsonObject.getString("timestamp"));
@@ -90,7 +167,55 @@ public class AuditMessageTest {
 		auditMessage = new AuditMessage(jsonObject.toString());
 
 		Assert.assertEquals(groupId, auditMessage.getGroupId());
+		Assert.assertEquals(
+			"system.mfa.verify_pending", auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
 		Assert.assertNotNull(auditMessage.getTimestampDate());
+
+		auditMessage.setContextName("AI_HUB");
+
+		Assert.assertEquals(
+			"ai_hub.mfa.verify_pending", auditMessage.getResourceAction());
+	}
+
+	private void _testConstructorResourceAction(
+		String className, String eventType, String expectedResourceAction,
+		String expectedResourceType) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null,
+			JSONFactoryUtil.createJSONObject(), className,
+			RandomTestUtil.randomString(), eventType, null);
+
+		Assert.assertEquals(
+			expectedResourceAction, auditMessage.getResourceAction());
+		Assert.assertEquals(
+			expectedResourceType, auditMessage.getResourceType());
+	}
+
+	private void _testGetResourceAction(
+		String contextName, String expectedContextName) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomLong(), RandomTestUtil.randomString(), null, 0,
+			JSONFactoryUtil.createJSONObject(),
+			"com.liferay.portal.kernel.model.User",
+			RandomTestUtil.randomString(), contextName, "ADD", null);
+
+		Assert.assertEquals(
+			expectedContextName + ".user.add",
+			auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+
+		auditMessage.setResourceAction("verify_pending");
+		auditMessage.setResourceType("mfa");
+
+		Assert.assertEquals(
+			expectedContextName + ".mfa.verify_pending",
+			auditMessage.getResourceAction());
+		Assert.assertEquals("mfa", auditMessage.getResourceType());
 	}
 
 }

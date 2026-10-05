@@ -475,7 +475,7 @@ public class LiferayDynamicRegistrationService
 				liferayClientRegistrationResponse.getClientId()),
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_ADD,
-			StringPool.BLANK);
+			StringPool.BLANK, "register");
 	}
 
 	private String _getApplicationType(ClientRegistration clientRegistration) {
@@ -604,7 +604,7 @@ public class LiferayDynamicRegistrationService
 			StringPool.BLANK,
 			OAuth2ProviderRESTEndpointConstants.
 				EVENT_TYPE_DYNAMIC_REGISTRATION_REJECT,
-			StringPool.BLANK);
+			StringPool.BLANK, "register_reject");
 	}
 
 	private boolean _isOpenRegistration(Client client) {

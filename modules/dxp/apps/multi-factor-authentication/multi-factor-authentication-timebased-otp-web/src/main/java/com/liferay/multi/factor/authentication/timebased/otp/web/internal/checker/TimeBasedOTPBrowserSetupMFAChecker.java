@@ -565,7 +565,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				String.valueOf(userId),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
-				null);
+				null, "verify_failure", "mfa");
 		}
 
 		public AuditMessage buildNotVerifiedAuditMessage(
@@ -575,7 +575,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				user.getCompanyId(), user.getUserId(), user.getFullName(),
 				JSONUtil.put("reason", reason), checkerClassName,
 				String.valueOf(user.getPrimaryKey()),
-				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_NOT_VERIFIED, null);
+				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_NOT_VERIFIED, null,
+				"verify_pending", "mfa");
 		}
 
 		public AuditMessage
@@ -588,7 +589,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				checkerClassName, null,
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
-				null);
+				null, "verify_failure", "mfa");
 		}
 
 		public AuditMessage buildVerificationFailureAuditMessage(
@@ -600,7 +601,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_FAILURE,
-				null);
+				null, "verify_failure", "mfa");
 		}
 
 		public AuditMessage buildVerificationSuccessAuditMessage(
@@ -611,7 +612,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
 				MFATimeBasedOTPEventTypes.
 					MFA_TIMEBASED_OTP_VERIFICATION_SUCCESS,
-				null);
+				null, "verify", "mfa");
 		}
 
 		public AuditMessage buildVerifiedAuditMessage(
@@ -620,7 +621,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 			return new AuditMessage(
 				user.getCompanyId(), user.getUserId(), user.getFullName(), null,
 				checkerClassName, String.valueOf(user.getPrimaryKey()),
-				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_VERIFIED, null);
+				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_VERIFIED, null,
+				"verify", "mfa");
 		}
 
 		public void routeAuditMessage(AuditMessage auditMessage) {
