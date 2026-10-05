@@ -36,16 +36,21 @@ public class EncryptorImplTest {
 	public void testDecrypt() throws Exception {
 		Encryptor encryptor = new EncryptorImpl();
 
-		Key key = encryptor.generateKey();
-
-		String encryptedString = encryptor.encrypt(key, _PLAINTEXT);
+		Assert.assertEquals(
+			_GOLDEN_PLAINTEXT,
+			encryptor.decrypt(
+				encryptor.deserializeKey(_GOLDEN_KEY_AES_128),
+				_GOLDEN_ENCRYPTED_STRING_AES_ECB));
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
 			Assert.assertEquals(
-				_PLAINTEXT, encryptor.decrypt(key, encryptedString));
+				_GOLDEN_PLAINTEXT,
+				encryptor.decrypt(
+					encryptor.deserializeKey(_GOLDEN_KEY_AES_256),
+					_GOLDEN_ENCRYPTED_STRING_AES_GCM));
 		}
 	}
 
@@ -144,6 +149,21 @@ public class EncryptorImplTest {
 		Assert.assertEquals(
 			_PLAINTEXT, encryptor.decrypt(key, encryptedString));
 	}
+
+	private static final String _GOLDEN_ENCRYPTED_STRING_AES_ECB =
+		"c93sY840K8KS+cRbav/aGBR5THb7pFXD4NJkGq5XtY4=";
+
+	private static final String _GOLDEN_ENCRYPTED_STRING_AES_GCM =
+		"MDEyMzQ1Njc4OTo7shNVjOciWcNHW7sMm3pih41w/nFhDPZPvawbryCDpIkNgHos" +
+			"D4eB9w==";
+
+	private static final String _GOLDEN_KEY_AES_128 =
+		"EBESExQVFhcYGRobHB0eHw==";
+
+	private static final String _GOLDEN_KEY_AES_256 =
+		"oKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr8=";
+
+	private static final String _GOLDEN_PLAINTEXT = "Liferay golden plaintext";
 
 	private static final String _PLAINTEXT = RandomTestUtil.randomString();
 
