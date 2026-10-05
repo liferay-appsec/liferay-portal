@@ -207,6 +207,18 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testIsHealthyProvider() {
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(
+				_createProvider("AmazonCorrettoCryptoProvider")));
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(_createProvider("BCFIPS")));
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(
+				_createProvider(RandomTestUtil.randomString())));
+	}
+
+	@Test
 	public void testReadChannelPropertiesDocument() throws Exception {
 		Document document = ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_readChannelPropertiesDocument",

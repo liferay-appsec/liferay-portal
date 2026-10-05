@@ -101,6 +101,34 @@ public class FIPSAuditEventFactoryTest {
 			tokenType);
 	}
 
+	@Test
+	public void testCreateProviderFailure() {
+		String factoryClassName = RandomTestUtil.randomString();
+		String providerErrorMessage = RandomTestUtil.randomString();
+		String providerName = RandomTestUtil.randomString();
+		String providerVersion = RandomTestUtil.randomString();
+		String requestedAlgorithm = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createProviderFailure(
+				factoryClassName, providerErrorMessage, providerName,
+				providerVersion, requestedAlgorithm);
+
+		Assert.assertEquals("provider-failure", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.CRITICAL, fipsAuditEvent.getSeverity());
+
+		_assertFields(
+			StringPool.BLANK,
+			FIPSAuditEventFactory.createProviderFailure(
+				null, null, null, null, null),
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK,
+			StringPool.BLANK);
+		_assertFields(
+			factoryClassName, fipsAuditEvent, providerErrorMessage,
+			providerName, providerVersion, requestedAlgorithm);
+	}
+
 	private void _assertFields(
 		boolean enforced, String factoryClassName,
 		FIPSAuditEvent fipsAuditEvent, String providerName,
@@ -137,6 +165,26 @@ public class FIPSAuditEventFactoryTest {
 				"token-issuer", tokenIssuer
 			).put(
 				"token-type", tokenType
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
+	private void _assertFields(
+		String factoryClassName, FIPSAuditEvent fipsAuditEvent,
+		String providerErrorMessage, String providerName,
+		String providerVersion, String requestedAlgorithm) {
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"factory-class-name", factoryClassName
+			).put(
+				"provider-error-message", providerErrorMessage
+			).put(
+				"provider-name", providerName
+			).put(
+				"provider-version", providerVersion
+			).put(
+				"requested-algorithm", requestedAlgorithm
 			).build(),
 			fipsAuditEvent.getFields());
 	}
