@@ -10,6 +10,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
@@ -60,7 +61,7 @@ public class CryptoUtil {
 			_validateKey(key.getAlgorithm(), Cipher.class, _getKeySize(key));
 		}
 
-		Cipher cipher = Cipher.getInstance(transformation);
+		Cipher cipher = _getCipher(transformation);
 
 		cipher.init(mode, key, algorithmParameterSpec);
 
@@ -78,13 +79,53 @@ public class CryptoUtil {
 			_validateKey(key.getAlgorithm(), Cipher.class, _getKeySize(key));
 		}
 
-		Cipher cipher = Cipher.getInstance(transformation);
+		Cipher cipher = _getCipher(transformation);
 
 		cipher.init(mode, key);
 
 		_recordProvider(transformation, Cipher.class, cipher.getProvider());
 
 		return cipher;
+	}
+
+	private static Throwable _fetchErrorThrowable(Throwable throwable) {
+		while (throwable != null) {
+			if (throwable instanceof Error) {
+				return throwable;
+			}
+
+			throwable = throwable.getCause();
+		}
+
+		return null;
+	}
+
+	private static Provider _fetchPinnedProvider() {
+		if (!PropsValues.FIPS_ENABLED) {
+			return null;
+		}
+
+		return FIPSModeValidator.fetchApprovedModeProvider();
+	}
+
+	private static Cipher _getCipher(String transformation)
+		throws NoSuchAlgorithmException, NoSuchPaddingException {
+
+		Provider provider = _fetchPinnedProvider();
+
+		if (provider == null) {
+			return Cipher.getInstance(transformation);
+		}
+
+		try {
+			return Cipher.getInstance(transformation, provider);
+		}
+		catch (NoSuchAlgorithmException | NoSuchPaddingException exception) {
+			_writeProviderException(
+				transformation, exception, Cipher.class, provider);
+
+			throw exception;
+		}
 	}
 
 	private static int _getKeySize(Key key) {
@@ -107,6 +148,32 @@ public class CryptoUtil {
 
 			return true;
 		}
+
+		return false;
+	}
+
+	private static boolean _isNewRecord(
+		String algorithm, Class<?> factoryClass, String providerName,
+		String reason) {
+
+		String memoKey = StringBundler.concat(
+			algorithm, StringPool.POUND, factoryClass.getName(),
+			StringPool.POUND, providerName, StringPool.POUND, reason);
+
+		if (_memoKeys.size() < _MEMO_KEYS_MAX_SIZE) {
+			return _memoKeys.add(memoKey);
+		}
+
+		if (_memoKeys.contains(memoKey) ||
+			!_memoSaturated.compareAndSet(false, true)) {
+
+			return false;
+		}
+
+		_writeFIPSAuditEvent(
+			FIPSAuditEventFactory.createAlgorithmRejected(
+				false, factoryClass.getName(), StringPool.BLANK,
+				StringPool.BLANK, "memo-saturated", null));
 
 		return false;
 	}
@@ -194,37 +261,61 @@ public class CryptoUtil {
 			algorithm = algorithm.substring(0, _REQUESTED_ALGORITHM_MAX_LENGTH);
 		}
 
-		String memoKey = StringBundler.concat(
-			algorithm, StringPool.POUND, factoryClass.getName(),
-			StringPool.POUND, providerName, StringPool.POUND, rejectionReason);
+		if (!_isNewRecord(
+				algorithm, factoryClass, providerName, rejectionReason)) {
 
-		if (_memoKeys.size() >= _MEMO_KEYS_MAX_SIZE) {
-			if (_memoKeys.contains(memoKey) ||
-				!_memoSaturated.compareAndSet(false, true)) {
-
-				return;
-			}
-
-			algorithm = null;
-			providerName = StringPool.BLANK;
-			providerVersion = StringPool.BLANK;
-			rejectionReason = "memo-saturated";
-		}
-		else if (!_memoKeys.add(memoKey)) {
 			return;
 		}
 
+		_writeFIPSAuditEvent(
+			FIPSAuditEventFactory.createAlgorithmRejected(
+				enforced, factoryClass.getName(), providerName, providerVersion,
+				rejectionReason, algorithm));
+	}
+
+	private static void _writeFIPSAuditEvent(FIPSAuditEvent fipsAuditEvent) {
 		try {
-			FIPSAuditUtil.write(
-				FIPSAuditEventFactory.createAlgorithmRejected(
-					enforced, factoryClass.getName(), providerName,
-					providerVersion, rejectionReason, algorithm));
+			FIPSAuditUtil.write(fipsAuditEvent);
 		}
 		catch (Exception exception) {
 			_log.error(
-				"Unable to write the algorithm rejected FIPS audit event",
+				StringBundler.concat(
+					"Unable to write the FIPS audit event \"",
+					fipsAuditEvent.getEventType(), "\""),
 				exception);
 		}
+	}
+
+	private static void _writeProviderException(
+		String algorithm, Exception exception, Class<?> factoryClass,
+		Provider provider) {
+
+		Throwable throwable = _fetchErrorThrowable(exception);
+
+		if ((throwable == null) &&
+			FIPSModeValidator.isHealthyProvider(provider)) {
+
+			_writeAlgorithmRejected(
+				algorithm, true, factoryClass, provider, "provider-refused");
+
+			return;
+		}
+
+		if (!_isNewRecord(
+				algorithm, factoryClass, provider.getName(),
+				"provider-failure")) {
+
+			return;
+		}
+
+		if (throwable == null) {
+			throwable = exception;
+		}
+
+		_writeFIPSAuditEvent(
+			FIPSAuditEventFactory.createProviderFailure(
+				factoryClass.getName(), String.valueOf(throwable),
+				provider.getName(), provider.getVersionStr(), algorithm));
 	}
 
 	private static final int _MEMO_KEYS_MAX_SIZE = 1024;
