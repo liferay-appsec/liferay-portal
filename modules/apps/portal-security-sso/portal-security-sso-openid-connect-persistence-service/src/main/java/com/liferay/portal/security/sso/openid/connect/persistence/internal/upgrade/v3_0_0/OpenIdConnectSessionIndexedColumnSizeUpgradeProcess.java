@@ -3,25 +3,26 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.changeset.internal.upgrade.v3_0_0;
+package com.liferay.portal.security.sso.openid.connect.persistence.internal.upgrade.v3_0_0;
 
 import com.liferay.portal.kernel.upgrade.BaseIndexedColumnSizeUpgradeProcess;
 
 /**
- * @author Roselaine Marques
+ * @author Alvaro Saugar
  */
-public class ChangesetEntryIndexedColumnSizeUpgradeProcess
+public class OpenIdConnectSessionIndexedColumnSizeUpgradeProcess
 	extends BaseIndexedColumnSizeUpgradeProcess {
 
 	@Override
 	protected int getMaxColumnLength() {
-		return 500;
+		return 255;
 	}
 
 	@Override
 	protected String[][] getTableAndColumnNames() {
 		return new String[][] {
-			{"ChangesetEntry", "classExternalReferenceCode"}
+			{"OpenIdConnectSession", "authServerWellKnownURI"},
+			{"OpenIdConnectSession", "clientId"}
 		};
 	}
 
@@ -29,8 +30,8 @@ public class ChangesetEntryIndexedColumnSizeUpgradeProcess
 	protected String[][] getTableAndUniqueIndexColumnNames() {
 		return new String[][] {
 			{
-				"ChangesetEntry", "changesetCollectionId", "classNameId",
-				"classExternalReferenceCode"
+				"OpenIdConnectSession", "userId", "authServerWellKnownURI",
+				"clientId"
 			}
 		};
 	}
