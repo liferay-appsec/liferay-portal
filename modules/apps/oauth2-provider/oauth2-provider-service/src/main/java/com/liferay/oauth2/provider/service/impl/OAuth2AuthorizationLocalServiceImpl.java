@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.nio.charset.StandardCharsets;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -130,8 +132,9 @@ public class OAuth2AuthorizationLocalServiceImpl
 				accessTokenContent.hashCode());
 
 		for (OAuth2Authorization oAuth2Authorization : oAuth2Authorizations) {
-			String currentAccessTokenContent =
-				oAuth2Authorization.getAccessTokenContent();
+			String currentAccessTokenContent = _secretResolver.resolve(
+				oAuth2Authorization.getCompanyId(),
+				oAuth2Authorization.getAccessTokenContent());
 
 			if (MessageDigest.isEqual(
 					accessTokenContent.getBytes(StandardCharsets.UTF_8),
@@ -278,5 +281,8 @@ public class OAuth2AuthorizationLocalServiceImpl
 	}
 
 	private volatile long _expiredAuthorizationsAfterlifeDurationMillis;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
