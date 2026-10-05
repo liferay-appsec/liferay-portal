@@ -57,4 +57,15 @@
 		</field>
 		<field name="userEmailAddress" type="String" />
 	</model>
+	<model name="com.liferay.portal.security.audit.storage.model.AuditPseudonym">
+		<field name="auditPseudonymId" type="long" />
+		<field name="companyId" type="long" />
+		<field name="createDate" type="Date" />
+		<field name="contextName" type="String" />
+		<field name="fieldCategory" type="String" />
+		<field name="value" type="String">
+			<hint name="max-length">255</hint>
+		</field>
+		<field name="valueHash" type="String" />
+	</model>
 </model-hints>
