@@ -8,6 +8,7 @@ package com.liferay.portal.encryptor;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.Key;
 
 import java.util.Arrays;
@@ -29,7 +31,6 @@ import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -102,9 +103,13 @@ public class EncryptorImpl implements Encryptor {
 
 	@Override
 	public Key deserializeKey(String base64String) {
-		byte[] bytes = Base64.decode(base64String);
-
-		return new SecretKeySpec(bytes, KEY_ALGORITHM);
+		try {
+			return CryptoUtil.createSecretKey(
+				KEY_ALGORITHM, Base64.decode(base64String));
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			throw new SystemException(invalidKeyException);
+		}
 	}
 
 	@Override
@@ -270,10 +275,8 @@ public class EncryptorImpl implements Encryptor {
 
 	private Key _generateKey(String algorithm) throws EncryptorException {
 		try {
-			KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
-
-			keyGenerator.init(
-				PropsValues.FIPS_ENABLED ? _AES_KEY_SIZE : KEY_SIZE);
+			KeyGenerator keyGenerator = CryptoUtil.createKeyGenerator(
+				algorithm, KEY_SIZE);
 
 			return keyGenerator.generateKey();
 		}
@@ -281,8 +284,6 @@ public class EncryptorImpl implements Encryptor {
 			throw new EncryptorException(exception);
 		}
 	}
-
-	private static final int _AES_KEY_SIZE = 256;
 
 	private static final int _GCM_INITIALIZATION_VECTOR_LENGTH = 12;
 
