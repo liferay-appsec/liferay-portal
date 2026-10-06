@@ -22,9 +22,12 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
 
 import java.util.List;
 import java.util.Map;
@@ -129,11 +132,34 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testGetApprovedAlgorithms() {
+		Assert.assertArrayEquals(
+			new String[] {"BCFKS", "PKCS12"},
+			FIPSModeValidator.getApprovedAlgorithms(KeyStore.class));
+		Assert.assertArrayEquals(
+			new String[0],
+			FIPSModeValidator.getApprovedAlgorithms(SSLContext.class));
+
+		String[] approvedAlgorithms = FIPSModeValidator.getApprovedAlgorithms(
+			KeyPairGenerator.class);
+
+		Assert.assertArrayEquals(new String[] {"RSA"}, approvedAlgorithms);
+
+		approvedAlgorithms[0] = RandomTestUtil.randomString();
+
+		Assert.assertArrayEquals(
+			new String[] {"RSA"},
+			FIPSModeValidator.getApprovedAlgorithms(KeyPairGenerator.class));
+	}
+
+	@Test
 	public void testGetKeySizes() {
 		Assert.assertArrayEquals(
 			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("AES"));
 		Assert.assertArrayEquals(
 			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("aes"));
+		Assert.assertArrayEquals(
+			new int[] {2048, 3072, 4096}, FIPSModeValidator.getKeySizes("RSA"));
 		Assert.assertArrayEquals(
 			new int[0],
 			FIPSModeValidator.getKeySizes(RandomTestUtil.randomString()));
@@ -207,7 +233,32 @@ public class FIPSModeValidatorTest {
 
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
+				"RSA"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
+				"DSA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyStore.class, "pkcs12"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyStore.class, "JKS"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, KeyStore.class, "JKS"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA512"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class,
+				"SHA512withRSA"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class,
+				"SHA1withRSA"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
@@ -266,7 +317,21 @@ public class FIPSModeValidatorTest {
 				"AES"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
+				"RSA"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
+				"DSA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA256"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class, "RSA"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class, "DSA"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
@@ -301,6 +366,8 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 112));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 4096));
+		Assert.assertFalse(FIPSModeValidator.isAllowedKeySize("RSA", 1024));
+		Assert.assertTrue(FIPSModeValidator.isAllowedKeySize("RSA", 2048));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeySize(
 				RandomTestUtil.randomString(), 256));

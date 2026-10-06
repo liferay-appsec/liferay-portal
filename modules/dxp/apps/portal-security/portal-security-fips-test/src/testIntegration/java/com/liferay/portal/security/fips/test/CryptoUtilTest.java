@@ -20,6 +20,9 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -195,6 +198,52 @@ public class CryptoUtilTest {
 	}
 
 	@Test
+	public void testCreateKeyPairGenerator() throws Exception {
+		KeyPairGenerator keyPairGenerator = CryptoUtil.createKeyPairGenerator(
+			"RSA", 2048);
+
+		Assert.assertSame(
+			_approvedModeProvider, keyPairGenerator.getProvider());
+
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createKeyPairGenerator("DSA", 2048));
+	}
+
+	@Test
+	public void testCreateKeyStore() throws Exception {
+		KeyStore keyStore = CryptoUtil.createKeyStore("PKCS12");
+
+		Provider provider = keyStore.getProvider();
+
+		Assert.assertTrue(
+			provider.getName(),
+			_hasAuditLogJSONObject(
+				"PKCS12", CryptoFunctionApprovalType.APPROVED,
+				"algorithm-served", provider.getName()));
+
+		Assert.assertThrows(
+			KeyStoreException.class, () -> CryptoUtil.createKeyStore("JKS"));
+
+		keyStore = CryptoUtil.createKeyStore(
+			CryptoFunctionApprovalType.ALLOWED, "JKS");
+
+		provider = keyStore.getProvider();
+
+		Assert.assertTrue(
+			provider.getName(),
+			_hasAuditLogJSONObject(
+				"JKS", CryptoFunctionApprovalType.ALLOWED, "algorithm-served",
+				provider.getName()));
+
+		Assert.assertThrows(
+			KeyStoreException.class,
+			() -> CryptoUtil.createKeyStore(
+				CryptoFunctionApprovalType.ALLOWED,
+				RandomTestUtil.randomString()));
+	}
+
+	@Test
 	public void testCreateMac() throws Exception {
 		String keyBytesString = RandomTestUtil.randomString(20);
 
@@ -234,6 +283,10 @@ public class CryptoUtilTest {
 		}
 
 		MessageDigest messageDigest = CryptoUtil.createMessageDigest("SHA-256");
+
+		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
+
+		messageDigest = CryptoUtil.createMessageDigest("SHA-384");
 
 		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
 

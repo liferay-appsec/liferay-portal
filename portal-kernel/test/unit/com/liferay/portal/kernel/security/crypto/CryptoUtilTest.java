@@ -16,14 +16,23 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 
+import java.math.BigInteger;
+
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.AlgorithmParameterSpec;
 
 import java.util.Arrays;
@@ -361,6 +370,119 @@ public class CryptoUtilTest {
 	}
 
 	@Test
+	public void testCreateKeyPairGenerator() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			KeyPairGenerator keyPairGenerator =
+				CryptoUtil.createKeyPairGenerator("DSA", 1024);
+
+			Assert.assertEquals("DSA", keyPairGenerator.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			KeyPairGenerator keyPairGenerator =
+				CryptoUtil.createKeyPairGenerator("RSA", 2048);
+
+			KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+			RSAPublicKey rsaPublicKey = (RSAPublicKey)keyPair.getPublic();
+
+			BigInteger modulus = rsaPublicKey.getModulus();
+
+			Assert.assertEquals(2048, modulus.bitLength());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createKeyPairGenerator("DSA", 2048));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true,
+				KeyPairGenerator.class, mockedStatic, "algorithm-not-allowed",
+				"DSA");
+
+			Assert.assertThrows(
+				InvalidParameterException.class,
+				() -> CryptoUtil.createKeyPairGenerator("RSA", 1024));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true,
+				KeyPairGenerator.class, mockedStatic, "key-size-not-allowed",
+				"RSA/1024");
+		}
+	}
+
+	@Test
+	public void testCreateKeyStore() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			KeyStore keyStore = CryptoUtil.createKeyStore("JKS");
+
+			Assert.assertEquals("JKS", keyStore.getType());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			KeyStore keyStore = CryptoUtil.createKeyStore(
+				CryptoFunctionApprovalType.ALLOWED, "JKS");
+
+			Assert.assertEquals("JKS", keyStore.getType());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				KeyStoreException.class,
+				() -> CryptoUtil.createKeyStore("JKS"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, KeyStore.class,
+				mockedStatic, "type-not-allowed", "JKS");
+
+			String type = RandomTestUtil.randomString();
+
+			Assert.assertThrows(
+				KeyStoreException.class,
+				() -> CryptoUtil.createKeyStore(
+					CryptoFunctionApprovalType.ALLOWED, type));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.ALLOWED, true, KeyStore.class,
+				mockedStatic, "type-not-allowed", type);
+
+			_setApprovedModeProvider(_createProvider());
+
+			keyStore = CryptoUtil.createKeyStore("PKCS12");
+
+			_assertAlgorithmServed(
+				CryptoFunctionApprovalType.APPROVED, mockedStatic,
+				keyStore.getProvider(), "PKCS12");
+
+			keyStore = CryptoUtil.createKeyStore(
+				CryptoFunctionApprovalType.ALLOWED, "JKS");
+
+			_assertAlgorithmServed(
+				CryptoFunctionApprovalType.ALLOWED, mockedStatic,
+				keyStore.getProvider(), "JKS");
+		}
+	}
+
+	@Test
 	public void testCreateMac() throws Exception {
 		String keyBytesString = RandomTestUtil.randomString(20);
 
@@ -559,6 +681,58 @@ public class CryptoUtilTest {
 
 			Assert.assertEquals(
 				"SHA-256", CryptoUtil.getAlgorithm("MD5", "SHA-256"));
+		}
+	}
+
+	@Test
+	public void testIsAllowedAlgorithm() throws Exception {
+		Assert.assertTrue(
+			CryptoUtil.isAllowedAlgorithm("MD5", MessageDigest.class));
+		Assert.assertTrue(CryptoUtil.isAllowedAlgorithm("JKS", KeyStore.class));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertFalse(
+				CryptoUtil.isAllowedAlgorithm("MD5", MessageDigest.class));
+			Assert.assertTrue(
+				CryptoUtil.isAllowedAlgorithm("SHA-256", MessageDigest.class));
+			Assert.assertFalse(
+				CryptoUtil.isAllowedAlgorithm("JKS", KeyStore.class));
+			Assert.assertTrue(
+				CryptoUtil.isAllowedAlgorithm("PKCS12", KeyStore.class));
+		}
+	}
+
+	@Test
+	public void testValidateAlgorithm() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			CryptoUtil.validateAlgorithm("SHA1withDSA", Signature.class);
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			CryptoUtil.validateAlgorithm("SHA256withRSA", Signature.class);
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.validateAlgorithm(
+					"SHA1withRSA", Signature.class));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, Signature.class,
+				mockedStatic, "algorithm-not-allowed", "SHA1withRSA");
 		}
 	}
 
