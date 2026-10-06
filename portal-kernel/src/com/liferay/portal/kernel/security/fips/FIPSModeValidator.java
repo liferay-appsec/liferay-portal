@@ -36,6 +36,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
@@ -828,7 +829,8 @@ public class FIPSModeValidator {
 		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
 		"SHA-512");
 	private static final Map<Class<?>, String[]> _allowedAlgorithms = Map.of(
-		MessageDigest.class, new String[] {"MD5", "SHA-1"});
+		KeyStore.class, new String[] {"JKS"}, MessageDigest.class,
+		new String[] {"MD5", "SHA-1"});
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
@@ -860,8 +862,8 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
 		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
-		new String[] {"AES"}, Mac.class,
-		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
+		new String[] {"AES"}, KeyStore.class, new String[] {"BCFKS", "PKCS12"},
+		Mac.class, new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
 		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();

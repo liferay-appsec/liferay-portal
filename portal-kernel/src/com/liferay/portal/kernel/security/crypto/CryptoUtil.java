@@ -20,6 +20,8 @@ import com.liferay.portal.kernel.util.StringUtil;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -129,6 +131,38 @@ public class CryptoUtil {
 		return keyGenerator;
 	}
 
+	public static KeyStore createKeyStore(
+			CryptoFunctionApprovalType approvalType, String type)
+		throws KeyStoreException {
+
+		if (PropsValues.FIPS_ENABLED &&
+			!FIPSModeValidator.isAllowedAlgorithm(
+				approvalType, KeyStore.class, type)) {
+
+			_writeAlgorithmRejected(
+				type, approvalType, true, KeyStore.class, null,
+				"type-not-allowed");
+
+			throw new KeyStoreException(
+				StringBundler.concat(
+					"Keystore type \"", type,
+					"\" is not allowed in FIPS mode"));
+		}
+
+		KeyStore keyStore = KeyStore.getInstance(type);
+
+		_recordServed(
+			type, approvalType, KeyStore.class, keyStore.getProvider());
+
+		return keyStore;
+	}
+
+	public static KeyStore createKeyStore(String type)
+		throws KeyStoreException {
+
+		return createKeyStore(CryptoFunctionApprovalType.APPROVED, type);
+	}
+
 	public static Mac createMac(String algorithm, Key key)
 		throws InvalidKeyException, NoSuchAlgorithmException {
 
@@ -194,6 +228,17 @@ public class CryptoUtil {
 		}
 
 		return algorithm;
+	}
+
+	public static boolean isAllowedAlgorithm(
+		String algorithm, Class<?> factoryClass) {
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return true;
+		}
+
+		return FIPSModeValidator.isAllowedAlgorithm(
+			CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm);
 	}
 
 	private static Throwable _fetchErrorThrowable(Throwable throwable) {
@@ -371,6 +416,12 @@ public class CryptoUtil {
 		String algorithm, CryptoFunctionApprovalType approvalType,
 		Class<?> factoryClass, Provider provider) {
 
+		if (approvalType == CryptoFunctionApprovalType.ALLOWED) {
+			_recordServed(algorithm, approvalType, factoryClass, provider);
+
+			return;
+		}
+
 		if (!PropsValues.FIPS_ENABLED) {
 			return;
 		}
@@ -378,17 +429,9 @@ public class CryptoUtil {
 		Provider approvedModeProvider =
 			FIPSModeValidator.fetchApprovedModeProvider();
 
-		if (approvedModeProvider == null) {
-			return;
-		}
+		if ((approvedModeProvider != null) &&
+			(approvedModeProvider != provider)) {
 
-		if (approvalType == CryptoFunctionApprovalType.ALLOWED) {
-			_recordServed(algorithm, approvalType, factoryClass, provider);
-
-			return;
-		}
-
-		if (approvedModeProvider != provider) {
 			_writeAlgorithmRejected(
 				algorithm, approvalType, false, factoryClass, provider,
 				"served-outside-module");
@@ -399,7 +442,9 @@ public class CryptoUtil {
 		String algorithm, CryptoFunctionApprovalType approvalType,
 		Class<?> factoryClass, Provider provider) {
 
-		if (!_isNewRecord(
+		if (!PropsValues.FIPS_ENABLED ||
+			(FIPSModeValidator.fetchApprovedModeProvider() == null) ||
+			!_isNewRecord(
 				algorithm, approvalType, factoryClass, provider.getName(),
 				"algorithm-served")) {
 
