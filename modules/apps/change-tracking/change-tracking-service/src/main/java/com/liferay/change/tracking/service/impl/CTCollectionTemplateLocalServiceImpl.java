@@ -243,9 +243,12 @@ public class CTCollectionTemplateLocalServiceImpl
 			() -> {
 				Instant now = Instant.now();
 
-				return DigesterUtil.digestHex(
-					DigesterUtil.MD5, String.valueOf(ctCollectionTemplateId),
+				String hash = DigesterUtil.digestHex(
+					DigesterUtil.SHA_256,
+					String.valueOf(ctCollectionTemplateId),
 					String.valueOf(now.getEpochSecond()));
+
+				return hash.substring(0, 32);
 			}
 		).put(
 			"${TODAY_DATE}", String.valueOf(LocalDate.now())
