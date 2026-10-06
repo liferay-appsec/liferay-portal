@@ -18,12 +18,12 @@ import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsValues;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -167,13 +167,11 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 			String signatureString, String timestamp)
 		throws Exception {
 
-		Signature signature = Signature.getInstance(
-			PropsValues.FIPS_ENABLED ? "SHA256withECDSA" : "DSA");
+		KeyFactory keyFactory = CryptoUtil.createKeyFactory(
+			CryptoUtil.getAlgorithm("DSA", "EC"));
 
-		KeyFactory keyFactory = KeyFactory.getInstance(
-			PropsValues.FIPS_ENABLED ? "EC" : "DSA");
-
-		signature.initVerify(
+		Signature signature = CryptoUtil.createSignature(
+			CryptoUtil.getAlgorithm("DSA", "SHA256withECDSA"),
 			keyFactory.generatePublic(
 				new X509EncodedKeySpec(Base64.decode(publicKey))));
 
