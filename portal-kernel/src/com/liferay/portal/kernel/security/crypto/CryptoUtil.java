@@ -19,7 +19,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.Key;
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -129,6 +131,40 @@ public class CryptoUtil {
 			keyGenerator.getProvider());
 
 		return keyGenerator;
+	}
+
+	public static KeyPairGenerator createKeyPairGenerator(
+			String algorithm, int keySize)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				KeyPairGenerator.class);
+
+			if (!FIPSModeValidator.isAllowedKeySize(algorithm, keySize)) {
+				_writeAlgorithmRejected(
+					algorithm + StringPool.SLASH + keySize,
+					CryptoFunctionApprovalType.APPROVED, true,
+					KeyPairGenerator.class, null, "key-size-not-allowed");
+
+				throw new InvalidParameterException(
+					StringBundler.concat(
+						"Key size ", keySize,
+						" is not allowed in FIPS mode for key algorithm \"",
+						algorithm, "\""));
+			}
+		}
+
+		KeyPairGenerator keyPairGenerator = _getKeyPairGenerator(algorithm);
+
+		keyPairGenerator.initialize(keySize);
+
+		_recordProvider(
+			algorithm, CryptoFunctionApprovalType.APPROVED,
+			KeyPairGenerator.class, keyPairGenerator.getProvider());
+
+		return keyPairGenerator;
 	}
 
 	public static KeyStore createKeyStore(
@@ -241,6 +277,16 @@ public class CryptoUtil {
 			CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm);
 	}
 
+	public static void validateAlgorithm(
+			String algorithm, Class<?> factoryClass)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED, factoryClass);
+		}
+	}
+
 	private static Throwable _fetchErrorThrowable(Throwable throwable) {
 		while (throwable != null) {
 			if (throwable instanceof Error) {
@@ -312,6 +358,28 @@ public class CryptoUtil {
 			_writeProviderException(
 				algorithm, CryptoFunctionApprovalType.APPROVED,
 				noSuchAlgorithmException, KeyGenerator.class, provider);
+
+			throw noSuchAlgorithmException;
+		}
+	}
+
+	private static KeyPairGenerator _getKeyPairGenerator(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider(
+			CryptoFunctionApprovalType.APPROVED);
+
+		if (provider == null) {
+			return KeyPairGenerator.getInstance(algorithm);
+		}
+
+		try {
+			return KeyPairGenerator.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				noSuchAlgorithmException, KeyPairGenerator.class, provider);
 
 			throw noSuchAlgorithmException;
 		}

@@ -36,10 +36,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,9 +107,18 @@ public class FIPSModeValidator {
 				_allowedTLSProtocols, SetUtil.fromArray(tlsProtocols)));
 	}
 
+	public static String[] getApprovedAlgorithms(Class<?> factoryClass) {
+		return ArrayUtil.clone(
+			_approvedAlgorithms.getOrDefault(factoryClass, new String[0]));
+	}
+
 	public static int[] getKeySizes(String keyAlgorithm) {
 		if (StringUtil.equalsIgnoreCase(keyAlgorithm, "AES")) {
 			return ArrayUtil.clone(_AES_KEY_SIZES);
+		}
+
+		if (StringUtil.equalsIgnoreCase(keyAlgorithm, "RSA")) {
+			return ArrayUtil.clone(_RSA_KEY_SIZES);
 		}
 
 		return new int[0];
@@ -277,6 +288,12 @@ public class FIPSModeValidator {
 			String[] segments = StringUtil.split(algorithm, CharPool.SLASH);
 
 			return segments[0];
+		}
+
+		if (factoryClass == Signature.class) {
+			int index = algorithm.indexOf("with");
+
+			return algorithm.substring(index + 4);
 		}
 
 		return algorithm;
@@ -813,13 +830,15 @@ public class FIPSModeValidator {
 	private static final int _HMAC_KEY_SIZE_MIN = 112;
 
 	private static final Class<?>[] _KEY_FACTORY_CLASSES = {
-		Cipher.class, KeyGenerator.class, Mac.class
+		Cipher.class, KeyGenerator.class, KeyPairGenerator.class, Mac.class
 	};
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
 		1300000;
+
+	private static final int[] _RSA_KEY_SIZES = {2048, 3072, 4096};
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FIPSModeValidator.class);
@@ -862,9 +881,12 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
 		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
-		new String[] {"AES"}, KeyStore.class, new String[] {"BCFKS", "PKCS12"},
-		Mac.class, new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
-		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"});
+		new String[] {"AES"}, KeyPairGenerator.class, new String[] {"RSA"},
+		KeyStore.class, new String[] {"BCFKS", "PKCS12"}, Mac.class,
+		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
+		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"},
+		Signature.class,
+		new String[] {"SHA256withRSA", "SHA384withRSA", "SHA512withRSA"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
