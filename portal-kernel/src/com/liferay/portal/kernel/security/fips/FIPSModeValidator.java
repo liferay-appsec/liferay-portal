@@ -887,7 +887,7 @@ public class FIPSModeValidator {
 		"SHA-512");
 	private static final Map<Class<?>, String[]> _allowedAlgorithms = Map.of(
 		KeyStore.class, new String[] {"JKS"}, MessageDigest.class,
-		new String[] {"MD5", "SHA-1"});
+		new String[] {"MD5"});
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
@@ -928,7 +928,8 @@ public class FIPSModeValidator {
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Map<Class<?>, String[]> _legacyAlgorithms = Map.of(
-		Mac.class, new String[] {"HmacSHA1"});
+		Mac.class, new String[] {"HmacSHA1"}, MessageDigest.class,
+		new String[] {"SHA", "SHA-1"});
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =
