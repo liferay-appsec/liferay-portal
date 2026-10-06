@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -932,6 +933,11 @@ public class FIPSModeValidator {
 		new String[] {"BCFKS", "PKCS12"}, Mac.class,
 		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
 		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"},
+		SecretKeyFactory.class,
+		new String[] {
+			"PBKDF2WithHmacSHA256", "PBKDF2WithHmacSHA384",
+			"PBKDF2WithHmacSHA512"
+		},
 		Signature.class,
 		new String[] {
 			"SHA256withECDSA", "SHA256withRSA", "SHA384withRSA", "SHA512withRSA"
