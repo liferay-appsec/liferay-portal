@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.mail.internet.InternetAddress;
@@ -120,7 +121,8 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 
 			httpServletRequest.setAttribute(
 				MFATimeBasedOTPWebKeys.MFA_TIME_BASED_OTP_ALGORITHM,
-				PropsValues.FIPS_ENABLED ? "SHA256" : "SHA1");
+				StringUtil.removeSubstring(
+					MFATimeBasedOTPUtil.getAlgorithm(), "Hmac"));
 			httpServletRequest.setAttribute(
 				MFATimeBasedOTPWebKeys.
 					MFA_TIME_BASED_OTP_CHECKER_DISPLAY_CONTEXT,

@@ -9,7 +9,7 @@ import com.liferay.petra.io.BigEndianCodec;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
-import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.math.BigInteger;
@@ -23,7 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import jodd.util.Base32;
 
@@ -53,6 +52,10 @@ public class MFATimeBasedOTPUtil {
 		return Base32.encode(secret);
 	}
 
+	public static String getAlgorithm() {
+		return CryptoUtil.getAlgorithm("HmacSHA1", "HmacSHA256");
+	}
+
 	public static boolean verifyTimeBasedOTP(
 		long clockSkew, String sharedSecret, String value) {
 
@@ -79,12 +82,11 @@ public class MFATimeBasedOTPUtil {
 	}
 
 	private static byte[] _generateHMAC(byte[] key, String text) {
-		String algorithm = PropsValues.FIPS_ENABLED ? "HmacSHA256" : "HmacSHA1";
+		String algorithm = getAlgorithm();
 
 		try {
-			Mac mac = Mac.getInstance(algorithm);
-
-			mac.init(new SecretKeySpec(key, "RAW"));
+			Mac mac = CryptoUtil.createMac(
+				algorithm, CryptoUtil.createSecretKey(algorithm, key));
 
 			BigInteger bigInteger = new BigInteger("10" + text, 16);
 
