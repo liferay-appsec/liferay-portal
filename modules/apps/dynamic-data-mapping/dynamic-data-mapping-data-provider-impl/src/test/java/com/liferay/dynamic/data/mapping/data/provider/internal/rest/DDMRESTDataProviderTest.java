@@ -5,13 +5,25 @@
 
 package com.liferay.dynamic.data.mapping.data.provider.internal.rest;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.security.Security;
+
+import java.util.HashMap;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -53,6 +65,48 @@ public class DDMRESTDataProviderTest {
 	@After
 	public void tearDown() {
 		_systemPropertiesMockedStatic.close();
+	}
+
+	@Test
+	public void testActivate() {
+		ReflectionTestUtil.setFieldValue(
+			_ddmrestDataProvider, "_multiVMPool",
+			Mockito.mock(MultiVMPool.class));
+
+		String keyStoreType = Security.getProperty("keystore.type");
+
+		Security.setProperty("keystore.type", "jks");
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				DDMRESTDataProvider.class.getName(), LoggerTestUtil.WARN)) {
+
+			_ddmrestDataProvider.activate(new HashMap<>());
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertTrue(logEntries.toString(), logEntries.isEmpty());
+
+			try (SafeCloseable safeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				_ddmrestDataProvider.activate(new HashMap<>());
+			}
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+
+			LogEntry logEntry = logEntries.get(0);
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"The keystore type \"jks\" of the security property ",
+					"\"keystore.type\" is not allowed in FIPS mode, so REST ",
+					"data providers cannot connect"),
+				logEntry.getMessage());
+		}
+		finally {
+			Security.setProperty("keystore.type", keyStoreType);
+		}
 	}
 
 	@Test

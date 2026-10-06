@@ -374,6 +374,33 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testIsAllowedSSLContextProtocol() {
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("SSL"));
+		Assert.assertTrue(FIPSModeValidator.isAllowedSSLContextProtocol("TLS"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1.1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1.2"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedSSLContextProtocol("tlsv1.3"));
+	}
+
+	@Test
+	public void testIsAllowedTLSFactoryAlgorithm() {
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("PKIX"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("pkix"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("SunX509"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm(null));
+	}
+
+	@Test
 	public void testIsHealthyProvider() {
 		Assert.assertFalse(
 			FIPSModeValidator.isHealthyProvider(

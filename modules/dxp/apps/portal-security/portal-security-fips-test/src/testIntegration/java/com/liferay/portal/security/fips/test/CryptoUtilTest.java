@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.fips.test.util.FIPSTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -41,6 +42,10 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -67,6 +72,33 @@ public class CryptoUtilTest {
 		_approvedModeProvider = FIPSModeValidator.fetchApprovedModeProvider();
 
 		Assert.assertNotNull(_approvedModeProvider);
+	}
+
+	@Test
+	public void testConfigureSSLParameters() throws Exception {
+		SSLContext sslContext = CryptoUtil.createSSLContext("TLS");
+
+		sslContext.init(null, null, null);
+
+		SSLParameters defaultSSLParameters =
+			sslContext.getDefaultSSLParameters();
+
+		SSLParameters sslParameters = new SSLParameters();
+
+		CryptoUtil.configureSSLParameters(
+			defaultSSLParameters.getCipherSuites(),
+			defaultSSLParameters.getProtocols(), sslParameters);
+
+		String[] cipherSuites = sslParameters.getCipherSuites();
+
+		Assert.assertTrue(
+			Arrays.toString(cipherSuites), ArrayUtil.isNotEmpty(cipherSuites));
+
+		for (String protocol : sslParameters.getProtocols()) {
+			Assert.assertTrue(
+				protocol,
+				protocol.equals("TLSv1.2") || protocol.equals("TLSv1.3"));
+		}
 	}
 
 	@Test
@@ -293,6 +325,26 @@ public class CryptoUtilTest {
 		Assert.assertThrows(
 			NoSuchAlgorithmException.class,
 			() -> CryptoUtil.createMessageDigest("MD5"));
+	}
+
+	@Test
+	public void testCreateSSLContext() throws Exception {
+		SSLContext sslContext = CryptoUtil.createSSLContext("TLSv1.3");
+
+		Assert.assertEquals("TLSv1.3", sslContext.getProtocol());
+
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createSSLContext("TLSv1.1"));
+	}
+
+	@Test
+	public void testCreateTrustManagerFactory() throws Exception {
+		TrustManagerFactory trustManagerFactory =
+			CryptoUtil.createTrustManagerFactory(
+				TrustManagerFactory.getDefaultAlgorithm());
+
+		Assert.assertEquals("PKIX", trustManagerFactory.getAlgorithm());
 	}
 
 	private boolean _hasAuditLogJSONObject(

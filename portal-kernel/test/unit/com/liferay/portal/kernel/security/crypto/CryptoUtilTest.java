@@ -50,6 +50,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -86,6 +91,75 @@ public class CryptoUtilTest {
 	@After
 	public void tearDown() {
 		_setApprovedModeProvider(null);
+	}
+
+	@Test
+	public void testConfigureSSLParameters() throws Exception {
+		String[] cipherSuites = {
+			"TLS_AES_128_GCM_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA"
+		};
+		String[] protocols = {"TLSv1.1", "TLSv1.3"};
+
+		SSLParameters sslParameters = new SSLParameters();
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			CryptoUtil.configureSSLParameters(
+				cipherSuites, protocols, sslParameters);
+
+			Assert.assertNull(sslParameters.getCipherSuites());
+			Assert.assertNull(sslParameters.getProtocols());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			CryptoUtil.configureSSLParameters(
+				cipherSuites, protocols, sslParameters);
+
+			Assert.assertArrayEquals(
+				new String[] {"TLS_AES_128_GCM_SHA256"},
+				sslParameters.getCipherSuites());
+			Assert.assertArrayEquals(
+				new String[] {"TLSv1.3"}, sslParameters.getProtocols());
+
+			sslParameters.setProtocols(new String[] {"TLSv1.2"});
+
+			CryptoUtil.configureSSLParameters(
+				cipherSuites, protocols, sslParameters);
+
+			Assert.assertArrayEquals(
+				new String[] {"TLSv1.2"}, sslParameters.getProtocols());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				SSLException.class,
+				() -> CryptoUtil.configureSSLParameters(
+					new String[] {"TLS_RSA_WITH_AES_128_CBC_SHA"}, protocols,
+					new SSLParameters()));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, SSLParameters.class,
+				mockedStatic, "cipher-suites-not-allowed",
+				"TLS_RSA_WITH_AES_128_CBC_SHA");
+
+			Assert.assertThrows(
+				SSLException.class,
+				() -> CryptoUtil.configureSSLParameters(
+					cipherSuites, new String[] {"TLSv1.1"},
+					new SSLParameters()));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, SSLParameters.class,
+				mockedStatic, "protocols-not-allowed", "TLSv1.1");
+		}
 	}
 
 	@Test
@@ -612,6 +686,42 @@ public class CryptoUtilTest {
 	}
 
 	@Test
+	public void testCreateSSLContext() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			SSLContext sslContext = CryptoUtil.createSSLContext("TLSv1.1");
+
+			Assert.assertEquals("TLSv1.1", sslContext.getProtocol());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			for (String protocol : new String[] {"TLS", "TLSv1.2", "TLSv1.3"}) {
+				SSLContext sslContext = CryptoUtil.createSSLContext(protocol);
+
+				Assert.assertEquals(protocol, sslContext.getProtocol());
+			}
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createSSLContext("TLSv1.1"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, SSLContext.class,
+				mockedStatic, "algorithm-not-allowed", "TLSv1.1");
+		}
+	}
+
+	@Test
 	public void testCreateSecretKey() throws Exception {
 		String algorithm = RandomTestUtil.randomString();
 		byte[] keyBytes = RandomTestUtil.randomBytes();
@@ -668,6 +778,43 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
 				mockedStatic, "key-size-not-allowed", "HmacSHA256");
+		}
+	}
+
+	@Test
+	public void testCreateTrustManagerFactory() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			TrustManagerFactory trustManagerFactory =
+				CryptoUtil.createTrustManagerFactory("SunX509");
+
+			Assert.assertEquals("SunX509", trustManagerFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			TrustManagerFactory trustManagerFactory =
+				CryptoUtil.createTrustManagerFactory("PKIX");
+
+			Assert.assertEquals("PKIX", trustManagerFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createTrustManagerFactory("SunX509"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true,
+				TrustManagerFactory.class, mockedStatic,
+				"algorithm-not-allowed", "SunX509");
 		}
 	}
 
