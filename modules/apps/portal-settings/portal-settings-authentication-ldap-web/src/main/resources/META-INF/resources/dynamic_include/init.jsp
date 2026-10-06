@@ -16,6 +16,7 @@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
 
 <%@ page import="com.liferay.petra.function.transform.TransformUtil" %><%@
 page import="com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder" %><%@
+page import="com.liferay.portal.kernel.security.fips.FIPSModeValidator" %><%@
 page import="com.liferay.portal.kernel.util.Constants" %><%@
 page import="com.liferay.portal.kernel.util.GetterUtil" %><%@
 page import="com.liferay.portal.kernel.util.HtmlUtil" %><%@
@@ -30,6 +31,8 @@ page import="com.liferay.portal.security.ldap.exportimport.configuration.LDAPImp
 page import="com.liferay.portal.settings.authentication.ldap.web.internal.portlet.action.ActionUtil" %><%@
 page import="com.liferay.portal.settings.authentication.ldap.web.internal.portlet.constants.LDAPSettingsConstants" %><%@
 page import="com.liferay.portal.settings.authentication.ldap.web.internal.portlet.util.ConfigurationProviderUtil" %>
+
+<%@ page import="java.security.MessageDigest" %>
 
 <%@ page import="java.util.List" %>
 
