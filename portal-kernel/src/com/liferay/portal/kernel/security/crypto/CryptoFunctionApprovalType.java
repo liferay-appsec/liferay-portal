@@ -11,9 +11,16 @@ package com.liferay.portal.kernel.security.crypto;
 public enum CryptoFunctionApprovalType {
 
 	/**
-	 * Functions allowed with no security claimed: the approved functions plus
-	 * a short list of non-approved ones, served by any provider and recorded.
+	 * Functions allowed with no security claimed: the approved and legacy
+	 * functions plus a short list of non-approved ones, served by any
+	 * provider and recorded.
 	 */
-	ALLOWED, APPROVED
+	ALLOWED, APPROVED,
+
+	/**
+	 * Approved functions kept for legacy use only: verifying or decrypting
+	 * values that already exist.
+	 */
+	LEGACY
 
 }

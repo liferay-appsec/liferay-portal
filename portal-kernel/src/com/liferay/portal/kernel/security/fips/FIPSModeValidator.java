@@ -138,6 +138,16 @@ public class FIPSModeValidator {
 			return false;
 		}
 
+		if (ArrayUtil.contains(
+				_legacyAlgorithms.get(factoryClass), algorithm, true)) {
+
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.LEGACY) {
+			return false;
+		}
+
 		return ArrayUtil.contains(
 			_allowedAlgorithms.get(factoryClass), algorithm, true);
 	}
@@ -151,6 +161,14 @@ public class FIPSModeValidator {
 		}
 
 		if (approvalType == CryptoFunctionApprovalType.APPROVED) {
+			return false;
+		}
+
+		if (_isKeyAlgorithm(_legacyAlgorithms, factoryClass, keyAlgorithm)) {
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.LEGACY) {
 			return false;
 		}
 
@@ -842,7 +860,7 @@ public class FIPSModeValidator {
 	private static final int[] _AES_KEY_SIZES = {128, 192, 256};
 
 	private static final String[] _HMAC_ALGORITHMS = {
-		"HmacSHA224", "HmacSHA256", "HmacSHA384", "HmacSHA512"
+		"HmacSHA1", "HmacSHA224", "HmacSHA256", "HmacSHA384", "HmacSHA512"
 	};
 
 	private static final int _HMAC_KEY_SIZE_MIN = 112;
@@ -909,6 +927,8 @@ public class FIPSModeValidator {
 		new String[] {"SHA256withRSA", "SHA384withRSA", "SHA512withRSA"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
+	private static final Map<Class<?>, String[]> _legacyAlgorithms = Map.of(
+		Mac.class, new String[] {"HmacSHA1"});
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =

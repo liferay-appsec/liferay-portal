@@ -277,26 +277,29 @@ public class CryptoUtil {
 		return createKeyStore(CryptoFunctionApprovalType.APPROVED, type);
 	}
 
-	public static Mac createMac(String algorithm, Key key)
+	public static Mac createMac(
+			String algorithm, CryptoFunctionApprovalType approvalType, Key key)
 		throws InvalidKeyException, NoSuchAlgorithmException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateAlgorithm(
-				algorithm, CryptoFunctionApprovalType.APPROVED, Mac.class);
+			_validateAlgorithm(algorithm, approvalType, Mac.class);
 			_validateKey(
-				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
-				Mac.class, _getKeySize(key));
+				key.getAlgorithm(), approvalType, Mac.class, _getKeySize(key));
 		}
 
-		Mac mac = _getMac(algorithm, CryptoFunctionApprovalType.APPROVED);
+		Mac mac = _getMac(algorithm, approvalType);
 
 		mac.init(key);
 
-		_recordProvider(
-			algorithm, CryptoFunctionApprovalType.APPROVED, Mac.class,
-			mac.getProvider());
+		_recordProvider(algorithm, approvalType, Mac.class, mac.getProvider());
 
 		return mac;
+	}
+
+	public static Mac createMac(String algorithm, Key key)
+		throws InvalidKeyException, NoSuchAlgorithmException {
+
+		return createMac(algorithm, CryptoFunctionApprovalType.APPROVED, key);
 	}
 
 	public static MessageDigest createMessageDigest(String algorithm)
@@ -346,10 +349,19 @@ public class CryptoUtil {
 	public static SecretKey createSecretKey(String algorithm, byte[] keyBytes)
 		throws InvalidKeyException {
 
+		return createSecretKey(
+			algorithm, CryptoFunctionApprovalType.APPROVED, keyBytes);
+	}
+
+	public static SecretKey createSecretKey(
+			String algorithm, CryptoFunctionApprovalType approvalType,
+			byte[] keyBytes)
+		throws InvalidKeyException {
+
 		if (PropsValues.FIPS_ENABLED) {
 			_validateKey(
-				algorithm, CryptoFunctionApprovalType.APPROVED,
-				SecretKeySpec.class, keyBytes.length * 8);
+				algorithm, approvalType, SecretKeySpec.class,
+				keyBytes.length * 8);
 		}
 
 		return new SecretKeySpec(keyBytes, algorithm);
