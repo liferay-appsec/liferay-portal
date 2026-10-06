@@ -11,6 +11,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -39,6 +40,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+
+import javax.crypto.Mac;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -512,14 +515,24 @@ public class ProductionReadinessCheckUtil {
 		String algorithm = PropsUtil.get(
 			PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM);
 
+		String recommendedValue =
+			"PBKDF2WithHmacSHA1/160/" + _MIN_PBKDF2_ROUNDS + ", BCRYPT, SCRYPT";
+
+		if (PropsValues.FIPS_ENABLED) {
+			String[] macAlgorithms = FIPSModeValidator.getApprovedAlgorithms(
+				Mac.class);
+
+			recommendedValue = StringBundler.concat(
+				"PBKDF2With", macAlgorithms[0], "/256/", _MIN_PBKDF2_ROUNDS);
+		}
+
 		ProductionReadinessResult.Builder builder =
 			ProductionReadinessResult.builder(
 				_CATEGORY_PORTAL_PROPERTIES_CONFIGURATION, "password-encryption"
 			).currentValue(
 				algorithm
 			).recommendedValue(
-				"PBKDF2WithHmacSHA1/160/" + _MIN_PBKDF2_ROUNDS +
-					", BCRYPT, SCRYPT"
+				recommendedValue
 			);
 
 		if (_isStrongerAlgorithm(algorithm)) {
@@ -695,21 +708,41 @@ public class ProductionReadinessCheckUtil {
 			return false;
 		}
 
+		if (PropsValues.FIPS_ENABLED) {
+			for (String macAlgorithm :
+					FIPSModeValidator.getApprovedAlgorithms(Mac.class)) {
+
+				if (_isStrongerPBKDF2Algorithm(algorithm, macAlgorithm)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		if (algorithm.equals("BCRYPT") || algorithm.startsWith("BCRYPT/") ||
 			algorithm.equals("SCRYPT")) {
 
 			return true;
 		}
 
-		if (algorithm.startsWith("PBKDF2WithHmacSHA1/")) {
-			String[] parts = algorithm.split("/");
+		return _isStrongerPBKDF2Algorithm(algorithm, "HmacSHA1");
+	}
 
-			if (parts.length >= 3) {
-				int rounds = GetterUtil.getInteger(parts[2]);
+	private static boolean _isStrongerPBKDF2Algorithm(
+		String algorithm, String macAlgorithm) {
 
-				if (rounds >= _MIN_PBKDF2_ROUNDS) {
-					return true;
-				}
+		if (!algorithm.startsWith("PBKDF2With" + macAlgorithm + "/")) {
+			return false;
+		}
+
+		String[] parts = algorithm.split("/");
+
+		if (parts.length >= 3) {
+			int rounds = GetterUtil.getInteger(parts[2]);
+
+			if (rounds >= _MIN_PBKDF2_ROUNDS) {
+				return true;
 			}
 		}
 
