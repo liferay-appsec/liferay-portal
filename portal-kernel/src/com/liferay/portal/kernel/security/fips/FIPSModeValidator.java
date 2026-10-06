@@ -231,8 +231,8 @@ public class FIPSModeValidator {
 			return true;
 		}
 
-		for (String allowedAlgorithm : _allowedAlgorithmPrefixes) {
-			if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
+		for (String[] approvedAlgorithms : _approvedAlgorithms.values()) {
+			if (ArrayUtil.contains(approvedAlgorithms, algorithm, true)) {
 				return false;
 			}
 		}
@@ -290,7 +290,7 @@ public class FIPSModeValidator {
 
 		validateAlgorithm(algorithm);
 
-		if ((keySize == 0) || _allowedSymmetricKeySizes.contains(keySize)) {
+		if ((keySize == 0) || isAllowedKeySize(algorithm, keySize)) {
 			return;
 		}
 
@@ -672,6 +672,18 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validateKeyAlgorithm(
+		String algorithm, Class<?> factoryClass) {
+
+		if (Validator.isNull(algorithm) ||
+			!isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm)) {
+
+			throw new SecurityException(
+				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
+		}
+	}
+
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
@@ -682,8 +694,9 @@ public class FIPSModeValidator {
 			upperCaseAlgorithm, CharPool.SLASH);
 
 		if (ArrayUtil.isEmpty(upperCaseAlgorithmParts) ||
-			!_allowedPasswordsEncryptionAlgorithms.contains(
-				upperCaseAlgorithmParts[0])) {
+			!ArrayUtil.contains(
+				getApprovedAlgorithms(SecretKeyFactory.class),
+				upperCaseAlgorithmParts[0], true)) {
 
 			throw new SecurityException(
 				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
@@ -769,9 +782,11 @@ public class FIPSModeValidator {
 			}
 		}
 
-		validateAlgorithm(
-			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
-		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+		_validateKeyAlgorithm(
+			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM),
+			KeyGenerator.class);
+		_validateKeyAlgorithm(
+			PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM, Cipher.class);
 
 		if (!GetterUtil.getBoolean(
 				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
@@ -890,20 +905,12 @@ public class FIPSModeValidator {
 	private static final Log _log = LogFactoryUtil.getLog(
 		FIPSModeValidator.class);
 
-	private static final Set<String> _allowedAlgorithmPrefixes = Set.of(
-		"AES", "HmacSHA256", "HmacSHA384", "HmacSHA512", "PBKDF2WithHmacSHA256",
-		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
-		"SHA-512");
 	private static final Map<Class<?>, String[]> _allowedAlgorithms = Map.of(
 		KeyStore.class, new String[] {"JKS"}, MessageDigest.class,
 		new String[] {"MD5"});
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
-	private static final Set<String> _allowedPasswordsEncryptionAlgorithms =
-		Set.of(
-			"PBKDF2WITHHMACSHA256", "PBKDF2WITHHMACSHA384",
-			"PBKDF2WITHHMACSHA512");
 	private static final Map<String, List<String>> _allowedProviderNames =
 		Map.of(
 			"AmazonCorrettoCryptoProvider",
@@ -914,8 +921,6 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
-	private static final Set<Integer> _allowedSymmetricKeySizes = Set.of(
-		128, 192, 256);
 	private static final Map<String, String[]> _allowedSystemProperties =
 		Map.of("jdk.tls.client.protocols", new String[] {"TLSv1.2", "TLSv1.3"});
 	private static final Set<String> _allowedTLSCipherSuites = Set.of(
