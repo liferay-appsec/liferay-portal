@@ -298,6 +298,23 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, Cipher.class,
 				"AES/ECB/PKCS5Padding"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacMD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
+				"SHA-256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "MD5"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, KeyStore.class, "JKS"));
 	}
 
 	@Test
@@ -354,6 +371,17 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "DES"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, SecretKeySpec.class,
+				"HmacSHA1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Cipher.class, "DES"));
 	}
 
 	@Test

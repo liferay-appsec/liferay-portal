@@ -314,9 +314,21 @@ public class CryptoUtilTest {
 
 		Assert.assertSame(_approvedModeProvider, mac.getProvider());
 
+		mac = CryptoUtil.createMac(
+			"HmacSHA1", CryptoFunctionApprovalType.LEGACY,
+			CryptoUtil.createSecretKey(
+				"HmacSHA1", CryptoFunctionApprovalType.LEGACY,
+				keyBytesString.getBytes()));
+
+		Assert.assertSame(_approvedModeProvider, mac.getProvider());
+
 		Assert.assertThrows(
 			InvalidKeyException.class,
 			() -> CryptoUtil.createSecretKey("HmacSHA256", new byte[8]));
+		Assert.assertThrows(
+			InvalidKeyException.class,
+			() -> CryptoUtil.createSecretKey(
+				"HmacSHA1", keyBytesString.getBytes()));
 	}
 
 	@Test

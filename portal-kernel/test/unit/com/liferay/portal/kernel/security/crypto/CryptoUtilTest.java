@@ -643,6 +643,34 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, Mac.class,
 				mockedStatic, "algorithm-not-allowed", "HmacSHA1");
+
+			mac = CryptoUtil.createMac(
+				"HmacSHA1", CryptoFunctionApprovalType.LEGACY,
+				new SecretKeySpec(keyBytes, "HmacSHA1"));
+
+			Assert.assertEquals("HmacSHA1", mac.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMac(
+					"HmacMD5", CryptoFunctionApprovalType.LEGACY,
+					new SecretKeySpec(keyBytes, "HmacMD5")));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.LEGACY, true, Mac.class,
+				mockedStatic, "algorithm-not-allowed", "HmacMD5");
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMac(
+					"HmacMD5", CryptoFunctionApprovalType.ALLOWED,
+					new SecretKeySpec(keyBytes, "HmacMD5")));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.ALLOWED, true, Mac.class,
+				mockedStatic, "algorithm-not-allowed", "HmacMD5");
 		}
 	}
 
@@ -791,6 +819,15 @@ public class CryptoUtilTest {
 
 			Assert.assertArrayEquals(aesKeyBytes, secretKey.getEncoded());
 
+			String hmacKeyBytesString = RandomTestUtil.randomString(20);
+
+			byte[] hmacKeyBytes = hmacKeyBytesString.getBytes();
+
+			secretKey = CryptoUtil.createSecretKey(
+				"HmacSHA1", CryptoFunctionApprovalType.LEGACY, hmacKeyBytes);
+
+			Assert.assertEquals("HmacSHA1", secretKey.getAlgorithm());
+
 			mockedStatic.verifyNoInteractions();
 
 			Assert.assertThrows(
@@ -800,6 +837,14 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
 				mockedStatic, "key-algorithm-not-allowed", "Blowfish");
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createSecretKey("HmacSHA1", hmacKeyBytes));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
+				mockedStatic, "key-algorithm-not-allowed", "HmacSHA1");
 
 			Assert.assertThrows(
 				InvalidKeyException.class,

@@ -11,6 +11,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -30,6 +32,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import org.osgi.framework.BundleContext;
 
@@ -220,6 +225,58 @@ public class PasswordEncryptorUtilTest {
 			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA1/128/1300000",
 			"password", "AAAAoAAK/IAeIrZ3b+oVv6of6xGPeOIsIhRyCH+h/VX2qMgK",
 			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA1");
+	}
+
+	@Test
+	public void testEncryptPBKDF2WithFIPSMode() throws Exception {
+		String algorithm =
+			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA256/256/1000";
+		String password = RandomTestUtil.randomString(14);
+
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.APPROVED,
+			() -> PasswordEncryptorUtil.encrypt(algorithm, password, null));
+
+		String encryptedPassword = PasswordEncryptorUtil.encrypt(
+			algorithm, password, null);
+
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.LEGACY,
+			() -> PasswordEncryptorUtil.encrypt(password, encryptedPassword));
+
+		String sha1Algorithm =
+			PasswordEncryptor.TYPE_PBKDF2 + "WithHmacSHA1/160/1000";
+
+		String sha1EncryptedPassword = PasswordEncryptorUtil.encrypt(
+			sha1Algorithm, password, null);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				encryptedPassword,
+				PasswordEncryptorUtil.encrypt(password, encryptedPassword));
+			Assert.assertEquals(
+				sha1EncryptedPassword,
+				PasswordEncryptorUtil.encrypt(password, sha1EncryptedPassword));
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				PwdEncryptorException.UnavailableAlgorithm.class,
+				() -> PasswordEncryptorUtil.encrypt(
+					sha1Algorithm, password, null));
+			Assert.assertThrows(
+				PwdEncryptorException.UnavailableAlgorithm.class,
+				() -> PasswordEncryptorUtil.encrypt(
+					algorithm, RandomTestUtil.randomString(13), null));
+
+			mockedStatic.verify(
+				() -> FIPSAuditUtil.write(Mockito.any()), Mockito.times(2));
+		}
 	}
 
 	@Test
