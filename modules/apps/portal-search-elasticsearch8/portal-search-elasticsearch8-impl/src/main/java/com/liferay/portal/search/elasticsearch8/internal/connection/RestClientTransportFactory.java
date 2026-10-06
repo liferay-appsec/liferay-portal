@@ -11,14 +11,15 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.security.KeyStore;
@@ -26,7 +27,9 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -46,8 +49,6 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
 
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
@@ -214,24 +215,44 @@ public class RestClientTransportFactory {
 	}
 
 	private SSLContext _createSSLContext() {
+		if (!CryptoUtil.isAllowedAlgorithm(_truststoreType, KeyStore.class) &&
+			_log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"The truststore type \"", _truststoreType,
+					"\" of the configuration property \"truststoreType\" is ",
+					"not allowed in FIPS mode"));
+		}
+
 		char[] truststorePasswordChars = _truststorePassword.toCharArray();
 
-		try {
-			Path path = Paths.get(_truststorePath);
+		try (InputStream inputStream = Files.newInputStream(
+				Paths.get(_truststorePath))) {
 
-			InputStream inputStream = Files.newInputStream(path);
-
-			KeyStore keyStore = KeyStore.getInstance(_truststoreType);
+			KeyStore keyStore = CryptoUtil.createKeyStore(_truststoreType);
 
 			keyStore.load(inputStream, truststorePasswordChars);
 
-			SSLContextBuilder sslContextBuilder = SSLContexts.custom();
+			KeyManagerFactory keyManagerFactory =
+				CryptoUtil.createKeyManagerFactory(
+					KeyManagerFactory.getDefaultAlgorithm());
 
-			sslContextBuilder.loadKeyMaterial(
-				keyStore, truststorePasswordChars);
-			sslContextBuilder.loadTrustMaterial(keyStore, null);
+			keyManagerFactory.init(keyStore, truststorePasswordChars);
 
-			return sslContextBuilder.build();
+			TrustManagerFactory trustManagerFactory =
+				CryptoUtil.createTrustManagerFactory(
+					TrustManagerFactory.getDefaultAlgorithm());
+
+			trustManagerFactory.init(keyStore);
+
+			SSLContext sslContext = CryptoUtil.createSSLContext("TLS");
+
+			sslContext.init(
+				keyManagerFactory.getKeyManagers(),
+				trustManagerFactory.getTrustManagers(), null);
+
+			return sslContext;
 		}
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
