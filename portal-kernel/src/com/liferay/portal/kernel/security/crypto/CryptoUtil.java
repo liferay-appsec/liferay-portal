@@ -42,6 +42,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
@@ -187,6 +188,27 @@ public class CryptoUtil {
 			keyGenerator.getProvider());
 
 		return keyGenerator;
+	}
+
+	public static KeyManagerFactory createKeyManagerFactory(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED &&
+			!FIPSModeValidator.isAllowedTLSFactoryAlgorithm(algorithm) &&
+			!StringUtil.equalsIgnoreCase(
+				algorithm, KeyManagerFactory.getDefaultAlgorithm())) {
+
+			_writeAlgorithmRejected(
+				algorithm, CryptoFunctionApprovalType.APPROVED, true,
+				KeyManagerFactory.class, null, "algorithm-not-allowed");
+
+			throw new NoSuchAlgorithmException(
+				StringBundler.concat(
+					"Algorithm \"", algorithm,
+					"\" is not allowed in FIPS mode for TLS"));
+		}
+
+		return KeyManagerFactory.getInstance(algorithm);
 	}
 
 	public static KeyPairGenerator createKeyPairGenerator(
