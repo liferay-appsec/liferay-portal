@@ -5,6 +5,10 @@
 
 package com.liferay.source.formatter.dependencies;
 
+import java.security.SecureRandom;
+
+import javax.crypto.KeyGenerator;
+
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -24,6 +28,10 @@ public class CryptoBypassImports {
 
 	public SSLContext getSSLContext() {
 		return SSLContexts.createDefault();
+	}
+
+	public void initKeyGenerator(KeyGenerator keyGenerator) {
+		keyGenerator.init(256, new SecureRandom());
 	}
 
 	public String sha256Hex(String value) {

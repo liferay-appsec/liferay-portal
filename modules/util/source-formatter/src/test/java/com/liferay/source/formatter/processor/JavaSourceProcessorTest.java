@@ -162,17 +162,22 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 			SourceProcessorTestParameters.create(
 				"CryptoBypassImports.testjava"
 			).addExpectedMessage(
+				"Use SecureRandomUtil or com.liferay.portal.kernel.security." +
+					"SecureRandom instead of java.security.SecureRandom, see " +
+						"LPS-39508",
+				8
+			).addExpectedMessage(
 				"Use DigesterUtil instead of org.apache.commons.codec.digest." +
 					"DigestUtils, see LPD-108121",
-				10
+				14
 			).addExpectedMessage(
 				"Use CryptoUtil.createSSLContext instead of org.apache.http." +
 					"ssl.SSLContexts, see LPD-108121",
-				11
+				15
 			).addExpectedMessage(
 				"Use CryptoUtil.createKeyPairGenerator instead of org.jose4j." +
 					"jwk.RsaJwkGenerator, see LPD-108121",
-				14
+				18
 			));
 	}
 

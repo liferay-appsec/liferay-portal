@@ -6,6 +6,7 @@
 package com.liferay.portal.security.key.test.util;
 
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.SecureRandom;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.key.ServiceIndicator;
 import com.liferay.portal.security.key.crypto.CryptoKey;
@@ -16,7 +17,6 @@ import com.liferay.portal.security.key.spi.crypto.CryptoProvider;
 
 import java.security.GeneralSecurityException;
 import java.security.Key;
-import java.security.SecureRandom;
 
 import java.util.Arrays;
 import java.util.Collections;

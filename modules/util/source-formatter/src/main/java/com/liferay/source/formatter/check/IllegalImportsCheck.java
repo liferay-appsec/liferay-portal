@@ -121,7 +121,8 @@ public class IllegalImportsCheck extends BaseFileCheck {
 
 		// java.security.SecureRandom
 
-		if (!content.contains("javax.crypto.KeyGenerator") &&
+		if ((isAttributeValue(_AVOID_CRYPTO_BYPASS_IMPORTS_KEY, absolutePath) ||
+			 !content.contains("javax.crypto.KeyGenerator")) &&
 			!isExcludedPath(RUN_OUTSIDE_PORTAL_EXCLUDES, absolutePath) &&
 			!isExcludedPath(_SECURE_RANDOM_EXCLUDES, absolutePath)) {
 
