@@ -195,9 +195,18 @@ public class CryptoUtilTest {
 				_GCM_TRANSFORMATION);
 
 			cipher = CryptoUtil.createCipher(
-				_key, Cipher.ENCRYPT_MODE, "AES/ECB/PKCS5Padding");
+				CryptoFunctionApprovalType.LEGACY, _key, Cipher.ENCRYPT_MODE,
+				"AES");
 
-			Assert.assertEquals("AES/ECB/PKCS5Padding", cipher.getAlgorithm());
+			Assert.assertEquals("AES", cipher.getAlgorithm());
+
+			encryptedBytes = cipher.doFinal(bytes);
+
+			cipher = CryptoUtil.createCipher(
+				CryptoFunctionApprovalType.LEGACY, _key, Cipher.DECRYPT_MODE,
+				"AES");
+
+			Assert.assertArrayEquals(bytes, cipher.doFinal(encryptedBytes));
 
 			mockedStatic.verifyNoInteractions();
 		}
@@ -255,6 +264,16 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				true, mockedStatic, "algorithm-not-allowed",
 				"AES/ECB/PKCS5Padding");
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createCipher(
+					CryptoFunctionApprovalType.LEGACY, _key,
+					Cipher.DECRYPT_MODE, "AES"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.LEGACY, true, Cipher.class,
+				mockedStatic, "algorithm-not-allowed", "AES");
 		}
 	}
 
