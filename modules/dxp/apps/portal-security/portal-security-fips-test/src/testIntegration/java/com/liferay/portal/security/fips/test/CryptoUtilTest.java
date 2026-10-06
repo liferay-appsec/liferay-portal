@@ -42,6 +42,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
@@ -227,6 +229,24 @@ public class CryptoUtilTest {
 
 		Assert.assertEquals(
 			Arrays.toString(encodedBytes), 32, encodedBytes.length);
+	}
+
+	@Test
+	public void testCreateKeyManagerFactory() throws Exception {
+		KeyManagerFactory keyManagerFactory =
+			CryptoUtil.createKeyManagerFactory(
+				KeyManagerFactory.getDefaultAlgorithm());
+
+		KeyStore keyStore = CryptoUtil.createKeyStore("PKCS12");
+
+		keyStore.load(null, null);
+
+		keyManagerFactory.init(keyStore, new char[0]);
+
+		KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
+
+		Assert.assertEquals(
+			Arrays.toString(keyManagers), 1, keyManagers.length);
 	}
 
 	@Test

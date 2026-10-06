@@ -50,6 +50,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
@@ -440,6 +441,43 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, KeyGenerator.class,
 				mockedStatic, "algorithm-not-allowed", "DESede");
+		}
+	}
+
+	@Test
+	public void testCreateKeyManagerFactory() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			KeyManagerFactory keyManagerFactory =
+				CryptoUtil.createKeyManagerFactory("NewSunX509");
+
+			Assert.assertEquals("NewSunX509", keyManagerFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			KeyManagerFactory keyManagerFactory =
+				CryptoUtil.createKeyManagerFactory("PKIX");
+
+			Assert.assertEquals("PKIX", keyManagerFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createKeyManagerFactory("NewSunX509"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true,
+				KeyManagerFactory.class, mockedStatic, "algorithm-not-allowed",
+				"NewSunX509");
 		}
 	}
 
