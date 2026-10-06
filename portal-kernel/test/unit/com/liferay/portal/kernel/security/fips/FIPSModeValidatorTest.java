@@ -315,6 +315,14 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, KeyStore.class, "JKS"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "SHA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
+				"SHA-1"));
 	}
 
 	@Test

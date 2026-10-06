@@ -346,17 +346,36 @@ public class CryptoUtilTest {
 					"algorithm-served", provider.getName()));
 		}
 
-		MessageDigest messageDigest = CryptoUtil.createMessageDigest("SHA-256");
+		MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+			CryptoUtil.getAlgorithm("MD5", "SHA-256"));
 
+		Assert.assertEquals("SHA-256", messageDigest.getAlgorithm());
 		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
 
 		messageDigest = CryptoUtil.createMessageDigest("SHA-384");
 
 		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
 
+		messageDigest = CryptoUtil.createMessageDigest(
+			"SHA-1", CryptoFunctionApprovalType.LEGACY);
+
+		Assert.assertSame(_approvedModeProvider, messageDigest.getProvider());
+
 		Assert.assertThrows(
 			NoSuchAlgorithmException.class,
 			() -> CryptoUtil.createMessageDigest("MD5"));
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createMessageDigest("SHA-1"));
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createMessageDigest(
+				"MD5", CryptoFunctionApprovalType.LEGACY));
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createMessageDigest(
+				RandomTestUtil.randomString(),
+				CryptoFunctionApprovalType.ALLOWED));
 	}
 
 	@Test

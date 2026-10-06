@@ -702,6 +702,11 @@ public class CryptoUtilTest {
 
 			Assert.assertEquals("SHA-1", messageDigest.getAlgorithm());
 
+			messageDigest = CryptoUtil.createMessageDigest(
+				"SHA-1", CryptoFunctionApprovalType.LEGACY);
+
+			Assert.assertEquals("SHA-1", messageDigest.getAlgorithm());
+
 			messageDigest = CryptoUtil.createMessageDigest("SHA-256");
 
 			Assert.assertEquals("SHA-256", messageDigest.getAlgorithm());
@@ -723,6 +728,15 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, MessageDigest.class,
 				mockedStatic, "algorithm-not-allowed", "SHA-1");
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMessageDigest(
+					"MD5", CryptoFunctionApprovalType.LEGACY));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.LEGACY, true, MessageDigest.class,
+				mockedStatic, "algorithm-not-allowed", "MD5");
 
 			String algorithm = RandomTestUtil.randomString();
 

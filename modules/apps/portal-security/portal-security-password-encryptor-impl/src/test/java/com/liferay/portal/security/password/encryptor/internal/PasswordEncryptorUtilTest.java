@@ -324,6 +324,52 @@ public class PasswordEncryptorUtilTest {
 	}
 
 	@Test
+	public void testEncryptSHAWithFIPSMode() throws Exception {
+		String password = RandomTestUtil.randomString();
+
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.APPROVED,
+			() -> PasswordEncryptorUtil.encrypt(
+				PasswordEncryptor.TYPE_SHA_256, password, null));
+
+		String shaEncryptedPassword = PasswordEncryptorUtil.encrypt(
+			PasswordEncryptor.TYPE_SHA, password, null);
+
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.LEGACY,
+			() -> PasswordEncryptorUtil.encrypt(
+				password, shaEncryptedPassword));
+
+		String md5EncryptedPassword = PasswordEncryptorUtil.encrypt(
+			PasswordEncryptor.TYPE_MD5, password, null);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				shaEncryptedPassword,
+				PasswordEncryptorUtil.encrypt(password, shaEncryptedPassword));
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				PwdEncryptorException.UnavailableAlgorithm.class,
+				() -> PasswordEncryptorUtil.encrypt(
+					password, md5EncryptedPassword));
+			Assert.assertThrows(
+				PwdEncryptorException.UnavailableAlgorithm.class,
+				() -> PasswordEncryptorUtil.encrypt(
+					PasswordEncryptor.TYPE_SHA, password, null));
+
+			mockedStatic.verify(
+				() -> FIPSAuditUtil.write(Mockito.any()), Mockito.times(2));
+		}
+	}
+
+	@Test
 	public void testEncryptSSHA() throws Exception {
 		_runTests(
 			PasswordEncryptor.TYPE_SSHA, "password",
