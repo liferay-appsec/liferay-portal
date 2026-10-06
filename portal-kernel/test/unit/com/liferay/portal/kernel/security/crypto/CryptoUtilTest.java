@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.crypto.Cipher;
 import javax.crypto.CipherSpi;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -360,6 +361,58 @@ public class CryptoUtilTest {
 	}
 
 	@Test
+	public void testCreateMac() throws Exception {
+		String keyBytesString = RandomTestUtil.randomString(20);
+
+		byte[] keyBytes = keyBytesString.getBytes();
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			Mac mac = CryptoUtil.createMac(
+				"HmacSHA1", CryptoUtil.createSecretKey("HmacSHA1", keyBytes));
+
+			Assert.assertEquals("HmacSHA1", mac.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Mac mac = CryptoUtil.createMac(
+				"HmacSHA256",
+				CryptoUtil.createSecretKey("HmacSHA256", keyBytes));
+
+			Assert.assertEquals("HmacSHA256", mac.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createMac(
+					"HmacSHA256",
+					new SecretKeySpec(new byte[8], "HmacSHA256")));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, Mac.class,
+				mockedStatic, "key-size-not-allowed", "HmacSHA256");
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createMac(
+					"HmacSHA1", new SecretKeySpec(keyBytes, "HmacSHA256")));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, Mac.class,
+				mockedStatic, "algorithm-not-allowed", "HmacSHA1");
+		}
+	}
+
+	@Test
 	public void testCreateMessageDigest() throws Exception {
 		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
 				FIPSAuditUtil.class)) {
@@ -485,6 +538,27 @@ public class CryptoUtilTest {
 			_assertAlgorithmRejected(
 				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
 				mockedStatic, "key-size-not-allowed", "AES");
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createSecretKey("HmacSHA256", new byte[8]));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, SecretKeySpec.class,
+				mockedStatic, "key-size-not-allowed", "HmacSHA256");
+		}
+	}
+
+	@Test
+	public void testGetAlgorithm() throws Exception {
+		Assert.assertEquals("MD5", CryptoUtil.getAlgorithm("MD5", "SHA-256"));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				"SHA-256", CryptoUtil.getAlgorithm("MD5", "SHA-256"));
 		}
 	}
 

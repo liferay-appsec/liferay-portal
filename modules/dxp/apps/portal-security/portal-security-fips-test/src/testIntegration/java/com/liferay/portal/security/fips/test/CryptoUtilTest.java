@@ -18,6 +18,7 @@ import com.liferay.portal.security.fips.test.util.FIPSTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
 
 import org.junit.Assert;
@@ -190,6 +192,30 @@ public class CryptoUtilTest {
 
 		Assert.assertEquals(
 			Arrays.toString(encodedBytes), 32, encodedBytes.length);
+	}
+
+	@Test
+	public void testCreateMac() throws Exception {
+		String keyBytesString = RandomTestUtil.randomString(20);
+
+		Mac mac = CryptoUtil.createMac(
+			"HmacSHA256",
+			CryptoUtil.createSecretKey(
+				"HmacSHA256", keyBytesString.getBytes()));
+
+		Assert.assertEquals("HmacSHA256", mac.getAlgorithm());
+		Assert.assertSame(_approvedModeProvider, mac.getProvider());
+
+		mac = CryptoUtil.createMac(
+			"HmacSHA512",
+			CryptoUtil.createSecretKey(
+				"HmacSHA512", keyBytesString.getBytes()));
+
+		Assert.assertSame(_approvedModeProvider, mac.getProvider());
+
+		Assert.assertThrows(
+			InvalidKeyException.class,
+			() -> CryptoUtil.createSecretKey("HmacSHA256", new byte[8]));
 	}
 
 	@Test

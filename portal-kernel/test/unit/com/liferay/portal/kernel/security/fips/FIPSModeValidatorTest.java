@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.SSLContext;
@@ -206,6 +207,12 @@ public class FIPSModeValidatorTest {
 
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA512"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
 				"SHA-256"));
 		Assert.assertFalse(
@@ -259,8 +266,18 @@ public class FIPSModeValidatorTest {
 				"AES"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
 				"AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
+				"HmacSHA512"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
@@ -278,6 +295,12 @@ public class FIPSModeValidatorTest {
 	public void testIsAllowedKeySize() {
 		Assert.assertFalse(FIPSModeValidator.isAllowedKeySize("AES", 64));
 		Assert.assertTrue(FIPSModeValidator.isAllowedKeySize("AES", 256));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 64));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 112));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 4096));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeySize(
 				RandomTestUtil.randomString(), 256));
