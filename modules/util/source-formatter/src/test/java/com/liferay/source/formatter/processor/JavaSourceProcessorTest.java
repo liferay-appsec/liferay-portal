@@ -157,6 +157,31 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testCryptoGetInstanceCall() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"CryptoGetInstanceCall.testjava"
+			).addExpectedMessage(
+				"Do not call \"CertificateFactory.getInstance\" outside " +
+					"CryptoUtil, see LPD-108121",
+				27
+			).addExpectedMessage(
+				"Use \"CryptoUtil.createCipher\" instead of " +
+					"\"Cipher.getInstance\", see LPD-108121",
+				31
+			));
+	}
+
+	@Test
+	public void testCryptoSecretKeySpec() throws Exception {
+		test(
+			"CryptoSecretKeySpec.testjava",
+			"Use \"CryptoUtil.createSecretKey\" instead of \"new " +
+				"SecretKeySpec\", see LPD-108121",
+			30);
+	}
+
+	@Test
 	public void testDeserializationSecurity() throws Exception {
 		test(
 			"DeserializationSecurity.testjava",

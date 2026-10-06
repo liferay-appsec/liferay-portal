@@ -1,0 +1,38 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.source.formatter.dependencies;
+
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+
+import java.security.MessageDigest;
+import java.security.cert.CertificateFactory;
+
+import java.util.Calendar;
+
+import javax.crypto.Cipher;
+
+/**
+ * @author Rafael Praxedes
+ */
+public class CryptoGetInstanceCall {
+
+	public Calendar getCalendar() {
+		return Calendar.getInstance();
+	}
+
+	public CertificateFactory getCertificateFactory() throws Exception {
+		return CertificateFactory.getInstance("X.509");
+	}
+
+	public Cipher getCipher() throws Exception {
+		return Cipher.getInstance("AES/GCM/NoPadding");
+	}
+
+	public MessageDigest getMessageDigest() throws Exception {
+		return CryptoUtil.createMessageDigest("SHA-256");
+	}
+
+}
