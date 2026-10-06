@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
@@ -83,9 +84,9 @@ public class EncryptorImpl implements Encryptor {
 		}
 
 		try {
-			Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-
-			cipher.init(Cipher.DECRYPT_MODE, key);
+			Cipher cipher = CryptoUtil.createCipher(
+				CryptoFunctionApprovalType.LEGACY, key, Cipher.DECRYPT_MODE,
+				key.getAlgorithm());
 
 			return cipher.doFinal(encryptedBytes);
 		}
@@ -144,9 +145,9 @@ public class EncryptorImpl implements Encryptor {
 		}
 
 		try {
-			Cipher cipher = Cipher.getInstance(key.getAlgorithm());
-
-			cipher.init(Cipher.ENCRYPT_MODE, key);
+			Cipher cipher = CryptoUtil.createCipher(
+				CryptoFunctionApprovalType.LEGACY, key, Cipher.ENCRYPT_MODE,
+				key.getAlgorithm());
 
 			return cipher.doFinal(plainBytes);
 		}
