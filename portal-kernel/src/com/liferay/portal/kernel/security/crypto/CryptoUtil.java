@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -41,10 +42,65 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
+
 /**
  * @author Rafael Praxedes
  */
 public class CryptoUtil {
+
+	public static void configureSSLParameters(
+			String[] defaultCipherSuites, String[] defaultProtocols,
+			SSLParameters sslParameters)
+		throws SSLException {
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return;
+		}
+
+		String[] cipherSuites = sslParameters.getCipherSuites();
+
+		if (cipherSuites == null) {
+			cipherSuites = defaultCipherSuites;
+		}
+
+		String[] allowedCipherSuites =
+			FIPSModeValidator.getAllowedTLSCipherSuites(cipherSuites);
+
+		if (ArrayUtil.isEmpty(allowedCipherSuites)) {
+			_writeAlgorithmRejected(
+				StringUtil.merge(cipherSuites),
+				CryptoFunctionApprovalType.APPROVED, true, SSLParameters.class,
+				null, "cipher-suites-not-allowed");
+
+			throw new SSLException(
+				"No TLS cipher suite is allowed in FIPS mode");
+		}
+
+		String[] protocols = sslParameters.getProtocols();
+
+		if (protocols == null) {
+			protocols = defaultProtocols;
+		}
+
+		String[] allowedProtocols = FIPSModeValidator.getAllowedTLSProtocols(
+			protocols);
+
+		if (ArrayUtil.isEmpty(allowedProtocols)) {
+			_writeAlgorithmRejected(
+				StringUtil.merge(protocols),
+				CryptoFunctionApprovalType.APPROVED, true, SSLParameters.class,
+				null, "protocols-not-allowed");
+
+			throw new SSLException("No TLS protocol is allowed in FIPS mode");
+		}
+
+		sslParameters.setCipherSuites(allowedCipherSuites);
+		sslParameters.setProtocols(allowedProtocols);
+	}
 
 	public static Cipher createCipher(
 			AlgorithmParameterSpec algorithmParameterSpec, Key key, int mode,
@@ -246,6 +302,25 @@ public class CryptoUtil {
 		return messageDigest;
 	}
 
+	public static SSLContext createSSLContext(String protocol)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED &&
+			!FIPSModeValidator.isAllowedSSLContextProtocol(protocol)) {
+
+			_writeAlgorithmRejected(
+				protocol, CryptoFunctionApprovalType.APPROVED, true,
+				SSLContext.class, null, "algorithm-not-allowed");
+
+			throw new NoSuchAlgorithmException(
+				StringBundler.concat(
+					"Protocol \"", protocol,
+					"\" is not allowed in FIPS mode for TLS"));
+		}
+
+		return SSLContext.getInstance(protocol);
+	}
+
 	public static SecretKey createSecretKey(String algorithm, byte[] keyBytes)
 		throws InvalidKeyException {
 
@@ -256,6 +331,26 @@ public class CryptoUtil {
 		}
 
 		return new SecretKeySpec(keyBytes, algorithm);
+	}
+
+	public static TrustManagerFactory createTrustManagerFactory(
+			String algorithm)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED &&
+			!FIPSModeValidator.isAllowedTLSFactoryAlgorithm(algorithm)) {
+
+			_writeAlgorithmRejected(
+				algorithm, CryptoFunctionApprovalType.APPROVED, true,
+				TrustManagerFactory.class, null, "algorithm-not-allowed");
+
+			throw new NoSuchAlgorithmException(
+				StringBundler.concat(
+					"Algorithm \"", algorithm,
+					"\" is not allowed in FIPS mode for TLS"));
+		}
+
+		return TrustManagerFactory.getInstance(algorithm);
 	}
 
 	public static String getAlgorithm(String algorithm, String fipsAlgorithm) {

@@ -173,6 +173,24 @@ public class FIPSModeValidator {
 		return false;
 	}
 
+	public static boolean isAllowedSSLContextProtocol(String protocol) {
+		if (StringUtil.equalsIgnoreCase(protocol, "TLS")) {
+			return true;
+		}
+
+		for (String allowedTLSProtocol : _allowedTLSProtocols) {
+			if (StringUtil.equalsIgnoreCase(protocol, allowedTLSProtocol)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static boolean isAllowedTLSFactoryAlgorithm(String algorithm) {
+		return StringUtil.equalsIgnoreCase(algorithm, _TLS_FACTORY_ALGORITHM);
+	}
+
 	public static boolean isHealthyProvider(Provider provider) {
 		try {
 			_validateFIPSProvider(new Provider[] {provider});
@@ -840,6 +858,8 @@ public class FIPSModeValidator {
 
 	private static final int[] _RSA_KEY_SIZES = {2048, 3072, 4096};
 
+	private static final String _TLS_FACTORY_ALGORITHM = "PKIX";
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		FIPSModeValidator.class);
 
@@ -896,7 +916,8 @@ public class FIPSModeValidator {
 			"jdk.tls.disabledAlgorithms",
 			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
 			"ocsp.enable", new String[] {"true"},
-			"ssl.TrustManagerFactory.algorithm", new String[] {"PKIX"});
+			"ssl.TrustManagerFactory.algorithm",
+			new String[] {_TLS_FACTORY_ALGORITHM});
 	private static final Map<String, String[]> _requiredSystemProperties =
 		Map.of(
 			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
