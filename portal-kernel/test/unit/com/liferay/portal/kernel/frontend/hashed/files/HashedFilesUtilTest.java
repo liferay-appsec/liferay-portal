@@ -5,7 +5,13 @@
 
 package com.liferay.portal.kernel.frontend.hashed.files;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,10 +53,25 @@ public class HashedFilesUtilTest {
 	}
 
 	@Test
-	public void testComputeHash() {
+	public void testComputeHash() throws Exception {
+		FIPSModeTestUtil.assertAlgorithmSwitch(
+			DigesterUtil.MD5, CryptoUtil.class, DigesterUtil.SHA_256,
+			algorithm -> CryptoUtil.createMessageDigest(
+				algorithm, CryptoFunctionApprovalType.APPROVED),
+			() -> HashedFilesUtil.computeHash(RandomTestUtil.randomString()));
+
 		Assert.assertEquals(
 			"vsPzX7N3HnQ",
 			HashedFilesUtil.computeHash("En un lugar de la Mancha..."));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertEquals(
+				"ShlzEKNNOVE",
+				HashedFilesUtil.computeHash("En un lugar de la Mancha..."));
+		}
 	}
 
 	@Test

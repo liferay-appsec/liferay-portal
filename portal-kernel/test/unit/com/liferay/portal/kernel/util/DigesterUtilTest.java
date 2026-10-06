@@ -6,9 +6,13 @@
 package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.io.IOException;
@@ -16,12 +20,14 @@ import java.io.InputStream;
 
 import java.nio.ByteBuffer;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Lucas Miranda
@@ -37,6 +43,13 @@ public class DigesterUtilTest {
 				DigesterUtil.digest(
 					CryptoFunctionApprovalType.ALLOWED, DigesterUtil.SHA_1,
 					"Liferay", "Portal")));
+		FIPSModeTestUtil.assertAlgorithm(
+			DigesterUtil.SHA_256,
+			() -> Assert.assertEquals(
+				"15cce9decbf65e7962be6cf0b6a2b19d" +
+					"46756ac87c5cc47d55dde1f7a5a652ee",
+				DigesterUtil.digest(
+					DigesterUtil.SHA_256, "Liferay", "Portal")));
 	}
 
 	@Test
@@ -53,9 +66,35 @@ public class DigesterUtilTest {
 	@Test
 	public void testDigestHex() throws Exception {
 		FIPSModeTestUtil.assertAlgorithmSwitch(
-			DigesterUtil.SHA, MessageDigest.class, DigesterUtil.SHA_256,
-			MessageDigest::getInstance,
+			DigesterUtil.SHA, CryptoUtil.class, DigesterUtil.SHA_256,
+			algorithm -> CryptoUtil.createMessageDigest(
+				algorithm, CryptoFunctionApprovalType.APPROVED),
 			() -> DigesterUtil.digestHex(RandomTestUtil.randomString()));
+		FIPSModeTestUtil.assertAlgorithm(
+			DigesterUtil.SHA_256,
+			() -> DigesterUtil.digestHex(
+				DigesterUtil.SHA_256, RandomTestUtil.randomString()));
+
+		Assert.assertEquals(
+			"c3b54c22a323527935b3fec34608a2e0",
+			DigesterUtil.digestHex(DigesterUtil.MD5, "Liferay"));
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_assertSystemException(
+				NoSuchAlgorithmException.class,
+				() -> DigesterUtil.digestHex(DigesterUtil.MD5, "Liferay"));
+			_assertSystemException(
+				NoSuchAlgorithmException.class,
+				() -> DigesterUtil.digestHex(DigesterUtil.SHA_1, "Liferay"));
+
+			mockedStatic.verify(
+				() -> FIPSAuditUtil.write(Mockito.any()), Mockito.times(2));
+		}
 
 		FIPSModeTestUtil.assertAlgorithm(
 			DigesterUtil.MD5,

@@ -10,6 +10,8 @@ import com.liferay.frontend.js.web.test.util.FrontendJSWebTestUtil;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.frontend.hashed.files.HashedFilesUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -21,8 +23,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import jakarta.servlet.ServletContext;
 
 import java.net.URL;
-
-import java.security.MessageDigest;
 
 import java.util.Map;
 
@@ -93,8 +93,9 @@ public class HashedFilesRegistryImplTest {
 		).build();
 
 		FIPSModeTestUtil.assertAlgorithmSwitch(
-			DigesterUtil.MD5, MessageDigest.class, DigesterUtil.SHA_256,
-			MessageDigest::getInstance,
+			DigesterUtil.MD5, CryptoUtil.class, DigesterUtil.SHA_256,
+			algorithm -> CryptoUtil.createMessageDigest(
+				algorithm, CryptoFunctionApprovalType.APPROVED),
 			() -> ReflectionTestUtil.invoke(
 				new HashedFilesRegistryImpl(), "_getServletContextHash",
 				new Class<?>[] {Map.class}, hashedFileURIs));
