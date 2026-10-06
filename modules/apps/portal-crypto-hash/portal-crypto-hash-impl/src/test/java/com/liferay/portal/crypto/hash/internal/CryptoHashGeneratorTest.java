@@ -9,10 +9,12 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
 import com.liferay.portal.crypto.hash.CryptoHashVerificationContext;
+import com.liferay.portal.crypto.hash.exception.CryptoHashException;
 import com.liferay.portal.crypto.hash.provider.bcrypt.internal.BCryptCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.provider.message.digest.internal.MessageDigestCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -20,6 +22,7 @@ import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,6 +93,7 @@ public class CryptoHashGeneratorTest {
 		_serviceRegistration1.unregister();
 	}
 
+	@NewEnv(type = NewEnv.Type.JVM)
 	@Test
 	public void testCreate() throws Exception {
 		MessageDigestCryptoHashProviderFactory
@@ -104,11 +108,16 @@ public class CryptoHashGeneratorTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			Assert.assertThrows(
-				SecurityException.class,
+			CryptoHashException cryptoHashException = Assert.assertThrows(
+				CryptoHashException.class,
 				() -> messageDigestCryptoHashProviderFactory.create(
 					Collections.singletonMap(
 						"message.digest.algorithm", DigesterUtil.MD5)));
+
+			Assert.assertTrue(
+				String.valueOf(cryptoHashException.getCause()),
+				cryptoHashException.getCause() instanceof
+					NoSuchAlgorithmException);
 		}
 	}
 

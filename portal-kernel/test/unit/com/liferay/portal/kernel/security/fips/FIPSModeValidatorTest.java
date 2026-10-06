@@ -514,14 +514,30 @@ public class FIPSModeValidatorTest {
 					"FIPS_ENABLED", true)) {
 
 			FIPSModeValidator.validateAlgorithm("AES");
+			FIPSModeValidator.validateAlgorithm("HmacSHA256");
+			FIPSModeValidator.validateAlgorithm("PBKDF2WithHmacSHA512");
 			FIPSModeValidator.validateAlgorithm("SHA-256");
+			FIPSModeValidator.validateAlgorithm("sha-384");
 
+			FIPSModeTestUtil.assertSecurityException(
+				"is not allowed in FIPS mode",
+				() -> FIPSModeValidator.validateAlgorithm(
+					"AES/CBC/PKCS5Padding"));
+			FIPSModeTestUtil.assertSecurityException(
+				"is not allowed in FIPS mode",
+				() -> FIPSModeValidator.validateAlgorithm("HmacSHA1"));
 			FIPSModeTestUtil.assertSecurityException(
 				"is not allowed in FIPS mode",
 				() -> FIPSModeValidator.validateAlgorithm("MD5"));
 			FIPSModeTestUtil.assertSecurityException(
 				"is not allowed in FIPS mode",
+				() -> FIPSModeValidator.validateAlgorithm("SHA-1"));
+			FIPSModeTestUtil.assertSecurityException(
+				"is not allowed in FIPS mode",
 				() -> FIPSModeValidator.validateAlgorithm("SHA-2"));
+			FIPSModeTestUtil.assertSecurityException(
+				"is not allowed in FIPS mode",
+				() -> FIPSModeValidator.validateAlgorithm("SHA-2560"));
 			FIPSModeTestUtil.assertSecurityException(
 				"is not allowed in FIPS mode",
 				() -> FIPSModeValidator.validateAlgorithm(null));
@@ -862,6 +878,31 @@ public class FIPSModeValidatorTest {
 			FIPSModeTestUtil.assertSecurityException(
 				"is not allowed in FIPS mode",
 				() -> FIPSModeValidator.validateKey("DES", 128));
+		}
+	}
+
+	@Test
+	public void testValidateKeyAlgorithm() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "AES",
+				KeyGenerator.class);
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "AES",
+				Cipher.class);
+
+			_assertSecurityException(
+				"is not allowed in FIPS mode", "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "HmacSHA256",
+				KeyGenerator.class);
+			_assertSecurityException(
+				"is not allowed in FIPS mode", "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, null, Cipher.class);
 		}
 	}
 
