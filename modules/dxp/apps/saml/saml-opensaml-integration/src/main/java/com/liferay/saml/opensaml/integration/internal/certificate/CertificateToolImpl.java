@@ -8,7 +8,8 @@ package com.liferay.saml.opensaml.integration.internal.certificate;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.security.SecureRandom;
-import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.certificate.CertificateEntityId;
 import com.liferay.saml.runtime.certificate.CertificateTool;
@@ -23,12 +24,13 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import java.util.Date;
-import java.util.Set;
 
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -80,8 +82,16 @@ public class CertificateToolImpl implements CertificateTool {
 				new KeyUsage(
 					KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
 
+			CryptoUtil.validateAlgorithm(signatureAlgorithm, Signature.class);
+
 			JcaContentSignerBuilder jcaContentSignerBuilder =
 				new JcaContentSignerBuilder(signatureAlgorithm);
+
+			Provider provider = FIPSModeValidator.fetchApprovedModeProvider();
+
+			if (provider != null) {
+				jcaContentSignerBuilder.setProvider(provider);
+			}
 
 			return jcaX509CertificateConverter.getCertificate(
 				x509v3CertificateBuilder.build(
@@ -96,27 +106,16 @@ public class CertificateToolImpl implements CertificateTool {
 	public KeyPair generateKeyPair(String algorithm, int keySize)
 		throws NoSuchAlgorithmException {
 
-		if (PropsValues.FIPS_ENABLED) {
-			if (!algorithm.equals("RSA")) {
-				throw new InvalidParameterException(
-					StringBundler.concat(
-						"The algorithm \"", algorithm,
-						"\" is not allowed in FIPS mode"));
-			}
-
-			if (!_allowedRsaKeySizes.contains(keySize)) {
-				throw new InvalidParameterException(
-					StringBundler.concat(
-						"The key size ", keySize,
-						" is not allowed in FIPS mode for \"", algorithm,
-						"\""));
-			}
+		try {
+			CryptoUtil.validateAlgorithm(algorithm, KeyPairGenerator.class);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			throw new InvalidParameterException(
+				noSuchAlgorithmException.getMessage());
 		}
 
-		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
-			algorithm);
-
-		keyPairGenerator.initialize(keySize);
+		KeyPairGenerator keyPairGenerator = CryptoUtil.createKeyPairGenerator(
+			algorithm, keySize);
 
 		return keyPairGenerator.genKeyPair();
 	}
@@ -126,7 +125,7 @@ public class CertificateToolImpl implements CertificateTool {
 			String algorithm, X509Certificate x509Certificate)
 		throws CertificateException, NoSuchAlgorithmException {
 
-		MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+		MessageDigest messageDigest = CryptoUtil.createMessageDigest(algorithm);
 
 		messageDigest.update(x509Certificate.getEncoded());
 
@@ -208,8 +207,5 @@ public class CertificateToolImpl implements CertificateTool {
 
 		return x500NameBuilder.build();
 	}
-
-	private static final Set<Integer> _allowedRsaKeySizes = Set.of(
-		2048, 3072, 4096);
 
 }
