@@ -8,6 +8,8 @@ package com.liferay.portal.security.password.encryptor.internal;
 import com.liferay.petra.io.BigEndianCodec;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
@@ -43,17 +45,25 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 		byte[] plaintextPasswordBytes = null;
 		byte[] saltedPlaintextPasswordBytes = null;
 
+		if (upgradeHashSecurity) {
+			encryptedPassword = null;
+		}
+
+		CryptoFunctionApprovalType approvalType =
+			CryptoFunctionApprovalType.LEGACY;
+
+		if (Validator.isNull(encryptedPassword)) {
+			approvalType = CryptoFunctionApprovalType.APPROVED;
+		}
+
 		try {
-			MessageDigest messageDigest = MessageDigest.getInstance(
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
 				PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
-					DigesterUtil.SHA_1);
+					DigesterUtil.SHA_1,
+				approvalType);
 
 			plaintextPasswordBytes = plaintextPassword.getBytes(
 				DigesterUtil.ENCODING);
-
-			if (upgradeHashSecurity) {
-				encryptedPassword = null;
-			}
 
 			byte[] saltBytes = getSaltBytes(encryptedPassword);
 

@@ -7,10 +7,12 @@ package com.liferay.portal.security.password.encryptor.internal;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.Validator;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.osgi.service.component.annotations.Component;
@@ -31,8 +33,15 @@ public class DefaultPasswordEncryptor implements PasswordEncryptor {
 			String encryptedPassword, boolean upgradeHashSecurity)
 		throws PwdEncryptorException {
 
+		CryptoFunctionApprovalType approvalType =
+			CryptoFunctionApprovalType.LEGACY;
+
+		if (Validator.isNull(encryptedPassword)) {
+			approvalType = CryptoFunctionApprovalType.APPROVED;
+		}
+
 		try {
-			MessageDigest.getInstance(algorithm);
+			CryptoUtil.createMessageDigest(algorithm, approvalType);
 		}
 		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
 			throw new PwdEncryptorException.UnavailableAlgorithm(
@@ -41,7 +50,7 @@ public class DefaultPasswordEncryptor implements PasswordEncryptor {
 				noSuchAlgorithmException);
 		}
 
-		return DigesterUtil.digest(algorithm, plaintextPassword);
+		return DigesterUtil.digest(approvalType, algorithm, plaintextPassword);
 	}
 
 }
