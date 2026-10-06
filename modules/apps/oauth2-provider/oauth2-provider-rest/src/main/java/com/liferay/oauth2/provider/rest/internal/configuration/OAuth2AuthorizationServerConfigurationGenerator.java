@@ -6,15 +6,19 @@
 package com.liferay.oauth2.provider.rest.internal.configuration;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 
 import java.io.IOException;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPublicKey;
 
 import java.util.Dictionary;
 
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
-import org.jose4j.jwk.RsaJwkGenerator;
 
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -47,11 +51,17 @@ public class OAuth2AuthorizationServerConfigurationGenerator {
 				"oauth2.authorization.server.jwt.access.token.signing.json." +
 					"web.key",
 				() -> {
-					RsaJsonWebKey rsaJsonWebKey = RsaJwkGenerator.generateJwk(
-						2048);
+					KeyPairGenerator keyPairGenerator =
+						CryptoUtil.createKeyPairGenerator("RSA", 2048);
+
+					KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+					RsaJsonWebKey rsaJsonWebKey = new RsaJsonWebKey(
+						(RSAPublicKey)keyPair.getPublic());
 
 					rsaJsonWebKey.setAlgorithm("RS256");
 					rsaJsonWebKey.setKeyId("authServer");
+					rsaJsonWebKey.setPrivateKey(keyPair.getPrivate());
 
 					return rsaJsonWebKey.toJson(
 						JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE);
