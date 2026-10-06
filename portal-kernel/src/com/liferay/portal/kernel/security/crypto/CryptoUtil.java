@@ -22,12 +22,16 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.security.spec.AlgorithmParameterSpec;
 
 import java.util.Arrays;
@@ -166,6 +170,24 @@ public class CryptoUtil {
 			cipher.getProvider());
 
 		return cipher;
+	}
+
+	public static KeyFactory createKeyFactory(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				KeyFactory.class);
+		}
+
+		KeyFactory keyFactory = _getKeyFactory(algorithm);
+
+		_recordProvider(
+			algorithm, CryptoFunctionApprovalType.APPROVED, KeyFactory.class,
+			keyFactory.getProvider());
+
+		return keyFactory;
 	}
 
 	public static KeyGenerator createKeyGenerator(String algorithm, int keySize)
@@ -367,6 +389,28 @@ public class CryptoUtil {
 		return new SecretKeySpec(keyBytes, algorithm);
 	}
 
+	public static Signature createSignature(
+			String algorithm, PrivateKey privateKey)
+		throws InvalidKeyException, NoSuchAlgorithmException {
+
+		Signature signature = _createSignature(algorithm, privateKey);
+
+		signature.initSign(privateKey);
+
+		return signature;
+	}
+
+	public static Signature createSignature(
+			String algorithm, PublicKey publicKey)
+		throws InvalidKeyException, NoSuchAlgorithmException {
+
+		Signature signature = _createSignature(algorithm, publicKey);
+
+		signature.initVerify(publicKey);
+
+		return signature;
+	}
+
 	public static TrustManagerFactory createTrustManagerFactory(
 			String algorithm)
 		throws NoSuchAlgorithmException {
@@ -414,6 +458,27 @@ public class CryptoUtil {
 			_validateAlgorithm(
 				algorithm, CryptoFunctionApprovalType.APPROVED, factoryClass);
 		}
+	}
+
+	private static Signature _createSignature(String algorithm, Key key)
+		throws InvalidKeyException, NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				Signature.class);
+			_validateKey(
+				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				Signature.class, 0);
+		}
+
+		Signature signature = _getSignature(algorithm);
+
+		_recordProvider(
+			algorithm, CryptoFunctionApprovalType.APPROVED, Signature.class,
+			signature.getProvider());
+
+		return signature;
 	}
 
 	private static Throwable _fetchErrorThrowable(Throwable throwable) {
@@ -468,6 +533,28 @@ public class CryptoUtil {
 		}
 
 		return 0;
+	}
+
+	private static KeyFactory _getKeyFactory(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider(
+			CryptoFunctionApprovalType.APPROVED);
+
+		if (provider == null) {
+			return KeyFactory.getInstance(algorithm);
+		}
+
+		try {
+			return KeyFactory.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				noSuchAlgorithmException, KeyFactory.class, provider);
+
+			throw noSuchAlgorithmException;
+		}
 	}
 
 	private static KeyGenerator _getKeyGenerator(String algorithm)
@@ -565,6 +652,28 @@ public class CryptoUtil {
 			_writeProviderException(
 				algorithm, approvalType, noSuchAlgorithmException,
 				MessageDigest.class, provider);
+
+			throw noSuchAlgorithmException;
+		}
+	}
+
+	private static Signature _getSignature(String algorithm)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider(
+			CryptoFunctionApprovalType.APPROVED);
+
+		if (provider == null) {
+			return Signature.getInstance(algorithm);
+		}
+
+		try {
+			return Signature.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				noSuchAlgorithmException, Signature.class, provider);
 
 			throw noSuchAlgorithmException;
 		}

@@ -36,6 +36,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -329,7 +330,13 @@ public class FIPSModeValidator {
 		if (factoryClass == Signature.class) {
 			int index = algorithm.indexOf("with");
 
-			return algorithm.substring(index + 4);
+			String keyAlgorithm = algorithm.substring(index + 4);
+
+			if (StringUtil.equalsIgnoreCase(keyAlgorithm, "ECDSA")) {
+				return "EC";
+			}
+
+			return keyAlgorithm;
 		}
 
 		return algorithm;
@@ -866,7 +873,8 @@ public class FIPSModeValidator {
 	private static final int _HMAC_KEY_SIZE_MIN = 112;
 
 	private static final Class<?>[] _KEY_FACTORY_CLASSES = {
-		Cipher.class, KeyGenerator.class, KeyPairGenerator.class, Mac.class
+		Cipher.class, KeyFactory.class, KeyGenerator.class,
+		KeyPairGenerator.class, Mac.class
 	};
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
@@ -918,13 +926,16 @@ public class FIPSModeValidator {
 	private static final Set<String> _allowedTLSProtocols = Set.of(
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
-		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
-		new String[] {"AES"}, KeyPairGenerator.class, new String[] {"RSA"},
-		KeyStore.class, new String[] {"BCFKS", "PKCS12"}, Mac.class,
+		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyFactory.class,
+		new String[] {"EC", "RSA"}, KeyGenerator.class, new String[] {"AES"},
+		KeyPairGenerator.class, new String[] {"RSA"}, KeyStore.class,
+		new String[] {"BCFKS", "PKCS12"}, Mac.class,
 		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
 		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"},
 		Signature.class,
-		new String[] {"SHA256withRSA", "SHA384withRSA", "SHA512withRSA"});
+		new String[] {
+			"SHA256withECDSA", "SHA256withRSA", "SHA384withRSA", "SHA512withRSA"
+		});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Map<Class<?>, String[]> _legacyAlgorithms = Map.of(
