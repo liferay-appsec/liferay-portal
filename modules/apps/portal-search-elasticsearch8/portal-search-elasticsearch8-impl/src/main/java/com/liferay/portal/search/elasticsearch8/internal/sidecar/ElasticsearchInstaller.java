@@ -7,6 +7,7 @@ package com.liferay.portal.search.elasticsearch8.internal.sidecar;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -110,7 +110,7 @@ public class ElasticsearchInstaller {
 
 	protected static String getChecksum(Path path) throws IOException {
 		try (InputStream inputStream = Files.newInputStream(path)) {
-			return DigestUtils.sha512Hex(inputStream);
+			return DigesterUtil.digestHex("SHA-512", inputStream);
 		}
 	}
 

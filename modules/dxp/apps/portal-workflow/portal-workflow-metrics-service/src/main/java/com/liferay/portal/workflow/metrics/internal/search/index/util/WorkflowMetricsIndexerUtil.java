@@ -6,11 +6,10 @@
 package com.liferay.portal.workflow.metrics.internal.search.index.util;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
-
-import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * @author Rafael Praxedes
@@ -25,7 +24,7 @@ public class WorkflowMetricsIndexerUtil {
 		}
 
 		return StringUtil.removeSubstring(indexType, "Type") +
-			DigestUtils.sha256Hex(sb.toString());
+			DigesterUtil.digestHex(DigesterUtil.SHA_256, sb.toString());
 	}
 
 }
