@@ -5,6 +5,7 @@
 
 package com.liferay.portal.json.web.service.client.internal;
 
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 
@@ -122,7 +123,7 @@ public class X509TrustManagerImpl implements X509TrustManager {
 		throws Exception {
 
 		TrustManagerFactory trustManagerFactory =
-			TrustManagerFactory.getInstance(
+			CryptoUtil.createTrustManagerFactory(
 				TrustManagerFactory.getDefaultAlgorithm());
 
 		trustManagerFactory.init(keyStore);
