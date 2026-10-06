@@ -13,12 +13,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.http.HttpAuthorizationHeader;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
@@ -222,8 +223,11 @@ public class HttpAuthManagerUtil {
 
 		String wwwAuthenticate = httpAuthorizationHeader.toString();
 
-		if (PropsValues.FIPS_ENABLED) {
-			wwwAuthenticate += ", algorithm=SHA-256";
+		String algorithm = CryptoUtil.getAlgorithm(
+			DigesterUtil.MD5, DigesterUtil.SHA_256);
+
+		if (!algorithm.equals(DigesterUtil.MD5)) {
+			wwwAuthenticate += ", algorithm=" + algorithm;
 		}
 
 		httpServletResponse.setHeader(

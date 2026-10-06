@@ -115,6 +115,7 @@ import com.liferay.portal.kernel.security.auth.FullNameValidator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.security.auth.ScreenNameValidator;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -1804,8 +1805,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			return 0;
 		}
 
-		String algorithm =
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5;
+		String algorithm = CryptoUtil.getAlgorithm(
+			DigesterUtil.MD5, DigesterUtil.SHA_256);
 
 		String ha2 = DigesterUtil.digestHex(algorithm, method, uri);
 

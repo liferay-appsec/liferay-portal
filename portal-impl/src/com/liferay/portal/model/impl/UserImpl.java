@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.security.auth.EmailAddressGenerator;
 import com.liferay.portal.kernel.security.auth.FullNameGenerator;
 import com.liferay.portal.kernel.security.auth.FullNameGeneratorFactory;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.service.AddressLocalServiceUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.ContactLocalServiceUtil;
@@ -197,7 +198,7 @@ public class UserImpl extends UserBaseImpl {
 	@Override
 	public String getDigest(String password) {
 		return DigesterUtil.digestHex(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5,
+			CryptoUtil.getAlgorithm(DigesterUtil.MD5, DigesterUtil.SHA_256),
 			String.valueOf(getUserId()), Portal.PORTAL_REALM, password);
 	}
 
