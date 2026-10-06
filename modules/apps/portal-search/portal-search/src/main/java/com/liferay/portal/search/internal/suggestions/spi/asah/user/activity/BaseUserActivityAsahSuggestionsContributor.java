@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -126,7 +127,8 @@ public abstract class BaseUserActivityAsahSuggestionsContributor
 		try {
 			StringBuilder sb = new StringBuilder();
 
-			MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+				"SHA-256");
 
 			String userEmailAddress = portal.getUserEmailAddress(userId);
 
