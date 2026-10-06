@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -123,9 +124,8 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 	}
 
 	private String _getJWT() throws Exception {
-		Signature signature = Signature.getInstance("SHA256withRSA");
-
-		signature.initSign(_readPrivateKey());
+		Signature signature = CryptoUtil.createSignature(
+			"SHA256withRSA", _readPrivateKey());
 
 		String headerJSON = JSONUtil.put(
 			"alg", "RS256"
@@ -193,7 +193,7 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 	}
 
 	private PrivateKey _readPrivateKey() throws Exception {
-		KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+		KeyFactory keyFactory = CryptoUtil.createKeyFactory("RSA");
 
 		PEMReader pemReader = new PEMReader(_rsaPrivateKeyBytes);
 
