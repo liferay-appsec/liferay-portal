@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -128,6 +129,28 @@ public class CryptoUtil {
 		return keyGenerator;
 	}
 
+	public static Mac createMac(String algorithm, Key key)
+		throws InvalidKeyException, NoSuchAlgorithmException {
+
+		if (PropsValues.FIPS_ENABLED) {
+			_validateAlgorithm(
+				algorithm, CryptoFunctionApprovalType.APPROVED, Mac.class);
+			_validateKey(
+				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				Mac.class, _getKeySize(key));
+		}
+
+		Mac mac = _getMac(algorithm, CryptoFunctionApprovalType.APPROVED);
+
+		mac.init(key);
+
+		_recordProvider(
+			algorithm, CryptoFunctionApprovalType.APPROVED, Mac.class,
+			mac.getProvider());
+
+		return mac;
+	}
+
 	public static MessageDigest createMessageDigest(String algorithm)
 		throws NoSuchAlgorithmException {
 
@@ -163,6 +186,14 @@ public class CryptoUtil {
 		}
 
 		return new SecretKeySpec(keyBytes, algorithm);
+	}
+
+	public static String getAlgorithm(String algorithm, String fipsAlgorithm) {
+		if (PropsValues.FIPS_ENABLED) {
+			return fipsAlgorithm;
+		}
+
+		return algorithm;
 	}
 
 	private static Throwable _fetchErrorThrowable(Throwable throwable) {
@@ -251,6 +282,28 @@ public class CryptoUtil {
 		Arrays.fill(encodedBytes, (byte)0);
 
 		return encodedBytes.length * 8;
+	}
+
+	private static Mac _getMac(
+			String algorithm, CryptoFunctionApprovalType approvalType)
+		throws NoSuchAlgorithmException {
+
+		Provider provider = _fetchPinnedProvider(approvalType);
+
+		if (provider == null) {
+			return Mac.getInstance(algorithm);
+		}
+
+		try {
+			return Mac.getInstance(algorithm, provider);
+		}
+		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+			_writeProviderException(
+				algorithm, approvalType, noSuchAlgorithmException, Mac.class,
+				provider);
+
+			throw noSuchAlgorithmException;
+		}
 	}
 
 	private static MessageDigest _getMessageDigest(

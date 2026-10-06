@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -145,7 +146,19 @@ public class FIPSModeValidator {
 	}
 
 	public static boolean isAllowedKeySize(String keyAlgorithm, int keySize) {
-		return ArrayUtil.contains(getKeySizes(keyAlgorithm), keySize);
+		if (ArrayUtil.contains(getKeySizes(keyAlgorithm), keySize)) {
+			return true;
+		}
+
+		for (String hmacAlgorithm : _HMAC_ALGORITHMS) {
+			if (StringUtil.equalsIgnoreCase(keyAlgorithm, hmacAlgorithm) &&
+				(keySize >= _HMAC_KEY_SIZE_MIN)) {
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public static boolean isHealthyProvider(Provider provider) {
@@ -792,8 +805,14 @@ public class FIPSModeValidator {
 
 	private static final int[] _AES_KEY_SIZES = {128, 192, 256};
 
+	private static final String[] _HMAC_ALGORITHMS = {
+		"HmacSHA224", "HmacSHA256", "HmacSHA384", "HmacSHA512"
+	};
+
+	private static final int _HMAC_KEY_SIZE_MIN = 112;
+
 	private static final Class<?>[] _KEY_FACTORY_CLASSES = {
-		Cipher.class, KeyGenerator.class
+		Cipher.class, KeyGenerator.class, Mac.class
 	};
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
@@ -841,8 +860,9 @@ public class FIPSModeValidator {
 		"TLSv1.2", "TLSv1.3");
 	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
 		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyGenerator.class,
-		new String[] {"AES"}, MessageDigest.class,
-		new String[] {"SHA-256", "SHA-384", "SHA-512"});
+		new String[] {"AES"}, Mac.class,
+		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
+		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"});
 	private static final AtomicReference<Provider>
 		_approvedModeProviderAtomicReference = new AtomicReference<>();
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
