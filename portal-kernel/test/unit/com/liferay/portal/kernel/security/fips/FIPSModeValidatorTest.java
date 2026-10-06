@@ -22,6 +22,7 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 
+import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -323,6 +324,17 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
 				"SHA-1"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "EC"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "DSA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class,
+				"SHA256withECDSA"));
 	}
 
 	@Test
@@ -390,6 +402,17 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, Cipher.class, "DES"));
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "EC"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, KeyFactory.class,
+				"ECDSA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Signature.class, "EC"));
 	}
 
 	@Test

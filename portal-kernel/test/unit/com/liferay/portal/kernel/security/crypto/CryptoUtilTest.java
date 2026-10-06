@@ -23,6 +23,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -401,6 +402,40 @@ public class CryptoUtilTest {
 
 			Assert.assertEquals(
 				provider.getName(), fields.get("provider-name"));
+		}
+	}
+
+	@Test
+	public void testCreateKeyFactory() throws Exception {
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			KeyFactory keyFactory = CryptoUtil.createKeyFactory("DSA");
+
+			Assert.assertEquals("DSA", keyFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			KeyFactory keyFactory = CryptoUtil.createKeyFactory("EC");
+
+			Assert.assertEquals("EC", keyFactory.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createKeyFactory("DSA"));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, KeyFactory.class,
+				mockedStatic, "algorithm-not-allowed", "DSA");
 		}
 	}
 
@@ -879,6 +914,69 @@ public class CryptoUtilTest {
 	}
 
 	@Test
+	public void testCreateSignature() throws Exception {
+		KeyPair dsaKeyPair = _generateKeyPair("DSA", 1024);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			Signature signature = CryptoUtil.createSignature(
+				"DSA", dsaKeyPair.getPrivate());
+
+			Assert.assertEquals("DSA", signature.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
+		}
+
+		KeyPair rsaKeyPair = _generateKeyPair("RSA", 2048);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Signature signature = CryptoUtil.createSignature(
+				"SHA256withRSA", rsaKeyPair.getPrivate());
+
+			Assert.assertEquals("SHA256withRSA", signature.getAlgorithm());
+
+			byte[] bytes = RandomTestUtil.randomBytes();
+
+			signature.update(bytes);
+
+			byte[] signatureBytes = signature.sign();
+
+			signature = CryptoUtil.createSignature(
+				"SHA256withRSA", rsaKeyPair.getPublic());
+
+			signature.update(bytes);
+
+			Assert.assertTrue(signature.verify(signatureBytes));
+
+			mockedStatic.verifyNoInteractions();
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createSignature(
+					"DSA", dsaKeyPair.getPublic()));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, Signature.class,
+				mockedStatic, "algorithm-not-allowed", "DSA");
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createSignature(
+					"SHA256withRSA", dsaKeyPair.getPublic()));
+
+			_assertAlgorithmRejected(
+				CryptoFunctionApprovalType.APPROVED, true, Signature.class,
+				mockedStatic, "key-algorithm-not-allowed", "DSA");
+		}
+	}
+
+	@Test
 	public void testCreateTrustManagerFactory() throws Exception {
 		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
 				FIPSAuditUtil.class)) {
@@ -1147,6 +1245,17 @@ public class CryptoUtilTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString()) {
 		};
+	}
+
+	private KeyPair _generateKeyPair(String algorithm, int keySize)
+		throws Exception {
+
+		KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
+			algorithm);
+
+		keyPairGenerator.initialize(keySize);
+
+		return keyPairGenerator.generateKeyPair();
 	}
 
 	private void _setApprovedModeProvider(Provider provider) {

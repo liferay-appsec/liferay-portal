@@ -21,12 +21,15 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Signature;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -387,6 +390,25 @@ public class CryptoUtilTest {
 		Assert.assertThrows(
 			NoSuchAlgorithmException.class,
 			() -> CryptoUtil.createSSLContext("TLSv1.1"));
+	}
+
+	@Test
+	public void testCreateSignature() throws Exception {
+		KeyFactory keyFactory = CryptoUtil.createKeyFactory(
+			CryptoUtil.getAlgorithm("DSA", "EC"));
+
+		Assert.assertEquals("EC", keyFactory.getAlgorithm());
+		Assert.assertSame(_approvedModeProvider, keyFactory.getProvider());
+
+		KeyPairGenerator keyPairGenerator = CryptoUtil.createKeyPairGenerator(
+			"RSA", 2048);
+
+		KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+		Signature signature = CryptoUtil.createSignature(
+			"SHA256withRSA", keyPair.getPrivate());
+
+		Assert.assertSame(_approvedModeProvider, signature.getProvider());
 	}
 
 	@Test
