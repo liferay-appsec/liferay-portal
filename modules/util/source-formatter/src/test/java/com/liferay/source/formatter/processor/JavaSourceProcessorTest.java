@@ -157,6 +157,26 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testCryptoBypassImports() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"CryptoBypassImports.testjava"
+			).addExpectedMessage(
+				"Use DigesterUtil instead of org.apache.commons.codec.digest." +
+					"DigestUtils, see LPD-108121",
+				10
+			).addExpectedMessage(
+				"Use CryptoUtil.createSSLContext instead of org.apache.http." +
+					"ssl.SSLContexts, see LPD-108121",
+				11
+			).addExpectedMessage(
+				"Use CryptoUtil.createKeyPairGenerator instead of org.jose4j." +
+					"jwk.RsaJwkGenerator, see LPD-108121",
+				14
+			));
+	}
+
+	@Test
 	public void testCryptoGetInstanceCall() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(
