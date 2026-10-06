@@ -147,29 +147,35 @@ public class CryptoUtil {
 		return cipher;
 	}
 
-	public static Cipher createCipher(Key key, int mode, String transformation)
+	public static Cipher createCipher(
+			CryptoFunctionApprovalType approvalType, Key key, int mode,
+			String transformation)
 		throws InvalidKeyException, NoSuchAlgorithmException,
 			   NoSuchPaddingException {
 
 		if (PropsValues.FIPS_ENABLED) {
-			_validateAlgorithm(
-				transformation, CryptoFunctionApprovalType.APPROVED,
-				Cipher.class);
+			_validateAlgorithm(transformation, approvalType, Cipher.class);
 			_validateKey(
-				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
-				Cipher.class, _getKeySize(key));
+				key.getAlgorithm(), approvalType, Cipher.class,
+				_getKeySize(key));
 		}
 
-		Cipher cipher = _getCipher(
-			CryptoFunctionApprovalType.APPROVED, transformation);
+		Cipher cipher = _getCipher(approvalType, transformation);
 
 		cipher.init(mode, key);
 
 		_recordProvider(
-			transformation, CryptoFunctionApprovalType.APPROVED, Cipher.class,
-			cipher.getProvider());
+			transformation, approvalType, Cipher.class, cipher.getProvider());
 
 		return cipher;
+	}
+
+	public static Cipher createCipher(Key key, int mode, String transformation)
+		throws InvalidKeyException, NoSuchAlgorithmException,
+			   NoSuchPaddingException {
+
+		return createCipher(
+			CryptoFunctionApprovalType.APPROVED, key, mode, transformation);
 	}
 
 	public static KeyFactory createKeyFactory(String algorithm)
