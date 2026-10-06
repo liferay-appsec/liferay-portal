@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -48,7 +49,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -255,13 +255,13 @@ public class CompletePaymentAuthorizeNetServlet extends HttpServlet {
 	private String _generateHMAC(byte[] bytes, String signatureKey)
 		throws Exception {
 
-		Mac mac = Mac.getInstance("HmacSHA512");
-
 		byte[] signatureKeyBytes = signatureKey.getBytes(
 			StandardCharsets.UTF_8);
 
 		try {
-			mac.init(new SecretKeySpec(signatureKeyBytes, mac.getAlgorithm()));
+			Mac mac = CryptoUtil.createMac(
+				"HmacSHA512",
+				CryptoUtil.createSecretKey("HmacSHA512", signatureKeyBytes));
 
 			return StringUtil.bytesToHexString(mac.doFinal(bytes));
 		}
