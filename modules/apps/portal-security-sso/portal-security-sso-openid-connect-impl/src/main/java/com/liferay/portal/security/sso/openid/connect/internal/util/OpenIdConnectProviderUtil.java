@@ -12,9 +12,9 @@ import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 
 import java.net.URI;
 
@@ -34,8 +34,8 @@ public class OpenIdConnectProviderUtil {
 		throws Exception {
 
 		URI issuerURI = URI.create(issuer);
-		MessageDigest messageDigest = MessageDigest.getInstance(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
+		MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+			CryptoUtil.getAlgorithm(DigesterUtil.MD5, DigesterUtil.SHA_256));
 
 		return StringBundler.concat(
 			issuerURI.getScheme(), "://", issuerURI.getAuthority(),
