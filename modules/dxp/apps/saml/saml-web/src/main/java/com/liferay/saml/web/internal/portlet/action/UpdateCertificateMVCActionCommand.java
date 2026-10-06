@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -189,7 +190,7 @@ public class UpdateCertificateMVCActionCommand extends BaseMVCActionCommand {
 		KeyStore.PrivateKeyEntry privateKeyEntry = null;
 
 		try {
-			keyStore = KeyStore.getInstance("PKCS12");
+			keyStore = CryptoUtil.createKeyStore("PKCS12");
 
 			keyStore.load(fileEntry.getContentStream(), password);
 
