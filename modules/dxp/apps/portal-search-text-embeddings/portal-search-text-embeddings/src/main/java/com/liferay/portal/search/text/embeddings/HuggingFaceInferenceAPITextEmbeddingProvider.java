@@ -104,14 +104,13 @@ public class HuggingFaceInferenceAPITextEmbeddingProvider
 
 		Http.Options options = new Http.Options();
 
-		JSONObject jsonObject = JSONUtil.put("inputs", text);
-
 		String accessToken = _secretResolver.resolve(
 			CompanyThreadLocal.getCompanyId(),
 			MapUtil.getString(attributes, "accessToken"));
 
-		options.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+		JSONObject jsonObject = JSONUtil.put("inputs", text);
 
+		options.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.setBody(

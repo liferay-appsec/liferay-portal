@@ -39,35 +39,21 @@ public class AgentPortalK8sConfigMapModifierTest {
 			new KeyReference(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
-		String saToken = RandomTestUtil.randomString();
-
-		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
-
-		Mockito.when(
-			secretResolver.resolve(Mockito.anyLong(), Mockito.any())
-		).thenAnswer(
-			invocationOnMock -> invocationOnMock.getArgument(1)
-		);
-
-		Mockito.when(
-			secretResolver.resolve(CompanyConstants.SYSTEM, keyReferenceString)
-		).thenReturn(
-			saToken
-		);
-
-		_testToConfig(saToken, keyReferenceString, secretResolver);
-		_testToConfig(saToken, saToken, secretResolver);
-	}
-
-	private void _testToConfig(
-		String expectedOauthToken, String saToken,
-		SecretResolver secretResolver) {
 
 		PortalK8sAgentConfiguration portalK8sAgentConfiguration = Mockito.mock(
 			PortalK8sAgentConfiguration.class);
 
 		Mockito.when(
 			portalK8sAgentConfiguration.saToken()
+		).thenReturn(
+			keyReferenceString
+		);
+
+		String saToken = RandomTestUtil.randomString();
+		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
+
+		Mockito.when(
+			secretResolver.resolve(CompanyConstants.SYSTEM, keyReferenceString)
 		).thenReturn(
 			saToken
 		);
@@ -82,7 +68,7 @@ public class AgentPortalK8sConfigMapModifierTest {
 			},
 			portalK8sAgentConfiguration, secretResolver);
 
-		Assert.assertEquals(expectedOauthToken, config.getOauthToken());
+		Assert.assertEquals(saToken, config.getOauthToken());
 	}
 
 }

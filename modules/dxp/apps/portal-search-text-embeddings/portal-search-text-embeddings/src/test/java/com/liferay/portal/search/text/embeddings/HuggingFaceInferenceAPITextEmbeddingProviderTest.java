@@ -7,6 +7,7 @@ package com.liferay.portal.search.text.embeddings;
 
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -43,13 +44,13 @@ public class HuggingFaceInferenceAPITextEmbeddingProviderTest {
 
 	@Test
 	public void testGetEmbedding() throws Exception {
+		EmbeddingProviderConfiguration embeddingProviderConfiguration =
+			new EmbeddingProviderConfiguration();
+
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
-
-		EmbeddingProviderConfiguration embeddingProviderConfiguration =
-			new EmbeddingProviderConfiguration();
 
 		embeddingProviderConfiguration.setAttributes(
 			HashMapBuilder.<String, Object>put(
@@ -73,7 +74,9 @@ public class HuggingFaceInferenceAPITextEmbeddingProviderTest {
 
 				options.setResponse(response);
 
-				return "[1.0]";
+				return JSONUtil.putAll(
+					RandomTestUtil.randomDouble()
+				).toString();
 			}
 		);
 
@@ -87,8 +90,8 @@ public class HuggingFaceInferenceAPITextEmbeddingProviderTest {
 			huggingFaceInferenceAPITextEmbeddingProvider, "_jsonFactory",
 			new JSONFactoryImpl());
 
-		long companyId = RandomTestUtil.randomLong();
 		String accessToken = RandomTestUtil.randomString();
+		long companyId = RandomTestUtil.randomLong();
 
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 

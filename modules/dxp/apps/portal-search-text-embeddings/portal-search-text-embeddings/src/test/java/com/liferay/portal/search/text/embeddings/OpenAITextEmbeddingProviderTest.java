@@ -42,13 +42,13 @@ public class OpenAITextEmbeddingProviderTest {
 
 	@Test
 	public void testGetEmbedding() throws Exception {
+		EmbeddingProviderConfiguration embeddingProviderConfiguration =
+			new EmbeddingProviderConfiguration();
+
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
-
-		EmbeddingProviderConfiguration embeddingProviderConfiguration =
-			new EmbeddingProviderConfiguration();
 
 		embeddingProviderConfiguration.setAttributes(
 			HashMapBuilder.<String, Object>put(
@@ -64,7 +64,10 @@ public class OpenAITextEmbeddingProviderTest {
 		).thenReturn(
 			JSONUtil.put(
 				"data",
-				JSONUtil.putAll(JSONUtil.put("embedding", JSONUtil.putAll(1.0)))
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"embedding",
+						JSONUtil.putAll(RandomTestUtil.randomDouble())))
 			).toString()
 		);
 
@@ -76,8 +79,8 @@ public class OpenAITextEmbeddingProviderTest {
 		ReflectionTestUtil.setFieldValue(
 			openAITextEmbeddingProvider, "_jsonFactory", new JSONFactoryImpl());
 
-		long companyId = RandomTestUtil.randomLong();
 		String apiKey = RandomTestUtil.randomString();
+		long companyId = RandomTestUtil.randomLong();
 
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
