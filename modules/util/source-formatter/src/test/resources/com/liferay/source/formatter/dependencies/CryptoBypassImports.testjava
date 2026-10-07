@@ -12,6 +12,7 @@ import javax.crypto.KeyGenerator;
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.http.ssl.SSLContexts;
 
 import org.jose4j.jwk.RsaJsonWebKey;

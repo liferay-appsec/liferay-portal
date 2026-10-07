@@ -171,13 +171,17 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 					"DigestUtils, see LPD-108121",
 				14
 			).addExpectedMessage(
+				"Use CryptoUtil.createSSLContext instead of org.apache.hc." +
+					"core5.ssl.SSLContexts, see LPD-108121",
+				15
+			).addExpectedMessage(
 				"Use CryptoUtil.createSSLContext instead of org.apache.http." +
 					"ssl.SSLContexts, see LPD-108121",
-				15
+				16
 			).addExpectedMessage(
 				"Use CryptoUtil.createKeyPairGenerator instead of org.jose4j." +
 					"jwk.RsaJwkGenerator, see LPD-108121",
-				18
+				19
 			));
 	}
 
