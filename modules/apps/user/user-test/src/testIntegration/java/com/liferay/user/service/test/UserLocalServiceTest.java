@@ -107,6 +107,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.comparator.UserLastLoginDateComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -129,6 +130,10 @@ import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import java.io.Serializable;
+
+import java.nio.charset.StandardCharsets;
+
+import java.security.MessageDigest;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -2214,16 +2219,30 @@ public class UserLocalServiceTest {
 
 		user = _userLocalService.updateUser(user);
 
-		String ha1 = DigesterUtil.digestHex(
+		String ha1 = _digestHex(
 			algorithm, String.valueOf(user.getUserId()), Portal.PORTAL_REALM,
 			password);
 
-		String ha2 = DigesterUtil.digestHex(algorithm, method, uriString);
+		String ha2 = _digestHex(algorithm, method, uriString);
 
 		return _userLocalService.authenticateForDigest(
 			user.getCompanyId(), String.valueOf(user.getUserId()),
 			Portal.PORTAL_REALM, nonce, method, uriString,
-			DigesterUtil.digestHex(algorithm, ha1, nonce, ha2));
+			_digestHex(algorithm, ha1, nonce, ha2));
+	}
+
+	private String _digestHex(String algorithm, String... parts)
+		throws Exception {
+
+		MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+
+		return StringUtil.bytesToHexString(
+			messageDigest.digest(
+				StringUtil.merge(
+					parts, StringPool.COLON
+				).getBytes(
+					StandardCharsets.UTF_8
+				)));
 	}
 
 	private String _getUpdatePasswordURL(String content) {
