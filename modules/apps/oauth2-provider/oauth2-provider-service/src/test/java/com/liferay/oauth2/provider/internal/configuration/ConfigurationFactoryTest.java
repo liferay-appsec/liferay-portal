@@ -278,7 +278,8 @@ public class ConfigurationFactoryTest {
 	public void testOAuth2ProviderApplicationHeadlessServerConfigurationFactory()
 		throws Exception {
 
-		_activateHeadlessServerConfigurationFactory(false);
+		_activateOAuth2ProviderApplicationHeadlessServerConfigurationFactory(
+			false);
 
 		Assert.assertEquals(
 			_webId, _labels.get("dxp.lxc.liferay.com/virtualInstanceId"));
@@ -296,7 +297,8 @@ public class ConfigurationFactoryTest {
 			"ext-init", _labels.get("lxc.liferay.com/metadataType"));
 		Assert.assertFalse(_featuresList.contains("upstream.token.forwarding"));
 
-		_activateHeadlessServerConfigurationFactory(true);
+		_activateOAuth2ProviderApplicationHeadlessServerConfigurationFactory(
+			true);
 
 		Assert.assertTrue(_featuresList.contains("upstream.token.forwarding"));
 	}
@@ -306,20 +308,24 @@ public class ConfigurationFactoryTest {
 		throws Exception {
 
 		OAuth2ProviderApplicationUserAgentConfigurationFactory
-			configurationFactory =
+			oAuth2ProviderApplicationUserAgentConfigurationFactory =
 				new OAuth2ProviderApplicationUserAgentConfigurationFactory();
 
-		configurationFactory.companyLocalService = _companyLocalService;
-		configurationFactory.oAuth2ApplicationLocalService =
-			_oAuth2ApplicationLocalService;
-		configurationFactory.oAuth2ApplicationScopeAliasesLocalService =
-			_oAuth2ApplicationScopeAliasesLocalService;
-		configurationFactory.scopeLocator = _scopeLocator;
-		configurationFactory.userLocalService = _userLocalService;
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.
+			companyLocalService = _companyLocalService;
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.
+			oAuth2ApplicationLocalService = _oAuth2ApplicationLocalService;
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.
+			oAuth2ApplicationScopeAliasesLocalService =
+				_oAuth2ApplicationScopeAliasesLocalService;
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.scopeLocator =
+			_scopeLocator;
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.
+			userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
-			configurationFactory, "_portalK8sConfigMapModifierSnapshot",
-			_snapshot);
+			oAuth2ProviderApplicationUserAgentConfigurationFactory,
+			"_portalK8sConfigMapModifierSnapshot", _snapshot);
 
 		VirtualHostLocalService virtualHostLocalService = Mockito.mock(
 			VirtualHostLocalService.class);
@@ -331,10 +337,10 @@ public class ConfigurationFactoryTest {
 		);
 
 		ReflectionTestUtil.setFieldValue(
-			configurationFactory, "_virtualHostLocalService",
-			virtualHostLocalService);
+			oAuth2ProviderApplicationUserAgentConfigurationFactory,
+			"_virtualHostLocalService", virtualHostLocalService);
 
-		configurationFactory.activate(
+		oAuth2ProviderApplicationUserAgentConfigurationFactory.activate(
 			HashMapBuilder.<String, Object>put(
 				"baseURL", "http://localhost"
 			).put(
@@ -377,27 +383,32 @@ public class ConfigurationFactoryTest {
 			"ext-init", _labels.get("lxc.liferay.com/metadataType"));
 	}
 
-	private void _activateHeadlessServerConfigurationFactory(
-			boolean forwardUpstreamToken)
+	private void
+			_activateOAuth2ProviderApplicationHeadlessServerConfigurationFactory(
+				boolean forwardUpstreamToken)
 		throws Exception {
 
 		OAuth2ProviderApplicationHeadlessServerConfigurationFactory
-			configurationFactory =
+			oAuth2ProviderApplicationHeadlessServerConfigurationFactory =
 				new OAuth2ProviderApplicationHeadlessServerConfigurationFactory();
 
-		configurationFactory.companyLocalService = _companyLocalService;
-		configurationFactory.oAuth2ApplicationLocalService =
-			_oAuth2ApplicationLocalService;
-		configurationFactory.oAuth2ApplicationScopeAliasesLocalService =
-			_oAuth2ApplicationScopeAliasesLocalService;
-		configurationFactory.scopeLocator = _scopeLocator;
-		configurationFactory.userLocalService = _userLocalService;
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.
+			companyLocalService = _companyLocalService;
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.
+			oAuth2ApplicationLocalService = _oAuth2ApplicationLocalService;
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.
+			oAuth2ApplicationScopeAliasesLocalService =
+				_oAuth2ApplicationScopeAliasesLocalService;
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.
+			scopeLocator = _scopeLocator;
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.
+			userLocalService = _userLocalService;
 
 		ReflectionTestUtil.setFieldValue(
-			configurationFactory, "_portalK8sConfigMapModifierSnapshot",
-			_snapshot);
+			oAuth2ProviderApplicationHeadlessServerConfigurationFactory,
+			"_portalK8sConfigMapModifierSnapshot", _snapshot);
 
-		configurationFactory.activate(
+		oAuth2ProviderApplicationHeadlessServerConfigurationFactory.activate(
 			HashMapBuilder.<String, Object>put(
 				"baseURL", "http://localhost"
 			).put(
