@@ -8,8 +8,11 @@ package com.liferay.multi.factor.authentication.timebased.otp.web.internal.util;
 import com.liferay.petra.io.BigEndianCodec;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.math.BigInteger;
@@ -36,7 +39,16 @@ public class MFATimeBasedOTPUtil {
 
 	public static final int MFA_TIMEBASED_OTP_DIGITS = 6;
 
+	public static final int MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN = 14;
+
 	public static String generateSharedSecret(int algorithmKeySize) {
+		if (PropsValues.FIPS_ENABLED &&
+			(algorithmKeySize <
+				MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN)) {
+
+			algorithmKeySize = MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN;
+		}
+
 		int count = (int)Math.ceil((double)algorithmKeySize / 8);
 
 		byte[] buffer = new byte[count * 8];
@@ -66,22 +78,33 @@ public class MFATimeBasedOTPUtil {
 			(System.currentTimeMillis() + clockSkew) /
 				MFA_TIMEBASED_OTP_COUNTER;
 
-		for (long i = initialTime; i <= finalTime; i++) {
-			String timeBasedOTP = _generateTimeBasedOTP(
-				Base32.decode(sharedSecret), _getTimeCountHex(i));
+		try {
+			for (long i = initialTime; i <= finalTime; i++) {
+				String timeBasedOTP = _generateTimeBasedOTP(
+					Base32.decode(sharedSecret), _getTimeCountHex(i));
 
-			if (MessageDigest.isEqual(
-					value.getBytes(StandardCharsets.UTF_8),
-					timeBasedOTP.getBytes(StandardCharsets.UTF_8))) {
+				if (MessageDigest.isEqual(
+						value.getBytes(StandardCharsets.UTF_8),
+						timeBasedOTP.getBytes(StandardCharsets.UTF_8))) {
 
-				return true;
+					return true;
+				}
+			}
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to verify the time-based one-time password",
+					invalidKeyException);
 			}
 		}
 
 		return false;
 	}
 
-	private static byte[] _generateHMAC(byte[] key, String text) {
+	private static byte[] _generateHMAC(byte[] key, String text)
+		throws InvalidKeyException {
+
 		String algorithm = getAlgorithm();
 
 		try {
@@ -95,11 +118,6 @@ public class MFATimeBasedOTPUtil {
 			return mac.doFinal(
 				Arrays.copyOfRange(byteArray, 1, byteArray.length));
 		}
-		catch (InvalidKeyException invalidKeyException) {
-			throw new IllegalArgumentException(
-				"Invalid secret key for algorithm " + algorithm,
-				invalidKeyException);
-		}
 		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
 			throw new IllegalArgumentException(
 				"Invalid algorithm " + algorithm, noSuchAlgorithmException);
@@ -107,7 +125,8 @@ public class MFATimeBasedOTPUtil {
 	}
 
 	private static String _generateTimeBasedOTP(
-		byte[] sharedSecret, String timeCountHex) {
+			byte[] sharedSecret, String timeCountHex)
+		throws InvalidKeyException {
 
 		byte[] hash = _generateHMAC(sharedSecret, timeCountHex);
 
@@ -133,5 +152,8 @@ public class MFATimeBasedOTPUtil {
 		return StringUtil.replace(
 			String.format("%16s", hex), CharPool.SPACE, CharPool.NUMBER_0);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		MFATimeBasedOTPUtil.class);
 
 }

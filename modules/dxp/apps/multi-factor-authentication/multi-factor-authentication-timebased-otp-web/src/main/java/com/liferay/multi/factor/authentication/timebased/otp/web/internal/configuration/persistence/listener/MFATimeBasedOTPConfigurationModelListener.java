@@ -6,6 +6,7 @@
 package com.liferay.multi.factor.authentication.timebased.otp.web.internal.configuration.persistence.listener;
 
 import com.liferay.multi.factor.authentication.timebased.otp.web.internal.configuration.MFATimeBasedOTPConfiguration;
+import com.liferay.multi.factor.authentication.timebased.otp.web.internal.util.MFATimeBasedOTPUtil;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
@@ -41,7 +42,8 @@ public class MFATimeBasedOTPConfigurationModelListener
 				MFATimeBasedOTPConfiguration.class, properties);
 
 		if (mfaTimeBasedOTPConfiguration.algorithmKeySize() >=
-				_ALGORITHM_KEY_SIZE_MIN) {
+				MFATimeBasedOTPUtil.
+					MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN) {
 
 			return;
 		}
@@ -50,7 +52,8 @@ public class MFATimeBasedOTPConfigurationModelListener
 			ResourceBundleUtil.getString(
 				_getResourceBundle(),
 				"the-totp-key-size-must-be-at-least-x-bytes-in-fips-mode",
-				_ALGORITHM_KEY_SIZE_MIN),
+				MFATimeBasedOTPUtil.
+					MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN),
 			MFATimeBasedOTPConfiguration.class, getClass(), properties);
 	}
 
@@ -58,7 +61,5 @@ public class MFATimeBasedOTPConfigurationModelListener
 		return ResourceBundleUtil.getBundle(
 			LocaleThreadLocal.getThemeDisplayLocale(), getClass());
 	}
-
-	private static final int _ALGORITHM_KEY_SIZE_MIN = 14;
 
 }
