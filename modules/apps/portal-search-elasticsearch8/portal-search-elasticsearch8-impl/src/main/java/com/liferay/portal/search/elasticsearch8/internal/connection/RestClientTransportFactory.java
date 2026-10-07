@@ -29,6 +29,8 @@ import java.util.concurrent.Future;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.http.HttpEntity;
@@ -40,6 +42,9 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.util.PublicSuffixMatcherLoader;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -214,6 +219,18 @@ public class RestClientTransportFactory {
 		return credentialsProvider;
 	}
 
+	private SSLConnectionSocketFactory _createSSLConnectionSocketFactory() {
+		SSLContext sslContext = _createSSLContext();
+
+		SSLParameters sslParameters = _createSSLParameters(sslContext);
+
+		return new SSLConnectionSocketFactory(
+			sslContext, sslParameters.getProtocols(),
+			sslParameters.getCipherSuites(),
+			new DefaultHostnameVerifier(
+				PublicSuffixMatcherLoader.getDefault()));
+	}
+
 	private SSLContext _createSSLContext() {
 		if (!CryptoUtil.isAllowedAlgorithm(_truststoreType, KeyStore.class) &&
 			_log.isWarnEnabled()) {
@@ -262,6 +279,24 @@ public class RestClientTransportFactory {
 		}
 	}
 
+	private SSLParameters _createSSLParameters(SSLContext sslContext) {
+		SSLParameters defaultSSLParameters =
+			sslContext.getDefaultSSLParameters();
+
+		SSLParameters sslParameters = new SSLParameters();
+
+		try {
+			CryptoUtil.configureSSLParameters(
+				defaultSSLParameters.getCipherSuites(),
+				defaultSSLParameters.getProtocols(), sslParameters);
+		}
+		catch (SSLException sslException) {
+			throw new RuntimeException(sslException);
+		}
+
+		return sslParameters;
+	}
+
 	private HttpAsyncClientBuilder _customizeHttpClient(
 		HttpAsyncClientBuilder httpAsyncClientBuilder) {
 
@@ -273,7 +308,8 @@ public class RestClientTransportFactory {
 		}
 
 		if (_httpSSLEnabled) {
-			httpClientBuilder.setSSLContext(_createSSLContext());
+			httpClientBuilder.setSSLSocketFactory(
+				_createSSLConnectionSocketFactory());
 		}
 
 		if ((_proxyConfig != null) && _proxyConfig.shouldApplyConfig()) {

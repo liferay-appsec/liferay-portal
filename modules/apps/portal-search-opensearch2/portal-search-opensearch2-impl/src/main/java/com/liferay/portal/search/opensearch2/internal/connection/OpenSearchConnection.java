@@ -25,6 +25,8 @@ import java.util.function.Consumer;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.hc.client5.http.auth.AuthScope;
@@ -35,6 +37,7 @@ import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
 
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -323,6 +326,49 @@ public class OpenSearchConnection {
 		}
 	}
 
+	private SSLParameters _createSSLParameters(SSLContext sslContext) {
+		SSLParameters sslParameters = new SSLParameters();
+
+		SSLParameters defaultSSLParameters =
+			sslContext.getDefaultSSLParameters();
+
+		try {
+			CryptoUtil.configureSSLParameters(
+				defaultSSLParameters.getCipherSuites(),
+				defaultSSLParameters.getProtocols(), sslParameters);
+		}
+		catch (SSLException sslException) {
+			throw new RuntimeException(sslException);
+		}
+
+		return sslParameters;
+	}
+
+	private TlsStrategy _createTlsStrategy() {
+		SSLContext sslContext = _createSSLContext();
+
+		ClientTlsStrategyBuilder clientTlsStrategyBuilder =
+			ClientTlsStrategyBuilder.create();
+
+		clientTlsStrategyBuilder.setSslContext(sslContext);
+
+		SSLParameters sslParameters = _createSSLParameters(sslContext);
+
+		String[] cipherSuites = sslParameters.getCipherSuites();
+
+		if (cipherSuites != null) {
+			clientTlsStrategyBuilder.setCiphers(cipherSuites);
+		}
+
+		String[] protocols = sslParameters.getProtocols();
+
+		if (protocols != null) {
+			clientTlsStrategyBuilder.setTlsVersions(protocols);
+		}
+
+		return clientTlsStrategyBuilder.build();
+	}
+
 	private OpenSearchTransport _createTransport() {
 		return ApacheHttpClient5TransportBuilder.builder(
 			_getHttpHosts()
@@ -354,10 +400,7 @@ public class OpenSearchConnection {
 
 				if (_httpSSLEnabled) {
 					poolingAsyncClientConnectionManagerBuilder.setTlsStrategy(
-						ClientTlsStrategyBuilder.create(
-						).setSslContext(
-							_createSSLContext()
-						).build());
+						_createTlsStrategy());
 				}
 
 				if ((_proxyConfig != null) &&

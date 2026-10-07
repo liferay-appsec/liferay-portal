@@ -8,9 +8,11 @@ package com.liferay.portal.search.elasticsearch8.internal.connection;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
@@ -23,11 +25,14 @@ import java.nio.file.Path;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.Security;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.junit.After;
@@ -37,6 +42,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -66,6 +72,57 @@ public class RestClientTransportFactoryTest {
 	@After
 	public void tearDown() throws Exception {
 		Files.delete(_path);
+	}
+
+	@Test
+	public void testCreateSSLConnectionSocketFactory() {
+		RestClientTransportFactory restClientTransportFactory =
+			_createRestClientTransportFactory("pkcs12");
+
+		try (MockedStatic<CryptoUtil> mockedStatic = Mockito.mockStatic(
+				CryptoUtil.class, Mockito.CALLS_REAL_METHODS)) {
+
+			Assert.assertNotNull(
+				ReflectionTestUtil.invoke(
+					restClientTransportFactory,
+					"_createSSLConnectionSocketFactory", new Class<?>[0]));
+
+			SSLParameters sslParameters = _captureSSLParameters(mockedStatic);
+
+			Assert.assertNull(sslParameters.getCipherSuites());
+			Assert.assertNull(sslParameters.getProtocols());
+		}
+
+		try (MockedStatic<CryptoUtil> mockedStatic = Mockito.mockStatic(
+				CryptoUtil.class, Mockito.CALLS_REAL_METHODS);
+			SafeCloseable fipsEnabledSafeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			SafeCloseable keyManagerFactoryAlgorithmSafeCloseable =
+				_swapKeyManagerFactoryAlgorithm()) {
+
+			Assert.assertNotNull(
+				ReflectionTestUtil.invoke(
+					restClientTransportFactory,
+					"_createSSLConnectionSocketFactory", new Class<?>[0]));
+
+			SSLParameters sslParameters = _captureSSLParameters(mockedStatic);
+
+			String[] cipherSuites = sslParameters.getCipherSuites();
+
+			Assert.assertTrue(
+				Arrays.toString(cipherSuites),
+				ArrayUtil.isNotEmpty(cipherSuites));
+			Assert.assertArrayEquals(
+				cipherSuites,
+				FIPSModeValidator.getAllowedTLSCipherSuites(cipherSuites));
+
+			String[] protocols = sslParameters.getProtocols();
+
+			Assert.assertTrue(
+				Arrays.toString(protocols), ArrayUtil.isNotEmpty(protocols));
+			Assert.assertArrayEquals(
+				protocols, FIPSModeValidator.getAllowedTLSProtocols(protocols));
+		}
 	}
 
 	@Test
@@ -126,6 +183,19 @@ public class RestClientTransportFactoryTest {
 		}
 	}
 
+	private SSLParameters _captureSSLParameters(
+		MockedStatic<CryptoUtil> mockedStatic) {
+
+		ArgumentCaptor<SSLParameters> argumentCaptor = ArgumentCaptor.forClass(
+			SSLParameters.class);
+
+		mockedStatic.verify(
+			() -> CryptoUtil.configureSSLParameters(
+				Mockito.any(), Mockito.any(), argumentCaptor.capture()));
+
+		return argumentCaptor.getValue();
+	}
+
 	private RestClientTransportFactory _createRestClientTransportFactory(
 		String truststoreType) {
 
@@ -143,6 +213,18 @@ public class RestClientTransportFactoryTest {
 
 		return builder.build();
 	}
+
+	private SafeCloseable _swapKeyManagerFactoryAlgorithm() {
+		String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+
+		Security.setProperty(_KEY_MANAGER_FACTORY_ALGORITHM, "PKIX");
+
+		return () -> Security.setProperty(
+			_KEY_MANAGER_FACTORY_ALGORITHM, algorithm);
+	}
+
+	private static final String _KEY_MANAGER_FACTORY_ALGORITHM =
+		"ssl.KeyManagerFactory.algorithm";
 
 	private static final String _PASSWORD = RandomTestUtil.randomString();
 
