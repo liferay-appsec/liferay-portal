@@ -57,15 +57,16 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 		}
 
 		try {
+			byte[] encryptedPasswordBytes = _getEncryptedPasswordBytes(
+				encryptedPassword);
+
 			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
-				PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
-					DigesterUtil.SHA_1,
-				approvalType);
+				_getAlgorithm(encryptedPasswordBytes), approvalType);
 
 			plaintextPasswordBytes = plaintextPassword.getBytes(
 				DigesterUtil.ENCODING);
 
-			byte[] saltBytes = getSaltBytes(encryptedPassword);
+			byte[] saltBytes = getSaltBytes(encryptedPasswordBytes);
 
 			saltedPlaintextPasswordBytes = ArrayUtil.append(
 				plaintextPasswordBytes, saltBytes);
@@ -97,32 +98,79 @@ public class SSHAPasswordEncryptor implements PasswordEncryptor {
 		}
 	}
 
-	protected byte[] getSaltBytes(String encryptedPassword)
-		throws PwdEncryptorException {
+	protected byte[] getSaltBytes(byte[] encryptedPasswordBytes) {
+		byte[] saltBytes = new byte[_SALT_SIZE];
 
-		byte[] saltBytes = new byte[8];
-
-		if (Validator.isNull(encryptedPassword)) {
+		if (encryptedPasswordBytes == null) {
 			BigEndianCodec.putLong(saltBytes, 0, SecureRandomUtil.nextLong());
 		}
 		else {
-			try {
-				byte[] encryptedPasswordBytes = Base64.decode(
-					encryptedPassword);
-
-				System.arraycopy(
-					encryptedPasswordBytes, encryptedPasswordBytes.length - 8,
-					saltBytes, 0, saltBytes.length);
-			}
-			catch (Exception exception) {
-				throw new PwdEncryptorException.InvalidEncryptedPwd(
-					"Unable to extract salt from encrypted password " +
-						exception.getMessage(),
-					exception);
-			}
+			System.arraycopy(
+				encryptedPasswordBytes,
+				encryptedPasswordBytes.length - _SALT_SIZE, saltBytes, 0,
+				saltBytes.length);
 		}
 
 		return saltBytes;
 	}
+
+	private String _getAlgorithm(byte[] encryptedPasswordBytes)
+		throws PwdEncryptorException {
+
+		if (encryptedPasswordBytes == null) {
+			if (PropsValues.FIPS_ENABLED) {
+				return DigesterUtil.SHA_256;
+			}
+
+			return DigesterUtil.SHA_1;
+		}
+
+		int digestSize = encryptedPasswordBytes.length - _SALT_SIZE;
+
+		if (digestSize == 20) {
+			return DigesterUtil.SHA_1;
+		}
+		else if (digestSize == 32) {
+			return DigesterUtil.SHA_256;
+		}
+		else if (digestSize == 48) {
+			return "SHA-384";
+		}
+		else if (digestSize == 64) {
+			return "SHA-512";
+		}
+
+		throw new PwdEncryptorException.InvalidEncryptedPwd(
+			"Unable to determine the digest of an encrypted password of " +
+				encryptedPasswordBytes.length + " bytes",
+			null);
+	}
+
+	private byte[] _getEncryptedPasswordBytes(String encryptedPassword)
+		throws PwdEncryptorException {
+
+		if (Validator.isNull(encryptedPassword)) {
+			return null;
+		}
+
+		try {
+			byte[] encryptedPasswordBytes = Base64.decode(encryptedPassword);
+
+			if (encryptedPasswordBytes.length <= _SALT_SIZE) {
+				throw new IllegalArgumentException(
+					"The encrypted password has no salt");
+			}
+
+			return encryptedPasswordBytes;
+		}
+		catch (Exception exception) {
+			throw new PwdEncryptorException.InvalidEncryptedPwd(
+				"Unable to extract salt from encrypted password " +
+					exception.getMessage(),
+				exception);
+		}
+	}
+
+	private static final int _SALT_SIZE = 8;
 
 }

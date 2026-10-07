@@ -19,13 +19,10 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.lang.reflect.Constructor;
-
-import java.security.MessageDigest;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -384,13 +381,22 @@ public class PasswordEncryptorUtilTest {
 				PasswordEncryptor.TYPE_SSHA, "password",
 				"q0elUchHiEgZAZww57UMs6Jt+L45+785Q8YcVUf8VfcAAQIDBAUGBw==",
 				PasswordEncryptor.TYPE_SSHA);
+
+			Assert.assertEquals(
+				"{SSHA}2EWEKeVpSdd79PkTX5vaGXH5uQ028Smy/H1NmA==",
+				PasswordEncryptorUtil.encrypt(
+					"password",
+					"{SSHA}2EWEKeVpSdd79PkTX5vaGXH5uQ028Smy/H1NmA=="));
 		}
 
-		FIPSModeTestUtil.assertAlgorithmSwitch(
-			DigesterUtil.SHA_1, MessageDigest.class, DigesterUtil.SHA_256,
-			MessageDigest::getInstance,
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.APPROVED,
 			() -> PasswordEncryptorUtil.encrypt(
 				PasswordEncryptor.TYPE_SSHA, "password", null));
+		FIPSModeTestUtil.assertApprovalType(
+			CryptoFunctionApprovalType.LEGACY,
+			() -> PasswordEncryptorUtil.encrypt(
+				"password", "{SSHA}2EWEKeVpSdd79PkTX5vaGXH5uQ028Smy/H1NmA=="));
 	}
 
 	@Test
