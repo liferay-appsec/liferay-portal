@@ -123,7 +123,8 @@ public class PwdAuthenticator {
 			_PRETENDED_CURRENT_ENCRYPTED_PASSWORD);
 	}
 
-	private static final String _PRETENDED_CLEAR_TEXT_PASSWORD = "password";
+	private static final String _PRETENDED_CLEAR_TEXT_PASSWORD =
+		"pretendedPassword";
 
 	private static final String _PRETENDED_CURRENT_ENCRYPTED_PASSWORD;
 
