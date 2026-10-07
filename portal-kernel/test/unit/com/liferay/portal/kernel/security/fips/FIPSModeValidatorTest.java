@@ -529,46 +529,6 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
-	public void testValidateAlgorithm() {
-		FIPSModeValidator.validateAlgorithm("MD5");
-		FIPSModeValidator.validateAlgorithm(null);
-
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true)) {
-
-			FIPSModeValidator.validateAlgorithm("AES");
-			FIPSModeValidator.validateAlgorithm("HmacSHA256");
-			FIPSModeValidator.validateAlgorithm("PBKDF2WithHmacSHA512");
-			FIPSModeValidator.validateAlgorithm("SHA-256");
-			FIPSModeValidator.validateAlgorithm("sha-384");
-
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm(
-					"AES/CBC/PKCS5Padding"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("HmacSHA1"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("MD5"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("SHA-1"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("SHA-2"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("SHA-2560"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm(null));
-		}
-	}
-
-	@Test
 	public void testValidateAllowedPropertyValues() {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validateAllowedPropertyValues",
@@ -885,23 +845,27 @@ public class FIPSModeValidatorTest {
 
 	@Test
 	public void testValidateKey() {
-		FIPSModeValidator.validateKey("DES", 64);
+		_validateKey("DES", 64);
+		_validateKey("MD5", 0);
+		_validateKey(null, 0);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			FIPSModeValidator.validateKey("AES", 0);
-			FIPSModeValidator.validateKey("AES", 128);
-			FIPSModeValidator.validateKey("AES", 192);
-			FIPSModeValidator.validateKey("AES", 256);
+			_validateKey("AES", 0);
+			_validateKey("AES", 128);
+			_validateKey("AES", 192);
+			_validateKey("AES", 256);
+			_validateKey("HmacSHA256", 0);
+			_validateKey("HmacSHA256", 256);
 
-			FIPSModeTestUtil.assertSecurityException(
-				"Key size 64 is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateKey("AES", 64));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateKey("DES", 128));
+			_assertKeyNotAllowed(
+				"Key size 64 is not allowed in FIPS mode", "AES", 64);
+			_assertKeyNotAllowed(
+				"Key size 128 is not allowed in FIPS mode", "DES", 128);
+			_assertKeyNotAllowed(
+				"Key size 64 is not allowed in FIPS mode", "HmacSHA256", 64);
 		}
 	}
 
@@ -1230,6 +1194,14 @@ public class FIPSModeValidatorTest {
 			() -> FIPSModeValidator.validateJWSAlgorithm(algorithm));
 	}
 
+	private void _assertKeyNotAllowed(
+		String expectedMessage, String algorithm, int keySize) {
+
+		_assertSecurityException(
+			expectedMessage, "_validateKey",
+			new Class<?>[] {String.class, int.class}, algorithm, keySize);
+	}
+
 	private void _assertSecurityException(
 		String expectedMessage, String methodName, Class<?>[] parameterTypes,
 		Object... parameterValues) {
@@ -1273,6 +1245,12 @@ public class FIPSModeValidatorTest {
 		NodeList nodeList = document.getElementsByTagName(tagName);
 
 		return (Element)nodeList.item(0);
+	}
+
+	private void _validateKey(String algorithm, int keySize) {
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validateKey",
+			new Class<?>[] {String.class, int.class}, algorithm, keySize);
 	}
 
 }

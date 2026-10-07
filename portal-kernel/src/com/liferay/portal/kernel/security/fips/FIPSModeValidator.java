@@ -222,24 +222,6 @@ public class FIPSModeValidator {
 		}
 	}
 
-	public static boolean isNotAllowedAlgorithm(String algorithm) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return false;
-		}
-
-		if (Validator.isNull(algorithm)) {
-			return true;
-		}
-
-		for (String[] approvedAlgorithms : _approvedAlgorithms.values()) {
-			if (ArrayUtil.contains(approvedAlgorithms, algorithm, true)) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
 	public static void validate() {
 		Provider approvedModeProvider = null;
 
@@ -264,13 +246,6 @@ public class FIPSModeValidator {
 		}
 	}
 
-	public static void validateAlgorithm(String algorithm) {
-		if (isNotAllowedAlgorithm(algorithm)) {
-			throw new SecurityException(
-				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
-		}
-	}
-
 	public static void validateJWSAlgorithm(String algorithm) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return;
@@ -281,21 +256,6 @@ public class FIPSModeValidator {
 				"JWS algorithm \"" + algorithm +
 					"\" is not allowed in FIPS mode");
 		}
-	}
-
-	public static void validateKey(String algorithm, int keySize) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
-		}
-
-		validateAlgorithm(algorithm);
-
-		if ((keySize == 0) || isAllowedKeySize(algorithm, keySize)) {
-			return;
-		}
-
-		throw new SecurityException(
-			"Key size " + keySize + " is not allowed in FIPS mode");
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {
@@ -525,7 +485,7 @@ public class FIPSModeValidator {
 		String[] symAlgorithmParts = StringUtil.split(
 			symAlgorithm, CharPool.SLASH);
 
-		validateKey(
+		_validateKey(
 			symAlgorithmParts[0],
 			GetterUtil.getInteger(
 				symEncryptElement.getAttribute("sym_keylength")));
@@ -670,6 +630,17 @@ public class FIPSModeValidator {
 			throw new SecurityException(
 				"FIPS provider integrity failed: " + message, causeThrowable);
 		}
+	}
+
+	private static void _validateKey(String algorithm, int keySize) {
+		if (!PropsValues.FIPS_ENABLED || (keySize == 0) ||
+			isAllowedKeySize(algorithm, keySize)) {
+
+			return;
+		}
+
+		throw new SecurityException(
+			"Key size " + keySize + " is not allowed in FIPS mode");
 	}
 
 	private static void _validateKeyAlgorithm(
