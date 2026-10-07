@@ -24,13 +24,16 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.nio.charset.Charset;
 
 import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 import java.util.ArrayList;
@@ -170,10 +173,28 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 		KeyFactory keyFactory = CryptoUtil.createKeyFactory(
 			CryptoUtil.getAlgorithm("DSA", "EC"));
 
+		PublicKey analyticsPublicKey = null;
+
+		try {
+			analyticsPublicKey = keyFactory.generatePublic(
+				new X509EncodedKeySpec(Base64.decode(publicKey)));
+		}
+		catch (InvalidKeySpecException invalidKeySpecException) {
+			if (PropsValues.FIPS_ENABLED && _log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"The Analytics Cloud public key is not a ",
+						keyFactory.getAlgorithm(),
+						" key, which FIPS mode requires"),
+					invalidKeySpecException);
+			}
+
+			throw invalidKeySpecException;
+		}
+
 		Signature signature = CryptoUtil.createSignature(
 			CryptoUtil.getAlgorithm("DSA", "SHA256withECDSA"),
-			keyFactory.generatePublic(
-				new X509EncodedKeySpec(Base64.decode(publicKey))));
+			analyticsPublicKey);
 
 		Map<String, String> sortedParameters = new TreeMap<>();
 
