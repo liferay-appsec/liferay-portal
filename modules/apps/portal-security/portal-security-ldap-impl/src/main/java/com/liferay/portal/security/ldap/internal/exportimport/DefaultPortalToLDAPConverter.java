@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.model.ListType;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
@@ -41,6 +40,7 @@ import com.liferay.portal.security.ldap.configuration.ConfigurationProvider;
 import com.liferay.portal.security.ldap.configuration.LDAPServerConfiguration;
 import com.liferay.portal.security.ldap.exportimport.Modifications;
 import com.liferay.portal.security.ldap.exportimport.PortalToLDAPConverter;
+import com.liferay.portal.security.ldap.internal.util.PasswordEncryptionAlgorithmUtil;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -554,7 +554,7 @@ public class DefaultPortalToLDAPConverter implements PortalToLDAPConverter {
 
 		String algorithm = ldapAuthConfiguration.passwordEncryptionAlgorithm();
 
-		FIPSModeValidator.validateAlgorithm(algorithm);
+		PasswordEncryptionAlgorithmUtil.validate(algorithm);
 
 		if (Validator.isNotNull(algorithm) &&
 			!algorithm.equals(PasswordEncryptor.TYPE_NONE)) {
