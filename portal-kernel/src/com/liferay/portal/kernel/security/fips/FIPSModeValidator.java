@@ -959,11 +959,14 @@ public class FIPSModeValidator {
 			"jdk.tls.disabledAlgorithms",
 			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
 			"ocsp.enable", new String[] {"true"},
+			"ssl.KeyManagerFactory.algorithm",
+			new String[] {_TLS_FACTORY_ALGORITHM},
 			"ssl.TrustManagerFactory.algorithm",
 			new String[] {_TLS_FACTORY_ALGORITHM});
 	private static final Map<String, String[]> _requiredSystemProperties =
 		Map.of(
 			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
-			"com.sun.security.enableCRLDP", new String[] {"true"});
+			"com.sun.security.enableCRLDP", new String[] {"true"},
+			"org.bouncycastle.fips.approved_only", new String[] {"true"});
 
 }

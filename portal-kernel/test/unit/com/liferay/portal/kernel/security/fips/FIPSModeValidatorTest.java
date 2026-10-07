@@ -505,6 +505,30 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testRequiredProperties() {
+		Map<String, String[]> requiredSecurityProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSecurityProperties");
+
+		Assert.assertArrayEquals(
+			new String[] {"PKIX"},
+			requiredSecurityProperties.get("ssl.KeyManagerFactory.algorithm"));
+		Assert.assertArrayEquals(
+			new String[] {"PKIX"},
+			requiredSecurityProperties.get(
+				"ssl.TrustManagerFactory.algorithm"));
+
+		Map<String, String[]> requiredSystemProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSystemProperties");
+
+		Assert.assertArrayEquals(
+			new String[] {"true"},
+			requiredSystemProperties.get(
+				"org.bouncycastle.fips.approved_only"));
+	}
+
+	@Test
 	public void testValidateAlgorithm() {
 		FIPSModeValidator.validateAlgorithm("MD5");
 		FIPSModeValidator.validateAlgorithm(null);

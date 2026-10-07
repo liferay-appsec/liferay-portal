@@ -216,9 +216,7 @@ public class CryptoUtil {
 		throws NoSuchAlgorithmException {
 
 		if (PropsValues.FIPS_ENABLED &&
-			!FIPSModeValidator.isAllowedTLSFactoryAlgorithm(algorithm) &&
-			!StringUtil.equalsIgnoreCase(
-				algorithm, KeyManagerFactory.getDefaultAlgorithm())) {
+			!FIPSModeValidator.isAllowedTLSFactoryAlgorithm(algorithm)) {
 
 			_writeAlgorithmRejected(
 				algorithm, CryptoFunctionApprovalType.APPROVED, true,
