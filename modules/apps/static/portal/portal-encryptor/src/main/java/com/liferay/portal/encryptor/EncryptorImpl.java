@@ -12,7 +12,6 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.crypto.CryptoUtil;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -79,12 +78,6 @@ public class EncryptorImpl implements Encryptor {
 	public byte[] decryptUnencodedAsBytes(Key key, byte[] encryptedBytes)
 		throws EncryptorException {
 
-		byte[] encodedBytes = key.getEncoded();
-
-		FIPSModeValidator.validateKey(
-			key.getAlgorithm(),
-			(encodedBytes == null) ? 0 : encodedBytes.length * 8);
-
 		if (PropsValues.FIPS_ENABLED) {
 			return _decryptGCM(encryptedBytes, key);
 		}
@@ -145,12 +138,6 @@ public class EncryptorImpl implements Encryptor {
 	@Override
 	public byte[] encryptUnencoded(Key key, byte[] plainBytes)
 		throws EncryptorException {
-
-		byte[] encodedBytes = key.getEncoded();
-
-		FIPSModeValidator.validateKey(
-			key.getAlgorithm(),
-			(encodedBytes == null) ? 0 : encodedBytes.length * 8);
 
 		if (PropsValues.FIPS_ENABLED) {
 			return _encryptGCM(key, plainBytes);

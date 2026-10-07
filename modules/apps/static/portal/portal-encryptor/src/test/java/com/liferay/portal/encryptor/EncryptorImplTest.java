@@ -8,12 +8,14 @@ package com.liferay.portal.encryptor;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.security.InvalidKeyException;
 import java.security.Key;
 
 import java.util.Arrays;
@@ -26,6 +28,10 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Mika Koivisto
@@ -101,16 +107,19 @@ public class EncryptorImplTest {
 			Assert.assertEquals(
 				_PLAINTEXT, encryptor.decrypt(key, encryptedString2));
 
-			Assert.assertThrows(
-				SecurityException.class,
-				() -> encryptor.decryptUnencodedAsBytes(
-					new SecretKeySpec(new byte[8], "AES"),
-					_PLAINTEXT.getBytes()));
-			Assert.assertThrows(
-				SecurityException.class,
-				() -> encryptor.encryptUnencoded(
-					new SecretKeySpec(new byte[8], "AES"),
-					_PLAINTEXT.getBytes()));
+			try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+					FIPSAuditUtil.class)) {
+
+				_assertInvalidKey(
+					() -> encryptor.decryptUnencodedAsBytes(
+						new SecretKeySpec(new byte[8], "AES"),
+						encryptor.encryptUnencoded(
+							key, _PLAINTEXT.getBytes())));
+				_assertInvalidKey(
+					() -> encryptor.encryptUnencoded(
+						new SecretKeySpec(new byte[8], "AES"),
+						_PLAINTEXT.getBytes()));
+			}
 		}
 	}
 
@@ -222,6 +231,17 @@ public class EncryptorImplTest {
 
 		Assert.assertEquals(
 			_PLAINTEXT, encryptor.decrypt(key, encryptedString));
+	}
+
+	private void _assertInvalidKey(ThrowingRunnable throwingRunnable) {
+		EncryptorException encryptorException = Assert.assertThrows(
+			EncryptorException.class, throwingRunnable);
+
+		Throwable throwable = encryptorException.getCause();
+
+		Assert.assertTrue(
+			String.valueOf(throwable),
+			throwable instanceof InvalidKeyException);
 	}
 
 	private static final String _GOLDEN_ENCRYPTED_STRING_AES_ECB =
