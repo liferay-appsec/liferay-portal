@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -124,6 +125,10 @@ public class FIPSModeValidator {
 		}
 
 		return new int[0];
+	}
+
+	public static boolean hasFailedValidation() {
+		return _validationFailedAtomicBoolean.get();
 	}
 
 	public static boolean isAllowedAlgorithm(
@@ -243,6 +248,7 @@ public class FIPSModeValidator {
 		}
 		finally {
 			_approvedModeProviderAtomicReference.set(approvedModeProvider);
+			_validationFailedAtomicBoolean.set(approvedModeProvider == null);
 		}
 	}
 
@@ -939,5 +945,7 @@ public class FIPSModeValidator {
 			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
 			"com.sun.security.enableCRLDP", new String[] {"true"},
 			"org.bouncycastle.fips.approved_only", new String[] {"true"});
+	private static final AtomicBoolean _validationFailedAtomicBoolean =
+		new AtomicBoolean();
 
 }

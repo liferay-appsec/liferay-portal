@@ -131,14 +131,25 @@ public class CryptoUtil {
 			}
 
 			_validateKey(
-				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				_getKeyAlgorithm(key), CryptoFunctionApprovalType.APPROVED,
 				Cipher.class, _getKeySize(key));
 		}
 
 		Cipher cipher = _getCipher(
 			CryptoFunctionApprovalType.APPROVED, transformation);
 
-		cipher.init(mode, key, algorithmParameterSpec);
+		try {
+			cipher.init(mode, key, algorithmParameterSpec);
+		}
+		catch (Error | InvalidAlgorithmParameterException | InvalidKeyException
+					exception) {
+
+			_recordInitThrowable(
+				transformation, CryptoFunctionApprovalType.APPROVED,
+				Cipher.class, cipher.getProvider(), exception);
+
+			throw exception;
+		}
 
 		_recordProvider(
 			transformation, CryptoFunctionApprovalType.APPROVED, Cipher.class,
@@ -156,13 +167,22 @@ public class CryptoUtil {
 		if (PropsValues.FIPS_ENABLED) {
 			_validateAlgorithm(transformation, approvalType, Cipher.class);
 			_validateKey(
-				key.getAlgorithm(), approvalType, Cipher.class,
+				_getKeyAlgorithm(key), approvalType, Cipher.class,
 				_getKeySize(key));
 		}
 
 		Cipher cipher = _getCipher(approvalType, transformation);
 
-		cipher.init(mode, key);
+		try {
+			cipher.init(mode, key);
+		}
+		catch (Error | InvalidKeyException exception) {
+			_recordInitThrowable(
+				transformation, approvalType, Cipher.class,
+				cipher.getProvider(), exception);
+
+			throw exception;
+		}
 
 		_recordProvider(
 			transformation, approvalType, Cipher.class, cipher.getProvider());
@@ -205,11 +225,31 @@ public class CryptoUtil {
 				KeyGenerator.class);
 
 			keySize = _getGenerationKeySize(algorithm);
+
+			if (keySize == 0) {
+				_writeAlgorithmRejected(
+					algorithm, CryptoFunctionApprovalType.APPROVED, true,
+					KeyGenerator.class, null, "key-size-not-allowed");
+
+				throw new InvalidParameterException(
+					StringBundler.concat(
+						"No key size is allowed in FIPS mode for key ",
+						"algorithm \"", algorithm, "\""));
+			}
 		}
 
 		KeyGenerator keyGenerator = _getKeyGenerator(algorithm);
 
-		keyGenerator.init(keySize);
+		try {
+			keyGenerator.init(keySize);
+		}
+		catch (Error | InvalidParameterException exception) {
+			_recordInitThrowable(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				KeyGenerator.class, keyGenerator.getProvider(), exception);
+
+			throw exception;
+		}
 
 		_recordProvider(
 			algorithm, CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
@@ -262,7 +302,17 @@ public class CryptoUtil {
 
 		KeyPairGenerator keyPairGenerator = _getKeyPairGenerator(algorithm);
 
-		keyPairGenerator.initialize(keySize);
+		try {
+			keyPairGenerator.initialize(keySize);
+		}
+		catch (Error | InvalidParameterException exception) {
+			_recordInitThrowable(
+				algorithm, CryptoFunctionApprovalType.APPROVED,
+				KeyPairGenerator.class, keyPairGenerator.getProvider(),
+				exception);
+
+			throw exception;
+		}
 
 		_recordProvider(
 			algorithm, CryptoFunctionApprovalType.APPROVED,
@@ -310,12 +360,22 @@ public class CryptoUtil {
 		if (PropsValues.FIPS_ENABLED) {
 			_validateAlgorithm(algorithm, approvalType, Mac.class);
 			_validateKey(
-				key.getAlgorithm(), approvalType, Mac.class, _getKeySize(key));
+				_getKeyAlgorithm(key), approvalType, Mac.class,
+				_getKeySize(key));
 		}
 
 		Mac mac = _getMac(algorithm, approvalType);
 
-		mac.init(key);
+		try {
+			mac.init(key);
+		}
+		catch (Error | InvalidKeyException exception) {
+			_recordInitThrowable(
+				algorithm, approvalType, Mac.class, mac.getProvider(),
+				exception);
+
+			throw exception;
+		}
 
 		_recordProvider(algorithm, approvalType, Mac.class, mac.getProvider());
 
@@ -399,7 +459,16 @@ public class CryptoUtil {
 
 		Signature signature = _createSignature(algorithm, privateKey);
 
-		signature.initSign(privateKey);
+		try {
+			signature.initSign(privateKey);
+		}
+		catch (Error | InvalidKeyException exception) {
+			_recordInitThrowable(
+				algorithm, CryptoFunctionApprovalType.APPROVED, Signature.class,
+				signature.getProvider(), exception);
+
+			throw exception;
+		}
 
 		return signature;
 	}
@@ -410,7 +479,16 @@ public class CryptoUtil {
 
 		Signature signature = _createSignature(algorithm, publicKey);
 
-		signature.initVerify(publicKey);
+		try {
+			signature.initVerify(publicKey);
+		}
+		catch (Error | InvalidKeyException exception) {
+			_recordInitThrowable(
+				algorithm, CryptoFunctionApprovalType.APPROVED, Signature.class,
+				signature.getProvider(), exception);
+
+			throw exception;
+		}
 
 		return signature;
 	}
@@ -472,7 +550,7 @@ public class CryptoUtil {
 				algorithm, CryptoFunctionApprovalType.APPROVED,
 				Signature.class);
 			_validateKey(
-				key.getAlgorithm(), CryptoFunctionApprovalType.APPROVED,
+				_getKeyAlgorithm(key), CryptoFunctionApprovalType.APPROVED,
 				Signature.class, 0);
 		}
 
@@ -498,7 +576,9 @@ public class CryptoUtil {
 	}
 
 	private static Provider _fetchPinnedProvider(
-		CryptoFunctionApprovalType approvalType) {
+			String algorithm, CryptoFunctionApprovalType approvalType,
+			Class<?> factoryClass)
+		throws NoSuchAlgorithmException {
 
 		if (!PropsValues.FIPS_ENABLED ||
 			(approvalType == CryptoFunctionApprovalType.ALLOWED)) {
@@ -506,14 +586,28 @@ public class CryptoUtil {
 			return null;
 		}
 
-		return FIPSModeValidator.fetchApprovedModeProvider();
+		Provider provider = FIPSModeValidator.fetchApprovedModeProvider();
+
+		if ((provider != null) || !FIPSModeValidator.hasFailedValidation()) {
+			return provider;
+		}
+
+		_writeAlgorithmRejected(
+			algorithm, approvalType, true, factoryClass, null,
+			"module-unavailable");
+
+		throw new NoSuchAlgorithmException(
+			StringBundler.concat(
+				"Algorithm \"", algorithm,
+				"\" is not available because the FIPS validation failed"));
 	}
 
 	private static Cipher _getCipher(
 			CryptoFunctionApprovalType approvalType, String transformation)
 		throws NoSuchAlgorithmException, NoSuchPaddingException {
 
-		Provider provider = _fetchPinnedProvider(approvalType);
+		Provider provider = _fetchPinnedProvider(
+			transformation, approvalType, Cipher.class);
 
 		if (provider == null) {
 			return Cipher.getInstance(transformation);
@@ -522,10 +616,12 @@ public class CryptoUtil {
 		try {
 			return Cipher.getInstance(transformation, provider);
 		}
-		catch (NoSuchAlgorithmException | NoSuchPaddingException exception) {
-			_writeProviderException(
-				transformation, approvalType, exception, Cipher.class,
-				provider);
+		catch (Error | NoSuchAlgorithmException | NoSuchPaddingException
+					exception) {
+
+			_writeProviderThrowable(
+				transformation, approvalType, Cipher.class, provider,
+				exception);
 
 			throw exception;
 		}
@@ -539,11 +635,19 @@ public class CryptoUtil {
 		return 0;
 	}
 
+	private static String _getKeyAlgorithm(Key key) throws InvalidKeyException {
+		if (key == null) {
+			throw new InvalidKeyException("Key is null");
+		}
+
+		return key.getAlgorithm();
+	}
+
 	private static KeyFactory _getKeyFactory(String algorithm)
 		throws NoSuchAlgorithmException {
 
 		Provider provider = _fetchPinnedProvider(
-			CryptoFunctionApprovalType.APPROVED);
+			algorithm, CryptoFunctionApprovalType.APPROVED, KeyFactory.class);
 
 		if (provider == null) {
 			return KeyFactory.getInstance(algorithm);
@@ -552,12 +656,12 @@ public class CryptoUtil {
 		try {
 			return KeyFactory.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
 				algorithm, CryptoFunctionApprovalType.APPROVED,
-				noSuchAlgorithmException, KeyFactory.class, provider);
+				KeyFactory.class, provider, exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -565,7 +669,7 @@ public class CryptoUtil {
 		throws NoSuchAlgorithmException {
 
 		Provider provider = _fetchPinnedProvider(
-			CryptoFunctionApprovalType.APPROVED);
+			algorithm, CryptoFunctionApprovalType.APPROVED, KeyGenerator.class);
 
 		if (provider == null) {
 			return KeyGenerator.getInstance(algorithm);
@@ -574,12 +678,12 @@ public class CryptoUtil {
 		try {
 			return KeyGenerator.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
 				algorithm, CryptoFunctionApprovalType.APPROVED,
-				noSuchAlgorithmException, KeyGenerator.class, provider);
+				KeyGenerator.class, provider, exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -587,7 +691,8 @@ public class CryptoUtil {
 		throws NoSuchAlgorithmException {
 
 		Provider provider = _fetchPinnedProvider(
-			CryptoFunctionApprovalType.APPROVED);
+			algorithm, CryptoFunctionApprovalType.APPROVED,
+			KeyPairGenerator.class);
 
 		if (provider == null) {
 			return KeyPairGenerator.getInstance(algorithm);
@@ -596,12 +701,12 @@ public class CryptoUtil {
 		try {
 			return KeyPairGenerator.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
 				algorithm, CryptoFunctionApprovalType.APPROVED,
-				noSuchAlgorithmException, KeyPairGenerator.class, provider);
+				KeyPairGenerator.class, provider, exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -621,7 +726,8 @@ public class CryptoUtil {
 			String algorithm, CryptoFunctionApprovalType approvalType)
 		throws NoSuchAlgorithmException {
 
-		Provider provider = _fetchPinnedProvider(approvalType);
+		Provider provider = _fetchPinnedProvider(
+			algorithm, approvalType, Mac.class);
 
 		if (provider == null) {
 			return Mac.getInstance(algorithm);
@@ -630,12 +736,11 @@ public class CryptoUtil {
 		try {
 			return Mac.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
-				algorithm, approvalType, noSuchAlgorithmException, Mac.class,
-				provider);
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
+				algorithm, approvalType, Mac.class, provider, exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -643,7 +748,8 @@ public class CryptoUtil {
 			String algorithm, CryptoFunctionApprovalType approvalType)
 		throws NoSuchAlgorithmException {
 
-		Provider provider = _fetchPinnedProvider(approvalType);
+		Provider provider = _fetchPinnedProvider(
+			algorithm, approvalType, MessageDigest.class);
 
 		if (provider == null) {
 			return MessageDigest.getInstance(algorithm);
@@ -652,12 +758,12 @@ public class CryptoUtil {
 		try {
 			return MessageDigest.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
-				algorithm, approvalType, noSuchAlgorithmException,
-				MessageDigest.class, provider);
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
+				algorithm, approvalType, MessageDigest.class, provider,
+				exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -665,7 +771,7 @@ public class CryptoUtil {
 		throws NoSuchAlgorithmException {
 
 		Provider provider = _fetchPinnedProvider(
-			CryptoFunctionApprovalType.APPROVED);
+			algorithm, CryptoFunctionApprovalType.APPROVED, Signature.class);
 
 		if (provider == null) {
 			return Signature.getInstance(algorithm);
@@ -674,12 +780,12 @@ public class CryptoUtil {
 		try {
 			return Signature.getInstance(algorithm, provider);
 		}
-		catch (NoSuchAlgorithmException noSuchAlgorithmException) {
-			_writeProviderException(
-				algorithm, CryptoFunctionApprovalType.APPROVED,
-				noSuchAlgorithmException, Signature.class, provider);
+		catch (Error | NoSuchAlgorithmException exception) {
+			_writeProviderThrowable(
+				algorithm, CryptoFunctionApprovalType.APPROVED, Signature.class,
+				provider, exception);
 
-			throw noSuchAlgorithmException;
+			throw exception;
 		}
 	}
 
@@ -720,6 +826,20 @@ public class CryptoUtil {
 				StringPool.BLANK, StringPool.BLANK, "memo-saturated", null));
 
 		return false;
+	}
+
+	private static void _recordInitThrowable(
+		String algorithm, CryptoFunctionApprovalType approvalType,
+		Class<?> factoryClass, Provider provider, Throwable throwable) {
+
+		if (!PropsValues.FIPS_ENABLED ||
+			(provider != FIPSModeValidator.fetchApprovedModeProvider())) {
+
+			return;
+		}
+
+		_writeProviderThrowable(
+			algorithm, approvalType, factoryClass, provider, throwable);
 	}
 
 	private static void _recordProvider(
@@ -864,13 +984,13 @@ public class CryptoUtil {
 		}
 	}
 
-	private static void _writeProviderException(
+	private static void _writeProviderThrowable(
 		String algorithm, CryptoFunctionApprovalType approvalType,
-		Exception exception, Class<?> factoryClass, Provider provider) {
+		Class<?> factoryClass, Provider provider, Throwable throwable) {
 
-		Throwable throwable = _fetchErrorThrowable(exception);
+		Throwable errorThrowable = _fetchErrorThrowable(throwable);
 
-		if ((throwable == null) &&
+		if ((errorThrowable == null) &&
 			FIPSModeValidator.isHealthyProvider(provider)) {
 
 			_writeAlgorithmRejected(
@@ -880,21 +1000,14 @@ public class CryptoUtil {
 			return;
 		}
 
-		if (!_isNewRecord(
-				algorithm, approvalType, factoryClass, provider.getName(),
-				"provider-failure")) {
-
-			return;
-		}
-
-		if (throwable == null) {
-			throwable = exception;
+		if (errorThrowable == null) {
+			errorThrowable = throwable;
 		}
 
 		_writeFIPSAuditEvent(
 			FIPSAuditEventFactory.createProviderFailure(
 				approvalType.name(), factoryClass.getName(),
-				String.valueOf(throwable), provider.getName(),
+				String.valueOf(errorThrowable), provider.getName(),
 				provider.getVersionStr(), algorithm));
 	}
 

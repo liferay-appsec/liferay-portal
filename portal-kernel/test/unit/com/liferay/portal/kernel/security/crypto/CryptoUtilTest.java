@@ -93,6 +93,7 @@ public class CryptoUtilTest {
 	@After
 	public void tearDown() {
 		_setApprovedModeProvider(null);
+		_setValidationFailed(false);
 	}
 
 	@Test
@@ -364,28 +365,78 @@ public class CryptoUtilTest {
 				() -> CryptoUtil.createCipher(
 					_key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION));
 
-			ArgumentCaptor<FIPSAuditEvent> argumentCaptor =
-				ArgumentCaptor.forClass(FIPSAuditEvent.class);
+			_assertProviderFailure(
+				"java.lang.AssertionError: Self test failed", mockedStatic,
+				provider);
+		}
+	}
 
-			mockedStatic.verify(
-				() -> FIPSAuditUtil.write(argumentCaptor.capture()));
+	@Test
+	public void testCreateCipherWhenTheModuleFailsAtInit() throws Exception {
+		Provider provider = _createProvider();
 
-			FIPSAuditEvent fipsAuditEvent = argumentCaptor.getValue();
+		provider.put(
+			"Cipher.AES/GCM/NoPadding", ErrorAtInitCipherSpi.class.getName());
 
-			Assert.assertEquals(
-				"provider-failure", fipsAuditEvent.getEventType());
-			Assert.assertEquals(
-				FIPSAuditEvent.Severity.CRITICAL, fipsAuditEvent.getSeverity());
+		_setApprovedModeProvider(provider);
 
-			Map<String, Object> fields = fipsAuditEvent.getFields();
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
 
-			Assert.assertEquals(
-				"APPROVED", fields.get("crypto-function-approval-type"));
-			Assert.assertEquals(
-				provider.getName(), fields.get("provider-name"));
-			Assert.assertEquals(
-				"java.lang.AssertionError: Self test failed",
-				fields.get("provider-error-message"));
+			Assert.assertThrows(
+				AssertionError.class,
+				() -> CryptoUtil.createCipher(
+					_key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION));
+
+			_assertProviderFailure(
+				"java.lang.AssertionError: Module in error status",
+				mockedStatic, provider);
+		}
+	}
+
+	@Test
+	public void testCreateCipherWhenTheModuleFailsWithAnError()
+		throws Exception {
+
+		Provider provider = new Provider(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString()) {
+
+			@Override
+			public Service getService(String type, String algorithm) {
+				return new Service(
+					this, type, algorithm, StubCipherSpi.class.getName(), null,
+					null) {
+
+					@Override
+					public Object newInstance(Object constructorParameter) {
+						throw new AssertionError("Module in error status");
+					}
+
+				};
+			}
+
+		};
+
+		_setApprovedModeProvider(provider);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertThrows(
+				AssertionError.class,
+				() -> CryptoUtil.createCipher(
+					_key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION));
+
+			_assertProviderFailure(
+				"java.lang.AssertionError: Module in error status",
+				mockedStatic, provider);
 		}
 	}
 
@@ -421,6 +472,71 @@ public class CryptoUtilTest {
 
 			Assert.assertEquals(
 				provider.getName(), fields.get("provider-name"));
+		}
+	}
+
+	@Test
+	public void testCreateCipherWhenTheModuleRefusesAtInit() throws Exception {
+		Provider provider = _createProvider();
+
+		provider.put(
+			"Cipher.AES/GCM/NoPadding", RefusingCipherSpi.class.getName());
+
+		_setApprovedModeProvider(provider);
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class);
+			MockedStatic<FIPSModeValidator> fipsModeValidatorMockedStatic =
+				Mockito.mockStatic(
+					FIPSModeValidator.class, Mockito.CALLS_REAL_METHODS);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			fipsModeValidatorMockedStatic.when(
+				() -> FIPSModeValidator.isHealthyProvider(provider)
+			).thenReturn(
+				true
+			);
+
+			Assert.assertThrows(
+				InvalidKeyException.class,
+				() -> CryptoUtil.createCipher(
+					_key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION));
+
+			Map<String, Object> fields = _assertAlgorithmRejected(
+				true, fipsAuditUtilMockedStatic, "provider-refused",
+				_GCM_TRANSFORMATION);
+
+			Assert.assertEquals(
+				provider.getName(), fields.get("provider-name"));
+		}
+	}
+
+	@Test
+	public void testCreateCipherWhenTheValidationFailed() throws Exception {
+		_setValidationFailed(true);
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertThrows(
+				NoSuchAlgorithmException.class,
+				() -> CryptoUtil.createCipher(
+					_key, Cipher.ENCRYPT_MODE, _GCM_TRANSFORMATION));
+
+			_assertAlgorithmRejected(
+				true, mockedStatic, "module-unavailable", _GCM_TRANSFORMATION);
+
+			MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+				"SHA-1", CryptoFunctionApprovalType.ALLOWED);
+
+			Assert.assertEquals("SHA-1", messageDigest.getAlgorithm());
+
+			mockedStatic.verifyNoInteractions();
 		}
 	}
 
@@ -1097,11 +1213,55 @@ public class CryptoUtilTest {
 		}
 	}
 
-	public static class FailingCipherSpi extends CipherSpi {
+	public static class ErrorAtInitCipherSpi extends StubCipherSpi {
+
+		@Override
+		protected void engineInit(
+			int mode, Key key, AlgorithmParameterSpec algorithmParameterSpec,
+			SecureRandom secureRandom) {
+
+			throw new AssertionError("Module in error status");
+		}
+
+		@Override
+		protected void engineInit(
+			int mode, Key key, SecureRandom secureRandom) {
+
+			throw new AssertionError("Module in error status");
+		}
+
+	}
+
+	public static class FailingCipherSpi extends StubCipherSpi {
 
 		public FailingCipherSpi() {
 			throw new AssertionError("Self test failed");
 		}
+
+	}
+
+	public static class RefusingCipherSpi extends StubCipherSpi {
+
+		@Override
+		protected void engineInit(
+				int mode, Key key,
+				AlgorithmParameterSpec algorithmParameterSpec,
+				SecureRandom secureRandom)
+			throws InvalidKeyException {
+
+			throw new InvalidKeyException("Key rejected by the module");
+		}
+
+		@Override
+		protected void engineInit(int mode, Key key, SecureRandom secureRandom)
+			throws InvalidKeyException {
+
+			throw new InvalidKeyException("Key rejected by the module");
+		}
+
+	}
+
+	public static class StubCipherSpi extends CipherSpi {
 
 		@Override
 		protected byte[] engineDoFinal(
@@ -1146,13 +1306,15 @@ public class CryptoUtilTest {
 
 		@Override
 		protected void engineInit(
-			int mode, Key key, AlgorithmParameterSpec algorithmParameterSpec,
-			SecureRandom secureRandom) {
+				int mode, Key key,
+				AlgorithmParameterSpec algorithmParameterSpec,
+				SecureRandom secureRandom)
+			throws InvalidAlgorithmParameterException, InvalidKeyException {
 		}
 
 		@Override
-		protected void engineInit(
-			int mode, Key key, SecureRandom secureRandom) {
+		protected void engineInit(int mode, Key key, SecureRandom secureRandom)
+			throws InvalidKeyException {
 		}
 
 		@Override
@@ -1253,6 +1415,30 @@ public class CryptoUtilTest {
 		Assert.assertEquals(keySize, encodedBytes.length * 8);
 	}
 
+	private void _assertProviderFailure(
+		String errorMessage, MockedStatic<FIPSAuditUtil> mockedStatic,
+		Provider provider) {
+
+		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
+			FIPSAuditEvent.class);
+
+		mockedStatic.verify(
+			() -> FIPSAuditUtil.write(argumentCaptor.capture()));
+
+		FIPSAuditEvent fipsAuditEvent = argumentCaptor.getValue();
+
+		Assert.assertEquals("provider-failure", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.CRITICAL, fipsAuditEvent.getSeverity());
+
+		Map<String, Object> fields = fipsAuditEvent.getFields();
+
+		Assert.assertEquals(
+			"APPROVED", fields.get("crypto-function-approval-type"));
+		Assert.assertEquals(provider.getName(), fields.get("provider-name"));
+		Assert.assertEquals(errorMessage, fields.get("provider-error-message"));
+	}
+
 	private GCMParameterSpec _createGCMParameterSpec() {
 		String initializationVector = RandomTestUtil.randomString(12);
 
@@ -1284,6 +1470,13 @@ public class CryptoUtilTest {
 				"_approvedModeProviderAtomicReference");
 
 		atomicReference.set(provider);
+	}
+
+	private void _setValidationFailed(boolean validationFailed) {
+		AtomicBoolean atomicBoolean = ReflectionTestUtil.getFieldValue(
+			FIPSModeValidator.class, "_validationFailedAtomicBoolean");
+
+		atomicBoolean.set(validationFailed);
 	}
 
 	private static final String _GCM_TRANSFORMATION = "AES/GCM/NoPadding";

@@ -34,12 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.SSLContext;
@@ -93,6 +95,14 @@ public class FIPSModeValidatorTest {
 			FIPSModeValidator::validate);
 
 		Assert.assertNull(FIPSModeValidator.fetchApprovedModeProvider());
+		Assert.assertTrue(FIPSModeValidator.hasFailedValidation());
+
+		AtomicBoolean atomicBoolean = ReflectionTestUtil.getFieldValue(
+			FIPSModeValidator.class, "_validationFailedAtomicBoolean");
+
+		atomicBoolean.set(false);
+
+		Assert.assertFalse(FIPSModeValidator.hasFailedValidation());
 	}
 
 	@Test
@@ -137,6 +147,12 @@ public class FIPSModeValidatorTest {
 		Assert.assertArrayEquals(
 			new String[] {"BCFKS", "PKCS12"},
 			FIPSModeValidator.getApprovedAlgorithms(KeyStore.class));
+		Assert.assertArrayEquals(
+			new String[] {
+				"PBKDF2WithHmacSHA256", "PBKDF2WithHmacSHA384",
+				"PBKDF2WithHmacSHA512"
+			},
+			FIPSModeValidator.getApprovedAlgorithms(SecretKeyFactory.class));
 		Assert.assertArrayEquals(
 			new String[0],
 			FIPSModeValidator.getApprovedAlgorithms(SSLContext.class));
@@ -204,81 +220,11 @@ public class FIPSModeValidatorTest {
 
 	@Test
 	public void testIsAllowedAlgorithm() {
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class,
-				"AES/GCM/NoPadding"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class,
-				"aes/gcm/nopadding"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class,
-				"AES/ECB/PKCS5Padding"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class, null));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
-				"AES"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
-				"DESede"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, SSLContext.class,
-				"AES/GCM/NoPadding"));
+		String algorithm = RandomTestUtil.randomString();
 
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
-				"RSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
-				"DSA"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyStore.class, "pkcs12"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyStore.class, "JKS"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, KeyStore.class, "JKS"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA512"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class,
-				"SHA512withRSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class,
-				"SHA1withRSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
-				"SHA-256"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
-				"MD5"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
-				"HmacSHA256"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
-				"SHA-512"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
@@ -294,18 +240,43 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
-				RandomTestUtil.randomString()));
+				algorithm));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.ALLOWED, Cipher.class,
-				"AES/ECB/PKCS5Padding"));
+				CryptoFunctionApprovalType.ALLOWED, Mac.class, "HmacMD5"));
 
+		_assertApprovedAlgorithm(
+			"AES/GCM/NoPadding", Cipher.class, "AES/ECB/PKCS5Padding");
+		_assertApprovedAlgorithm("EC", KeyFactory.class, "DSA");
+		_assertApprovedAlgorithm("aes", KeyGenerator.class, algorithm);
+		_assertApprovedAlgorithm("RSA", KeyPairGenerator.class, "DSA");
+		_assertApprovedAlgorithm("pkcs12", KeyStore.class, "JKS");
+		_assertApprovedAlgorithm("HmacSHA512", Mac.class, "HmacSHA1");
+		_assertApprovedAlgorithm("SHA-256", MessageDigest.class, "MD5");
+		_assertApprovedAlgorithm("SHA-384", MessageDigest.class, "SHA-1");
+		_assertApprovedAlgorithm("SHA-512", MessageDigest.class, "SHA3-256");
+		_assertApprovedAlgorithm(
+			"PBKDF2WithHmacSHA256", SecretKeyFactory.class,
+			"PBKDF2WithHmacSHA1");
+		_assertApprovedAlgorithm(
+			"SHA512withRSA", Signature.class, "SHA1withRSA");
+
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				null));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SSLContext.class, "TLS"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacMD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "SHA"));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
@@ -316,82 +287,40 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, KeyStore.class, "JKS"));
-
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "SHA"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
-				"SHA-1"));
-
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "EC"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "DSA"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class,
-				"SHA256withECDSA"));
 	}
 
 	@Test
 	public void testIsAllowedKeyAlgorithm() {
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class, "AES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class, "aes"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Cipher.class, "DES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyGenerator.class,
-				"AES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
-				"RSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyPairGenerator.class,
-				"DSA"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA256"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class, "RSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class, "DSA"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Mac.class, "HmacSHA1"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
-				"AES"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
-				"HmacSHA512"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, SecretKeySpec.class,
-				"Blowfish"));
+		String keyAlgorithm = RandomTestUtil.randomString();
 
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Mac.class, "HmacSHA1"));
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "DES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class,
+				keyAlgorithm));
 
+		_assertApprovedKeyAlgorithm("AES", Cipher.class, "RSA");
+		_assertApprovedKeyAlgorithm("EC", KeyFactory.class, "ECDSA");
+		_assertApprovedKeyAlgorithm("aes", KeyGenerator.class, keyAlgorithm);
+		_assertApprovedKeyAlgorithm("RSA", KeyPairGenerator.class, "DSA");
+		_assertApprovedKeyAlgorithm("HmacSHA256", Mac.class, "HmacSHA1");
+		_assertApprovedKeyAlgorithm("EC", Signature.class, "ECDSA");
+		_assertApprovedKeyAlgorithm("RSA", Signature.class, "DSA");
+		_assertApprovedKeyAlgorithm("AES", SecretKeySpec.class, "Blowfish");
+		_assertApprovedKeyAlgorithm(
+			"HmacSHA512", SecretKeySpec.class, "HmacSHA1");
+
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, null));
 		Assert.assertTrue(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
@@ -402,17 +331,6 @@ public class FIPSModeValidatorTest {
 		Assert.assertFalse(
 			FIPSModeValidator.isAllowedKeyAlgorithm(
 				CryptoFunctionApprovalType.LEGACY, Cipher.class, "DES"));
-
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyFactory.class, "EC"));
-		Assert.assertFalse(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, KeyFactory.class,
-				"ECDSA"));
-		Assert.assertTrue(
-			FIPSModeValidator.isAllowedKeyAlgorithm(
-				CryptoFunctionApprovalType.APPROVED, Signature.class, "EC"));
 	}
 
 	@Test
@@ -1171,6 +1089,32 @@ public class FIPSModeValidatorTest {
 			FIPSModeTestUtil.assertSecurityException(
 				"protocol scheme", () -> FIPSModeValidator.validateURL(null));
 		}
+	}
+
+	private void _assertApprovedAlgorithm(
+		String algorithm, Class<?> factoryClass, String notAllowedAlgorithm) {
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				notAllowedAlgorithm));
+	}
+
+	private void _assertApprovedKeyAlgorithm(
+		String keyAlgorithm, Class<?> factoryClass,
+		String notAllowedKeyAlgorithm) {
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				keyAlgorithm));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				notAllowedKeyAlgorithm));
 	}
 
 	private void _assertClusterLinkConfigurationSecurityException(
