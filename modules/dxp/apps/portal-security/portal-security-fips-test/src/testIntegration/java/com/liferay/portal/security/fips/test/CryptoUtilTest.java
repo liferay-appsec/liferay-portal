@@ -178,9 +178,10 @@ public class CryptoUtilTest {
 			logger.setLevel(level);
 		}
 
-		Assert.assertFalse(
-			messages.toString(),
-			messages.contains("Passed in GCM nonce detected"));
+		for (String message : messages) {
+			Assert.assertFalse(
+				message, message.startsWith("Passed in GCM nonce detected"));
+		}
 
 		boolean callerSuppliedParameters = false;
 
@@ -211,6 +212,24 @@ public class CryptoUtilTest {
 		}
 
 		Assert.assertTrue(callerSuppliedParameters);
+	}
+
+	@Test
+	public void testCreateCipherWithLegacy() throws Exception {
+		KeyGenerator keyGenerator = CryptoUtil.createKeyGenerator("AES", 256);
+
+		Key key = keyGenerator.generateKey();
+
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createCipher(
+				CryptoFunctionApprovalType.LEGACY, key, Cipher.ENCRYPT_MODE,
+				"AES"));
+		Assert.assertThrows(
+			NoSuchAlgorithmException.class,
+			() -> CryptoUtil.createCipher(
+				CryptoFunctionApprovalType.LEGACY, key, Cipher.ENCRYPT_MODE,
+				"AES/CBC/PKCS5Padding"));
 	}
 
 	@Test

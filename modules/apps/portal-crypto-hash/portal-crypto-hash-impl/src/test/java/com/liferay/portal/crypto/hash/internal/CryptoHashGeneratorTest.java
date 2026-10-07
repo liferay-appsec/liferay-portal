@@ -14,6 +14,7 @@ import com.liferay.portal.crypto.hash.provider.bcrypt.internal.BCryptCryptoHashP
 import com.liferay.portal.crypto.hash.provider.message.digest.internal.MessageDigestCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -38,6 +39,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -104,7 +108,9 @@ public class CryptoHashGeneratorTest {
 			Collections.singletonMap(
 				"message.digest.algorithm", DigesterUtil.MD5));
 
-		try (SafeCloseable safeCloseable =
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
@@ -118,6 +124,8 @@ public class CryptoHashGeneratorTest {
 				String.valueOf(cryptoHashException.getCause()),
 				cryptoHashException.getCause() instanceof
 					NoSuchAlgorithmException);
+
+			mockedStatic.verify(() -> FIPSAuditUtil.write(Mockito.any()));
 		}
 	}
 
