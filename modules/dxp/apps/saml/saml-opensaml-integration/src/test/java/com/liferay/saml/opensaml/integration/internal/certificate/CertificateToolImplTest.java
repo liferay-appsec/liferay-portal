@@ -5,6 +5,7 @@
 
 package com.liferay.saml.opensaml.integration.internal.certificate;
 
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
@@ -25,6 +26,8 @@ import java.security.interfaces.RSAPublicKey;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -138,6 +141,8 @@ public class CertificateToolImplTest {
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
 			PropsValues.class, "FIPS_ENABLED", true);
 
+		_clearMemo();
+
 		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
 				FIPSAuditUtil.class)) {
 
@@ -171,6 +176,8 @@ public class CertificateToolImplTest {
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
 			PropsValues.class, "FIPS_ENABLED", true);
 
+		_clearMemo();
+
 		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
 				FIPSAuditUtil.class)) {
 
@@ -203,6 +210,18 @@ public class CertificateToolImplTest {
 		BigInteger modulus = rsaPublicKey.getModulus();
 
 		Assert.assertEquals(expectedBitLength, modulus.bitLength());
+	}
+
+	private void _clearMemo() {
+		Set<String> memoKeys = ReflectionTestUtil.getFieldValue(
+			CryptoUtil.class, "_memoKeys");
+
+		memoKeys.clear();
+
+		AtomicBoolean memoSaturated = ReflectionTestUtil.getFieldValue(
+			CryptoUtil.class, "_memoSaturated");
+
+		memoSaturated.set(false);
 	}
 
 	private X509Certificate _generateX509Certificate(String signatureAlgorithm)
