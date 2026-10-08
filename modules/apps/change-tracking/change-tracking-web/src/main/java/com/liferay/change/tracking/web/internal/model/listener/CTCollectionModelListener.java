@@ -9,12 +9,15 @@ import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.model.CTRemote;
 import com.liferay.change.tracking.rest.client.resource.v1_0.CTCollectionResource;
 import com.liferay.change.tracking.service.CTRemoteLocalService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -126,7 +129,15 @@ public class CTCollectionModelListener extends BaseModelListener<CTCollection> {
 		options.setPost(true);
 
 		options.addPart("client_id", ctRemote.getClientId());
-		options.addPart("client_secret", ctRemote.getClientSecret());
+		options.addPart(
+			"client_secret",
+			SecretResolverUtil.resolve(
+				ctRemote.getCompanyId(),
+				StringBundler.concat(
+					CTRemote.class.getSimpleName(), StringPool.SLASH,
+					ctRemote.getCompanyId(), StringPool.SLASH,
+					ctRemote.getCtRemoteId()),
+				ctRemote.getClientSecret()));
 		options.addPart("grant_type", "client_credentials");
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject(

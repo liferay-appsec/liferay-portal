@@ -7,12 +7,15 @@ package com.liferay.object.internal.action.executor;
 
 import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
+import com.liferay.object.model.ObjectAction;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -35,7 +38,13 @@ public class WebhookObjectActionExecutorImpl implements ObjectActionExecutor {
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.addHeader(
-			"x-api-key", parametersUnicodeProperties.get("secret"));
+			"x-api-key",
+			SecretResolverUtil.resolve(
+				companyId,
+				StringBundler.concat(
+					ObjectAction.class.getSimpleName(), StringPool.SLASH,
+					companyId, StringPool.SLASH, objectActionId),
+				parametersUnicodeProperties.get("secret")));
 		options.setBody(
 			payloadJSONObject.toString(), ContentTypes.APPLICATION_JSON,
 			StringPool.UTF8);
