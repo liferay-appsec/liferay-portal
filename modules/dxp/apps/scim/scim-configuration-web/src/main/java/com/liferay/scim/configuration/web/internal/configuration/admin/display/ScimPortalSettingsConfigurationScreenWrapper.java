@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.settings.configuration.admin.display.PortalSettingsConfigurationScreenContributor;
 import com.liferay.portal.settings.configuration.admin.display.PortalSettingsConfigurationScreenFactory;
 import com.liferay.scim.configuration.web.internal.constants.ScimWebKeys;
@@ -82,6 +83,9 @@ public class ScimPortalSettingsConfigurationScreenWrapper
 	@Reference
 	private PortalSettingsConfigurationScreenFactory
 		_portalSettingsConfigurationScreenFactory;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.scim.configuration.web)"
@@ -192,9 +196,20 @@ public class ScimPortalSettingsConfigurationScreenWrapper
 				OAuth2Authorization oAuth2Authorization =
 					oAuth2Authorizations.get(0);
 
-				httpServletRequest.setAttribute(
-					ScimWebKeys.SCIM_OAUTH2_ACCESS_TOKEN,
-					oAuth2Authorization.getAccessTokenContent());
+				try {
+					httpServletRequest.setAttribute(
+						ScimWebKeys.SCIM_OAUTH2_ACCESS_TOKEN,
+						_secretResolver.resolve(
+							oAuth2Authorization.getCompanyId(),
+							oAuth2Authorization.getAccessTokenContent()));
+				}
+				catch (Exception exception) {
+					_log.error(
+						"Unable to resolve the access token for OAuth2 " +
+							"authorization " +
+								oAuth2Authorization.getOAuth2AuthorizationId(),
+						exception);
+				}
 
 				Date accessTokenExpirationDate =
 					oAuth2Authorization.getAccessTokenExpirationDate();

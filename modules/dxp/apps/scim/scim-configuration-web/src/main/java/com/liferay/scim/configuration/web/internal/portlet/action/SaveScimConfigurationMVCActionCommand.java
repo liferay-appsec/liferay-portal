@@ -53,10 +53,6 @@ import com.liferay.scim.rest.util.ScimThreadLocal;
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
 
-import java.nio.charset.StandardCharsets;
-
-import java.security.MessageDigest;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Dictionary;
@@ -126,17 +122,14 @@ public class SaveScimConfigurationMVCActionCommand
 					oAuth2Application.getOAuth2ApplicationId(),
 					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
+			OAuth2Authorization generatedOAuth2Authorization =
+				_oAuth2AuthorizationLocalService.
+					fetchOAuth2AuthorizationByAccessTokenContent(accessToken);
+
 			for (OAuth2Authorization oAuth2Authorization :
 					oAuth2Authorizations) {
 
-				String accessTokenContent =
-					oAuth2Authorization.getAccessTokenContent();
-
-				if ((accessToken != null) &&
-					MessageDigest.isEqual(
-						accessToken.getBytes(StandardCharsets.UTF_8),
-						accessTokenContent.getBytes(StandardCharsets.UTF_8))) {
-
+				if (oAuth2Authorization.equals(generatedOAuth2Authorization)) {
 					continue;
 				}
 

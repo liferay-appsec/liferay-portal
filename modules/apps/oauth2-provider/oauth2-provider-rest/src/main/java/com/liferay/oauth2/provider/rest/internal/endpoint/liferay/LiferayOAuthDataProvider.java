@@ -538,7 +538,9 @@ public class LiferayOAuthDataProvider
 
 			refreshToken.setAccessTokens(
 				Collections.singletonList(
-					oAuth2Authorization.getAccessTokenContent()));
+					_secretResolver.resolve(
+						oAuth2Authorization.getCompanyId(),
+						oAuth2Authorization.getAccessTokenContent())));
 			refreshToken.setAudiences(oAuth2Authorization.getAudiencesList());
 			refreshToken.setScopes(
 				convertScopeToPermissions(
@@ -1521,8 +1523,11 @@ public class LiferayOAuthDataProvider
 		long lifetime = expires - issuedAt;
 
 		ServerAccessToken serverAccessToken = new BearerAccessToken(
-			client, oAuth2Authorization.getAccessTokenContent(), lifetime,
-			issuedAt);
+			client,
+			_secretResolver.resolve(
+				oAuth2Authorization.getCompanyId(),
+				oAuth2Authorization.getAccessTokenContent()),
+			lifetime, issuedAt);
 
 		List<String> audiencesList = oAuth2Authorization.getAudiencesList();
 
