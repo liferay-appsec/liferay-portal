@@ -62,6 +62,8 @@ public class SchedulerEngineAuditorImpl implements SchedulerEngineAuditor {
 				SchedulerEngine.class.getName(), "0", SchedulerEngine.SCHEDULER,
 				triggerState.toString());
 
+			auditMessage.setResourceAction("system.scheduler.update");
+			auditMessage.setResourceType("scheduler");
 			auditMessage.setServerName(InetAddressUtil.getLocalHostName());
 			auditMessage.setServerPort(_portal.getPortalLocalPort(false));
 

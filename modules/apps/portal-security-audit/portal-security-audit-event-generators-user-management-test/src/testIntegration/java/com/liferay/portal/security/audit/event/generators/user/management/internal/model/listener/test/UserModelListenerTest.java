@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
@@ -29,6 +30,44 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class UserModelListenerTest extends BaseModelListenerTestCase {
+
+	@Test
+	public void testOnBeforeCreate() throws Exception {
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_user = UserTestUtil.addUser();
+		}
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.ADD);
+
+		Assert.assertEquals(
+			"system.user.add", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
+
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_userLocalService.deleteUser(user);
+		}
+
+		AuditMessage auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.DELETE);
+
+		Assert.assertEquals(
+			"system.user.delete", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
+	}
 
 	@Test
 	public void testOnBeforeUpdate() throws Exception {
@@ -77,6 +116,39 @@ public class UserModelListenerTest extends BaseModelListenerTestCase {
 			Assert.assertNotEquals(
 				EventTypes.AGREED_TO_TERMS_OF_USE, auditMessage.getEventType());
 		}
+
+		_userLocalService.updateAgreedToTermsOfUse(_user.getUserId(), false);
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_userLocalService.updateAgreedToTermsOfUse(_user.getUserId(), true);
+
+			_user = _userLocalService.getUser(_user.getUserId());
+
+			_user.setComments(RandomTestUtil.randomString());
+
+			_user = _userLocalService.updateUser(_user);
+		}
+
+		agreedToTermsOfUseAuditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.AGREED_TO_TERMS_OF_USE);
+
+		Assert.assertEquals(
+			"system.user.agree_to_terms_of_use",
+			agreedToTermsOfUseAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"user", agreedToTermsOfUseAuditMessage.getResourceType());
+
+		AuditMessage updateAuditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.UPDATE);
+
+		Assert.assertEquals(
+			"system.user.update", updateAuditMessage.getResourceAction());
+		Assert.assertEquals("user", updateAuditMessage.getResourceType());
 	}
 
 	@DeleteAfterTestRun

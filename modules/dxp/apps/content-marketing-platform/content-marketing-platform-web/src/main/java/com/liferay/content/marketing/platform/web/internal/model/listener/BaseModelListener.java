@@ -12,6 +12,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectEntryLocalServiceUtil;
+import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -66,10 +67,13 @@ public abstract class BaseModelListener<T extends BaseModel<T>>
 			return;
 		}
 
-		auditRouter.route(
-			AuditMessageBuilder.buildAuditMessage(
-				objectEntry.getModelClassName(), objectEntry.getObjectEntryId(),
-				eventType, Collections.singletonList(attribute)));
+		AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
+			objectEntry.getModelClassName(), objectEntry.getObjectEntryId(),
+			eventType, Collections.singletonList(attribute));
+
+		auditMessage.setResourceType("objectentry");
+
+		auditRouter.route(auditMessage);
 	}
 
 	@Reference

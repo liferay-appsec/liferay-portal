@@ -12,6 +12,7 @@ import com.liferay.oauth2.provider.constants.GrantType;
 import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -27,6 +28,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -289,6 +291,9 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 		Assert.assertEquals(
 			"invalid_client_metadata",
 			rejectAdditionalInfoJSONObject.getString("error"));
+
+		_testRegisterWhenFeatureFlagIsEnabled(
+			jsonObject, oAuth2Application, scope);
 	}
 
 	@Test
@@ -781,6 +786,22 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 
 		_testRegisterWithInvalidBearerToken(
 			jwsJwtCompactProducer.signWith(new NoneJwsSignatureProvider()));
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_testRegisterWithInvalidBearerToken(RandomTestUtil.randomString());
+		}
+
+		AuditMessage auditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_REJECT");
+
+		Assert.assertEquals(
+			"system.oauth2application.register_reject",
+			auditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", auditMessage.getResourceType());
 	}
 
 	@Test
@@ -1100,6 +1121,56 @@ public class DynamicRegistrationServiceTest extends BaseClientTestCase {
 				Assert.assertEquals(expectedError, parseError(response));
 			}
 		}
+	}
+
+	private void _testRegisterWhenFeatureFlagIsEnabled(
+			JSONObject jsonObject, OAuth2Application oAuth2Application,
+			String scope)
+		throws Exception {
+
+		_auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			WebTarget registerWebTarget = getRegisterWebTarget();
+
+			Invocation.Builder invocationBuilder = authorize(
+				registerWebTarget.request(), _getToken(oAuth2Application));
+
+			Response response = invocationBuilder.method(
+				"post",
+				Entity.json(
+					_createAuthenticatedRegistrationJSONObject(
+						RandomTestUtil.randomString(), scope
+					).toString()));
+
+			Assert.assertEquals(201, response.getStatus());
+
+			response = invocationBuilder.method(
+				"post", Entity.json(jsonObject.toString()));
+
+			Assert.assertEquals(400, response.getStatus());
+		}
+
+		AuditMessage addAuditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_ADD");
+
+		Assert.assertEquals(
+			"system.oauth2application.register",
+			addAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", addAuditMessage.getResourceType());
+
+		AuditMessage rejectAuditMessage = _fetchAuditMessage(
+			"DYNAMIC_REGISTRATION_REJECT");
+
+		Assert.assertEquals(
+			"system.oauth2application.register_reject",
+			rejectAuditMessage.getResourceAction());
+		Assert.assertEquals(
+			"oauth2application", rejectAuditMessage.getResourceType());
 	}
 
 	private void _testRegisterWithInvalidBearerToken(String bearerToken) {

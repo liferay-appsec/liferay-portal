@@ -188,6 +188,7 @@ public class RoleModelListener extends BaseModelListener<Role> {
 			}
 
 			auditMessage.setCompanyId(role.getCompanyId());
+			auditMessage.setResourceType("role");
 
 			_auditRouter.route(auditMessage);
 		}

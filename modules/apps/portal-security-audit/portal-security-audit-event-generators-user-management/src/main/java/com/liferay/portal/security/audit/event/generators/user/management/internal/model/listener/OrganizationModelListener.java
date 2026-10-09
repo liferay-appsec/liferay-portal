@@ -118,6 +118,8 @@ public class OrganizationModelListener extends BaseModelListener<Organization> {
 
 			auditMessage.setCompanyId(organization.getCompanyId());
 
+			auditMessage.setResourceType("organization");
+
 			_auditRouter.route(auditMessage);
 		}
 		catch (Exception exception) {

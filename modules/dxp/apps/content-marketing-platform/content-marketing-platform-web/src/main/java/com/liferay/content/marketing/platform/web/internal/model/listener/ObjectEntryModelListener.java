@@ -25,6 +25,7 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.sql.dsl.expression.Predicate;
+import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.ModelListenerException;
@@ -490,11 +491,14 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			return;
 		}
 
-		_auditRouter.route(
-			AuditMessageBuilder.buildAuditMessage(
-				cmpTaskObjectEntry.getModelClassName(),
-				cmpTaskObjectEntry.getObjectEntryId(), eventType,
-				Collections.singletonList(new Attribute(title))));
+		AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
+			cmpTaskObjectEntry.getModelClassName(),
+			cmpTaskObjectEntry.getObjectEntryId(), eventType,
+			Collections.singletonList(new Attribute(title)));
+
+		auditMessage.setResourceType("objectentry");
+
+		_auditRouter.route(auditMessage);
 	}
 
 	private void _setResourcePermissions(ObjectEntry objectEntry)

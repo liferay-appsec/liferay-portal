@@ -84,6 +84,8 @@ public class OnDemandAdminTicketGeneratorImpl
 			).put(
 				"requestedCompanyWebId", company.getWebId()
 			));
+		auditMessage.setResourceAction("system.user.grant_on_demand_access");
+		auditMessage.setResourceType("user");
 
 		_auditRouter.route(auditMessage);
 

@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -53,6 +54,26 @@ public class RoleModelListenerTest extends BaseModelListenerTestCase {
 			User.class.getName(), EventTypes.ASSIGN);
 
 		Assert.assertEquals(_user.getCompanyId(), auditMessage.getCompanyId());
+
+		_userLocalService.unsetRoleUsers(
+			_role.getRoleId(), new long[] {_user.getUserId()});
+
+		auditMessages.clear();
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_userLocalService.addRoleUsers(
+				_role.getRoleId(), new long[] {_user.getUserId()});
+		}
+
+		auditMessage = fetchAuditMessage(
+			User.class.getName(), EventTypes.ASSIGN);
+
+		Assert.assertEquals(
+			"system.role.assign", auditMessage.getResourceAction());
+		Assert.assertEquals("role", auditMessage.getResourceType());
 	}
 
 	@Test

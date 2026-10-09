@@ -101,6 +101,9 @@ public class CTOnDemandUserTicketGeneratorImpl
 			).put(
 				"onDemandUserId", user.getUserId()
 			));
+		auditMessage.setResourceAction(
+			"system.ctcollection.grant_on_demand_access");
+		auditMessage.setResourceType("ctcollection");
 
 		_auditRouter.route(auditMessage);
 

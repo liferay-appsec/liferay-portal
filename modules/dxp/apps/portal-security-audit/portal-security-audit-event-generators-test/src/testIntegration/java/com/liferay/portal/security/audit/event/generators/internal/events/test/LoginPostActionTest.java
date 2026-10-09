@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.filters.invoker.InvokerFilterChain;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -142,6 +143,19 @@ public class LoginPostActionTest {
 
 		Assert.assertEquals(
 			auditSessionId, auditRequestThreadLocal.getSessionID());
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-6417")) {
+
+			_run(_createMockHttpServletRequest());
+		}
+
+		auditMessage = _fetchAuditMessage(EventTypes.LOGIN);
+
+		Assert.assertEquals(
+			"system.user.login", auditMessage.getResourceAction());
+		Assert.assertEquals("user", auditMessage.getResourceType());
 	}
 
 	@Test
