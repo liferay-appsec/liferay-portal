@@ -59,6 +59,7 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.zip.ZipReaderFactory;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -442,8 +443,10 @@ public class AnalyticsBatchExportImportManagerImpl
 
 		HttpUriRequest httpUriRequest = _buildHttpUriRequest(
 			null, analyticsConfiguration.liferayAnalyticsDataSourceId(),
-			analyticsConfiguration.
-				liferayAnalyticsFaroBackendSecuritySignature(),
+			_secretResolver.resolve(
+				companyId,
+				analyticsConfiguration.
+					liferayAnalyticsFaroBackendSecuritySignature()),
 			HttpMethods.GET, analyticsConfiguration.liferayAnalyticsProjectId(),
 			analyticsConfiguration.liferayAnalyticsFaroBackendURL() +
 				"/api/1.0/data-sources/" +
@@ -612,7 +615,10 @@ public class AnalyticsBatchExportImportManagerImpl
 				oAuth2Application));
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject(
-			new String(Base64.decode(analyticsConfiguration.token())));
+			new String(
+				Base64.decode(
+					_secretResolver.resolve(
+						companyId, analyticsConfiguration.token()))));
 
 		options.setLocation(
 			StringUtil.replace(
@@ -813,8 +819,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			analyticsConfiguration.liferayAnalyticsDataSourceId());
 		options.addHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
-			analyticsConfiguration.
-				liferayAnalyticsFaroBackendSecuritySignature());
+			_secretResolver.resolve(
+				companyId,
+				analyticsConfiguration.
+					liferayAnalyticsFaroBackendSecuritySignature()));
 		options.addHeader(
 			"OSB-Asah-Project-ID",
 			analyticsConfiguration.liferayAnalyticsProjectId());
@@ -973,8 +981,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			analyticsConfiguration.liferayAnalyticsDataSourceId());
 		httpPost.setHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
-			analyticsConfiguration.
-				liferayAnalyticsFaroBackendSecuritySignature());
+			_secretResolver.resolve(
+				companyId,
+				analyticsConfiguration.
+					liferayAnalyticsFaroBackendSecuritySignature()));
 		httpPost.setHeader(
 			"OSB-Asah-Project-ID",
 			analyticsConfiguration.liferayAnalyticsProjectId());
@@ -1226,6 +1236,9 @@ public class AnalyticsBatchExportImportManagerImpl
 
 	@Reference
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 	@Reference
 	private SettingsLocatorHelper _settingsLocatorHelper;

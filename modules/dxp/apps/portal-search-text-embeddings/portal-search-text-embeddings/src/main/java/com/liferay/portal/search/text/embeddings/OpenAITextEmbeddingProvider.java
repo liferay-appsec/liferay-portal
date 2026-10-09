@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.search.ml.embedding.util.ConfigurationValidationUtil;
 import com.liferay.portal.search.rest.dto.v1_0.EmbeddingProviderConfiguration;
 import com.liferay.portal.search.rest.text.embeddings.configuration.TextEmbeddingProvider;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -91,9 +93,12 @@ public class OpenAITextEmbeddingProvider implements TextEmbeddingProvider {
 
 		Http.Options options = new Http.Options();
 
-		options.addHeader(
-			HttpHeaders.AUTHORIZATION,
-			"Bearer " + MapUtil.getString(attributes, "apiKey"));
+		String apiKey = _secretResolver.resolve(
+			CompanyThreadLocal.getCompanyId(),
+			MapUtil.getString(attributes, "apiKey"));
+
+		options.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
+
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.setBody(
@@ -136,5 +141,8 @@ public class OpenAITextEmbeddingProvider implements TextEmbeddingProvider {
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }
