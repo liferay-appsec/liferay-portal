@@ -9,19 +9,29 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.crypto.hash.CryptoHashGenerator;
 import com.liferay.portal.crypto.hash.CryptoHashResponse;
 import com.liferay.portal.crypto.hash.CryptoHashVerificationContext;
+import com.liferay.portal.crypto.hash.exception.CryptoHashException;
 import com.liferay.portal.crypto.hash.provider.bcrypt.internal.BCryptCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.provider.message.digest.internal.MessageDigestCryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -29,6 +39,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -84,6 +97,7 @@ public class CryptoHashGeneratorTest {
 		_serviceRegistration1.unregister();
 	}
 
+	@NewEnv(type = NewEnv.Type.JVM)
 	@Test
 	public void testCreate() throws Exception {
 		MessageDigestCryptoHashProviderFactory
@@ -94,15 +108,24 @@ public class CryptoHashGeneratorTest {
 			Collections.singletonMap(
 				"message.digest.algorithm", DigesterUtil.MD5));
 
-		try (SafeCloseable safeCloseable =
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			Assert.assertThrows(
-				SecurityException.class,
+			CryptoHashException cryptoHashException = Assert.assertThrows(
+				CryptoHashException.class,
 				() -> messageDigestCryptoHashProviderFactory.create(
 					Collections.singletonMap(
 						"message.digest.algorithm", DigesterUtil.MD5)));
+
+			Assert.assertTrue(
+				String.valueOf(cryptoHashException.getCause()),
+				cryptoHashException.getCause() instanceof
+					NoSuchAlgorithmException);
+
+			mockedStatic.verify(() -> FIPSAuditUtil.write(Mockito.any()));
 		}
 	}
 
@@ -143,6 +166,62 @@ public class CryptoHashGeneratorTest {
 		Assert.assertTrue(
 			_cryptoHashVerifierImpl.verify(
 				_INPUT, hash, cryptoHashVerificationContexts));
+
+		MessageDigestCryptoHashProviderFactory
+			messageDigestCryptoHashProviderFactory =
+				new MessageDigestCryptoHashProviderFactory();
+
+		CryptoHashGenerator cryptoHashGenerator = new CryptoHashGeneratorImpl(
+			messageDigestCryptoHashProviderFactory.create(
+				Collections.singletonMap(
+					"message.digest.algorithm", DigesterUtil.SHA_256)));
+
+		List<Future<Boolean>> futures = new ArrayList<>();
+
+		ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+		try {
+			for (int i = 0; i < 8; i++) {
+				futures.add(
+					executorService.submit(
+						() -> {
+							MessageDigest messageDigest =
+								MessageDigest.getInstance(DigesterUtil.SHA_256);
+
+							for (int j = 0; j < 250; j++) {
+								byte[] input = RandomTestUtil.randomBytes();
+
+								CryptoHashResponse cryptoHashResponse =
+									cryptoHashGenerator.generate(input);
+
+								CryptoHashVerificationContext
+									cryptoHashVerificationContext =
+										cryptoHashResponse.
+											getCryptoHashVerificationContext();
+
+								if (!Arrays.equals(
+										messageDigest.digest(
+											ArrayUtil.append(
+												cryptoHashVerificationContext.
+													getSalt(),
+												input)),
+										cryptoHashResponse.getHash())) {
+
+									return false;
+								}
+							}
+
+							return true;
+						}));
+			}
+
+			for (Future<Boolean> future : futures) {
+				Assert.assertTrue(future.get());
+			}
+		}
+		finally {
+			executorService.shutdownNow();
+		}
 	}
 
 	private static final byte[] _INPUT = RandomTestUtil.randomBytes();

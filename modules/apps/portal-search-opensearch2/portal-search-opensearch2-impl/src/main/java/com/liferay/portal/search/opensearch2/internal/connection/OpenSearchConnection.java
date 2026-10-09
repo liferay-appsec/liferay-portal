@@ -6,14 +6,15 @@
 package com.liferay.portal.search.opensearch2.internal.connection;
 
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.security.KeyStore;
@@ -22,7 +23,11 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.CredentialsProvider;
@@ -32,8 +37,7 @@ import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
 import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.http.nio.ssl.TlsStrategy;
 
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -275,24 +279,44 @@ public class OpenSearchConnection {
 	}
 
 	private SSLContext _createSSLContext() {
+		if (!CryptoUtil.isAllowedAlgorithm(_truststoreType, KeyStore.class) &&
+			_log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"The truststore type \"", _truststoreType,
+					"\" of the configuration property \"truststoreType\" is ",
+					"not allowed in FIPS mode"));
+		}
+
 		char[] truststorePasswordChars = _truststorePassword.toCharArray();
 
-		try {
-			Path path = Paths.get(_truststorePath);
+		try (InputStream inputStream = Files.newInputStream(
+				Paths.get(_truststorePath))) {
 
-			InputStream inputStream = Files.newInputStream(path);
-
-			KeyStore keyStore = KeyStore.getInstance(_truststoreType);
+			KeyStore keyStore = CryptoUtil.createKeyStore(_truststoreType);
 
 			keyStore.load(inputStream, truststorePasswordChars);
 
-			SSLContextBuilder sslContextBuilder = SSLContexts.custom();
+			KeyManagerFactory keyManagerFactory =
+				CryptoUtil.createKeyManagerFactory(
+					KeyManagerFactory.getDefaultAlgorithm());
 
-			sslContextBuilder.loadKeyMaterial(
-				keyStore, truststorePasswordChars);
-			sslContextBuilder.loadTrustMaterial(keyStore, null);
+			keyManagerFactory.init(keyStore, truststorePasswordChars);
 
-			return sslContextBuilder.build();
+			TrustManagerFactory trustManagerFactory =
+				CryptoUtil.createTrustManagerFactory(
+					TrustManagerFactory.getDefaultAlgorithm());
+
+			trustManagerFactory.init(keyStore);
+
+			SSLContext sslContext = CryptoUtil.createSSLContext("TLS");
+
+			sslContext.init(
+				keyManagerFactory.getKeyManagers(),
+				trustManagerFactory.getTrustManagers(), null);
+
+			return sslContext;
 		}
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
@@ -300,6 +324,49 @@ public class OpenSearchConnection {
 		finally {
 			Arrays.fill(truststorePasswordChars, '\0');
 		}
+	}
+
+	private SSLParameters _createSSLParameters(SSLContext sslContext) {
+		SSLParameters sslParameters = new SSLParameters();
+
+		SSLParameters defaultSSLParameters =
+			sslContext.getDefaultSSLParameters();
+
+		try {
+			CryptoUtil.configureSSLParameters(
+				defaultSSLParameters.getCipherSuites(),
+				defaultSSLParameters.getProtocols(), sslParameters);
+		}
+		catch (SSLException sslException) {
+			throw new RuntimeException(sslException);
+		}
+
+		return sslParameters;
+	}
+
+	private TlsStrategy _createTlsStrategy() {
+		SSLContext sslContext = _createSSLContext();
+
+		ClientTlsStrategyBuilder clientTlsStrategyBuilder =
+			ClientTlsStrategyBuilder.create();
+
+		clientTlsStrategyBuilder.setSslContext(sslContext);
+
+		SSLParameters sslParameters = _createSSLParameters(sslContext);
+
+		String[] cipherSuites = sslParameters.getCipherSuites();
+
+		if (cipherSuites != null) {
+			clientTlsStrategyBuilder.setCiphers(cipherSuites);
+		}
+
+		String[] protocols = sslParameters.getProtocols();
+
+		if (protocols != null) {
+			clientTlsStrategyBuilder.setTlsVersions(protocols);
+		}
+
+		return clientTlsStrategyBuilder.build();
 	}
 
 	private OpenSearchTransport _createTransport() {
@@ -333,10 +400,7 @@ public class OpenSearchConnection {
 
 				if (_httpSSLEnabled) {
 					poolingAsyncClientConnectionManagerBuilder.setTlsStrategy(
-						ClientTlsStrategyBuilder.create(
-						).setSslContext(
-							_createSSLContext()
-						).build());
+						_createTlsStrategy());
 				}
 
 				if ((_proxyConfig != null) &&

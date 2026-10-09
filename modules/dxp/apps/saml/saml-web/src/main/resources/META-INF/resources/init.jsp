@@ -24,7 +24,9 @@ page import="com.liferay.portal.kernel.language.UnicodeLanguageUtil" %><%@
 page import="com.liferay.portal.kernel.portlet.LiferayWindowState" %><%@
 page import="com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder" %><%@
 page import="com.liferay.portal.kernel.repository.model.FileEntry" %><%@
+page import="com.liferay.portal.kernel.security.fips.FIPSModeValidator" %><%@
 page import="com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil" %><%@
+page import="com.liferay.portal.kernel.util.ArrayUtil" %><%@
 page import="com.liferay.portal.kernel.util.Constants" %><%@
 page import="com.liferay.portal.kernel.util.GetterUtil" %><%@
 page import="com.liferay.portal.kernel.util.HtmlUtil" %><%@
@@ -70,6 +72,7 @@ page import="com.liferay.taglib.search.ResultRow" %>
 <%@ page import="jakarta.portlet.PortletURL" %>
 
 <%@ page import="java.security.InvalidParameterException" %><%@
+page import="java.security.KeyPairGenerator" %><%@
 page import="java.security.KeyStore" %><%@
 page import="java.security.cert.CertificateException" %><%@
 page import="java.security.cert.X509Certificate" %>

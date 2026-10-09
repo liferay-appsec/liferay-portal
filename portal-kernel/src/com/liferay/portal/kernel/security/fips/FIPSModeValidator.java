@@ -9,8 +9,10 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
-import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -34,8 +36,13 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.KeyFactory;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,9 +51,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -61,6 +75,10 @@ import org.xml.sax.InputSource;
  * @author Caio Farias
  */
 public class FIPSModeValidator {
+
+	public static Provider fetchApprovedModeProvider() {
+		return _approvedModeProviderAtomicReference.get();
+	}
 
 	public static Provider fetchProvider() {
 		Provider[] providers = Security.getProviders();
@@ -92,43 +110,145 @@ public class FIPSModeValidator {
 				_allowedTLSProtocols, SetUtil.fromArray(tlsProtocols)));
 	}
 
-	public static boolean isNotAllowedAlgorithm(String algorithm) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return false;
+	public static String[] getApprovedAlgorithms(Class<?> factoryClass) {
+		return ArrayUtil.clone(
+			_approvedAlgorithms.getOrDefault(factoryClass, new String[0]));
+	}
+
+	public static int[] getKeySizes(String keyAlgorithm) {
+		if (StringUtil.equalsIgnoreCase(keyAlgorithm, "AES")) {
+			return ArrayUtil.clone(_AES_KEY_SIZES);
 		}
 
-		if (Validator.isNull(algorithm)) {
+		if (StringUtil.equalsIgnoreCase(keyAlgorithm, "RSA")) {
+			return ArrayUtil.clone(_RSA_KEY_SIZES);
+		}
+
+		return new int[0];
+	}
+
+	public static boolean hasFailedValidation() {
+		return _validationFailedAtomicBoolean.get();
+	}
+
+	public static boolean isAllowedAlgorithm(
+		CryptoFunctionApprovalType approvalType, Class<?> factoryClass,
+		String algorithm) {
+
+		if (ArrayUtil.contains(
+				_approvedAlgorithms.get(factoryClass), algorithm, true)) {
+
 			return true;
 		}
 
-		for (String allowedAlgorithm : _allowedAlgorithms) {
-			if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
-				return false;
+		if (approvalType == CryptoFunctionApprovalType.APPROVED) {
+			return false;
+		}
+
+		if (ArrayUtil.contains(
+				_legacyAlgorithms.get(factoryClass), algorithm, true)) {
+
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.LEGACY) {
+			return false;
+		}
+
+		return ArrayUtil.contains(
+			_allowedAlgorithms.get(factoryClass), algorithm, true);
+	}
+
+	public static boolean isAllowedKeyAlgorithm(
+		CryptoFunctionApprovalType approvalType, Class<?> factoryClass,
+		String keyAlgorithm) {
+
+		if (_isKeyAlgorithm(_approvedAlgorithms, factoryClass, keyAlgorithm)) {
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.APPROVED) {
+			return false;
+		}
+
+		if (_isKeyAlgorithm(_legacyAlgorithms, factoryClass, keyAlgorithm)) {
+			return true;
+		}
+
+		if (approvalType == CryptoFunctionApprovalType.LEGACY) {
+			return false;
+		}
+
+		return _isKeyAlgorithm(_allowedAlgorithms, factoryClass, keyAlgorithm);
+	}
+
+	public static boolean isAllowedKeySize(String keyAlgorithm, int keySize) {
+		if (ArrayUtil.contains(getKeySizes(keyAlgorithm), keySize)) {
+			return true;
+		}
+
+		for (String hmacAlgorithm : _HMAC_ALGORITHMS) {
+			if (StringUtil.equalsIgnoreCase(keyAlgorithm, hmacAlgorithm) &&
+				(keySize >= _HMAC_KEY_SIZE_MIN)) {
+
+				return true;
 			}
 		}
 
-		return true;
+		return false;
+	}
+
+	public static boolean isAllowedSSLContextProtocol(String protocol) {
+		if (StringUtil.equalsIgnoreCase(protocol, "TLS")) {
+			return true;
+		}
+
+		for (String allowedTLSProtocol : _allowedTLSProtocols) {
+			if (StringUtil.equalsIgnoreCase(protocol, allowedTLSProtocol)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static boolean isAllowedTLSFactoryAlgorithm(String algorithm) {
+		return StringUtil.equalsIgnoreCase(algorithm, _TLS_FACTORY_ALGORITHM);
+	}
+
+	public static boolean isHealthyProvider(Provider provider) {
+		try {
+			_validateFIPSProvider(new Provider[] {provider});
+
+			return true;
+		}
+		catch (SecurityException securityException) {
+			return false;
+		}
 	}
 
 	public static void validate() {
-		Provider[] providers = Security.getProviders();
+		Provider approvedModeProvider = null;
 
-		_validateFIPSProvider(providers);
-		_validateProviders(providers);
+		try {
+			Provider[] providers = Security.getProviders();
 
-		_validateAllowedPropertyValues(System::getProperty);
-		_validatePortalProperties();
-		_validateRequiredPropertyValues(
-			Security::getProperty, _requiredSecurityProperties);
-		_validateRequiredPropertyValues(
-			System::getProperty, _requiredSystemProperties);
-		_validateSecureRandomProvider();
-	}
+			_validateFIPSProvider(providers);
+			_validateProviders(providers);
 
-	public static void validateAlgorithm(String algorithm) {
-		if (isNotAllowedAlgorithm(algorithm)) {
-			throw new SecurityException(
-				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
+			_validateAllowedPropertyValues(System::getProperty);
+			_validatePortalProperties();
+			_validateRequiredPropertyValues(
+				Security::getProperty, _requiredSecurityProperties);
+			_validateRequiredPropertyValues(
+				System::getProperty, _requiredSystemProperties);
+			_validateSecureRandomProvider();
+
+			approvedModeProvider = providers[0];
+		}
+		finally {
+			_approvedModeProviderAtomicReference.set(approvedModeProvider);
+			_validationFailedAtomicBoolean.set(approvedModeProvider == null);
 		}
 	}
 
@@ -142,21 +262,6 @@ public class FIPSModeValidator {
 				"JWS algorithm \"" + algorithm +
 					"\" is not allowed in FIPS mode");
 		}
-	}
-
-	public static void validateKey(String algorithm, int keySize) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
-		}
-
-		validateAlgorithm(algorithm);
-
-		if ((keySize == 0) || _allowedSymmetricKeySizes.contains(keySize)) {
-			return;
-		}
-
-		throw new SecurityException(
-			"Key size " + keySize + " is not allowed in FIPS mode");
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {
@@ -178,6 +283,30 @@ public class FIPSModeValidator {
 
 		throw new SecurityException(
 			"URL protocol scheme is not allowed in FIPS mode");
+	}
+
+	private static String _getKeyAlgorithm(
+		Class<?> factoryClass, String algorithm) {
+
+		if (factoryClass == Cipher.class) {
+			String[] segments = StringUtil.split(algorithm, CharPool.SLASH);
+
+			return segments[0];
+		}
+
+		if (factoryClass == Signature.class) {
+			int index = algorithm.indexOf("with");
+
+			String keyAlgorithm = algorithm.substring(index + 4);
+
+			if (StringUtil.equalsIgnoreCase(keyAlgorithm, "ECDSA")) {
+				return "EC";
+			}
+
+			return keyAlgorithm;
+		}
+
+		return algorithm;
 	}
 
 	private static List<String> _getPlaintextSecretProperties(
@@ -202,6 +331,36 @@ public class FIPSModeValidator {
 		}
 
 		return plaintextSecretProperties;
+	}
+
+	private static boolean _isKeyAlgorithm(
+		Map<Class<?>, String[]> algorithms, Class<?> factoryClass,
+		String keyAlgorithm) {
+
+		Class<?>[] factoryClasses = {factoryClass};
+
+		if (!_approvedAlgorithms.containsKey(factoryClass)) {
+			factoryClasses = _KEY_FACTORY_CLASSES;
+		}
+
+		for (Class<?> currentFactoryClass : factoryClasses) {
+			String[] currentAlgorithms = algorithms.get(currentFactoryClass);
+
+			if (currentAlgorithms == null) {
+				continue;
+			}
+
+			for (String algorithm : currentAlgorithms) {
+				if (StringUtil.equalsIgnoreCase(
+						keyAlgorithm,
+						_getKeyAlgorithm(currentFactoryClass, algorithm))) {
+
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private static Document _readChannelPropertiesDocument(
@@ -332,7 +491,7 @@ public class FIPSModeValidator {
 		String[] symAlgorithmParts = StringUtil.split(
 			symAlgorithm, CharPool.SLASH);
 
-		validateKey(
+		_validateKey(
 			symAlgorithmParts[0],
 			GetterUtil.getInteger(
 				symEncryptElement.getAttribute("sym_keylength")));
@@ -479,14 +638,42 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validateKey(String algorithm, int keySize) {
+		if (!PropsValues.FIPS_ENABLED || (keySize == 0) ||
+			isAllowedKeySize(algorithm, keySize)) {
+
+			return;
+		}
+
+		throw new SecurityException(
+			"Key size " + keySize + " is not allowed in FIPS mode");
+	}
+
+	private static void _validateKeyAlgorithm(
+		String algorithm, Class<?> factoryClass) {
+
+		if (Validator.isNull(algorithm) ||
+			!isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm)) {
+
+			throw new SecurityException(
+				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
+		}
+	}
+
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
 		String upperCaseAlgorithm = StringUtil.toUpperCase(
 			GetterUtil.getString(algorithm));
 
-		if (!upperCaseAlgorithm.startsWith(PasswordEncryptor.TYPE_PBKDF2) ||
-			!upperCaseAlgorithm.contains("SHA256")) {
+		String[] upperCaseAlgorithmParts = StringUtil.split(
+			upperCaseAlgorithm, CharPool.SLASH);
+
+		if (ArrayUtil.isEmpty(upperCaseAlgorithmParts) ||
+			!ArrayUtil.contains(
+				getApprovedAlgorithms(SecretKeyFactory.class),
+				upperCaseAlgorithmParts[0], true)) {
 
 			throw new SecurityException(
 				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
@@ -556,12 +743,27 @@ public class FIPSModeValidator {
 
 	private static void _validatePortalProperties() {
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
-			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
+			String authMACAlgorithm = PropsUtil.get(
+				PropsKeys.AUTH_MAC_ALGORITHM);
+
+			if (!isAllowedAlgorithm(
+					CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+					authMACAlgorithm) &&
+				_log.isWarnEnabled()) {
+
+				_log.warn(
+					StringBundler.concat(
+						"Auth MAC is disabled in FIPS mode because the ",
+						"property \"", PropsKeys.AUTH_MAC_ALGORITHM,
+						"\" is set to \"", authMACAlgorithm, "\""));
+			}
 		}
 
-		validateAlgorithm(
-			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
-		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
+		_validateKeyAlgorithm(
+			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM),
+			KeyGenerator.class);
+		_validateKeyAlgorithm(
+			PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM, Cipher.class);
 
 		if (!GetterUtil.getBoolean(
 				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
@@ -655,15 +857,34 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static final int[] _AES_KEY_SIZES = {128, 192, 256};
+
+	private static final String[] _HMAC_ALGORITHMS = {
+		"HmacSHA1", "HmacSHA224", "HmacSHA256", "HmacSHA384", "HmacSHA512"
+	};
+
+	private static final int _HMAC_KEY_SIZE_MIN = 112;
+
+	private static final Class<?>[] _KEY_FACTORY_CLASSES = {
+		Cipher.class, KeyFactory.class, KeyGenerator.class,
+		KeyPairGenerator.class, Mac.class
+	};
+
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN =
 		1300000;
 
-	private static final Set<String> _allowedAlgorithms = Set.of(
-		"AES", "HmacSHA256", "HmacSHA384", "HmacSHA512", "PBKDF2WithHmacSHA256",
-		"PBKDF2WithHmacSHA384", "PBKDF2WithHmacSHA512", "SHA-256", "SHA-384",
-		"SHA-512");
+	private static final int[] _RSA_KEY_SIZES = {2048, 3072, 4096};
+
+	private static final String _TLS_FACTORY_ALGORITHM = "PKIX";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		FIPSModeValidator.class);
+
+	private static final Map<Class<?>, String[]> _allowedAlgorithms = Map.of(
+		KeyStore.class, new String[] {"JKS"}, MessageDigest.class,
+		new String[] {"MD5"});
 	private static final Set<String> _allowedJWSAlgorithms = Set.of(
 		"ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512", "RS256",
 		"RS384", "RS512");
@@ -677,8 +898,6 @@ public class FIPSModeValidator {
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
 				"SunSASL", "XMLDSig"));
-	private static final Set<Integer> _allowedSymmetricKeySizes = Set.of(
-		128, 192, 256);
 	private static final Map<String, String[]> _allowedSystemProperties =
 		Map.of("jdk.tls.client.protocols", new String[] {"TLSv1.2", "TLSv1.3"});
 	private static final Set<String> _allowedTLSCipherSuites = Set.of(
@@ -689,6 +908,27 @@ public class FIPSModeValidator {
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384");
 	private static final Set<String> _allowedTLSProtocols = Set.of(
 		"TLSv1.2", "TLSv1.3");
+	private static final Map<Class<?>, String[]> _approvedAlgorithms = Map.of(
+		Cipher.class, new String[] {"AES/GCM/NoPadding"}, KeyFactory.class,
+		new String[] {"EC", "RSA"}, KeyGenerator.class, new String[] {"AES"},
+		KeyPairGenerator.class, new String[] {"RSA"}, KeyStore.class,
+		new String[] {"BCFKS", "PKCS12"}, Mac.class,
+		new String[] {"HmacSHA256", "HmacSHA384", "HmacSHA512"},
+		MessageDigest.class, new String[] {"SHA-256", "SHA-384", "SHA-512"},
+		SecretKeyFactory.class,
+		new String[] {
+			"PBKDF2WithHmacSHA256", "PBKDF2WithHmacSHA384",
+			"PBKDF2WithHmacSHA512"
+		},
+		Signature.class,
+		new String[] {
+			"SHA256withECDSA", "SHA256withRSA", "SHA384withRSA", "SHA512withRSA"
+		});
+	private static final AtomicReference<Provider>
+		_approvedModeProviderAtomicReference = new AtomicReference<>();
+	private static final Map<Class<?>, String[]> _legacyAlgorithms = Map.of(
+		Mac.class, new String[] {"HmacSHA1"}, MessageDigest.class,
+		new String[] {"SHA", "SHA-1"});
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =
@@ -696,10 +936,16 @@ public class FIPSModeValidator {
 			"jdk.tls.disabledAlgorithms",
 			new String[] {"SSLv3", "TLS_RSA_*", "TLSv1", "TLSv1.1"},
 			"ocsp.enable", new String[] {"true"},
-			"ssl.TrustManagerFactory.algorithm", new String[] {"PKIX"});
+			"ssl.KeyManagerFactory.algorithm",
+			new String[] {_TLS_FACTORY_ALGORITHM},
+			"ssl.TrustManagerFactory.algorithm",
+			new String[] {_TLS_FACTORY_ALGORITHM});
 	private static final Map<String, String[]> _requiredSystemProperties =
 		Map.of(
 			"com.sun.net.ssl.checkRevocation", new String[] {"true"},
-			"com.sun.security.enableCRLDP", new String[] {"true"});
+			"com.sun.security.enableCRLDP", new String[] {"true"},
+			"org.bouncycastle.fips.approved_only", new String[] {"true"});
+	private static final AtomicBoolean _validationFailedAtomicBoolean =
+		new AtomicBoolean();
 
 }

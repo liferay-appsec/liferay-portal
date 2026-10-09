@@ -6,7 +6,6 @@
 package com.liferay.portal.security.ldap.internal.configuration.persistence.listener;
 
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -18,9 +17,6 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 /**
  * @author Jorge García Jiménez
@@ -34,9 +30,7 @@ public class LDAPAuthConfigurationModelListenerTest {
 
 	@Test
 	public void testOnBeforeSave() throws Exception {
-		try (MockedStatic<FIPSModeValidator> fipsModeValidatorMockedStatic =
-				Mockito.mockStatic(FIPSModeValidator.class);
-			SafeCloseable safeCloseable =
+		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", false)) {
 
@@ -48,9 +42,6 @@ public class LDAPAuthConfigurationModelListenerTest {
 					).put(
 						"passwordEncryptionAlgorithm", algorithm
 					).build());
-
-				fipsModeValidatorMockedStatic.verify(
-					() -> FIPSModeValidator.validateAlgorithm(algorithm));
 			}
 		}
 
@@ -107,11 +98,12 @@ public class LDAPAuthConfigurationModelListenerTest {
 	}
 
 	private static final String[] _ALGORITHMS_ALLOWED = {
-		"PBKDF2WithHmacSHA256", "SHA-256", "SHA-384", "SHA-512"
+		"PBKDF2WithHmacSHA256", "PBKDF2WithHmacSHA512/160/1300000", "SHA-256",
+		"SHA-384", "SHA-512"
 	};
 
 	private static final String[] _ALGORITHMS_NOT_ALLOWED = {
-		"", "BCRYPT", "MD5", "NONE", "SHA", "SSHA"
+		"", "AES", "BCRYPT", "MD5", "NONE", "RSA", "SHA", "SHA3-256", "SSHA"
 	};
 
 	private final LDAPAuthConfigurationModelListener _modelListener =

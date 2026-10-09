@@ -5,7 +5,10 @@
 
 package com.liferay.saml.opensaml.integration.internal.certificate;
 
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -15,12 +18,16 @@ import java.math.BigInteger;
 
 import java.security.InvalidParameterException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -30,6 +37,9 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Pedro Victor Silvestre
@@ -84,6 +94,11 @@ public class CertificateToolImplTest {
 		Assert.assertTrue(name.contains("OU=" + organizationUnit));
 		Assert.assertTrue(name.contains("ST=" + state));
 
+		FIPSModeTestUtil.assertAlgorithm(
+			"SHA-256",
+			() -> _certificateToolImpl.getFingerprint(
+				"SHA-256", x509Certificate1));
+
 		String fingerprint = _certificateToolImpl.getFingerprint(
 			"SHA-256", x509Certificate1);
 
@@ -112,17 +127,43 @@ public class CertificateToolImplTest {
 		Assert.assertEquals(-1, x509Certificate1.getBasicConstraints());
 
 		X509Certificate x509Certificate2 = _generateX509Certificate(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+			"SHA256withRSA");
 
 		Assert.assertNotEquals(
 			x509Certificate1.getSerialNumber(),
 			x509Certificate2.getSerialNumber());
+
+		X509Certificate x509Certificate3 = _generateX509Certificate(
+			"SHA1withRSA");
+
+		Assert.assertEquals("SHA1withRSA", x509Certificate3.getSigAlgName());
+
+		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			PropsValues.class, "FIPS_ENABLED", true);
+
+		_clearMemo();
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			CertificateException certificateException = Assert.assertThrows(
+				CertificateException.class,
+				() -> _generateX509Certificate("SHA1withRSA"));
+
+			Assert.assertTrue(
+				String.valueOf(certificateException.getCause()),
+				certificateException.getCause() instanceof
+					NoSuchAlgorithmException);
+
+			mockedStatic.verify(() -> FIPSAuditUtil.write(Mockito.any()));
+		}
 	}
 
 	@Test
 	public void testGenerateKeyPair() throws Exception {
+		FIPSModeTestUtil.assertAlgorithm(
+			"RSA", () -> _certificateToolImpl.generateKeyPair("RSA", 2048));
+
 		_assertKeyPair(512, _certificateToolImpl.generateKeyPair("RSA", 512));
 		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
 
@@ -135,9 +176,18 @@ public class CertificateToolImplTest {
 		_autoCloseable = ReflectionTestUtil.setFieldValueWithAutoCloseable(
 			PropsValues.class, "FIPS_ENABLED", true);
 
-		_assertFail("DSA", 2048);
-		_assertFail("RSA", 512);
-		_assertFail("RSA", 1024);
+		_clearMemo();
+
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class)) {
+
+			_assertFail("DSA", 2048);
+			_assertFail("RSA", 512);
+			_assertFail("RSA", 1024);
+
+			mockedStatic.verify(
+				() -> FIPSAuditUtil.write(Mockito.any()), Mockito.times(3));
+		}
 
 		_assertKeyPair(2048, _certificateToolImpl.generateKeyPair("RSA", 2048));
 		_assertKeyPair(3072, _certificateToolImpl.generateKeyPair("RSA", 3072));
@@ -162,9 +212,42 @@ public class CertificateToolImplTest {
 		Assert.assertEquals(expectedBitLength, modulus.bitLength());
 	}
 
+	private void _clearMemo() {
+		Set<String> memoKeys = ReflectionTestUtil.getFieldValue(
+			CryptoUtil.class, "_memoKeys");
+
+		memoKeys.clear();
+
+		AtomicBoolean memoSaturated = ReflectionTestUtil.getFieldValue(
+			CryptoUtil.class, "_memoSaturated");
+
+		memoSaturated.set(false);
+	}
+
+	private X509Certificate _generateX509Certificate(String signatureAlgorithm)
+		throws Exception {
+
+		return _generateX509Certificate(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			signatureAlgorithm);
+	}
+
 	private X509Certificate _generateX509Certificate(
 			String country, String commonName, String locality,
 			String organization, String organizationUnit, String state)
+		throws Exception {
+
+		return _generateX509Certificate(
+			country, commonName, locality, organization, organizationUnit,
+			state, "SHA256withRSA");
+	}
+
+	private X509Certificate _generateX509Certificate(
+			String country, String commonName, String locality,
+			String organization, String organizationUnit, String state,
+			String signatureAlgorithm)
 		throws Exception {
 
 		CertificateEntityId certificateEntityId = new CertificateEntityId(
@@ -178,7 +261,7 @@ public class CertificateToolImplTest {
 
 		return _certificateToolImpl.generateCertificate(
 			_keyPair, certificateEntityId, certificateEntityId, startDate,
-			endDate, "SHA256withRSA");
+			endDate, signatureAlgorithm);
 	}
 
 	private AutoCloseable _autoCloseable;

@@ -157,6 +157,60 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testCryptoBypassImports() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"CryptoBypassImports.testjava"
+			).addExpectedMessage(
+				"Use SecureRandomUtil or com.liferay.portal.kernel.security." +
+					"SecureRandom instead of java.security.SecureRandom, see " +
+						"LPS-39508",
+				8
+			).addExpectedMessage(
+				"Use DigesterUtil instead of org.apache.commons.codec.digest." +
+					"DigestUtils, see LPD-108121",
+				14
+			).addExpectedMessage(
+				"Use CryptoUtil.createSSLContext instead of org.apache.hc." +
+					"core5.ssl.SSLContexts, see LPD-108121",
+				15
+			).addExpectedMessage(
+				"Use CryptoUtil.createSSLContext instead of org.apache.http." +
+					"ssl.SSLContexts, see LPD-108121",
+				16
+			).addExpectedMessage(
+				"Use CryptoUtil.createKeyPairGenerator instead of org.jose4j." +
+					"jwk.RsaJwkGenerator, see LPD-108121",
+				19
+			));
+	}
+
+	@Test
+	public void testCryptoGetInstanceCall() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"CryptoGetInstanceCall.testjava"
+			).addExpectedMessage(
+				"Do not call \"CertificateFactory.getInstance\" outside " +
+					"CryptoUtil, see LPD-108121",
+				27
+			).addExpectedMessage(
+				"Use \"CryptoUtil.createCipher\" instead of " +
+					"\"Cipher.getInstance\", see LPD-108121",
+				31
+			));
+	}
+
+	@Test
+	public void testCryptoSecretKeySpec() throws Exception {
+		test(
+			"CryptoSecretKeySpec.testjava",
+			"Use \"CryptoUtil.createSecretKey\" instead of \"new " +
+				"SecretKeySpec\", see LPD-108121",
+			30);
+	}
+
+	@Test
 	public void testDeserializationSecurity() throws Exception {
 		test(
 			"DeserializationSecurity.testjava",

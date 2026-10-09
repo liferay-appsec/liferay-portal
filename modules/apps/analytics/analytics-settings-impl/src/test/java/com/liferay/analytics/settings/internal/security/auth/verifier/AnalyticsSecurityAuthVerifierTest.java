@@ -5,6 +5,7 @@
 
 package com.liferay.analytics.settings.internal.security.auth.verifier;
 
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -12,8 +13,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.security.KeyFactory;
-import java.security.Signature;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Assert;
@@ -34,10 +33,7 @@ public class AnalyticsSecurityAuthVerifierTest {
 	@Test
 	public void testValidateSignature() throws Exception {
 		FIPSModeTestUtil.assertAlgorithmSwitch(
-			"DSA", KeyFactory.class, "EC", KeyFactory::getInstance,
-			this::_invokeValidateSignature);
-		FIPSModeTestUtil.assertAlgorithmSwitch(
-			"DSA", Signature.class, "SHA256withECDSA", Signature::getInstance,
+			"DSA", CryptoUtil.class, "EC", CryptoUtil::createKeyFactory,
 			this::_invokeValidateSignature);
 	}
 

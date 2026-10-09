@@ -10,7 +10,7 @@ import com.liferay.portal.crypto.hash.spi.CryptoHashProvider;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderFactory;
 import com.liferay.portal.crypto.hash.spi.CryptoHashProviderResponse;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -69,24 +69,32 @@ public class MessageDigestCryptoHashProviderFactory
 
 			_cryptoHashProviderProperties = cryptoHashProviderProperties;
 
-			String algorithm = MapUtil.getString(
+			_algorithm = MapUtil.getString(
 				cryptoHashProviderProperties, "message.digest.algorithm",
 				DigesterUtil.SHA_256);
 
-			FIPSModeValidator.validateAlgorithm(algorithm);
-
-			_messageDigest = MessageDigest.getInstance(algorithm);
+			CryptoUtil.createMessageDigest(_algorithm);
 
 			_saltSize = MapUtil.getInteger(
 				cryptoHashProviderProperties, "message.digest.salt.size", 32);
 		}
 
 		@Override
-		public CryptoHashProviderResponse generate(byte[] salt, byte[] input) {
-			return new CryptoHashProviderResponse(
-				_CRYPTO_HASH_PROVIDER_FACTORY_NAME,
-				Collections.unmodifiableMap(_cryptoHashProviderProperties),
-				_messageDigest.digest(ArrayUtil.append(salt, input)));
+		public CryptoHashProviderResponse generate(byte[] salt, byte[] input)
+			throws CryptoHashException {
+
+			try {
+				MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+					_algorithm);
+
+				return new CryptoHashProviderResponse(
+					_CRYPTO_HASH_PROVIDER_FACTORY_NAME,
+					Collections.unmodifiableMap(_cryptoHashProviderProperties),
+					messageDigest.digest(ArrayUtil.append(salt, input)));
+			}
+			catch (NoSuchAlgorithmException noSuchAlgorithmException) {
+				throw new CryptoHashException(noSuchAlgorithmException);
+			}
 		}
 
 		@Override
@@ -100,8 +108,8 @@ public class MessageDigestCryptoHashProviderFactory
 			return salt;
 		}
 
+		private final String _algorithm;
 		private final Map<String, ?> _cryptoHashProviderProperties;
-		private final MessageDigest _messageDigest;
 		private final int _saltSize;
 
 	}

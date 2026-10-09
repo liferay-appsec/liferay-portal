@@ -28,10 +28,6 @@ public class PropsValuesTestUtil {
 		String propsKeysName = ReflectionTestUtil.getFieldValue(
 			PropsKeys.class, propsKeysFieldName);
 
-		String originalPropsValue = PropsUtil.get(propsKeysName);
-
-		PropsUtil.set(propsKeysName, String.valueOf(value));
-
 		Object originalValue;
 
 		if (updateField) {
@@ -41,6 +37,10 @@ public class PropsValuesTestUtil {
 		else {
 			originalValue = null;
 		}
+
+		String originalPropsValue = PropsUtil.get(propsKeysName);
+
+		PropsUtil.set(propsKeysName, String.valueOf(value));
 
 		return () -> {
 			PropsUtil.set(propsKeysName, originalPropsValue);

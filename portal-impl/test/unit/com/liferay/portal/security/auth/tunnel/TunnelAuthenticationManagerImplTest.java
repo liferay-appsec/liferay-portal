@@ -6,6 +6,8 @@
 package com.liferay.portal.security.auth.tunnel;
 
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.security.auth.AuthException;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -17,6 +19,9 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Lucas Miranda
@@ -64,6 +69,20 @@ public class TunnelAuthenticationManagerImplTest {
 				Key key = _getSharedSecretKey();
 
 				Assert.assertEquals("AES", key.getAlgorithm());
+			}
+
+			try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+					FIPSAuditUtil.class);
+				SafeCloseable safeCloseable4 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"TUNNELING_SERVLET_ENCRYPTION_ALGORITHM", "Blowfish")) {
+
+				AuthException authException = Assert.assertThrows(
+					AuthException.class, this::_getSharedSecretKey);
+
+				Assert.assertEquals(
+					AuthException.INVALID_SHARED_SECRET,
+					authException.getType());
 			}
 		}
 	}

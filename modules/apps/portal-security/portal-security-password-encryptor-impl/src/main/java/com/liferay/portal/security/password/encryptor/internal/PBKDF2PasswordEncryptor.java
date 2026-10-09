@@ -12,9 +12,12 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PwdEncryptorException;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -28,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -52,6 +54,13 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 			encryptedPassword = null;
 		}
 
+		CryptoFunctionApprovalType approvalType =
+			CryptoFunctionApprovalType.LEGACY;
+
+		if (Validator.isNull(encryptedPassword)) {
+			approvalType = CryptoFunctionApprovalType.APPROVED;
+		}
+
 		PBKDF2EncryptionConfiguration pbkdf2EncryptionConfiguration =
 			new PBKDF2EncryptionConfiguration();
 
@@ -61,11 +70,16 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 
 		byte[] plaintextPasswordBytes = plaintextPassword.getBytes();
 
+		String macAlgorithm = pbkdf2EncryptionConfiguration.getMacAlgorithm();
+
 		try {
+			Mac mac = CryptoUtil.createMac(
+				macAlgorithm, approvalType,
+				CryptoUtil.createSecretKey(
+					macAlgorithm, approvalType, plaintextPasswordBytes));
+
 			byte[] secretKeyBytes = _generateDerivedKey(
-				pbkdf2EncryptionConfiguration.getKeySize(),
-				pbkdf2EncryptionConfiguration.getMacAlgorithm(),
-				plaintextPasswordBytes,
+				pbkdf2EncryptionConfiguration.getKeySize(), mac,
 				pbkdf2EncryptionConfiguration.getRounds(), saltBytes);
 
 			ByteBuffer byteBuffer = ByteBuffer.allocate(
@@ -77,6 +91,17 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 			byteBuffer.put(secretKeyBytes);
 
 			return Base64.encode(byteBuffer.array());
+		}
+		catch (GeneralSecurityException generalSecurityException) {
+			String message = "Unable to derive key using " + macAlgorithm;
+
+			if (PropsValues.FIPS_ENABLED) {
+				throw new PwdEncryptorException.UnavailableAlgorithm(
+					message, generalSecurityException);
+			}
+
+			throw new PwdEncryptorException.InvalidAlgorithm(
+				message, generalSecurityException);
 		}
 		finally {
 			Arrays.fill(plaintextPasswordBytes, (byte)0);
@@ -112,9 +137,8 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 	}
 
 	private byte[] _generateDerivedKey(
-			int keySize, String macAlgorithm, byte[] passwordBytes, int rounds,
-			byte[] saltBytes)
-		throws PwdEncryptorException {
+			int keySize, Mac mac, int rounds, byte[] saltBytes)
+		throws GeneralSecurityException {
 
 		int derivedKeyLength = keySize / 8;
 
@@ -123,10 +147,6 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 		byte[] nextMacBytes = null;
 
 		try {
-			Mac mac = Mac.getInstance(macAlgorithm);
-
-			mac.init(new SecretKeySpec(passwordBytes, macAlgorithm));
-
 			int macLength = mac.getMacLength();
 
 			if (macLength <= 0) {
@@ -180,11 +200,6 @@ public class PBKDF2PasswordEncryptor implements PasswordEncryptor {
 					Arrays.fill(macBytes, (byte)0);
 				}
 			}
-		}
-		catch (GeneralSecurityException generalSecurityException) {
-			throw new PwdEncryptorException.InvalidAlgorithm(
-				"Unable to derive key using " + macAlgorithm,
-				generalSecurityException);
 		}
 		finally {
 			if (nextMacBytes != null) {

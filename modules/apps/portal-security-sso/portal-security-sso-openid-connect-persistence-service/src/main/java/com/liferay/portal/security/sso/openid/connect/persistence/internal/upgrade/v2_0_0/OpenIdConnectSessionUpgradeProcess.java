@@ -8,13 +8,13 @@ package com.liferay.portal.security.sso.openid.connect.persistence.internal.upgr
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.net.URI;
@@ -95,8 +95,8 @@ public class OpenIdConnectSessionUpgradeProcess extends UpgradeProcess {
 		throws Exception {
 
 		URI issuerURI = URI.create(issuer);
-		MessageDigest messageDigest = MessageDigest.getInstance(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
+		MessageDigest messageDigest = CryptoUtil.createMessageDigest(
+			CryptoUtil.getAlgorithm(DigesterUtil.MD5, DigesterUtil.SHA_256));
 
 		return StringBundler.concat(
 			issuerURI.getScheme(), "://", issuerURI.getAuthority(),

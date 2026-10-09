@@ -8,6 +8,13 @@ package com.liferay.portal.kernel.test.util;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
+
+import java.lang.reflect.Method;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.function.ThrowingRunnable;
@@ -20,6 +27,20 @@ import org.mockito.Mockito;
  * @author Lucas Miranda
  */
 public class FIPSModeTestUtil {
+
+	public static void assertAlgorithm(
+			String algorithm, UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		_assertAlgorithm(algorithm, unsafeRunnable);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_assertAlgorithm(algorithm, unsafeRunnable);
+		}
+	}
 
 	public static <T> void assertAlgorithmSwitch(
 			String algorithm, Class<T> classToMock, String fipsAlgorithm,
@@ -54,6 +75,21 @@ public class FIPSModeTestUtil {
 		}
 	}
 
+	public static void assertApprovalType(
+			CryptoFunctionApprovalType approvalType,
+			UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		_assertApprovalType(approvalType, unsafeRunnable);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_assertApprovalType(approvalType, unsafeRunnable);
+		}
+	}
+
 	public static void assertSecurityException(
 		String expectedMessage, ThrowingRunnable throwingRunnable) {
 
@@ -63,6 +99,66 @@ public class FIPSModeTestUtil {
 		String message = securityException.getMessage();
 
 		Assert.assertTrue(message, message.contains(expectedMessage));
+	}
+
+	private static void _assertAlgorithm(
+			String algorithm, UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		Set<String> algorithms = new HashSet<>();
+
+		try (MockedStatic<CryptoUtil> mockedStatic = Mockito.mockStatic(
+				CryptoUtil.class,
+				invocationOnMock -> {
+					Method method = invocationOnMock.getMethod();
+
+					String methodName = method.getName();
+
+					if (methodName.startsWith("create")) {
+						for (Object argument :
+								invocationOnMock.getArguments()) {
+
+							if (argument instanceof String) {
+								algorithms.add((String)argument);
+							}
+						}
+					}
+
+					return invocationOnMock.callRealMethod();
+				})) {
+
+			unsafeRunnable.run();
+		}
+
+		Assert.assertTrue(
+			algorithms.toString(), algorithms.contains(algorithm));
+	}
+
+	private static void _assertApprovalType(
+			CryptoFunctionApprovalType approvalType,
+			UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		Set<CryptoFunctionApprovalType> approvalTypes = new HashSet<>();
+
+		try (MockedStatic<CryptoUtil> mockedStatic = Mockito.mockStatic(
+				CryptoUtil.class,
+				invocationOnMock -> {
+					for (Object argument : invocationOnMock.getArguments()) {
+						if (argument instanceof CryptoFunctionApprovalType) {
+							approvalTypes.add(
+								(CryptoFunctionApprovalType)argument);
+						}
+					}
+
+					return invocationOnMock.callRealMethod();
+				})) {
+
+			unsafeRunnable.run();
+		}
+
+		Assert.assertTrue(
+			approvalTypes.toString(), approvalTypes.contains(approvalType));
 	}
 
 }

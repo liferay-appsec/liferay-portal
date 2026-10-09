@@ -5,6 +5,9 @@
 
 package com.liferay.portal.security.ldap.internal.ssl;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.net.InetSocketAddress;
@@ -78,6 +81,30 @@ public class LDAPSSLSocketFactoryTest {
 		Socket socket = socketFactory.createSocket();
 
 		Assert.assertTrue(socket instanceof LDAPSSLSocket);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			SSLSocket sslSocket = (SSLSocket)socketFactory.createSocket();
+
+			Assert.assertEquals(
+				SetUtil.fromArray(_CIPHER_SUITES),
+				SetUtil.fromArray(sslSocket.getEnabledCipherSuites()));
+			Assert.assertEquals(
+				SetUtil.fromArray(_PROTOCOLS),
+				SetUtil.fromArray(sslSocket.getEnabledProtocols()));
+		}
 	}
+
+	private static final String[] _CIPHER_SUITES = {
+		"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+	};
+
+	private static final String[] _PROTOCOLS = {"TLSv1.2", "TLSv1.3"};
 
 }

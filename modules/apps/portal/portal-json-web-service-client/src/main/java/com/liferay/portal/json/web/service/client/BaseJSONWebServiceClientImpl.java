@@ -16,6 +16,7 @@ import com.liferay.portal.json.web.service.client.internal.IdleConnectionMonitor
 import com.liferay.portal.json.web.service.client.internal.X509TrustManagerImpl;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
@@ -41,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManager;
 
 import org.apache.http.Header;
@@ -87,8 +89,6 @@ import org.apache.http.nio.conn.NoopIOSessionStrategy;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
 /**
@@ -903,12 +903,13 @@ public abstract class BaseJSONWebServiceClientImpl
 	}
 
 	protected SSLIOSessionStrategy getSSLIOSessionStrategy() {
-		SSLContextBuilder sslContextBuilder = SSLContexts.custom();
-
 		SSLContext sslContext = null;
+		SSLParameters sslParameters = new SSLParameters(
+			_split(System.getProperty("https.cipherSuites")),
+			_split(System.getProperty("https.protocols")));
 
 		try {
-			sslContext = sslContextBuilder.build();
+			sslContext = CryptoUtil.createSSLContext("TLS");
 
 			sslContext.init(
 				null,
@@ -917,6 +918,13 @@ public abstract class BaseJSONWebServiceClientImpl
 						_keyStore, _trustSelfSignedCertificates)
 				},
 				null);
+
+			SSLParameters defaultSSLParameters =
+				sslContext.getDefaultSSLParameters();
+
+			CryptoUtil.configureSSLParameters(
+				defaultSSLParameters.getCipherSuites(),
+				defaultSSLParameters.getProtocols(), sslParameters);
 		}
 		catch (SecurityException securityException) {
 			throw securityException;
@@ -925,13 +933,9 @@ public abstract class BaseJSONWebServiceClientImpl
 			throw new RuntimeException(exception);
 		}
 
-		String[] httpsProtocols = _split(System.getProperty("https.protocols"));
-
-		String[] cipherSuites = _split(
-			System.getProperty("https.cipherSuites"));
-
 		return new SSLIOSessionStrategy(
-			sslContext, httpsProtocols, cipherSuites,
+			sslContext, sslParameters.getProtocols(),
+			sslParameters.getCipherSuites(),
 			SSLIOSessionStrategy.getDefaultHostnameVerifier());
 	}
 

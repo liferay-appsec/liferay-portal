@@ -13,12 +13,14 @@ import com.liferay.commerce.payment.method.authorize.net.internal.AuthorizeNetCo
 import com.liferay.commerce.payment.method.authorize.net.internal.configuration.AuthorizeNetGroupServiceConfiguration;
 import com.liferay.commerce.payment.method.authorize.net.internal.constants.AuthorizeNetCommercePaymentMethodConstants;
 import com.liferay.commerce.service.CommerceOrderLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -96,6 +98,22 @@ public class CompletePaymentAuthorizeNetServletTest {
 		_testDoPostWithInvalidJSON();
 		_testDoPostWithInvalidSignature();
 		_testDoPostWithUnsupportedEventType();
+	}
+
+	@Test
+	public void testGenerateHMAC() throws Exception {
+		FIPSModeTestUtil.assertAlgorithm(
+			"HmacSHA512",
+			() -> Assert.assertEquals(
+				StringBundler.concat(
+					"34089b2c6ad8afc5fbb72d8c97b5f94aedd1446dbe57083c",
+					"7677b0910c396d6b6965ad51ff6155ad53dcd111d10ebf73",
+					"1240cf42d37395fcb97c8c0dd4d4b7b0"),
+				ReflectionTestUtil.invoke(
+					_completePaymentAuthorizeNetServlet, "_generateHMAC",
+					new Class<?>[] {byte[].class, String.class},
+					"Liferay".getBytes(StandardCharsets.UTF_8),
+					"0123456789ABCDEF0123456789ABCDEF")));
 	}
 
 	@Test

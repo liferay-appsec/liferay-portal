@@ -11,14 +11,15 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.security.KeyStore;
@@ -26,7 +27,11 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.concurrent.Future;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -37,6 +42,9 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.util.PublicSuffixMatcherLoader;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -46,8 +54,6 @@ import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
 
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
@@ -213,25 +219,57 @@ public class RestClientTransportFactory {
 		return credentialsProvider;
 	}
 
+	private SSLConnectionSocketFactory _createSSLConnectionSocketFactory() {
+		SSLContext sslContext = _createSSLContext();
+
+		SSLParameters sslParameters = _createSSLParameters(sslContext);
+
+		return new SSLConnectionSocketFactory(
+			sslContext, sslParameters.getProtocols(),
+			sslParameters.getCipherSuites(),
+			new DefaultHostnameVerifier(
+				PublicSuffixMatcherLoader.getDefault()));
+	}
+
 	private SSLContext _createSSLContext() {
+		if (!CryptoUtil.isAllowedAlgorithm(_truststoreType, KeyStore.class) &&
+			_log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"The truststore type \"", _truststoreType,
+					"\" of the configuration property \"truststoreType\" is ",
+					"not allowed in FIPS mode"));
+		}
+
 		char[] truststorePasswordChars = _truststorePassword.toCharArray();
 
-		try {
-			Path path = Paths.get(_truststorePath);
+		try (InputStream inputStream = Files.newInputStream(
+				Paths.get(_truststorePath))) {
 
-			InputStream inputStream = Files.newInputStream(path);
-
-			KeyStore keyStore = KeyStore.getInstance(_truststoreType);
+			KeyStore keyStore = CryptoUtil.createKeyStore(_truststoreType);
 
 			keyStore.load(inputStream, truststorePasswordChars);
 
-			SSLContextBuilder sslContextBuilder = SSLContexts.custom();
+			KeyManagerFactory keyManagerFactory =
+				CryptoUtil.createKeyManagerFactory(
+					KeyManagerFactory.getDefaultAlgorithm());
 
-			sslContextBuilder.loadKeyMaterial(
-				keyStore, truststorePasswordChars);
-			sslContextBuilder.loadTrustMaterial(keyStore, null);
+			keyManagerFactory.init(keyStore, truststorePasswordChars);
 
-			return sslContextBuilder.build();
+			TrustManagerFactory trustManagerFactory =
+				CryptoUtil.createTrustManagerFactory(
+					TrustManagerFactory.getDefaultAlgorithm());
+
+			trustManagerFactory.init(keyStore);
+
+			SSLContext sslContext = CryptoUtil.createSSLContext("TLS");
+
+			sslContext.init(
+				keyManagerFactory.getKeyManagers(),
+				trustManagerFactory.getTrustManagers(), null);
+
+			return sslContext;
 		}
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
@@ -239,6 +277,24 @@ public class RestClientTransportFactory {
 		finally {
 			Arrays.fill(truststorePasswordChars, '\0');
 		}
+	}
+
+	private SSLParameters _createSSLParameters(SSLContext sslContext) {
+		SSLParameters defaultSSLParameters =
+			sslContext.getDefaultSSLParameters();
+
+		SSLParameters sslParameters = new SSLParameters();
+
+		try {
+			CryptoUtil.configureSSLParameters(
+				defaultSSLParameters.getCipherSuites(),
+				defaultSSLParameters.getProtocols(), sslParameters);
+		}
+		catch (SSLException sslException) {
+			throw new RuntimeException(sslException);
+		}
+
+		return sslParameters;
 	}
 
 	private HttpAsyncClientBuilder _customizeHttpClient(
@@ -252,7 +308,8 @@ public class RestClientTransportFactory {
 		}
 
 		if (_httpSSLEnabled) {
-			httpClientBuilder.setSSLContext(_createSSLContext());
+			httpClientBuilder.setSSLSocketFactory(
+				_createSSLConnectionSocketFactory());
 		}
 
 		if ((_proxyConfig != null) && _proxyConfig.shouldApplyConfig()) {

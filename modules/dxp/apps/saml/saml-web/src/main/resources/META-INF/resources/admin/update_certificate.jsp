@@ -107,7 +107,7 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 								<aui:select label="key-algorithm" name="certificateKeyAlgorithm" required="<%= true %>">
 
 									<%
-									String[] keyAlgorithms = PropsValues.FIPS_ENABLED ? new String[] {"RSA"} : new String[] {"RSA", "DSA"};
+									String[] keyAlgorithms = PropsValues.FIPS_ENABLED ? FIPSModeValidator.getApprovedAlgorithms(KeyPairGenerator.class) : new String[] {"RSA", "DSA"};
 
 									for (String keyAlgorithm : keyAlgorithms) {
 									%>
@@ -129,7 +129,7 @@ X509Certificate x509Certificate = (X509Certificate)request.getAttribute(SamlWebK
 						<aui:select label="key-size-bits" name="certificateKeySize" required="<%= true %>">
 
 							<%
-							String[] keySizes = PropsValues.FIPS_ENABLED ? new String[] {"4096", "3072", "2048"} : new String[] {"4096", "2048", "1024", "512"};
+							String[] keySizes = PropsValues.FIPS_ENABLED ? ArrayUtil.toStringArray(FIPSModeValidator.getKeySizes("RSA")) : new String[] {"4096", "2048", "1024", "512"};
 
 							for (String keySize : keySizes) {
 							%>

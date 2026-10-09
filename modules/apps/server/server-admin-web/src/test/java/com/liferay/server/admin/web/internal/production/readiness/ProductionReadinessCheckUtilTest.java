@@ -890,11 +890,26 @@ public class ProductionReadinessCheckUtilTest {
 	}
 
 	@Test
-	public void testCheckPasswordEncryption() {
+	public void testCheckPasswordEncryption() throws Exception {
 		_testCheckPasswordEncryption("BCRYPT", true);
 		_testCheckPasswordEncryption("MD5", false);
 		_testCheckPasswordEncryption("PBKDF2WithHmacSHA1/160/1300000", true);
 		_testCheckPasswordEncryption("PBKDF2WithHmacSHA1/160/1000", false);
+
+		try (AutoCloseable closeable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			_testCheckPasswordEncryption("BCRYPT", false);
+			_testCheckPasswordEncryption(
+				"PBKDF2WithHmacSHA1/160/1300000", false);
+			_testCheckPasswordEncryption(
+				"PBKDF2WithHmacSHA256/256/1000", false);
+			_testCheckPasswordEncryption(
+				"PBKDF2WithHmacSHA256/256/1300000", true);
+			_testCheckPasswordEncryption(
+				"PBKDF2WithHmacSHA512/512/1300000", true);
+		}
 	}
 
 	@Test

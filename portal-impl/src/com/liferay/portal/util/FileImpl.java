@@ -16,6 +16,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.FileComparator;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -406,7 +407,9 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 	@Override
 	public String getMD5Checksum(File file) throws IOException {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
-			return DigesterUtil.digestHex(DigesterUtil.MD5, fileInputStream);
+			return DigesterUtil.digestHex(
+				CryptoFunctionApprovalType.ALLOWED, DigesterUtil.MD5,
+				fileInputStream);
 		}
 		catch (SystemException systemException) {
 			throw new IOException(systemException);

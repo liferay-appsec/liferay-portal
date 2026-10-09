@@ -8,6 +8,7 @@ package com.liferay.saml.opensaml.integration.internal.credential;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.runtime.configuration.SamlConfiguration;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
@@ -89,7 +90,7 @@ public class FileSystemKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 		String samlKeyStoreType = getSamlKeyStoreType();
 
 		try {
-			_keyStore = KeyStore.getInstance(samlKeyStoreType);
+			_keyStore = CryptoUtil.createKeyStore(samlKeyStoreType);
 		}
 		catch (KeyStoreException keyStoreException) {
 			String message = StringBundler.concat(

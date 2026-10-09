@@ -7,11 +7,11 @@ package com.liferay.portal.security.ldap.internal.configuration.persistence.list
 
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.security.ldap.LDAPConfigurationModelListenerException;
 import com.liferay.portal.security.ldap.authenticator.configuration.LDAPAuthConfiguration;
 import com.liferay.portal.security.ldap.constants.LDAPConstants;
+import com.liferay.portal.security.ldap.internal.util.PasswordEncryptionAlgorithmUtil;
 
 import java.util.Dictionary;
 
@@ -42,7 +42,7 @@ public class LDAPAuthConfigurationModelListener
 			properties.get(LDAPConstants.PASSWORD_ENCRYPTION_ALGORITHM));
 
 		try {
-			FIPSModeValidator.validateAlgorithm(algorithm);
+			PasswordEncryptionAlgorithmUtil.validate(algorithm);
 		}
 		catch (SecurityException securityException) {
 			throw new LDAPConfigurationModelListenerException(

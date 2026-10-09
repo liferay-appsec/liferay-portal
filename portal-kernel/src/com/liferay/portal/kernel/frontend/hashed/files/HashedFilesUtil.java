@@ -7,9 +7,9 @@ package com.liferay.portal.kernel.frontend.hashed.files;
 
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DigesterUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
 /**
@@ -54,7 +54,7 @@ public class HashedFilesUtil {
 
 	public static String computeHash(String content) {
 		byte[] hash = DigesterUtil.digestRaw(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5,
+			CryptoUtil.getAlgorithm(DigesterUtil.MD5, DigesterUtil.SHA_256),
 			content);
 
 		byte[] truncatedHash = new byte[8];

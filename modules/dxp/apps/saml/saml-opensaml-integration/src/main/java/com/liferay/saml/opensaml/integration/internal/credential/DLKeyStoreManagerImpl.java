@@ -11,6 +11,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.saml.runtime.credential.KeyStoreManager;
 
 import java.io.ByteArrayInputStream;
@@ -39,7 +40,7 @@ public class DLKeyStoreManagerImpl extends BaseKeyStoreManagerImpl {
 
 	@Override
 	public KeyStore getKeyStore() throws KeyStoreException {
-		KeyStore keyStore = KeyStore.getInstance(getSamlKeyStoreType());
+		KeyStore keyStore = CryptoUtil.createKeyStore(getSamlKeyStoreType());
 
 		try (InputStream inputStream = _store.getFileAsStream(
 				getCompanyId(), CompanyConstants.SYSTEM, _SAML_KEYSTORE_PATH,

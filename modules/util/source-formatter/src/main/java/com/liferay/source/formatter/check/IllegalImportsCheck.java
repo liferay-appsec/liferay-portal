@@ -121,7 +121,8 @@ public class IllegalImportsCheck extends BaseFileCheck {
 
 		// java.security.SecureRandom
 
-		if (!content.contains("javax.crypto.KeyGenerator") &&
+		if ((isAttributeValue(_AVOID_CRYPTO_BYPASS_IMPORTS_KEY, absolutePath) ||
+			 !content.contains("javax.crypto.KeyGenerator")) &&
 			!isExcludedPath(RUN_OUTSIDE_PORTAL_EXCLUDES, absolutePath) &&
 			!isExcludedPath(_SECURE_RANDOM_EXCLUDES, absolutePath)) {
 
@@ -199,6 +200,40 @@ public class IllegalImportsCheck extends BaseFileCheck {
 				fileName, content, "org.apache.commons.beanutils.PropertyUtils",
 				"Do not use org.apache.commons.beanutils.PropertyUtils, see " +
 					"LPS-62786");
+		}
+
+		// org.apache.commons.codec.digest.DigestUtils
+		// org.apache.hc.core5.ssl.SSLContexts
+		// org.apache.http.ssl.SSLContexts
+		// org.jose4j.jwk.RsaJwkGenerator
+
+		if (isAttributeValue(_AVOID_CRYPTO_BYPASS_IMPORTS_KEY, absolutePath) &&
+			!absolutePath.contains("/modules/apps/archived/") &&
+			!absolutePath.contains("/modules/third-party/") &&
+			!absolutePath.contains("/src/test/") &&
+			!absolutePath.contains("/src/testIntegration/") &&
+			!absolutePath.contains("/test/integration/") &&
+			!absolutePath.contains("/test/unit/") &&
+			!absolutePath.contains("/workspaces/") &&
+			!isExcludedPath(RUN_OUTSIDE_PORTAL_EXCLUDES, absolutePath)) {
+
+			_checkImport(
+				fileName, content,
+				"org.apache.commons.codec.digest.DigestUtils",
+				"Use DigesterUtil instead of org.apache.commons.codec.digest." +
+					"DigestUtils, see LPD-108121");
+			_checkImport(
+				fileName, content, "org.apache.hc.core5.ssl.SSLContexts",
+				"Use CryptoUtil.createSSLContext instead of org.apache.hc." +
+					"core5.ssl.SSLContexts, see LPD-108121");
+			_checkImport(
+				fileName, content, "org.apache.http.ssl.SSLContexts",
+				"Use CryptoUtil.createSSLContext instead of org.apache.http." +
+					"ssl.SSLContexts, see LPD-108121");
+			_checkImport(
+				fileName, content, "org.jose4j.jwk.RsaJwkGenerator",
+				"Use CryptoUtil.createKeyPairGenerator instead of org.jose4j." +
+					"jwk.RsaJwkGenerator, see LPD-108121");
 		}
 
 		// org.slf4j.Logger
@@ -298,6 +333,9 @@ public class IllegalImportsCheck extends BaseFileCheck {
 
 	private static final String _AVOID_COMPLETABLE_FUTURE_KEY =
 		"avoidCompletableFuture";
+
+	private static final String _AVOID_CRYPTO_BYPASS_IMPORTS_KEY =
+		"avoidCryptoBypassImports";
 
 	private static final String _AVOID_OPTIONAL_KEY = "avoidOptional";
 

@@ -12,6 +12,52 @@ import com.liferay.portal.kernel.util.GetterUtil;
  */
 public class FIPSAuditEventFactory {
 
+	public static FIPSAuditEvent createAlgorithmRejected(
+		String approvalType, boolean enforced, String factoryClassName,
+		String providerName, String providerVersion, String rejectionReason,
+		String requestedAlgorithm) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"algorithm-rejected", FIPSAuditEvent.Severity.WARNING);
+
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
+		fipsAuditEvent.put("enforced", enforced);
+		fipsAuditEvent.put(
+			"factory-class-name", GetterUtil.getString(factoryClassName));
+		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
+		fipsAuditEvent.put(
+			"provider-version", GetterUtil.getString(providerVersion));
+		fipsAuditEvent.put(
+			"rejection-reason", GetterUtil.getString(rejectionReason));
+		fipsAuditEvent.put(
+			"requested-algorithm", GetterUtil.getString(requestedAlgorithm));
+
+		return fipsAuditEvent;
+	}
+
+	public static FIPSAuditEvent createAlgorithmServed(
+		String approvalType, String factoryClassName, String providerName,
+		String providerVersion, String requestedAlgorithm) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"algorithm-served", FIPSAuditEvent.Severity.INFO);
+
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
+		fipsAuditEvent.put(
+			"factory-class-name", GetterUtil.getString(factoryClassName));
+		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
+		fipsAuditEvent.put(
+			"provider-version", GetterUtil.getString(providerVersion));
+		fipsAuditEvent.put(
+			"requested-algorithm", GetterUtil.getString(requestedAlgorithm));
+
+		return fipsAuditEvent;
+	}
+
 	public static FIPSAuditEvent createAuthAttemptFailure(
 		String attemptedUserId, String authenticationMethod, String clientIP,
 		int consecutiveFailureCount, String failureReason) {
@@ -46,6 +92,31 @@ public class FIPSAuditEventFactory {
 			"rejected-value", GetterUtil.getString(rejectedValue));
 		fipsAuditEvent.put("token-issuer", GetterUtil.getString(tokenIssuer));
 		fipsAuditEvent.put("token-type", GetterUtil.getString(tokenType));
+
+		return fipsAuditEvent;
+	}
+
+	public static FIPSAuditEvent createProviderFailure(
+		String approvalType, String factoryClassName,
+		String providerErrorMessage, String providerName,
+		String providerVersion, String requestedAlgorithm) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"provider-failure", FIPSAuditEvent.Severity.CRITICAL);
+
+		fipsAuditEvent.put(
+			"crypto-function-approval-type",
+			GetterUtil.getString(approvalType));
+		fipsAuditEvent.put(
+			"factory-class-name", GetterUtil.getString(factoryClassName));
+		fipsAuditEvent.put(
+			"provider-error-message",
+			GetterUtil.getString(providerErrorMessage));
+		fipsAuditEvent.put("provider-name", GetterUtil.getString(providerName));
+		fipsAuditEvent.put(
+			"provider-version", GetterUtil.getString(providerVersion));
+		fipsAuditEvent.put(
+			"requested-algorithm", GetterUtil.getString(requestedAlgorithm));
 
 		return fipsAuditEvent;
 	}

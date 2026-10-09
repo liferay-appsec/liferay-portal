@@ -21,6 +21,7 @@ import com.liferay.dynamic.data.mapping.data.provider.settings.DDMDataProviderSe
 import com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance;
 import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.json.web.service.client.JSONWebServiceClient;
@@ -30,6 +31,7 @@ import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -151,6 +153,19 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 			(PortalCache<String, DDMDataProviderResponse>)
 				_multiVMPool.getPortalCache(
 					DDMRESTDataProvider.class.getName());
+
+		String keyStoreType = KeyStore.getDefaultType();
+
+		if (!CryptoUtil.isAllowedAlgorithm(keyStoreType, KeyStore.class) &&
+			_log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"The keystore type \"", keyStoreType,
+					"\" of the security property \"keystore.type\" is not ",
+					"allowed in FIPS mode, so REST data providers cannot ",
+					"connect"));
+		}
 	}
 
 	@Deactivate
@@ -442,7 +457,7 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 				).put(
 					"keyStore",
 					() -> {
-						KeyStore keyStore = KeyStore.getInstance(
+						KeyStore keyStore = CryptoUtil.createKeyStore(
 							KeyStore.getDefaultType());
 
 						keyStore.load(null);

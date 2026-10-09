@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
@@ -243,7 +244,7 @@ public class UpdateCertificateMVCResourceCommand
 			throws CertificateException, KeyStoreException {
 
 			try (InputStream inputStream = fileEntry.getContentStream()) {
-				KeyStore keyStore = KeyStore.getInstance("PKCS12");
+				KeyStore keyStore = CryptoUtil.createKeyStore("PKCS12");
 
 				keyStore.load(inputStream, null);
 			}

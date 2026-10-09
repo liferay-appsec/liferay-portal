@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifier;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.service.access.policy.ServiceAccessPolicy;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Base64;
@@ -30,7 +31,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.Charset;
 
 import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 import java.util.ArrayList;
@@ -167,15 +170,31 @@ public class AnalyticsSecurityAuthVerifier implements AuthVerifier {
 			String signatureString, String timestamp)
 		throws Exception {
 
-		Signature signature = Signature.getInstance(
-			PropsValues.FIPS_ENABLED ? "SHA256withECDSA" : "DSA");
+		KeyFactory keyFactory = CryptoUtil.createKeyFactory(
+			CryptoUtil.getAlgorithm("DSA", "EC"));
 
-		KeyFactory keyFactory = KeyFactory.getInstance(
-			PropsValues.FIPS_ENABLED ? "EC" : "DSA");
+		PublicKey analyticsPublicKey = null;
 
-		signature.initVerify(
-			keyFactory.generatePublic(
-				new X509EncodedKeySpec(Base64.decode(publicKey))));
+		try {
+			analyticsPublicKey = keyFactory.generatePublic(
+				new X509EncodedKeySpec(Base64.decode(publicKey)));
+		}
+		catch (InvalidKeySpecException invalidKeySpecException) {
+			if (PropsValues.FIPS_ENABLED && _log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"The Analytics Cloud public key is not a ",
+						keyFactory.getAlgorithm(),
+						" key, which FIPS mode requires"),
+					invalidKeySpecException);
+			}
+
+			throw invalidKeySpecException;
+		}
+
+		Signature signature = CryptoUtil.createSignature(
+			CryptoUtil.getAlgorithm("DSA", "SHA256withECDSA"),
+			analyticsPublicKey);
 
 		Map<String, String> sortedParameters = new TreeMap<>();
 

@@ -5,7 +5,7 @@
 
 package com.liferay.portal.security.ldap.internal.ssl;
 
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 
 import java.io.IOException;
 
@@ -16,6 +16,7 @@ import java.security.GeneralSecurityException;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -89,7 +90,7 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 
 	private LDAPSSLSocketFactory() {
 		try {
-			SSLContext sslContext = SSLContext.getInstance("TLS");
+			SSLContext sslContext = CryptoUtil.createSSLContext("TLS");
 
 			sslContext.init(null, null, null);
 
@@ -102,16 +103,14 @@ public class LDAPSSLSocketFactory extends SocketFactory {
 		}
 	}
 
-	private void _configure(SSLSocket sslSocket) {
+	private void _configure(SSLSocket sslSocket) throws SSLException {
 		SSLParameters sslParameters = sslSocket.getSSLParameters();
 
-		sslParameters.setCipherSuites(
-			FIPSModeValidator.getAllowedTLSCipherSuites(
-				sslSocket.getSupportedCipherSuites()));
+		CryptoUtil.configureSSLParameters(
+			sslSocket.getEnabledCipherSuites(), sslSocket.getEnabledProtocols(),
+			sslParameters);
+
 		sslParameters.setEndpointIdentificationAlgorithm("LDAPS");
-		sslParameters.setProtocols(
-			FIPSModeValidator.getAllowedTLSProtocols(
-				sslSocket.getSupportedProtocols()));
 
 		sslSocket.setSSLParameters(sslParameters);
 	}

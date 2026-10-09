@@ -93,6 +93,7 @@ import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
@@ -123,8 +124,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -1902,9 +1901,9 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		try {
-			new SecretKeySpec(
-				Base64.decode(PropsValues.OBJECT_ENCRYPTION_KEY),
-				PropsValues.OBJECT_ENCRYPTION_ALGORITHM);
+			CryptoUtil.createSecretKey(
+				PropsValues.OBJECT_ENCRYPTION_ALGORITHM,
+				Base64.decode(PropsValues.OBJECT_ENCRYPTION_KEY));
 		}
 		catch (Exception exception) {
 			throw new PortalException(exception);

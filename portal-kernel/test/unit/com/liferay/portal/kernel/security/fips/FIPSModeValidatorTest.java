@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.security.fips;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProvider;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -17,15 +18,33 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 
+import java.security.KeyFactory;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.SecretKeySpec;
+
+import javax.net.ssl.SSLContext;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -60,6 +79,30 @@ public class FIPSModeValidatorTest {
 
 		secureXMLFactoryProviderUtil.setSecureXMLFactoryProvider(
 			secureXMLFactoryProvider);
+	}
+
+	@Test
+	public void testFetchApprovedModeProvider() {
+		AtomicReference<Provider> atomicReference =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class,
+				"_approvedModeProviderAtomicReference");
+
+		atomicReference.set(_createProvider(RandomTestUtil.randomString()));
+
+		FIPSModeTestUtil.assertSecurityException(
+			"The first security provider must be an allowed FIPS provider",
+			FIPSModeValidator::validate);
+
+		Assert.assertNull(FIPSModeValidator.fetchApprovedModeProvider());
+		Assert.assertTrue(FIPSModeValidator.hasFailedValidation());
+
+		AtomicBoolean atomicBoolean = ReflectionTestUtil.getFieldValue(
+			FIPSModeValidator.class, "_validationFailedAtomicBoolean");
+
+		atomicBoolean.set(false);
+
+		Assert.assertFalse(FIPSModeValidator.hasFailedValidation());
 	}
 
 	@Test
@@ -100,6 +143,46 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testGetApprovedAlgorithms() {
+		Assert.assertArrayEquals(
+			new String[] {"BCFKS", "PKCS12"},
+			FIPSModeValidator.getApprovedAlgorithms(KeyStore.class));
+		Assert.assertArrayEquals(
+			new String[] {
+				"PBKDF2WithHmacSHA256", "PBKDF2WithHmacSHA384",
+				"PBKDF2WithHmacSHA512"
+			},
+			FIPSModeValidator.getApprovedAlgorithms(SecretKeyFactory.class));
+		Assert.assertArrayEquals(
+			new String[0],
+			FIPSModeValidator.getApprovedAlgorithms(SSLContext.class));
+
+		String[] approvedAlgorithms = FIPSModeValidator.getApprovedAlgorithms(
+			KeyPairGenerator.class);
+
+		Assert.assertArrayEquals(new String[] {"RSA"}, approvedAlgorithms);
+
+		approvedAlgorithms[0] = RandomTestUtil.randomString();
+
+		Assert.assertArrayEquals(
+			new String[] {"RSA"},
+			FIPSModeValidator.getApprovedAlgorithms(KeyPairGenerator.class));
+	}
+
+	@Test
+	public void testGetKeySizes() {
+		Assert.assertArrayEquals(
+			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("AES"));
+		Assert.assertArrayEquals(
+			new int[] {128, 192, 256}, FIPSModeValidator.getKeySizes("aes"));
+		Assert.assertArrayEquals(
+			new int[] {2048, 3072, 4096}, FIPSModeValidator.getKeySizes("RSA"));
+		Assert.assertArrayEquals(
+			new int[0],
+			FIPSModeValidator.getKeySizes(RandomTestUtil.randomString()));
+	}
+
+	@Test
 	public void testGetPlaintextSecretProperties() {
 		String obfuscatedKey1 = RandomTestUtil.randomString();
 		String obfuscatedKey2 = RandomTestUtil.randomString();
@@ -136,6 +219,177 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testIsAllowedAlgorithm() {
+		String algorithm = RandomTestUtil.randomString();
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, KeyStore.class, "JKS"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"MD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"SHA-1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				"SHA-256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, MessageDigest.class,
+				algorithm));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Mac.class, "HmacMD5"));
+
+		_assertApprovedAlgorithm(
+			"AES/GCM/NoPadding", Cipher.class, "AES/ECB/PKCS5Padding");
+		_assertApprovedAlgorithm("EC", KeyFactory.class, "DSA");
+		_assertApprovedAlgorithm("aes", KeyGenerator.class, algorithm);
+		_assertApprovedAlgorithm("RSA", KeyPairGenerator.class, "DSA");
+		_assertApprovedAlgorithm("pkcs12", KeyStore.class, "JKS");
+		_assertApprovedAlgorithm("HmacSHA512", Mac.class, "HmacSHA1");
+		_assertApprovedAlgorithm("SHA-256", MessageDigest.class, "MD5");
+		_assertApprovedAlgorithm("SHA-384", MessageDigest.class, "SHA-1");
+		_assertApprovedAlgorithm("SHA-512", MessageDigest.class, "SHA3-256");
+		_assertApprovedAlgorithm(
+			"PBKDF2WithHmacSHA256", SecretKeyFactory.class,
+			"PBKDF2WithHmacSHA1");
+		_assertApprovedAlgorithm(
+			"SHA512withRSA", Signature.class, "SHA1withRSA");
+
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, MessageDigest.class,
+				null));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, SSLContext.class, "TLS"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacMD5"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "SHA"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class,
+				"SHA-256"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, MessageDigest.class, "MD5"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, KeyStore.class, "JKS"));
+	}
+
+	@Test
+	public void testIsAllowedKeyAlgorithm() {
+		String keyAlgorithm = RandomTestUtil.randomString();
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "AES"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Mac.class, "HmacSHA1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class, "DES"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.ALLOWED, Cipher.class,
+				keyAlgorithm));
+
+		_assertApprovedKeyAlgorithm("AES", Cipher.class, "RSA");
+		_assertApprovedKeyAlgorithm("EC", KeyFactory.class, "ECDSA");
+		_assertApprovedKeyAlgorithm("aes", KeyGenerator.class, keyAlgorithm);
+		_assertApprovedKeyAlgorithm("RSA", KeyPairGenerator.class, "DSA");
+		_assertApprovedKeyAlgorithm("HmacSHA256", Mac.class, "HmacSHA1");
+		_assertApprovedKeyAlgorithm("EC", Signature.class, "ECDSA");
+		_assertApprovedKeyAlgorithm("RSA", Signature.class, "DSA");
+		_assertApprovedKeyAlgorithm("AES", SecretKeySpec.class, "Blowfish");
+		_assertApprovedKeyAlgorithm(
+			"HmacSHA512", SecretKeySpec.class, "HmacSHA1");
+
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, Cipher.class, null));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Mac.class, "HmacSHA1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, SecretKeySpec.class,
+				"HmacSHA1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.LEGACY, Cipher.class, "DES"));
+	}
+
+	@Test
+	public void testIsAllowedKeySize() {
+		Assert.assertFalse(FIPSModeValidator.isAllowedKeySize("AES", 64));
+		Assert.assertTrue(FIPSModeValidator.isAllowedKeySize("AES", 256));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 64));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 112));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeySize("HmacSHA256", 4096));
+		Assert.assertFalse(FIPSModeValidator.isAllowedKeySize("RSA", 1024));
+		Assert.assertTrue(FIPSModeValidator.isAllowedKeySize("RSA", 2048));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeySize(
+				RandomTestUtil.randomString(), 256));
+	}
+
+	@Test
+	public void testIsAllowedSSLContextProtocol() {
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("SSL"));
+		Assert.assertTrue(FIPSModeValidator.isAllowedSSLContextProtocol("TLS"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1.1"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedSSLContextProtocol("TLSv1.2"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedSSLContextProtocol("tlsv1.3"));
+	}
+
+	@Test
+	public void testIsAllowedTLSFactoryAlgorithm() {
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("PKIX"));
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("pkix"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm("SunX509"));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedTLSFactoryAlgorithm(null));
+	}
+
+	@Test
+	public void testIsHealthyProvider() {
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(
+				_createProvider("AmazonCorrettoCryptoProvider")));
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(_createProvider("BCFIPS")));
+		Assert.assertFalse(
+			FIPSModeValidator.isHealthyProvider(
+				_createProvider(RandomTestUtil.randomString())));
+	}
+
+	@Test
 	public void testReadChannelPropertiesDocument() throws Exception {
 		Document document = ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_readChannelPropertiesDocument",
@@ -169,27 +423,27 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
-	public void testValidateAlgorithm() {
-		FIPSModeValidator.validateAlgorithm("MD5");
-		FIPSModeValidator.validateAlgorithm(null);
+	public void testRequiredProperties() {
+		Map<String, String[]> requiredSecurityProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSecurityProperties");
 
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true)) {
+		Assert.assertArrayEquals(
+			new String[] {"PKIX"},
+			requiredSecurityProperties.get("ssl.KeyManagerFactory.algorithm"));
+		Assert.assertArrayEquals(
+			new String[] {"PKIX"},
+			requiredSecurityProperties.get(
+				"ssl.TrustManagerFactory.algorithm"));
 
-			FIPSModeValidator.validateAlgorithm("AES");
-			FIPSModeValidator.validateAlgorithm("SHA-256");
+		Map<String, String[]> requiredSystemProperties =
+			ReflectionTestUtil.getFieldValue(
+				FIPSModeValidator.class, "_requiredSystemProperties");
 
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("MD5"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm("SHA-2"));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateAlgorithm(null));
-		}
+		Assert.assertArrayEquals(
+			new String[] {"true"},
+			requiredSystemProperties.get(
+				"org.bouncycastle.fips.approved_only"));
 	}
 
 	@Test
@@ -509,23 +763,52 @@ public class FIPSModeValidatorTest {
 
 	@Test
 	public void testValidateKey() {
-		FIPSModeValidator.validateKey("DES", 64);
+		_validateKey("DES", 64);
+		_validateKey("MD5", 0);
+		_validateKey(null, 0);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			FIPSModeValidator.validateKey("AES", 0);
-			FIPSModeValidator.validateKey("AES", 128);
-			FIPSModeValidator.validateKey("AES", 192);
-			FIPSModeValidator.validateKey("AES", 256);
+			_validateKey("AES", 0);
+			_validateKey("AES", 128);
+			_validateKey("AES", 192);
+			_validateKey("AES", 256);
+			_validateKey("HmacSHA256", 0);
+			_validateKey("HmacSHA256", 256);
 
-			FIPSModeTestUtil.assertSecurityException(
-				"Key size 64 is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateKey("AES", 64));
-			FIPSModeTestUtil.assertSecurityException(
-				"is not allowed in FIPS mode",
-				() -> FIPSModeValidator.validateKey("DES", 128));
+			_assertKeyNotAllowed(
+				"Key size 64 is not allowed in FIPS mode", "AES", 64);
+			_assertKeyNotAllowed(
+				"Key size 128 is not allowed in FIPS mode", "DES", 128);
+			_assertKeyNotAllowed(
+				"Key size 64 is not allowed in FIPS mode", "HmacSHA256", 64);
+		}
+	}
+
+	@Test
+	public void testValidateKeyAlgorithm() {
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "AES",
+				KeyGenerator.class);
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "AES",
+				Cipher.class);
+
+			_assertSecurityException(
+				"is not allowed in FIPS mode", "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, "HmacSHA256",
+				KeyGenerator.class);
+			_assertSecurityException(
+				"is not allowed in FIPS mode", "_validateKeyAlgorithm",
+				new Class<?>[] {String.class, Class.class}, null, Cipher.class);
 		}
 	}
 
@@ -534,11 +817,21 @@ public class FIPSModeValidatorTest {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
 			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA256/256/1300000");
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA384/384/1300000");
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA512/512/1300000");
 
 		_assertSecurityException(
 			"is not allowed in FIPS mode",
 			"_validatePasswordsEncryptionAlgorithm",
 			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA1/160/1300000");
+		_assertSecurityException(
+			"is not allowed in FIPS mode",
+			"_validatePasswordsEncryptionAlgorithm",
+			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA256X/256/1300000");
 		_assertSecurityException(
 			"is not allowed in FIPS mode",
 			"_validatePasswordsEncryptionAlgorithm",
@@ -573,6 +866,35 @@ public class FIPSModeValidatorTest {
 				ReflectionTestUtil.invoke(
 					FIPSModeValidator.class, "_validatePortalProperties",
 					new Class<?>[0]);
+
+				try (LogCapture logCapture =
+						LoggerTestUtil.configureLog4JLogger(
+							FIPSModeValidator.class.getName(),
+							LoggerTestUtil.WARN);
+					SafeCloseable safeCloseable6 =
+						PropsValuesTestUtil.swapWithSafeCloseable(
+							"AUTH_MAC_ALGORITHM", "HmacSHA256", false);
+					SafeCloseable safeCloseable7 =
+						PropsValuesTestUtil.swapWithSafeCloseable(
+							"AUTH_MAC_ALLOW", "true", false)) {
+
+					ReflectionTestUtil.invoke(
+						FIPSModeValidator.class, "_validatePortalProperties",
+						new Class<?>[0]);
+
+					List<LogEntry> logEntries = logCapture.getLogEntries();
+
+					Assert.assertEquals(
+						logEntries.toString(), 1, logEntries.size());
+
+					LogEntry logEntry = logEntries.get(0);
+
+					Assert.assertEquals(
+						"Auth MAC is disabled in FIPS mode because the " +
+							"property \"auth.mac.algorithm\" is set to " +
+								"\"HmacSHA256\"",
+						logEntry.getMessage());
+				}
 			}
 
 			try (SafeCloseable safeCloseable5 =
@@ -769,6 +1091,32 @@ public class FIPSModeValidatorTest {
 		}
 	}
 
+	private void _assertApprovedAlgorithm(
+		String algorithm, Class<?> factoryClass, String notAllowedAlgorithm) {
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass, algorithm));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				notAllowedAlgorithm));
+	}
+
+	private void _assertApprovedKeyAlgorithm(
+		String keyAlgorithm, Class<?> factoryClass,
+		String notAllowedKeyAlgorithm) {
+
+		Assert.assertTrue(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				keyAlgorithm));
+		Assert.assertFalse(
+			FIPSModeValidator.isAllowedKeyAlgorithm(
+				CryptoFunctionApprovalType.APPROVED, factoryClass,
+				notAllowedKeyAlgorithm));
+	}
+
 	private void _assertClusterLinkConfigurationSecurityException(
 			String expectedMessage, String fileName, String key)
 		throws Exception {
@@ -788,6 +1136,14 @@ public class FIPSModeValidatorTest {
 		FIPSModeTestUtil.assertSecurityException(
 			"is not allowed in FIPS mode",
 			() -> FIPSModeValidator.validateJWSAlgorithm(algorithm));
+	}
+
+	private void _assertKeyNotAllowed(
+		String expectedMessage, String algorithm, int keySize) {
+
+		_assertSecurityException(
+			expectedMessage, "_validateKey",
+			new Class<?>[] {String.class, int.class}, algorithm, keySize);
 	}
 
 	private void _assertSecurityException(
@@ -833,6 +1189,12 @@ public class FIPSModeValidatorTest {
 		NodeList nodeList = document.getElementsByTagName(tagName);
 
 		return (Element)nodeList.item(0);
+	}
+
+	private void _validateKey(String algorithm, int keySize) {
+		ReflectionTestUtil.invoke(
+			FIPSModeValidator.class, "_validateKey",
+			new Class<?>[] {String.class, int.class}, algorithm, keySize);
 	}
 
 }

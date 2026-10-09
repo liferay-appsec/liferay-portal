@@ -6,14 +6,21 @@
 package com.liferay.portal.json.web.service.client.internal;
 
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Caio Farias
@@ -58,6 +65,31 @@ public class X509TrustManagerImplTest {
 			Assert.assertEquals(
 				"Self signed certificates are not allowed in FIPS mode",
 				securityException2.getMessage());
+
+			String algorithm = Security.getProperty(
+				"ssl.TrustManagerFactory.algorithm");
+
+			Security.setProperty(
+				"ssl.TrustManagerFactory.algorithm", "SunX509");
+
+			try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+					FIPSAuditUtil.class)) {
+
+				RuntimeException runtimeException = Assert.assertThrows(
+					RuntimeException.class,
+					() -> new X509TrustManagerImpl(null, false));
+
+				Assert.assertTrue(
+					String.valueOf(runtimeException.getCause()),
+					runtimeException.getCause() instanceof
+						NoSuchAlgorithmException);
+
+				mockedStatic.verify(() -> FIPSAuditUtil.write(Mockito.any()));
+			}
+			finally {
+				Security.setProperty(
+					"ssl.TrustManagerFactory.algorithm", algorithm);
+			}
 		}
 	}
 

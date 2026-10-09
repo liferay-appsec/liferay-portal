@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettings;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
@@ -42,6 +41,7 @@ import com.liferay.portal.security.ldap.constants.LDAPConstants;
 import com.liferay.portal.security.ldap.exportimport.LDAPUserImporter;
 import com.liferay.portal.security.ldap.exportimport.configuration.LDAPImportConfiguration;
 import com.liferay.portal.security.ldap.internal.ssl.LDAPSSLSocketFactory;
+import com.liferay.portal.security.ldap.internal.util.PasswordEncryptionAlgorithmUtil;
 import com.liferay.portal.security.ldap.internal.util.SafeLdapReferralUtil;
 import com.liferay.portal.security.ldap.util.LDAPUtil;
 import com.liferay.portal.security.ldap.validator.LDAPFilterValidator;
@@ -259,7 +259,7 @@ public class LDAPAuth implements Authenticator {
 				String algorithm =
 					ldapAuthConfiguration.passwordEncryptionAlgorithm();
 
-				if (FIPSModeValidator.isNotAllowedAlgorithm(algorithm)) {
+				if (!PasswordEncryptionAlgorithmUtil.isAllowed(algorithm)) {
 					_log.error(
 						"Algorithm \"" + algorithm +
 							"\" is not allowed in FIPS mode");

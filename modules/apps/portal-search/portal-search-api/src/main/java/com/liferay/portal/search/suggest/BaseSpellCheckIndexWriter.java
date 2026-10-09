@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.suggest.SpellCheckIndexWriter;
 import com.liferay.portal.kernel.search.suggest.SuggestionConstants;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
@@ -222,7 +223,8 @@ public abstract class BaseSpellCheckIndexWriter
 			String key = keySB.toString();
 
 			byte[] bytes = DigesterUtil.digestRaw(
-				DigesterUtil.MD5, charsetEncoder.encode(CharBuffer.wrap(key)));
+				CryptoFunctionApprovalType.ALLOWED, DigesterUtil.MD5,
+				charsetEncoder.encode(CharBuffer.wrap(key)));
 
 			uidSB.append(Base64.encode(bytes));
 		}

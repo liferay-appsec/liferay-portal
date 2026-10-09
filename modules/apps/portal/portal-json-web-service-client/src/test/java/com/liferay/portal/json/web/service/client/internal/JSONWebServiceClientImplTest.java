@@ -5,10 +5,16 @@
 
 package com.liferay.portal.json.web.service.client.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
+
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -102,5 +108,56 @@ public class JSONWebServiceClientImplTest
 
 		Assert.assertTrue(headers.containsKey("headerKey1"));
 	}
+
+	@Test
+	public void testGetSSLIOSessionStrategy() throws Exception {
+		JSONWebServiceClientImpl jsonWebServiceClientImpl =
+			new JSONWebServiceClientImpl();
+
+		jsonWebServiceClientImpl.setTrustSelfSignedCertificates(false);
+
+		SSLIOSessionStrategy sslIOSessionStrategy = ReflectionTestUtil.invoke(
+			jsonWebServiceClientImpl, "getSSLIOSessionStrategy",
+			new Class<?>[0]);
+
+		Assert.assertNull(
+			ReflectionTestUtil.getFieldValue(
+				sslIOSessionStrategy, "supportedCipherSuites"));
+		Assert.assertNull(
+			ReflectionTestUtil.getFieldValue(
+				sslIOSessionStrategy, "supportedProtocols"));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			sslIOSessionStrategy = ReflectionTestUtil.invoke(
+				jsonWebServiceClientImpl, "getSSLIOSessionStrategy",
+				new Class<?>[0]);
+
+			String[] cipherSuites = ReflectionTestUtil.getFieldValue(
+				sslIOSessionStrategy, "supportedCipherSuites");
+
+			Assert.assertEquals(
+				SetUtil.fromArray(_CIPHER_SUITES),
+				SetUtil.fromArray(cipherSuites));
+
+			String[] protocols = ReflectionTestUtil.getFieldValue(
+				sslIOSessionStrategy, "supportedProtocols");
+
+			Assert.assertEquals(
+				SetUtil.fromArray(_PROTOCOLS), SetUtil.fromArray(protocols));
+		}
+	}
+
+	private static final String[] _CIPHER_SUITES = {
+		"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384",
+		"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+		"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+	};
+
+	private static final String[] _PROTOCOLS = {"TLSv1.2", "TLSv1.3"};
 
 }

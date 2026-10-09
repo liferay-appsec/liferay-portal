@@ -7,7 +7,7 @@ package com.liferay.portal.kernel.util;
 
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.test.util.FIPSModeTestUtil;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
@@ -16,8 +16,13 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.security.NoSuchAlgorithmException;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Dante Wang
@@ -32,17 +37,26 @@ public class URLUtilTest {
 		Path tempFilePath = Files.createTempFile(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString());
 
-		try (SafeCloseable safeCloseable =
+		try (MockedStatic<FIPSAuditUtil> mockedStatic = Mockito.mockStatic(
+				FIPSAuditUtil.class);
+			SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			FIPSModeTestUtil.assertSecurityException(
+			NoSuchAlgorithmException noSuchAlgorithmException =
+				Assert.assertThrows(
+					NoSuchAlgorithmException.class,
+					() -> URLUtil.download(
+						URLUtilTest.class.getResource("dependencies/test.jar"),
+						tempFilePath, _SHA1_REAL));
+
+			Assert.assertEquals(
 				"Algorithm \"SHA-1\" is not allowed in FIPS mode",
-				() -> URLUtil.download(
-					URLUtilTest.class.getResource("dependencies/test.jar"),
-					tempFilePath, _SHA1_REAL));
+				noSuchAlgorithmException.getMessage());
 
 			Assert.assertEquals(0, Files.size(tempFilePath));
+
+			mockedStatic.verify(() -> FIPSAuditUtil.write(Mockito.any()));
 		}
 		finally {
 			Files.deleteIfExists(tempFilePath);

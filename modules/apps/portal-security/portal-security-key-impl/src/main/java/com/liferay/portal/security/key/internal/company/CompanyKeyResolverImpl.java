@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.encryptor.CompanyKeyResolverUtil;
 import com.liferay.portal.kernel.exception.CompanyKeyException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
@@ -30,6 +31,7 @@ import com.liferay.portal.security.key.internal.profile.configuration.KeyManager
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
+import java.security.InvalidKeyException;
 import java.security.Key;
 
 import java.util.Arrays;
@@ -38,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.crypto.spec.SecretKeySpec;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -119,12 +119,17 @@ public class CompanyKeyResolverImpl implements CompanyKeyResolver {
 				companyKeyCacheEntry.destroy();
 			}
 
-			return new SecretKeySpec(keyBytes, _getKeyAlgorithm());
+			return CryptoUtil.createSecretKey(_getKeyAlgorithm(), keyBytes);
 		}
 		catch (CryptoException cryptoException) {
 			throw new CompanyKeyException(
 				"Unable to decrypt the wrapped key for company " + companyId,
 				cryptoException);
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			throw new CompanyKeyException(
+				"The wrapped key is not allowed for company " + companyId,
+				invalidKeyException);
 		}
 		finally {
 			if (keyBytes != null) {
@@ -241,7 +246,12 @@ public class CompanyKeyResolverImpl implements CompanyKeyResolver {
 		}
 
 		try {
-			return new SecretKeySpec(keyBytes, _getKeyAlgorithm());
+			return CryptoUtil.createSecretKey(_getKeyAlgorithm(), keyBytes);
+		}
+		catch (InvalidKeyException invalidKeyException) {
+			throw new CompanyKeyException(
+				"The cached key is not allowed for company " + companyId,
+				invalidKeyException);
 		}
 		finally {
 			Arrays.fill(keyBytes, (byte)0);

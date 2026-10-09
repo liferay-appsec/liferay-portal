@@ -10,6 +10,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.url.builder.facet.CacheAwareAbsolutePortalURLBuilder.CachePolicy;
 
@@ -128,7 +129,9 @@ public class CacheHelper {
 		}
 
 		try (InputStream inputStream = url.openStream()) {
-			digest = DigesterUtil.digestBase64("SHA-1", inputStream);
+			digest = DigesterUtil.digestBase64(
+				CryptoFunctionApprovalType.ALLOWED, DigesterUtil.SHA_1,
+				inputStream);
 
 			digests.put(cacheKey, digest);
 

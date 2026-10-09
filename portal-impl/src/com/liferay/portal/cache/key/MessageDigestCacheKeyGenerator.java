@@ -13,6 +13,8 @@ import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCache;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.Serializable;
@@ -68,7 +70,8 @@ public class MessageDigestCacheKeyGenerator extends BaseCacheKeyGenerator {
 			MessageDigest messageDigest = threadLocalCache.get(_algorithm);
 
 			if (messageDigest == null) {
-				messageDigest = MessageDigest.getInstance(_algorithm);
+				messageDigest = CryptoUtil.createMessageDigest(
+					_algorithm, CryptoFunctionApprovalType.ALLOWED);
 
 				threadLocalCache.put(_algorithm, messageDigest);
 			}

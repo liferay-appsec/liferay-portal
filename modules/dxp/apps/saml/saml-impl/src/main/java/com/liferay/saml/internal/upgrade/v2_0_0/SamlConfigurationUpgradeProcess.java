@@ -12,6 +12,8 @@ import com.liferay.portal.configuration.module.configuration.ConfigurationProvid
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -67,11 +69,12 @@ public class SamlConfigurationUpgradeProcess extends UpgradeProcess {
 			InputStream inputStream, char[] keyStorePassword)
 		throws Exception {
 
-		KeyStore jksKeyStore = KeyStore.getInstance("JKS");
+		KeyStore jksKeyStore = CryptoUtil.createKeyStore(
+			CryptoFunctionApprovalType.ALLOWED, "JKS");
 
 		jksKeyStore.load(inputStream, keyStorePassword);
 
-		KeyStore pkcs12KeyStore = KeyStore.getInstance("PKCS12");
+		KeyStore pkcs12KeyStore = CryptoUtil.createKeyStore("PKCS12");
 
 		pkcs12KeyStore.load(null, null);
 

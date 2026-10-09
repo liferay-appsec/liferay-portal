@@ -37,6 +37,8 @@ ContractionsCheck | [Styling](styling_checks.md#styling-checks) | Finds contract
 [CreatingThreadsForDBAccessCheck](check/creating_threads_for_db_access_check.md#creatingthreadsfordbaccesscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `CompanyInheritableThreadLocalCallable` should be used when creating threads for DB access. |
 [CreationMenuBuilderCheck](check/builder_check.md#buildercheck) | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | Checks that `CreationMenuBuilder` is used when possible. |
 CredentialBufferCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds buffers that are derived from a `String` and passed straight into a credential API, leaving no reference to clear. |
+CryptoGetInstanceCallCheck | [Security](security_checks.md#security-checks) | Finds JCA classes instantiated with `getInstance` outside `CryptoUtil`. |
+CryptoSecretKeySpecCheck | [Security](security_checks.md#security-checks) | Finds secret keys built with `new SecretKeySpec` instead of `CryptoUtil.createSecretKey`. |
 DTOEnumCreationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks the creation of DTO enum. |
 DatabaseMetaDataCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks usages of `java.sql.DatabaseMetaData`. |
 DatabaseMetaDataSupportsBatchUpdatesCallCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks illegal call to `DatabaseMetaData.supportsBatchUpdates`. |

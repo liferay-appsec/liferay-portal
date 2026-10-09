@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
+import com.liferay.portal.kernel.security.crypto.CryptoFunctionApprovalType;
 import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
@@ -76,9 +77,10 @@ public class LanguageFilter extends BasePortalFilter {
 
 		content = translateResponse(httpServletRequest, content);
 
-		String eTag =
-			StringPool.QUOTE + DigesterUtil.digest("SHA-1", content) +
-				StringPool.QUOTE;
+		String digest = DigesterUtil.digest(
+			CryptoFunctionApprovalType.ALLOWED, DigesterUtil.SHA_1, content);
+
+		String eTag = StringPool.QUOTE + digest + StringPool.QUOTE;
 
 		httpServletResponse.setHeader(HttpHeaders.ETAG, eTag);
 

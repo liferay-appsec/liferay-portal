@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.cluster.FutureClusterResponses;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -54,7 +55,7 @@ public class NonceUtil {
 		long timestamp = System.currentTimeMillis();
 
 		String nonce = DigesterUtil.digestHex(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5,
+			CryptoUtil.getAlgorithm(DigesterUtil.MD5, DigesterUtil.SHA_256),
 			remoteAddress, String.valueOf(timestamp), companyKey);
 
 		_nonceDelayQueue.put(new NonceDelayed(nonce));

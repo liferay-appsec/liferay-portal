@@ -10,7 +10,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
+import com.liferay.portal.kernel.security.crypto.CryptoUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import java.security.MessageDigest;
+
 /**
  * @author Shuyang Zhou
  */
@@ -30,7 +32,7 @@ public class URLUtil {
 	public static void download(URL url, Path path, String sha1)
 		throws Exception {
 
-		FIPSModeValidator.validateAlgorithm(DigesterUtil.SHA_1);
+		CryptoUtil.validateAlgorithm(DigesterUtil.SHA_1, MessageDigest.class);
 
 		if (_log.isInfoEnabled()) {
 			_log.info(StringBundler.concat("Downloading ", url, " to ", path));
