@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.router.configuration.FileSystemAuditMessageProcessorConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -109,10 +110,15 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 		_configurationProvider.deleteCompanyConfiguration(
 			FileSystemAuditMessageProcessorConfiguration.class,
 			TestPropsValues.getCompanyId());
+		_configurationProvider.deleteCompanyConfiguration(
+			PersistentAuditMessageProcessorConfiguration.class,
+			TestPropsValues.getCompanyId());
 		_configurationProvider.deleteSystemConfiguration(
 			AuditConfiguration.class);
 		_configurationProvider.deleteSystemConfiguration(
 			FileSystemAuditMessageProcessorConfiguration.class);
+		_configurationProvider.deleteSystemConfiguration(
+			PersistentAuditMessageProcessorConfiguration.class);
 	}
 
 	@FeatureFlag("LPD-6417")
@@ -122,12 +128,17 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 			ExtendedObjectClassDefinition.Scope.COMPANY);
 		_testProcessActionRoutesAuditMessage(
 			ExtendedObjectClassDefinition.Scope.SYSTEM);
+		_testProcessActionWhenDatabaseProcessorIsOverridden(
+			ExtendedObjectClassDefinition.Scope.COMPANY);
+		_testProcessActionWhenDatabaseProcessorIsOverridden(
+			ExtendedObjectClassDefinition.Scope.SYSTEM);
 		_testProcessActionWhenFileSystemProcessorIsOverridden(
 			ExtendedObjectClassDefinition.Scope.COMPANY);
 		_testProcessActionWhenFileSystemProcessorIsOverridden(
 			ExtendedObjectClassDefinition.Scope.SYSTEM);
 		_testProcessActionWithCompanyScope();
 		_testProcessActionWithCompanyScopeDoesNotAffectOtherInstances();
+		_testProcessActionWithCompanyScopeWhenDatabaseProcessorValuesAreEqualToSystemValues();
 		_testProcessActionWithCompanyScopeWhenFeatureFlagIsDisabled();
 		_testProcessActionWithCompanyScopeWhenProcessorParametersAreAbsent();
 		_testProcessActionWithCompanyScopeWhenUserIsNotCompanyAdmin();
@@ -150,6 +161,18 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 		Assert.assertEquals(
 			_OUTPUT_DIRECTORY, properties.get("outputDirectory"));
 		Assert.assertEquals(_OUTPUT_FORMAT, properties.get("outputFormat"));
+	}
+
+	private void _assertPersistentAuditMessageProcessorConfiguration(
+			ExtendedObjectClassDefinition.Scope scope)
+		throws Exception {
+
+		Dictionary<String, Object> properties = _getProperties(
+			PersistentAuditMessageProcessorConfiguration.class, scope);
+
+		Assert.assertEquals(_BUFFER_SIZE, properties.get("bufferSize"));
+		Assert.assertEquals(Boolean.FALSE, properties.get("enabled"));
+		Assert.assertEquals(_FLUSH_INTERVAL, properties.get("flushInterval"));
 	}
 
 	private void _assertProcessActionFails(
@@ -315,6 +338,14 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 				_OUTPUT_DIRECTORY);
 			mockLiferayPortletActionRequest.setParameter(
 				"fileSystemAuditMessageProcessorOutputFormat", _OUTPUT_FORMAT);
+			mockLiferayPortletActionRequest.setParameter(
+				"persistentAuditMessageProcessorBufferSize",
+				String.valueOf(_BUFFER_SIZE));
+			mockLiferayPortletActionRequest.setParameter(
+				"persistentAuditMessageProcessorEnabled", "false");
+			mockLiferayPortletActionRequest.setParameter(
+				"persistentAuditMessageProcessorFlushInterval",
+				String.valueOf(_FLUSH_INTERVAL));
 		}
 
 		_mvcActionCommand.processAction(
@@ -407,6 +438,49 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 		}
 	}
 
+	private void _testProcessActionWhenDatabaseProcessorIsOverridden(
+			ExtendedObjectClassDefinition.Scope scope)
+		throws Exception {
+
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"bufferSize", _BUFFER_SIZE
+			).put(
+				"enabled", true
+			).put(
+				"flushInterval", _FLUSH_INTERVAL
+			).build();
+
+		if (ExtendedObjectClassDefinition.Scope.SYSTEM.equals(scope)) {
+			_configurationProvider.saveSystemConfiguration(
+				PersistentAuditMessageProcessorConfiguration.class, properties);
+		}
+		else {
+			_configurationProvider.saveCompanyConfiguration(
+				PersistentAuditMessageProcessorConfiguration.class,
+				TestPropsValues.getCompanyId(), properties);
+		}
+
+		_processActionWithOverriddenConfiguration(
+			PersistentAuditMessageProcessorConfiguration.class,
+			HashMapBuilder.<String, Object>put(
+				"bufferSize", 0
+			).put(
+				"enabled", false
+			).put(
+				"flushInterval", 0L
+			).build(),
+			scope);
+
+		Dictionary<String, Object> currentProperties = _getProperties(
+			PersistentAuditMessageProcessorConfiguration.class, scope);
+
+		Assert.assertEquals(_BUFFER_SIZE, currentProperties.get("bufferSize"));
+		Assert.assertEquals(Boolean.TRUE, currentProperties.get("enabled"));
+		Assert.assertEquals(
+			_FLUSH_INTERVAL, currentProperties.get("flushInterval"));
+	}
+
 	private void _testProcessActionWhenFileSystemProcessorIsOverridden(
 			ExtendedObjectClassDefinition.Scope scope)
 		throws Exception {
@@ -458,23 +532,38 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 	}
 
 	private void _testProcessActionWithCompanyScope() throws Exception {
-		_processAction(ExtendedObjectClassDefinition.Scope.COMPANY);
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					PersistentAuditMessageProcessorConfiguration.class.
+						getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"bufferSize", RandomTestUtil.randomInt()
+					).put(
+						"enabled", RandomTestUtil.randomBoolean()
+					).put(
+						"flushInterval", RandomTestUtil.randomLong()
+					).build())) {
 
-		Dictionary<String, Object> properties = _getProperties(
-			ExtendedObjectClassDefinition.Scope.COMPANY);
+			_processAction(ExtendedObjectClassDefinition.Scope.COMPANY);
 
-		Assert.assertNull(properties.get("enabled"));
-		Assert.assertEquals(
-			Boolean.FALSE, properties.get("pseudonymizationEnabled"));
+			Dictionary<String, Object> properties = _getProperties(
+				ExtendedObjectClassDefinition.Scope.COMPANY);
 
-		_assertFileSystemAuditMessageProcessorConfiguration(
-			ExtendedObjectClassDefinition.Scope.COMPANY);
+			Assert.assertNull(properties.get("enabled"));
+			Assert.assertEquals(
+				Boolean.FALSE, properties.get("pseudonymizationEnabled"));
+
+			_assertFileSystemAuditMessageProcessorConfiguration(
+				ExtendedObjectClassDefinition.Scope.COMPANY);
+			_assertPersistentAuditMessageProcessorConfiguration(
+				ExtendedObjectClassDefinition.Scope.COMPANY);
+		}
 	}
 
 	private void _testProcessActionWithCompanyScopeDoesNotAffectOtherInstances()
 		throws Exception {
 
-		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper1 =
 				new ConfigurationTemporarySwapper(
 					FileSystemAuditMessageProcessorConfiguration.class.
 						getName(),
@@ -486,6 +575,17 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 						"outputDirectory", "data/other"
 					).put(
 						"outputFormat", "NDJSON"
+					).build());
+			ConfigurationTemporarySwapper configurationTemporarySwapper2 =
+				new ConfigurationTemporarySwapper(
+					PersistentAuditMessageProcessorConfiguration.class.
+						getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"bufferSize", 2000
+					).put(
+						"enabled", true
+					).put(
+						"flushInterval", 60000L
 					).build())) {
 
 			_processAction(ExtendedObjectClassDefinition.Scope.COMPANY);
@@ -500,6 +600,50 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 			Assert.assertEquals(
 				"data/other", properties.get("outputDirectory"));
 			Assert.assertEquals("NDJSON", properties.get("outputFormat"));
+
+			properties = _getProperties(
+				PersistentAuditMessageProcessorConfiguration.class,
+				ExtendedObjectClassDefinition.Scope.SYSTEM);
+
+			Assert.assertEquals(2000, properties.get("bufferSize"));
+			Assert.assertEquals(Boolean.TRUE, properties.get("enabled"));
+			Assert.assertEquals(60000L, properties.get("flushInterval"));
+		}
+	}
+
+	private void _testProcessActionWithCompanyScopeWhenDatabaseProcessorValuesAreEqualToSystemValues()
+		throws Exception {
+
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					PersistentAuditMessageProcessorConfiguration.class.
+						getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"bufferSize", _BUFFER_SIZE
+					).put(
+						"enabled", false
+					).put(
+						"flushInterval", _FLUSH_INTERVAL
+					).build())) {
+
+			_configurationProvider.saveCompanyConfiguration(
+				PersistentAuditMessageProcessorConfiguration.class,
+				TestPropsValues.getCompanyId(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"bufferSize", RandomTestUtil.randomInt()
+				).put(
+					"enabled", RandomTestUtil.randomBoolean()
+				).put(
+					"flushInterval", RandomTestUtil.randomLong()
+				).build());
+
+			_processAction(ExtendedObjectClassDefinition.Scope.COMPANY);
+
+			Assert.assertNull(
+				_configurationAdmin.listConfigurations(
+					_getFilterString(
+						PersistentAuditMessageProcessorConfiguration.class,
+						ExtendedObjectClassDefinition.Scope.COMPANY)));
 		}
 	}
 
@@ -519,24 +663,49 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 	private void _testProcessActionWithCompanyScopeWhenProcessorParametersAreAbsent()
 		throws Exception {
 
-		_configurationProvider.saveCompanyConfiguration(
-			FileSystemAuditMessageProcessorConfiguration.class,
-			TestPropsValues.getCompanyId(),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"enabled", true
-			).put(
-				"generateChecksum", true
-			).put(
-				"outputDirectory", _OUTPUT_DIRECTORY
-			).put(
-				"outputFormat", _OUTPUT_FORMAT
-			).build());
+		try (ConfigurationTemporarySwapper configurationTemporarySwapper =
+				new ConfigurationTemporarySwapper(
+					PersistentAuditMessageProcessorConfiguration.class.
+						getName(),
+					HashMapDictionaryBuilder.<String, Object>put(
+						"bufferSize", RandomTestUtil.randomInt()
+					).put(
+						"enabled", RandomTestUtil.randomBoolean()
+					).put(
+						"flushInterval", RandomTestUtil.randomLong()
+					).build())) {
 
-		_processAction(
-			null, ExtendedObjectClassDefinition.Scope.COMPANY, false);
+			_configurationProvider.saveCompanyConfiguration(
+				FileSystemAuditMessageProcessorConfiguration.class,
+				TestPropsValues.getCompanyId(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"enabled", true
+				).put(
+					"generateChecksum", true
+				).put(
+					"outputDirectory", _OUTPUT_DIRECTORY
+				).put(
+					"outputFormat", _OUTPUT_FORMAT
+				).build());
+			_configurationProvider.saveCompanyConfiguration(
+				PersistentAuditMessageProcessorConfiguration.class,
+				TestPropsValues.getCompanyId(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"bufferSize", _BUFFER_SIZE
+				).put(
+					"enabled", false
+				).put(
+					"flushInterval", _FLUSH_INTERVAL
+				).build());
 
-		_assertFileSystemAuditMessageProcessorConfiguration(
-			ExtendedObjectClassDefinition.Scope.COMPANY);
+			_processAction(
+				null, ExtendedObjectClassDefinition.Scope.COMPANY, false);
+
+			_assertFileSystemAuditMessageProcessorConfiguration(
+				ExtendedObjectClassDefinition.Scope.COMPANY);
+			_assertPersistentAuditMessageProcessorConfiguration(
+				ExtendedObjectClassDefinition.Scope.COMPANY);
+		}
 	}
 
 	private void _testProcessActionWithCompanyScopeWhenUserIsNotCompanyAdmin()
@@ -558,6 +727,8 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 			Boolean.FALSE, properties.get("pseudonymizationEnabled"));
 
 		_assertFileSystemAuditMessageProcessorConfiguration(
+			ExtendedObjectClassDefinition.Scope.SYSTEM);
+		_assertPersistentAuditMessageProcessorConfiguration(
 			ExtendedObjectClassDefinition.Scope.SYSTEM);
 	}
 
@@ -628,6 +799,10 @@ public class SaveAuditConfigurationMVCActionCommandTest {
 			ExtendedObjectClassDefinition.Scope.SYSTEM,
 			PrincipalException.MustBeOmniadmin.class);
 	}
+
+	private static final int _BUFFER_SIZE = 1000;
+
+	private static final long _FLUSH_INTERVAL = 30000;
 
 	private static final String _OUTPUT_DIRECTORY = "data/audit-test";
 
