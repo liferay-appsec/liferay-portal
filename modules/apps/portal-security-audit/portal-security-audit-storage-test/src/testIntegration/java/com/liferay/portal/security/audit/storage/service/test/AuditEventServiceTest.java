@@ -102,6 +102,13 @@ public class AuditEventServiceTest {
 					contextName, RandomTestUtil.randomString(),
 					new ArrayList<>())));
 
+		_auditEvents.add(
+			_auditEventLocalService.addAuditEvent(
+				AuditMessageBuilder.buildAuditMessage(
+					_accountEntry.getAccountEntryId(),
+					RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
+					null, RandomTestUtil.randomString(), new ArrayList<>())));
+
 		User accountMemberUser = UserTestUtil.addUser();
 
 		_associateUser(
@@ -172,6 +179,32 @@ public class AuditEventServiceTest {
 			QueryUtil.ALL_POS, new AuditEventCreateDateComparator());
 
 		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
+
+		auditEvents = _auditEventService.getAuditEvents(
+			TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+			new long[] {_accountEntry.getAccountEntryId()}, null, null, null,
+			null, null, null, null, 0, null, true, QueryUtil.ALL_POS,
+			QueryUtil.ALL_POS, new AuditEventCreateDateComparator());
+
+		Assert.assertEquals(auditEvents.toString(), 3, auditEvents.size());
+
+		auditEvents = _auditEventService.getAuditEvents(
+			TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+			new long[] {_accountEntry.getAccountEntryId()}, null, null, null,
+			null, StringPool.BLANK, null, null, 0, null, true,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			new AuditEventCreateDateComparator());
+
+		Assert.assertEquals(auditEvents.toString(), 1, auditEvents.size());
+
+		auditEvents = _auditEventService.getAuditEvents(
+			TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+			new long[] {_accountEntry.getAccountEntryId()}, null, null, null,
+			null, StringPool.BLANK, null, null, 0, null, false,
+			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			new AuditEventCreateDateComparator());
+
+		Assert.assertEquals(auditEvents.toString(), 1, auditEvents.size());
 	}
 
 	private void _associateUser(Role role, User user) throws Exception {
