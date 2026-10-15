@@ -25,6 +25,7 @@ import com.liferay.portal.security.audit.storage.service.base.AuditEventLocalSer
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -218,14 +219,10 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 					StringPool.PERCENT + clientIP + StringPool.PERCENT));
 		}
 
-		Property contextNameProperty = PropertyFactoryUtil.forName(
-			"contextName");
-
 		if (Validator.isNotNull(contextName)) {
-			junction.add(contextNameProperty.eq(contextName));
-		}
-		else if (andSearch) {
-			junction.add(contextNameProperty.isNull());
+			Property property = PropertyFactoryUtil.forName("contextName");
+
+			junction.add(property.eq(contextName));
 		}
 
 		if (Validator.isNotNull(serverName)) {
@@ -254,6 +251,12 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			Property property = PropertyFactoryUtil.forName("companyId");
 
 			dynamicQuery.add(property.eq(companyId));
+		}
+
+		if (Objects.equals(contextName, StringPool.BLANK)) {
+			Property property = PropertyFactoryUtil.forName("contextName");
+
+			dynamicQuery.add(property.isNull());
 		}
 
 		if (createDateGT != null) {

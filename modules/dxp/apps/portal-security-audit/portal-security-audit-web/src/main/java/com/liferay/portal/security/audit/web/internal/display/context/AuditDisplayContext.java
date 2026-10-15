@@ -240,16 +240,16 @@ public class AuditDisplayContext {
 				() -> AuditEventManagerUtil.getAuditEvents(
 					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
 					getUserName(), startDate, endDate, null, getClassName(),
-					getClassPK(), getClientHost(), getClientIP(), null,
-					getEventType(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator(), range[0], range[1],
-					new AuditEventCreateDateComparator()),
+					getClassPK(), getClientHost(), getClientIP(),
+					StringPool.BLANK, getEventType(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator(),
+					range[0], range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
 					getUserName(), startDate, endDate, null, getClassName(),
-					getClassPK(), getClientHost(), getClientIP(), null,
-					getEventType(), getServerName(), getServerPort(), null,
-					displayTerms.isAndOperator()));
+					getClassPK(), getClientHost(), getClientIP(),
+					StringPool.BLANK, getEventType(), getServerName(),
+					getServerPort(), null, displayTerms.isAndOperator()));
 		}
 		else {
 			String keywords = displayTerms.getKeywords();
@@ -261,14 +261,14 @@ public class AuditDisplayContext {
 				() -> AuditEventManagerUtil.getAuditEvents(
 					_themeDisplay.getCompanyId(), getGroupId(),
 					Long.valueOf(number), keywords, null, null, null, keywords,
-					keywords, keywords, keywords, null, keywords, keywords,
-					Integer.valueOf(number), null, false, range[0], range[1],
-					new AuditEventCreateDateComparator()),
+					keywords, keywords, keywords, StringPool.BLANK, keywords,
+					keywords, Integer.valueOf(number), null, false, range[0],
+					range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(), getGroupId(),
 					Long.valueOf(number), keywords, null, null, null, keywords,
-					keywords, keywords, keywords, null, keywords, keywords,
-					Integer.valueOf(number), null, false));
+					keywords, keywords, keywords, StringPool.BLANK, keywords,
+					keywords, Integer.valueOf(number), null, false));
 		}
 
 		return _searchContainer;
