@@ -78,34 +78,6 @@ public class SecurityTest extends BaseClientTestCase {
 		new LiferayIntegrationTestRule();
 
 	@Test
-	public void testConfidentialApplicationIsDisclosedToAuthorizedUser()
-		throws Exception {
-
-		Response response = _getApplicationResponse(
-			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS,
-			getAuthenticatedCookie(
-				_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD,
-				null));
-
-		Assert.assertEquals(200, getStatus(response));
-
-		_assertApplicationResponseBody(_CLIENT_ID_CLIENT_CREDENTIALS, response);
-	}
-
-	@Test
-	public void testConfidentialApplicationIsNotDisclosedToGuestUser() {
-		Response response1 = _getApplicationResponse(
-			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS, null);
-		Response response2 = _getApplicationResponse(
-			RandomTestUtil.randomString(), null);
-
-		Assert.assertEquals(400, getStatus(response1));
-		Assert.assertEquals(getStatus(response2), getStatus(response1));
-		Assert.assertEquals(
-			getBodyAsString(response2), getBodyAsString(response1));
-	}
-
-	@Test
 	public void testEscapeOAuth2ApplicationName() {
 		_assertAuthorizationPageEscapesInjectedScript(
 			webTarget -> webTarget.queryParam(
@@ -137,6 +109,13 @@ public class SecurityTest extends BaseClientTestCase {
 			).queryParam(
 				"scope", "Liferay.Captcha.REST.everything.read"
 			));
+	}
+
+	@Test
+	public void testGetApplication() throws Exception {
+		_testGetApplicationWithConfidentialApplicationDisclosedToAuthorizedUser();
+		_testGetApplicationWithConfidentialApplicationNotDisclosedToGuestUser();
+		_testGetApplicationWithPublicApplicationDisclosedToGuestUser();
 	}
 
 	@Test
@@ -261,14 +240,6 @@ public class SecurityTest extends BaseClientTestCase {
 			"{\"error\":\"invalid_request\",\"error_description\":\"Client " +
 				"Redirect Uri is invalid\"}",
 			getBodyAsString(response));
-	}
-
-	@Test
-	public void testPublicApplicationIsDisclosedToGuestUser() throws Exception {
-		_testPublicApplicationIsDisclosedToGuestUser(
-			_CLIENT_ID_CODE_PKCE_1, _EXTERNAL_REFERENCE_CODE_CODE_PKCE);
-		_testPublicApplicationIsDisclosedToGuestUser(
-			_CLIENT_ID_CODE_PKCE_2, _generatedExternalReferenceCode);
 	}
 
 	@Test
@@ -513,6 +484,41 @@ public class SecurityTest extends BaseClientTestCase {
 		).post(
 			Entity.form(formData)
 		);
+	}
+
+	private void _testGetApplicationWithConfidentialApplicationDisclosedToAuthorizedUser()
+		throws Exception {
+
+		Response response = _getApplicationResponse(
+			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS,
+			getAuthenticatedCookie(
+				_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD,
+				null));
+
+		Assert.assertEquals(200, getStatus(response));
+
+		_assertApplicationResponseBody(_CLIENT_ID_CLIENT_CREDENTIALS, response);
+	}
+
+	private void _testGetApplicationWithConfidentialApplicationNotDisclosedToGuestUser() {
+		Response response1 = _getApplicationResponse(
+			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS, null);
+		Response response2 = _getApplicationResponse(
+			RandomTestUtil.randomString(), null);
+
+		Assert.assertEquals(400, getStatus(response1));
+		Assert.assertEquals(getStatus(response2), getStatus(response1));
+		Assert.assertEquals(
+			getBodyAsString(response2), getBodyAsString(response1));
+	}
+
+	private void _testGetApplicationWithPublicApplicationDisclosedToGuestUser()
+		throws Exception {
+
+		_testPublicApplicationIsDisclosedToGuestUser(
+			_CLIENT_ID_CODE_PKCE_1, _EXTERNAL_REFERENCE_CODE_CODE_PKCE);
+		_testPublicApplicationIsDisclosedToGuestUser(
+			_CLIENT_ID_CODE_PKCE_2, _generatedExternalReferenceCode);
 	}
 
 	private void _testPublicApplicationIsDisclosedToGuestUser(
