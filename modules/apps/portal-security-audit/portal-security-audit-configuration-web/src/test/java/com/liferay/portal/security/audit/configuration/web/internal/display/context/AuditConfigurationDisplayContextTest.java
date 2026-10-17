@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.router.configuration.FileSystemAuditMessageProcessorConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.function.Function;
@@ -59,6 +60,19 @@ public class AuditConfigurationDisplayContextTest {
 			FileSystemAuditMessageProcessorConfiguration.class, "outputFormat");
 		_testGetHelpMessage(
 			AuditConfigurationDisplayContext::
+				getPersistentAuditMessageProcessorBufferSizeHelpMessage,
+			PersistentAuditMessageProcessorConfiguration.class, "bufferSize");
+		_testGetHelpMessage(
+			AuditConfigurationDisplayContext::
+				getPersistentAuditMessageProcessorEnabledHelpMessage,
+			PersistentAuditMessageProcessorConfiguration.class, "enabled");
+		_testGetHelpMessage(
+			AuditConfigurationDisplayContext::
+				getPersistentAuditMessageProcessorFlushIntervalHelpMessage,
+			PersistentAuditMessageProcessorConfiguration.class,
+			"flushInterval");
+		_testGetHelpMessage(
+			AuditConfigurationDisplayContext::
 				getPseudonymizationEnabledHelpMessage,
 			AuditConfiguration.class, "pseudonymizationEnabled");
 	}
@@ -88,6 +102,19 @@ public class AuditConfigurationDisplayContextTest {
 			FileSystemAuditMessageProcessorConfiguration.class, "outputFormat");
 		_testIsOverridden(
 			AuditConfigurationDisplayContext::
+				isPersistentAuditMessageProcessorBufferSizeOverridden,
+			PersistentAuditMessageProcessorConfiguration.class, "bufferSize");
+		_testIsOverridden(
+			AuditConfigurationDisplayContext::
+				isPersistentAuditMessageProcessorEnabledOverridden,
+			PersistentAuditMessageProcessorConfiguration.class, "enabled");
+		_testIsOverridden(
+			AuditConfigurationDisplayContext::
+				isPersistentAuditMessageProcessorFlushIntervalOverridden,
+			PersistentAuditMessageProcessorConfiguration.class,
+			"flushInterval");
+		_testIsOverridden(
+			AuditConfigurationDisplayContext::
 				isPseudonymizationEnabledOverridden,
 			AuditConfiguration.class, "pseudonymizationEnabled");
 	}
@@ -96,6 +123,7 @@ public class AuditConfigurationDisplayContextTest {
 		return new AuditConfigurationDisplayContext(
 			Mockito.mock(AuditConfiguration.class),
 			Mockito.mock(FileSystemAuditMessageProcessorConfiguration.class),
+			Mockito.mock(PersistentAuditMessageProcessorConfiguration.class),
 			false);
 	}
 
