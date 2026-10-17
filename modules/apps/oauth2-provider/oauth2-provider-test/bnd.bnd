@@ -16,6 +16,7 @@ Import-Package:\
 	*
 Private-Package: com.liferay.oauth2.provider.internal.test.*
 -includeresource:\
+	@jsonassert-[0-9.]*.jar,\
 	@org.apache.cxf.rt.rs.extension.providers*.jar,\
 	@org.apache.cxf.rt.rs.json.basic*.jar,\
 	@org.apache.cxf.rt.rs.security.jose*.jar,\
