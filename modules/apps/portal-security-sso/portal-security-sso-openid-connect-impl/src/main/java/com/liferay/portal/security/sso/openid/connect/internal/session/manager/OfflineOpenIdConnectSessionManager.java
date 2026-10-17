@@ -103,15 +103,7 @@ public class OfflineOpenIdConnectSessionManager {
 			return true;
 		}
 
-		Date accessTokenExpirationDate =
-			openIdConnectSession.getAccessTokenExpirationDate();
-
-		long currentTime = System.currentTimeMillis();
-
-		if (currentTime >
-				(accessTokenExpirationDate.getTime() -
-					_tokenRefreshOffsetMillis)) {
-
+		if (_isAccessTokenExpiringSoon(openIdConnectSession)) {
 			Message message = new Message();
 
 			message.put("openIdConnectSessionId", openIdConnectSessionId);
@@ -267,11 +259,36 @@ public class OfflineOpenIdConnectSessionManager {
 				_log.debug(exception);
 			}
 
-			_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
-				openIdConnectSession);
+			OpenIdConnectSession currentOpenIdConnectSession =
+				_openIdConnectSessionLocalService.fetchOpenIdConnectSession(
+					openIdConnectSession.getOpenIdConnectSessionId());
+
+			if ((currentOpenIdConnectSession != null) &&
+				(currentOpenIdConnectSession.getMvccVersion() ==
+					openIdConnectSession.getMvccVersion())) {
+
+				_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
+					currentOpenIdConnectSession);
+			}
 		}
 
 		return null;
+	}
+
+	private boolean _isAccessTokenExpiringSoon(
+		OpenIdConnectSession openIdConnectSession) {
+
+		Date accessTokenExpirationDate =
+			openIdConnectSession.getAccessTokenExpirationDate();
+
+		if (System.currentTimeMillis() >
+				(accessTokenExpirationDate.getTime() -
+					_tokenRefreshOffsetMillis)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _registerServices(BundleContext bundleContext) {
@@ -455,6 +472,12 @@ public class OfflineOpenIdConnectSessionManager {
 		implements SchedulerJobConfiguration {
 
 		@Override
+		public String getDestinationName() {
+			return OpenIdConnectDestinationNames.
+				OPENID_CONNECT_TOKEN_REFRESH_SCHEDULER;
+		}
+
+		@Override
 		public UnsafeRunnable<Exception> getJobExecutorUnsafeRunnable() {
 			return () -> {
 				List<OpenIdConnectSession> openIdConnectSessions =
@@ -468,7 +491,19 @@ public class OfflineOpenIdConnectSessionManager {
 				for (OpenIdConnectSession openIdConnectSession :
 						openIdConnectSessions) {
 
-					_extendOpenIdConnectSession(openIdConnectSession);
+					OpenIdConnectSession currentOpenIdConnectSession =
+						_openIdConnectSessionLocalService.
+							fetchOpenIdConnectSession(
+								openIdConnectSession.
+									getOpenIdConnectSessionId());
+
+					if ((currentOpenIdConnectSession != null) &&
+						_isAccessTokenExpiringSoon(
+							currentOpenIdConnectSession)) {
+
+						_extendOpenIdConnectSession(
+							currentOpenIdConnectSession);
+					}
 				}
 			};
 		}
