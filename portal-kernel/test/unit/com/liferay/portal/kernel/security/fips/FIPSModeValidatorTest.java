@@ -530,6 +530,51 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testValidatePasswordLengths() {
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DEFAULT_ADMIN_PASSWORD", RandomTestUtil.randomString(14));
+			SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 14)) {
+
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validatePasswordLengths",
+				new Class<?>[0]);
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DEFAULT_ADMIN_PASSWORD", StringPool.BLANK)) {
+
+				ReflectionTestUtil.invoke(
+					FIPSModeValidator.class, "_validatePasswordLengths",
+					new Class<?>[0]);
+			}
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DEFAULT_ADMIN_PASSWORD",
+						RandomTestUtil.randomString(13))) {
+
+				_assertSecurityException(
+					"FIPS mode requires the property \"" +
+						PropsKeys.DEFAULT_ADMIN_PASSWORD + "\"",
+					"_validatePasswordLengths", new Class<?>[0]);
+			}
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 13)) {
+
+				_assertSecurityException(
+					"FIPS mode requires the property \"" +
+						PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH + "\"",
+					"_validatePasswordLengths", new Class<?>[0]);
+			}
+		}
+	}
+
+	@Test
 	public void testValidatePasswordsEncryptionAlgorithm() {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
@@ -557,16 +602,22 @@ public class FIPSModeValidatorTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"COMPANY_ENCRYPTION_ALGORITHM", "AES", false);
 			SafeCloseable safeCloseable2 =
-				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DEFAULT_ADMIN_PASSWORD", RandomTestUtil.randomString(14));
 			SafeCloseable safeCloseable3 =
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
+			SafeCloseable safeCloseable4 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 14);
+			SafeCloseable safeCloseable5 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"PASSWORDS_ENCRYPTION_ALGORITHM",
 					"PBKDF2WithHmacSHA256/256/1300000", false);
-			SafeCloseable safeCloseable4 =
+			SafeCloseable safeCloseable6 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"TUNNELING_SERVLET_ENCRYPTION_ALGORITHM", "AES")) {
 
-			try (SafeCloseable safeCloseable5 =
+			try (SafeCloseable safeCloseable7 =
 					PropsValuesTestUtil.swapWithSafeCloseable(
 						"TUNNEL_UTIL_VERIFY_SSL_HOSTNAME", "true", false)) {
 
@@ -575,7 +626,7 @@ public class FIPSModeValidatorTest {
 					new Class<?>[0]);
 			}
 
-			try (SafeCloseable safeCloseable5 =
+			try (SafeCloseable safeCloseable7 =
 					PropsValuesTestUtil.swapWithSafeCloseable(
 						"TUNNEL_UTIL_VERIFY_SSL_HOSTNAME", StringPool.BLANK,
 						false)) {
@@ -586,7 +637,7 @@ public class FIPSModeValidatorTest {
 					"_validatePortalProperties", new Class<?>[0]);
 			}
 
-			try (SafeCloseable safeCloseable5 =
+			try (SafeCloseable safeCloseable7 =
 					PropsValuesTestUtil.swapWithSafeCloseable(
 						"TUNNEL_UTIL_VERIFY_SSL_HOSTNAME", "false", false)) {
 
