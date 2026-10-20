@@ -63,6 +63,8 @@ import org.xml.sax.InputSource;
  */
 public class FIPSModeValidator {
 
+	public static final int PASSWORDS_MIN_LENGTH = 14;
+
 	public static Provider fetchProvider() {
 		Provider[] providers = Security.getProviders();
 
@@ -158,6 +160,22 @@ public class FIPSModeValidator {
 
 		throw new SecurityException(
 			"Key size " + keySize + " is not allowed in FIPS mode");
+	}
+
+	public static void validatePassword(String password) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return;
+		}
+
+		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
+
+		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
+			return;
+		}
+
+		throw new SecurityException(
+			"Password must be at least " + PASSWORDS_MIN_LENGTH +
+				" bytes in FIPS mode");
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {
@@ -482,13 +500,13 @@ public class FIPSModeValidator {
 
 	private static void _validatePasswordLengths() {
 		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
-				_PASSWORD_LENGTH_MIN) {
+				PASSWORDS_MIN_LENGTH) {
 
 			throw new SecurityException(
 				StringBundler.concat(
 					"FIPS mode requires the property \"",
 					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
-					"\" to be at least ", _PASSWORD_LENGTH_MIN));
+					"\" to be at least ", PASSWORDS_MIN_LENGTH));
 		}
 
 		String defaultAdminPassword = GetterUtil.getString(
@@ -496,12 +514,12 @@ public class FIPSModeValidator {
 
 		byte[] bytes = defaultAdminPassword.getBytes(StandardCharsets.UTF_8);
 
-		if (bytes.length < _PASSWORD_LENGTH_MIN) {
+		if (bytes.length < PASSWORDS_MIN_LENGTH) {
 			throw new SecurityException(
 				StringBundler.concat(
 					"FIPS mode requires the property \"",
 					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
-					_PASSWORD_LENGTH_MIN, " bytes"));
+					PASSWORDS_MIN_LENGTH, " bytes"));
 		}
 	}
 
@@ -681,8 +699,6 @@ public class FIPSModeValidator {
 				throwable);
 		}
 	}
-
-	private static final int _PASSWORD_LENGTH_MIN = 14;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 

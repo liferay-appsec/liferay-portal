@@ -530,6 +530,24 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testValidatePassword() {
+		String password = RandomTestUtil.randomString(13);
+
+		FIPSModeValidator.validatePassword(password);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			FIPSModeValidator.validatePassword(RandomTestUtil.randomString(14));
+
+			FIPSModeTestUtil.assertSecurityException(
+				"Password must be at least 14 bytes in FIPS mode",
+				() -> FIPSModeValidator.validatePassword(password));
+		}
+	}
+
+	@Test
 	public void testValidatePasswordLengths() {
 		try (SafeCloseable safeCloseable1 =
 				PropsValuesTestUtil.swapWithSafeCloseable(
