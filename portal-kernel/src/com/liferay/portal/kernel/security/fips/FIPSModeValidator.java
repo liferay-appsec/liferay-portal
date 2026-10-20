@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 
 import java.net.URL;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -479,6 +480,31 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validatePasswordLengths() {
+		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
+				_PASSWORD_LENGTH_MIN) {
+
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
+					"\" to be at least ", _PASSWORD_LENGTH_MIN));
+		}
+
+		String defaultAdminPassword = GetterUtil.getString(
+			PropsValues.DEFAULT_ADMIN_PASSWORD);
+
+		byte[] bytes = defaultAdminPassword.getBytes(StandardCharsets.UTF_8);
+
+		if (bytes.length < _PASSWORD_LENGTH_MIN) {
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
+					_PASSWORD_LENGTH_MIN, " bytes"));
+		}
+	}
+
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
@@ -573,6 +599,7 @@ public class FIPSModeValidator {
 		}
 
 		_validateClusterLinkConfiguration();
+		_validatePasswordLengths();
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
 		_validatePlaintextSecrets();
@@ -654,6 +681,8 @@ public class FIPSModeValidator {
 				throwable);
 		}
 	}
+
+	private static final int _PASSWORD_LENGTH_MIN = 14;
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
