@@ -6,6 +6,7 @@
 package com.liferay.portal.security.audit.storage.service.impl;
 
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
@@ -26,6 +27,7 @@ import org.osgi.service.component.annotations.Component;
 	property = "model.class.name=com.liferay.portal.security.audit.storage.model.AuditEventPseudonymField",
 	service = AopService.class
 )
+@CTAware
 public class AuditEventPseudonymFieldLocalServiceImpl
 	extends AuditEventPseudonymFieldLocalServiceBaseImpl {
 
