@@ -193,7 +193,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 
 			_mfaTimeBasedOTPAuditMessageBuilder.routeAuditMessage(
 				_mfaTimeBasedOTPAuditMessageBuilder.
-					buildSetupRemovedAuditMessage(userId, _getClassName()));
+					buildSetupRemovedAuditMessage(userId));
 		}
 	}
 
@@ -222,8 +222,7 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				if (timeBasedOTPEntry != null) {
 					_mfaTimeBasedOTPAuditMessageBuilder.routeAuditMessage(
 						_mfaTimeBasedOTPAuditMessageBuilder.
-							buildSetupAddedAuditMessage(
-								userId, _getClassName()));
+							buildSetupAddedAuditMessage(userId));
 
 					return true;
 				}
@@ -588,19 +587,15 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_NOT_VERIFIED, null);
 		}
 
-		public AuditMessage buildSetupAddedAuditMessage(
-			long userId, String checkerClassName) {
-
+		public AuditMessage buildSetupAddedAuditMessage(long userId) {
 			return AuditMessageBuilder.buildAuditMessage(
-				checkerClassName, userId,
+				User.class.getName(), userId,
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_SETUP_ADDED, null);
 		}
 
-		public AuditMessage buildSetupRemovedAuditMessage(
-			long userId, String checkerClassName) {
-
+		public AuditMessage buildSetupRemovedAuditMessage(long userId) {
 			return AuditMessageBuilder.buildAuditMessage(
-				checkerClassName, userId,
+				User.class.getName(), userId,
 				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_SETUP_REMOVED,
 				null);
 		}

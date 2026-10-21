@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -195,9 +196,7 @@ public class TimeBasedOTPBrowserSetupMFACheckerTest {
 		Assert.assertEquals(
 			doAsUserId, additionalInfoJSONObject.getString("doAsUserId", null));
 
-		Assert.assertEquals(
-			TimeBasedOTPBrowserSetupMFAChecker.class.getName(),
-			auditMessage.getClassName());
+		Assert.assertEquals(User.class.getName(), auditMessage.getClassName());
 		Assert.assertEquals(
 			String.valueOf(selectedUserId), auditMessage.getClassPK());
 		Assert.assertEquals(eventType, auditMessage.getEventType());
