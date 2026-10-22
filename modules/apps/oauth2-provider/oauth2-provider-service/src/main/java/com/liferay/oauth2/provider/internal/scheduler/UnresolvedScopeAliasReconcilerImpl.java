@@ -75,10 +75,12 @@ public class UnresolvedScopeAliasReconcilerImpl
 				_scopeLocator.getLiferayOAuth2Scopes(
 					companyId, entry.getValue());
 
-			if (!liferayOAuth2Scopes.isEmpty()) {
-				resolvedLiferayOAuth2Scopes.put(
-					entry.getKey(), liferayOAuth2Scopes);
+			if (liferayOAuth2Scopes.isEmpty()) {
+				continue;
 			}
+
+			resolvedLiferayOAuth2Scopes.put(
+				entry.getKey(), liferayOAuth2Scopes);
 		}
 
 		if (resolvedLiferayOAuth2Scopes.isEmpty()) {

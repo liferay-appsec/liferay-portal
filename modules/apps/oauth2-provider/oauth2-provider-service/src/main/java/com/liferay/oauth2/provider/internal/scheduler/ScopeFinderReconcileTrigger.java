@@ -179,10 +179,10 @@ public class ScopeFinderReconcileTrigger {
 	private ServiceTracker<ScopeFinder, Boolean> _scopeFinderServiceTracker;
 
 	@Reference
-	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
+	private UnresolvedScopeAliasReconciler _unresolvedScopeAliasReconciler;
 
 	@Reference
-	private UnresolvedScopeAliasReconciler _unresolvedScopeAliasReconciler;
+	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
 
 	private class ScopeFinderServiceTrackerCustomizer
 		implements ServiceTrackerCustomizer<ScopeFinder, Boolean> {

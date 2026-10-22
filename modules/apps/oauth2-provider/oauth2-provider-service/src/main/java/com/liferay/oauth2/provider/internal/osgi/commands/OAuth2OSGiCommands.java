@@ -106,9 +106,9 @@ public class OAuth2OSGiCommands implements OSGiCommands {
 	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
 	@Reference
-	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
+	private UnresolvedScopeAliasReconciler _unresolvedScopeAliasReconciler;
 
 	@Reference
-	private UnresolvedScopeAliasReconciler _unresolvedScopeAliasReconciler;
+	private UnresolvedScopeAliasesRegistry _unresolvedScopeAliasesRegistry;
 
 }
