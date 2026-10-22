@@ -125,32 +125,47 @@ public class AuditEventLocalServiceTest {
 	@Test
 	public void testGetAuditEvents() {
 		long companyId = RandomTestUtil.randomLong();
-		String userName = RandomTestUtil.randomString();
+		String value = RandomTestUtil.randomString();
 
-		_addAuditEvent(
-			companyId, true, userName + RandomTestUtil.randomString());
+		_addAuditEvent(companyId, true, value + RandomTestUtil.randomString());
 
 		AuditEvent auditEvent1 = _addAuditEvent(
 			companyId, false,
-			RandomTestUtil.randomString() + userName +
+			RandomTestUtil.randomString() + value +
 				RandomTestUtil.randomString());
 		AuditEvent auditEvent2 = _addAuditEvent(
-			companyId, false, userName + RandomTestUtil.randomString());
-		AuditEvent auditEvent3 = _addAuditEvent(companyId, true, userName);
+			companyId, false, value + RandomTestUtil.randomString());
+		AuditEvent auditEvent3 = _addAuditEvent(companyId, true, value);
 
 		_testGetAuditEvents(
-			false, companyId, userName, auditEvent1, auditEvent2, auditEvent3);
+			false, null, null, companyId, value, auditEvent1, auditEvent2,
+			auditEvent3);
 		_testGetAuditEvents(
-			true, companyId, userName, auditEvent1, auditEvent2, auditEvent3);
+			false, null, value, companyId, null, auditEvent1, auditEvent2,
+			auditEvent3);
+		_testGetAuditEvents(
+			false, value, null, companyId, null, auditEvent1, auditEvent2,
+			auditEvent3);
+		_testGetAuditEvents(
+			true, null, null, companyId, value, auditEvent1, auditEvent2,
+			auditEvent3);
+		_testGetAuditEvents(
+			true, null, value, companyId, null, auditEvent1, auditEvent2,
+			auditEvent3);
+		_testGetAuditEvents(
+			true, value, null, companyId, null, auditEvent1, auditEvent2,
+			auditEvent3);
 	}
 
 	private AuditEvent _addAuditEvent(
-		long companyId, boolean pseudonymized, String userName) {
+		long companyId, boolean pseudonymized, String value) {
 
 		AuditMessage auditMessage = new AuditMessage(
-			companyId, RandomTestUtil.randomLong(), userName,
+			companyId, RandomTestUtil.randomLong(), value,
 			RandomTestUtil.randomString());
 
+		auditMessage.setClientHost(value);
+		auditMessage.setClientIP(value);
 		auditMessage.setPseudonymized(pseudonymized);
 
 		AuditEvent auditEvent = _auditEventLocalService.addAuditEvent(
@@ -178,21 +193,21 @@ public class AuditEventLocalServiceTest {
 	}
 
 	private void _testGetAuditEvents(
-		boolean andSearch, long companyId, String userName,
-		AuditEvent... expectedAuditEvents) {
+		boolean andSearch, String clientHost, String clientIP, long companyId,
+		String userName, AuditEvent... expectedAuditEvents) {
 
 		Assert.assertEquals(
 			SetUtil.fromArray(expectedAuditEvents),
 			SetUtil.fromList(
 				_auditEventLocalService.getAuditEvents(
 					companyId, 0, 0, userName, null, null, null, null, null,
-					null, null, null, null, null, 0, null, andSearch,
+					clientHost, clientIP, null, null, null, 0, null, andSearch,
 					QueryUtil.ALL_POS, QueryUtil.ALL_POS)));
 		Assert.assertEquals(
 			expectedAuditEvents.length,
 			_auditEventLocalService.getAuditEventsCount(
-				companyId, 0, 0, userName, null, null, null, null, null, null,
-				null, null, null, null, 0, null, andSearch));
+				companyId, 0, 0, userName, null, null, null, null, null,
+				clientHost, clientIP, null, null, null, 0, null, andSearch));
 	}
 
 	@Inject
