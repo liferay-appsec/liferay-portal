@@ -10,6 +10,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.change.tracking.CTAware;
+import com.liferay.portal.kernel.dao.orm.Criterion;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Junction;
 import com.liferay.portal.kernel.dao.orm.Property;
@@ -176,21 +177,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNotNull(userName)) {
-			Property pseudonymizedProperty = PropertyFactoryUtil.forName(
-				"pseudonymized");
-			Property userNameProperty = PropertyFactoryUtil.forName("userName");
-
-			junction.add(
-				RestrictionsFactoryUtil.or(
-					RestrictionsFactoryUtil.and(
-						RestrictionsFactoryUtil.or(
-							pseudonymizedProperty.isNull(),
-							pseudonymizedProperty.eq(false)),
-						RestrictionsFactoryUtil.ilike(
-							"userName",
-							StringPool.PERCENT + userName +
-								StringPool.PERCENT)),
-					userNameProperty.eq(userName)));
+			junction.add(_getCriterion("userName", userName));
 		}
 
 		if (Validator.isNotNull(eventType)) {
@@ -217,17 +204,11 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNotNull(clientHost)) {
-			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"clientHost",
-					StringPool.PERCENT + clientHost + StringPool.PERCENT));
+			junction.add(_getCriterion("clientHost", clientHost));
 		}
 
 		if (Validator.isNotNull(clientIP)) {
-			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"clientIP",
-					StringPool.PERCENT + clientIP + StringPool.PERCENT));
+			junction.add(_getCriterion("clientIP", clientIP));
 		}
 
 		if (Validator.isNotNull(serverName)) {
@@ -285,6 +266,21 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		return auditMessage.getContextName();
+	}
+
+	private Criterion _getCriterion(String name, String value) {
+		Property property = PropertyFactoryUtil.forName(name);
+		Property pseudonymizedProperty = PropertyFactoryUtil.forName(
+			"pseudonymized");
+
+		return RestrictionsFactoryUtil.or(
+			RestrictionsFactoryUtil.and(
+				RestrictionsFactoryUtil.or(
+					pseudonymizedProperty.isNull(),
+					pseudonymizedProperty.eq(false)),
+				RestrictionsFactoryUtil.ilike(
+					name, StringPool.PERCENT + value + StringPool.PERCENT)),
+			property.eq(value));
 	}
 
 	private AuditEvent _toAuditEvent(
