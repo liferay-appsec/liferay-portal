@@ -11,6 +11,8 @@ import com.liferay.oauth2.provider.internal.test.AuthorizationGrant;
 import com.liferay.oauth2.provider.internal.test.PasswordAuthorizationGrant;
 import com.liferay.oauth2.provider.internal.test.RefreshTokenAuthorizationGrant;
 import com.liferay.oauth2.provider.internal.test.TestAnnotatedApplication;
+import com.liferay.oauth2.provider.model.OAuth2Authorization;
+import com.liferay.oauth2.provider.util.OAuth2TokenContentUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -78,6 +80,13 @@ public class RefreshTokenAuthorizationGrantTest
 
 		Assert.assertNotEquals(tokenString, accessTokenString);
 
+		OAuth2Authorization oAuth2Authorization =
+			fetchOAuth2AuthorizationByAccessTokenContent(tokenString);
+
+		Assert.assertEquals(
+			OAuth2TokenContentUtil.getTokenContent(tokenString),
+			oAuth2Authorization.getAccessTokenContent());
+
 		invocationBuilder = authorize(webTarget.request(), tokenString);
 
 		Assert.assertEquals(
@@ -89,6 +98,38 @@ public class RefreshTokenAuthorizationGrantTest
 				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
 
 			Response response = invocationBuilder.get();
+
+			Assert.assertEquals(401, response.getStatus());
+		}
+
+		jsonObject = getToken(
+			_CLIENT_ID, null,
+			getResourceOwnerPasswordBiFunction(
+				_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD),
+			this::parseJSONObject);
+
+		accessTokenString = jsonObject.getString("access_token");
+
+		formData.putSingle("client_id", TEST_CLIENT_ID_1);
+		formData.putSingle(
+			"refresh_token", jsonObject.getString("refresh_token"));
+
+		Response response = tokenBuilder.post(Entity.form(formData));
+
+		Assert.assertEquals(400, response.getStatus());
+
+		formData.putSingle("client_id", _CLIENT_ID);
+
+		response = tokenBuilder.post(Entity.form(formData));
+
+		Assert.assertEquals(400, response.getStatus());
+
+		invocationBuilder = authorize(webTarget.request(), accessTokenString);
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
+
+			response = invocationBuilder.get();
 
 			Assert.assertEquals(401, response.getStatus());
 		}

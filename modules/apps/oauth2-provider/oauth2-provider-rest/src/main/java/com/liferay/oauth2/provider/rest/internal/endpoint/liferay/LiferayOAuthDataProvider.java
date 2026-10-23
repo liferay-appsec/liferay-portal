@@ -27,6 +27,7 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalSer
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ScopeGrantLocalService;
 import com.liferay.oauth2.provider.util.OAuth2JWKValidatorUtil;
+import com.liferay.oauth2.provider.util.OAuth2TokenContentUtil;
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
@@ -341,7 +342,7 @@ public class LiferayOAuthDataProvider
 		}
 
 		try {
-			return _populateAccessToken(oAuth2Authorization);
+			return _populateAccessToken(accessToken, oAuth2Authorization);
 		}
 		catch (PortalException portalException) {
 			_log.error(
@@ -371,7 +372,9 @@ public class LiferayOAuthDataProvider
 		for (OAuth2Authorization oAuth2Authorization : oAuth2Authorizations) {
 			try {
 				serverAccessTokens.add(
-					_populateAccessToken(oAuth2Authorization));
+					_populateAccessToken(
+						oAuth2Authorization.getAccessTokenContent(),
+						oAuth2Authorization));
 			}
 			catch (PortalException portalException) {
 				_log.error(
@@ -542,9 +545,6 @@ public class LiferayOAuthDataProvider
 				_populateClient(oAuth2Application, getMessageContext()),
 				refreshTokenKey, lifetime, issuedAt);
 
-			refreshToken.setAccessTokens(
-				Collections.singletonList(
-					oAuth2Authorization.getAccessTokenContent()));
 			refreshToken.setAudiences(oAuth2Authorization.getAudiencesList());
 			refreshToken.setScopes(
 				convertScopeToPermissions(
@@ -774,8 +774,6 @@ public class LiferayOAuthDataProvider
 
 			throw ExceptionUtils.toForbiddenException(null, null);
 		}
-
-		removeClientTokens(client);
 
 		doRemoveClient(client);
 
@@ -1203,7 +1201,8 @@ public class LiferayOAuthDataProvider
 				fetchOAuth2AuthorizationByAccessTokenContent(
 					accessTokenContent);
 
-		oAuth2Authorization.setRefreshTokenContent(refreshToken.getTokenKey());
+		oAuth2Authorization.setRefreshTokenContent(
+			OAuth2TokenContentUtil.getTokenContent(refreshToken.getTokenKey()));
 
 		Date createDate = _toDate(refreshToken.getIssuedAt());
 
@@ -1568,7 +1567,7 @@ public class LiferayOAuthDataProvider
 	}
 
 	private ServerAccessToken _populateAccessToken(
-			OAuth2Authorization oAuth2Authorization)
+			String accessToken, OAuth2Authorization oAuth2Authorization)
 		throws PortalException {
 
 		OAuth2Application oAuth2Application =
@@ -1585,8 +1584,7 @@ public class LiferayOAuthDataProvider
 		long lifetime = expires - issuedAt;
 
 		ServerAccessToken serverAccessToken = new BearerAccessToken(
-			client, oAuth2Authorization.getAccessTokenContent(), lifetime,
-			issuedAt);
+			client, accessToken, lifetime, issuedAt);
 
 		List<String> audiencesList = oAuth2Authorization.getAudiencesList();
 
@@ -1805,7 +1803,8 @@ public class LiferayOAuthDataProvider
 						serverAccessToken.getRefreshToken());
 
 			oAuth2Authorization.setAccessTokenContent(
-				serverAccessToken.getTokenKey());
+				OAuth2TokenContentUtil.getTokenContent(
+					serverAccessToken.getTokenKey()));
 			oAuth2Authorization.setAccessTokenCreateDate(createDate);
 			oAuth2Authorization.setAccessTokenExpirationDate(expirationDate);
 			oAuth2Authorization.setAudiencesList(
