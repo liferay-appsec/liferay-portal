@@ -63,7 +63,7 @@ public class RoleModelListenerTest {
 			_testAddUserRoles(false, role, UserTestUtil.addUser(company));
 			_testAddUserRoles(
 				true, role,
-				UserTestUtil.addUser(company, RandomTestUtil.randomString()));
+				UserTestUtil.addUser(company, RandomTestUtil.randomString(14)));
 
 			Assert.assertThrows(
 				ModelListenerException.class,
@@ -117,7 +117,7 @@ public class RoleModelListenerTest {
 				_companyLocalService.getCompany(
 					TestPropsValues.getCompanyId()));
 
-			String password = RandomTestUtil.randomString();
+			String password = RandomTestUtil.randomString(14);
 			Role role = _roleLocalService.fetchRole(
 				TestPropsValues.getCompanyId(), RoleConstants.CRYPTO_OFFICER);
 
