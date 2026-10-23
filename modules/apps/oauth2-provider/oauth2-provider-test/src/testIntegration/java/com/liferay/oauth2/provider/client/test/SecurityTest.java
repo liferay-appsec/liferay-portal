@@ -14,6 +14,7 @@ import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ScopeGrantLocalService;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.image.ImageToolUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileVersion;
@@ -63,6 +64,8 @@ import org.junit.runner.RunWith;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.ServiceRegistration;
 
+import org.skyscreamer.jsonassert.JSONAssert;
+
 /**
  * @author Stian Sigvartsen
  */
@@ -73,34 +76,6 @@ public class SecurityTest extends BaseClientTestCase {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
-
-	@Test
-	public void testConfidentialApplicationIsDisclosedToAuthorizedUser() {
-		Response response = _getApplicationResponse(
-			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS,
-			getAuthenticatedCookie(
-				_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD,
-				null));
-
-		Assert.assertEquals(200, getStatus(response));
-
-		String bodyString = getBodyAsString(response);
-
-		Assert.assertTrue(bodyString.contains(_CLIENT_ID_CLIENT_CREDENTIALS));
-	}
-
-	@Test
-	public void testConfidentialApplicationIsNotDisclosedToGuestUser() {
-		Response response1 = _getApplicationResponse(
-			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS, null);
-		Response response2 = _getApplicationResponse(
-			RandomTestUtil.randomString(), null);
-
-		Assert.assertEquals(400, getStatus(response1));
-		Assert.assertEquals(getStatus(response2), getStatus(response1));
-		Assert.assertEquals(
-			getBodyAsString(response2), getBodyAsString(response1));
-	}
 
 	@Test
 	public void testEscapeOAuth2ApplicationName() {
@@ -134,6 +109,30 @@ public class SecurityTest extends BaseClientTestCase {
 			).queryParam(
 				"scope", "Liferay.Captcha.REST.everything.read"
 			));
+	}
+
+	@Test
+	public void testGetApplication() throws Exception {
+		_testGetApplication(
+			_CLIENT_ID_CLIENT_CREDENTIALS,
+			getAuthenticatedCookie(
+				_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD,
+				null),
+			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS);
+		_testGetApplication(
+			_CLIENT_ID_CODE_PKCE_1, null, _EXTERNAL_REFERENCE_CODE_CODE_PKCE);
+		_testGetApplication(
+			_CLIENT_ID_CODE_PKCE_2, null, _generatedExternalReferenceCode);
+
+		Response response1 = _getApplicationResponse(
+			_EXTERNAL_REFERENCE_CODE_CLIENT_CREDENTIALS, null);
+		Response response2 = _getApplicationResponse(
+			RandomTestUtil.randomString(), null);
+
+		Assert.assertEquals(400, getStatus(response1));
+		Assert.assertEquals(getStatus(response2), getStatus(response1));
+		Assert.assertEquals(
+			getBodyAsString(response2), getBodyAsString(response1));
 	}
 
 	@Test
@@ -240,7 +239,7 @@ public class SecurityTest extends BaseClientTestCase {
 	 * OAUTH2-97
 	 */
 	@Test
-	public void testPreventOpenRedirect() {
+	public void testPreventOpenRedirect() throws Exception {
 		Response response = getCodeResponse(
 			_user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD, null,
 			getCodeFunction(
@@ -254,18 +253,14 @@ public class SecurityTest extends BaseClientTestCase {
 				)));
 
 		Assert.assertEquals(400, getStatus(response));
-		Assert.assertEquals(
-			"{\"error\":\"invalid_request\",\"error_description\":\"Client " +
-				"Redirect Uri is invalid\"}",
-			getBodyAsString(response));
-	}
 
-	@Test
-	public void testPublicApplicationIsDisclosedToGuestUser() {
-		_testPublicApplicationIsDisclosedToGuestUser(
-			_CLIENT_ID_CODE_PKCE_1, _EXTERNAL_REFERENCE_CODE_CODE_PKCE);
-		_testPublicApplicationIsDisclosedToGuestUser(
-			_CLIENT_ID_CODE_PKCE_2, _generatedExternalReferenceCode);
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"error", "invalid_request"
+			).put(
+				"error_description", "Client Redirect Uri is invalid"
+			).toString(),
+			getBodyAsString(response), true);
 	}
 
 	@Test
@@ -498,17 +493,23 @@ public class SecurityTest extends BaseClientTestCase {
 		);
 	}
 
-	private void _testPublicApplicationIsDisclosedToGuestUser(
-		String clientId, String externalReferenceCode) {
+	private void _testGetApplication(
+			String clientId, Cookie cookie, String externalReferenceCode)
+		throws Exception {
 
 		Response response = _getApplicationResponse(
-			externalReferenceCode, null);
+			externalReferenceCode, cookie);
 
 		Assert.assertEquals(200, getStatus(response));
 
-		String bodyString = getBodyAsString(response);
-
-		Assert.assertTrue(bodyString.contains(clientId));
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"client_id", clientId
+			).put(
+				"homePageURL",
+				"http://localhost:" + PortalUtil.getPortalServerPort(false)
+			).toString(),
+			getBodyAsString(response), true);
 	}
 
 	private void _testUnregisteredClientIdIsRejected(WebTarget webTarget) {
