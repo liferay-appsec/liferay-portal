@@ -271,4 +271,4 @@ public interface AuditEventPseudonymFieldLocalService
 		AuditEventPseudonymField auditEventPseudonymField);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:502965395
+// LIFERAY-SERVICE-BUILDER-HASH:-1575872289
