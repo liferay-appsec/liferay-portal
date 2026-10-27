@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -68,25 +69,36 @@ public class CryptoCallScannerTest {
 
 	@Test
 	public void testScan() throws Exception {
-		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
-		_testScan(DigesterUtilTestClass.class, "MessageDigest MD5 [digest]");
 		_testScan(
-			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
+			ConstantTestClass.class, false, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			DigesterUtilTestClass.class, false, "MessageDigest MD5 [digest]");
+		_testScan(
+			FIPSEnabledTestClass.class, false, "MessageDigest MD5 [digest]");
+		_testScan(
+			FIPSEnabledTestClass.class, true, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			KeyFactoryTestClass.class, false,
+			"KeyFactory RSA [other] [private-key]",
 			"KeyFactory RSA [other] [public-key]");
-		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES [keygen] 256");
 		_testScan(
-			MacTestClass.class, "Mac HmacSHA256 [tag]",
+			KeyGeneratorTestClass.class, false,
+			"KeyGenerator AES [keygen] 256");
+		_testScan(
+			MacTestClass.class, false, "Mac HmacSHA256 [tag]",
 			"SecretKeySpec HmacSHA256 [other]");
 		_testScan(
-			ParameterTestClass.class,
+			ParameterTestClass.class, false,
 			"MessageDigest unresolved: parameter 1 of " +
 				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
-			PropsUtilTestClass.class,
+			PropsUtilTestClass.class, false,
 			"MessageDigest configured by [test.algorithm] [digest]");
-		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
 		_testScan(
-			TrustManagerFactoryTestClass.class,
+			SignatureTestClass.class, false,
+			"Signature SHA256withRSA [verify]");
+		_testScan(
+			TrustManagerFactoryTestClass.class, false,
 			"TrustManagerFactory configured by " +
 				"[ssl.TrustManagerFactory.algorithm] [other]");
 	}
@@ -141,6 +153,16 @@ public class CryptoCallScannerTest {
 
 		public String digest() {
 			return DigesterUtil.digestHex(DigesterUtil.MD5, "test");
+		}
+
+	}
+
+	public static class FIPSEnabledTestClass {
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(
+				PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
+					DigesterUtil.MD5);
 		}
 
 	}
@@ -274,10 +296,12 @@ public class CryptoCallScannerTest {
 		}
 	}
 
-	private void _testScan(Class<?> clazz, String... expectedDescriptions)
+	private void _testScan(
+			Class<?> clazz, boolean fipsEnabled, String... expectedDescriptions)
 		throws Exception {
 
-		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner();
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(
+			fipsEnabled);
 
 		String bundleSymbolicName = RandomTestUtil.randomString();
 		String featureName = RandomTestUtil.randomString();
@@ -311,7 +335,7 @@ public class CryptoCallScannerTest {
 			File file)
 		throws Exception {
 
-		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner();
+		CryptoCallScanner cryptoCallScanner = new CryptoCallScanner(false);
 
 		cryptoCallScanner.scan(file);
 

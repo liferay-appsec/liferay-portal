@@ -53,6 +53,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -67,6 +68,10 @@ import org.objectweb.asm.tree.analysis.SourceValue;
  * @author Manuele Castro
  */
 public class CryptoCallScanner {
+
+	public CryptoCallScanner(boolean fipsEnabled) {
+		_fipsEnabled = fipsEnabled;
+	}
 
 	public List<CryptoCall> getCryptoCalls() {
 		List<CryptoCall> cryptoCalls = new ArrayList<>();
@@ -133,12 +138,50 @@ public class CryptoCallScanner {
 			ClassNode classNode, MethodNode methodNode)
 		throws AnalyzerException {
 
+		_foldFIPSEnabled(methodNode.instructions);
+
 		Analyzer<SourceValue> analyzer = new Analyzer<>(
 			new OriginInterpreter(
 				_getMethodKey(classNode.name, methodNode.name, methodNode.desc),
 				methodNode));
 
 		return analyzer.analyze(classNode.name, methodNode);
+	}
+
+	private void _foldFIPSEnabled(InsnList insnList) {
+		for (AbstractInsnNode abstractInsnNode : insnList.toArray()) {
+			if (!_isFIPSEnabled(abstractInsnNode)) {
+				continue;
+			}
+
+			AbstractInsnNode nextAbstractInsnNode = abstractInsnNode.getNext();
+
+			while ((nextAbstractInsnNode != null) &&
+				   (nextAbstractInsnNode.getOpcode() == -1)) {
+
+				nextAbstractInsnNode = nextAbstractInsnNode.getNext();
+			}
+
+			if ((nextAbstractInsnNode == null) ||
+				((nextAbstractInsnNode.getOpcode() != Opcodes.IFEQ) &&
+				 (nextAbstractInsnNode.getOpcode() != Opcodes.IFNE))) {
+
+				continue;
+			}
+
+			JumpInsnNode jumpInsnNode = (JumpInsnNode)nextAbstractInsnNode;
+
+			insnList.remove(abstractInsnNode);
+
+			if ((jumpInsnNode.getOpcode() == Opcodes.IFEQ) != _fipsEnabled) {
+				insnList.set(
+					jumpInsnNode,
+					new JumpInsnNode(Opcodes.GOTO, jumpInsnNode.label));
+			}
+			else {
+				insnList.remove(jumpInsnNode);
+			}
+		}
 	}
 
 	private Origin _getAlgorithmOrigin(
@@ -686,6 +729,22 @@ public class CryptoCallScanner {
 		return false;
 	}
 
+	private boolean _isFIPSEnabled(AbstractInsnNode abstractInsnNode) {
+		if (abstractInsnNode.getOpcode() != Opcodes.GETSTATIC) {
+			return false;
+		}
+
+		FieldInsnNode fieldInsnNode = (FieldInsnNode)abstractInsnNode;
+
+		if (fieldInsnNode.owner.endsWith("/PropsValues") &&
+			Objects.equals(fieldInsnNode.name, "FIPS_ENABLED")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private Origin _resolve(Origin origin) {
 		Origin resolvedOrigin = new Origin();
 
@@ -968,6 +1027,7 @@ public class CryptoCallScanner {
 			"java/lang/String.trim", StringUtil::trim
 		).build();
 
+	private final boolean _fipsEnabled;
 	private final List<ScannedCryptoCall> _scannedCryptoCalls =
 		new ArrayList<>();
 
