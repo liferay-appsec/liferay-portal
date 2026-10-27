@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
@@ -56,6 +57,10 @@ public class CryptoCall {
 
 	public int getKeySize() {
 		return _keySize;
+	}
+
+	public Primitive getPrimitive() {
+		return CryptoPrimitiveUtil.getPrimitive(_algorithm, _jcaClassName);
 	}
 
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
