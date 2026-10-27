@@ -69,6 +69,10 @@ import org.objectweb.asm.tree.analysis.SourceValue;
  */
 public class CryptoCallScanner {
 
+	public static boolean isJDKPropertyKey(String propertyKey) {
+		return _jdkPropertyKeys.containsValue(propertyKey);
+	}
+
 	public CryptoCallScanner(boolean fipsEnabled) {
 		_fipsEnabled = fipsEnabled;
 	}
