@@ -1,0 +1,962 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.security.fips.cbom.builder;
+
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.nio.charset.StandardCharsets;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
+
+/**
+ * @author Manuele Castro
+ */
+public class CryptoCallScanner {
+
+	public List<CryptoCall> getCryptoCalls() {
+		List<CryptoCall> cryptoCalls = new ArrayList<>();
+
+		for (ScannedCryptoCall scannedCryptoCall : _scannedCryptoCalls) {
+			cryptoCalls.add(_toCryptoCall(scannedCryptoCall));
+		}
+
+		return cryptoCalls;
+	}
+
+	public void scan(File file) throws IOException {
+		String fileName = file.getName();
+
+		if (fileName.endsWith(".lpkg")) {
+			try (ZipFile zipFile = new ZipFile(file)) {
+				for (ZipEntry zipEntry : Collections.list(zipFile.entries())) {
+					String name = zipEntry.getName();
+
+					if (!name.endsWith(".jar")) {
+						continue;
+					}
+
+					try (JarInputStream jarInputStream = new JarInputStream(
+							zipFile.getInputStream(zipEntry))) {
+
+						_scan(jarInputStream, name);
+					}
+				}
+			}
+
+			return;
+		}
+
+		try (JarInputStream jarInputStream = new JarInputStream(
+				new FileInputStream(file))) {
+
+			_scan(jarInputStream, fileName);
+		}
+	}
+
+	public void scan(
+			String bundleSymbolicName, String featureName,
+			InputStream inputStream)
+		throws IOException {
+
+		byte[] bytes = inputStream.readAllBytes();
+
+		if (!_hasCryptoReference(bytes)) {
+			return;
+		}
+
+		ClassNode classNode = new ClassNode();
+
+		ClassReader classReader = new ClassReader(bytes);
+
+		classReader.accept(
+			classNode, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+		_scan(classNode, bundleSymbolicName, featureName);
+	}
+
+	private Frame<SourceValue>[] _analyze(
+			ClassNode classNode, MethodNode methodNode)
+		throws AnalyzerException {
+
+		Analyzer<SourceValue> analyzer = new Analyzer<>(
+			new OriginInterpreter(
+				_getMethodKey(classNode.name, methodNode.name, methodNode.desc),
+				methodNode));
+
+		return analyzer.analyze(classNode.name, methodNode);
+	}
+
+	private Origin _getAlgorithmOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode) {
+
+		Type[] argumentTypes = Type.getArgumentTypes(methodInsnNode.desc);
+
+		if (Objects.equals(methodInsnNode.owner, _CLASS_NAME_DIGESTER_UTIL) &&
+			((argumentTypes.length < 2) ||
+			 !Objects.equals(argumentTypes[0], Type.getType(String.class)))) {
+
+			Origin origin = new Origin();
+
+			origin.addReference(
+				_getMethodKey(
+					_CLASS_NAME_DIGESTER_UTIL, "_getDefaultAlgorithm",
+					"()Ljava/lang/String;"));
+
+			return origin;
+		}
+
+		int index = 0;
+
+		if (Objects.equals(methodInsnNode.owner, _CLASS_NAME_SECRET_KEY_SPEC)) {
+			index = argumentTypes.length - 1;
+		}
+
+		return _getArgumentOrigin(
+			frames, insnList, methodInsnNode, index, argumentTypes.length);
+	}
+
+	private SourceValue _getArgument(
+		Frame<SourceValue> frame, int index, int count) {
+
+		return frame.getStack(frame.getStackSize() - count + index);
+	}
+
+	private Origin _getArgumentOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		AbstractInsnNode abstractInsnNode, int index, int count) {
+
+		return _getOrigin(
+			frames, insnList,
+			_getArgument(
+				frames[insnList.indexOf(abstractInsnNode)], index, count),
+			new HashSet<>());
+	}
+
+	private String _getBundleSymbolicName(String fileName, Manifest manifest) {
+		if (manifest != null) {
+			Attributes attributes = manifest.getMainAttributes();
+
+			String bundleSymbolicName = attributes.getValue(
+				"Bundle-SymbolicName");
+
+			if (Validator.isNotNull(bundleSymbolicName)) {
+				int index = bundleSymbolicName.indexOf(CharPool.SEMICOLON);
+
+				if (index != -1) {
+					bundleSymbolicName = bundleSymbolicName.substring(0, index);
+				}
+
+				return StringUtil.trim(bundleSymbolicName);
+			}
+		}
+
+		return _getFileName(fileName);
+	}
+
+	private String _getClassName(String internalName) {
+		String className = StringUtil.replace(
+			internalName, CharPool.SLASH, CharPool.PERIOD);
+
+		int index = className.indexOf(CharPool.DOLLAR);
+
+		if (index != -1) {
+			className = className.substring(0, index);
+		}
+
+		return className;
+	}
+
+	private List<CryptoFunction> _getCryptoFunctions(String jcaClassName) {
+		CryptoFunction cryptoFunction = _cryptoFunctions.get(jcaClassName);
+
+		if (cryptoFunction != null) {
+			return Collections.singletonList(cryptoFunction);
+		}
+
+		return Collections.singletonList(CryptoFunction.UNKNOWN);
+	}
+
+	private List<MethodInsnNode> _getCryptoMethodInsnNodes(
+		ClassNode classNode, MethodNode methodNode) {
+
+		List<MethodInsnNode> methodInsnNodes = new ArrayList<>();
+
+		if (Objects.equals(classNode.name, _CLASS_NAME_DIGESTER_UTIL)) {
+			return methodInsnNodes;
+		}
+
+		for (AbstractInsnNode abstractInsnNode : methodNode.instructions) {
+			if (!(abstractInsnNode instanceof MethodInsnNode)) {
+				continue;
+			}
+
+			MethodInsnNode methodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			if (_getJCAClassName(methodInsnNode) == null) {
+				continue;
+			}
+
+			methodInsnNodes.add(methodInsnNode);
+		}
+
+		return methodInsnNodes;
+	}
+
+	private String _getFeatureName(String fileName, Manifest manifest) {
+		if (manifest != null) {
+			Attributes attributes = manifest.getMainAttributes();
+
+			String bundleName = attributes.getValue("Bundle-Name");
+
+			if (Validator.isNotNull(bundleName)) {
+				return bundleName;
+			}
+		}
+
+		return _getFileName(fileName);
+	}
+
+	private String _getFieldKey(FieldInsnNode fieldInsnNode) {
+		return _getKeyName(fieldInsnNode.owner) + StringPool.PERIOD +
+			fieldInsnNode.name;
+	}
+
+	private String _getFileName(String fileName) {
+		String name = fileName.substring(
+			fileName.lastIndexOf(CharPool.SLASH) + 1);
+
+		int index = name.lastIndexOf(CharPool.PERIOD);
+
+		if (index > 0) {
+			name = name.substring(0, index);
+		}
+
+		return name;
+	}
+
+	private String _getJCAClassName(MethodInsnNode methodInsnNode) {
+		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+			if (Objects.equals(
+					methodInsnNode.owner, _CLASS_NAME_DIGESTER_UTIL) &&
+				methodInsnNode.name.startsWith("digest")) {
+
+				return "MessageDigest";
+			}
+
+			if (Objects.equals(methodInsnNode.name, "getInstance") &&
+				methodInsnNode.desc.startsWith("(Ljava/lang/String;")) {
+
+				return _jcaClassNames.get(methodInsnNode.owner);
+			}
+
+			return null;
+		}
+
+		if ((methodInsnNode.getOpcode() == Opcodes.INVOKESPECIAL) &&
+			Objects.equals(methodInsnNode.owner, _CLASS_NAME_SECRET_KEY_SPEC) &&
+			Objects.equals(methodInsnNode.name, "<init>") &&
+			methodInsnNode.desc.endsWith("Ljava/lang/String;)V")) {
+
+			return "SecretKeySpec";
+		}
+
+		return null;
+	}
+
+	private String _getKeyName(String internalName) {
+		return StringUtil.replace(
+			internalName, CharPool.SLASH, CharPool.PERIOD);
+	}
+
+	private String _getMethodKey(
+		String internalName, String name, String desc) {
+
+		return StringBundler.concat(
+			_getKeyName(internalName), StringPool.PERIOD, name, desc);
+	}
+
+	private Origin _getOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		AbstractInsnNode abstractInsnNode,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Origin origin = new Origin();
+
+		int opcode = abstractInsnNode.getOpcode();
+
+		if (abstractInsnNode instanceof ParameterInsnNode) {
+			ParameterInsnNode parameterInsnNode =
+				(ParameterInsnNode)abstractInsnNode;
+
+			origin.addReference(parameterInsnNode.getParameterKey());
+		}
+		else if (abstractInsnNode instanceof LdcInsnNode) {
+			LdcInsnNode ldcInsnNode = (LdcInsnNode)abstractInsnNode;
+
+			origin.addValue(String.valueOf(ldcInsnNode.cst));
+		}
+		else if ((opcode == Opcodes.GETFIELD) ||
+				 (opcode == Opcodes.GETSTATIC)) {
+
+			origin.addReference(_getFieldKey((FieldInsnNode)abstractInsnNode));
+		}
+		else if (opcode == Opcodes.CHECKCAST) {
+			origin.addAll(
+				_getOrigin(
+					frames, insnList,
+					_getArgument(
+						frames[insnList.indexOf(abstractInsnNode)], 0, 1),
+					visitedAbstractInsnNodes));
+		}
+		else if (abstractInsnNode instanceof MethodInsnNode) {
+			origin.addAll(
+				_getReturnValueOrigin(
+					frames, insnList, (MethodInsnNode)abstractInsnNode,
+					visitedAbstractInsnNodes));
+		}
+		else if (opcode != Opcodes.ACONST_NULL) {
+			origin.addUnresolvedReason("a value the code computes");
+		}
+
+		return origin;
+	}
+
+	private Origin _getOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList, SourceValue sourceValue,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Origin origin = new Origin();
+
+		for (AbstractInsnNode abstractInsnNode : sourceValue.insns) {
+			if (!visitedAbstractInsnNodes.add(abstractInsnNode)) {
+				continue;
+			}
+
+			origin.addAll(
+				_getOrigin(
+					frames, insnList, abstractInsnNode,
+					visitedAbstractInsnNodes));
+		}
+
+		return origin;
+	}
+
+	private SourceValue _getReceiver(Frame<SourceValue> frame, int count) {
+		return frame.getStack(frame.getStackSize() - count - 1);
+	}
+
+	private Origin _getReturnValueOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Origin origin = new Origin();
+
+		String propertyKey = _jdkPropertyKeys.get(
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
+
+		if (propertyKey != null) {
+			origin.addPropertyKey(propertyKey);
+
+			return origin;
+		}
+
+		Frame<SourceValue> frame = frames[insnList.indexOf(methodInsnNode)];
+		int count = Type.getArgumentCount(methodInsnNode.desc);
+
+		if (methodInsnNode.owner.endsWith("/PropsUtil") &&
+			Objects.equals(methodInsnNode.name, "get") && (count > 0)) {
+
+			Origin keyOrigin = _getOrigin(
+				frames, insnList, _getArgument(frame, 0, count),
+				visitedAbstractInsnNodes);
+
+			for (String value : keyOrigin.getValues()) {
+				origin.addPropertyKey(value);
+			}
+
+			if (!keyOrigin.isConstant()) {
+				origin.addUnresolvedReason(
+					"a property whose name the code computes");
+			}
+
+			return origin;
+		}
+
+		if (_jcaClassNames.containsKey(methodInsnNode.owner) &&
+			Objects.equals(methodInsnNode.name, "getAlgorithm") &&
+			(count == 0)) {
+
+			for (AbstractInsnNode abstractInsnNode :
+					_getReceiver(frame, count).insns) {
+
+				if ((abstractInsnNode instanceof MethodInsnNode) &&
+					(_getJCAClassName((MethodInsnNode)abstractInsnNode) !=
+						null)) {
+
+					origin.addAll(
+						_getAlgorithmOrigin(
+							frames, insnList,
+							(MethodInsnNode)abstractInsnNode));
+				}
+				else {
+					origin.addUnresolvedReason(
+						"the algorithm of a " +
+							_jcaClassNames.get(methodInsnNode.owner) +
+								" that the code does not create");
+				}
+			}
+
+			return origin;
+		}
+
+		Function<String, String> function = _stringFunctions.get(
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
+
+		if (function == null) {
+			origin.addReference(
+				_getMethodKey(
+					methodInsnNode.owner, methodInsnNode.name,
+					methodInsnNode.desc));
+
+			return origin;
+		}
+
+		SourceValue sourceValue = null;
+
+		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+			sourceValue = _getArgument(frame, 0, count);
+		}
+		else {
+			sourceValue = _getReceiver(frame, count);
+		}
+
+		Origin wrappedOrigin = _getOrigin(
+			frames, insnList, sourceValue, visitedAbstractInsnNodes);
+
+		wrappedOrigin.transformValues(function);
+
+		return wrappedOrigin;
+	}
+
+	private String _getUnresolvedReason(String reference) {
+		int index = reference.indexOf(CharPool.POUND);
+
+		if (index != -1) {
+			String methodName = reference.substring(
+				0, reference.indexOf(CharPool.OPEN_PARENTHESIS));
+
+			if (methodName.endsWith(".<init>")) {
+				methodName =
+					"the constructor of " +
+						StringUtil.removeLast(methodName, ".<init>");
+			}
+
+			return StringBundler.concat(
+				"parameter ",
+				GetterUtil.getInteger(reference.substring(index + 1)) + 1,
+				" of ", methodName);
+		}
+
+		index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
+
+		if (index != -1) {
+			return "the return value of " + reference.substring(0, index) +
+				"()";
+		}
+
+		return "the field " + reference;
+	}
+
+	private boolean _hasCryptoReference(byte[] bytes) {
+		String classFileContent = new String(
+			bytes, StandardCharsets.ISO_8859_1);
+
+		for (String needle : _needles) {
+			if (classFileContent.contains(needle)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private boolean _isClassFileName(String name) {
+		if (name.startsWith("com/liferay/") && name.endsWith(".class")) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private Origin _resolve(Origin origin) {
+		Origin resolvedOrigin = new Origin();
+
+		resolvedOrigin.addAll(origin);
+
+		resolvedOrigin.clearReferences();
+
+		for (String reference : origin.getReferences()) {
+			resolvedOrigin.addUnresolvedReason(_getUnresolvedReason(reference));
+		}
+
+		return resolvedOrigin;
+	}
+
+	private void _scan(
+		ClassNode classNode, String bundleSymbolicName, String featureName) {
+
+		String className = _getClassName(classNode.name);
+
+		for (MethodNode methodNode : classNode.methods) {
+			if (methodNode.instructions.size() == 0) {
+				continue;
+			}
+
+			List<MethodInsnNode> methodInsnNodes = _getCryptoMethodInsnNodes(
+				classNode, methodNode);
+
+			Frame<SourceValue>[] frames = null;
+
+			try {
+				frames = _analyze(classNode, methodNode);
+			}
+			catch (AnalyzerException analyzerException) {
+				for (MethodInsnNode methodInsnNode : methodInsnNodes) {
+					Origin origin = new Origin();
+
+					origin.addUnresolvedReason(
+						"bytecode that the scan cannot analyze: " +
+							analyzerException.getMessage());
+
+					_scannedCryptoCalls.add(
+						new ScannedCryptoCall(
+							origin,
+							new CryptoCall(
+								bundleSymbolicName, className, featureName,
+								_getJCAClassName(methodInsnNode))));
+				}
+
+				continue;
+			}
+
+			InsnList insnList = methodNode.instructions;
+
+			for (MethodInsnNode methodInsnNode : methodInsnNodes) {
+				if (frames[insnList.indexOf(methodInsnNode)] == null) {
+					continue;
+				}
+
+				String jcaClassName = _getJCAClassName(methodInsnNode);
+
+				CryptoCall cryptoCall = new CryptoCall(
+					bundleSymbolicName, className, featureName, jcaClassName);
+
+				cryptoCall.setCryptoFunctions(
+					_getCryptoFunctions(jcaClassName));
+
+				_scannedCryptoCalls.add(
+					new ScannedCryptoCall(
+						_getAlgorithmOrigin(frames, insnList, methodInsnNode),
+						cryptoCall));
+			}
+		}
+	}
+
+	private void _scan(JarInputStream jarInputStream, String name)
+		throws IOException {
+
+		Manifest manifest = jarInputStream.getManifest();
+
+		String bundleSymbolicName = _getBundleSymbolicName(name, manifest);
+		String featureName = _getFeatureName(name, manifest);
+
+		JarEntry jarEntry = null;
+
+		while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+			if (!_isClassFileName(jarEntry.getName())) {
+				continue;
+			}
+
+			scan(bundleSymbolicName, featureName, jarInputStream);
+		}
+	}
+
+	private CryptoCall _toCryptoCall(ScannedCryptoCall scannedCryptoCall) {
+		CryptoCall cryptoCall = scannedCryptoCall.getCryptoCall();
+
+		Origin algorithmOrigin = _resolve(
+			scannedCryptoCall.getAlgorithmOrigin());
+
+		Set<String> unresolvedReasons = algorithmOrigin.getUnresolvedReasons();
+
+		if (!unresolvedReasons.isEmpty()) {
+			cryptoCall.setUnresolvedReason(
+				StringUtil.merge(unresolvedReasons, ", "));
+
+			return cryptoCall;
+		}
+
+		Set<String> propertyKeys = algorithmOrigin.getPropertyKeys();
+		SortedSet<String> values = algorithmOrigin.getValues();
+
+		if (values.isEmpty() && !propertyKeys.isEmpty()) {
+			cryptoCall.setConfiguredBy(new ArrayList<>(propertyKeys));
+
+			return cryptoCall;
+		}
+
+		if ((values.size() == 1) && propertyKeys.isEmpty()) {
+			cryptoCall.setAlgorithm(
+				CryptoProviderUtil.getAlgorithmName(
+					values.first(), cryptoCall.getJCAClassName()));
+
+			return cryptoCall;
+		}
+
+		Set<String> candidates = new TreeSet<>(values);
+
+		candidates.addAll(propertyKeys);
+
+		if (candidates.isEmpty()) {
+			cryptoCall.setUnresolvedReason("a value the code never sets");
+		}
+		else {
+			cryptoCall.setUnresolvedReason(
+				"one of several values: " + StringUtil.merge(candidates, ", "));
+		}
+
+		return cryptoCall;
+	}
+
+	private static final String _CLASS_NAME_DIGESTER_UTIL =
+		"com/liferay/portal/kernel/util/DigesterUtil";
+
+	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
+		"javax/crypto/spec/SecretKeySpec";
+
+	private static final Map<String, CryptoFunction> _cryptoFunctions =
+		HashMapBuilder.put(
+			"KeyAgreement", CryptoFunction.KEYDERIVE
+		).put(
+			"KeyFactory", CryptoFunction.OTHER
+		).put(
+			"KeyGenerator", CryptoFunction.KEYGEN
+		).put(
+			"KeyManagerFactory", CryptoFunction.OTHER
+		).put(
+			"KeyPairGenerator", CryptoFunction.KEYGEN
+		).put(
+			"KeyStore", CryptoFunction.OTHER
+		).put(
+			"Mac", CryptoFunction.TAG
+		).put(
+			"MessageDigest", CryptoFunction.DIGEST
+		).put(
+			"SecretKeyFactory", CryptoFunction.KEYDERIVE
+		).put(
+			"SecretKeySpec", CryptoFunction.OTHER
+		).put(
+			"SSLContext", CryptoFunction.OTHER
+		).put(
+			"TrustManagerFactory", CryptoFunction.OTHER
+		).build();
+	private static final Map<String, String> _jcaClassNames =
+		HashMapBuilder.put(
+			"java/security/KeyFactory", "KeyFactory"
+		).put(
+			"java/security/KeyPairGenerator", "KeyPairGenerator"
+		).put(
+			"java/security/KeyStore", "KeyStore"
+		).put(
+			"java/security/MessageDigest", "MessageDigest"
+		).put(
+			"java/security/Signature", "Signature"
+		).put(
+			"javax/crypto/Cipher", "Cipher"
+		).put(
+			"javax/crypto/KeyAgreement", "KeyAgreement"
+		).put(
+			"javax/crypto/KeyGenerator", "KeyGenerator"
+		).put(
+			"javax/crypto/Mac", "Mac"
+		).put(
+			"javax/crypto/SecretKeyFactory", "SecretKeyFactory"
+		).put(
+			"javax/net/ssl/KeyManagerFactory", "KeyManagerFactory"
+		).put(
+			"javax/net/ssl/SSLContext", "SSLContext"
+		).put(
+			"javax/net/ssl/TrustManagerFactory", "TrustManagerFactory"
+		).build();
+	private static final Map<String, String> _jdkPropertyKeys =
+		HashMapBuilder.put(
+			"java/security/KeyStore.getDefaultType", "keystore.type"
+		).put(
+			"javax/net/ssl/KeyManagerFactory.getDefaultAlgorithm",
+			"ssl.KeyManagerFactory.algorithm"
+		).put(
+			"javax/net/ssl/TrustManagerFactory.getDefaultAlgorithm",
+			"ssl.TrustManagerFactory.algorithm"
+		).build();
+	private static final List<String> _needles = Arrays.asList(
+		_CLASS_NAME_DIGESTER_UTIL, "/PropsUtil", "java/security/",
+		"javax/crypto/", "javax/net/ssl/");
+	private static final Map<String, Function<String, String>>
+		_stringFunctions = HashMapBuilder.<String, Function<String, String>>put(
+			"com/liferay/petra/string/StringUtil.toLowerCase",
+			StringUtil::toLowerCase
+		).put(
+			"com/liferay/petra/string/StringUtil.toUpperCase",
+			StringUtil::toUpperCase
+		).put(
+			"com/liferay/portal/kernel/util/GetterUtil.getString",
+			Function.identity()
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.toLowerCase",
+			StringUtil::toLowerCase
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.toUpperCase",
+			StringUtil::toUpperCase
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.trim", StringUtil::trim
+		).put(
+			"java/lang/String.toLowerCase", StringUtil::toLowerCase
+		).put(
+			"java/lang/String.toUpperCase", StringUtil::toUpperCase
+		).put(
+			"java/lang/String.trim", StringUtil::trim
+		).build();
+
+	private final List<ScannedCryptoCall> _scannedCryptoCalls =
+		new ArrayList<>();
+
+	private static class Origin {
+
+		public void addAll(Origin origin) {
+			_propertyKeys.addAll(origin._propertyKeys);
+			_references.addAll(origin._references);
+			_unresolvedReasons.addAll(origin._unresolvedReasons);
+			_values.addAll(origin._values);
+		}
+
+		public void addPropertyKey(String propertyKey) {
+			_propertyKeys.add(propertyKey);
+		}
+
+		public void addReference(String reference) {
+			_references.add(reference);
+		}
+
+		public void addUnresolvedReason(String unresolvedReason) {
+			_unresolvedReasons.add(unresolvedReason);
+		}
+
+		public void addValue(String value) {
+			_values.add(value);
+		}
+
+		public void clearReferences() {
+			_references.clear();
+		}
+
+		public Set<String> getPropertyKeys() {
+			return _propertyKeys;
+		}
+
+		public Set<String> getReferences() {
+			return _references;
+		}
+
+		public Set<String> getUnresolvedReasons() {
+			return _unresolvedReasons;
+		}
+
+		public SortedSet<String> getValues() {
+			return _values;
+		}
+
+		public boolean isConstant() {
+			if (_propertyKeys.isEmpty() && _references.isEmpty() &&
+				_unresolvedReasons.isEmpty()) {
+
+				return true;
+			}
+
+			return false;
+		}
+
+		public void transformValues(Function<String, String> function) {
+			Set<String> values = new TreeSet<>();
+
+			for (String value : _values) {
+				values.add(function.apply(value));
+			}
+
+			_values.clear();
+
+			_values.addAll(values);
+		}
+
+		private final Set<String> _propertyKeys = new TreeSet<>();
+		private final Set<String> _references = new TreeSet<>();
+		private final Set<String> _unresolvedReasons = new TreeSet<>();
+		private final SortedSet<String> _values = new TreeSet<>();
+
+	}
+
+	private static class OriginInterpreter extends SourceInterpreter {
+
+		public OriginInterpreter(String methodKey, MethodNode methodNode) {
+			super(Opcodes.ASM9);
+
+			_methodKey = methodKey;
+
+			int local = 0;
+
+			if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
+				local++;
+			}
+
+			Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+
+			for (int i = 0; i < argumentTypes.length; i++) {
+				_parameterIndexes.put(local, i);
+
+				local += argumentTypes[i].getSize();
+			}
+		}
+
+		@Override
+		public SourceValue copyOperation(
+			AbstractInsnNode abstractInsnNode, SourceValue sourceValue) {
+
+			return sourceValue;
+		}
+
+		@Override
+		public SourceValue newParameterValue(
+			boolean instanceMethod, int local, Type type) {
+
+			Integer parameterIndex = _parameterIndexes.get(local);
+
+			if (parameterIndex == null) {
+				return super.newParameterValue(instanceMethod, local, type);
+			}
+
+			return new SourceValue(
+				type.getSize(),
+				new ParameterInsnNode(
+					_methodKey + StringPool.POUND + parameterIndex));
+		}
+
+		private final String _methodKey;
+		private final Map<Integer, Integer> _parameterIndexes = new HashMap<>();
+
+	}
+
+	private static class ParameterInsnNode extends AbstractInsnNode {
+
+		public ParameterInsnNode(String parameterKey) {
+			super(-1);
+
+			_parameterKey = parameterKey;
+		}
+
+		@Override
+		public void accept(MethodVisitor methodVisitor) {
+		}
+
+		@Override
+		public AbstractInsnNode clone(Map<LabelNode, LabelNode> labelNodes) {
+			return this;
+		}
+
+		public String getParameterKey() {
+			return _parameterKey;
+		}
+
+		@Override
+		public int getType() {
+			return VAR_INSN;
+		}
+
+		private final String _parameterKey;
+
+	}
+
+	private static class ScannedCryptoCall {
+
+		public ScannedCryptoCall(
+			Origin algorithmOrigin, CryptoCall cryptoCall) {
+
+			_algorithmOrigin = algorithmOrigin;
+			_cryptoCall = cryptoCall;
+		}
+
+		public Origin getAlgorithmOrigin() {
+			return _algorithmOrigin;
+		}
+
+		public CryptoCall getCryptoCall() {
+			return _cryptoCall;
+		}
+
+		private final Origin _algorithmOrigin;
+		private final CryptoCall _cryptoCall;
+
+	}
+
+}

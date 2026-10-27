@@ -2,6 +2,10 @@ dependencies {
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly project(":core:petra:petra-function")
 	compileOnly project(":core:petra:petra-string")
+	implementation group: "org.cyclonedx", name: "cyclonedx-core-java", version: "13.2.0"
+	implementation group: "org.ow2.asm", name: "asm", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-analysis", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-tree", version: "9.11.1"
 }
 
 deploy {
