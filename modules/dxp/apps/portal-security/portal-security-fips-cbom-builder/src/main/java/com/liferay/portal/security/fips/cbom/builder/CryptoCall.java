@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.portal.kernel.util.ListUtil;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -69,6 +71,18 @@ public class CryptoCall {
 
 	public String getUnresolvedReason() {
 		return _unresolvedReason;
+	}
+
+	public boolean isConfigurable() {
+		return ListUtil.isNotEmpty(_configuredBy);
+	}
+
+	public boolean isResolved() {
+		if ((_algorithm != null) || isConfigurable()) {
+			return true;
+		}
+
+		return false;
 	}
 
 	public void setAlgorithm(String algorithm) {
