@@ -745,7 +745,27 @@ public class CryptoCallScanner {
 		return false;
 	}
 
-	private Origin _resolve(Origin origin) {
+	private boolean _isResolvable(String reference) {
+		int index = reference.indexOf(CharPool.POUND);
+
+		if (index == -1) {
+			return true;
+		}
+
+		return _privateMethodKeys.contains(reference.substring(0, index));
+	}
+
+	private boolean _isTracked(Type type) {
+		if (Objects.equals(type, Type.INT_TYPE) ||
+			Objects.equals(type, Type.getType(String.class))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private Origin _resolve(Origin origin, Set<String> visitedReferences) {
 		Origin resolvedOrigin = new Origin();
 
 		resolvedOrigin.addAll(origin);
@@ -753,7 +773,18 @@ public class CryptoCallScanner {
 		resolvedOrigin.clearReferences();
 
 		for (String reference : origin.getReferences()) {
-			resolvedOrigin.addUnresolvedReason(_getUnresolvedReason(reference));
+			Origin referenceOrigin = _referenceOrigins.get(reference);
+
+			if ((referenceOrigin == null) || !_isResolvable(reference) ||
+				!visitedReferences.add(reference)) {
+
+				resolvedOrigin.addUnresolvedReason(
+					_getUnresolvedReason(reference));
+			}
+			else {
+				resolvedOrigin.addAll(
+					_resolve(referenceOrigin, visitedReferences));
+			}
 		}
 
 		return resolvedOrigin;
@@ -796,6 +827,8 @@ public class CryptoCallScanner {
 
 				continue;
 			}
+
+			_scanAssignments(classNode, frames, methodNode);
 
 			InsnList insnList = methodNode.instructions;
 
@@ -844,11 +877,96 @@ public class CryptoCallScanner {
 		}
 	}
 
+	private void _scanAssignments(
+		ClassNode classNode, Frame<SourceValue>[] frames,
+		MethodNode methodNode) {
+
+		String className = _getClassName(classNode.name);
+
+		String methodKey = _getMethodKey(
+			classNode.name, methodNode.name, methodNode.desc);
+
+		if ((methodNode.access & Opcodes.ACC_PRIVATE) != 0) {
+			_privateMethodKeys.add(methodKey);
+		}
+
+		boolean returnValueTracked = false;
+
+		if (((methodNode.access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC)) !=
+				0) &&
+			(Type.getArgumentCount(methodNode.desc) == 0) &&
+			_isTracked(Type.getReturnType(methodNode.desc))) {
+
+			returnValueTracked = true;
+		}
+
+		InsnList insnList = methodNode.instructions;
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (frames[insnList.indexOf(abstractInsnNode)] == null) {
+				continue;
+			}
+
+			int opcode = abstractInsnNode.getOpcode();
+
+			if ((opcode == Opcodes.PUTFIELD) || (opcode == Opcodes.PUTSTATIC)) {
+				FieldInsnNode fieldInsnNode = (FieldInsnNode)abstractInsnNode;
+
+				if (Objects.equals(fieldInsnNode.owner, classNode.name) &&
+					_isTracked(Type.getType(fieldInsnNode.desc))) {
+
+					_track(
+						_getFieldKey(fieldInsnNode),
+						_getArgumentOrigin(
+							frames, insnList, abstractInsnNode, 0, 1));
+				}
+			}
+			else if (((opcode == Opcodes.ARETURN) ||
+					  (opcode == Opcodes.IRETURN)) &&
+					 returnValueTracked) {
+
+				_track(
+					methodKey,
+					_getArgumentOrigin(
+						frames, insnList, abstractInsnNode, 0, 1));
+			}
+			else if (abstractInsnNode instanceof MethodInsnNode) {
+				MethodInsnNode methodInsnNode =
+					(MethodInsnNode)abstractInsnNode;
+
+				if (!Objects.equals(
+						_getClassName(methodInsnNode.owner), className)) {
+
+					continue;
+				}
+
+				Type[] argumentTypes = Type.getArgumentTypes(
+					methodInsnNode.desc);
+
+				for (int i = 0; i < argumentTypes.length; i++) {
+					if (!_isTracked(argumentTypes[i])) {
+						continue;
+					}
+
+					_track(
+						StringBundler.concat(
+							_getMethodKey(
+								methodInsnNode.owner, methodInsnNode.name,
+								methodInsnNode.desc),
+							StringPool.POUND, i),
+						_getArgumentOrigin(
+							frames, insnList, methodInsnNode, i,
+							argumentTypes.length));
+				}
+			}
+		}
+	}
+
 	private CryptoCall _toCryptoCall(ScannedCryptoCall scannedCryptoCall) {
 		CryptoCall cryptoCall = scannedCryptoCall.getCryptoCall();
 
 		Origin algorithmOrigin = _resolve(
-			scannedCryptoCall.getAlgorithmOrigin());
+			scannedCryptoCall.getAlgorithmOrigin(), new HashSet<>());
 
 		Set<String> unresolvedReasons = algorithmOrigin.getUnresolvedReasons();
 
@@ -859,7 +977,8 @@ public class CryptoCallScanner {
 			return cryptoCall;
 		}
 
-		Origin keySizeOrigin = _resolve(scannedCryptoCall.getKeySizeOrigin());
+		Origin keySizeOrigin = _resolve(
+			scannedCryptoCall.getKeySizeOrigin(), new HashSet<>());
 
 		Set<String> propertyKeys = algorithmOrigin.getPropertyKeys();
 		SortedSet<String> values = algorithmOrigin.getValues();
@@ -901,6 +1020,17 @@ public class CryptoCallScanner {
 		}
 
 		return cryptoCall;
+	}
+
+	private void _track(String reference, Origin origin) {
+		Origin referenceOrigin = _referenceOrigins.get(reference);
+
+		if (referenceOrigin == null) {
+			_referenceOrigins.put(reference, origin);
+		}
+		else {
+			referenceOrigin.addAll(origin);
+		}
 	}
 
 	private static final String _CLASS_NAME_DIGESTER_UTIL =
@@ -1028,6 +1158,8 @@ public class CryptoCallScanner {
 		).build();
 
 	private final boolean _fipsEnabled;
+	private final Set<String> _privateMethodKeys = new HashSet<>();
+	private final Map<String, Origin> _referenceOrigins = new HashMap<>();
 	private final List<ScannedCryptoCall> _scannedCryptoCalls =
 		new ArrayList<>();
 

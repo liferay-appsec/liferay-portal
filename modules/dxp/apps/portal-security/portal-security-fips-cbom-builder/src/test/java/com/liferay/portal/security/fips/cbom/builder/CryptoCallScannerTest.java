@@ -11,6 +11,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -42,6 +43,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -72,11 +74,24 @@ public class CryptoCallScannerTest {
 		_testScan(
 			ConstantTestClass.class, false, "MessageDigest SHA-256 [digest]");
 		_testScan(
+			ConstructorParameterTestClass.class, false,
+			"MessageDigest unresolved: parameter 1 of the constructor of " +
+				ConstructorParameterTestClass.class.getName() + " [digest]");
+		_testScan(
+			DigesterUtilDefaultTestClass.class, false,
+			"MessageDigest SHA-1 [digest]");
+		_testScan(
+			DigesterUtilDefaultTestClass.class, true,
+			"MessageDigest SHA-256 [digest]");
+		_testScan(
 			DigesterUtilTestClass.class, false, "MessageDigest MD5 [digest]");
 		_testScan(
 			FIPSEnabledTestClass.class, false, "MessageDigest MD5 [digest]");
 		_testScan(
 			FIPSEnabledTestClass.class, true, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			InstanceFieldTestClass.class, false,
+			"SecretKeySpec configured by [test.algorithm] [other]");
 		_testScan(
 			KeyFactoryTestClass.class, false,
 			"KeyFactory RSA [other] [private-key]",
@@ -92,11 +107,18 @@ public class CryptoCallScannerTest {
 			"MessageDigest unresolved: parameter 1 of " +
 				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
+			PrivateMethodTestClass.class, false,
+			"Cipher AES/CBC/PKCS5Padding [encrypt]");
+		_testScan(
 			PropsUtilTestClass.class, false,
 			"MessageDigest configured by [test.algorithm] [digest]");
 		_testScan(
 			SignatureTestClass.class, false,
 			"Signature SHA256withRSA [verify]");
+		_testScan(
+			StaticFieldTestClass.class, false,
+			"KeyGenerator configured by [test.algorithm, test.key.size] " +
+				"[keygen]");
 		_testScan(
 			TrustManagerFactoryTestClass.class, false,
 			"TrustManagerFactory configured by " +
@@ -149,6 +171,28 @@ public class CryptoCallScannerTest {
 
 	}
 
+	public static class ConstructorParameterTestClass {
+
+		public ConstructorParameterTestClass(String algorithm) {
+			_algorithm = algorithm;
+		}
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(_algorithm);
+		}
+
+		private final String _algorithm;
+
+	}
+
+	public static class DigesterUtilDefaultTestClass {
+
+		public String digest() {
+			return DigesterUtil.digest("test");
+		}
+
+	}
+
 	public static class DigesterUtilTestClass {
 
 		public String digest() {
@@ -164,6 +208,28 @@ public class CryptoCallScannerTest {
 				PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
 					DigesterUtil.MD5);
 		}
+
+	}
+
+	public static class InstanceFieldTestClass {
+
+		public Key getKey(byte[] bytes) {
+			return new SecretKeySpec(bytes, _getAlgorithm());
+		}
+
+		private String _getAlgorithm() {
+			String algorithm = _algorithm;
+
+			if (algorithm == null) {
+				algorithm = PropsUtil.get("test.algorithm");
+
+				_algorithm = algorithm;
+			}
+
+			return algorithm;
+		}
+
+		private String _algorithm;
 
 	}
 
@@ -211,6 +277,20 @@ public class CryptoCallScannerTest {
 
 	}
 
+	public static class PrivateMethodTestClass {
+
+		public void encrypt(Key key) throws Exception {
+			_encrypt(key, "AES/CBC/PKCS5Padding");
+		}
+
+		private void _encrypt(Key key, String transformation) throws Exception {
+			Cipher cipher = Cipher.getInstance(transformation);
+
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+		}
+
+	}
+
 	public static class PropsUtilTestClass {
 
 		public void digest() throws Exception {
@@ -226,6 +306,22 @@ public class CryptoCallScannerTest {
 
 			signature.initVerify(publicKey);
 		}
+
+	}
+
+	public static class StaticFieldTestClass {
+
+		public void generateKey() throws Exception {
+			KeyGenerator keyGenerator = KeyGenerator.getInstance(_ALGORITHM);
+
+			keyGenerator.init(_KEY_SIZE);
+		}
+
+		private static final String _ALGORITHM = StringUtil.toUpperCase(
+			GetterUtil.getString(PropsUtil.get("test.algorithm")));
+
+		private static final int _KEY_SIZE = GetterUtil.getInteger(
+			PropsUtil.get("test.key.size"));
 
 	}
 
@@ -306,9 +402,13 @@ public class CryptoCallScannerTest {
 		String bundleSymbolicName = RandomTestUtil.randomString();
 		String featureName = RandomTestUtil.randomString();
 
-		try (InputStream inputStream = new ByteArrayInputStream(_read(clazz))) {
-			cryptoCallScanner.scan(
-				bundleSymbolicName, featureName, inputStream);
+		for (Class<?> curClass : new Class<?>[] {DigesterUtil.class, clazz}) {
+			try (InputStream inputStream = new ByteArrayInputStream(
+					_read(curClass))) {
+
+				cryptoCallScanner.scan(
+					bundleSymbolicName, featureName, inputStream);
+			}
 		}
 
 		List<CryptoCall> cryptoCalls = cryptoCallScanner.getCryptoCalls();
