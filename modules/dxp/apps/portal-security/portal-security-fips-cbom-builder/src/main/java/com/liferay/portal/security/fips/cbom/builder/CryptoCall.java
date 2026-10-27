@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * @author Manuele Castro
@@ -53,6 +54,14 @@ public class CryptoCall {
 		return _jcaClassName;
 	}
 
+	public int getKeySize() {
+		return _keySize;
+	}
+
+	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
+		return _relatedCryptoMaterialTypes;
+	}
+
 	public String getUnresolvedReason() {
 		return _unresolvedReason;
 	}
@@ -69,6 +78,16 @@ public class CryptoCall {
 		_cryptoFunctions = cryptoFunctions;
 	}
 
+	public void setKeySize(int keySize) {
+		_keySize = keySize;
+	}
+
+	public void setRelatedCryptoMaterialTypes(
+		List<RelatedCryptoMaterialType> relatedCryptoMaterialTypes) {
+
+		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
+	}
+
 	public void setUnresolvedReason(String unresolvedReason) {
 		_unresolvedReason = unresolvedReason;
 	}
@@ -80,6 +99,9 @@ public class CryptoCall {
 	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
 	private final String _featureName;
 	private final String _jcaClassName;
+	private int _keySize;
+	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
+		Collections.emptyList();
 	private String _unresolvedReason;
 
 }

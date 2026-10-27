@@ -24,7 +24,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,12 +41,14 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.TrustManagerFactory;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -63,6 +71,10 @@ public class CryptoCallScannerTest {
 		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(DigesterUtilTestClass.class, "MessageDigest MD5 [digest]");
 		_testScan(
+			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
+			"KeyFactory RSA [other] [public-key]");
+		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES [keygen] 256");
+		_testScan(
 			MacTestClass.class, "Mac HmacSHA256 [tag]",
 			"SecretKeySpec HmacSHA256 [other]");
 		_testScan(
@@ -72,6 +84,7 @@ public class CryptoCallScannerTest {
 		_testScan(
 			PropsUtilTestClass.class,
 			"MessageDigest configured by [test.algorithm] [digest]");
+		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
 		_testScan(
 			TrustManagerFactoryTestClass.class,
 			"TrustManagerFactory configured by " +
@@ -132,6 +145,32 @@ public class CryptoCallScannerTest {
 
 	}
 
+	public static class KeyFactoryTestClass {
+
+		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+			return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(bytes));
+		}
+
+		public PublicKey getPublicKey(byte[] bytes) throws Exception {
+			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+			return keyFactory.generatePublic(new X509EncodedKeySpec(bytes));
+		}
+
+	}
+
+	public static class KeyGeneratorTestClass {
+
+		public void generateKey() throws Exception {
+			KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+
+			keyGenerator.init(256);
+		}
+
+	}
+
 	public static class MacTestClass {
 
 		public Key getKey(byte[] bytes) throws Exception {
@@ -158,6 +197,16 @@ public class CryptoCallScannerTest {
 
 	}
 
+	public static class SignatureTestClass {
+
+		public void verify(PublicKey publicKey) throws Exception {
+			Signature signature = Signature.getInstance("SHA256withRSA");
+
+			signature.initVerify(publicKey);
+		}
+
+	}
+
 	public static class TrustManagerFactoryTestClass {
 
 		public void getTrustManagerFactory() throws Exception {
@@ -175,7 +224,7 @@ public class CryptoCallScannerTest {
 	}
 
 	private String _getDescription(CryptoCall cryptoCall) {
-		StringBundler sb = new StringBundler(6);
+		StringBundler sb = new StringBundler(10);
 
 		sb.append(cryptoCall.getJCAClassName());
 		sb.append(StringPool.SPACE);
@@ -197,6 +246,20 @@ public class CryptoCallScannerTest {
 			String.valueOf(
 				TransformUtil.transform(
 					cryptoCall.getCryptoFunctions(), CryptoFunction::getName)));
+
+		if (cryptoCall.getKeySize() > 0) {
+			sb.append(StringPool.SPACE);
+			sb.append(String.valueOf(cryptoCall.getKeySize()));
+		}
+
+		if (ListUtil.isNotEmpty(cryptoCall.getRelatedCryptoMaterialTypes())) {
+			sb.append(StringPool.SPACE);
+			sb.append(
+				String.valueOf(
+					TransformUtil.transform(
+						cryptoCall.getRelatedCryptoMaterialTypes(),
+						RelatedCryptoMaterialType::getName)));
+		}
 
 		return sb.toString();
 	}

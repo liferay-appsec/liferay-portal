@@ -39,7 +39,10 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import javax.crypto.Cipher;
+
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
@@ -49,6 +52,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -218,14 +222,51 @@ public class CryptoCallScanner {
 		return className;
 	}
 
-	private List<CryptoFunction> _getCryptoFunctions(String jcaClassName) {
+	private List<CryptoFunction> _getCryptoFunctions(
+		Frame<SourceValue>[] frames, InsnList insnList, String jcaClassName,
+		MethodInsnNode methodInsnNode) {
+
 		CryptoFunction cryptoFunction = _cryptoFunctions.get(jcaClassName);
 
 		if (cryptoFunction != null) {
 			return Collections.singletonList(cryptoFunction);
 		}
 
-		return Collections.singletonList(CryptoFunction.UNKNOWN);
+		Set<CryptoFunction> cryptoFunctions = new TreeSet<>();
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			if (Objects.equals(linkedMethodInsnNode.name, "initSign")) {
+				cryptoFunctions.add(CryptoFunction.SIGN);
+			}
+			else if (Objects.equals(linkedMethodInsnNode.name, "initVerify")) {
+				cryptoFunctions.add(CryptoFunction.VERIFY);
+			}
+			else if (Objects.equals(linkedMethodInsnNode.name, "init") &&
+					 linkedMethodInsnNode.desc.startsWith("(I")) {
+
+				Origin origin = _getArgumentOrigin(
+					frames, insnList, linkedMethodInsnNode, 0,
+					Type.getArgumentCount(linkedMethodInsnNode.desc));
+
+				for (String value : origin.getValues()) {
+					cryptoFunction = _cipherCryptoFunctions.get(value);
+
+					if (cryptoFunction == null) {
+						continue;
+					}
+
+					cryptoFunctions.add(cryptoFunction);
+				}
+			}
+		}
+
+		if (cryptoFunctions.isEmpty()) {
+			return Collections.singletonList(CryptoFunction.UNKNOWN);
+		}
+
+		return new ArrayList<>(cryptoFunctions);
 	}
 
 	private List<MethodInsnNode> _getCryptoMethodInsnNodes(
@@ -320,6 +361,72 @@ public class CryptoCallScanner {
 			internalName, CharPool.SLASH, CharPool.PERIOD);
 	}
 
+	private Origin _getKeySizeOrigin(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode) {
+
+		Origin origin = new Origin();
+
+		String methodName = _keySizeMethodNames.get(methodInsnNode.owner);
+
+		if (methodName == null) {
+			return origin;
+		}
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			if (!Objects.equals(linkedMethodInsnNode.name, methodName) ||
+				!linkedMethodInsnNode.desc.startsWith("(I")) {
+
+				continue;
+			}
+
+			origin.addAll(
+				_getArgumentOrigin(
+					frames, insnList, linkedMethodInsnNode, 0,
+					Type.getArgumentCount(linkedMethodInsnNode.desc)));
+		}
+
+		return origin;
+	}
+
+	private List<MethodInsnNode> _getLinkedMethodInsnNodes(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode) {
+
+		List<MethodInsnNode> linkedMethodInsnNodes = new ArrayList<>();
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (abstractInsnNode.getOpcode() != Opcodes.INVOKEVIRTUAL) {
+				continue;
+			}
+
+			MethodInsnNode curMethodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame =
+				frames[insnList.indexOf(curMethodInsnNode)];
+
+			if ((frame == null) ||
+				!Objects.equals(
+					curMethodInsnNode.owner, methodInsnNode.owner)) {
+
+				continue;
+			}
+
+			SourceValue sourceValue = _getReceiver(
+				frame, Type.getArgumentCount(curMethodInsnNode.desc));
+
+			if (!sourceValue.insns.contains(methodInsnNode)) {
+				continue;
+			}
+
+			linkedMethodInsnNodes.add(curMethodInsnNode);
+		}
+
+		return linkedMethodInsnNodes;
+	}
+
 	private String _getMethodKey(
 		String internalName, String name, String desc) {
 
@@ -346,6 +453,16 @@ public class CryptoCallScanner {
 			LdcInsnNode ldcInsnNode = (LdcInsnNode)abstractInsnNode;
 
 			origin.addValue(String.valueOf(ldcInsnNode.cst));
+		}
+		else if ((opcode >= Opcodes.ICONST_M1) &&
+				 (opcode <= Opcodes.ICONST_5)) {
+
+			origin.addValue(String.valueOf(opcode - Opcodes.ICONST_0));
+		}
+		else if ((opcode == Opcodes.BIPUSH) || (opcode == Opcodes.SIPUSH)) {
+			IntInsnNode intInsnNode = (IntInsnNode)abstractInsnNode;
+
+			origin.addValue(String.valueOf(intInsnNode.operand));
 		}
 		else if ((opcode == Opcodes.GETFIELD) ||
 				 (opcode == Opcodes.GETSTATIC)) {
@@ -395,6 +512,34 @@ public class CryptoCallScanner {
 
 	private SourceValue _getReceiver(Frame<SourceValue> frame, int count) {
 		return frame.getStack(frame.getStackSize() - count - 1);
+	}
+
+	private List<RelatedCryptoMaterialType> _getRelatedCryptoMaterialTypes(
+		Frame<SourceValue>[] frames, InsnList insnList, String jcaClassName,
+		MethodInsnNode methodInsnNode) {
+
+		if (!Objects.equals(jcaClassName, "KeyFactory")) {
+			return Collections.emptyList();
+		}
+
+		Set<RelatedCryptoMaterialType> relatedCryptoMaterialTypes =
+			new TreeSet<>();
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			RelatedCryptoMaterialType relatedCryptoMaterialType =
+				_keyFactoryRelatedCryptoMaterialTypes.get(
+					linkedMethodInsnNode.name);
+
+			if (relatedCryptoMaterialType == null) {
+				continue;
+			}
+
+			relatedCryptoMaterialTypes.add(relatedCryptoMaterialType);
+		}
+
+		return new ArrayList<>(relatedCryptoMaterialTypes);
 	}
 
 	private Origin _getReturnValueOrigin(
@@ -586,7 +731,8 @@ public class CryptoCallScanner {
 							origin,
 							new CryptoCall(
 								bundleSymbolicName, className, featureName,
-								_getJCAClassName(methodInsnNode))));
+								_getJCAClassName(methodInsnNode)),
+							new Origin()));
 				}
 
 				continue;
@@ -605,12 +751,17 @@ public class CryptoCallScanner {
 					bundleSymbolicName, className, featureName, jcaClassName);
 
 				cryptoCall.setCryptoFunctions(
-					_getCryptoFunctions(jcaClassName));
+					_getCryptoFunctions(
+						frames, insnList, jcaClassName, methodInsnNode));
+				cryptoCall.setRelatedCryptoMaterialTypes(
+					_getRelatedCryptoMaterialTypes(
+						frames, insnList, jcaClassName, methodInsnNode));
 
 				_scannedCryptoCalls.add(
 					new ScannedCryptoCall(
 						_getAlgorithmOrigin(frames, insnList, methodInsnNode),
-						cryptoCall));
+						cryptoCall,
+						_getKeySizeOrigin(frames, insnList, methodInsnNode)));
 			}
 		}
 	}
@@ -649,11 +800,17 @@ public class CryptoCallScanner {
 			return cryptoCall;
 		}
 
+		Origin keySizeOrigin = _resolve(scannedCryptoCall.getKeySizeOrigin());
+
 		Set<String> propertyKeys = algorithmOrigin.getPropertyKeys();
 		SortedSet<String> values = algorithmOrigin.getValues();
 
 		if (values.isEmpty() && !propertyKeys.isEmpty()) {
-			cryptoCall.setConfiguredBy(new ArrayList<>(propertyKeys));
+			List<String> configuredBy = new ArrayList<>(propertyKeys);
+
+			configuredBy.addAll(keySizeOrigin.getPropertyKeys());
+
+			cryptoCall.setConfiguredBy(configuredBy);
 
 			return cryptoCall;
 		}
@@ -662,6 +819,12 @@ public class CryptoCallScanner {
 			cryptoCall.setAlgorithm(
 				CryptoProviderUtil.getAlgorithmName(
 					values.first(), cryptoCall.getJCAClassName()));
+
+			SortedSet<String> keySizes = keySizeOrigin.getValues();
+
+			if (keySizeOrigin.isConstant() && (keySizes.size() == 1)) {
+				cryptoCall.setKeySize(GetterUtil.getInteger(keySizes.first()));
+			}
 
 			return cryptoCall;
 		}
@@ -687,6 +850,16 @@ public class CryptoCallScanner {
 	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
 		"javax/crypto/spec/SecretKeySpec";
 
+	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
+		HashMapBuilder.put(
+			String.valueOf(Cipher.DECRYPT_MODE), CryptoFunction.DECRYPT
+		).put(
+			String.valueOf(Cipher.ENCRYPT_MODE), CryptoFunction.ENCRYPT
+		).put(
+			String.valueOf(Cipher.UNWRAP_MODE), CryptoFunction.DECRYPT
+		).put(
+			String.valueOf(Cipher.WRAP_MODE), CryptoFunction.ENCRYPT
+		).build();
 	private static final Map<String, CryptoFunction> _cryptoFunctions =
 		HashMapBuilder.put(
 			"KeyAgreement", CryptoFunction.KEYDERIVE
@@ -751,6 +924,18 @@ public class CryptoCallScanner {
 			"javax/net/ssl/TrustManagerFactory.getDefaultAlgorithm",
 			"ssl.TrustManagerFactory.algorithm"
 		).build();
+	private static final Map<String, RelatedCryptoMaterialType>
+		_keyFactoryRelatedCryptoMaterialTypes = HashMapBuilder.put(
+			"generatePrivate", RelatedCryptoMaterialType.PRIVATE_KEY
+		).put(
+			"generatePublic", RelatedCryptoMaterialType.PUBLIC_KEY
+		).build();
+	private static final Map<String, String> _keySizeMethodNames =
+		HashMapBuilder.put(
+			"java/security/KeyPairGenerator", "initialize"
+		).put(
+			"javax/crypto/KeyGenerator", "init"
+		).build();
 	private static final List<String> _needles = Arrays.asList(
 		_CLASS_NAME_DIGESTER_UTIL, "/PropsUtil", "java/security/",
 		"javax/crypto/", "javax/net/ssl/");
@@ -761,6 +946,9 @@ public class CryptoCallScanner {
 		).put(
 			"com/liferay/petra/string/StringUtil.toUpperCase",
 			StringUtil::toUpperCase
+		).put(
+			"com/liferay/portal/kernel/util/GetterUtil.getInteger",
+			Function.identity()
 		).put(
 			"com/liferay/portal/kernel/util/GetterUtil.getString",
 			Function.identity()
@@ -940,10 +1128,12 @@ public class CryptoCallScanner {
 	private static class ScannedCryptoCall {
 
 		public ScannedCryptoCall(
-			Origin algorithmOrigin, CryptoCall cryptoCall) {
+			Origin algorithmOrigin, CryptoCall cryptoCall,
+			Origin keySizeOrigin) {
 
 			_algorithmOrigin = algorithmOrigin;
 			_cryptoCall = cryptoCall;
+			_keySizeOrigin = keySizeOrigin;
 		}
 
 		public Origin getAlgorithmOrigin() {
@@ -954,8 +1144,13 @@ public class CryptoCallScanner {
 			return _cryptoCall;
 		}
 
+		public Origin getKeySizeOrigin() {
+			return _keySizeOrigin;
+		}
+
 		private final Origin _algorithmOrigin;
 		private final CryptoCall _cryptoCall;
+		private final Origin _keySizeOrigin;
 
 	}
 
