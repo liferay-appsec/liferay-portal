@@ -1,4 +1,6 @@
 dependencies {
+	testIntegrationImplementation group: "org.osgi", name: "osgi.core", version: "6.0.0"
+	testIntegrationImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
 	testIntegrationImplementation project(":apps:account:account-api")
 	testIntegrationImplementation project(":apps:portal-security-audit:portal-security-audit-api")
 	testIntegrationImplementation project(":apps:portal-security-audit:portal-security-audit-event-generators-api")
