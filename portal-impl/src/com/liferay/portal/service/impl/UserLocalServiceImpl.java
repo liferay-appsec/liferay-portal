@@ -5585,6 +5585,24 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
+		if (FIPSModeValidator.isNotAllowedPassword(password1)) {
+			if (!silentUpdate) {
+				throw new UserPasswordException.MustBeLonger(
+					userId, FIPSModeValidator.PASSWORDS_MIN_LENGTH);
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Unable to update the password of user ", userId,
+						" because it has fewer than ",
+						FIPSModeValidator.PASSWORDS_MIN_LENGTH,
+						" bytes in FIPS mode"));
+			}
+
+			return user;
+		}
+
 		String newEncPwd = null;
 
 		if (user.isPasswordEncrypted()) {

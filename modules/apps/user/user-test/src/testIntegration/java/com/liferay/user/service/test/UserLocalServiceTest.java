@@ -2294,6 +2294,30 @@ public class UserLocalServiceTest {
 	}
 
 	@Test
+	public void testUpdatePasswordInFIPSMode() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		String password = RandomTestUtil.randomString(13);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertThrows(
+				UserPasswordException.MustBeLonger.class,
+				() -> _userLocalService.updatePassword(
+					user.getUserId(), password, password, false, false));
+
+			_userLocalService.updatePassword(
+				user.getUserId(), password, password, false, true);
+		}
+
+		User curUser = _userLocalService.getUser(user.getUserId());
+
+		Assert.assertEquals(user.getPassword(), curUser.getPassword());
+	}
+
+	@Test
 	public void testUpdatePasswordWithModifiedAlgorithm() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
