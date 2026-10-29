@@ -580,7 +580,8 @@ public class UserLocalServiceTest {
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
 			"PBKDF2WITHHMACSHA1/160/1300000", RandomTestUtil.randomString(13));
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
-			"PBKDF2WITHHMACSHA256/256/1300000", RandomTestUtil.randomString(14));
+			"PBKDF2WITHHMACSHA256/256/1300000",
+			RandomTestUtil.randomString(14));
 	}
 
 	@Test
@@ -3001,8 +3002,7 @@ public class UserLocalServiceTest {
 			"PBKDF2WITHHMACSHA256/256/1300000";
 
 		try (AutoCloseable autoCloseable1 =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true);
+				PropsValuesTestUtil.swapWithSafeCloseable("FIPS_ENABLED", true);
 			AutoCloseable autoCloseable2 =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PasswordEncryptorUtil.class,
