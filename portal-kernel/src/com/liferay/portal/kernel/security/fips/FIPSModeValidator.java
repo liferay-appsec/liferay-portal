@@ -113,6 +113,20 @@ public class FIPSModeValidator {
 		return true;
 	}
 
+	public static boolean isNotAllowedPassword(String password) {
+		if (!PropsValues.FIPS_ENABLED) {
+			return false;
+		}
+
+		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
+
+		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
+			return false;
+		}
+
+		return true;
+	}
+
 	public static void validate() {
 		Provider[] providers = Security.getProviders();
 
@@ -163,19 +177,11 @@ public class FIPSModeValidator {
 	}
 
 	public static void validatePassword(String password) {
-		if (!PropsValues.FIPS_ENABLED) {
-			return;
+		if (isNotAllowedPassword(password)) {
+			throw new SecurityException(
+				"Password must be at least " + PASSWORDS_MIN_LENGTH +
+					" bytes in FIPS mode");
 		}
-
-		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
-
-		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
-			return;
-		}
-
-		throw new SecurityException(
-			"Password must be at least " + PASSWORDS_MIN_LENGTH +
-				" bytes in FIPS mode");
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {

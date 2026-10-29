@@ -115,6 +115,7 @@ import com.liferay.portal.kernel.security.auth.FullNameValidator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.security.auth.ScreenNameValidator;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -6482,7 +6483,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 						PasswordEncryptorUtil.
 							getEncryptedPasswordAlgorithmSettings(
 								user.getPassword()),
-						_PASSWORDS_ENCRYPTION_ALGORITHM)) {
+						_PASSWORDS_ENCRYPTION_ALGORITHM) &&
+					!FIPSModeValidator.isNotAllowedPassword(password)) {
 
 					user.setPassword(
 						PasswordEncryptorUtil.encrypt(

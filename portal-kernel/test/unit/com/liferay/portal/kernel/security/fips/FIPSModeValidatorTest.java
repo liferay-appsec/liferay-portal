@@ -136,6 +136,23 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testIsNotAllowedPassword() {
+		String password = RandomTestUtil.randomString(13);
+
+		Assert.assertFalse(FIPSModeValidator.isNotAllowedPassword(password));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertTrue(FIPSModeValidator.isNotAllowedPassword(password));
+			Assert.assertFalse(
+				FIPSModeValidator.isNotAllowedPassword(
+					RandomTestUtil.randomString(14)));
+		}
+	}
+
+	@Test
 	public void testReadChannelPropertiesDocument() throws Exception {
 		Document document = ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_readChannelPropertiesDocument",
