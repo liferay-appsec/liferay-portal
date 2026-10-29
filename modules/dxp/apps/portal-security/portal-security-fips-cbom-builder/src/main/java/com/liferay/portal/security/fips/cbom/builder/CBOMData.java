@@ -6,8 +6,11 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayDeque;
@@ -96,6 +99,34 @@ public class CBOMData {
 				className, key -> new ArrayList<>());
 
 		argumentsList.add(new ArrayList<>(arguments.values()));
+	}
+
+	public Set<String> getBundleSymbolicNames() {
+		Set<String> bundleSymbolicNames = new HashSet<>(
+			_portalBundleSymbolicNames);
+
+		bundleSymbolicNames.addAll(_settingBundleSymbolicNames);
+
+		return bundleSymbolicNames;
+	}
+
+	public List<CryptoUse> getCryptoUses() {
+		_scopeCryptoUses();
+
+		return _cryptoUses;
+	}
+
+	public Set<String> getMessages() {
+		_scopeCryptoUses();
+
+		Set<String> messages = new TreeSet<>(_messages);
+
+		for (String propertyKey : _unmatchedPropertyKeys) {
+			messages.add(
+				"The scan found no crypto call for \"" + propertyKey + "\"");
+		}
+
+		return messages;
 	}
 
 	public List<CryptoUse> getScannedCryptoUses() {
@@ -546,6 +577,85 @@ public class CBOMData {
 		return cryptoUse;
 	}
 
+	private void _scopeCryptoUses() {
+		if (_cryptoUses != null) {
+			return;
+		}
+
+		_cryptoUses = new ArrayList<>();
+
+		for (CryptoUse cryptoUse : getScannedCryptoUses()) {
+			if (!cryptoUse.isResolved()) {
+				_cryptoUses.add(cryptoUse);
+
+				_messages.add(
+					StringBundler.concat(
+						"The scan cannot read the algorithm of the ",
+						cryptoUse.getJCAClassName(), " call in ",
+						cryptoUse.getClassName(), ", which comes from ",
+						StringUtil.merge(
+							cryptoUse.getUnresolvedReasons(), ", ")));
+
+				continue;
+			}
+
+			if (cryptoUse.isConfigurable()) {
+				List<String> configuredBy = cryptoUse.getConfiguredBy();
+
+				String propertyKey = configuredBy.get(0);
+
+				if (!_portalBundleSymbolicNames.contains(
+						cryptoUse.getBundleSymbolicName()) &&
+					!_settingPropertyKeys.contains(propertyKey)) {
+
+					continue;
+				}
+
+				cryptoUse.setFeatureName(propertyKey);
+
+				_cryptoUses.add(cryptoUse);
+
+				_unmatchedPropertyKeys.remove(propertyKey);
+
+				continue;
+			}
+
+			String standardAlgorithmName = CBOMUtil.getStandardAlgorithmName(
+				cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
+
+			cryptoUse.setAlgorithm(standardAlgorithmName);
+
+			if (_portalBundleSymbolicNames.contains(
+					cryptoUse.getBundleSymbolicName())) {
+
+				cryptoUse.setFeatureName(
+					StringBundler.concat(
+						cryptoUse.getAlgorithm(), " in ",
+						cryptoUse.getClassName()));
+
+				_cryptoUses.add(cryptoUse);
+
+				continue;
+			}
+
+			for (String propertyKey : cryptoUse.getSelectedBy()) {
+				if (!_settingPropertyKeys.contains(propertyKey)) {
+					continue;
+				}
+
+				CryptoUse featureCryptoUse = cryptoUse.createPart();
+
+				featureCryptoUse.setAlgorithm(cryptoUse.getAlgorithm());
+				featureCryptoUse.setFeatureName(propertyKey);
+				featureCryptoUse.setKeySize(cryptoUse.getKeySize());
+
+				_cryptoUses.add(featureCryptoUse);
+
+				_unmatchedPropertyKeys.remove(propertyKey);
+			}
+		}
+	}
+
 	private List<CryptoUse> _toCryptoUses(
 		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse,
 		CryptoUse methodCryptoUse) {
@@ -638,12 +748,28 @@ public class CBOMData {
 
 	private static final int _MAX_DEPTH = 32;
 
+	private static final Set<String> _portalBundleSymbolicNames =
+		SetUtil.fromArray(
+			"com.liferay.portal.impl", "com.liferay.portal.kernel");
+	private static final Set<String> _settingBundleSymbolicNames =
+		SetUtil.fromArray(
+			"com.liferay.object.service", "com.liferay.portal.encryptor",
+			"com.liferay.portal.security.key.impl",
+			"com.liferay.portal.security.password.encryptor.impl");
+	private static final Set<String> _settingPropertyKeys = SetUtil.fromArray(
+		"auth.mac.algorithm", "company.encryption.algorithm",
+		"object.encryption.algorithm", "passwords.encryption.algorithm",
+		"passwords.encryption.algorithm.legacy",
+		"tunneling.servlet.encryption.algorithm");
+
 	private int _callReferenceCount;
 	private final Map<String, CallSite> _callSites = new HashMap<>();
 	private int _computedReferenceCount;
+	private List<CryptoUse> _cryptoUses;
 	private final List<Supplier<List<CryptoUse>>> _cryptoUsesSuppliers =
 		new ArrayList<>();
 	private final Map<String, List<String>> _interfaceNames = new HashMap<>();
+	private final Set<String> _messages = new TreeSet<>();
 	private final Map<String, Integer> _methodAccesses = new HashMap<>();
 	private final Map<String, CryptoUse> _referenceCryptoUses = new HashMap<>();
 	private int _resolutionContextCount = 1;
@@ -651,6 +777,8 @@ public class CBOMData {
 		new HashMap<>();
 	private Map<String, Set<String>> _subtypeNames;
 	private final Map<String, String> _superClassNames = new HashMap<>();
+	private final Set<String> _unmatchedPropertyKeys = new TreeSet<>(
+		_settingPropertyKeys);
 
 	private static class CallSite {
 

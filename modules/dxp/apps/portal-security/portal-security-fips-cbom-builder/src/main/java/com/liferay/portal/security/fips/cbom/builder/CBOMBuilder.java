@@ -14,12 +14,17 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.io.File;
+import java.io.FileInputStream;
+
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import java.security.Provider;
 
@@ -97,6 +102,70 @@ public class CBOMBuilder {
 		ObjectWriter objectWriter = objectMapper.writer(defaultPrettyPrinter);
 
 		return objectWriter.writeValueAsString(jsonNode);
+	}
+
+	public static void main(String[] args) throws Exception {
+		File configurationDir = new File(args[0]);
+
+		Properties portalExtProperties = _loadProperties(
+			new File(configurationDir, "portal-ext.properties"));
+
+		if (GetterUtil.getBoolean(
+				portalExtProperties.getProperty("fips.enabled"))) {
+
+			throw new UnsupportedOperationException(
+				"Unable to build the CBOM of a FIPS mode configuration");
+		}
+
+		CBOMData cbomData = new CBOMData();
+
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData.getBundleSymbolicNames(), cbomData,
+			CBOMUtil.getDefaultSecureRandomAlgorithm(), false);
+
+		for (File file : _getFiles(new File(args[3]), new File(args[2]))) {
+			cbomScanner.scan(file);
+		}
+
+		String cbomJSON = build(
+			configurationDir.getName(), cbomData.getCryptoUses());
+
+		File file = new File(args[1]);
+
+		File parentDir = file.getParentFile();
+
+		parentDir.mkdirs();
+
+		Files.write(file.toPath(), cbomJSON.getBytes(StandardCharsets.UTF_8));
+
+		for (String message : cbomData.getMessages()) {
+			System.out.println(message);
+		}
+
+		System.out.println("Wrote " + file.getAbsolutePath());
+	}
+
+	private static void _addFiles(
+		File dir, File excludedDir, List<File> files) {
+
+		File[] childFiles = dir.listFiles();
+
+		if (childFiles == null) {
+			return;
+		}
+
+		for (File childFile : childFiles) {
+			String fileName = childFile.getName();
+
+			if (childFile.isDirectory()) {
+				if (!childFile.equals(excludedDir)) {
+					_addFiles(childFile, excludedDir, files);
+				}
+			}
+			else if (fileName.endsWith(".jar") || fileName.endsWith(".lpkg")) {
+				files.add(childFile);
+			}
+		}
 	}
 
 	private static void _addProperties(
@@ -289,6 +358,25 @@ public class CBOMBuilder {
 				}));
 
 		return evidence;
+	}
+
+	private static List<File> _getFiles(
+		File appServerPortalDir, File liferayHomeDir) {
+
+		List<File> files = new ArrayList<>();
+
+		File osgiDir = new File(liferayHomeDir, "osgi");
+
+		_addFiles(osgiDir, new File(osgiDir, "test"), files);
+
+		_addFiles(new File(appServerPortalDir, "WEB-INF/lib"), null, files);
+		_addFiles(
+			new File(appServerPortalDir, "WEB-INF/shielded-container-lib"),
+			null, files);
+
+		files.sort(null);
+
+		return files;
 	}
 
 	private static Metadata _getMetadata(String configurationName) {
@@ -511,6 +599,12 @@ public class CBOMBuilder {
 
 		return !Collections.disjoint(
 			cryptoUse.getConfiguredBy(), keyCryptoUse.getConfiguredBy());
+	}
+
+	private static Properties _loadProperties(File file) throws Exception {
+		try (FileInputStream fileInputStream = new FileInputStream(file)) {
+			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
+		}
 	}
 
 	private static Component _toComponent(

@@ -11,14 +11,26 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.nio.charset.StandardCharsets;
+import java.io.File;
 
+import java.net.URL;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
@@ -31,6 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -420,7 +433,131 @@ public class CBOMBuilderTest {
 
 		Assert.assertNotEquals(
 			serialNumber, jsonObject.getString("serialNumber"));
+
+		CBOMData cbomData = new CBOMData();
+
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData, "NativePRNG", false);
+
+		cbomScanner.scan(_getJarFile(DigesterUtil.class));
+		cbomScanner.scan(_getJarFile(JSONFactoryImpl.class));
+
+		Assert.assertEquals(
+			Arrays.asList(
+				"The scan found no crypto call for " +
+					"\"company.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"object.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"passwords.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"passwords.encryption.algorithm.legacy\""),
+			new ArrayList<>(cbomData.getMessages()));
+
+		cbomJSON = CBOMBuilder.build(
+			configurationName, cbomData.getCryptoUses());
+
+		jsonObject = JSONFactoryUtil.createJSONObject(cbomJSON);
+
+		JSONArray componentsJSONArray = jsonObject.getJSONArray("components");
+
+		List<String> bomRefs = new ArrayList<>();
+		Map<String, JSONArray> propertiesJSONArrays = new HashMap<>();
+
+		for (int i = 0; i < componentsJSONArray.length(); i++) {
+			JSONObject componentJSONObject = componentsJSONArray.getJSONObject(
+				i);
+
+			String bomRef = componentJSONObject.getString("bom-ref");
+
+			bomRefs.add(bomRef);
+			propertiesJSONArrays.put(
+				bomRef, componentJSONObject.getJSONArray("properties"));
+		}
+
+		Assert.assertEquals(
+			Arrays.asList(
+				"crypto:MessageDigest:MD5", "crypto:MessageDigest:SHA-1",
+				"crypto:MessageDigest:SHA-256",
+				"crypto:MessageDigest:auth.mac.algorithm",
+				"crypto:SecretKeySpec:tunneling.servlet.encryption.algorithm",
+				"crypto:SecureRandom:NativePRNG"),
+			bomRefs);
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				_toPropertyJSONObject("configured-by", "auth.mac.algorithm"),
+				_toPropertyJSONObject(
+					"default-value", "auth.mac.algorithm=MD5"),
+				_toPropertyJSONObject("feature", "auth.mac.algorithm"),
+				_toPropertyJSONObject("jca-class", "MessageDigest"),
+				_toPropertyJSONObject("module", "com.liferay.portal.impl")
+			).toString(),
+			String.valueOf(
+				propertiesJSONArrays.get(
+					"crypto:MessageDigest:auth.mac.algorithm")),
+			JSONCompareMode.STRICT);
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.cache.key." +
+						"MessageDigestCacheKeyGenerator"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.kernel.model.UserConstants"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.kernel.util.URLUtil"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.model.impl.OrganizationImpl"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.security.auth." +
+						"AuthTokenWhitelistImpl"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.servlet.filters.language." +
+						"LanguageFilter"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.webserver.WebServerServlet"),
+				_toPropertyJSONObject("jca-class", "MessageDigest"),
+				_toPropertyJSONObject("module", "com.liferay.portal.impl"),
+				_toPropertyJSONObject("module", "com.liferay.portal.kernel"),
+				_toPropertyJSONObject("provider", "SUN")
+			).toString(),
+			String.valueOf(
+				propertiesJSONArrays.get("crypto:MessageDigest:SHA-1")),
+			JSONCompareMode.STRICT);
 	}
+
+	@Test
+	public void testMain() throws Exception {
+		File configurationDir = temporaryFolder.newFolder();
+
+		File portalExtPropertiesFile = new File(
+			configurationDir, "portal-ext.properties");
+
+		Files.write(
+			portalExtPropertiesFile.toPath(),
+			"fips.enabled=true".getBytes(StandardCharsets.UTF_8));
+
+		try {
+			CBOMBuilder.main(new String[] {configurationDir.getPath()});
+
+			Assert.fail();
+		}
+		catch (UnsupportedOperationException unsupportedOperationException) {
+			Assert.assertEquals(
+				"Unable to build the CBOM of a FIPS mode configuration",
+				unsupportedOperationException.getMessage());
+		}
+	}
+
+	@Rule
+	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private CryptoUse _createCryptoUse(
 		String algorithm, String className,
@@ -433,6 +570,16 @@ public class CBOMBuilderTest {
 		cryptoUse.setCryptoFunctions(cryptoFunctions);
 
 		return cryptoUse;
+	}
+
+	private File _getJarFile(Class<?> clazz) throws Exception {
+		ProtectionDomain protectionDomain = clazz.getProtectionDomain();
+
+		CodeSource codeSource = protectionDomain.getCodeSource();
+
+		URL url = codeSource.getLocation();
+
+		return new File(url.toURI());
 	}
 
 	private JSONObject _toJSONObject(
