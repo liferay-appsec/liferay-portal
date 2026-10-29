@@ -9,14 +9,23 @@ import com.liferay.portal.kernel.util.ListUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.function.Function;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * @author Manuele Castro
+ * @author Caio Farias
  */
 public class CryptoUse {
+
+	public CryptoUse() {
+		this(null, null, null, null);
+	}
 
 	public CryptoUse(
 		String bundleSymbolicName, String className, String featureName,
@@ -26,6 +35,33 @@ public class CryptoUse {
 		_className = className;
 		_featureName = featureName;
 		_jcaClassName = jcaClassName;
+	}
+
+	public void addAll(CryptoUse cryptoUse) {
+		_propertyKeys.addAll(cryptoUse._propertyKeys);
+		_references.addAll(cryptoUse._references);
+		_unresolvedReasons.addAll(cryptoUse._unresolvedReasons);
+		_values.addAll(cryptoUse._values);
+	}
+
+	public void addPropertyKey(String propertyKey) {
+		_propertyKeys.add(propertyKey);
+	}
+
+	public void addReference(String reference) {
+		_references.add(reference);
+	}
+
+	public void addUnresolvedReason(String unresolvedReason) {
+		_unresolvedReasons.add(unresolvedReason);
+	}
+
+	public void addValue(String value) {
+		_values.add(value);
+	}
+
+	public void clearReferences() {
+		_references.clear();
 	}
 
 	public CryptoUse createPart() {
@@ -70,6 +106,14 @@ public class CryptoUse {
 		return _keySize;
 	}
 
+	public Set<String> getPropertyKeys() {
+		return _propertyKeys;
+	}
+
+	public Set<String> getReferences() {
+		return _references;
+	}
+
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
 		return _relatedCryptoMaterialTypes;
 	}
@@ -78,12 +122,26 @@ public class CryptoUse {
 		return _selectedBy;
 	}
 
-	public List<String> getUnresolvedReasons() {
+	public Set<String> getUnresolvedReasons() {
 		return _unresolvedReasons;
+	}
+
+	public SortedSet<String> getValues() {
+		return _values;
 	}
 
 	public boolean isConfigurable() {
 		return ListUtil.isNotEmpty(_configuredBy);
+	}
+
+	public boolean isConstant() {
+		if (_propertyKeys.isEmpty() && _references.isEmpty() &&
+			_unresolvedReasons.isEmpty()) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	public boolean isResolved() {
@@ -125,7 +183,21 @@ public class CryptoUse {
 	}
 
 	public void setUnresolvedReasons(List<String> unresolvedReasons) {
-		_unresolvedReasons = unresolvedReasons;
+		_unresolvedReasons.clear();
+
+		_unresolvedReasons.addAll(unresolvedReasons);
+	}
+
+	public void transformValues(Function<String, String> function) {
+		Set<String> values = new TreeSet<>();
+
+		for (String value : _values) {
+			values.add(function.apply(value));
+		}
+
+		_values.clear();
+
+		_values.addAll(values);
 	}
 
 	private String _algorithm;
@@ -136,9 +208,12 @@ public class CryptoUse {
 	private String _featureName;
 	private final String _jcaClassName;
 	private int _keySize;
+	private final Set<String> _propertyKeys = new TreeSet<>();
+	private final Set<String> _references = new TreeSet<>();
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
 	private List<String> _selectedBy = Collections.emptyList();
-	private List<String> _unresolvedReasons = Collections.emptyList();
+	private final Set<String> _unresolvedReasons = new TreeSet<>();
+	private final SortedSet<String> _values = new TreeSet<>();
 
 }

@@ -7,9 +7,11 @@ package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -50,6 +52,20 @@ import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
  * @author Caio Farias
  */
 public class CBOMUtil {
+
+	public static CBOMData.ResolutionContext fetchBoundResolutionContext(
+		String methodKey, CBOMData.ResolutionContext resolutionContext) {
+
+		while (resolutionContext != null) {
+			if (Objects.equals(resolutionContext.getMethodKey(), methodKey)) {
+				return resolutionContext;
+			}
+
+			resolutionContext = resolutionContext.getParentResolutionContext();
+		}
+
+		return null;
+	}
 
 	public static CryptoFunction fetchCipherCryptoFunction(String mode) {
 		return _cipherCryptoFunctions.get(mode);
@@ -233,6 +249,45 @@ public class CBOMUtil {
 		return service.getAlgorithm() + suffix;
 	}
 
+	public static String getUnresolvedReason(String reference) {
+		int index = reference.indexOf(CharPool.POUND);
+
+		if (index != -1) {
+			String methodName = reference.substring(
+				0, reference.indexOf(CharPool.OPEN_PARENTHESIS));
+
+			if (methodName.endsWith(".<init>")) {
+				methodName =
+					"the constructor of " +
+						StringUtil.removeLast(methodName, ".<init>");
+			}
+
+			return StringBundler.concat(
+				"parameter ",
+				GetterUtil.getInteger(reference.substring(index + 1)) + 1,
+				" of ", methodName);
+		}
+
+		index = reference.indexOf(CharPool.OPEN_PARENTHESIS);
+
+		if (index != -1) {
+			return "the return value of " + reference.substring(0, index) +
+				"()";
+		}
+
+		return "the field " + reference;
+	}
+
+	public static String getVisitedKey(
+		String reference, CBOMData.ResolutionContext resolutionContext) {
+
+		if (resolutionContext == null) {
+			return reference;
+		}
+
+		return resolutionContext.getId() + StringPool.COLON + reference;
+	}
+
 	public static boolean isKeyAlgorithm(
 		String algorithm, String jcaClassName, String keyAlgorithm) {
 
@@ -312,6 +367,24 @@ public class CBOMUtil {
 		else {
 			algorithmProperties.setPadding(Padding.OTHER);
 		}
+	}
+
+	public static CryptoUse toComputedCryptoUse(CryptoUse cryptoUse) {
+		CryptoUse computedCryptoUse = new CryptoUse();
+
+		for (String propertyKey : cryptoUse.getPropertyKeys()) {
+			computedCryptoUse.addPropertyKey(propertyKey);
+		}
+
+		for (String unresolvedReason : cryptoUse.getUnresolvedReasons()) {
+			computedCryptoUse.addUnresolvedReason(unresolvedReason);
+		}
+
+		if (computedCryptoUse.isConstant()) {
+			computedCryptoUse.addUnresolvedReason("a value the code computes");
+		}
+
+		return computedCryptoUse;
 	}
 
 	private static String _getCipherName(String algorithm) {
