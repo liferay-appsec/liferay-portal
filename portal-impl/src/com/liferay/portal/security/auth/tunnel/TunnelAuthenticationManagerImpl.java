@@ -5,7 +5,6 @@
 
 package com.liferay.portal.security.auth.tunnel;
 
-import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -89,9 +88,9 @@ public class TunnelAuthenticationManagerImpl
 				decryptedLogin = EncryptorUtil.decrypt(
 					sharedSecretKey, password);
 			}
-			catch (EncryptorException encryptorException) {
+			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
-					_log.debug(encryptorException);
+					_log.debug(exception);
 				}
 			}
 		}

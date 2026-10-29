@@ -158,6 +158,16 @@ public class TunnelAuthenticationManagerImplTest {
 			_assertWrongSharedSecret(
 				_getHttpServletRequest(login, password),
 				tunnelAuthenticationManagerImpl);
+
+			Mockito.when(
+				encryptor.decrypt(Mockito.any(Key.class), Mockito.eq(password))
+			).thenThrow(
+				new StringIndexOutOfBoundsException()
+			);
+
+			_assertWrongSharedSecret(
+				_getHttpServletRequest(login, password),
+				tunnelAuthenticationManagerImpl);
 		}
 	}
 
