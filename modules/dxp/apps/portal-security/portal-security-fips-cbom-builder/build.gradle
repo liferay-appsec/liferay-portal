@@ -1,0 +1,46 @@
+task buildCBOM
+task copyCBOMConfigurations(type: Sync)
+
+File cbomDir = new File(liferay.liferayHome, "cbom")
+
+file("configurations").eachDir {
+	File cbomConfigurationDir ->
+
+	String cbomConfigurationName = cbomConfigurationDir.name
+
+	JavaExec buildCBOMConfigurationTask = tasks.create(name: "buildCBOM-${cbomConfigurationName}", type: JavaExec) {
+		args cbomConfigurationDir, new File(cbomDir, "${cbomConfigurationName}.cdx.json"), liferay.liferayHome, liferay.appServerPortalDir
+		classpath = sourceSets.main.runtimeClasspath + configurations.compileClasspath + configurations.portal
+		dependsOn copyCBOMConfigurations
+		environment = System.getenv().findAll {
+			!it.key.startsWith("LIFERAY_")
+		}
+		jvmArgs "--add-opens=java.base/java.lang=ALL-UNNAMED", "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
+		mainClass = "com.liferay.portal.security.fips.cbom.builder.CBOMBuilder"
+	}
+
+	buildCBOM.dependsOn buildCBOMConfigurationTask
+}
+
+copyCBOMConfigurations {
+	from "configurations"
+	into new File(cbomDir, "configurations")
+}
+
+dependencies {
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly project(":core:petra:petra-function")
+	compileOnly project(":core:petra:petra-string")
+	implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.11"
+	implementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.11"
+	implementation group: "org.cyclonedx", name: "cyclonedx-core-java", version: "13.2.0"
+	implementation group: "org.ow2.asm", name: "asm", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-analysis", version: "9.11.1"
+	implementation group: "org.ow2.asm", name: "asm-tree", version: "9.11.1"
+	testImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
+}
+
+deploy {
+	enabled = false
+}
