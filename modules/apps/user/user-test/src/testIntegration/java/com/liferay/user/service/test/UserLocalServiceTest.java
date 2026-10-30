@@ -2297,11 +2297,11 @@ public class UserLocalServiceTest {
 	public void testUpdatePasswordInFIPSMode() throws Exception {
 		User user = UserTestUtil.addUser();
 
-		String password = RandomTestUtil.randomString(13);
-
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
+
+			String password = RandomTestUtil.randomString(13);
 
 			Assert.assertThrows(
 				UserPasswordException.MustBeLonger.class,

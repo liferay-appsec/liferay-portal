@@ -145,10 +145,10 @@ public class FIPSModeValidatorTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
-			Assert.assertTrue(FIPSModeValidator.isNotAllowedPassword(password));
 			Assert.assertFalse(
 				FIPSModeValidator.isNotAllowedPassword(
 					RandomTestUtil.randomString(14)));
+			Assert.assertTrue(FIPSModeValidator.isNotAllowedPassword(password));
 		}
 	}
 

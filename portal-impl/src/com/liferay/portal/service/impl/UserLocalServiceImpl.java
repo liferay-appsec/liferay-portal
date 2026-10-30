@@ -6497,12 +6497,12 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 				login, password, user.getPassword());
 
 			if (authenticated) {
-				if (!StringUtil.equalsIgnoreCase(
+				if (!FIPSModeValidator.isNotAllowedPassword(password) &&
+					!StringUtil.equalsIgnoreCase(
 						PasswordEncryptorUtil.
 							getEncryptedPasswordAlgorithmSettings(
 								user.getPassword()),
-						_PASSWORDS_ENCRYPTION_ALGORITHM) &&
-					!FIPSModeValidator.isNotAllowedPassword(password)) {
+						_PASSWORDS_ENCRYPTION_ALGORITHM)) {
 
 					user.setPassword(
 						PasswordEncryptorUtil.encrypt(
