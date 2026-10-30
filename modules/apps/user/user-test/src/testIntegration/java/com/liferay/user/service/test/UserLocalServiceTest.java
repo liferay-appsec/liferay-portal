@@ -2220,6 +2220,26 @@ public class UserLocalServiceTest {
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			String newPassword = RandomTestUtil.randomString(13);
+			long userId = user.getUserId();
+
+			Assert.assertThrows(
+				UserPasswordException.MustBeLonger.class,
+				() -> _userLocalService.updatePassword(
+					userId, newPassword, newPassword, false, false));
+
+			_userLocalService.updatePassword(
+				userId, newPassword, newPassword, false, true);
+		}
+
+		User curUser = _userLocalService.getUser(user.getUserId());
+
+		Assert.assertEquals(user.getPassword(), curUser.getPassword());
 	}
 
 	@Test
@@ -2291,30 +2311,6 @@ public class UserLocalServiceTest {
 		finally {
 			ServiceContextThreadLocal.popServiceContext();
 		}
-	}
-
-	@Test
-	public void testUpdatePasswordInFIPSMode() throws Exception {
-		User user = UserTestUtil.addUser();
-
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"FIPS_ENABLED", true)) {
-
-			String password = RandomTestUtil.randomString(13);
-
-			Assert.assertThrows(
-				UserPasswordException.MustBeLonger.class,
-				() -> _userLocalService.updatePassword(
-					user.getUserId(), password, password, false, false));
-
-			_userLocalService.updatePassword(
-				user.getUserId(), password, password, false, true);
-		}
-
-		User curUser = _userLocalService.getUser(user.getUserId());
-
-		Assert.assertEquals(user.getPassword(), curUser.getPassword());
 	}
 
 	@Test
