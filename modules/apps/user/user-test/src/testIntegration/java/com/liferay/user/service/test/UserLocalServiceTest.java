@@ -3022,7 +3022,7 @@ public class UserLocalServiceTest {
 				user.getUserId(), password, password, false, true);
 		}
 
-		String newPasswordsEncryptionAlgorithm =
+		String passwordsEncryptionAlgorithm =
 			"PBKDF2WITHHMACSHA256/256/1300000";
 
 		try (AutoCloseable autoCloseable1 =
@@ -3031,12 +3031,12 @@ public class UserLocalServiceTest {
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PasswordEncryptorUtil.class,
 					"_PASSWORDS_ENCRYPTION_ALGORITHM",
-					newPasswordsEncryptionAlgorithm);
+					passwordsEncryptionAlgorithm);
 			AutoCloseable autoCloseable3 =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					UserLocalServiceImpl.class,
 					"_PASSWORDS_ENCRYPTION_ALGORITHM",
-					newPasswordsEncryptionAlgorithm)) {
+					passwordsEncryptionAlgorithm)) {
 
 			Assert.assertEquals(
 				Authenticator.SUCCESS,

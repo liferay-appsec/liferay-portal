@@ -28,6 +28,11 @@ public class PwdToolkitUtilTest {
 
 	@Test
 	public void testValidate() throws Exception {
+		_testValidate();
+		_testValidateInFIPSMode();
+	}
+
+	private void _testValidate() throws Exception {
 		String password = RandomTestUtil.randomString(13);
 		long userId = RandomTestUtil.randomLong();
 
@@ -37,10 +42,15 @@ public class PwdToolkitUtilTest {
 			UserPasswordException.MustMatch.class,
 			() -> PwdToolkitUtil.validate(
 				userId, password, RandomTestUtil.randomString(), null));
+	}
 
+	private void _testValidateInFIPSMode() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
+
+			String password = RandomTestUtil.randomString(13);
+			long userId = RandomTestUtil.randomLong();
 
 			UserPasswordException.MustBeLonger mustBeLonger =
 				Assert.assertThrows(
