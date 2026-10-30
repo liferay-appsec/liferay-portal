@@ -283,12 +283,14 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 	}
 
 	private AuditEvent _getAuditEvent(String contextName) throws Exception {
-		Page<AuditEvent> page = auditEventResource.getAuditEventsPage(
-			null, contextName, null, null, null, Pagination.of(1, 10), null);
+		Page<AuditEvent> auditEventsPage =
+			auditEventResource.getAuditEventsPage(
+				null, contextName, null, null, null, Pagination.of(1, 10),
+				null);
 
-		Assert.assertEquals(1, page.getTotalCount());
+		Assert.assertEquals(1, auditEventsPage.getTotalCount());
 
-		return page.fetchFirstItem();
+		return auditEventsPage.fetchFirstItem();
 	}
 
 	private AuditEvent _randomAuditEvent(

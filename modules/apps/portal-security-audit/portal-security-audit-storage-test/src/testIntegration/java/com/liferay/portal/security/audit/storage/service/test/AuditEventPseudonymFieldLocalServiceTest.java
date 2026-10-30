@@ -146,10 +146,10 @@ public class AuditEventPseudonymFieldLocalServiceTest {
 			pseudonymizedAuditMessage.getImpersonatedUserId());
 		Assert.assertTrue(pseudonymizedAuditMessage.isPseudonymized());
 		Assert.assertEquals(
-			auditMessage.getUserId(), pseudonymizedAuditMessage.getUserId());
-		Assert.assertEquals(
 			pseudonymizedAuditMessage.getUserEmailAddress(),
 			pseudonymizedAuditMessage.getUserLogin());
+		Assert.assertEquals(
+			auditMessage.getUserId(), pseudonymizedAuditMessage.getUserId());
 
 		_assertAuditEventPseudonymField(
 			"clientIP", pseudonymizedAuditMessage.getClientIP(),
