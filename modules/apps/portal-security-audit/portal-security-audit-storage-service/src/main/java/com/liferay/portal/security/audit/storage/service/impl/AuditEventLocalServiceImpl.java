@@ -10,24 +10,30 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.change.tracking.CTAware;
+import com.liferay.portal.kernel.dao.orm.Criterion;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.Junction;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.audit.configuration.AuditConfigurationProvider;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
 import com.liferay.portal.security.audit.storage.comparator.AuditEventCreateDateComparator;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
+import com.liferay.portal.security.audit.storage.service.AuditEventPseudonymFieldLocalService;
 import com.liferay.portal.security.audit.storage.service.base.AuditEventLocalServiceBaseImpl;
 
 import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -176,10 +182,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNotNull(userName)) {
-			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"userName",
-					StringPool.PERCENT + userName + StringPool.PERCENT));
+			junction.add(_getCriterion("userName", userName));
 		}
 
 		if (Validator.isNotNull(eventType)) {
@@ -206,17 +209,11 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		}
 
 		if (Validator.isNotNull(clientHost)) {
-			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"clientHost",
-					StringPool.PERCENT + clientHost + StringPool.PERCENT));
+			junction.add(_getCriterion("clientHost", clientHost));
 		}
 
 		if (Validator.isNotNull(clientIP)) {
-			junction.add(
-				RestrictionsFactoryUtil.ilike(
-					"clientIP",
-					StringPool.PERCENT + clientIP + StringPool.PERCENT));
+			junction.add(_getCriterion("clientIP", clientIP));
 		}
 
 		if (Validator.isNotNull(serverName)) {
@@ -276,8 +273,36 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		return auditMessage.getContextName();
 	}
 
+	private Criterion _getCriterion(String name, String value) {
+		Property property = PropertyFactoryUtil.forName(name);
+		Property pseudonymizedProperty = PropertyFactoryUtil.forName(
+			"pseudonymized");
+
+		return RestrictionsFactoryUtil.or(
+			RestrictionsFactoryUtil.and(
+				RestrictionsFactoryUtil.or(
+					pseudonymizedProperty.isNull(),
+					pseudonymizedProperty.eq(false)),
+				RestrictionsFactoryUtil.ilike(
+					name, StringPool.PERCENT + value + StringPool.PERCENT)),
+			property.eq(value));
+	}
+
 	private AuditEvent _toAuditEvent(
 		AuditMessage auditMessage, long auditEventId) {
+
+		if (_auditConfigurationProvider.isPseudonymizationEnabled(
+				auditMessage.getCompanyId())) {
+
+			try {
+				auditMessage =
+					_auditEventPseudonymFieldLocalService.
+						pseudonymizeAuditMessage(auditMessage);
+			}
+			catch (PortalException portalException) {
+				throw new SystemException(portalException);
+			}
+		}
 
 		AuditEvent auditEvent = auditEventPersistence.create(auditEventId);
 
@@ -305,6 +330,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			auditMessage.getImpersonatedUserName());
 		auditEvent.setMessage(auditMessage.getMessage());
 		auditEvent.setObjectName(auditMessage.getObjectName());
+		auditEvent.setPseudonymized(auditMessage.isPseudonymized());
 		auditEvent.setRequestId(auditMessage.getRequestId());
 		auditEvent.setRequestIdGenerated(auditMessage.isRequestIdGenerated());
 		auditEvent.setResourceAction(auditMessage.getResourceAction());
@@ -318,5 +344,12 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 
 		return auditEvent;
 	}
+
+	@Reference
+	private AuditConfigurationProvider _auditConfigurationProvider;
+
+	@Reference
+	private AuditEventPseudonymFieldLocalService
+		_auditEventPseudonymFieldLocalService;
 
 }
