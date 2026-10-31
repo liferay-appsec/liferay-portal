@@ -565,51 +565,6 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
-	public void testValidatePasswordLengths() {
-		try (SafeCloseable safeCloseable1 =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"DEFAULT_ADMIN_PASSWORD", RandomTestUtil.randomString(14));
-			SafeCloseable safeCloseable2 =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 14)) {
-
-			ReflectionTestUtil.invoke(
-				FIPSModeValidator.class, "_validatePasswordLengths",
-				new Class<?>[0]);
-
-			try (SafeCloseable safeCloseable3 =
-					PropsValuesTestUtil.swapWithSafeCloseable(
-						"DEFAULT_ADMIN_PASSWORD", StringPool.BLANK)) {
-
-				ReflectionTestUtil.invoke(
-					FIPSModeValidator.class, "_validatePasswordLengths",
-					new Class<?>[0]);
-			}
-
-			try (SafeCloseable safeCloseable3 =
-					PropsValuesTestUtil.swapWithSafeCloseable(
-						"DEFAULT_ADMIN_PASSWORD",
-						RandomTestUtil.randomString(13))) {
-
-				_assertSecurityException(
-					"FIPS mode requires the property \"" +
-						PropsKeys.DEFAULT_ADMIN_PASSWORD + "\"",
-					"_validatePasswordLengths", new Class<?>[0]);
-			}
-
-			try (SafeCloseable safeCloseable3 =
-					PropsValuesTestUtil.swapWithSafeCloseable(
-						"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 13)) {
-
-				_assertSecurityException(
-					"FIPS mode requires the property \"" +
-						PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH + "\"",
-					"_validatePasswordLengths", new Class<?>[0]);
-			}
-		}
-	}
-
-	@Test
 	public void testValidatePasswordsEncryptionAlgorithm() {
 		ReflectionTestUtil.invoke(
 			FIPSModeValidator.class, "_validatePasswordsEncryptionAlgorithm",
@@ -629,6 +584,51 @@ public class FIPSModeValidatorTest {
 		_assertSecurityException(
 			"output length", "_validatePasswordsEncryptionAlgorithm",
 			new Class<?>[] {String.class}, "PBKDF2WithHmacSHA256/64/1300000");
+	}
+
+	@Test
+	public void testValidatePasswordsMinLength() {
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DEFAULT_ADMIN_PASSWORD", RandomTestUtil.randomString(14));
+			SafeCloseable safeCloseable2 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 14)) {
+
+			ReflectionTestUtil.invoke(
+				FIPSModeValidator.class, "_validatePasswordsMinLength",
+				new Class<?>[0]);
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DEFAULT_ADMIN_PASSWORD", StringPool.BLANK)) {
+
+				ReflectionTestUtil.invoke(
+					FIPSModeValidator.class, "_validatePasswordsMinLength",
+					new Class<?>[0]);
+			}
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"DEFAULT_ADMIN_PASSWORD",
+						RandomTestUtil.randomString(13))) {
+
+				_assertSecurityException(
+					"FIPS mode requires the property \"" +
+						PropsKeys.DEFAULT_ADMIN_PASSWORD + "\"",
+					"_validatePasswordsMinLength", new Class<?>[0]);
+			}
+
+			try (SafeCloseable safeCloseable3 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 13)) {
+
+				_assertSecurityException(
+					"FIPS mode requires the property \"" +
+						PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH + "\"",
+					"_validatePasswordsMinLength", new Class<?>[0]);
+			}
+		}
 	}
 
 	@Test

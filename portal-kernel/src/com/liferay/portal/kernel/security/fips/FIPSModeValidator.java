@@ -504,33 +504,6 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validatePasswordLengths() {
-		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
-				PASSWORDS_MIN_LENGTH) {
-
-			throw new SecurityException(
-				StringBundler.concat(
-					"FIPS mode requires the property \"",
-					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
-					"\" to be at least ", PASSWORDS_MIN_LENGTH));
-		}
-
-		if (Validator.isNull(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
-			return;
-		}
-
-		byte[] bytes = PropsValues.DEFAULT_ADMIN_PASSWORD.getBytes(
-			StandardCharsets.UTF_8);
-
-		if (bytes.length < PASSWORDS_MIN_LENGTH) {
-			throw new SecurityException(
-				StringBundler.concat(
-					"FIPS mode requires the property \"",
-					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
-					PASSWORDS_MIN_LENGTH, " bytes"));
-		}
-	}
-
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
@@ -570,6 +543,33 @@ public class FIPSModeValidator {
 					"PBKDF2 iteration count ", rounds,
 					" is below the minimum allowed value of ",
 					_PASSWORDS_ENCRYPTION_ALGORITHM_ROUNDS_MIN));
+		}
+	}
+
+	private static void _validatePasswordsMinLength() {
+		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
+				PASSWORDS_MIN_LENGTH) {
+
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
+					"\" to be at least ", PASSWORDS_MIN_LENGTH));
+		}
+
+		if (Validator.isNull(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
+			return;
+		}
+
+		byte[] bytes = PropsValues.DEFAULT_ADMIN_PASSWORD.getBytes(
+			StandardCharsets.UTF_8);
+
+		if (bytes.length < PASSWORDS_MIN_LENGTH) {
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
+					PASSWORDS_MIN_LENGTH, " bytes"));
 		}
 	}
 
@@ -625,9 +625,9 @@ public class FIPSModeValidator {
 		}
 
 		_validateClusterLinkConfiguration();
-		_validatePasswordLengths();
 		_validatePasswordsEncryptionAlgorithm(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
+		_validatePasswordsMinLength();
 		_validatePlaintextSecrets();
 		validateSessionTimeout(PropsValues.SESSION_TIMEOUT);
 	}
