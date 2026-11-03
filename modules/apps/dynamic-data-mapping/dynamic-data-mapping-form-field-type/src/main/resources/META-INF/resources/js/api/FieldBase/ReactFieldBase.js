@@ -234,6 +234,10 @@ export default function FieldBase({
 		}
 
 		return Object.entries(localizedValue).map(([locale, value]) => {
+			if (type === 'localizable_text') {
+				value = localizedValue[editingLanguageId] ?? value;
+			}
+
 			return (
 				<input
 					data-field-name={`${fieldName}${instanceId}`}
