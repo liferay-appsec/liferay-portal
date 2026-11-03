@@ -9,6 +9,7 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -38,6 +39,7 @@ import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -46,6 +48,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
@@ -392,6 +395,38 @@ public class CBOMScanner {
 					frames, insnList, (MethodInsnNode)abstractInsnNode,
 					visitedAbstractInsnNodes));
 		}
+		else if ((abstractInsnNode instanceof InvokeDynamicInsnNode) &&
+				 _isBootstrappedBy(
+					 (InvokeDynamicInsnNode)abstractInsnNode,
+					 "java/lang/invoke/StringConcatFactory")) {
+
+			InvokeDynamicInsnNode invokeDynamicInsnNode =
+				(InvokeDynamicInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame =
+				frames[insnList.indexOf(abstractInsnNode)];
+			Type[] argumentTypes = Type.getArgumentTypes(
+				invokeDynamicInsnNode.desc);
+
+			CryptoUse computedCryptoUse = new CryptoUse();
+
+			for (int i = 0; i < argumentTypes.length; i++) {
+				if (!Objects.equals(
+						argumentTypes[i], Type.getType(String.class))) {
+
+					continue;
+				}
+
+				computedCryptoUse.addAll(
+					_getCryptoUse(
+						frames, insnList,
+						_getArgument(frame, i, argumentTypes.length),
+						visitedAbstractInsnNodes));
+			}
+
+			cryptoUse.addReference(
+				_cbomData.addComputedReference(computedCryptoUse));
+		}
 		else if (opcode != Opcodes.ACONST_NULL) {
 			cryptoUse.addUnresolvedReason("a value the code computes");
 		}
@@ -575,6 +610,27 @@ public class CBOMScanner {
 		return linkedMethodInsnNodes;
 	}
 
+	private CryptoUse _getMethodCryptoUse(
+		ClassNode classNode, MethodNode methodNode) {
+
+		CryptoUse cryptoUse = new CryptoUse();
+
+		String methodKey = _getMethodKey(
+			classNode.name, methodNode.name, methodNode.desc);
+
+		Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+
+		for (int i = 0; i < argumentTypes.length; i++) {
+			if (!Objects.equals(argumentTypes[i], Type.getType(String.class))) {
+				continue;
+			}
+
+			cryptoUse.addReference(methodKey + StringPool.POUND + i);
+		}
+
+		return cryptoUse;
+	}
+
 	private String _getMethodKey(
 		String internalName, String name, String desc) {
 
@@ -619,15 +675,81 @@ public class CBOMScanner {
 		MethodInsnNode methodInsnNode,
 		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
 
+		CryptoUse cryptoUse = new CryptoUse();
+
+		String propertyKey = CBOMUtil.fetchJDKPropertyKey(
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
+
+		if (propertyKey != null) {
+			cryptoUse.addPropertyKey(propertyKey);
+
+			return cryptoUse;
+		}
+
 		Frame<SourceValue> frame = frames[insnList.indexOf(methodInsnNode)];
 		int count = Type.getArgumentCount(methodInsnNode.desc);
+
+		if (methodInsnNode.owner.endsWith("/PropsUtil") &&
+			Objects.equals(methodInsnNode.name, "get") && (count > 0)) {
+
+			CryptoUse keyCryptoUse = _getCryptoUse(
+				frames, insnList, _getArgument(frame, 0, count),
+				visitedAbstractInsnNodes);
+
+			for (String value : keyCryptoUse.getValues()) {
+				cryptoUse.addPropertyKey(value);
+			}
+
+			if (!keyCryptoUse.isConstant()) {
+				cryptoUse.addUnresolvedReason(
+					"a property whose name the code computes");
+			}
+
+			return cryptoUse;
+		}
 
 		Function<String, String> function = _stringFunctions.get(
 			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
 
-		if (function == null) {
-			CryptoUse cryptoUse = new CryptoUse();
+		if ((function == null) &&
+			_computingClassNames.contains(methodInsnNode.owner) &&
+			Objects.equals(
+				Type.getReturnType(methodInsnNode.desc),
+				Type.getType(String.class))) {
 
+			CryptoUse computedCryptoUse = new CryptoUse();
+
+			if ((methodInsnNode.getOpcode() != Opcodes.INVOKESTATIC) &&
+				Objects.equals(methodInsnNode.owner, "java/lang/String")) {
+
+				computedCryptoUse.addAll(
+					_getCryptoUse(
+						frames, insnList, _getReceiver(frame, count),
+						visitedAbstractInsnNodes));
+			}
+
+			Type[] argumentTypes = Type.getArgumentTypes(methodInsnNode.desc);
+
+			for (int i = 0; i < argumentTypes.length; i++) {
+				if (!Objects.equals(
+						argumentTypes[i], Type.getType(String.class))) {
+
+					continue;
+				}
+
+				computedCryptoUse.addAll(
+					_getCryptoUse(
+						frames, insnList, _getArgument(frame, i, count),
+						visitedAbstractInsnNodes));
+			}
+
+			cryptoUse.addReference(
+				_cbomData.addComputedReference(computedCryptoUse));
+
+			return cryptoUse;
+		}
+
+		if (function == null) {
 			cryptoUse.addReference(
 				_getMethodKey(
 					methodInsnNode.owner, methodInsnNode.name,
@@ -651,6 +773,14 @@ public class CBOMScanner {
 		wrappedCryptoUse.transformValues(function);
 
 		return wrappedCryptoUse;
+	}
+
+	private boolean _isBootstrappedBy(
+		InvokeDynamicInsnNode invokeDynamicInsnNode, String owner) {
+
+		Handle handle = invokeDynamicInsnNode.bsm;
+
+		return Objects.equals(handle.getOwner(), owner);
 	}
 
 	private boolean _isClassFileName(String name) {
@@ -725,7 +855,8 @@ public class CBOMScanner {
 						"bytecode that the scan cannot analyze: " +
 							analyzerException.getMessage());
 
-					_cbomData.addCryptoUse(cryptoUse, new CryptoUse());
+					_cbomData.addCryptoUse(
+						cryptoUse, new CryptoUse(), new CryptoUse());
 				}
 
 				continue;
@@ -757,7 +888,8 @@ public class CBOMScanner {
 
 				_cbomData.addCryptoUse(
 					cryptoUse,
-					_getKeySizeCryptoUse(frames, insnList, methodInsnNode));
+					_getKeySizeCryptoUse(frames, insnList, methodInsnNode),
+					_getMethodCryptoUse(classNode, methodNode));
 			}
 		}
 	}
@@ -861,6 +993,10 @@ public class CBOMScanner {
 	private static final String _CLASS_NAME_SECURE_RANDOM_UTIL =
 		"com/liferay/portal/kernel/security/SecureRandomUtil";
 
+	private static final Set<String> _computingClassNames = SetUtil.fromArray(
+		"com/liferay/petra/string/StringBundler",
+		"com/liferay/petra/string/StringUtil",
+		"com/liferay/portal/kernel/util/StringUtil", "java/lang/String");
 	private static final Map<String, String> _fixedAlgorithmClassNames =
 		HashMapBuilder.put(
 			_CLASS_NAME_LIFERAY_SECURE_RANDOM + ".<init>", "SecureRandom"

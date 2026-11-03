@@ -75,6 +75,24 @@ public class CBOMBuilderTest {
 
 		cipherCryptoUse.setKeySize(256);
 
+		CryptoUse keyGeneratorCryptoUse = _createCryptoUse(
+			null, "com.liferay.test.Class2",
+			Collections.singletonList(CryptoFunction.KEYGEN), "KeyGenerator");
+
+		keyGeneratorCryptoUse.setConfiguredBy(
+			Arrays.asList("test.encryption.algorithm", "test.key.size"));
+
+		String featureName = _FEATURE_NAME + RandomTestUtil.randomString();
+
+		keyGeneratorCryptoUse.setFeatureName(featureName);
+
+		CryptoUse cipherConfigurableCryptoUse = _createCryptoUse(
+			null, "com.liferay.test.Class2",
+			Collections.singletonList(CryptoFunction.ENCRYPT), "Cipher");
+
+		cipherConfigurableCryptoUse.setConfiguredBy(
+			Arrays.asList("test.encryption.algorithm", "test.key.size"));
+
 		CryptoUse keyFactoryCryptoUse = _createCryptoUse(
 			"DSA", "com.liferay.test.Class3",
 			Collections.singletonList(CryptoFunction.OTHER), "KeyFactory");
@@ -105,12 +123,12 @@ public class CBOMBuilderTest {
 				"SHA-256", "com.liferay.test.Class4",
 				Collections.singletonList(CryptoFunction.DIGEST),
 				"MessageDigest"),
-			cipherCryptoUse,
+			keyGeneratorCryptoUse, cipherCryptoUse,
 			_createCryptoUse(
 				"SHA-256", "com.liferay.test.Class5",
 				Collections.singletonList(CryptoFunction.DIGEST),
 				"MessageDigest"),
-			keyFactoryCryptoUse,
+			cipherConfigurableCryptoUse, keyFactoryCryptoUse,
 			_createCryptoUse(
 				"SHA1withDSA", "com.liferay.test.Class3",
 				Collections.singletonList(CryptoFunction.VERIFY), "Signature"),
@@ -172,6 +190,34 @@ public class CBOMBuilderTest {
 						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
 						_toPropertyJSONObject("provider", "SunJCE")),
 					"com.liferay.test.Class1"),
+				_toJSONObject(
+					"crypto:Cipher:test.encryption.algorithm",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions",
+							JSONUtil.putAll("keygen", "encrypt")
+						).put(
+							"primitive", "unknown"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"test.encryption.algorithm",
+					JSONUtil.putAll(
+						_toPropertyJSONObject(
+							"configured-by", "test.encryption.algorithm"),
+						_toPropertyJSONObject("configured-by", "test.key.size"),
+						_toPropertyJSONObject(
+							"default-value", "test.encryption.algorithm="),
+						_toPropertyJSONObject(
+							"default-value", "test.key.size="),
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("feature", featureName),
+						_toPropertyJSONObject("jca-class", "Cipher"),
+						_toPropertyJSONObject("jca-class", "KeyGenerator"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME)),
+					"com.liferay.test.Class2"),
 				_toJSONObject(
 					"crypto:KeyFactory:DSA",
 					JSONUtil.put(
@@ -404,12 +450,16 @@ public class CBOMBuilderTest {
 					"call in ", _CLASS_NAME_CACHE_KEY_GENERATOR,
 					", which comes from parameter 1 of the constructor of ",
 					_CLASS_NAME_CACHE_KEY_GENERATOR),
-				StringBundler.concat(
-					"The scan cannot read the algorithm of the MessageDigest ",
-					"call in com.liferay.portal.security.pwd.",
-					"PwdAuthenticator, which comes from the return value of ",
-					"com.liferay.portal.kernel.configuration.Configuration.",
-					"get()")),
+				"The scan found no crypto call for " +
+					"\"company.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"object.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"passwords.encryption.algorithm\"",
+				"The scan found no crypto call for " +
+					"\"passwords.encryption.algorithm.legacy\"",
+				"The scan found no crypto call for " +
+					"\"tunneling.servlet.encryption.algorithm\""),
 			new ArrayList<>(cbomData.getMessages()));
 
 		cbomJSON = CBOMBuilder.build(
@@ -437,12 +487,24 @@ public class CBOMBuilderTest {
 			Arrays.asList(
 				"crypto:MessageDigest:MD5", "crypto:MessageDigest:SHA-1",
 				"crypto:MessageDigest:SHA-256",
+				"crypto:MessageDigest:auth.mac.algorithm",
 				"crypto:MessageDigest:" + _CLASS_NAME_CACHE_KEY_GENERATOR,
-				"crypto:MessageDigest:com.liferay.portal.security.pwd." +
-					"PwdAuthenticator",
 				"crypto:SecureRandom:NativePRNG"),
 			bomRefs);
 
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				_toPropertyJSONObject("configured-by", "auth.mac.algorithm"),
+				_toPropertyJSONObject(
+					"default-value", "auth.mac.algorithm=MD5"),
+				_toPropertyJSONObject("feature", "auth.mac.algorithm"),
+				_toPropertyJSONObject("jca-class", "MessageDigest"),
+				_toPropertyJSONObject("module", "com.liferay.portal.impl")
+			).toString(),
+			String.valueOf(
+				propertiesJSONArrays.get(
+					"crypto:MessageDigest:auth.mac.algorithm")),
+			JSONCompareMode.STRICT);
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				_toPropertyJSONObject(

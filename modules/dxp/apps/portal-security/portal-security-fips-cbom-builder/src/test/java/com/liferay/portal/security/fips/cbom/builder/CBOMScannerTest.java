@@ -12,7 +12,9 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -37,7 +39,9 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -47,6 +51,9 @@ import java.util.zip.ZipOutputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+
+import javax.net.ssl.TrustManagerFactory;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
@@ -76,6 +83,10 @@ public class CBOMScannerTest {
 			"MessageDigest unresolved: parameter 1 of the constructor of " +
 				ConstructorParameterTestClass.class.getName() + " [digest]");
 		_testScan(
+			new Class<?>[] {ComputedTestClass.class}, false,
+			"Mac configured by [test.digest] [tag]",
+			"MessageDigest unresolved: a value the code computes [digest]");
+		_testScan(
 			DiamondTestClass.class, false, "MessageDigest SHA-256 [digest]");
 		_testScan(
 			DigesterUtilDefaultTestClass.class, false,
@@ -85,6 +96,10 @@ public class CBOMScannerTest {
 			"MessageDigest SHA-256 [digest]");
 		_testScan(
 			DigesterUtilTestClass.class, false, "MessageDigest MD5 [digest]");
+		_testScan(
+			FallbackTestClass.class, false,
+			"MessageDigest SHA-256 selected by [test.algorithm] [digest]",
+			"MessageDigest configured by [test.algorithm] [digest]");
 		_testScan(
 			FIPSEnabledTestClass.class, false, "MessageDigest MD5 [digest]");
 		_testScan(
@@ -97,6 +112,10 @@ public class CBOMScannerTest {
 			KeyGeneratorTestClass.class, false,
 			"KeyGenerator AES [keygen] 256");
 		_testScan(
+			MultiplePropertiesTestClass.class, false,
+			"MessageDigest configured by [test.algorithm] [digest]",
+			"MessageDigest configured by [test.legacy.algorithm] [digest]");
+		_testScan(
 			MultipleValuesTestClass.class, false, "MessageDigest MD5 [digest]",
 			"MessageDigest SHA-256 [digest]");
 		_testScan(
@@ -104,14 +123,30 @@ public class CBOMScannerTest {
 			"MessageDigest unresolved: parameter 1 of " +
 				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
+			PartialTestClass.class, false,
+			"MessageDigest configured by [test.algorithm] [digest]",
+			"MessageDigest unresolved: the return value of " +
+				"java.util.Map.get() [digest]");
+		_testScan(
 			PrivateMethodTestClass.class, false,
 			"Cipher AES/CBC/PKCS5Padding [encrypt]");
+		_testScan(
+			PropsUtilTestClass.class, false,
+			"MessageDigest configured by [test.algorithm] [digest]");
 		_testScan(
 			SecureRandomTestClass.class, false, "SecureRandom DRBG [generate]",
 			"SecureRandom DRBG [generate]", "SecureRandom SHA1PRNG [generate]");
 		_testScan(
 			SignatureTestClass.class, false,
 			"Signature SHA256withRSA [verify]");
+		_testScan(
+			StaticFieldTestClass.class, false,
+			"KeyGenerator configured by [test.algorithm, test.key.size] " +
+				"[keygen]");
+		_testScan(
+			TrustManagerFactoryTestClass.class, false,
+			"TrustManagerFactory configured by " +
+				"[ssl.TrustManagerFactory.algorithm] [other]");
 	}
 
 	@Test
@@ -160,6 +195,23 @@ public class CBOMScannerTest {
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	public static class ComputedTestClass {
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance("SHA-" + _size);
+		}
+
+		public void tag() throws Exception {
+			String digest = StringUtil.replaceFirst(
+				PropsUtil.get("test.digest"), "SHA-", "SHA");
+
+			Mac.getInstance("Hmac" + digest);
+		}
+
+		private int _size = 256;
+
+	}
 
 	public static class ConstantTestClass {
 
@@ -229,6 +281,15 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class FallbackTestClass {
+
+		public void digest(boolean flag) throws Exception {
+			MessageDigest.getInstance(
+				flag ? "SHA-256" : PropsUtil.get("test.algorithm"));
+		}
+
+	}
+
 	public static class KeyFactoryTestClass {
 
 		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
@@ -255,6 +316,16 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class MultiplePropertiesTestClass {
+
+		public void digest(boolean flag) throws Exception {
+			MessageDigest.getInstance(
+				flag ? PropsUtil.get("test.algorithm") :
+					PropsUtil.get("test.legacy.algorithm"));
+		}
+
+	}
+
 	public static class MultipleValuesTestClass {
 
 		public void digest(boolean flag) throws Exception {
@@ -271,6 +342,17 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class PartialTestClass {
+
+		public void digest(boolean flag, String key) throws Exception {
+			MessageDigest.getInstance(
+				flag ? PropsUtil.get("test.algorithm") : _map.get(key));
+		}
+
+		private final Map<String, String> _map = new HashMap<>();
+
+	}
+
 	public static class PrivateMethodTestClass {
 
 		public void encrypt(Key key) throws Exception {
@@ -281,6 +363,14 @@ public class CBOMScannerTest {
 			Cipher cipher = Cipher.getInstance(transformation);
 
 			cipher.init(Cipher.ENCRYPT_MODE, key);
+		}
+
+	}
+
+	public static class PropsUtilTestClass {
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(PropsUtil.get("test.algorithm"));
 		}
 
 	}
@@ -307,6 +397,31 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class StaticFieldTestClass {
+
+		public void generateKey() throws Exception {
+			KeyGenerator keyGenerator = KeyGenerator.getInstance(_ALGORITHM);
+
+			keyGenerator.init(_KEY_SIZE);
+		}
+
+		private static final String _ALGORITHM = StringUtil.toUpperCase(
+			GetterUtil.getString(PropsUtil.get("test.algorithm")));
+
+		private static final int _KEY_SIZE = GetterUtil.getInteger(
+			PropsUtil.get("test.key.size"));
+
+	}
+
+	public static class TrustManagerFactoryTestClass {
+
+		public void getTrustManagerFactory() throws Exception {
+			TrustManagerFactory.getInstance(
+				TrustManagerFactory.getDefaultAlgorithm());
+		}
+
+	}
+
 	private String _getClassFileName(Class<?> clazz) {
 		String name = StringUtil.replace(
 			clazz.getName(), CharPool.PERIOD, CharPool.SLASH);
@@ -315,13 +430,22 @@ public class CBOMScannerTest {
 	}
 
 	private String _getDescription(CryptoUse cryptoUse) {
-		StringBundler sb = new StringBundler(10);
+		StringBundler sb = new StringBundler(11);
 
 		sb.append(cryptoUse.getJCAClassName());
 		sb.append(StringPool.SPACE);
 
 		if (cryptoUse.getAlgorithm() != null) {
 			sb.append(cryptoUse.getAlgorithm());
+
+			if (ListUtil.isNotEmpty(cryptoUse.getSelectedBy())) {
+				sb.append(" selected by ");
+				sb.append(String.valueOf(cryptoUse.getSelectedBy()));
+			}
+		}
+		else if (ListUtil.isNotEmpty(cryptoUse.getConfiguredBy())) {
+			sb.append("configured by ");
+			sb.append(String.valueOf(cryptoUse.getConfiguredBy()));
 		}
 		else {
 			sb.append("unresolved: ");

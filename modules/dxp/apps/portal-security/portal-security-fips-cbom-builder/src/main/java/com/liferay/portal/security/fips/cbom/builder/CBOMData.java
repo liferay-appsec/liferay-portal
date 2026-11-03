@@ -27,9 +27,21 @@ import java.util.function.Supplier;
  */
 public class CBOMData {
 
-	public void addCryptoUse(CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
+	public String addComputedReference(CryptoUse cryptoUse) {
+		String reference =
+			_COMPUTED_REFERENCE_PREFIX + _computedReferenceCount++;
+
+		_referenceCryptoUses.put(reference, cryptoUse);
+
+		return reference;
+	}
+
+	public void addCryptoUse(
+		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse,
+		CryptoUse methodCryptoUse) {
+
 		_cryptoUsesSuppliers.add(
-			() -> _toCryptoUses(cryptoUse, keySizeCryptoUse));
+			() -> _toCryptoUses(cryptoUse, keySizeCryptoUse, methodCryptoUse));
 	}
 
 	public void addReferenceCryptoUse(CryptoUse cryptoUse, String reference) {
@@ -44,7 +56,12 @@ public class CBOMData {
 	}
 
 	public Set<String> getBundleSymbolicNames() {
-		return new HashSet<>(_portalBundleSymbolicNames);
+		Set<String> bundleSymbolicNames = new HashSet<>(
+			_portalBundleSymbolicNames);
+
+		bundleSymbolicNames.addAll(_settingBundleSymbolicNames);
+
+		return bundleSymbolicNames;
 	}
 
 	public List<CryptoUse> getCryptoUses() {
@@ -56,7 +73,14 @@ public class CBOMData {
 	public Set<String> getMessages() {
 		_scopeCryptoUses();
 
-		return _messages;
+		Set<String> messages = new TreeSet<>(_messages);
+
+		for (String propertyKey : _unmatchedPropertyKeys) {
+			messages.add(
+				"The scan found no crypto call for \"" + propertyKey + "\"");
+		}
+
+		return messages;
 	}
 
 	public List<CryptoUse> getScannedCryptoUses() {
@@ -94,8 +118,15 @@ public class CBOMData {
 				continue;
 			}
 
-			resolvedCryptoUse.addAll(
-				_resolve(referenceCryptoUse, visitedReferences));
+			CryptoUse resolvedReferenceCryptoUse = _resolve(
+				referenceCryptoUse, visitedReferences);
+
+			if (reference.startsWith(_COMPUTED_REFERENCE_PREFIX)) {
+				resolvedReferenceCryptoUse = CBOMUtil.toComputedCryptoUse(
+					resolvedReferenceCryptoUse);
+			}
+
+			resolvedCryptoUse.addAll(resolvedReferenceCryptoUse);
 		}
 
 		return resolvedCryptoUse;
@@ -123,8 +154,23 @@ public class CBOMData {
 				continue;
 			}
 
-			if (!_portalBundleSymbolicNames.contains(
-					cryptoUse.getBundleSymbolicName())) {
+			if (cryptoUse.isConfigurable()) {
+				List<String> configuredBy = cryptoUse.getConfiguredBy();
+
+				String propertyKey = configuredBy.get(0);
+
+				if (!_portalBundleSymbolicNames.contains(
+						cryptoUse.getBundleSymbolicName()) &&
+					!_settingPropertyKeys.contains(propertyKey)) {
+
+					continue;
+				}
+
+				cryptoUse.setFeatureName(propertyKey);
+
+				_cryptoUses.add(cryptoUse);
+
+				_unmatchedPropertyKeys.remove(propertyKey);
 
 				continue;
 			}
@@ -134,17 +180,40 @@ public class CBOMData {
 
 			cryptoUse.setAlgorithm(standardAlgorithmName);
 
-			cryptoUse.setFeatureName(
-				StringBundler.concat(
-					cryptoUse.getAlgorithm(), " in ",
-					cryptoUse.getClassName()));
+			if (_portalBundleSymbolicNames.contains(
+					cryptoUse.getBundleSymbolicName())) {
 
-			_cryptoUses.add(cryptoUse);
+				cryptoUse.setFeatureName(
+					StringBundler.concat(
+						cryptoUse.getAlgorithm(), " in ",
+						cryptoUse.getClassName()));
+
+				_cryptoUses.add(cryptoUse);
+
+				continue;
+			}
+
+			for (String propertyKey : cryptoUse.getSelectedBy()) {
+				if (!_settingPropertyKeys.contains(propertyKey)) {
+					continue;
+				}
+
+				CryptoUse featureCryptoUse = cryptoUse.createPart();
+
+				featureCryptoUse.setAlgorithm(cryptoUse.getAlgorithm());
+				featureCryptoUse.setFeatureName(propertyKey);
+				featureCryptoUse.setKeySize(cryptoUse.getKeySize());
+
+				_cryptoUses.add(featureCryptoUse);
+
+				_unmatchedPropertyKeys.remove(propertyKey);
+			}
 		}
 	}
 
 	private List<CryptoUse> _toCryptoUses(
-		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
+		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse,
+		CryptoUse methodCryptoUse) {
 
 		CryptoUse resolvedAlgorithmCryptoUse = _resolve(
 			cryptoUse, new HashSet<>());
@@ -156,10 +225,22 @@ public class CBOMData {
 		SortedSet<String> keySizes = resolvedKeySizeCryptoUse.getValues();
 		SortedSet<String> values = resolvedAlgorithmCryptoUse.getValues();
 
+		Set<String> selectedBy = new TreeSet<>();
+
+		if (!values.isEmpty()) {
+			selectedBy.addAll(resolvedAlgorithmCryptoUse.getPropertyKeys());
+
+			CryptoUse resolvedMethodCryptoUse = _resolve(
+				methodCryptoUse, new HashSet<>());
+
+			selectedBy.addAll(resolvedMethodCryptoUse.getPropertyKeys());
+		}
+
 		for (String value : values) {
 			CryptoUse valueCryptoUse = cryptoUse.createPart();
 
 			valueCryptoUse.setAlgorithm(value);
+			valueCryptoUse.setSelectedBy(new ArrayList<>(selectedBy));
 
 			if ((values.size() == 1) && resolvedKeySizeCryptoUse.isConstant() &&
 				(keySizes.size() == 1)) {
@@ -169,6 +250,30 @@ public class CBOMData {
 			}
 
 			cryptoUses.add(valueCryptoUse);
+		}
+
+		for (String propertyKey :
+				resolvedAlgorithmCryptoUse.getPropertyKeys()) {
+
+			CryptoUse configuredCryptoUse = cryptoUse.createPart();
+
+			List<String> configuredBy = new ArrayList<>();
+
+			configuredBy.add(propertyKey);
+
+			for (String keySizePropertyKey :
+					resolvedKeySizeCryptoUse.getPropertyKeys()) {
+
+				if (configuredBy.contains(keySizePropertyKey)) {
+					continue;
+				}
+
+				configuredBy.add(keySizePropertyKey);
+			}
+
+			configuredCryptoUse.setConfiguredBy(configuredBy);
+
+			cryptoUses.add(configuredCryptoUse);
 		}
 
 		Set<String> unresolvedReasons =
@@ -192,14 +297,29 @@ public class CBOMData {
 		return cryptoUses;
 	}
 
+	private static final String _COMPUTED_REFERENCE_PREFIX = "computed:";
+
 	private static final Set<String> _portalBundleSymbolicNames =
 		SetUtil.fromArray(
 			"com.liferay.portal.impl", "com.liferay.portal.kernel");
+	private static final Set<String> _settingBundleSymbolicNames =
+		SetUtil.fromArray(
+			"com.liferay.object.service", "com.liferay.portal.encryptor",
+			"com.liferay.portal.security.key.impl",
+			"com.liferay.portal.security.password.encryptor.impl");
+	private static final Set<String> _settingPropertyKeys = SetUtil.fromArray(
+		"auth.mac.algorithm", "company.encryption.algorithm",
+		"object.encryption.algorithm", "passwords.encryption.algorithm",
+		"passwords.encryption.algorithm.legacy",
+		"tunneling.servlet.encryption.algorithm");
 
+	private int _computedReferenceCount;
 	private List<CryptoUse> _cryptoUses;
 	private final List<Supplier<List<CryptoUse>>> _cryptoUsesSuppliers =
 		new ArrayList<>();
 	private final Set<String> _messages = new TreeSet<>();
 	private final Map<String, CryptoUse> _referenceCryptoUses = new HashMap<>();
+	private final Set<String> _unmatchedPropertyKeys = new TreeSet<>(
+		_settingPropertyKeys);
 
 }

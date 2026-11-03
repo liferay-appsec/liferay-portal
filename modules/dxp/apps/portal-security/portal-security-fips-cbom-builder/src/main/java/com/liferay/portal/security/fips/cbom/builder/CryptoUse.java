@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.portal.kernel.util.ListUtil;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -36,9 +38,14 @@ public class CryptoUse {
 	}
 
 	public void addAll(CryptoUse cryptoUse) {
+		_propertyKeys.addAll(cryptoUse._propertyKeys);
 		_references.addAll(cryptoUse._references);
 		_unresolvedReasons.addAll(cryptoUse._unresolvedReasons);
 		_values.addAll(cryptoUse._values);
+	}
+
+	public void addPropertyKey(String propertyKey) {
+		_propertyKeys.add(propertyKey);
 	}
 
 	public void addReference(String reference) {
@@ -79,6 +86,10 @@ public class CryptoUse {
 		return _className;
 	}
 
+	public List<String> getConfiguredBy() {
+		return _configuredBy;
+	}
+
 	public List<CryptoFunction> getCryptoFunctions() {
 		return _cryptoFunctions;
 	}
@@ -95,12 +106,20 @@ public class CryptoUse {
 		return _keySize;
 	}
 
+	public Set<String> getPropertyKeys() {
+		return _propertyKeys;
+	}
+
 	public Set<String> getReferences() {
 		return _references;
 	}
 
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
 		return _relatedCryptoMaterialTypes;
+	}
+
+	public List<String> getSelectedBy() {
+		return _selectedBy;
 	}
 
 	public Set<String> getUnresolvedReasons() {
@@ -111,8 +130,14 @@ public class CryptoUse {
 		return _values;
 	}
 
+	public boolean isConfigurable() {
+		return ListUtil.isNotEmpty(_configuredBy);
+	}
+
 	public boolean isConstant() {
-		if (_references.isEmpty() && _unresolvedReasons.isEmpty()) {
+		if (_propertyKeys.isEmpty() && _references.isEmpty() &&
+			_unresolvedReasons.isEmpty()) {
+
 			return true;
 		}
 
@@ -120,7 +145,7 @@ public class CryptoUse {
 	}
 
 	public boolean isResolved() {
-		if (_algorithm != null) {
+		if ((_algorithm != null) || isConfigurable()) {
 			return true;
 		}
 
@@ -129,6 +154,10 @@ public class CryptoUse {
 
 	public void setAlgorithm(String algorithm) {
 		_algorithm = algorithm;
+	}
+
+	public void setConfiguredBy(List<String> configuredBy) {
+		_configuredBy = configuredBy;
 	}
 
 	public void setCryptoFunctions(List<CryptoFunction> cryptoFunctions) {
@@ -147,6 +176,10 @@ public class CryptoUse {
 		List<RelatedCryptoMaterialType> relatedCryptoMaterialTypes) {
 
 		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
+	}
+
+	public void setSelectedBy(List<String> selectedBy) {
+		_selectedBy = selectedBy;
 	}
 
 	public void setUnresolvedReasons(List<String> unresolvedReasons) {
@@ -170,13 +203,16 @@ public class CryptoUse {
 	private String _algorithm;
 	private final String _bundleSymbolicName;
 	private final String _className;
+	private List<String> _configuredBy = Collections.emptyList();
 	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
 	private String _featureName;
 	private final String _jcaClassName;
 	private int _keySize;
+	private final Set<String> _propertyKeys = new TreeSet<>();
 	private final Set<String> _references = new TreeSet<>();
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
+	private List<String> _selectedBy = Collections.emptyList();
 	private final Set<String> _unresolvedReasons = new TreeSet<>();
 	private final SortedSet<String> _values = new TreeSet<>();
 

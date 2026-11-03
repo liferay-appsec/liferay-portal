@@ -79,6 +79,10 @@ public class CBOMUtil {
 		return jcaClassName;
 	}
 
+	public static String fetchJDKPropertyKey(String methodKey) {
+		return _jdkPropertyKeys.get(methodKey);
+	}
+
 	public static RelatedCryptoMaterialType
 		fetchKeyFactoryRelatedCryptoMaterialType(String methodName) {
 
@@ -331,6 +335,24 @@ public class CBOMUtil {
 		else {
 			algorithmProperties.setPadding(Padding.OTHER);
 		}
+	}
+
+	public static CryptoUse toComputedCryptoUse(CryptoUse cryptoUse) {
+		CryptoUse computedCryptoUse = new CryptoUse();
+
+		for (String propertyKey : cryptoUse.getPropertyKeys()) {
+			computedCryptoUse.addPropertyKey(propertyKey);
+		}
+
+		for (String unresolvedReason : cryptoUse.getUnresolvedReasons()) {
+			computedCryptoUse.addUnresolvedReason(unresolvedReason);
+		}
+
+		if (computedCryptoUse.isConstant()) {
+			computedCryptoUse.addUnresolvedReason("a value the code computes");
+		}
+
+		return computedCryptoUse;
 	}
 
 	private static String _getCipherName(String algorithm) {
@@ -613,6 +635,16 @@ public class CBOMUtil {
 		).build();
 	private static final Set<String> _jcaPackageNames = SetUtil.fromArray(
 		"java/security", "javax/crypto", "javax/net/ssl");
+	private static final Map<String, String> _jdkPropertyKeys =
+		HashMapBuilder.put(
+			"java/security/KeyStore.getDefaultType", "keystore.type"
+		).put(
+			"javax/net/ssl/KeyManagerFactory.getDefaultAlgorithm",
+			"ssl.KeyManagerFactory.algorithm"
+		).put(
+			"javax/net/ssl/TrustManagerFactory.getDefaultAlgorithm",
+			"ssl.TrustManagerFactory.algorithm"
+		).build();
 	private static final Set<String> _keyAgreementNames = SetUtil.fromArray(
 		"DH", "DIFFIEHELLMAN", "ECDH", "X25519", "X448", "XDH");
 	private static final Map<String, RelatedCryptoMaterialType>

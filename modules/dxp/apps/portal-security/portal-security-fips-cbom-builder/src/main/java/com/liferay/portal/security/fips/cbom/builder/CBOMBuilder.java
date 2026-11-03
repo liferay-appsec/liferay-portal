@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,9 +73,15 @@ public class CBOMBuilder {
 			String configurationName, List<CryptoUse> cryptoUses)
 		throws Exception {
 
+		String portalPropertiesContent = StringUtil.read(
+			CBOMBuilder.class.getClassLoader(), "portal.properties");
+
+		Properties portalProperties = PropertiesUtil.load(
+			portalPropertiesContent);
+
 		Bom bom = new Bom();
 
-		bom.setComponents(_getComponents(cryptoUses));
+		bom.setComponents(_getComponents(cryptoUses, portalProperties));
 		bom.setMetadata(_getMetadata(configurationName));
 		bom.setSerialNumber(_getSerialNumber(configurationName));
 		bom.setVersion(1);
@@ -196,7 +204,8 @@ public class CBOMBuilder {
 	}
 
 	private static String _getAlgorithmRef(
-		List<CryptoUse> cryptoUses, List<CryptoUse> keyCryptoUses) {
+		List<CryptoUse> cryptoUses, Map<String, String> jcaClassNames,
+		List<CryptoUse> keyCryptoUses) {
 
 		TreeSet<String> algorithmRefs = new TreeSet<>();
 
@@ -215,7 +224,8 @@ public class CBOMBuilder {
 
 				candidateCryptoUses.add(cryptoUse);
 
-				if (!CBOMUtil.isKeyAlgorithm(
+				if (!keyCryptoUse.isConfigurable() &&
+					!CBOMUtil.isKeyAlgorithm(
 						cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName(),
 						keyCryptoUse.getAlgorithm())) {
 
@@ -232,7 +242,7 @@ public class CBOMBuilder {
 			}
 
 			for (CryptoUse matchingCryptoUse : matchingCryptoUses) {
-				algorithmRefs.add(_getBOMRef(matchingCryptoUse));
+				algorithmRefs.add(_getBOMRef(matchingCryptoUse, jcaClassNames));
 			}
 		}
 
@@ -243,7 +253,19 @@ public class CBOMBuilder {
 		return algorithmRefs.first();
 	}
 
-	private static String _getBOMRef(CryptoUse cryptoUse) {
+	private static String _getBOMRef(
+		CryptoUse cryptoUse, Map<String, String> jcaClassNames) {
+
+		if (cryptoUse.isConfigurable()) {
+			List<String> configuredBy = cryptoUse.getConfiguredBy();
+
+			String propertyKey = configuredBy.get(0);
+
+			return StringBundler.concat(
+				"crypto:", jcaClassNames.get(propertyKey), StringPool.COLON,
+				propertyKey);
+		}
+
 		StringBundler sb = new StringBundler(6);
 
 		sb.append("crypto:");
@@ -266,16 +288,32 @@ public class CBOMBuilder {
 		return sb.toString();
 	}
 
-	private static List<Component> _getComponents(List<CryptoUse> cryptoUses) {
+	private static List<Component> _getComponents(
+		List<CryptoUse> cryptoUses, Properties portalProperties) {
+
 		List<CryptoUse> sortedCryptoUses = new ArrayList<>(cryptoUses);
 
 		sortedCryptoUses.sort(Comparator.comparing(CryptoUse::getJCAClassName));
+
+		Map<String, String> jcaClassNames = new HashMap<>();
+
+		for (CryptoUse cryptoUse : sortedCryptoUses) {
+			if (!cryptoUse.isConfigurable()) {
+				continue;
+			}
+
+			List<String> configuredBy = cryptoUse.getConfiguredBy();
+
+			jcaClassNames.putIfAbsent(
+				configuredBy.get(0), cryptoUse.getJCAClassName());
+		}
 
 		Map<String, List<CryptoUse>> cryptoUsesMap = new TreeMap<>();
 
 		for (CryptoUse cryptoUse : sortedCryptoUses) {
 			List<CryptoUse> bomRefCryptoUses = cryptoUsesMap.computeIfAbsent(
-				_getBOMRef(cryptoUse), bomRef -> new ArrayList<>());
+				_getBOMRef(cryptoUse, jcaClassNames),
+				bomRef -> new ArrayList<>());
 
 			bomRefCryptoUses.add(cryptoUse);
 		}
@@ -283,7 +321,8 @@ public class CBOMBuilder {
 		return TransformUtil.transform(
 			cryptoUsesMap.entrySet(),
 			entry -> _toComponent(
-				entry.getKey(), entry.getValue(), cryptoUses));
+				entry.getKey(), entry.getValue(), cryptoUses, jcaClassNames,
+				portalProperties));
 	}
 
 	private static List<CryptoFunction> _getCryptoFunctions(
@@ -370,6 +409,12 @@ public class CBOMBuilder {
 	}
 
 	private static String _getName(CryptoUse cryptoUse) {
+		if (cryptoUse.isConfigurable()) {
+			List<String> configuredBy = cryptoUse.getConfiguredBy();
+
+			return configuredBy.get(0);
+		}
+
 		if (cryptoUse.getAlgorithm() == null) {
 			return cryptoUse.getJCAClassName();
 		}
@@ -395,7 +440,10 @@ public class CBOMBuilder {
 		return Primitive.UNKNOWN;
 	}
 
-	private static List<Property> _getProperties(List<CryptoUse> cryptoUses) {
+	private static List<Property> _getProperties(
+		List<CryptoUse> cryptoUses, Properties portalProperties) {
+
+		Set<String> configuredBy = new TreeSet<>();
 		Set<String> featureNames = new TreeSet<>();
 		Set<String> jcaClassNames = new TreeSet<>();
 		Set<String> moduleNames = new TreeSet<>();
@@ -403,6 +451,7 @@ public class CBOMBuilder {
 		Set<String> unresolvedReasons = new TreeSet<>();
 
 		for (CryptoUse cryptoUse : cryptoUses) {
+			configuredBy.addAll(cryptoUse.getConfiguredBy());
 			featureNames.add(cryptoUse.getFeatureName());
 			jcaClassNames.add(cryptoUse.getJCAClassName());
 
@@ -423,6 +472,16 @@ public class CBOMBuilder {
 		}
 
 		List<Property> properties = new ArrayList<>();
+
+		_addProperties("liferay:cbom:configured-by", properties, configuredBy);
+
+		List<String> defaultValues = TransformUtil.transform(
+			configuredBy,
+			propertyKey -> StringBundler.concat(
+				propertyKey, StringPool.EQUAL,
+				portalProperties.getProperty(propertyKey, StringPool.BLANK)));
+
+		_addProperties("liferay:cbom:default-value", properties, defaultValues);
 
 		_addProperties("liferay:cbom:feature", properties, featureNames);
 		_addProperties("liferay:cbom:jca-class", properties, jcaClassNames);
@@ -463,7 +522,8 @@ public class CBOMBuilder {
 
 	private static RelatedCryptoMaterialProperties
 		_getRelatedCryptoMaterialProperties(
-			List<CryptoUse> cryptoUses, List<CryptoUse> keyCryptoUses) {
+			List<CryptoUse> cryptoUses, Map<String, String> jcaClassNames,
+			List<CryptoUse> keyCryptoUses) {
 
 		RelatedCryptoMaterialProperties relatedCryptoMaterialProperties =
 			new RelatedCryptoMaterialProperties();
@@ -483,7 +543,7 @@ public class CBOMBuilder {
 		}
 
 		relatedCryptoMaterialProperties.setAlgorithmRef(
-			_getAlgorithmRef(cryptoUses, keyCryptoUses));
+			_getAlgorithmRef(cryptoUses, jcaClassNames, keyCryptoUses));
 
 		if (Objects.equals(keyCryptoUse.getJCAClassName(), "SecretKeySpec")) {
 			relatedCryptoMaterialProperties.setType(
@@ -527,12 +587,18 @@ public class CBOMBuilder {
 		if (!_keyAlgorithmJCAClassNames.contains(cryptoUse.getJCAClassName()) ||
 			!Objects.equals(
 				cryptoUse.getClassName(), keyCryptoUse.getClassName()) ||
-			!cryptoUse.isResolved()) {
+			!cryptoUse.isResolved() ||
+			(cryptoUse.isConfigurable() != keyCryptoUse.isConfigurable())) {
 
 			return false;
 		}
 
-		return true;
+		if (!keyCryptoUse.isConfigurable()) {
+			return true;
+		}
+
+		return !Collections.disjoint(
+			cryptoUse.getConfiguredBy(), keyCryptoUse.getConfiguredBy());
 	}
 
 	private static Properties _loadProperties(File file) throws Exception {
@@ -543,7 +609,8 @@ public class CBOMBuilder {
 
 	private static Component _toComponent(
 		String bomRef, List<CryptoUse> bomRefCryptoUses,
-		List<CryptoUse> cryptoUses) {
+		List<CryptoUse> cryptoUses, Map<String, String> jcaClassNames,
+		Properties portalProperties) {
 
 		Component component = new Component();
 		CryptoProperties cryptoProperties = new CryptoProperties();
@@ -564,7 +631,7 @@ public class CBOMBuilder {
 		else {
 			cryptoProperties.setRelatedCryptoMaterialProperties(
 				_getRelatedCryptoMaterialProperties(
-					cryptoUses, bomRefCryptoUses));
+					cryptoUses, jcaClassNames, bomRefCryptoUses));
 		}
 
 		cryptoProperties.setAssetType(assetType);
@@ -573,7 +640,8 @@ public class CBOMBuilder {
 		component.setCryptoProperties(cryptoProperties);
 		component.setEvidence(_getEvidence(bomRefCryptoUses));
 		component.setName(_getName(cryptoUse));
-		component.setProperties(_getProperties(bomRefCryptoUses));
+		component.setProperties(
+			_getProperties(bomRefCryptoUses, portalProperties));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;
