@@ -17,6 +17,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
+import com.liferay.portal.kernel.util.SetUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -49,8 +51,14 @@ import org.cyclonedx.model.LifecycleChoice;
 import org.cyclonedx.model.Lifecycles;
 import org.cyclonedx.model.Metadata;
 import org.cyclonedx.model.Property;
+import org.cyclonedx.model.component.crypto.AlgorithmProperties;
 import org.cyclonedx.model.component.crypto.CryptoProperties;
+import org.cyclonedx.model.component.crypto.ProtocolProperties;
+import org.cyclonedx.model.component.crypto.RelatedCryptoMaterialProperties;
 import org.cyclonedx.model.component.crypto.enums.AssetType;
+import org.cyclonedx.model.component.crypto.enums.Primitive;
+import org.cyclonedx.model.component.crypto.enums.ProtocolType;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 import org.cyclonedx.model.component.evidence.Occurrence;
 
 /**
@@ -154,6 +162,67 @@ public class CBOMBuilder {
 		}
 	}
 
+	private static AlgorithmProperties _getAlgorithmProperties(
+		List<CryptoUse> cryptoUses) {
+
+		AlgorithmProperties algorithmProperties = new AlgorithmProperties();
+
+		CryptoUse cryptoUse = cryptoUses.get(0);
+
+		algorithmProperties.setPrimitive(_getPrimitive(cryptoUses));
+
+		if (Objects.equals(cryptoUse.getJCAClassName(), "Cipher")) {
+			CBOMUtil.setCipherProperties(
+				algorithmProperties, cryptoUse.getAlgorithm());
+		}
+
+		return algorithmProperties;
+	}
+
+	private static String _getAlgorithmRef(
+		List<CryptoUse> cryptoUses, List<CryptoUse> keyCryptoUses) {
+
+		TreeSet<String> algorithmRefs = new TreeSet<>();
+
+		for (CryptoUse keyCryptoUse : keyCryptoUses) {
+			List<CryptoUse> candidateCryptoUses = new ArrayList<>();
+			List<CryptoUse> matchingCryptoUses = new ArrayList<>();
+
+			for (CryptoUse cryptoUse : cryptoUses) {
+				if (!_isKeyCandidate(cryptoUse, keyCryptoUse)) {
+					continue;
+				}
+
+				candidateCryptoUses.add(cryptoUse);
+
+				if (!CBOMUtil.isKeyAlgorithm(
+						cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName(),
+						keyCryptoUse.getAlgorithm())) {
+
+					continue;
+				}
+
+				matchingCryptoUses.add(cryptoUse);
+			}
+
+			if (matchingCryptoUses.isEmpty() &&
+				(candidateCryptoUses.size() == 1)) {
+
+				matchingCryptoUses = candidateCryptoUses;
+			}
+
+			for (CryptoUse matchingCryptoUse : matchingCryptoUses) {
+				algorithmRefs.add(_getBOMRef(matchingCryptoUse));
+			}
+		}
+
+		if (algorithmRefs.size() != 1) {
+			return null;
+		}
+
+		return algorithmRefs.first();
+	}
+
 	private static String _getBOMRef(CryptoUse cryptoUse) {
 		StringBundler sb = new StringBundler(4);
 
@@ -181,17 +250,18 @@ public class CBOMBuilder {
 
 		return TransformUtil.transform(
 			cryptoUsesMap.entrySet(),
-			entry -> _toComponent(entry.getKey(), entry.getValue()));
+			entry -> _toComponent(
+				entry.getKey(), entry.getValue(), cryptoUses));
 	}
 
 	private static Evidence _getEvidence(List<CryptoUse> cryptoUses) {
-		Evidence evidence = new Evidence();
-
 		Set<String> classNames = new TreeSet<>();
 
 		for (CryptoUse cryptoUse : cryptoUses) {
 			classNames.add(cryptoUse.getClassName());
 		}
+
+		Evidence evidence = new Evidence();
 
 		evidence.setOccurrences(
 			TransformUtil.transform(
@@ -255,6 +325,27 @@ public class CBOMBuilder {
 		return metadata;
 	}
 
+	private static String _getName(CryptoUse cryptoUse) {
+		return CBOMUtil.getCycloneDXName(
+			cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
+	}
+
+	private static Primitive _getPrimitive(List<CryptoUse> cryptoUses) {
+		TreeSet<Primitive> primitives = new TreeSet<>();
+
+		for (CryptoUse cryptoUse : cryptoUses) {
+			primitives.add(
+				CBOMUtil.getPrimitive(
+					cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName()));
+		}
+
+		if (primitives.size() == 1) {
+			return primitives.first();
+		}
+
+		return Primitive.UNKNOWN;
+	}
+
 	private static List<Property> _getProperties(List<CryptoUse> cryptoUses) {
 		Set<String> featureNames = new TreeSet<>();
 		Set<String> jcaClassNames = new TreeSet<>();
@@ -289,6 +380,60 @@ public class CBOMBuilder {
 		return properties;
 	}
 
+	private static ProtocolProperties _getProtocolProperties(
+		CryptoUse cryptoUse) {
+
+		ProtocolProperties protocolProperties = new ProtocolProperties();
+
+		String algorithm = cryptoUse.getAlgorithm();
+
+		if (algorithm.equals("TLS")) {
+			protocolProperties.setType(ProtocolType.TLS);
+		}
+		else if (algorithm.startsWith("TLSv")) {
+			protocolProperties.setType(ProtocolType.TLS);
+			protocolProperties.setVersion(algorithm.substring(4));
+		}
+		else {
+			protocolProperties.setType(ProtocolType.OTHER);
+		}
+
+		return protocolProperties;
+	}
+
+	private static RelatedCryptoMaterialProperties
+		_getRelatedCryptoMaterialProperties(
+			List<CryptoUse> cryptoUses, List<CryptoUse> keyCryptoUses) {
+
+		RelatedCryptoMaterialProperties relatedCryptoMaterialProperties =
+			new RelatedCryptoMaterialProperties();
+
+		CryptoUse keyCryptoUse = keyCryptoUses.get(0);
+
+		if (Objects.equals(keyCryptoUse.getJCAClassName(), "KeyStore")) {
+			relatedCryptoMaterialProperties.setFormat(
+				keyCryptoUse.getAlgorithm());
+			relatedCryptoMaterialProperties.setType(
+				RelatedCryptoMaterialType.OTHER);
+
+			return relatedCryptoMaterialProperties;
+		}
+
+		relatedCryptoMaterialProperties.setAlgorithmRef(
+			_getAlgorithmRef(cryptoUses, keyCryptoUses));
+
+		if (Objects.equals(keyCryptoUse.getJCAClassName(), "SecretKeySpec")) {
+			relatedCryptoMaterialProperties.setType(
+				RelatedCryptoMaterialType.SECRET_KEY);
+
+			return relatedCryptoMaterialProperties;
+		}
+
+		relatedCryptoMaterialProperties.setType(RelatedCryptoMaterialType.KEY);
+
+		return relatedCryptoMaterialProperties;
+	}
+
 	private static String _getSerialNumber(String configurationName) {
 		String name =
 			ReleaseInfo.getVersionDisplayName() + StringPool.POUND +
@@ -298,6 +443,19 @@ public class CBOMBuilder {
 			UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
 	}
 
+	private static boolean _isKeyCandidate(
+		CryptoUse cryptoUse, CryptoUse keyCryptoUse) {
+
+		if (!_keyAlgorithmJCAClassNames.contains(cryptoUse.getJCAClassName()) ||
+			!Objects.equals(
+				cryptoUse.getClassName(), keyCryptoUse.getClassName())) {
+
+			return false;
+		}
+
+		return true;
+	}
+
 	private static Properties _loadProperties(File file) throws Exception {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			return PropertiesUtil.load(fileInputStream, StringPool.UTF8);
@@ -305,24 +463,44 @@ public class CBOMBuilder {
 	}
 
 	private static Component _toComponent(
-		String bomRef, List<CryptoUse> bomRefCryptoUses) {
+		String bomRef, List<CryptoUse> bomRefCryptoUses,
+		List<CryptoUse> cryptoUses) {
 
+		Component component = new Component();
 		CryptoProperties cryptoProperties = new CryptoProperties();
-
-		cryptoProperties.setAssetType(AssetType.ALGORITHM);
 
 		CryptoUse cryptoUse = bomRefCryptoUses.get(0);
 
-		Component component = new Component();
+		AssetType assetType = CBOMUtil.getAssetType(
+			cryptoUse.getJCAClassName());
+
+		if (assetType == AssetType.ALGORITHM) {
+			cryptoProperties.setAlgorithmProperties(
+				_getAlgorithmProperties(bomRefCryptoUses));
+		}
+		else if (assetType == AssetType.PROTOCOL) {
+			cryptoProperties.setProtocolProperties(
+				_getProtocolProperties(cryptoUse));
+		}
+		else {
+			cryptoProperties.setRelatedCryptoMaterialProperties(
+				_getRelatedCryptoMaterialProperties(
+					cryptoUses, bomRefCryptoUses));
+		}
+
+		cryptoProperties.setAssetType(assetType);
 
 		component.setBomRef(bomRef);
 		component.setCryptoProperties(cryptoProperties);
 		component.setEvidence(_getEvidence(bomRefCryptoUses));
-		component.setName(cryptoUse.getAlgorithm());
+		component.setName(_getName(cryptoUse));
 		component.setProperties(_getProperties(bomRefCryptoUses));
 		component.setType(Component.Type.CRYPTOGRAPHIC_ASSET);
 
 		return component;
 	}
+
+	private static final Set<String> _keyAlgorithmJCAClassNames =
+		SetUtil.fromArray("Cipher", "KeyAgreement", "Mac", "Signature");
 
 }

@@ -47,7 +47,7 @@ public class CBOMDataTest {
 		cbomData.addCryptoUse(cryptoUse4);
 
 		Assert.assertEquals(
-			Arrays.asList("SHA in com.liferay.test.Class1 SHA"),
+			Arrays.asList("SHA-1 in com.liferay.test.Class1 SHA-1"),
 			TransformUtil.transform(
 				cbomData.getCryptoUses(),
 				cryptoUse -> StringBundler.concat(

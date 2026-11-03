@@ -51,6 +51,11 @@ public class CBOMData {
 				continue;
 			}
 
+			String standardAlgorithmName = CBOMUtil.getStandardAlgorithmName(
+				cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
+
+			cryptoUse.setAlgorithm(standardAlgorithmName);
+
 			cryptoUse.setFeatureName(
 				StringBundler.concat(
 					cryptoUse.getAlgorithm(), " in ",

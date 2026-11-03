@@ -62,9 +62,14 @@ public class CBOMBuilderTest {
 				"AES/GCM/NoPadding", "com.liferay.test.Class1", "Cipher"),
 			_createCryptoUse(
 				"SHA-256", "com.liferay.test.Class5", "MessageDigest"),
+			_createCryptoUse("DSA", "com.liferay.test.Class3", "KeyFactory"),
 			_createCryptoUse(
 				"SHA1withDSA", "com.liferay.test.Class3", "Signature"),
-			_createCryptoUse("HmacSHA1", "com.liferay.test.Class6", "Mac"));
+			_createCryptoUse("HmacSHA1", "com.liferay.test.Class6", "Mac"),
+			_createCryptoUse("RAW", "com.liferay.test.Class6", "SecretKeySpec"),
+			_createCryptoUse("PKCS12", "com.liferay.test.Class7", "KeyStore"),
+			_createCryptoUse(
+				"TLSv1.2", "com.liferay.test.Class8", "SSLContext"));
 
 		String configurationName = RandomTestUtil.randomString();
 
@@ -87,7 +92,17 @@ public class CBOMBuilderTest {
 			JSONUtil.putAll(
 				_toJSONObject(
 					"crypto:Cipher:AES/GCM/NoPadding",
-					JSONUtil.put("assetType", "algorithm"), "AES/GCM/NoPadding",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put(
+							"mode", "gcm"
+						).put(
+							"primitive", "ae"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"AES-GCM",
 					JSONUtil.putAll(
 						_toPropertyJSONObject("feature", _FEATURE_NAME),
 						_toPropertyJSONObject("jca-class", "Cipher"),
@@ -95,8 +110,51 @@ public class CBOMBuilderTest {
 						_toPropertyJSONObject("provider", "SunJCE")),
 					"com.liferay.test.Class1"),
 				_toJSONObject(
+					"crypto:KeyFactory:DSA",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put(
+							"algorithmRef", "crypto:Signature:SHA1withDSA"
+						).put(
+							"type", "key"
+						)
+					),
+					"DSA",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "KeyFactory"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
+						_toPropertyJSONObject("provider", "SUN")),
+					"com.liferay.test.Class3"),
+				_toJSONObject(
+					"crypto:KeyStore:PKCS12",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put(
+							"format", "PKCS12"
+						).put(
+							"type", "other"
+						)
+					),
+					"PKCS12",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "KeyStore"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
+						_toPropertyJSONObject("provider", "SUN")),
+					"com.liferay.test.Class7"),
+				_toJSONObject(
 					"crypto:Mac:HmacSHA1",
-					JSONUtil.put("assetType", "algorithm"), "HmacSHA1",
+					JSONUtil.put(
+						"algorithmProperties", JSONUtil.put("primitive", "mac")
+					).put(
+						"assetType", "algorithm"
+					),
+					"HMAC-SHA-1",
 					JSONUtil.putAll(
 						_toPropertyJSONObject("feature", _FEATURE_NAME),
 						_toPropertyJSONObject("jca-class", "Mac"),
@@ -105,7 +163,12 @@ public class CBOMBuilderTest {
 					"com.liferay.test.Class6"),
 				_toJSONObject(
 					"crypto:MessageDigest:SHA-256",
-					JSONUtil.put("assetType", "algorithm"), "SHA-256",
+					JSONUtil.put(
+						"algorithmProperties", JSONUtil.put("primitive", "hash")
+					).put(
+						"assetType", "algorithm"
+					),
+					"SHA-256",
 					JSONUtil.putAll(
 						_toPropertyJSONObject("feature", _FEATURE_NAME),
 						_toPropertyJSONObject("jca-class", "MessageDigest"),
@@ -113,8 +176,51 @@ public class CBOMBuilderTest {
 						_toPropertyJSONObject("provider", "SUN")),
 					"com.liferay.test.Class4", "com.liferay.test.Class5"),
 				_toJSONObject(
+					"crypto:SSLContext:TLSv1.2",
+					JSONUtil.put(
+						"assetType", "protocol"
+					).put(
+						"protocolProperties",
+						JSONUtil.put(
+							"type", "tls"
+						).put(
+							"version", "1.2"
+						)
+					),
+					"TLSv1.2",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "SSLContext"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
+						_toPropertyJSONObject("provider", "SunJSSE")),
+					"com.liferay.test.Class8"),
+				_toJSONObject(
+					"crypto:SecretKeySpec:RAW",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put(
+							"algorithmRef", "crypto:Mac:HmacSHA1"
+						).put(
+							"type", "secret-key"
+						)
+					),
+					"RAW",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "SecretKeySpec"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME)),
+					"com.liferay.test.Class6"),
+				_toJSONObject(
 					"crypto:Signature:SHA1withDSA",
-					JSONUtil.put("assetType", "algorithm"), "SHA1withDSA",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put("primitive", "signature")
+					).put(
+						"assetType", "algorithm"
+					),
+					"DSA-SHA-1",
 					JSONUtil.putAll(
 						_toPropertyJSONObject("feature", _FEATURE_NAME),
 						_toPropertyJSONObject("jca-class", "Signature"),
