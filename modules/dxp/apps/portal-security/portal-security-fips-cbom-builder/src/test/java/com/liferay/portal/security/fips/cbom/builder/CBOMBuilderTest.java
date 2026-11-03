@@ -401,18 +401,14 @@ public class CBOMBuilderTest {
 				StringBundler.concat(
 					"The scan cannot read the algorithm of the MessageDigest ",
 					"call in ", _CLASS_NAME_CACHE_KEY_GENERATOR,
-					", which comes from the field ",
-					_CLASS_NAME_CACHE_KEY_GENERATOR, "._algorithm"),
-				StringBundler.concat(
-					"The scan cannot read the algorithm of the MessageDigest ",
-					"call in ", DigesterUtil.class.getName(),
-					", which comes from parameter 1 of ",
-					DigesterUtil.class.getName(), ".digestRaw"),
+					", which comes from parameter 1 of the constructor of ",
+					_CLASS_NAME_CACHE_KEY_GENERATOR),
 				StringBundler.concat(
 					"The scan cannot read the algorithm of the MessageDigest ",
 					"call in com.liferay.portal.security.pwd.",
 					"PwdAuthenticator, which comes from the return value of ",
-					"com.liferay.portal.kernel.util.PropsUtil.get()")),
+					"com.liferay.portal.kernel.configuration.Configuration.",
+					"get()")),
 			new ArrayList<>(cbomData.getMessages()));
 
 		cbomJSON = CBOMBuilder.build(
@@ -438,25 +434,24 @@ public class CBOMBuilderTest {
 
 		Assert.assertEquals(
 			Arrays.asList(
+				"crypto:MessageDigest:MD5", "crypto:MessageDigest:SHA-1",
+				"crypto:MessageDigest:SHA-256",
 				"crypto:MessageDigest:" + _CLASS_NAME_CACHE_KEY_GENERATOR,
-				"crypto:MessageDigest:" + DigesterUtil.class.getName(),
 				"crypto:MessageDigest:com.liferay.portal.security.pwd." +
 					"PwdAuthenticator"),
 			bomRefs);
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
-				_toPropertyJSONObject("feature", "Liferay Portal Kernel"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.kernel.util.DigesterUtil"),
 				_toPropertyJSONObject("jca-class", "MessageDigest"),
 				_toPropertyJSONObject("module", "com.liferay.portal.kernel"),
-				_toPropertyJSONObject(
-					"unresolved-reason",
-					"parameter 1 of " + DigesterUtil.class.getName() +
-						".digestRaw")
+				_toPropertyJSONObject("provider", "SUN")
 			).toString(),
 			String.valueOf(
-				propertiesJSONArrays.get(
-					"crypto:MessageDigest:" + DigesterUtil.class.getName())),
+				propertiesJSONArrays.get("crypto:MessageDigest:SHA-1")),
 			JSONCompareMode.STRICT);
 	}
 

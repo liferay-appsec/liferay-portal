@@ -12,11 +12,14 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 
 /**
  * @author Manuele Castro
@@ -25,7 +28,19 @@ import java.util.TreeSet;
 public class CBOMData {
 
 	public void addCryptoUse(CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
-		_scannedCryptoUses.addAll(_toCryptoUses(cryptoUse, keySizeCryptoUse));
+		_cryptoUsesSuppliers.add(
+			() -> _toCryptoUses(cryptoUse, keySizeCryptoUse));
+	}
+
+	public void addReferenceCryptoUse(CryptoUse cryptoUse, String reference) {
+		CryptoUse referenceCryptoUse = _referenceCryptoUses.get(reference);
+
+		if (referenceCryptoUse == null) {
+			_referenceCryptoUses.put(reference, cryptoUse);
+		}
+		else {
+			referenceCryptoUse.addAll(cryptoUse);
+		}
 	}
 
 	public Set<String> getBundleSymbolicNames() {
@@ -45,10 +60,20 @@ public class CBOMData {
 	}
 
 	public List<CryptoUse> getScannedCryptoUses() {
-		return _scannedCryptoUses;
+		List<CryptoUse> cryptoUses = new ArrayList<>();
+
+		for (Supplier<List<CryptoUse>> cryptoUsesSupplier :
+				_cryptoUsesSuppliers) {
+
+			cryptoUses.addAll(cryptoUsesSupplier.get());
+		}
+
+		return cryptoUses;
 	}
 
-	private CryptoUse _resolve(CryptoUse cryptoUse) {
+	private CryptoUse _resolve(
+		CryptoUse cryptoUse, Set<String> visitedReferences) {
+
 		CryptoUse resolvedCryptoUse = new CryptoUse();
 
 		resolvedCryptoUse.addAll(cryptoUse);
@@ -56,8 +81,21 @@ public class CBOMData {
 		resolvedCryptoUse.clearReferences();
 
 		for (String reference : cryptoUse.getReferences()) {
-			resolvedCryptoUse.addUnresolvedReason(
-				CBOMUtil.getUnresolvedReason(reference));
+			if (!visitedReferences.add(reference)) {
+				continue;
+			}
+
+			CryptoUse referenceCryptoUse = _referenceCryptoUses.get(reference);
+
+			if (referenceCryptoUse == null) {
+				resolvedCryptoUse.addUnresolvedReason(
+					CBOMUtil.getUnresolvedReason(reference));
+
+				continue;
+			}
+
+			resolvedCryptoUse.addAll(
+				_resolve(referenceCryptoUse, visitedReferences));
 		}
 
 		return resolvedCryptoUse;
@@ -108,8 +146,10 @@ public class CBOMData {
 	private List<CryptoUse> _toCryptoUses(
 		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
 
-		CryptoUse resolvedAlgorithmCryptoUse = _resolve(cryptoUse);
-		CryptoUse resolvedKeySizeCryptoUse = _resolve(keySizeCryptoUse);
+		CryptoUse resolvedAlgorithmCryptoUse = _resolve(
+			cryptoUse, new HashSet<>());
+		CryptoUse resolvedKeySizeCryptoUse = _resolve(
+			keySizeCryptoUse, new HashSet<>());
 
 		List<CryptoUse> cryptoUses = new ArrayList<>();
 
@@ -157,7 +197,9 @@ public class CBOMData {
 			"com.liferay.portal.impl", "com.liferay.portal.kernel");
 
 	private List<CryptoUse> _cryptoUses;
+	private final List<Supplier<List<CryptoUse>>> _cryptoUsesSuppliers =
+		new ArrayList<>();
 	private final Set<String> _messages = new TreeSet<>();
-	private final List<CryptoUse> _scannedCryptoUses = new ArrayList<>();
+	private final Map<String, CryptoUse> _referenceCryptoUses = new HashMap<>();
 
 }

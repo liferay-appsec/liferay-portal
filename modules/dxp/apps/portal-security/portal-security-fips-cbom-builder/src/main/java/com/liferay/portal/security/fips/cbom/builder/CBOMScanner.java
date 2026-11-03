@@ -8,6 +8,7 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -307,12 +309,10 @@ public class CBOMScanner {
 					visitedAbstractInsnNodes));
 		}
 		else if (abstractInsnNode instanceof MethodInsnNode) {
-			MethodInsnNode methodInsnNode = (MethodInsnNode)abstractInsnNode;
-
-			cryptoUse.addReference(
-				_getMethodKey(
-					methodInsnNode.owner, methodInsnNode.name,
-					methodInsnNode.desc));
+			cryptoUse.addAll(
+				_getReturnValueCryptoUse(
+					frames, insnList, (MethodInsnNode)abstractInsnNode,
+					visitedAbstractInsnNodes));
 		}
 		else if (opcode != Opcodes.ACONST_NULL) {
 			cryptoUse.addUnresolvedReason("a value the code computes");
@@ -495,6 +495,45 @@ public class CBOMScanner {
 		return new ArrayList<>(relatedCryptoMaterialTypes);
 	}
 
+	private CryptoUse _getReturnValueCryptoUse(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
+		Frame<SourceValue> frame = frames[insnList.indexOf(methodInsnNode)];
+		int count = Type.getArgumentCount(methodInsnNode.desc);
+
+		Function<String, String> function = _stringFunctions.get(
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
+
+		if (function == null) {
+			CryptoUse cryptoUse = new CryptoUse();
+
+			cryptoUse.addReference(
+				_getMethodKey(
+					methodInsnNode.owner, methodInsnNode.name,
+					methodInsnNode.desc));
+
+			return cryptoUse;
+		}
+
+		SourceValue sourceValue = null;
+
+		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+			sourceValue = _getArgument(frame, 0, count);
+		}
+		else {
+			sourceValue = _getReceiver(frame, count);
+		}
+
+		CryptoUse wrappedCryptoUse = _getCryptoUse(
+			frames, insnList, sourceValue, visitedAbstractInsnNodes);
+
+		wrappedCryptoUse.transformValues(function);
+
+		return wrappedCryptoUse;
+	}
+
 	private boolean _isClassFileName(String name) {
 		if (name.startsWith("com/liferay/") && name.endsWith(".class")) {
 			return true;
@@ -506,6 +545,16 @@ public class CBOMScanner {
 	private boolean _isScanned(String bundleSymbolicName) {
 		if ((_bundleSymbolicNames == null) ||
 			_bundleSymbolicNames.contains(bundleSymbolicName)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isTracked(Type type) {
+		if (Objects.equals(type, Type.INT_TYPE) ||
+			Objects.equals(type, Type.getType(String.class))) {
 
 			return true;
 		}
@@ -546,6 +595,8 @@ public class CBOMScanner {
 
 				continue;
 			}
+
+			_scanAssignments(classNode, frames, methodNode);
 
 			InsnList insnList = methodNode.instructions;
 
@@ -601,6 +652,99 @@ public class CBOMScanner {
 			scan(bundleSymbolicName, featureName, jarInputStream);
 		}
 	}
+
+	private void _scanAssignments(
+		ClassNode classNode, Frame<SourceValue>[] frames,
+		MethodNode methodNode) {
+
+		String methodKey = _getMethodKey(
+			classNode.name, methodNode.name, methodNode.desc);
+
+		boolean returnValueTracked = _isTracked(
+			Type.getReturnType(methodNode.desc));
+
+		InsnList insnList = methodNode.instructions;
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (frames[insnList.indexOf(abstractInsnNode)] == null) {
+				continue;
+			}
+
+			int opcode = abstractInsnNode.getOpcode();
+
+			if ((opcode == Opcodes.PUTFIELD) || (opcode == Opcodes.PUTSTATIC)) {
+				FieldInsnNode fieldInsnNode = (FieldInsnNode)abstractInsnNode;
+
+				if (_isTracked(Type.getType(fieldInsnNode.desc))) {
+					_cbomData.addReferenceCryptoUse(
+						_getArgumentCryptoUse(
+							frames, insnList, abstractInsnNode, 0, 1),
+						_getFieldKey(fieldInsnNode));
+				}
+			}
+			else if (((opcode == Opcodes.ARETURN) ||
+					  (opcode == Opcodes.IRETURN)) &&
+					 returnValueTracked) {
+
+				_cbomData.addReferenceCryptoUse(
+					_getArgumentCryptoUse(
+						frames, insnList, abstractInsnNode, 0, 1),
+					methodKey);
+			}
+			else if (abstractInsnNode instanceof MethodInsnNode) {
+				MethodInsnNode methodInsnNode =
+					(MethodInsnNode)abstractInsnNode;
+
+				Type[] argumentTypes = Type.getArgumentTypes(
+					methodInsnNode.desc);
+
+				for (int i = 0; i < argumentTypes.length; i++) {
+					if (!_isTracked(argumentTypes[i])) {
+						continue;
+					}
+
+					_cbomData.addReferenceCryptoUse(
+						_getArgumentCryptoUse(
+							frames, insnList, methodInsnNode, i,
+							argumentTypes.length),
+						StringBundler.concat(
+							_getMethodKey(
+								methodInsnNode.owner, methodInsnNode.name,
+								methodInsnNode.desc),
+							StringPool.POUND, i));
+				}
+			}
+		}
+	}
+
+	private static final Map<String, Function<String, String>>
+		_stringFunctions = HashMapBuilder.<String, Function<String, String>>put(
+			"com/liferay/petra/string/StringUtil.toLowerCase",
+			StringUtil::toLowerCase
+		).put(
+			"com/liferay/petra/string/StringUtil.toUpperCase",
+			StringUtil::toUpperCase
+		).put(
+			"com/liferay/portal/kernel/util/GetterUtil.getInteger",
+			Function.identity()
+		).put(
+			"com/liferay/portal/kernel/util/GetterUtil.getString",
+			Function.identity()
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.toLowerCase",
+			StringUtil::toLowerCase
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.toUpperCase",
+			StringUtil::toUpperCase
+		).put(
+			"com/liferay/portal/kernel/util/StringUtil.trim", StringUtil::trim
+		).put(
+			"java/lang/String.toLowerCase", StringUtil::toLowerCase
+		).put(
+			"java/lang/String.toUpperCase", StringUtil::toUpperCase
+		).put(
+			"java/lang/String.trim", StringUtil::trim
+		).build();
 
 	private final Set<String> _bundleSymbolicNames;
 	private final CBOMData _cbomData;

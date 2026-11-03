@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
@@ -152,6 +153,18 @@ public class CryptoUse {
 		_unresolvedReasons.clear();
 
 		_unresolvedReasons.addAll(unresolvedReasons);
+	}
+
+	public void transformValues(Function<String, String> function) {
+		Set<String> values = new TreeSet<>();
+
+		for (String value : _values) {
+			values.add(function.apply(value));
+		}
+
+		_values.clear();
+
+		_values.addAll(values);
 	}
 
 	private String _algorithm;

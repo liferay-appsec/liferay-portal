@@ -22,6 +22,7 @@ import java.io.InputStream;
 
 import java.nio.file.Files;
 
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
@@ -41,6 +42,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
@@ -67,9 +69,9 @@ public class CBOMScannerTest {
 		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
 			ConstructorParameterTestClass.class,
-			"MessageDigest unresolved: the field " +
-				ConstructorParameterTestClass.class.getName() +
-					"._algorithm [digest]");
+			"MessageDigest unresolved: parameter 1 of the constructor of " +
+				ConstructorParameterTestClass.class.getName() + " [digest]");
+		_testScan(DiamondTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
 			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
 			"KeyFactory RSA [other] [public-key]");
@@ -81,6 +83,9 @@ public class CBOMScannerTest {
 			ParameterTestClass.class,
 			"MessageDigest unresolved: parameter 1 of " +
 				ParameterTestClass.class.getName() + ".digest [digest]");
+		_testScan(
+			PrivateMethodTestClass.class,
+			"Cipher AES/CBC/PKCS5Padding [encrypt]");
 		_testScan(
 			SecureRandomTestClass.class, "SecureRandom SHA1PRNG [generate]");
 		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
@@ -157,6 +162,24 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class DiamondTestClass {
+
+		public DiamondTestClass() {
+			_algorithm1 = _defaultAlgorithm;
+			_algorithm2 = _defaultAlgorithm;
+		}
+
+		public void digest(boolean flag) throws Exception {
+			MessageDigest.getInstance(flag ? _algorithm1 : _algorithm2);
+		}
+
+		private static String _defaultAlgorithm = "SHA-256";
+
+		private final String _algorithm1;
+		private final String _algorithm2;
+
+	}
+
 	public static class KeyFactoryTestClass {
 
 		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
@@ -195,6 +218,20 @@ public class CBOMScannerTest {
 
 		public void digest(String algorithm) throws Exception {
 			MessageDigest.getInstance(algorithm);
+		}
+
+	}
+
+	public static class PrivateMethodTestClass {
+
+		public void encrypt(Key key) throws Exception {
+			_encrypt(key, "AES/CBC/PKCS5Padding");
+		}
+
+		private void _encrypt(Key key, String transformation) throws Exception {
+			Cipher cipher = Cipher.getInstance(transformation);
+
+			cipher.init(Cipher.ENCRYPT_MODE, key);
 		}
 
 	}
