@@ -24,6 +24,9 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+
 /**
  * @author Regisson Aguiar
  */
@@ -43,6 +46,7 @@ public class AuditMessageTest {
 	@Test
 	public void testConstructor() throws Exception {
 		_testConstructor();
+		_testConstructorWithAuditMessage();
 		_testConstructorWithClonedContext();
 		_testConstructorWithSharedContext();
 		_testConstructorWithSystemCompany();
@@ -148,6 +152,35 @@ public class AuditMessageTest {
 
 		Assert.assertEquals(action, auditMessage.getAction());
 		Assert.assertEquals(resourceType, auditMessage.getResourceType());
+
+		AuditRequestContextThreadLocal.removeAuditRequestContext();
+	}
+
+	private void _testConstructorWithAuditMessage() throws Exception {
+		AuditMessage auditMessage = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		auditMessage.setClientIP(RandomTestUtil.randomString());
+		auditMessage.setPseudonymized(true);
+		auditMessage.setTimestampDate(RandomTestUtil.nextDate());
+
+		AuditMessage copyAuditMessage = new AuditMessage(auditMessage);
+
+		Assert.assertNull(copyAuditMessage.getClassName());
+		Assert.assertEquals(
+			auditMessage.getTimestampDate(),
+			copyAuditMessage.getTimestampDate());
+
+		JSONAssert.assertEquals(
+			String.valueOf(auditMessage.toJSONObject()),
+			String.valueOf(copyAuditMessage.toJSONObject()),
+			JSONCompareMode.STRICT);
+
+		copyAuditMessage.setClientIP(RandomTestUtil.randomString());
+
+		Assert.assertNotEquals(
+			auditMessage.getClientIP(), copyAuditMessage.getClientIP());
 
 		AuditRequestContextThreadLocal.removeAuditRequestContext();
 	}
