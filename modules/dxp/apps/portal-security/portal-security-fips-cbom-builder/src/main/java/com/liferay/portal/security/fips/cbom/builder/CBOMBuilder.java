@@ -112,7 +112,8 @@ public class CBOMBuilder {
 		CBOMData cbomData = new CBOMData();
 
 		CBOMScanner cbomScanner = new CBOMScanner(
-			cbomData.getBundleSymbolicNames(), cbomData);
+			cbomData.getBundleSymbolicNames(), cbomData,
+			CBOMUtil.getDefaultSecureRandomAlgorithm(), false);
 
 		for (File file : _getFiles(new File(args[3]), new File(args[2]))) {
 			cbomScanner.scan(file);

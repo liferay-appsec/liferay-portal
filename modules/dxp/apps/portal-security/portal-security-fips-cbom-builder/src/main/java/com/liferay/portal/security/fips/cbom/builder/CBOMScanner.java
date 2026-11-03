@@ -46,6 +46,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -61,13 +62,21 @@ import org.objectweb.asm.tree.analysis.SourceValue;
  */
 public class CBOMScanner {
 
-	public CBOMScanner(CBOMData cbomData) {
-		this(null, cbomData);
+	public CBOMScanner(
+		CBOMData cbomData, String defaultSecureRandomAlgorithm,
+		boolean fipsEnabled) {
+
+		this(null, cbomData, defaultSecureRandomAlgorithm, fipsEnabled);
 	}
 
-	public CBOMScanner(Set<String> bundleSymbolicNames, CBOMData cbomData) {
+	public CBOMScanner(
+		Set<String> bundleSymbolicNames, CBOMData cbomData,
+		String defaultSecureRandomAlgorithm, boolean fipsEnabled) {
+
 		_bundleSymbolicNames = bundleSymbolicNames;
 		_cbomData = cbomData;
+		_defaultSecureRandomAlgorithm = defaultSecureRandomAlgorithm;
+		_fipsEnabled = fipsEnabled;
 	}
 
 	public void scan(File file) throws IOException {
@@ -125,6 +134,8 @@ public class CBOMScanner {
 			ClassNode classNode, MethodNode methodNode)
 		throws AnalyzerException {
 
+		_foldFIPSEnabled(methodNode.instructions);
+
 		Analyzer<SourceValue> analyzer = new Analyzer<>(
 			new OriginInterpreter(
 				_getMethodKey(classNode.name, methodNode.name, methodNode.desc),
@@ -133,11 +144,71 @@ public class CBOMScanner {
 		return analyzer.analyze(classNode.name, methodNode);
 	}
 
+	private void _foldFIPSEnabled(InsnList insnList) {
+		for (AbstractInsnNode abstractInsnNode : insnList.toArray()) {
+			if (!_isFIPSEnabled(abstractInsnNode)) {
+				continue;
+			}
+
+			AbstractInsnNode nextAbstractInsnNode = abstractInsnNode.getNext();
+
+			while ((nextAbstractInsnNode != null) &&
+				   (nextAbstractInsnNode.getOpcode() == -1)) {
+
+				nextAbstractInsnNode = nextAbstractInsnNode.getNext();
+			}
+
+			if ((nextAbstractInsnNode == null) ||
+				((nextAbstractInsnNode.getOpcode() != Opcodes.IFEQ) &&
+				 (nextAbstractInsnNode.getOpcode() != Opcodes.IFNE))) {
+
+				continue;
+			}
+
+			JumpInsnNode jumpInsnNode = (JumpInsnNode)nextAbstractInsnNode;
+
+			insnList.remove(abstractInsnNode);
+
+			if ((jumpInsnNode.getOpcode() == Opcodes.IFEQ) != _fipsEnabled) {
+				insnList.set(
+					jumpInsnNode,
+					new JumpInsnNode(Opcodes.GOTO, jumpInsnNode.label));
+			}
+			else {
+				insnList.remove(jumpInsnNode);
+			}
+		}
+	}
+
 	private CryptoUse _getAlgorithmCryptoUse(
 		Frame<SourceValue>[] frames, InsnList insnList,
 		MethodInsnNode methodInsnNode) {
 
 		Type[] argumentTypes = Type.getArgumentTypes(methodInsnNode.desc);
+
+		if (Objects.equals(methodInsnNode.owner, _CLASS_NAME_DIGESTER_UTIL) &&
+			((argumentTypes.length < 2) ||
+			 !Objects.equals(argumentTypes[0], Type.getType(String.class)))) {
+
+			CryptoUse cryptoUse = new CryptoUse();
+
+			cryptoUse.addReference(
+				_getMethodKey(
+					_CLASS_NAME_DIGESTER_UTIL, "_getDefaultAlgorithm",
+					"()Ljava/lang/String;"));
+
+			return cryptoUse;
+		}
+
+		String fixedAlgorithm = _getFixedAlgorithm(methodInsnNode);
+
+		if (fixedAlgorithm != null) {
+			CryptoUse cryptoUse = new CryptoUse();
+
+			cryptoUse.addValue(fixedAlgorithm);
+
+			return cryptoUse;
+		}
 
 		return _getArgumentCryptoUse(
 			frames, insnList, methodInsnNode, 0, argumentTypes.length);
@@ -243,9 +314,16 @@ public class CBOMScanner {
 	}
 
 	private List<MethodInsnNode> _getCryptoMethodInsnNodes(
-		MethodNode methodNode) {
+		ClassNode classNode, MethodNode methodNode) {
 
 		List<MethodInsnNode> methodInsnNodes = new ArrayList<>();
+
+		if (Objects.equals(classNode.name, _CLASS_NAME_DIGESTER_UTIL) ||
+			Objects.equals(classNode.name, _CLASS_NAME_LIFERAY_SECURE_RANDOM) ||
+			Objects.equals(classNode.name, _CLASS_NAME_SECURE_RANDOM_UTIL)) {
+
+			return methodInsnNodes;
+		}
 
 		for (AbstractInsnNode abstractInsnNode : methodNode.instructions) {
 			if (!(abstractInsnNode instanceof MethodInsnNode)) {
@@ -373,12 +451,53 @@ public class CBOMScanner {
 		return name;
 	}
 
-	private String _getJCAClassName(MethodInsnNode methodInsnNode) {
-		if ((methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) &&
-			Objects.equals(methodInsnNode.name, "getInstance") &&
-			methodInsnNode.desc.startsWith("(Ljava/lang/String;")) {
+	private String _getFixedAlgorithm(MethodInsnNode methodInsnNode) {
+		String key =
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name;
 
-			return CBOMUtil.fetchJCAClassName(methodInsnNode.owner);
+		if (key.equals("java/security/SecureRandom.<init>") ||
+			key.equals(_CLASS_NAME_LIFERAY_SECURE_RANDOM + ".<init>") ||
+			(Objects.equals(
+				methodInsnNode.owner, _CLASS_NAME_SECURE_RANDOM_UTIL) &&
+			 methodInsnNode.name.startsWith("next"))) {
+
+			return _defaultSecureRandomAlgorithm;
+		}
+
+		return _fixedAlgorithms.get(key);
+	}
+
+	private String _getJCAClassName(MethodInsnNode methodInsnNode) {
+		String fixedAlgorithmClassName = _fixedAlgorithmClassNames.get(
+			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
+
+		if (fixedAlgorithmClassName != null) {
+			return fixedAlgorithmClassName;
+		}
+
+		if ((methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) &&
+			Objects.equals(
+				methodInsnNode.owner, _CLASS_NAME_SECURE_RANDOM_UTIL) &&
+			methodInsnNode.name.startsWith("next")) {
+
+			return "SecureRandom";
+		}
+
+		if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+			if (Objects.equals(
+					methodInsnNode.owner, _CLASS_NAME_DIGESTER_UTIL) &&
+				methodInsnNode.name.startsWith("digest")) {
+
+				return "MessageDigest";
+			}
+
+			if (Objects.equals(methodInsnNode.name, "getInstance") &&
+				methodInsnNode.desc.startsWith("(Ljava/lang/String;")) {
+
+				return CBOMUtil.fetchJCAClassName(methodInsnNode.owner);
+			}
+
+			return null;
 		}
 
 		return null;
@@ -542,6 +661,22 @@ public class CBOMScanner {
 		return false;
 	}
 
+	private boolean _isFIPSEnabled(AbstractInsnNode abstractInsnNode) {
+		if (abstractInsnNode.getOpcode() != Opcodes.GETSTATIC) {
+			return false;
+		}
+
+		FieldInsnNode fieldInsnNode = (FieldInsnNode)abstractInsnNode;
+
+		if (fieldInsnNode.owner.endsWith("/PropsValues") &&
+			Objects.equals(fieldInsnNode.name, "FIPS_ENABLED")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean _isScanned(String bundleSymbolicName) {
 		if ((_bundleSymbolicNames == null) ||
 			_bundleSymbolicNames.contains(bundleSymbolicName)) {
@@ -573,7 +708,7 @@ public class CBOMScanner {
 			}
 
 			List<MethodInsnNode> methodInsnNodes = _getCryptoMethodInsnNodes(
-				methodNode);
+				classNode, methodNode);
 
 			Frame<SourceValue>[] frames = null;
 
@@ -717,6 +852,31 @@ public class CBOMScanner {
 		}
 	}
 
+	private static final String _CLASS_NAME_DIGESTER_UTIL =
+		"com/liferay/portal/kernel/util/DigesterUtil";
+
+	private static final String _CLASS_NAME_LIFERAY_SECURE_RANDOM =
+		"com/liferay/portal/kernel/security/SecureRandom";
+
+	private static final String _CLASS_NAME_SECURE_RANDOM_UTIL =
+		"com/liferay/portal/kernel/security/SecureRandomUtil";
+
+	private static final Map<String, String> _fixedAlgorithmClassNames =
+		HashMapBuilder.put(
+			_CLASS_NAME_LIFERAY_SECURE_RANDOM + ".<init>", "SecureRandom"
+		).put(
+			"java/security/SecureRandom.<init>", "SecureRandom"
+		).put(
+			"jodd/util/BCrypt.hashpw", "BCrypt"
+		).put(
+			"org/vps/crypt/Crypt.crypt", "Crypt"
+		).build();
+	private static final Map<String, String> _fixedAlgorithms =
+		HashMapBuilder.put(
+			"jodd/util/BCrypt.hashpw", "BCRYPT"
+		).put(
+			"org/vps/crypt/Crypt.crypt", "UFC-CRYPT"
+		).build();
 	private static final Map<String, Function<String, String>>
 		_stringFunctions = HashMapBuilder.<String, Function<String, String>>put(
 			"com/liferay/petra/string/StringUtil.toLowerCase",
@@ -748,6 +908,8 @@ public class CBOMScanner {
 
 	private final Set<String> _bundleSymbolicNames;
 	private final CBOMData _cbomData;
+	private final String _defaultSecureRandomAlgorithm;
+	private final boolean _fipsEnabled;
 
 	private static class OriginInterpreter extends SourceInterpreter {
 

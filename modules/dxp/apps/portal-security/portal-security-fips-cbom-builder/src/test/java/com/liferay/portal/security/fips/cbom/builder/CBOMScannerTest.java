@@ -11,7 +11,9 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -32,6 +34,7 @@ import java.security.Signature;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -66,29 +69,49 @@ public class CBOMScannerTest {
 
 	@Test
 	public void testScan() throws Exception {
-		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
-			ConstructorParameterTestClass.class,
+			ConstantTestClass.class, false, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			ConstructorParameterTestClass.class, false,
 			"MessageDigest unresolved: parameter 1 of the constructor of " +
 				ConstructorParameterTestClass.class.getName() + " [digest]");
-		_testScan(DiamondTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
-			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
-			"KeyFactory RSA [other] [public-key]");
-		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES [keygen] 256");
+			DiamondTestClass.class, false, "MessageDigest SHA-256 [digest]");
 		_testScan(
-			MultipleValuesTestClass.class, "MessageDigest MD5 [digest]",
+			DigesterUtilDefaultTestClass.class, false,
+			"MessageDigest SHA [digest]");
+		_testScan(
+			DigesterUtilDefaultTestClass.class, true,
 			"MessageDigest SHA-256 [digest]");
 		_testScan(
-			ParameterTestClass.class,
+			DigesterUtilTestClass.class, false, "MessageDigest MD5 [digest]");
+		_testScan(
+			FIPSEnabledTestClass.class, false, "MessageDigest MD5 [digest]");
+		_testScan(
+			FIPSEnabledTestClass.class, true, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			KeyFactoryTestClass.class, false,
+			"KeyFactory RSA [other] [private-key]",
+			"KeyFactory RSA [other] [public-key]");
+		_testScan(
+			KeyGeneratorTestClass.class, false,
+			"KeyGenerator AES [keygen] 256");
+		_testScan(
+			MultipleValuesTestClass.class, false, "MessageDigest MD5 [digest]",
+			"MessageDigest SHA-256 [digest]");
+		_testScan(
+			ParameterTestClass.class, false,
 			"MessageDigest unresolved: parameter 1 of " +
 				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
-			PrivateMethodTestClass.class,
+			PrivateMethodTestClass.class, false,
 			"Cipher AES/CBC/PKCS5Padding [encrypt]");
 		_testScan(
-			SecureRandomTestClass.class, "SecureRandom SHA1PRNG [generate]");
-		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
+			SecureRandomTestClass.class, false, "SecureRandom DRBG [generate]",
+			"SecureRandom DRBG [generate]", "SecureRandom SHA1PRNG [generate]");
+		_testScan(
+			SignatureTestClass.class, false,
+			"Signature SHA256withRSA [verify]");
 	}
 
 	@Test
@@ -127,7 +150,7 @@ public class CBOMScannerTest {
 
 		CBOMScanner bundleCBOMScanner = new CBOMScanner(
 			Collections.singleton(RandomTestUtil.randomString()),
-			bundleCBOMData);
+			bundleCBOMData, RandomTestUtil.randomString(), false);
 
 		bundleCBOMScanner.scan(bundleJarFile);
 
@@ -177,6 +200,32 @@ public class CBOMScannerTest {
 
 		private final String _algorithm1;
 		private final String _algorithm2;
+
+	}
+
+	public static class DigesterUtilDefaultTestClass {
+
+		public String digest() {
+			return DigesterUtil.digest("test");
+		}
+
+	}
+
+	public static class DigesterUtilTestClass {
+
+		public String digest() {
+			return DigesterUtil.digestHex(DigesterUtil.MD5, "test");
+		}
+
+	}
+
+	public static class FIPSEnabledTestClass {
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(
+				PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 :
+					DigesterUtil.MD5);
+		}
 
 	}
 
@@ -312,23 +361,33 @@ public class CBOMScannerTest {
 		}
 	}
 
-	private void _testScan(Class<?> clazz, String... expectedDescriptions)
+	private void _testScan(
+			Class<?> clazz, boolean fipsEnabled, String... expectedDescriptions)
 		throws Exception {
 
-		_testScan(new Class<?>[] {clazz}, expectedDescriptions);
+		_testScan(new Class<?>[] {clazz}, fipsEnabled, expectedDescriptions);
 	}
 
-	private void _testScan(Class<?>[] classes, String... expectedDescriptions)
+	private void _testScan(
+			Class<?>[] classes, boolean fipsEnabled,
+			String... expectedDescriptions)
 		throws Exception {
 
 		CBOMData cbomData = new CBOMData();
 
-		CBOMScanner cbomScanner = new CBOMScanner(cbomData);
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData, "DRBG", fipsEnabled);
 
 		String bundleSymbolicName = RandomTestUtil.randomString();
 		String featureName = RandomTestUtil.randomString();
 
-		for (Class<?> curClass : classes) {
+		List<Class<?>> scannedClasses = new ArrayList<>();
+
+		scannedClasses.add(DigesterUtil.class);
+
+		Collections.addAll(scannedClasses, classes);
+
+		for (Class<?> curClass : scannedClasses) {
 			try (InputStream inputStream = new ByteArrayInputStream(
 					_read(curClass))) {
 
@@ -361,7 +420,8 @@ public class CBOMScannerTest {
 
 		CBOMData cbomData = new CBOMData();
 
-		CBOMScanner cbomScanner = new CBOMScanner(cbomData);
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData, RandomTestUtil.randomString(), false);
 
 		cbomScanner.scan(file);
 

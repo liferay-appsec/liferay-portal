@@ -391,7 +391,8 @@ public class CBOMBuilderTest {
 
 		CBOMData cbomData = new CBOMData();
 
-		CBOMScanner cbomScanner = new CBOMScanner(cbomData);
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData, "NativePRNG", false);
 
 		cbomScanner.scan(_getJarFile(DigesterUtil.class));
 		cbomScanner.scan(_getJarFile(JSONFactoryImpl.class));
@@ -438,15 +439,34 @@ public class CBOMBuilderTest {
 				"crypto:MessageDigest:SHA-256",
 				"crypto:MessageDigest:" + _CLASS_NAME_CACHE_KEY_GENERATOR,
 				"crypto:MessageDigest:com.liferay.portal.security.pwd." +
-					"PwdAuthenticator"),
+					"PwdAuthenticator",
+				"crypto:SecureRandom:NativePRNG"),
 			bomRefs);
 
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				_toPropertyJSONObject(
 					"feature",
-					"SHA-1 in com.liferay.portal.kernel.util.DigesterUtil"),
+					"SHA-1 in com.liferay.portal.kernel.model.UserConstants"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.kernel.util.URLUtil"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.model.impl.OrganizationImpl"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.security.auth." +
+						"AuthTokenWhitelistImpl"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.servlet.filters.language." +
+						"LanguageFilter"),
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.webserver.WebServerServlet"),
 				_toPropertyJSONObject("jca-class", "MessageDigest"),
+				_toPropertyJSONObject("module", "com.liferay.portal.impl"),
 				_toPropertyJSONObject("module", "com.liferay.portal.kernel"),
 				_toPropertyJSONObject("provider", "SUN")
 			).toString(),

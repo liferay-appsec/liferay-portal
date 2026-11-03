@@ -135,6 +135,12 @@ public class CBOMUtil {
 		return name;
 	}
 
+	public static String getDefaultSecureRandomAlgorithm() {
+		SecureRandom secureRandom = new SecureRandom();
+
+		return secureRandom.getAlgorithm();
+	}
+
 	public static Primitive getPrimitive(
 		String algorithm, String jcaClassName) {
 
@@ -477,6 +483,10 @@ public class CBOMUtil {
 		).build();
 	private static final Map<String, CryptoFunction> _cryptoFunctions =
 		HashMapBuilder.put(
+			"BCrypt", CryptoFunction.KEYDERIVE
+		).put(
+			"Crypt", CryptoFunction.DIGEST
+		).put(
 			"KeyAgreement", CryptoFunction.KEYDERIVE
 		).put(
 			"KeyFactory", CryptoFunction.OTHER
@@ -619,6 +629,10 @@ public class CBOMUtil {
 		).build();
 	private static final Map<String, Primitive> _primitives =
 		HashMapBuilder.put(
+			"BCrypt", Primitive.KDF
+		).put(
+			"Crypt", Primitive.HASH
+		).put(
 			"KeyAgreement", Primitive.KEY_AGREE
 		).put(
 			"KeyManagerFactory", Primitive.OTHER
