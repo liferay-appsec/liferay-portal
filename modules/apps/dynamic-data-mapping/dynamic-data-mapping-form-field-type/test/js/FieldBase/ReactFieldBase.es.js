@@ -366,6 +366,33 @@ describe('ReactFieldBase', () => {
 		).toHaveAttribute('data-translated', 'false');
 	});
 
+	it('renders every hidden input of a localizable text with the value of the editing language', () => {
+		const value = '{"en_US":"Title","es_ES":"Título"}';
+
+		render(
+			<FormProvider
+				initialState={{editingLanguageId: 'es_ES', pages: []}}
+			>
+				<PageProvider value={{editingLanguageId: 'es_ES'}}>
+					<FieldBase
+						fieldName="title"
+						instanceId="instance_id"
+						localizedValue={{
+							en_US: '{"en_US":"Title"}',
+							es_ES: value,
+						}}
+						name="title$$es_ES"
+						type="localizable_text"
+					/>
+				</PageProvider>
+			</FormProvider>
+		);
+
+		expect(document.querySelector('[name="title$$en_US"]')).toHaveValue(
+			value
+		);
+	});
+
 	it('renders the add button when repeatable is true', () => {
 		const {container} = render(
 			<FieldBaseWithProvider
