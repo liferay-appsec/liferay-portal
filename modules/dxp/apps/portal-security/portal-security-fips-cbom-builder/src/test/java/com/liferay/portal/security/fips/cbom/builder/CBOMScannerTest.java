@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import java.security.Key;
@@ -42,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -52,6 +54,7 @@ import java.util.zip.ZipOutputStream;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.TrustManagerFactory;
 
@@ -108,11 +111,22 @@ public class CBOMScannerTest {
 		_testScan(
 			FIPSEnabledTestClass.class, true, "MessageDigest SHA-256 [digest]");
 		_testScan(
+			InstanceFieldTestClass.class, false,
+			"SecretKeySpec configured by [test.algorithm] [other]");
+		_testScan(
 			new Class<?>[] {
 				DispatchCallerTestClass.class, DispatchTestClass.class,
 				DispatchTestInterface.class
 			},
 			false, "MessageDigest SHA-384 [digest]");
+		_testScan(
+			new Class<?>[] {LambdaTestClass.class}, false,
+			"Cipher configured by [test.algorithm] [encrypt]",
+			"SecretKeySpec configured by [test.algorithm] [other]");
+		_testScan(
+			new Class<?>[] {KeyTestClass.class}, false,
+			"Cipher configured by [test.algorithm] [encrypt]",
+			"SecretKeySpec configured by [test.algorithm] [other]");
 		_testScan(
 			KeyFactoryTestClass.class, false,
 			"KeyFactory RSA [other] [private-key]",
@@ -120,6 +134,9 @@ public class CBOMScannerTest {
 		_testScan(
 			KeyGeneratorTestClass.class, false,
 			"KeyGenerator AES [keygen] 256");
+		_testScan(
+			MacTestClass.class, false, "Mac HmacSHA256 [tag]",
+			"SecretKeySpec HmacSHA256 [other]");
 		_testScan(
 			MultiplePropertiesTestClass.class, false,
 			"MessageDigest configured by [test.algorithm] [digest]",
@@ -208,6 +225,41 @@ public class CBOMScannerTest {
 
 		Assert.assertEquals(
 			Collections.emptyList(), bundleCBOMData.getScannedCryptoUses());
+
+		File springJarFile = temporaryFolder.newFile("spring.jar");
+
+		try (JarOutputStream jarOutputStream = new JarOutputStream(
+				new FileOutputStream(springJarFile))) {
+
+			jarOutputStream.putNextEntry(
+				new JarEntry(_getClassFileName(SpringBeanTestClass.class)));
+
+			jarOutputStream.write(_read(SpringBeanTestClass.class));
+
+			jarOutputStream.closeEntry();
+
+			jarOutputStream.putNextEntry(
+				new JarEntry("META-INF/test-spring.xml"));
+
+			String xml = StringUtil.read(
+				CBOMScannerTest.class, "dependencies/test-spring.xml");
+
+			jarOutputStream.write(xml.getBytes(StandardCharsets.UTF_8));
+
+			jarOutputStream.closeEntry();
+		}
+
+		CBOMData cbomData = new CBOMData();
+
+		CBOMScanner cbomScanner = new CBOMScanner(
+			cbomData, RandomTestUtil.randomString(), false);
+
+		cbomScanner.scan(springJarFile);
+
+		Assert.assertEquals(
+			Collections.singletonList("MessageDigest SHA-256 [digest]"),
+			TransformUtil.transform(
+				cbomData.getScannedCryptoUses(), this::_getDescription));
 	}
 
 	@Rule
@@ -340,6 +392,28 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class InstanceFieldTestClass {
+
+		public Key getKey(byte[] bytes) {
+			return new SecretKeySpec(bytes, _getAlgorithm());
+		}
+
+		private String _getAlgorithm() {
+			String algorithm = _algorithm;
+
+			if (algorithm == null) {
+				algorithm = PropsUtil.get("test.algorithm");
+
+				_algorithm = algorithm;
+			}
+
+			return algorithm;
+		}
+
+		private String _algorithm;
+
+	}
+
 	public static class KeyFactoryTestClass {
 
 		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
@@ -362,6 +436,63 @@ public class CBOMScannerTest {
 			KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
 
 			keyGenerator.init(256);
+		}
+
+	}
+
+	public static class KeyTestClass {
+
+		public void encrypt() throws Exception {
+			_encrypt(_getKey());
+		}
+
+		private void _encrypt(Key key) throws Exception {
+			Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+
+			cipher.init(Cipher.ENCRYPT_MODE, key);
+		}
+
+		private Key _getKey() {
+			return new SecretKeySpec(
+				new byte[16], PropsUtil.get("test.algorithm"));
+		}
+
+	}
+
+	public static class LambdaTestClass {
+
+		public void encrypt() {
+			Key key = _getKey();
+
+			Consumer<String> consumer = value -> _encrypt(key, value);
+
+			consumer.accept("test");
+		}
+
+		private void _encrypt(Key key, String value) {
+			try {
+				Cipher cipher = Cipher.getInstance(key.getAlgorithm());
+
+				cipher.init(Cipher.ENCRYPT_MODE, key);
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(value, exception);
+			}
+		}
+
+		private Key _getKey() {
+			return new SecretKeySpec(
+				new byte[16], PropsUtil.get("test.algorithm"));
+		}
+
+	}
+
+	public static class MacTestClass {
+
+		public Key getKey(byte[] bytes) throws Exception {
+			Mac mac = Mac.getInstance("HmacSHA256");
+
+			return new SecretKeySpec(bytes, mac.getAlgorithm());
 		}
 
 	}
@@ -463,6 +594,30 @@ public class CBOMScannerTest {
 
 			signature.initVerify(publicKey);
 		}
+
+	}
+
+	public static class SpringBeanTestClass {
+
+		public SpringBeanTestClass(String algorithm) {
+			this(algorithm, StringPool.UTF8);
+		}
+
+		public SpringBeanTestClass(String algorithm, String charsetName) {
+			_algorithm = algorithm;
+			_charsetName = charsetName;
+		}
+
+		public SpringBeanTestClass copy() {
+			return new SpringBeanTestClass(_algorithm, _charsetName);
+		}
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(_algorithm);
+		}
+
+		private final String _algorithm;
+		private final String _charsetName;
 
 	}
 

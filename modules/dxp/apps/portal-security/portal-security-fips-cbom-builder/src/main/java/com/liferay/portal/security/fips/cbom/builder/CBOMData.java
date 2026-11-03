@@ -11,6 +11,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 /**
  * @author Manuele Castro
@@ -83,6 +85,20 @@ public class CBOMData {
 		else {
 			referenceCryptoUse.addAll(cryptoUse);
 		}
+	}
+
+	public void addSpringBean(
+		Map<Integer, String> arguments, String className) {
+
+		if (arguments.isEmpty() || Validator.isNull(className)) {
+			return;
+		}
+
+		List<List<String>> argumentsList =
+			_springConstructorArguments.computeIfAbsent(
+				className, key -> new ArrayList<>());
+
+		argumentsList.add(new ArrayList<>(arguments.values()));
 	}
 
 	public Set<String> getBundleSymbolicNames() {
@@ -263,7 +279,18 @@ public class CBOMData {
 			cryptoUse.addAll(referenceCryptoUse);
 		}
 
-		return cryptoUse;
+		CryptoUse springCryptoUse = _getSpringCryptoUse(
+			methodKey + StringPool.POUND + index);
+
+		if (springCryptoUse == null) {
+			return cryptoUse;
+		}
+
+		if (cryptoUse != null) {
+			springCryptoUse.addAll(cryptoUse);
+		}
+
+		return springCryptoUse;
 	}
 
 	private CryptoUse _getReferenceCryptoUse(String reference) {
@@ -275,6 +302,52 @@ public class CBOMData {
 		}
 
 		return _referenceCryptoUses.get(reference);
+	}
+
+	private CryptoUse _getSpringCryptoUse(String reference) {
+		int index = reference.indexOf(".<init>(");
+
+		if (index == -1) {
+			return null;
+		}
+
+		List<List<String>> argumentsList = _springConstructorArguments.get(
+			reference.substring(0, index));
+
+		if (argumentsList == null) {
+			return null;
+		}
+
+		int poundIndex = reference.indexOf(CharPool.POUND);
+
+		int argumentCount = Type.getArgumentCount(
+			reference.substring(index + 7, poundIndex));
+		int parameterIndex = GetterUtil.getInteger(
+			reference.substring(poundIndex + 1));
+
+		CryptoUse cryptoUse = null;
+
+		for (List<String> arguments : argumentsList) {
+			if (arguments.size() != argumentCount) {
+				continue;
+			}
+
+			if (cryptoUse == null) {
+				cryptoUse = new CryptoUse();
+			}
+
+			String value = arguments.get(parameterIndex);
+
+			if (value == null) {
+				cryptoUse.addUnresolvedReason(
+					CBOMUtil.getUnresolvedReason(reference));
+			}
+			else {
+				cryptoUse.addValue(value);
+			}
+		}
+
+		return cryptoUse;
 	}
 
 	private Set<String> _getSubtypeNames(String className) {
@@ -700,6 +773,8 @@ public class CBOMData {
 	private final Map<String, Integer> _methodAccesses = new HashMap<>();
 	private final Map<String, CryptoUse> _referenceCryptoUses = new HashMap<>();
 	private int _resolutionContextCount = 1;
+	private final Map<String, List<List<String>>> _springConstructorArguments =
+		new HashMap<>();
 	private Map<String, Set<String>> _subtypeNames;
 	private final Map<String, String> _superClassNames = new HashMap<>();
 	private final Set<String> _unmatchedPropertyKeys = new TreeSet<>(

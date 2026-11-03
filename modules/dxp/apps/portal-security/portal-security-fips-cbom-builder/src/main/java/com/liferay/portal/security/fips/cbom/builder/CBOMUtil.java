@@ -326,6 +326,14 @@ public class CBOMUtil {
 		return upperCaseAlgorithm.equals(upperCaseKeyAlgorithm);
 	}
 
+	public static boolean isKeyClassName(String internalName) {
+		return _keyClassNames.contains(internalName);
+	}
+
+	public static boolean isKeyMethodName(String methodName) {
+		return _keyMethodNames.contains(methodName);
+	}
+
 	public static void setCipherProperties(
 		AlgorithmProperties algorithmProperties, String transformation) {
 
@@ -671,12 +679,19 @@ public class CBOMUtil {
 		).build();
 	private static final Set<String> _keyAgreementNames = SetUtil.fromArray(
 		"DH", "DIFFIEHELLMAN", "ECDH", "X25519", "X448", "XDH");
+	private static final Set<String> _keyClassNames = SetUtil.fromArray(
+		"java/security/Key", "java/security/PrivateKey",
+		"java/security/PublicKey", "javax/crypto/SecretKey",
+		"javax/crypto/spec/SecretKeySpec");
 	private static final Map<String, RelatedCryptoMaterialType>
 		_keyFactoryRelatedCryptoMaterialTypes = HashMapBuilder.put(
 			"generatePrivate", RelatedCryptoMaterialType.PRIVATE_KEY
 		).put(
 			"generatePublic", RelatedCryptoMaterialType.PUBLIC_KEY
 		).build();
+	private static final Set<String> _keyMethodNames = SetUtil.fromArray(
+		"generateKey", "generatePrivate", "generatePublic", "generateSecret",
+		"getAlgorithm");
 	private static final Map<String, String> _keySizeMethodNames =
 		HashMapBuilder.put(
 			"java/security/KeyPairGenerator", "initialize"

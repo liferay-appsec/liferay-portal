@@ -8,24 +8,29 @@ package com.liferay.portal.security.fips.cbom.builder;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.jar.Attributes;
@@ -34,6 +39,11 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
@@ -54,6 +64,7 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Frame;
@@ -215,8 +226,14 @@ public class CBOMScanner {
 			return cryptoUse;
 		}
 
+		int index = 0;
+
+		if (Objects.equals(methodInsnNode.owner, _CLASS_NAME_SECRET_KEY_SPEC)) {
+			index = argumentTypes.length - 1;
+		}
+
 		return _getArgumentCryptoUse(
-			frames, insnList, methodInsnNode, 0, argumentTypes.length);
+			frames, insnList, methodInsnNode, index, argumentTypes.length);
 	}
 
 	private SourceValue _getArgument(
@@ -268,6 +285,41 @@ public class CBOMScanner {
 		}
 
 		return className;
+	}
+
+	private List<MethodInsnNode> _getConstructorMethodInsnNodes(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		TypeInsnNode typeInsnNode) {
+
+		List<MethodInsnNode> methodInsnNodes = new ArrayList<>();
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (abstractInsnNode.getOpcode() != Opcodes.INVOKESPECIAL) {
+				continue;
+			}
+
+			MethodInsnNode methodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame = frames[insnList.indexOf(methodInsnNode)];
+
+			if ((frame == null) ||
+				!Objects.equals(methodInsnNode.owner, typeInsnNode.desc) ||
+				!Objects.equals(methodInsnNode.name, "<init>")) {
+
+				continue;
+			}
+
+			SourceValue sourceValue = _getReceiver(
+				frame, Type.getArgumentCount(methodInsnNode.desc));
+
+			if (!sourceValue.insns.contains(typeInsnNode)) {
+				continue;
+			}
+
+			methodInsnNodes.add(methodInsnNode);
+		}
+
+		return methodInsnNodes;
 	}
 
 	private List<CryptoFunction> _getCryptoFunctions(
@@ -396,6 +448,17 @@ public class CBOMScanner {
 				_getReturnValueCryptoUse(
 					frames, insnList, (MethodInsnNode)abstractInsnNode,
 					visitedAbstractInsnNodes));
+		}
+		else if ((opcode == Opcodes.NEW) &&
+				 _isSecretKeySpec((TypeInsnNode)abstractInsnNode)) {
+
+			for (MethodInsnNode methodInsnNode :
+					_getConstructorMethodInsnNodes(
+						frames, insnList, (TypeInsnNode)abstractInsnNode)) {
+
+				cryptoUse.addAll(
+					_getAlgorithmCryptoUse(frames, insnList, methodInsnNode));
+			}
 		}
 		else if ((abstractInsnNode instanceof InvokeDynamicInsnNode) &&
 				 _isBootstrappedBy(
@@ -535,6 +598,14 @@ public class CBOMScanner {
 			}
 
 			return null;
+		}
+
+		if ((methodInsnNode.getOpcode() == Opcodes.INVOKESPECIAL) &&
+			Objects.equals(methodInsnNode.owner, _CLASS_NAME_SECRET_KEY_SPEC) &&
+			Objects.equals(methodInsnNode.name, "<init>") &&
+			methodInsnNode.desc.endsWith("Ljava/lang/String;)V")) {
+
+			return "SecretKeySpec";
 		}
 
 		return null;
@@ -710,6 +781,42 @@ public class CBOMScanner {
 			return cryptoUse;
 		}
 
+		if (CBOMUtil.isKeyClassName(methodInsnNode.owner) &&
+			Objects.equals(methodInsnNode.name, "getAlgorithm") &&
+			(count == 0)) {
+
+			return _getCryptoUse(
+				frames, insnList, _getReceiver(frame, count),
+				visitedAbstractInsnNodes);
+		}
+
+		String jcaClassName = CBOMUtil.fetchJCAClassName(methodInsnNode.owner);
+
+		if ((jcaClassName != null) &&
+			CBOMUtil.isKeyMethodName(methodInsnNode.name)) {
+
+			for (AbstractInsnNode abstractInsnNode :
+					_getReceiver(frame, count).insns) {
+
+				if ((abstractInsnNode instanceof MethodInsnNode) &&
+					(_getJCAClassName((MethodInsnNode)abstractInsnNode) !=
+						null)) {
+
+					cryptoUse.addAll(
+						_getAlgorithmCryptoUse(
+							frames, insnList,
+							(MethodInsnNode)abstractInsnNode));
+				}
+				else {
+					cryptoUse.addUnresolvedReason(
+						"the algorithm of a " + jcaClassName +
+							" that the code does not create");
+				}
+			}
+
+			return cryptoUse;
+		}
+
 		Function<String, String> function = _stringFunctions.get(
 			methodInsnNode.owner + StringPool.PERIOD + methodInsnNode.name);
 
@@ -838,10 +945,23 @@ public class CBOMScanner {
 		return false;
 	}
 
+	private boolean _isSecretKeySpec(TypeInsnNode typeInsnNode) {
+		return Objects.equals(typeInsnNode.desc, _CLASS_NAME_SECRET_KEY_SPEC);
+	}
+
 	private boolean _isTracked(Type type) {
 		if (Objects.equals(type, Type.INT_TYPE) ||
-			Objects.equals(type, Type.getType(String.class))) {
+			Objects.equals(type, Type.getType(String.class)) ||
+			CBOMUtil.isKeyClassName(type.getInternalName())) {
 
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _isXMLFileName(String name) {
+		if (name.startsWith("META-INF/") && name.endsWith(".xml")) {
 			return true;
 		}
 
@@ -955,11 +1075,12 @@ public class CBOMScanner {
 		while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
 			String jarEntryName = jarEntry.getName();
 
-			if (!_isClassFileName(jarEntryName)) {
-				continue;
+			if (_isClassFileName(jarEntryName)) {
+				scan(bundleSymbolicName, featureName, jarInputStream);
 			}
-
-			scan(bundleSymbolicName, featureName, jarInputStream);
+			else if (_isXMLFileName(jarEntryName)) {
+				_scanSpringBeans(jarInputStream);
+			}
 		}
 	}
 
@@ -1001,6 +1122,42 @@ public class CBOMScanner {
 						frames, insnList, abstractInsnNode, 0, 1),
 					methodKey);
 			}
+			else if ((abstractInsnNode instanceof InvokeDynamicInsnNode) &&
+					 _isBootstrappedBy(
+						 (InvokeDynamicInsnNode)abstractInsnNode,
+						 "java/lang/invoke/LambdaMetafactory")) {
+
+				InvokeDynamicInsnNode invokeDynamicInsnNode =
+					(InvokeDynamicInsnNode)abstractInsnNode;
+
+				Handle handle = (Handle)invokeDynamicInsnNode.bsmArgs[1];
+
+				int offset = 1;
+
+				if ((handle.getTag() == Opcodes.H_INVOKESTATIC) ||
+					(handle.getTag() == Opcodes.H_NEWINVOKESPECIAL)) {
+
+					offset = 0;
+				}
+
+				String lambdaMethodKey = _getMethodKey(
+					handle.getOwner(), handle.getName(), handle.getDesc());
+
+				Type[] argumentTypes = Type.getArgumentTypes(
+					invokeDynamicInsnNode.desc);
+
+				for (int i = offset; i < argumentTypes.length; i++) {
+					if (!_isTracked(argumentTypes[i])) {
+						continue;
+					}
+
+					_cbomData.addReferenceCryptoUse(
+						_getArgumentCryptoUse(
+							frames, insnList, invokeDynamicInsnNode, i,
+							argumentTypes.length),
+						lambdaMethodKey + StringPool.POUND + (i - offset));
+				}
+			}
 			else if (abstractInsnNode instanceof MethodInsnNode) {
 				MethodInsnNode methodInsnNode =
 					(MethodInsnNode)abstractInsnNode;
@@ -1027,11 +1184,81 @@ public class CBOMScanner {
 		}
 	}
 
+	private void _scanSpringBeans(InputStream inputStream) throws IOException {
+		XMLInputFactory xmlInputFactory = XMLInputFactory.newDefaultFactory();
+
+		xmlInputFactory.setProperty(
+			XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+		xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+
+		try {
+			XMLStreamReader xmlStreamReader =
+				xmlInputFactory.createXMLStreamReader(
+					new ByteArrayInputStream(inputStream.readAllBytes()));
+
+			int eventType = xmlStreamReader.next();
+
+			while (eventType != XMLStreamConstants.START_ELEMENT) {
+				eventType = xmlStreamReader.next();
+			}
+
+			if (!Objects.equals(xmlStreamReader.getLocalName(), "beans")) {
+				return;
+			}
+
+			Deque<Map<Integer, String>> argumentsDeque = new ArrayDeque<>();
+			Deque<String> classNames = new ArrayDeque<>();
+
+			while (xmlStreamReader.hasNext()) {
+				eventType = xmlStreamReader.next();
+
+				if ((eventType == XMLStreamConstants.END_ELEMENT) &&
+					Objects.equals(xmlStreamReader.getLocalName(), "bean")) {
+
+					_cbomData.addSpringBean(
+						argumentsDeque.pop(), classNames.pop());
+
+					continue;
+				}
+
+				if (eventType != XMLStreamConstants.START_ELEMENT) {
+					continue;
+				}
+
+				String localName = xmlStreamReader.getLocalName();
+
+				if (localName.equals("bean")) {
+					argumentsDeque.push(new TreeMap<>());
+					classNames.push(
+						GetterUtil.getString(
+							xmlStreamReader.getAttributeValue(null, "class")));
+				}
+				else if (localName.equals("constructor-arg") &&
+						 !argumentsDeque.isEmpty()) {
+
+					Map<Integer, String> arguments = argumentsDeque.peek();
+
+					arguments.put(
+						GetterUtil.getInteger(
+							xmlStreamReader.getAttributeValue(null, "index"),
+							arguments.size()),
+						xmlStreamReader.getAttributeValue(null, "value"));
+				}
+			}
+		}
+		catch (XMLStreamException xmlStreamException) {
+			throw new IOException(xmlStreamException);
+		}
+	}
+
 	private static final String _CLASS_NAME_DIGESTER_UTIL =
 		"com/liferay/portal/kernel/util/DigesterUtil";
 
 	private static final String _CLASS_NAME_LIFERAY_SECURE_RANDOM =
 		"com/liferay/portal/kernel/security/SecureRandom";
+
+	private static final String _CLASS_NAME_SECRET_KEY_SPEC =
+		"javax/crypto/spec/SecretKeySpec";
 
 	private static final String _CLASS_NAME_SECURE_RANDOM_UTIL =
 		"com/liferay/portal/kernel/security/SecureRandomUtil";

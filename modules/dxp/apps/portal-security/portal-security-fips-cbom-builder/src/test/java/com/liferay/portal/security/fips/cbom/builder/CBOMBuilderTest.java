@@ -5,7 +5,6 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -445,11 +444,6 @@ public class CBOMBuilderTest {
 
 		Assert.assertEquals(
 			Arrays.asList(
-				StringBundler.concat(
-					"The scan cannot read the algorithm of the MessageDigest ",
-					"call in ", _CLASS_NAME_CACHE_KEY_GENERATOR,
-					", which comes from parameter 1 of the constructor of ",
-					_CLASS_NAME_CACHE_KEY_GENERATOR),
 				"The scan found no crypto call for " +
 					"\"company.encryption.algorithm\"",
 				"The scan found no crypto call for " +
@@ -457,9 +451,7 @@ public class CBOMBuilderTest {
 				"The scan found no crypto call for " +
 					"\"passwords.encryption.algorithm\"",
 				"The scan found no crypto call for " +
-					"\"passwords.encryption.algorithm.legacy\"",
-				"The scan found no crypto call for " +
-					"\"tunneling.servlet.encryption.algorithm\""),
+					"\"passwords.encryption.algorithm.legacy\""),
 			new ArrayList<>(cbomData.getMessages()));
 
 		cbomJSON = CBOMBuilder.build(
@@ -488,7 +480,7 @@ public class CBOMBuilderTest {
 				"crypto:MessageDigest:MD5", "crypto:MessageDigest:SHA-1",
 				"crypto:MessageDigest:SHA-256",
 				"crypto:MessageDigest:auth.mac.algorithm",
-				"crypto:MessageDigest:" + _CLASS_NAME_CACHE_KEY_GENERATOR,
+				"crypto:SecretKeySpec:tunneling.servlet.encryption.algorithm",
 				"crypto:SecureRandom:NativePRNG"),
 			bomRefs);
 
@@ -507,6 +499,10 @@ public class CBOMBuilderTest {
 			JSONCompareMode.STRICT);
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
+				_toPropertyJSONObject(
+					"feature",
+					"SHA-1 in com.liferay.portal.cache.key." +
+						"MessageDigestCacheKeyGenerator"),
 				_toPropertyJSONObject(
 					"feature",
 					"SHA-1 in com.liferay.portal.kernel.model.UserConstants"),
@@ -620,9 +616,6 @@ public class CBOMBuilderTest {
 
 	private static final String _BUNDLE_SYMBOLIC_NAME =
 		RandomTestUtil.randomString();
-
-	private static final String _CLASS_NAME_CACHE_KEY_GENERATOR =
-		"com.liferay.portal.cache.key.MessageDigestCacheKeyGenerator";
 
 	private static final String _FEATURE_NAME = RandomTestUtil.randomString();
 
