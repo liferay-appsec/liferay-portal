@@ -13,6 +13,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -21,6 +23,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
@@ -154,8 +157,60 @@ public class AuditEventLocalServiceTest {
 		_testAddAuditEventWhenPseudonymizationIsEnabled();
 	}
 
+	@FeatureFlag("LPD-6417")
 	@Test
-	public void testGetAuditEvents() {
+	public void testAddAuditEvents() throws Exception {
+		AuditMessage auditMessage = new AuditMessage(
+			TestPropsValues.getCompanyId(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		auditMessage.setClientIP(RandomTestUtil.randomString());
+		auditMessage.setSessionID(RandomTestUtil.randomString());
+
+		_auditEventLocalService.addAuditEvents(
+			ListUtil.fromArray(auditMessage, auditMessage));
+
+		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
+			TestPropsValues.getCompanyId(), 0, 0, null, null, null, null, null,
+			null, null, null, null, null, null, 0, auditMessage.getSessionID(),
+			true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		_auditEvents.addAll(auditEvents);
+
+		Assert.assertEquals(auditEvents.toString(), 2, auditEvents.size());
+
+		AuditEvent auditEvent1 = auditEvents.get(0);
+		AuditEvent auditEvent2 = auditEvents.get(1);
+
+		Assert.assertTrue(auditEvent1.isPseudonymized());
+		Assert.assertTrue(auditEvent2.isPseudonymized());
+
+		Assert.assertEquals(
+			auditEvent1.getClientIP(), auditEvent2.getClientIP());
+
+		AuditEventPseudonymField clientIPAuditEventPseudonymField =
+			_auditEventPseudonymFieldLocalService.fetchAuditEventPseudonymField(
+				GetterUtil.getLong(auditEvent1.getClientIP()));
+
+		_auditEventPseudonymFields.add(clientIPAuditEventPseudonymField);
+
+		Assert.assertEquals(
+			auditMessage.getClientIP(),
+			clientIPAuditEventPseudonymField.getValue());
+
+		AuditEventPseudonymField userNameAuditEventPseudonymField =
+			_auditEventPseudonymFieldLocalService.fetchAuditEventPseudonymField(
+				GetterUtil.getLong(auditEvent1.getUserName()));
+
+		_auditEventPseudonymFields.add(userNameAuditEventPseudonymField);
+
+		Assert.assertEquals(
+			auditMessage.getUserName(),
+			userNameAuditEventPseudonymField.getValue());
+	}
+
+	@Test
+	public void testGetAuditEvents() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 		String value = RandomTestUtil.randomString();
 
@@ -168,6 +223,12 @@ public class AuditEventLocalServiceTest {
 		AuditEvent auditEvent2 = _addAuditEvent(
 			companyId, false, value + RandomTestUtil.randomString());
 		AuditEvent auditEvent3 = _addAuditEvent(companyId, true, value);
+
+		DB db = DBManagerUtil.getDB();
+
+		db.runSQL(
+			"update Audit_AuditEvent set pseudonymized = null where " +
+				"auditEventId = " + auditEvent2.getAuditEventId());
 
 		_testGetAuditEvents(
 			false, null, null, companyId, value, auditEvent1, auditEvent2,
@@ -264,6 +325,10 @@ public class AuditEventLocalServiceTest {
 
 			_auditEventPseudonymFields.add(clientIPAuditEventPseudonymField);
 
+			Assert.assertEquals(
+				auditMessage.getClientIP(),
+				clientIPAuditEventPseudonymField.getValue());
+
 			AuditEventPseudonymField userNameAuditEventPseudonymField =
 				_auditEventPseudonymFieldLocalService.
 					fetchAuditEventPseudonymField(
@@ -271,9 +336,6 @@ public class AuditEventLocalServiceTest {
 
 			_auditEventPseudonymFields.add(userNameAuditEventPseudonymField);
 
-			Assert.assertEquals(
-				auditMessage.getClientIP(),
-				clientIPAuditEventPseudonymField.getValue());
 			Assert.assertTrue(auditEvent.isPseudonymized());
 			Assert.assertEquals(
 				auditMessage.getUserName(),
