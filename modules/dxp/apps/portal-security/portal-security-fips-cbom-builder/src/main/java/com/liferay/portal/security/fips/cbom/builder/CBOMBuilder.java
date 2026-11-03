@@ -56,6 +56,7 @@ import org.cyclonedx.model.component.crypto.CryptoProperties;
 import org.cyclonedx.model.component.crypto.ProtocolProperties;
 import org.cyclonedx.model.component.crypto.RelatedCryptoMaterialProperties;
 import org.cyclonedx.model.component.crypto.enums.AssetType;
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
 import org.cyclonedx.model.component.crypto.enums.ProtocolType;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
@@ -169,7 +170,13 @@ public class CBOMBuilder {
 
 		CryptoUse cryptoUse = cryptoUses.get(0);
 
+		algorithmProperties.setCryptoFunctions(_getCryptoFunctions(cryptoUses));
 		algorithmProperties.setPrimitive(_getPrimitive(cryptoUses));
+
+		if (cryptoUse.getKeySize() > 0) {
+			algorithmProperties.setParameterSetIdentifier(
+				String.valueOf(cryptoUse.getKeySize()));
+		}
 
 		if (Objects.equals(cryptoUse.getJCAClassName(), "Cipher")) {
 			CBOMUtil.setCipherProperties(
@@ -224,12 +231,17 @@ public class CBOMBuilder {
 	}
 
 	private static String _getBOMRef(CryptoUse cryptoUse) {
-		StringBundler sb = new StringBundler(4);
+		StringBundler sb = new StringBundler(6);
 
 		sb.append("crypto:");
 		sb.append(cryptoUse.getJCAClassName());
 		sb.append(StringPool.COLON);
 		sb.append(cryptoUse.getAlgorithm());
+
+		if (cryptoUse.getKeySize() > 0) {
+			sb.append(StringPool.COLON);
+			sb.append(cryptoUse.getKeySize());
+		}
 
 		return sb.toString();
 	}
@@ -252,6 +264,18 @@ public class CBOMBuilder {
 			cryptoUsesMap.entrySet(),
 			entry -> _toComponent(
 				entry.getKey(), entry.getValue(), cryptoUses));
+	}
+
+	private static List<CryptoFunction> _getCryptoFunctions(
+		List<CryptoUse> cryptoUses) {
+
+		Set<CryptoFunction> cryptoFunctions = new TreeSet<>();
+
+		for (CryptoUse cryptoUse : cryptoUses) {
+			cryptoFunctions.addAll(cryptoUse.getCryptoFunctions());
+		}
+
+		return new ArrayList<>(cryptoFunctions);
 	}
 
 	private static Evidence _getEvidence(List<CryptoUse> cryptoUses) {
@@ -327,7 +351,8 @@ public class CBOMBuilder {
 
 	private static String _getName(CryptoUse cryptoUse) {
 		return CBOMUtil.getCycloneDXName(
-			cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
+			cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName(),
+			cryptoUse.getKeySize());
 	}
 
 	private static Primitive _getPrimitive(List<CryptoUse> cryptoUses) {
@@ -429,7 +454,22 @@ public class CBOMBuilder {
 			return relatedCryptoMaterialProperties;
 		}
 
-		relatedCryptoMaterialProperties.setType(RelatedCryptoMaterialType.KEY);
+		TreeSet<RelatedCryptoMaterialType> relatedCryptoMaterialTypes =
+			new TreeSet<>();
+
+		for (CryptoUse cryptoUse : keyCryptoUses) {
+			relatedCryptoMaterialTypes.addAll(
+				cryptoUse.getRelatedCryptoMaterialTypes());
+		}
+
+		if (relatedCryptoMaterialTypes.size() == 1) {
+			relatedCryptoMaterialProperties.setType(
+				relatedCryptoMaterialTypes.first());
+		}
+		else {
+			relatedCryptoMaterialProperties.setType(
+				RelatedCryptoMaterialType.KEY);
+		}
 
 		return relatedCryptoMaterialProperties;
 	}

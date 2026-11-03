@@ -37,14 +37,14 @@ public class CBOMDataTest {
 
 		cryptoUse1.addValue("SHA");
 
-		cbomData.addCryptoUse(cryptoUse1);
+		cbomData.addCryptoUse(cryptoUse1, new CryptoUse());
 
 		CryptoUse cryptoUse4 = _createMessageDigestCryptoUse(
 			"com.liferay.portal.encryptor", RandomTestUtil.randomString());
 
 		cryptoUse4.addValue("MD5");
 
-		cbomData.addCryptoUse(cryptoUse4);
+		cbomData.addCryptoUse(cryptoUse4, new CryptoUse());
 
 		Assert.assertEquals(
 			Arrays.asList("SHA-1 in com.liferay.test.Class1 SHA-1"),

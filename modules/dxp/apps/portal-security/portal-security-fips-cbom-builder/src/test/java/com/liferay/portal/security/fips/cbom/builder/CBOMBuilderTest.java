@@ -20,10 +20,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 import org.cyclonedx.parsers.JsonParser;
 
 import org.junit.Assert;
@@ -55,21 +58,47 @@ public class CBOMBuilderTest {
 
 	@Test
 	public void testBuild() throws Exception {
+		CryptoUse cipherCryptoUse = _createCryptoUse(
+			"AES/GCM/NoPadding", "com.liferay.test.Class1",
+			Arrays.asList(CryptoFunction.ENCRYPT, CryptoFunction.DECRYPT),
+			"Cipher");
+
+		cipherCryptoUse.setKeySize(256);
+
+		CryptoUse keyFactoryCryptoUse = _createCryptoUse(
+			"DSA", "com.liferay.test.Class3",
+			Collections.singletonList(CryptoFunction.OTHER), "KeyFactory");
+
+		keyFactoryCryptoUse.setRelatedCryptoMaterialTypes(
+			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
+
 		List<CryptoUse> cryptoUses = Arrays.asList(
 			_createCryptoUse(
-				"SHA-256", "com.liferay.test.Class4", "MessageDigest"),
+				"SHA-256", "com.liferay.test.Class4",
+				Collections.singletonList(CryptoFunction.DIGEST),
+				"MessageDigest"),
+			cipherCryptoUse,
 			_createCryptoUse(
-				"AES/GCM/NoPadding", "com.liferay.test.Class1", "Cipher"),
+				"SHA-256", "com.liferay.test.Class5",
+				Collections.singletonList(CryptoFunction.DIGEST),
+				"MessageDigest"),
+			keyFactoryCryptoUse,
 			_createCryptoUse(
-				"SHA-256", "com.liferay.test.Class5", "MessageDigest"),
-			_createCryptoUse("DSA", "com.liferay.test.Class3", "KeyFactory"),
+				"SHA1withDSA", "com.liferay.test.Class3",
+				Collections.singletonList(CryptoFunction.VERIFY), "Signature"),
 			_createCryptoUse(
-				"SHA1withDSA", "com.liferay.test.Class3", "Signature"),
-			_createCryptoUse("HmacSHA1", "com.liferay.test.Class6", "Mac"),
-			_createCryptoUse("RAW", "com.liferay.test.Class6", "SecretKeySpec"),
-			_createCryptoUse("PKCS12", "com.liferay.test.Class7", "KeyStore"),
+				"HmacSHA1", "com.liferay.test.Class6",
+				Collections.singletonList(CryptoFunction.TAG), "Mac"),
 			_createCryptoUse(
-				"TLSv1.2", "com.liferay.test.Class8", "SSLContext"));
+				"RAW", "com.liferay.test.Class6",
+				Collections.singletonList(CryptoFunction.OTHER),
+				"SecretKeySpec"),
+			_createCryptoUse(
+				"PKCS12", "com.liferay.test.Class7",
+				Collections.singletonList(CryptoFunction.OTHER), "KeyStore"),
+			_createCryptoUse(
+				"TLSv1.2", "com.liferay.test.Class8",
+				Collections.singletonList(CryptoFunction.OTHER), "SSLContext"));
 
 		String configurationName = RandomTestUtil.randomString();
 
@@ -91,18 +120,23 @@ public class CBOMBuilderTest {
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				_toJSONObject(
-					"crypto:Cipher:AES/GCM/NoPadding",
+					"crypto:Cipher:AES/GCM/NoPadding:256",
 					JSONUtil.put(
 						"algorithmProperties",
 						JSONUtil.put(
+							"cryptoFunctions",
+							JSONUtil.putAll("encrypt", "decrypt")
+						).put(
 							"mode", "gcm"
+						).put(
+							"parameterSetIdentifier", "256"
 						).put(
 							"primitive", "ae"
 						)
 					).put(
 						"assetType", "algorithm"
 					),
-					"AES-GCM",
+					"AES-256-GCM",
 					JSONUtil.putAll(
 						_toPropertyJSONObject("feature", _FEATURE_NAME),
 						_toPropertyJSONObject("jca-class", "Cipher"),
@@ -118,7 +152,7 @@ public class CBOMBuilderTest {
 						JSONUtil.put(
 							"algorithmRef", "crypto:Signature:SHA1withDSA"
 						).put(
-							"type", "key"
+							"type", "public-key"
 						)
 					),
 					"DSA",
@@ -150,7 +184,12 @@ public class CBOMBuilderTest {
 				_toJSONObject(
 					"crypto:Mac:HmacSHA1",
 					JSONUtil.put(
-						"algorithmProperties", JSONUtil.put("primitive", "mac")
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("tag")
+						).put(
+							"primitive", "mac"
+						)
 					).put(
 						"assetType", "algorithm"
 					),
@@ -164,7 +203,12 @@ public class CBOMBuilderTest {
 				_toJSONObject(
 					"crypto:MessageDigest:SHA-256",
 					JSONUtil.put(
-						"algorithmProperties", JSONUtil.put("primitive", "hash")
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("digest")
+						).put(
+							"primitive", "hash"
+						)
 					).put(
 						"assetType", "algorithm"
 					),
@@ -216,7 +260,11 @@ public class CBOMBuilderTest {
 					"crypto:Signature:SHA1withDSA",
 					JSONUtil.put(
 						"algorithmProperties",
-						JSONUtil.put("primitive", "signature")
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("verify")
+						).put(
+							"primitive", "signature"
+						)
 					).put(
 						"assetType", "algorithm"
 					),
@@ -298,12 +346,14 @@ public class CBOMBuilderTest {
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
 	private CryptoUse _createCryptoUse(
-		String algorithm, String className, String jcaClassName) {
+		String algorithm, String className,
+		List<CryptoFunction> cryptoFunctions, String jcaClassName) {
 
 		CryptoUse cryptoUse = new CryptoUse(
 			_BUNDLE_SYMBOLIC_NAME, className, _FEATURE_NAME, jcaClassName);
 
 		cryptoUse.setAlgorithm(algorithm);
+		cryptoUse.setCryptoFunctions(cryptoFunctions);
 
 		return cryptoUse;
 	}

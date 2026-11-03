@@ -6,12 +6,14 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * @author Manuele Castro
@@ -19,8 +21,8 @@ import java.util.Set;
  */
 public class CBOMData {
 
-	public void addCryptoUse(CryptoUse cryptoUse) {
-		_scannedCryptoUses.addAll(_toCryptoUses(cryptoUse));
+	public void addCryptoUse(CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
+		_scannedCryptoUses.addAll(_toCryptoUses(cryptoUse, keySizeCryptoUse));
 	}
 
 	public Set<String> getBundleSymbolicNames() {
@@ -65,13 +67,23 @@ public class CBOMData {
 		}
 	}
 
-	private List<CryptoUse> _toCryptoUses(CryptoUse cryptoUse) {
+	private List<CryptoUse> _toCryptoUses(
+		CryptoUse cryptoUse, CryptoUse keySizeCryptoUse) {
+
 		List<CryptoUse> cryptoUses = new ArrayList<>();
 
-		for (String value : cryptoUse.getValues()) {
+		SortedSet<String> keySizes = keySizeCryptoUse.getValues();
+		SortedSet<String> values = cryptoUse.getValues();
+
+		for (String value : values) {
 			CryptoUse valueCryptoUse = cryptoUse.createPart();
 
 			valueCryptoUse.setAlgorithm(value);
+
+			if ((values.size() == 1) && (keySizes.size() == 1)) {
+				valueCryptoUse.setKeySize(
+					GetterUtil.getInteger(keySizes.first()));
+			}
 
 			cryptoUses.add(valueCryptoUse);
 		}

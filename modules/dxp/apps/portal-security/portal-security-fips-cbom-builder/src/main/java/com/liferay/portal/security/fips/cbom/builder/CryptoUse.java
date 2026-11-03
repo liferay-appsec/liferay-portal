@@ -5,8 +5,13 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * @author Manuele Castro
@@ -37,8 +42,13 @@ public class CryptoUse {
 	}
 
 	public CryptoUse createPart() {
-		return new CryptoUse(
+		CryptoUse cryptoUse = new CryptoUse(
 			_bundleSymbolicName, _className, _featureName, _jcaClassName);
+
+		cryptoUse.setCryptoFunctions(_cryptoFunctions);
+		cryptoUse.setRelatedCryptoMaterialTypes(_relatedCryptoMaterialTypes);
+
+		return cryptoUse;
 	}
 
 	public String getAlgorithm() {
@@ -53,12 +63,24 @@ public class CryptoUse {
 		return _className;
 	}
 
+	public List<CryptoFunction> getCryptoFunctions() {
+		return _cryptoFunctions;
+	}
+
 	public String getFeatureName() {
 		return _featureName;
 	}
 
 	public String getJCAClassName() {
 		return _jcaClassName;
+	}
+
+	public int getKeySize() {
+		return _keySize;
+	}
+
+	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
+		return _relatedCryptoMaterialTypes;
 	}
 
 	public SortedSet<String> getValues() {
@@ -69,15 +91,33 @@ public class CryptoUse {
 		_algorithm = algorithm;
 	}
 
+	public void setCryptoFunctions(List<CryptoFunction> cryptoFunctions) {
+		_cryptoFunctions = cryptoFunctions;
+	}
+
 	public void setFeatureName(String featureName) {
 		_featureName = featureName;
+	}
+
+	public void setKeySize(int keySize) {
+		_keySize = keySize;
+	}
+
+	public void setRelatedCryptoMaterialTypes(
+		List<RelatedCryptoMaterialType> relatedCryptoMaterialTypes) {
+
+		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
 	}
 
 	private String _algorithm;
 	private final String _bundleSymbolicName;
 	private final String _className;
+	private List<CryptoFunction> _cryptoFunctions = Collections.emptyList();
 	private String _featureName;
 	private final String _jcaClassName;
+	private int _keySize;
+	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
+		Collections.emptyList();
 	private final SortedSet<String> _values = new TreeSet<>();
 
 }

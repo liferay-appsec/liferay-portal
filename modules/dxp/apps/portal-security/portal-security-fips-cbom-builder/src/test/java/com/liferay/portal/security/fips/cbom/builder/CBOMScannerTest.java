@@ -7,9 +7,11 @@ package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -41,6 +43,9 @@ import java.util.zip.ZipOutputStream;
 
 import javax.crypto.KeyGenerator;
 
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
+
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -59,15 +64,17 @@ public class CBOMScannerTest {
 
 	@Test
 	public void testScan() throws Exception {
-		_testScan(ConstantTestClass.class, "MessageDigest SHA-256");
+		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
-			KeyFactoryTestClass.class, "KeyFactory RSA", "KeyFactory RSA");
-		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES");
+			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
+			"KeyFactory RSA [other] [public-key]");
+		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES [keygen] 256");
 		_testScan(
-			MultipleValuesTestClass.class, "MessageDigest MD5",
-			"MessageDigest SHA-256");
-		_testScan(SecureRandomTestClass.class, "SecureRandom SHA1PRNG");
-		_testScan(SignatureTestClass.class, "Signature SHA256withRSA");
+			MultipleValuesTestClass.class, "MessageDigest MD5 [digest]",
+			"MessageDigest SHA-256 [digest]");
+		_testScan(
+			SecureRandomTestClass.class, "SecureRandom SHA1PRNG [generate]");
+		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
 	}
 
 	@Test
@@ -191,8 +198,34 @@ public class CBOMScannerTest {
 	}
 
 	private String _getDescription(CryptoUse cryptoUse) {
-		return cryptoUse.getJCAClassName() + StringPool.SPACE +
-			cryptoUse.getAlgorithm();
+		StringBundler sb = new StringBundler(9);
+
+		sb.append(cryptoUse.getJCAClassName());
+		sb.append(StringPool.SPACE);
+
+		sb.append(cryptoUse.getAlgorithm());
+
+		sb.append(StringPool.SPACE);
+		sb.append(
+			String.valueOf(
+				TransformUtil.transform(
+					cryptoUse.getCryptoFunctions(), CryptoFunction::getName)));
+
+		if (cryptoUse.getKeySize() > 0) {
+			sb.append(StringPool.SPACE);
+			sb.append(String.valueOf(cryptoUse.getKeySize()));
+		}
+
+		if (ListUtil.isNotEmpty(cryptoUse.getRelatedCryptoMaterialTypes())) {
+			sb.append(StringPool.SPACE);
+			sb.append(
+				String.valueOf(
+					TransformUtil.transform(
+						cryptoUse.getRelatedCryptoMaterialTypes(),
+						RelatedCryptoMaterialType::getName)));
+		}
+
+		return sb.toString();
 	}
 
 	private byte[] _read(Class<?> clazz) throws Exception {

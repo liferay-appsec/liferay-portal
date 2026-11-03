@@ -75,43 +75,50 @@ public class CBOMUtilTest {
 
 	@Test
 	public void testGetCycloneDXName() {
-		_testGetCycloneDXName("AES", "AES", "Cipher");
-		_testGetCycloneDXName("AES/CBC/PKCS5Padding", "AES-CBC", "Cipher");
-		_testGetCycloneDXName("AES/GCM/NoPadding", "AES-GCM", "Cipher");
+		_testGetCycloneDXName("AES", "AES", "Cipher", 0);
+		_testGetCycloneDXName("AES", "AES-256", "KeyGenerator", 256);
+		_testGetCycloneDXName("AES/CBC/PKCS5Padding", "AES-CBC", "Cipher", 0);
 		_testGetCycloneDXName(
-			"ChaCha20-Poly1305/None/NoPadding", "ChaCha20-Poly1305", "Cipher");
-		_testGetCycloneDXName("DESede/CBC/PKCS5Padding", "3DES-CBC", "Cipher");
-		_testGetCycloneDXName("DH", "FFDH", "KeyAgreement");
-		_testGetCycloneDXName("Ed25519", "Ed25519", "Signature");
-		_testGetCycloneDXName("HmacSHA1", "HMAC-SHA-1", "Mac");
-		_testGetCycloneDXName("HmacSHA256", "HMAC-SHA-256", "KeyGenerator");
-		_testGetCycloneDXName("HmacSHA512", "HMAC-SHA-512", "Mac");
-		_testGetCycloneDXName("HmacSHA512", "HMAC-SHA-512", "SecretKeySpec");
-		_testGetCycloneDXName("MD5", "MD5", "MessageDigest");
-		_testGetCycloneDXName("PKCS12", "PKCS12", "KeyStore");
-		_testGetCycloneDXName("RAW", "RAW", "SecretKeySpec");
+			"AES/GCM/NoPadding", "AES-128-GCM", "Cipher", 128);
+		_testGetCycloneDXName("AES/GCM/NoPadding", "AES-GCM", "Cipher", 0);
+		_testGetCycloneDXName(
+			"ChaCha20-Poly1305/None/NoPadding", "ChaCha20-Poly1305", "Cipher",
+			0);
+		_testGetCycloneDXName(
+			"DESede/CBC/PKCS5Padding", "3DES-CBC", "Cipher", 0);
+		_testGetCycloneDXName("DH", "FFDH", "KeyAgreement", 0);
+		_testGetCycloneDXName("Ed25519", "Ed25519", "Signature", 0);
+		_testGetCycloneDXName("HmacSHA1", "HMAC-SHA-1", "Mac", 0);
+		_testGetCycloneDXName("HmacSHA256", "HMAC-SHA-256", "KeyGenerator", 0);
+		_testGetCycloneDXName("HmacSHA512", "HMAC-SHA-512", "Mac", 0);
+		_testGetCycloneDXName("HmacSHA512", "HMAC-SHA-512", "SecretKeySpec", 0);
+		_testGetCycloneDXName("MD5", "MD5", "MessageDigest", 0);
+		_testGetCycloneDXName("PKCS12", "PKCS12", "KeyStore", 0);
+		_testGetCycloneDXName("RAW", "RAW", "SecretKeySpec", 0);
+		_testGetCycloneDXName("RSA", "RSA-2048", "KeyPairGenerator", 2048);
 		_testGetCycloneDXName(
 			"RSA/ECB/OAEPWithSHA-256AndMGF1Padding", "RSA-OAEP-SHA-256",
-			"Cipher");
+			"Cipher", 0);
 		_testGetCycloneDXName(
-			"RSA/ECB/PKCS1Padding", "RSA-PKCS1-1.5", "Cipher");
-		_testGetCycloneDXName("SHA", "SHA-1", "MessageDigest");
-		_testGetCycloneDXName("SHA-512/256", "SHA-512/256", "MessageDigest");
-		_testGetCycloneDXName("SHA1withDSA", "DSA-SHA-1", "Signature");
+			"RSA/ECB/PKCS1Padding", "RSA-PKCS1-1.5", "Cipher", 0);
+		_testGetCycloneDXName("SHA", "SHA-1", "MessageDigest", 0);
+		_testGetCycloneDXName("SHA-512/256", "SHA-512/256", "MessageDigest", 0);
+		_testGetCycloneDXName("SHA1withDSA", "DSA-SHA-1", "Signature", 0);
 		_testGetCycloneDXName(
-			"SHA256withRSA", "RSA-PKCS1-1.5-SHA-256", "Signature");
+			"SHA256withRSA", "RSA-PKCS1-1.5-SHA-256", "Signature", 0);
 		_testGetCycloneDXName(
-			"SHA256withRSA/PSS", "RSA-PSS-SHA-256", "Signature");
-		_testGetCycloneDXName("SHA3-256", "SHA3-256", "MessageDigest");
-		_testGetCycloneDXName("SHA384withECDSA", "ECDSA-SHA-384", "Signature");
-		_testGetCycloneDXName("TLSv1.3", "TLSv1.3", "SSLContext");
-		_testGetCycloneDXName("X25519", "x25519", "KeyAgreement");
+			"SHA256withRSA/PSS", "RSA-PSS-SHA-256", "Signature", 0);
+		_testGetCycloneDXName("SHA3-256", "SHA3-256", "MessageDigest", 0);
+		_testGetCycloneDXName(
+			"SHA384withECDSA", "ECDSA-SHA-384", "Signature", 0);
+		_testGetCycloneDXName("TLSv1.3", "TLSv1.3", "SSLContext", 0);
+		_testGetCycloneDXName("X25519", "x25519", "KeyAgreement", 0);
 
 		String algorithm = RandomTestUtil.randomString();
 
-		_testGetCycloneDXName(algorithm, algorithm, "Cipher");
-		_testGetCycloneDXName(algorithm, algorithm, "MessageDigest");
-		_testGetCycloneDXName(algorithm, algorithm, "Signature");
+		_testGetCycloneDXName(algorithm, algorithm, "Cipher", 0);
+		_testGetCycloneDXName(algorithm, algorithm, "MessageDigest", 0);
+		_testGetCycloneDXName(algorithm, algorithm, "Signature", 0);
 	}
 
 	@Test
@@ -195,10 +202,12 @@ public class CBOMUtilTest {
 	}
 
 	private void _testGetCycloneDXName(
-		String algorithm, String expectedName, String jcaClassName) {
+		String algorithm, String expectedName, String jcaClassName,
+		int keySize) {
 
 		Assert.assertEquals(
-			expectedName, CBOMUtil.getCycloneDXName(algorithm, jcaClassName));
+			expectedName,
+			CBOMUtil.getCycloneDXName(algorithm, jcaClassName, keySize));
 	}
 
 	private void _testGetPrimitive(

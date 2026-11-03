@@ -39,15 +39,25 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.cyclonedx.model.component.crypto.AlgorithmProperties;
 import org.cyclonedx.model.component.crypto.enums.AssetType;
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.Mode;
 import org.cyclonedx.model.component.crypto.enums.Padding;
 import org.cyclonedx.model.component.crypto.enums.Primitive;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 /**
  * @author Manuele Castro
  * @author Caio Farias
  */
 public class CBOMUtil {
+
+	public static CryptoFunction fetchCipherCryptoFunction(String mode) {
+		return _cipherCryptoFunctions.get(mode);
+	}
+
+	public static CryptoFunction fetchCryptoFunction(String jcaClassName) {
+		return _cryptoFunctions.get(jcaClassName);
+	}
 
 	public static String fetchJCAClassName(String internalName) {
 		int index = internalName.lastIndexOf(CharPool.SLASH);
@@ -65,6 +75,16 @@ public class CBOMUtil {
 		}
 
 		return jcaClassName;
+	}
+
+	public static RelatedCryptoMaterialType
+		fetchKeyFactoryRelatedCryptoMaterialType(String methodName) {
+
+		return _keyFactoryRelatedCryptoMaterialTypes.get(methodName);
+	}
+
+	public static String fetchKeySizeMethodName(String internalName) {
+		return _keySizeMethodNames.get(internalName);
 	}
 
 	public static Provider fetchProvider(
@@ -94,39 +114,23 @@ public class CBOMUtil {
 	}
 
 	public static String getCycloneDXName(
-		String algorithm, String jcaClassName) {
+		String algorithm, String jcaClassName, int keySize) {
 
-		if (Objects.equals(jcaClassName, "Cipher")) {
-			return _getCipherName(algorithm);
+		String name = _getCycloneDXName(algorithm, jcaClassName);
+
+		if (keySize <= 0) {
+			return name;
 		}
 
-		String upperCaseAlgorithm = StringUtil.toUpperCase(algorithm);
-
-		if (Objects.equals(jcaClassName, "KeyAgreement")) {
-			return _cycloneDXKeyAgreementNames.getOrDefault(
-				upperCaseAlgorithm, algorithm);
+		if (name.equals("AES") || name.startsWith("AES-")) {
+			return "AES-" + keySize + name.substring(3);
 		}
 
-		if (Objects.equals(jcaClassName, "MessageDigest")) {
-			return _cycloneDXDigestNames.getOrDefault(
-				upperCaseAlgorithm, algorithm);
+		if (Objects.equals(jcaClassName, "KeyPairGenerator")) {
+			return name + StringPool.DASH + keySize;
 		}
 
-		if (Objects.equals(jcaClassName, "Signature")) {
-			return _getSignatureName(algorithm, upperCaseAlgorithm);
-		}
-
-		if (upperCaseAlgorithm.startsWith("HMAC")) {
-			String digestName = _cycloneDXDigestNames.get(
-				upperCaseAlgorithm.substring(4));
-
-			if (digestName != null) {
-				return "HMAC-" + digestName;
-			}
-		}
-
-		return _cycloneDXCipherNames.getOrDefault(
-			upperCaseAlgorithm, algorithm);
+		return name;
 	}
 
 	public static Primitive getPrimitive(
@@ -315,6 +319,42 @@ public class CBOMUtil {
 		return name + StringPool.DASH + transformationParts[1];
 	}
 
+	private static String _getCycloneDXName(
+		String algorithm, String jcaClassName) {
+
+		if (Objects.equals(jcaClassName, "Cipher")) {
+			return _getCipherName(algorithm);
+		}
+
+		String upperCaseAlgorithm = StringUtil.toUpperCase(algorithm);
+
+		if (Objects.equals(jcaClassName, "KeyAgreement")) {
+			return _cycloneDXKeyAgreementNames.getOrDefault(
+				upperCaseAlgorithm, algorithm);
+		}
+
+		if (Objects.equals(jcaClassName, "MessageDigest")) {
+			return _cycloneDXDigestNames.getOrDefault(
+				upperCaseAlgorithm, algorithm);
+		}
+
+		if (Objects.equals(jcaClassName, "Signature")) {
+			return _getSignatureName(algorithm, upperCaseAlgorithm);
+		}
+
+		if (upperCaseAlgorithm.startsWith("HMAC")) {
+			String digestName = _cycloneDXDigestNames.get(
+				upperCaseAlgorithm.substring(4));
+
+			if (digestName != null) {
+				return "HMAC-" + digestName;
+			}
+		}
+
+		return _cycloneDXCipherNames.getOrDefault(
+			upperCaseAlgorithm, algorithm);
+	}
+
 	private static Mode _getMode(String name) {
 		for (Mode mode : Mode.values()) {
 			if (StringUtil.equalsIgnoreCase(mode.getName(), name)) {
@@ -390,6 +430,44 @@ public class CBOMUtil {
 	private static final Set<String> _blockCipherNames = SetUtil.fromArray(
 		"ARIA", "BLOWFISH", "CAMELLIA", "DES", "DESEDE", "RC2", "SM4",
 		"TRIPLEDES");
+	private static final Map<String, CryptoFunction> _cipherCryptoFunctions =
+		HashMapBuilder.put(
+			String.valueOf(Cipher.DECRYPT_MODE), CryptoFunction.DECRYPT
+		).put(
+			String.valueOf(Cipher.ENCRYPT_MODE), CryptoFunction.ENCRYPT
+		).put(
+			String.valueOf(Cipher.UNWRAP_MODE), CryptoFunction.DECRYPT
+		).put(
+			String.valueOf(Cipher.WRAP_MODE), CryptoFunction.ENCRYPT
+		).build();
+	private static final Map<String, CryptoFunction> _cryptoFunctions =
+		HashMapBuilder.put(
+			"KeyAgreement", CryptoFunction.KEYDERIVE
+		).put(
+			"KeyFactory", CryptoFunction.OTHER
+		).put(
+			"KeyGenerator", CryptoFunction.KEYGEN
+		).put(
+			"KeyManagerFactory", CryptoFunction.OTHER
+		).put(
+			"KeyPairGenerator", CryptoFunction.KEYGEN
+		).put(
+			"KeyStore", CryptoFunction.OTHER
+		).put(
+			"Mac", CryptoFunction.TAG
+		).put(
+			"MessageDigest", CryptoFunction.DIGEST
+		).put(
+			"SecretKeyFactory", CryptoFunction.KEYDERIVE
+		).put(
+			"SecretKeySpec", CryptoFunction.OTHER
+		).put(
+			"SecureRandom", CryptoFunction.GENERATE
+		).put(
+			"SSLContext", CryptoFunction.OTHER
+		).put(
+			"TrustManagerFactory", CryptoFunction.OTHER
+		).build();
 	private static final Map<String, String> _cycloneDXCipherNames =
 		HashMapBuilder.put(
 			"AES", "AES"
@@ -492,6 +570,18 @@ public class CBOMUtil {
 		"java/security", "javax/crypto", "javax/net/ssl");
 	private static final Set<String> _keyAgreementNames = SetUtil.fromArray(
 		"DH", "DIFFIEHELLMAN", "ECDH", "X25519", "X448", "XDH");
+	private static final Map<String, RelatedCryptoMaterialType>
+		_keyFactoryRelatedCryptoMaterialTypes = HashMapBuilder.put(
+			"generatePrivate", RelatedCryptoMaterialType.PRIVATE_KEY
+		).put(
+			"generatePublic", RelatedCryptoMaterialType.PUBLIC_KEY
+		).build();
+	private static final Map<String, String> _keySizeMethodNames =
+		HashMapBuilder.put(
+			"java/security/KeyPairGenerator", "initialize"
+		).put(
+			"javax/crypto/KeyGenerator", "init"
+		).build();
 	private static final Map<String, Primitive> _primitives =
 		HashMapBuilder.put(
 			"KeyAgreement", Primitive.KEY_AGREE

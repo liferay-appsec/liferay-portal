@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -26,12 +27,16 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
+import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
+
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -175,6 +180,54 @@ public class CBOMScanner {
 		return className;
 	}
 
+	private List<CryptoFunction> _getCryptoFunctions(
+		Frame<SourceValue>[] frames, InsnList insnList, String jcaClassName,
+		MethodInsnNode methodInsnNode) {
+
+		CryptoFunction cryptoFunction = CBOMUtil.fetchCryptoFunction(
+			jcaClassName);
+
+		if (cryptoFunction != null) {
+			return Collections.singletonList(cryptoFunction);
+		}
+
+		Set<CryptoFunction> cryptoFunctions = new TreeSet<>();
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			if (Objects.equals(linkedMethodInsnNode.name, "initSign")) {
+				cryptoFunctions.add(CryptoFunction.SIGN);
+			}
+			else if (Objects.equals(linkedMethodInsnNode.name, "initVerify")) {
+				cryptoFunctions.add(CryptoFunction.VERIFY);
+			}
+			else if (Objects.equals(linkedMethodInsnNode.name, "init") &&
+					 linkedMethodInsnNode.desc.startsWith("(I")) {
+
+				CryptoUse cryptoUse = _getArgumentCryptoUse(
+					frames, insnList, linkedMethodInsnNode, 0,
+					Type.getArgumentCount(linkedMethodInsnNode.desc));
+
+				for (String value : cryptoUse.getValues()) {
+					cryptoFunction = CBOMUtil.fetchCipherCryptoFunction(value);
+
+					if (cryptoFunction == null) {
+						continue;
+					}
+
+					cryptoFunctions.add(cryptoFunction);
+				}
+			}
+		}
+
+		if (cryptoFunctions.isEmpty()) {
+			return Collections.singletonList(CryptoFunction.UNKNOWN);
+		}
+
+		return new ArrayList<>(cryptoFunctions);
+	}
+
 	private List<MethodInsnNode> _getCryptoMethodInsnNodes(
 		MethodNode methodNode) {
 
@@ -200,10 +253,22 @@ public class CBOMScanner {
 	private CryptoUse _getCryptoUse(AbstractInsnNode abstractInsnNode) {
 		CryptoUse cryptoUse = new CryptoUse();
 
+		int opcode = abstractInsnNode.getOpcode();
+
 		if (abstractInsnNode instanceof LdcInsnNode) {
 			LdcInsnNode ldcInsnNode = (LdcInsnNode)abstractInsnNode;
 
 			cryptoUse.addValue(String.valueOf(ldcInsnNode.cst));
+		}
+		else if ((opcode >= Opcodes.ICONST_M1) &&
+				 (opcode <= Opcodes.ICONST_5)) {
+
+			cryptoUse.addValue(String.valueOf(opcode - Opcodes.ICONST_0));
+		}
+		else if ((opcode == Opcodes.BIPUSH) || (opcode == Opcodes.SIPUSH)) {
+			IntInsnNode intInsnNode = (IntInsnNode)abstractInsnNode;
+
+			cryptoUse.addValue(String.valueOf(intInsnNode.operand));
 		}
 
 		return cryptoUse;
@@ -255,6 +320,105 @@ public class CBOMScanner {
 		}
 
 		return null;
+	}
+
+	private CryptoUse _getKeySizeCryptoUse(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode) {
+
+		CryptoUse cryptoUse = new CryptoUse();
+
+		String methodName = CBOMUtil.fetchKeySizeMethodName(
+			methodInsnNode.owner);
+
+		if (methodName == null) {
+			return cryptoUse;
+		}
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			if (!Objects.equals(linkedMethodInsnNode.name, methodName) ||
+				!linkedMethodInsnNode.desc.startsWith("(I")) {
+
+				continue;
+			}
+
+			cryptoUse.addAll(
+				_getArgumentCryptoUse(
+					frames, insnList, linkedMethodInsnNode, 0,
+					Type.getArgumentCount(linkedMethodInsnNode.desc)));
+		}
+
+		return cryptoUse;
+	}
+
+	private List<MethodInsnNode> _getLinkedMethodInsnNodes(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		MethodInsnNode methodInsnNode) {
+
+		List<MethodInsnNode> linkedMethodInsnNodes = new ArrayList<>();
+
+		for (AbstractInsnNode abstractInsnNode : insnList) {
+			if (abstractInsnNode.getOpcode() != Opcodes.INVOKEVIRTUAL) {
+				continue;
+			}
+
+			MethodInsnNode curMethodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			Frame<SourceValue> frame =
+				frames[insnList.indexOf(curMethodInsnNode)];
+
+			if ((frame == null) ||
+				!Objects.equals(
+					curMethodInsnNode.owner, methodInsnNode.owner)) {
+
+				continue;
+			}
+
+			SourceValue sourceValue = _getReceiver(
+				frame, Type.getArgumentCount(curMethodInsnNode.desc));
+
+			if (!sourceValue.insns.contains(methodInsnNode)) {
+				continue;
+			}
+
+			linkedMethodInsnNodes.add(curMethodInsnNode);
+		}
+
+		return linkedMethodInsnNodes;
+	}
+
+	private SourceValue _getReceiver(Frame<SourceValue> frame, int count) {
+		return frame.getStack(frame.getStackSize() - count - 1);
+	}
+
+	private List<RelatedCryptoMaterialType> _getRelatedCryptoMaterialTypes(
+		Frame<SourceValue>[] frames, InsnList insnList, String jcaClassName,
+		MethodInsnNode methodInsnNode) {
+
+		if (!Objects.equals(jcaClassName, "KeyFactory")) {
+			return Collections.emptyList();
+		}
+
+		Set<RelatedCryptoMaterialType> relatedCryptoMaterialTypes =
+			new TreeSet<>();
+
+		for (MethodInsnNode linkedMethodInsnNode :
+				_getLinkedMethodInsnNodes(frames, insnList, methodInsnNode)) {
+
+			RelatedCryptoMaterialType relatedCryptoMaterialType =
+				CBOMUtil.fetchKeyFactoryRelatedCryptoMaterialType(
+					linkedMethodInsnNode.name);
+
+			if (relatedCryptoMaterialType == null) {
+				continue;
+			}
+
+			relatedCryptoMaterialTypes.add(relatedCryptoMaterialType);
+		}
+
+		return new ArrayList<>(relatedCryptoMaterialTypes);
 	}
 
 	private boolean _isClassFileName(String name) {
@@ -310,10 +474,19 @@ public class CBOMScanner {
 				CryptoUse cryptoUse = new CryptoUse(
 					bundleSymbolicName, className, featureName, jcaClassName);
 
+				cryptoUse.setCryptoFunctions(
+					_getCryptoFunctions(
+						frames, insnList, jcaClassName, methodInsnNode));
+				cryptoUse.setRelatedCryptoMaterialTypes(
+					_getRelatedCryptoMaterialTypes(
+						frames, insnList, jcaClassName, methodInsnNode));
+
 				cryptoUse.addAll(
 					_getAlgorithmCryptoUse(frames, insnList, methodInsnNode));
 
-				_cbomData.addCryptoUse(cryptoUse);
+				_cbomData.addCryptoUse(
+					cryptoUse,
+					_getKeySizeCryptoUse(frames, insnList, methodInsnNode));
 			}
 		}
 	}
