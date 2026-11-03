@@ -83,6 +83,9 @@ public class CBOMScannerTest {
 			"MessageDigest unresolved: parameter 1 of the constructor of " +
 				ConstructorParameterTestClass.class.getName() + " [digest]");
 		_testScan(
+			new Class<?>[] {CallSiteTestClass.class}, false,
+			"MessageDigest SHA-256 [digest]");
+		_testScan(
 			new Class<?>[] {ComputedTestClass.class}, false,
 			"Mac configured by [test.digest] [tag]",
 			"MessageDigest unresolved: a value the code computes [digest]");
@@ -104,6 +107,12 @@ public class CBOMScannerTest {
 			FIPSEnabledTestClass.class, false, "MessageDigest MD5 [digest]");
 		_testScan(
 			FIPSEnabledTestClass.class, true, "MessageDigest SHA-256 [digest]");
+		_testScan(
+			new Class<?>[] {
+				DispatchCallerTestClass.class, DispatchTestClass.class,
+				DispatchTestInterface.class
+			},
+			false, "MessageDigest SHA-384 [digest]");
 		_testScan(
 			KeyFactoryTestClass.class, false,
 			"KeyFactory RSA [other] [private-key]",
@@ -133,6 +142,14 @@ public class CBOMScannerTest {
 		_testScan(
 			PropsUtilTestClass.class, false,
 			"MessageDigest configured by [test.algorithm] [digest]");
+		_testScan(
+			new Class<?>[] {
+				SelectedCallerTestClass.class, SelectedTestClass.class,
+				SelectedTestInterface.class
+			},
+			false,
+			"MessageDigest SHA-512 selected by [test.algorithm] [digest]");
+
 		_testScan(
 			SecureRandomTestClass.class, false, "SecureRandom DRBG [generate]",
 			"SecureRandom DRBG [generate]", "SecureRandom SHA1PRNG [generate]");
@@ -195,6 +212,20 @@ public class CBOMScannerTest {
 
 	@Rule
 	public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+	public static class CallSiteTestClass {
+
+		public void digest() throws Exception {
+			_identity("MD5");
+
+			MessageDigest.getInstance(_identity("SHA-256"));
+		}
+
+		private String _identity(String value) {
+			return value;
+		}
+
+	}
 
 	public static class ComputedTestClass {
 
@@ -267,6 +298,25 @@ public class CBOMScannerTest {
 
 		public String digest() {
 			return DigesterUtil.digestHex(DigesterUtil.MD5, "test");
+		}
+
+	}
+
+	public static class DispatchCallerTestClass {
+
+		public void digest(DispatchTestInterface dispatchTestInterface)
+			throws Exception {
+
+			dispatchTestInterface.digest("SHA-384");
+		}
+
+	}
+
+	public static class DispatchTestClass implements DispatchTestInterface {
+
+		@Override
+		public void digest(String algorithm) throws Exception {
+			MessageDigest.getInstance(algorithm);
 		}
 
 	}
@@ -387,6 +437,25 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class SelectedCallerTestClass {
+
+		public void digest(SelectedTestInterface selectedTestInterface)
+			throws Exception {
+
+			selectedTestInterface.digest(PropsUtil.get("test.algorithm"));
+		}
+
+	}
+
+	public static class SelectedTestClass implements SelectedTestInterface {
+
+		@Override
+		public void digest(String algorithm) throws Exception {
+			MessageDigest.getInstance("SHA-512");
+		}
+
+	}
+
 	public static class SignatureTestClass {
 
 		public void verify(PublicKey publicKey) throws Exception {
@@ -419,6 +488,18 @@ public class CBOMScannerTest {
 			TrustManagerFactory.getInstance(
 				TrustManagerFactory.getDefaultAlgorithm());
 		}
+
+	}
+
+	public interface DispatchTestInterface {
+
+		public void digest(String algorithm) throws Exception;
+
+	}
+
+	public interface SelectedTestInterface {
+
+		public void digest(String algorithm) throws Exception;
 
 	}
 

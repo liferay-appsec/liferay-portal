@@ -196,9 +196,11 @@ public class CBOMScanner {
 			CryptoUse cryptoUse = new CryptoUse();
 
 			cryptoUse.addReference(
-				_getMethodKey(
-					_CLASS_NAME_DIGESTER_UTIL, "_getDefaultAlgorithm",
-					"()Ljava/lang/String;"));
+				_cbomData.addCallReference(
+					Collections.emptyList(),
+					_getMethodKey(
+						_CLASS_NAME_DIGESTER_UTIL, "_getDefaultAlgorithm",
+						"()Ljava/lang/String;")));
 
 			return cryptoUse;
 		}
@@ -750,10 +752,29 @@ public class CBOMScanner {
 		}
 
 		if (function == null) {
+			List<CryptoUse> argumentCryptoUses = new ArrayList<>();
+
+			Type[] argumentTypes = Type.getArgumentTypes(methodInsnNode.desc);
+
+			for (int i = 0; i < argumentTypes.length; i++) {
+				if (!_isTracked(argumentTypes[i])) {
+					argumentCryptoUses.add(null);
+
+					continue;
+				}
+
+				argumentCryptoUses.add(
+					_getCryptoUse(
+						frames, insnList, _getArgument(frame, i, count),
+						new HashSet<>(visitedAbstractInsnNodes)));
+			}
+
 			cryptoUse.addReference(
-				_getMethodKey(
-					methodInsnNode.owner, methodInsnNode.name,
-					methodInsnNode.desc));
+				_cbomData.addCallReference(
+					argumentCryptoUses,
+					_getMethodKey(
+						methodInsnNode.owner, methodInsnNode.name,
+						methodInsnNode.desc)));
 
 			return cryptoUse;
 		}
@@ -831,6 +852,28 @@ public class CBOMScanner {
 		ClassNode classNode, String bundleSymbolicName, String featureName) {
 
 		String className = _getClassName(classNode.name);
+
+		List<String> interfaceNames = new ArrayList<>();
+
+		for (String interfaceName : classNode.interfaces) {
+			interfaceNames.add(_getKeyName(interfaceName));
+		}
+
+		String superClassName = null;
+
+		if (classNode.superName != null) {
+			superClassName = _getKeyName(classNode.superName);
+		}
+
+		_cbomData.addClass(
+			_getKeyName(classNode.name), interfaceNames, superClassName);
+
+		for (MethodNode methodNode : classNode.methods) {
+			_cbomData.addMethod(
+				methodNode.access,
+				_getMethodKey(
+					classNode.name, methodNode.name, methodNode.desc));
+		}
 
 		for (MethodNode methodNode : classNode.methods) {
 			if (methodNode.instructions.size() == 0) {

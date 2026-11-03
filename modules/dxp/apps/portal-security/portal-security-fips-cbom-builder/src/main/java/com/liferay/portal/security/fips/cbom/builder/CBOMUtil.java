@@ -53,6 +53,20 @@ import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
  */
 public class CBOMUtil {
 
+	public static CBOMData.ResolutionContext fetchBoundResolutionContext(
+		String methodKey, CBOMData.ResolutionContext resolutionContext) {
+
+		while (resolutionContext != null) {
+			if (Objects.equals(resolutionContext.getMethodKey(), methodKey)) {
+				return resolutionContext;
+			}
+
+			resolutionContext = resolutionContext.getParentResolutionContext();
+		}
+
+		return null;
+	}
+
 	public static CryptoFunction fetchCipherCryptoFunction(String mode) {
 		return _cipherCryptoFunctions.get(mode);
 	}
@@ -262,6 +276,16 @@ public class CBOMUtil {
 		}
 
 		return "the field " + reference;
+	}
+
+	public static String getVisitedKey(
+		String reference, CBOMData.ResolutionContext resolutionContext) {
+
+		if (resolutionContext == null) {
+			return reference;
+		}
+
+		return resolutionContext.getId() + StringPool.COLON + reference;
 	}
 
 	public static boolean isKeyAlgorithm(
