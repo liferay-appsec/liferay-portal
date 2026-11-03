@@ -66,12 +66,21 @@ public class CBOMScannerTest {
 	public void testScan() throws Exception {
 		_testScan(ConstantTestClass.class, "MessageDigest SHA-256 [digest]");
 		_testScan(
+			ConstructorParameterTestClass.class,
+			"MessageDigest unresolved: the field " +
+				ConstructorParameterTestClass.class.getName() +
+					"._algorithm [digest]");
+		_testScan(
 			KeyFactoryTestClass.class, "KeyFactory RSA [other] [private-key]",
 			"KeyFactory RSA [other] [public-key]");
 		_testScan(KeyGeneratorTestClass.class, "KeyGenerator AES [keygen] 256");
 		_testScan(
 			MultipleValuesTestClass.class, "MessageDigest MD5 [digest]",
 			"MessageDigest SHA-256 [digest]");
+		_testScan(
+			ParameterTestClass.class,
+			"MessageDigest unresolved: parameter 1 of " +
+				ParameterTestClass.class.getName() + ".digest [digest]");
 		_testScan(
 			SecureRandomTestClass.class, "SecureRandom SHA1PRNG [generate]");
 		_testScan(SignatureTestClass.class, "Signature SHA256withRSA [verify]");
@@ -134,6 +143,20 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class ConstructorParameterTestClass {
+
+		public ConstructorParameterTestClass(String algorithm) {
+			_algorithm = algorithm;
+		}
+
+		public void digest() throws Exception {
+			MessageDigest.getInstance(_algorithm);
+		}
+
+		private final String _algorithm;
+
+	}
+
 	public static class KeyFactoryTestClass {
 
 		public PrivateKey getPrivateKey(byte[] bytes) throws Exception {
@@ -168,6 +191,14 @@ public class CBOMScannerTest {
 
 	}
 
+	public static class ParameterTestClass {
+
+		public void digest(String algorithm) throws Exception {
+			MessageDigest.getInstance(algorithm);
+		}
+
+	}
+
 	public static class SecureRandomTestClass {
 
 		public void generate() throws Exception {
@@ -198,12 +229,18 @@ public class CBOMScannerTest {
 	}
 
 	private String _getDescription(CryptoUse cryptoUse) {
-		StringBundler sb = new StringBundler(9);
+		StringBundler sb = new StringBundler(10);
 
 		sb.append(cryptoUse.getJCAClassName());
 		sb.append(StringPool.SPACE);
 
-		sb.append(cryptoUse.getAlgorithm());
+		if (cryptoUse.getAlgorithm() != null) {
+			sb.append(cryptoUse.getAlgorithm());
+		}
+		else {
+			sb.append("unresolved: ");
+			sb.append(StringUtil.merge(cryptoUse.getUnresolvedReasons(), ", "));
+		}
 
 		sb.append(StringPool.SPACE);
 		sb.append(

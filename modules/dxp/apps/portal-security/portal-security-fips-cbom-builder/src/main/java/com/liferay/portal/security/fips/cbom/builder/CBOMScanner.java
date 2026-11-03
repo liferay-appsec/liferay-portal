@@ -6,6 +6,8 @@
 package com.liferay.portal.security.fips.cbom.builder;
 
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -16,7 +18,10 @@ import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -31,12 +36,15 @@ import org.cyclonedx.model.component.crypto.enums.CryptoFunction;
 import org.cyclonedx.model.component.crypto.enums.RelatedCryptoMaterialType;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -116,7 +124,9 @@ public class CBOMScanner {
 		throws AnalyzerException {
 
 		Analyzer<SourceValue> analyzer = new Analyzer<>(
-			new OriginInterpreter());
+			new OriginInterpreter(
+				_getMethodKey(classNode.name, methodNode.name, methodNode.desc),
+				methodNode));
 
 		return analyzer.analyze(classNode.name, methodNode);
 	}
@@ -142,8 +152,10 @@ public class CBOMScanner {
 		AbstractInsnNode abstractInsnNode, int index, int count) {
 
 		return _getCryptoUse(
+			frames, insnList,
 			_getArgument(
-				frames[insnList.indexOf(abstractInsnNode)], index, count));
+				frames[insnList.indexOf(abstractInsnNode)], index, count),
+			new HashSet<>());
 	}
 
 	private String _getBundleSymbolicName(String fileName, Manifest manifest) {
@@ -250,12 +262,22 @@ public class CBOMScanner {
 		return methodInsnNodes;
 	}
 
-	private CryptoUse _getCryptoUse(AbstractInsnNode abstractInsnNode) {
+	private CryptoUse _getCryptoUse(
+		Frame<SourceValue>[] frames, InsnList insnList,
+		AbstractInsnNode abstractInsnNode,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
 		CryptoUse cryptoUse = new CryptoUse();
 
 		int opcode = abstractInsnNode.getOpcode();
 
-		if (abstractInsnNode instanceof LdcInsnNode) {
+		if (abstractInsnNode instanceof ParameterInsnNode) {
+			ParameterInsnNode parameterInsnNode =
+				(ParameterInsnNode)abstractInsnNode;
+
+			cryptoUse.addReference(parameterInsnNode.getParameterKey());
+		}
+		else if (abstractInsnNode instanceof LdcInsnNode) {
 			LdcInsnNode ldcInsnNode = (LdcInsnNode)abstractInsnNode;
 
 			cryptoUse.addValue(String.valueOf(ldcInsnNode.cst));
@@ -270,15 +292,50 @@ public class CBOMScanner {
 
 			cryptoUse.addValue(String.valueOf(intInsnNode.operand));
 		}
+		else if ((opcode == Opcodes.GETFIELD) ||
+				 (opcode == Opcodes.GETSTATIC)) {
+
+			cryptoUse.addReference(
+				_getFieldKey((FieldInsnNode)abstractInsnNode));
+		}
+		else if (opcode == Opcodes.CHECKCAST) {
+			cryptoUse.addAll(
+				_getCryptoUse(
+					frames, insnList,
+					_getArgument(
+						frames[insnList.indexOf(abstractInsnNode)], 0, 1),
+					visitedAbstractInsnNodes));
+		}
+		else if (abstractInsnNode instanceof MethodInsnNode) {
+			MethodInsnNode methodInsnNode = (MethodInsnNode)abstractInsnNode;
+
+			cryptoUse.addReference(
+				_getMethodKey(
+					methodInsnNode.owner, methodInsnNode.name,
+					methodInsnNode.desc));
+		}
+		else if (opcode != Opcodes.ACONST_NULL) {
+			cryptoUse.addUnresolvedReason("a value the code computes");
+		}
 
 		return cryptoUse;
 	}
 
-	private CryptoUse _getCryptoUse(SourceValue sourceValue) {
+	private CryptoUse _getCryptoUse(
+		Frame<SourceValue>[] frames, InsnList insnList, SourceValue sourceValue,
+		Set<AbstractInsnNode> visitedAbstractInsnNodes) {
+
 		CryptoUse cryptoUse = new CryptoUse();
 
 		for (AbstractInsnNode abstractInsnNode : sourceValue.insns) {
-			cryptoUse.addAll(_getCryptoUse(abstractInsnNode));
+			if (!visitedAbstractInsnNodes.add(abstractInsnNode)) {
+				continue;
+			}
+
+			cryptoUse.addAll(
+				_getCryptoUse(
+					frames, insnList, abstractInsnNode,
+					visitedAbstractInsnNodes));
 		}
 
 		return cryptoUse;
@@ -296,6 +353,11 @@ public class CBOMScanner {
 		}
 
 		return _getFileName(fileName);
+	}
+
+	private String _getFieldKey(FieldInsnNode fieldInsnNode) {
+		return _getKeyName(fieldInsnNode.owner) + StringPool.PERIOD +
+			fieldInsnNode.name;
 	}
 
 	private String _getFileName(String fileName) {
@@ -320,6 +382,11 @@ public class CBOMScanner {
 		}
 
 		return null;
+	}
+
+	private String _getKeyName(String internalName) {
+		return StringUtil.replace(
+			internalName, CharPool.SLASH, CharPool.PERIOD);
 	}
 
 	private CryptoUse _getKeySizeCryptoUse(
@@ -389,6 +456,13 @@ public class CBOMScanner {
 		return linkedMethodInsnNodes;
 	}
 
+	private String _getMethodKey(
+		String internalName, String name, String desc) {
+
+		return StringBundler.concat(
+			_getKeyName(internalName), StringPool.PERIOD, name, desc);
+	}
+
 	private SourceValue _getReceiver(Frame<SourceValue> frame, int count) {
 		return frame.getStack(frame.getStackSize() - count - 1);
 	}
@@ -440,8 +514,7 @@ public class CBOMScanner {
 	}
 
 	private void _scan(
-			ClassNode classNode, String bundleSymbolicName, String featureName)
-		throws IOException {
+		ClassNode classNode, String bundleSymbolicName, String featureName) {
 
 		String className = _getClassName(classNode.name);
 
@@ -459,7 +532,19 @@ public class CBOMScanner {
 				frames = _analyze(classNode, methodNode);
 			}
 			catch (AnalyzerException analyzerException) {
-				throw new IOException(analyzerException);
+				for (MethodInsnNode methodInsnNode : methodInsnNodes) {
+					CryptoUse cryptoUse = new CryptoUse(
+						bundleSymbolicName, className, featureName,
+						_getJCAClassName(methodInsnNode));
+
+					cryptoUse.addUnresolvedReason(
+						"bytecode that the scan cannot analyze: " +
+							analyzerException.getMessage());
+
+					_cbomData.addCryptoUse(cryptoUse, new CryptoUse());
+				}
+
+				continue;
 			}
 
 			InsnList insnList = methodNode.instructions;
@@ -522,8 +607,24 @@ public class CBOMScanner {
 
 	private static class OriginInterpreter extends SourceInterpreter {
 
-		public OriginInterpreter() {
+		public OriginInterpreter(String methodKey, MethodNode methodNode) {
 			super(Opcodes.ASM9);
+
+			_methodKey = methodKey;
+
+			int local = 0;
+
+			if ((methodNode.access & Opcodes.ACC_STATIC) == 0) {
+				local++;
+			}
+
+			Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
+
+			for (int i = 0; i < argumentTypes.length; i++) {
+				_parameterIndexes.put(local, i);
+
+				local += argumentTypes[i].getSize();
+			}
 		}
 
 		@Override
@@ -532,6 +633,55 @@ public class CBOMScanner {
 
 			return sourceValue;
 		}
+
+		@Override
+		public SourceValue newParameterValue(
+			boolean instanceMethod, int local, Type type) {
+
+			Integer parameterIndex = _parameterIndexes.get(local);
+
+			if (parameterIndex == null) {
+				return super.newParameterValue(instanceMethod, local, type);
+			}
+
+			return new SourceValue(
+				type.getSize(),
+				new ParameterInsnNode(
+					_methodKey + StringPool.POUND + parameterIndex));
+		}
+
+		private final String _methodKey;
+		private final Map<Integer, Integer> _parameterIndexes = new HashMap<>();
+
+	}
+
+	private static class ParameterInsnNode extends AbstractInsnNode {
+
+		public ParameterInsnNode(String parameterKey) {
+			super(-1);
+
+			_parameterKey = parameterKey;
+		}
+
+		@Override
+		public void accept(MethodVisitor methodVisitor) {
+		}
+
+		@Override
+		public AbstractInsnNode clone(Map<LabelNode, LabelNode> labelNodes) {
+			return this;
+		}
+
+		public String getParameterKey() {
+			return _parameterKey;
+		}
+
+		@Override
+		public int getType() {
+			return VAR_INSN;
+		}
+
+		private final String _parameterKey;
 
 	}
 

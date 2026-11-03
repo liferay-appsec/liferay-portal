@@ -138,6 +138,8 @@ public class CBOMUtilTest {
 			"RSA/ECB/OAEPWithSHA-256AndMGF1Padding", Primitive.PKE, "Cipher");
 		_testGetPrimitive("SHA256withRSA", Primitive.SIGNATURE, "Signature");
 		_testGetPrimitive("X25519", Primitive.KEY_AGREE, "KeyPairGenerator");
+		_testGetPrimitive(null, Primitive.HASH, "MessageDigest");
+		_testGetPrimitive(null, Primitive.UNKNOWN, "Cipher");
 	}
 
 	@Test

@@ -129,6 +129,10 @@ public class CBOMBuilder {
 
 		Files.write(file.toPath(), cbomJSON.getBytes(StandardCharsets.UTF_8));
 
+		for (String message : cbomData.getMessages()) {
+			System.out.println(message);
+		}
+
 		System.out.println("Wrote " + file.getAbsolutePath());
 	}
 
@@ -173,6 +177,10 @@ public class CBOMBuilder {
 		algorithmProperties.setCryptoFunctions(_getCryptoFunctions(cryptoUses));
 		algorithmProperties.setPrimitive(_getPrimitive(cryptoUses));
 
+		if (cryptoUse.getAlgorithm() == null) {
+			return algorithmProperties;
+		}
+
 		if (cryptoUse.getKeySize() > 0) {
 			algorithmProperties.setParameterSetIdentifier(
 				String.valueOf(cryptoUse.getKeySize()));
@@ -192,6 +200,10 @@ public class CBOMBuilder {
 		TreeSet<String> algorithmRefs = new TreeSet<>();
 
 		for (CryptoUse keyCryptoUse : keyCryptoUses) {
+			if (!keyCryptoUse.isResolved()) {
+				continue;
+			}
+
 			List<CryptoUse> candidateCryptoUses = new ArrayList<>();
 			List<CryptoUse> matchingCryptoUses = new ArrayList<>();
 
@@ -236,6 +248,13 @@ public class CBOMBuilder {
 		sb.append("crypto:");
 		sb.append(cryptoUse.getJCAClassName());
 		sb.append(StringPool.COLON);
+
+		if (cryptoUse.getAlgorithm() == null) {
+			sb.append(cryptoUse.getClassName());
+
+			return sb.toString();
+		}
+
 		sb.append(cryptoUse.getAlgorithm());
 
 		if (cryptoUse.getKeySize() > 0) {
@@ -350,6 +369,10 @@ public class CBOMBuilder {
 	}
 
 	private static String _getName(CryptoUse cryptoUse) {
+		if (cryptoUse.getAlgorithm() == null) {
+			return cryptoUse.getJCAClassName();
+		}
+
 		return CBOMUtil.getCycloneDXName(
 			cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName(),
 			cryptoUse.getKeySize());
@@ -376,6 +399,7 @@ public class CBOMBuilder {
 		Set<String> jcaClassNames = new TreeSet<>();
 		Set<String> moduleNames = new TreeSet<>();
 		Set<String> providerNames = new TreeSet<>();
+		Set<String> unresolvedReasons = new TreeSet<>();
 
 		for (CryptoUse cryptoUse : cryptoUses) {
 			featureNames.add(cryptoUse.getFeatureName());
@@ -385,14 +409,16 @@ public class CBOMBuilder {
 				moduleNames.add(cryptoUse.getBundleSymbolicName());
 			}
 
-			Provider provider = CBOMUtil.fetchProvider(
-				cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
+			if (cryptoUse.getAlgorithm() != null) {
+				Provider provider = CBOMUtil.fetchProvider(
+					cryptoUse.getAlgorithm(), cryptoUse.getJCAClassName());
 
-			if (provider == null) {
-				continue;
+				if (provider != null) {
+					providerNames.add(provider.getName());
+				}
 			}
 
-			providerNames.add(provider.getName());
+			unresolvedReasons.addAll(cryptoUse.getUnresolvedReasons());
 		}
 
 		List<Property> properties = new ArrayList<>();
@@ -401,6 +427,8 @@ public class CBOMBuilder {
 		_addProperties("liferay:cbom:jca-class", properties, jcaClassNames);
 		_addProperties("liferay:cbom:module", properties, moduleNames);
 		_addProperties("liferay:cbom:provider", properties, providerNames);
+		_addProperties(
+			"liferay:cbom:unresolved-reason", properties, unresolvedReasons);
 
 		return properties;
 	}
@@ -409,6 +437,12 @@ public class CBOMBuilder {
 		CryptoUse cryptoUse) {
 
 		ProtocolProperties protocolProperties = new ProtocolProperties();
+
+		if (cryptoUse.getAlgorithm() == null) {
+			protocolProperties.setType(ProtocolType.TLS);
+
+			return protocolProperties;
+		}
 
 		String algorithm = cryptoUse.getAlgorithm();
 
@@ -436,8 +470,11 @@ public class CBOMBuilder {
 		CryptoUse keyCryptoUse = keyCryptoUses.get(0);
 
 		if (Objects.equals(keyCryptoUse.getJCAClassName(), "KeyStore")) {
-			relatedCryptoMaterialProperties.setFormat(
-				keyCryptoUse.getAlgorithm());
+			if (keyCryptoUse.getAlgorithm() != null) {
+				relatedCryptoMaterialProperties.setFormat(
+					keyCryptoUse.getAlgorithm());
+			}
+
 			relatedCryptoMaterialProperties.setType(
 				RelatedCryptoMaterialType.OTHER);
 
@@ -488,7 +525,8 @@ public class CBOMBuilder {
 
 		if (!_keyAlgorithmJCAClassNames.contains(cryptoUse.getJCAClassName()) ||
 			!Objects.equals(
-				cryptoUse.getClassName(), keyCryptoUse.getClassName())) {
+				cryptoUse.getClassName(), keyCryptoUse.getClassName()) ||
+			!cryptoUse.isResolved()) {
 
 			return false;
 		}

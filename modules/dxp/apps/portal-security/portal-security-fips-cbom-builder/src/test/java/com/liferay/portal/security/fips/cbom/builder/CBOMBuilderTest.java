@@ -5,23 +5,33 @@
 
 package com.liferay.portal.security.fips.cbom.builder;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.io.File;
 
+import java.net.URL;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
@@ -72,6 +82,24 @@ public class CBOMBuilderTest {
 		keyFactoryCryptoUse.setRelatedCryptoMaterialTypes(
 			Collections.singletonList(RelatedCryptoMaterialType.PUBLIC_KEY));
 
+		CryptoUse unresolvedKeyStoreCryptoUse = _createCryptoUse(
+			null, "com.liferay.test.Class10",
+			Collections.singletonList(CryptoFunction.OTHER), "KeyStore");
+
+		unresolvedKeyStoreCryptoUse.setUnresolvedReasons(
+			Collections.singletonList(
+				"the return value of " +
+					"com.liferay.test.Class10.getKeyStoreType()"));
+
+		CryptoUse unresolvedMessageDigestCryptoUse = _createCryptoUse(
+			null, "com.liferay.test.Class9",
+			Collections.singletonList(CryptoFunction.DIGEST), "MessageDigest");
+
+		unresolvedMessageDigestCryptoUse.setUnresolvedReasons(
+			Arrays.asList(
+				"parameter 1 of com.liferay.test.Class9.digest",
+				"the field com.liferay.test.Class9._algorithm"));
+
 		List<CryptoUse> cryptoUses = Arrays.asList(
 			_createCryptoUse(
 				"SHA-256", "com.liferay.test.Class4",
@@ -98,7 +126,8 @@ public class CBOMBuilderTest {
 				Collections.singletonList(CryptoFunction.OTHER), "KeyStore"),
 			_createCryptoUse(
 				"TLSv1.2", "com.liferay.test.Class8",
-				Collections.singletonList(CryptoFunction.OTHER), "SSLContext"));
+				Collections.singletonList(CryptoFunction.OTHER), "SSLContext"),
+			unresolvedKeyStoreCryptoUse, unresolvedMessageDigestCryptoUse);
 
 		String configurationName = RandomTestUtil.randomString();
 
@@ -182,6 +211,24 @@ public class CBOMBuilderTest {
 						_toPropertyJSONObject("provider", "SUN")),
 					"com.liferay.test.Class7"),
 				_toJSONObject(
+					"crypto:KeyStore:com.liferay.test.Class10",
+					JSONUtil.put(
+						"assetType", "related-crypto-material"
+					).put(
+						"relatedCryptoMaterialProperties",
+						JSONUtil.put("type", "other")
+					),
+					"KeyStore",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "KeyStore"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
+						_toPropertyJSONObject(
+							"unresolved-reason",
+							"the return value of " +
+								"com.liferay.test.Class10.getKeyStoreType()")),
+					"com.liferay.test.Class10"),
+				_toJSONObject(
 					"crypto:Mac:HmacSHA1",
 					JSONUtil.put(
 						"algorithmProperties",
@@ -219,6 +266,30 @@ public class CBOMBuilderTest {
 						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
 						_toPropertyJSONObject("provider", "SUN")),
 					"com.liferay.test.Class4", "com.liferay.test.Class5"),
+				_toJSONObject(
+					"crypto:MessageDigest:com.liferay.test.Class9",
+					JSONUtil.put(
+						"algorithmProperties",
+						JSONUtil.put(
+							"cryptoFunctions", JSONUtil.putAll("digest")
+						).put(
+							"primitive", "hash"
+						)
+					).put(
+						"assetType", "algorithm"
+					),
+					"MessageDigest",
+					JSONUtil.putAll(
+						_toPropertyJSONObject("feature", _FEATURE_NAME),
+						_toPropertyJSONObject("jca-class", "MessageDigest"),
+						_toPropertyJSONObject("module", _BUNDLE_SYMBOLIC_NAME),
+						_toPropertyJSONObject(
+							"unresolved-reason",
+							"parameter 1 of com.liferay.test.Class9.digest"),
+						_toPropertyJSONObject(
+							"unresolved-reason",
+							"the field com.liferay.test.Class9._algorithm")),
+					"com.liferay.test.Class9"),
 				_toJSONObject(
 					"crypto:SSLContext:TLSv1.2",
 					JSONUtil.put(
@@ -317,6 +388,76 @@ public class CBOMBuilderTest {
 
 		Assert.assertNotEquals(
 			serialNumber, jsonObject.getString("serialNumber"));
+
+		CBOMData cbomData = new CBOMData();
+
+		CBOMScanner cbomScanner = new CBOMScanner(cbomData);
+
+		cbomScanner.scan(_getJarFile(DigesterUtil.class));
+		cbomScanner.scan(_getJarFile(JSONFactoryImpl.class));
+
+		Assert.assertEquals(
+			Arrays.asList(
+				StringBundler.concat(
+					"The scan cannot read the algorithm of the MessageDigest ",
+					"call in ", _CLASS_NAME_CACHE_KEY_GENERATOR,
+					", which comes from the field ",
+					_CLASS_NAME_CACHE_KEY_GENERATOR, "._algorithm"),
+				StringBundler.concat(
+					"The scan cannot read the algorithm of the MessageDigest ",
+					"call in ", DigesterUtil.class.getName(),
+					", which comes from parameter 1 of ",
+					DigesterUtil.class.getName(), ".digestRaw"),
+				StringBundler.concat(
+					"The scan cannot read the algorithm of the MessageDigest ",
+					"call in com.liferay.portal.security.pwd.",
+					"PwdAuthenticator, which comes from the return value of ",
+					"com.liferay.portal.kernel.util.PropsUtil.get()")),
+			new ArrayList<>(cbomData.getMessages()));
+
+		cbomJSON = CBOMBuilder.build(
+			configurationName, cbomData.getCryptoUses());
+
+		jsonObject = JSONFactoryUtil.createJSONObject(cbomJSON);
+
+		JSONArray componentsJSONArray = jsonObject.getJSONArray("components");
+
+		List<String> bomRefs = new ArrayList<>();
+		Map<String, JSONArray> propertiesJSONArrays = new HashMap<>();
+
+		for (int i = 0; i < componentsJSONArray.length(); i++) {
+			JSONObject componentJSONObject = componentsJSONArray.getJSONObject(
+				i);
+
+			String bomRef = componentJSONObject.getString("bom-ref");
+
+			bomRefs.add(bomRef);
+			propertiesJSONArrays.put(
+				bomRef, componentJSONObject.getJSONArray("properties"));
+		}
+
+		Assert.assertEquals(
+			Arrays.asList(
+				"crypto:MessageDigest:" + _CLASS_NAME_CACHE_KEY_GENERATOR,
+				"crypto:MessageDigest:" + DigesterUtil.class.getName(),
+				"crypto:MessageDigest:com.liferay.portal.security.pwd." +
+					"PwdAuthenticator"),
+			bomRefs);
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				_toPropertyJSONObject("feature", "Liferay Portal Kernel"),
+				_toPropertyJSONObject("jca-class", "MessageDigest"),
+				_toPropertyJSONObject("module", "com.liferay.portal.kernel"),
+				_toPropertyJSONObject(
+					"unresolved-reason",
+					"parameter 1 of " + DigesterUtil.class.getName() +
+						".digestRaw")
+			).toString(),
+			String.valueOf(
+				propertiesJSONArrays.get(
+					"crypto:MessageDigest:" + DigesterUtil.class.getName())),
+			JSONCompareMode.STRICT);
 	}
 
 	@Test
@@ -358,6 +499,16 @@ public class CBOMBuilderTest {
 		return cryptoUse;
 	}
 
+	private File _getJarFile(Class<?> clazz) throws Exception {
+		ProtectionDomain protectionDomain = clazz.getProtectionDomain();
+
+		CodeSource codeSource = protectionDomain.getCodeSource();
+
+		URL url = codeSource.getLocation();
+
+		return new File(url.toURI());
+	}
+
 	private JSONObject _toJSONObject(
 			String bomRef, JSONObject cryptoPropertiesJSONObject, String name,
 			JSONArray propertiesJSONArray, String... locations)
@@ -392,6 +543,9 @@ public class CBOMBuilderTest {
 
 	private static final String _BUNDLE_SYMBOLIC_NAME =
 		RandomTestUtil.randomString();
+
+	private static final String _CLASS_NAME_CACHE_KEY_GENERATOR =
+		"com.liferay.portal.cache.key.MessageDigestCacheKeyGenerator";
 
 	private static final String _FEATURE_NAME = RandomTestUtil.randomString();
 

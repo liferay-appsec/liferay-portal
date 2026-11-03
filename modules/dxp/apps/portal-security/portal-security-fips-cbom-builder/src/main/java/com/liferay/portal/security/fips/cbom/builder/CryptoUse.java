@@ -7,6 +7,7 @@ package com.liferay.portal.security.fips.cbom.builder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -34,11 +35,25 @@ public class CryptoUse {
 	}
 
 	public void addAll(CryptoUse cryptoUse) {
+		_references.addAll(cryptoUse._references);
+		_unresolvedReasons.addAll(cryptoUse._unresolvedReasons);
 		_values.addAll(cryptoUse._values);
+	}
+
+	public void addReference(String reference) {
+		_references.add(reference);
+	}
+
+	public void addUnresolvedReason(String unresolvedReason) {
+		_unresolvedReasons.add(unresolvedReason);
 	}
 
 	public void addValue(String value) {
 		_values.add(value);
+	}
+
+	public void clearReferences() {
+		_references.clear();
 	}
 
 	public CryptoUse createPart() {
@@ -79,12 +94,36 @@ public class CryptoUse {
 		return _keySize;
 	}
 
+	public Set<String> getReferences() {
+		return _references;
+	}
+
 	public List<RelatedCryptoMaterialType> getRelatedCryptoMaterialTypes() {
 		return _relatedCryptoMaterialTypes;
 	}
 
+	public Set<String> getUnresolvedReasons() {
+		return _unresolvedReasons;
+	}
+
 	public SortedSet<String> getValues() {
 		return _values;
+	}
+
+	public boolean isConstant() {
+		if (_references.isEmpty() && _unresolvedReasons.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isResolved() {
+		if (_algorithm != null) {
+			return true;
+		}
+
+		return false;
 	}
 
 	public void setAlgorithm(String algorithm) {
@@ -109,6 +148,12 @@ public class CryptoUse {
 		_relatedCryptoMaterialTypes = relatedCryptoMaterialTypes;
 	}
 
+	public void setUnresolvedReasons(List<String> unresolvedReasons) {
+		_unresolvedReasons.clear();
+
+		_unresolvedReasons.addAll(unresolvedReasons);
+	}
+
 	private String _algorithm;
 	private final String _bundleSymbolicName;
 	private final String _className;
@@ -116,8 +161,10 @@ public class CryptoUse {
 	private String _featureName;
 	private final String _jcaClassName;
 	private int _keySize;
+	private final Set<String> _references = new TreeSet<>();
 	private List<RelatedCryptoMaterialType> _relatedCryptoMaterialTypes =
 		Collections.emptyList();
+	private final Set<String> _unresolvedReasons = new TreeSet<>();
 	private final SortedSet<String> _values = new TreeSet<>();
 
 }
