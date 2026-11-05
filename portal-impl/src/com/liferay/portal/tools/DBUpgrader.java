@@ -544,9 +544,6 @@ public class DBUpgrader {
 
 					updatePortalServiceComponent();
 				}
-
-				PortalUpgradeProcess.updateBuildInfo(connection);
-				PortalUpgradeProcess.updateVersionDisplayName(connection);
 			}
 
 			CustomSQLUtil.reloadCustomSQL();
@@ -557,6 +554,11 @@ public class DBUpgrader {
 			}
 
 			_updateCompanyKey();
+
+			try (Connection connection = DataAccess.getConnection()) {
+				PortalUpgradeProcess.updateBuildInfo(connection);
+				PortalUpgradeProcess.updateVersionDisplayName(connection);
+			}
 
 			PortalCacheHelperUtil.clearPortalCaches(
 				PortalCacheManagerNames.MULTI_VM);
