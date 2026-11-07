@@ -36,6 +36,44 @@ import java.util.Date;
  */
 public class AuditMessage implements Serializable {
 
+	public AuditMessage(AuditMessage auditMessage) {
+		_accountEntryId = auditMessage._accountEntryId;
+		_action = auditMessage._action;
+		_additionalInfoJSONObject = auditMessage._additionalInfoJSONObject;
+		_className = auditMessage._className;
+		_classPK = auditMessage._classPK;
+		_clientHost = auditMessage._clientHost;
+		_clientIP = auditMessage._clientIP;
+		_companyId = auditMessage._companyId;
+		_contextName = auditMessage._contextName;
+		_correlationId = auditMessage._correlationId;
+		_eventType = auditMessage._eventType;
+		_groupId = auditMessage._groupId;
+		_httpMethod = auditMessage._httpMethod;
+		_impersonated = auditMessage._impersonated;
+		_impersonatedUserEmailAddress =
+			auditMessage._impersonatedUserEmailAddress;
+		_impersonatedUserId = auditMessage._impersonatedUserId;
+		_impersonatedUserName = auditMessage._impersonatedUserName;
+		_message = auditMessage._message;
+		_objectName = auditMessage._objectName;
+		_pseudonymized = auditMessage._pseudonymized;
+		_requestId = auditMessage._requestId;
+		_requestIdGenerated = auditMessage._requestIdGenerated;
+		_resourceAction = auditMessage._resourceAction;
+		_resourceType = auditMessage._resourceType;
+		_roles = auditMessage._roles;
+		_serverName = auditMessage._serverName;
+		_serverPort = auditMessage._serverPort;
+		_sessionID = auditMessage._sessionID;
+		_timestampDate = auditMessage._timestampDate;
+		_userAgent = auditMessage._userAgent;
+		_userEmailAddress = auditMessage._userEmailAddress;
+		_userId = auditMessage._userId;
+		_userLogin = auditMessage._userLogin;
+		_userName = auditMessage._userName;
+	}
+
 	public AuditMessage(
 		long groupId, long companyId, long userId, String userName,
 		Date timestampDate, JSONObject additionalInfoJSONObject,
@@ -271,6 +309,10 @@ public class AuditMessage implements Serializable {
 			_objectName = jsonObject.getString(_OBJECT_NAME);
 		}
 
+		if (jsonObject.has(_PSEUDONYMIZED)) {
+			_pseudonymized = jsonObject.getBoolean(_PSEUDONYMIZED);
+		}
+
 		if (jsonObject.has(_REQUEST_ID)) {
 			_requestId = jsonObject.getString(_REQUEST_ID);
 		}
@@ -444,6 +486,10 @@ public class AuditMessage implements Serializable {
 		return _impersonated;
 	}
 
+	public boolean isPseudonymized() {
+		return _pseudonymized;
+	}
+
 	public boolean isRequestIdGenerated() {
 		return _requestIdGenerated;
 	}
@@ -528,6 +574,10 @@ public class AuditMessage implements Serializable {
 
 	public void setObjectName(String objectName) {
 		_objectName = objectName;
+	}
+
+	public void setPseudonymized(boolean pseudonymized) {
+		_pseudonymized = pseudonymized;
 	}
 
 	public void setRequestId(String requestId) {
@@ -628,6 +678,8 @@ public class AuditMessage implements Serializable {
 		).put(
 			_OBJECT_NAME, _objectName
 		).put(
+			_PSEUDONYMIZED, _pseudonymized
+		).put(
 			_REQUEST_ID, _requestId
 		).put(
 			_REQUEST_ID_GENERATED, _requestIdGenerated
@@ -706,6 +758,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _OBJECT_NAME = "objectName";
 
+	private static final String _PSEUDONYMIZED = "pseudonymized";
+
 	private static final String _REQUEST_ID = "requestId";
 
 	private static final String _REQUEST_ID_GENERATED = "requestIdGenerated";
@@ -755,6 +809,7 @@ public class AuditMessage implements Serializable {
 	private String _impersonatedUserName;
 	private String _message;
 	private String _objectName;
+	private boolean _pseudonymized;
 	private String _requestId;
 	private boolean _requestIdGenerated;
 	private String _resourceAction;

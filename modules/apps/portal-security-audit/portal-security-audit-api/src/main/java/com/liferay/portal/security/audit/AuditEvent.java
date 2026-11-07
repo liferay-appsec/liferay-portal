@@ -50,11 +50,15 @@ public interface AuditEvent {
 
 	public String getSessionID();
 
+	public String getUserEmailAddress();
+
 	public long getUserId();
 
 	public String getUserName();
 
 	public String getUserUuid();
+
+	public boolean isPseudonymized();
 
 	public void setAccountEntryId(long accountEntryId);
 
