@@ -342,7 +342,14 @@ public class SecretResolverImpl implements SecretResolver {
 
 		SequencedMap<String, Long> secretIdentifierMap = new LinkedHashMap<>();
 
-		if (secretContext.getType() == SecretContext.Type.CONFIGURATION) {
+		SecretContext.Type type = secretContext.getType();
+
+		if (type == SecretContext.Type.COMPANY) {
+			_putPortalPreferenceScope(
+				secretContext.getCompanyId(), secretContext.getKey(),
+				secretIdentifierMap);
+		}
+		else if (type == SecretContext.Type.CONFIGURATION) {
 			Dictionary<String, Object> properties = new HashMapDictionary<>(
 				secretContext.getProperties());
 

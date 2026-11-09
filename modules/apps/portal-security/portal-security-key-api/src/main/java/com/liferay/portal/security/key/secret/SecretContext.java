@@ -19,6 +19,12 @@ import java.util.Map;
  */
 public class SecretContext {
 
+	public static SecretContext createCompanySecretContext(
+		long companyId, String key) {
+
+		return new SecretContext(companyId, key, null, null, Type.COMPANY);
+	}
+
 	public static SecretContext createConfigurationSecretContext(
 		String key, Dictionary<String, ?> properties) {
 
@@ -47,8 +53,8 @@ public class SecretContext {
 		}
 
 		return new SecretContext(
-			key, Collections.unmodifiableMap(new HashMap<>(properties)), null,
-			Type.CONFIGURATION);
+			0, key, Collections.unmodifiableMap(new HashMap<>(properties)),
+			null, Type.CONFIGURATION);
 	}
 
 	public static SecretContext createSettingsSecretContext(
@@ -58,7 +64,11 @@ public class SecretContext {
 			throw new IllegalArgumentException("Settings locator is null");
 		}
 
-		return new SecretContext(key, null, settingsLocator, Type.SETTINGS);
+		return new SecretContext(0, key, null, settingsLocator, Type.SETTINGS);
+	}
+
+	public long getCompanyId() {
+		return _companyId;
 	}
 
 	public String getKey() {
@@ -84,19 +94,21 @@ public class SecretContext {
 	}
 
 	private SecretContext(
-		String key, Map<String, Object> properties,
+		long companyId, String key, Map<String, Object> properties,
 		SettingsLocator settingsLocator, Type type) {
 
 		if (Validator.isNull(key)) {
 			throw new IllegalArgumentException("Key is null");
 		}
 
+		_companyId = companyId;
 		_key = key;
 		_properties = properties;
 		_settingsLocator = settingsLocator;
 		_type = type;
 	}
 
+	private final long _companyId;
 	private final String _key;
 	private final Map<String, Object> _properties;
 	private final SettingsLocator _settingsLocator;
