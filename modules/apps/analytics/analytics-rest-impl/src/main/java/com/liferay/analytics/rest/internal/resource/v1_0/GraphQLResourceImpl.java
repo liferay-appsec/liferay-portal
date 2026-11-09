@@ -14,8 +14,10 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import jakarta.ws.rs.core.MediaType;
@@ -71,6 +73,13 @@ public class GraphQLResourceImpl extends BaseGraphQLResourceImpl {
 
 		Http.Options options = new Http.Options();
 
+		long companyId = CompanyThreadLocal.getCompanyId();
+
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"liferayAnalyticsFaroBackendSecuritySignature",
+			new CompanyServiceSettingsLocator(
+				companyId, AnalyticsConfiguration.class.getName()));
+
 		options.addHeader("Content-Type", ContentTypes.APPLICATION_JSON);
 		options.addHeader(
 			"OSB-Asah-Data-Source-ID",
@@ -78,7 +87,7 @@ public class GraphQLResourceImpl extends BaseGraphQLResourceImpl {
 		options.addHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			SecretResolverUtil.resolve(
-				CompanyThreadLocal.getCompanyId(),
+				companyId, secretContext,
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 		options.addHeader(

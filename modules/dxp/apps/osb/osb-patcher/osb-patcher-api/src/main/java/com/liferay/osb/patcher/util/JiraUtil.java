@@ -14,13 +14,14 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -31,7 +32,8 @@ import java.net.HttpURLConnection;
 public class JiraUtil {
 
 	public static JSONObject getIssueJSONObject(
-			PatcherConfiguration patcherConfiguration, String issueKey)
+			long companyId, PatcherConfiguration patcherConfiguration,
+			String issueKey)
 		throws Exception {
 
 		Http.Options options = new Http.Options();
@@ -39,7 +41,11 @@ public class JiraUtil {
 		options.addHeader(HttpHeaders.ACCEPT, ContentTypes.APPLICATION_JSON);
 
 		String jiraAPIToken = SecretResolverUtil.resolve(
-			CompanyThreadLocal.getCompanyId(),
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"jiraAPIToken",
+				new CompanyServiceSettingsLocator(
+					companyId, PatcherConfiguration.class.getName())),
 			patcherConfiguration.jiraAPIToken());
 
 		String credentials =

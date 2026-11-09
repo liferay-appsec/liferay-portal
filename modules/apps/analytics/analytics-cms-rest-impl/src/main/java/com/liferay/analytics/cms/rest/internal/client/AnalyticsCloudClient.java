@@ -38,12 +38,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -873,12 +875,19 @@ public class AnalyticsCloudClient {
 
 		Http.Options options = new Http.Options();
 
+		long companyId = CompanyThreadLocal.getCompanyId();
+
 		options.addHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			SecretResolverUtil.resolve(
-				CompanyThreadLocal.getCompanyId(),
+				companyId,
+				SecretContext.createSettingsSecretContext(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
+
 		options.addHeader(
 			"OSB-Asah-Project-ID",
 			analyticsConfiguration.liferayAnalyticsProjectId());

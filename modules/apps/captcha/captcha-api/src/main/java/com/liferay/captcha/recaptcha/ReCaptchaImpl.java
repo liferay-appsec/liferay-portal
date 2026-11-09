@@ -19,12 +19,15 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.PortletRequest;
@@ -119,6 +122,11 @@ public class ReCaptchaImpl extends SimpleCaptchaImpl {
 				"secret",
 				_secretResolver.resolve(
 					PortalUtil.getCompanyId(httpServletRequest),
+					SecretContext.createSettingsSecretContext(
+						"reCaptchaPrivateKey",
+						new CompanyServiceSettingsLocator(
+							CompanyThreadLocal.getCompanyId(),
+							CaptchaConfiguration.class.getName())),
 					captchaConfiguration.reCaptchaPrivateKey()));
 		}
 		catch (SystemException systemException) {

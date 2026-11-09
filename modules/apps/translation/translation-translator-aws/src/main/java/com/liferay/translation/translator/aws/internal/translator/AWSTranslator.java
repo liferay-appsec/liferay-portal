@@ -8,7 +8,9 @@ package com.liferay.translation.translator.aws.internal.translator;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.translation.translator.BaseTranslator;
 import com.liferay.translation.translator.Translator;
@@ -63,6 +65,11 @@ public class AWSTranslator extends BaseTranslator {
 					awsTranslatorConfiguration.accessKey(),
 					_secretResolver.resolve(
 						translatorPacket.getCompanyId(),
+						SecretContext.createSettingsSecretContext(
+							"secretKey",
+							new CompanyServiceSettingsLocator(
+								translatorPacket.getCompanyId(),
+								AWSTranslatorConfiguration.class.getName())),
 						awsTranslatorConfiguration.secretKey())))
 		).region(
 			Region.of(awsTranslatorConfiguration.region())

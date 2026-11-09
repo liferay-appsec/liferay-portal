@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -48,6 +49,7 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.text.DateFormat;
@@ -171,7 +173,8 @@ public class JenkinsUtil {
 				if (patcherFix.getType() == PatcherFixConstants.TYPE_AUTO_FIX) {
 					return StringUtil.merge(
 						JiraTicketResolverUtil.resolveTickets(
-							patcherConfiguration, patcherFix.getName()),
+							patcherFix.getCompanyId(), patcherConfiguration,
+							patcherFix.getName()),
 						StringPool.COMMA);
 				}
 
@@ -683,7 +686,12 @@ public class JenkinsUtil {
 		Http.Options options = new Http.Options();
 
 		String jenkinsAdminUserToken = SecretResolverUtil.resolve(
-			user.getCompanyId(), patcherConfiguration.jenkinsAdminUserToken());
+			user.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"jenkinsAdminUserToken",
+				new CompanyServiceSettingsLocator(
+					user.getCompanyId(), PatcherConfiguration.class.getName())),
+			patcherConfiguration.jenkinsAdminUserToken());
 
 		String credentials =
 			patcherConfiguration.jenkinsAdminUserName() + StringPool.COLON +

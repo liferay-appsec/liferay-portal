@@ -16,12 +16,14 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.url.URLBuilder;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.translation.translator.BaseTranslator;
 import com.liferay.translation.translator.Translator;
@@ -176,6 +178,11 @@ public class AzureTranslator extends BaseTranslator {
 
 		Http.Options options = new Http.Options();
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"subscriptionKey",
+			new CompanyServiceSettingsLocator(
+				companyId, AzureTranslatorConfiguration.class.getName()));
+
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.addHeader(
@@ -184,7 +191,8 @@ public class AzureTranslator extends BaseTranslator {
 		options.addHeader(
 			"Ocp-Apim-Subscription-Key",
 			_secretResolver.resolve(
-				companyId, azureTranslatorConfiguration.subscriptionKey()));
+				companyId, secretContext,
+				azureTranslatorConfiguration.subscriptionKey()));
 		options.addHeader(
 			"Ocp-Apim-Subscription-Region",
 			azureTranslatorConfiguration.resourceLocation());

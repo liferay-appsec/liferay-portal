@@ -59,6 +59,7 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.zip.ZipReaderFactory;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.File;
@@ -440,6 +441,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			null, analyticsConfiguration.liferayAnalyticsDataSourceId(),
 			_secretResolver.resolve(
 				companyId,
+				SecretContext.createSettingsSecretContext(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()),
 			HttpMethods.GET, analyticsConfiguration.liferayAnalyticsProjectId(),
@@ -613,7 +618,13 @@ public class AnalyticsBatchExportImportManagerImpl
 			new String(
 				Base64.decode(
 					_secretResolver.resolve(
-						companyId, analyticsConfiguration.token()))));
+						companyId,
+						SecretContext.createSettingsSecretContext(
+							"token",
+							new CompanyServiceSettingsLocator(
+								companyId,
+								AnalyticsConfiguration.class.getName())),
+						analyticsConfiguration.token()))));
 
 		options.setLocation(
 			StringUtil.replace(
@@ -809,13 +820,18 @@ public class AnalyticsBatchExportImportManagerImpl
 			_analyticsConfigurationRegistry.getAnalyticsConfiguration(
 				companyId);
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"liferayAnalyticsFaroBackendSecuritySignature",
+			new CompanyServiceSettingsLocator(
+				companyId, AnalyticsConfiguration.class.getName()));
+
 		options.addHeader(
 			"OSB-Asah-Data-Source-ID",
 			analyticsConfiguration.liferayAnalyticsDataSourceId());
 		options.addHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			_secretResolver.resolve(
-				companyId,
+				companyId, secretContext,
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 		options.addHeader(
@@ -966,6 +982,11 @@ public class AnalyticsBatchExportImportManagerImpl
 			analyticsConfiguration.liferayAnalyticsEndpointURL() +
 				"/dxp-batch-entities");
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"liferayAnalyticsFaroBackendSecuritySignature",
+			new CompanyServiceSettingsLocator(
+				companyId, AnalyticsConfiguration.class.getName()));
+
 		httpPost.setEntity(new FileEntity(multipartFile));
 		httpPost.setHeader(HttpHeaders.CONTENT_ENCODING, contentEncoding);
 		httpPost.setHeader(
@@ -977,7 +998,7 @@ public class AnalyticsBatchExportImportManagerImpl
 		httpPost.setHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			_secretResolver.resolve(
-				companyId,
+				companyId, secretContext,
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 		httpPost.setHeader(

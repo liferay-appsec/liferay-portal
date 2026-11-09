@@ -12,6 +12,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import com.microsoft.aad.msal4j.ClientCredentialFactory;
@@ -53,6 +55,12 @@ public class MailOutlookMailAuthTokenProvider implements MailAuthTokenProvider {
 					ClientCredentialFactory.createFromSecret(
 						_secretResolver.resolve(
 							companyId,
+							SecretContext.createSettingsSecretContext(
+								"clientSecret",
+								new CompanyServiceSettingsLocator(
+									companyId,
+									MailOutlookAuthConnectorCompanyConfiguration.class.
+										getName())),
 							mailOutlookAuthConnectorCompanyConfiguration.
 								clientSecret()))
 				).authority(

@@ -20,10 +20,12 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.repository.capabilities.TemporaryFileEntriesCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.InputStream;
@@ -77,6 +79,12 @@ public class MSCognitiveServicesImageAssetAutoTagProvider
 					apiEndpoint(),
 				_secretResolver.resolve(
 					fileEntry.getCompanyId(),
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							fileEntry.getCompanyId(),
+							MSCognitiveServicesAssetAutoTagProviderCompanyConfiguration.class.
+								getName())),
 					msCognitiveServicesAssetAutoTagProviderCompanyConfiguration.
 						apiKey()),
 				fileEntry.getFileVersion());

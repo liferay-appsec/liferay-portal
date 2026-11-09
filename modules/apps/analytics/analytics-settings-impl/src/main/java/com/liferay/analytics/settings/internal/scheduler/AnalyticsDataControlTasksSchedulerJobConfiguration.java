@@ -17,9 +17,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.scheduler.SchedulerJobConfiguration;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
 import com.liferay.portal.kernel.scheduler.TriggerConfiguration;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -117,8 +119,13 @@ public class AnalyticsDataControlTasksSchedulerJobConfiguration
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			SecretResolverUtil.resolve(
 				companyId,
+				SecretContext.createSettingsSecretContext(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
+
 		options.addHeader(
 			"OSB-Asah-Project-ID",
 			analyticsConfiguration.liferayAnalyticsProjectId());

@@ -12,10 +12,12 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.search.experiences.blueprint.exception.InvalidWebCacheItemException;
 import com.liferay.search.experiences.internal.configuration.OpenWeatherMapConfiguration;
@@ -75,7 +77,13 @@ public class OpenWeatherMapWebCacheItem implements WebCacheItem {
 			String url = StringBundler.concat(
 				_openWeatherMapConfiguration.apiURL(), "?APPID=",
 				SecretResolverUtil.resolve(
-					_companyId, _openWeatherMapConfiguration.apiKey()),
+					_companyId,
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							_companyId,
+							OpenWeatherMapConfiguration.class.getName())),
+					_openWeatherMapConfiguration.apiKey()),
 				"&format=json&lat=", _latitude, "&lon=", _longitude, "&units=",
 				_openWeatherMapConfiguration.units());
 

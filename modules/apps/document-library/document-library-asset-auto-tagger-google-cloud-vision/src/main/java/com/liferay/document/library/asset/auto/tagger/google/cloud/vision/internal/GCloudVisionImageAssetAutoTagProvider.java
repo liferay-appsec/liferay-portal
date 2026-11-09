@@ -21,8 +21,10 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.repository.capabilities.TemporaryFileEntriesCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
@@ -64,6 +66,12 @@ public class GCloudVisionImageAssetAutoTagProvider
 			JSONObject responseJSONObject = _queryGCloudVisionJSONObject(
 				_secretResolver.resolve(
 					fileEntry.getCompanyId(),
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							fileEntry.getCompanyId(),
+							GCloudVisionAssetAutoTagProviderCompanyConfiguration.class.
+								getName())),
 					gCloudVisionAssetAutoTagProviderCompanyConfiguration.
 						apiKey()),
 				GCloudVisionUtil.getAnnotateImagePayload(fileEntry));

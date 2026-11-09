@@ -11,7 +11,9 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.NestableRuntimeException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import org.apache.http.HttpStatus;
@@ -83,6 +85,10 @@ public class AsahFaroBackendClient {
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			SecretResolverUtil.resolve(
 				companyId,
+				SecretContext.createSettingsSecretContext(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 

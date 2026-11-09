@@ -12,9 +12,11 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.search.experiences.blueprint.exception.InvalidWebCacheItemException;
 import com.liferay.search.experiences.blueprint.exception.PrivateIPAddressException;
@@ -87,7 +89,12 @@ public class IpstackWebCacheItem implements WebCacheItem {
 			String url = StringBundler.concat(
 				apiURL, _ipAddress, "?access_key=",
 				SecretResolverUtil.resolve(
-					_companyId, _ipstackConfiguration.apiKey()));
+					_companyId,
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							_companyId, IpstackConfiguration.class.getName())),
+					_ipstackConfiguration.apiKey()));
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
 				HttpUtil.URLtoString(url));

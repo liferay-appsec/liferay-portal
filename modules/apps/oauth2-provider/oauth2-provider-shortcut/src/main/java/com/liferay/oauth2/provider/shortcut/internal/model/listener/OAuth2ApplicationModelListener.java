@@ -16,10 +16,12 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
@@ -160,6 +162,11 @@ public class OAuth2ApplicationModelListener
 				Base64.decode(
 					_secretResolver.resolve(
 						oAuth2Application.getCompanyId(),
+						SecretContext.createSettingsSecretContext(
+							"token",
+							new CompanyServiceSettingsLocator(
+								oAuth2Application.getCompanyId(),
+								AnalyticsConfiguration.class.getName())),
 						analyticsConfiguration.token()))));
 
 		Http.Options options = new Http.Options();

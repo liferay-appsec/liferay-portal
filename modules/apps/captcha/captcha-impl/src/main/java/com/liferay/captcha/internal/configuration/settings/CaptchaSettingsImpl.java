@@ -10,6 +10,8 @@ import com.liferay.captcha.provider.CaptchaProvider;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.captcha.CaptchaSettings;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Dictionary;
@@ -55,8 +57,14 @@ public class CaptchaSettingsImpl implements CaptchaSettings {
 		CaptchaConfiguration captchaConfiguration =
 			_captchaProvider.getCaptchaConfiguration();
 
+		long companyId = CompanyThreadLocal.getCompanyId();
+
 		return _secretResolver.resolve(
-			CompanyThreadLocal.getCompanyId(),
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"reCaptchaPrivateKey",
+				new CompanyServiceSettingsLocator(
+					companyId, CaptchaConfiguration.class.getName())),
 			captchaConfiguration.reCaptchaPrivateKey());
 	}
 

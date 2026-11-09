@@ -21,10 +21,11 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -42,12 +43,13 @@ public class AnalyticsCloudClient {
 
 	public AssetAppearsOnHistogramMetric getAssetAppearsOnHistogramMetric(
 			AnalyticsConfiguration analyticsConfiguration, String assetId,
-			String assetType, List<Long> channelIds, String identityType,
-			Integer rangeKey)
+			String assetType, List<Long> channelIds, long companyId,
+			String identityType, Integer rangeKey)
 		throws Exception {
 
 		try {
-			Http.Options options = _getOptions(analyticsConfiguration);
+			Http.Options options = _getOptions(
+				analyticsConfiguration, companyId);
 
 			options.setLocation(
 				_getUrl(
@@ -99,12 +101,13 @@ public class AnalyticsCloudClient {
 
 	public AssetDeviceMetric getAssetDeviceMetric(
 			AnalyticsConfiguration analyticsConfiguration, String assetId,
-			String assetType, List<Long> channelIds, String identityType,
-			Integer rangeKey)
+			String assetType, List<Long> channelIds, long companyId,
+			String identityType, Integer rangeKey)
 		throws Exception {
 
 		try {
-			Http.Options options = _getOptions(analyticsConfiguration);
+			Http.Options options = _getOptions(
+				analyticsConfiguration, companyId);
 
 			options.setLocation(
 				_getUrl(
@@ -153,12 +156,13 @@ public class AnalyticsCloudClient {
 
 	public AssetHistogramMetric getAssetHistogramMetric(
 			AnalyticsConfiguration analyticsConfiguration, String assetId,
-			String assetType, List<Long> channelIds, String identityType,
-			Integer rangeKey)
+			String assetType, List<Long> channelIds, long companyId,
+			String identityType, Integer rangeKey)
 		throws Exception {
 
 		try {
-			Http.Options options = _getOptions(analyticsConfiguration);
+			Http.Options options = _getOptions(
+				analyticsConfiguration, companyId);
 
 			options.setLocation(
 				_getUrl(
@@ -208,12 +212,13 @@ public class AnalyticsCloudClient {
 
 	public AssetMetric getAssetMetric(
 			AnalyticsConfiguration analyticsConfiguration, String assetId,
-			String assetType, List<Long> channelIds, String identityType,
-			Integer rangeKey, String[] selectedMetrics)
+			String assetType, List<Long> channelIds, long companyId,
+			String identityType, Integer rangeKey, String[] selectedMetrics)
 		throws Exception {
 
 		try {
-			Http.Options options = _getOptions(analyticsConfiguration);
+			Http.Options options = _getOptions(
+				analyticsConfiguration, companyId);
 
 			String url = _getUrl(
 				assetId, assetType, channelIds, identityType,
@@ -265,7 +270,7 @@ public class AnalyticsCloudClient {
 	}
 
 	private Http.Options _getOptions(
-			AnalyticsConfiguration analyticsConfiguration)
+			AnalyticsConfiguration analyticsConfiguration, long companyId)
 		throws Exception {
 
 		Http.Options options = new Http.Options();
@@ -273,9 +278,14 @@ public class AnalyticsCloudClient {
 		options.addHeader(
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			SecretResolverUtil.resolve(
-				CompanyThreadLocal.getCompanyId(),
+				companyId,
+				SecretContext.createSettingsSecretContext(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
+
 		options.addHeader(
 			"OSB-Asah-Project-ID",
 			analyticsConfiguration.liferayAnalyticsProjectId());

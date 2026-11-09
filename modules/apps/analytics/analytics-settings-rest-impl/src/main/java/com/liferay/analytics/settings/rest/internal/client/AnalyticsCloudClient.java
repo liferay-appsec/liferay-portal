@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -54,6 +55,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -601,9 +603,15 @@ public class AnalyticsCloudClient {
 				null);
 
 		if (liferayAnalyticsFaroBackendSecuritySignature == null) {
+			long companyId = CompanyThreadLocal.getCompanyId();
+
 			liferayAnalyticsFaroBackendSecuritySignature =
 				SecretResolverUtil.resolve(
-					CompanyThreadLocal.getCompanyId(),
+					companyId,
+					SecretContext.createSettingsSecretContext(
+						"liferayAnalyticsFaroBackendSecuritySignature",
+						new CompanyServiceSettingsLocator(
+							companyId, AnalyticsConfiguration.class.getName())),
 					analyticsConfiguration.
 						liferayAnalyticsFaroBackendSecuritySignature());
 		}

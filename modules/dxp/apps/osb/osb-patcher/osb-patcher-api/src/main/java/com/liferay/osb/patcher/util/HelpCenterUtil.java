@@ -18,14 +18,15 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -49,6 +50,11 @@ public class HelpCenterUtil {
 
 		String jiraServiceManagementUserToken = SecretResolverUtil.resolve(
 			patcherBuild.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"jiraServiceManagementUserToken",
+				new CompanyServiceSettingsLocator(
+					patcherBuild.getCompanyId(),
+					PatcherConfiguration.class.getName())),
 			patcherConfiguration.jiraServiceManagementUserToken());
 
 		String credentials =
@@ -89,7 +95,7 @@ public class HelpCenterUtil {
 				PatcherConfiguration.class, companyId);
 
 		Http.Options options = _initOptions(
-			true,
+			true, companyId,
 			HashMapBuilder.put(
 				HttpHeaders.ACCEPT, ContentTypes.APPLICATION_JSON
 			).build(),
@@ -125,7 +131,7 @@ public class HelpCenterUtil {
 	}
 
 	protected static String getAuthenticationToken(
-			PatcherConfiguration patcherConfiguration)
+			long companyId, PatcherConfiguration patcherConfiguration)
 		throws Exception {
 
 		if (System.currentTimeMillis() < _tokenExpirationTime) {
@@ -133,18 +139,23 @@ public class HelpCenterUtil {
 		}
 
 		Http.Options options = _initOptions(
-			false,
+			false, companyId,
 			HashMapBuilder.put(
 				"Content-Type", ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED
 			).build(),
 			patcherConfiguration);
+
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"supportLiferayAPIClientSecret",
+			new CompanyServiceSettingsLocator(
+				companyId, PatcherConfiguration.class.getName()));
 
 		options.addPart(
 			"client_id", patcherConfiguration.supportLiferayAPIClientId());
 		options.addPart(
 			"client_secret",
 			SecretResolverUtil.resolve(
-				CompanyThreadLocal.getCompanyId(),
+				companyId, secretContext,
 				patcherConfiguration.supportLiferayAPIClientSecret()));
 		options.addPart("grant_type", "client_credentials");
 		options.setLocation(
@@ -215,7 +226,7 @@ public class HelpCenterUtil {
 	}
 
 	private static Http.Options _initOptions(
-			boolean authenticate, Map<String, String> headers,
+			boolean authenticate, long companyId, Map<String, String> headers,
 			PatcherConfiguration patcherConfiguration)
 		throws Exception {
 
@@ -226,7 +237,8 @@ public class HelpCenterUtil {
 		if (authenticate) {
 			options.addHeader(
 				"Authorization",
-				"Bearer " + getAuthenticationToken(patcherConfiguration));
+				"Bearer " +
+					getAuthenticationToken(companyId, patcherConfiguration));
 		}
 
 		for (Map.Entry<String, String> header : headers.entrySet()) {

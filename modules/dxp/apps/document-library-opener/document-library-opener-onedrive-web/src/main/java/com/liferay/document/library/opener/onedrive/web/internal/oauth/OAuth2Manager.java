@@ -15,7 +15,9 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.IOException;
@@ -115,7 +117,13 @@ public class OAuth2Manager {
 			dlOneDriveCompanyConfiguration.clientId()
 		).apiSecret(
 			_secretResolver.resolve(
-				companyId, dlOneDriveCompanyConfiguration.clientSecret())
+				companyId,
+				SecretContext.createSettingsSecretContext(
+					"clientSecret",
+					new CompanyServiceSettingsLocator(
+						companyId,
+						DLOneDriveCompanyConfiguration.class.getName())),
+				dlOneDriveCompanyConfiguration.clientSecret())
 		).callback(
 			redirectURL
 		).withScope(

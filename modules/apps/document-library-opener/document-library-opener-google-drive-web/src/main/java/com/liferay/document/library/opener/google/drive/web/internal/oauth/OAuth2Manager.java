@@ -24,9 +24,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.IOException;
@@ -210,6 +212,13 @@ public class OAuth2Manager {
 				dlGoogleDriveCompanyConfiguration =
 					_getDLGoogleDriveCompanyConfiguration(companyId);
 
+			SecretContext secretContext =
+				SecretContext.createSettingsSecretContext(
+					"clientSecret",
+					new CompanyServiceSettingsLocator(
+						companyId,
+						DLGoogleDriveCompanyConfiguration.class.getName()));
+
 			GoogleAuthorizationCodeFlow googleAuthorizationCodeFlow =
 				_googleAuthorizationCodeFlows.get(companyId);
 
@@ -224,7 +233,7 @@ public class OAuth2Manager {
 					StringUtil.equals(
 						clientParametersAuthentication.getClientSecret(),
 						_secretResolver.resolve(
-							companyId,
+							companyId, secretContext,
 							dlGoogleDriveCompanyConfiguration.
 								clientSecret()))) {
 
@@ -246,7 +255,7 @@ public class OAuth2Manager {
 							dlGoogleDriveCompanyConfiguration.clientId()),
 						GetterUtil.getString(
 							_secretResolver.resolve(
-								companyId,
+								companyId, secretContext,
 								dlGoogleDriveCompanyConfiguration.
 									clientSecret())),
 						Collections.singleton(DriveScopes.DRIVE_FILE));

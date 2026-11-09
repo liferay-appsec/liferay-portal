@@ -88,8 +88,8 @@ public class AssetAppearsOnHistogramMetricResourceImpl
 		return analyticsCloudClient.getAssetAppearsOnHistogramMetric(
 			_analyticsSettingsManager.getAnalyticsConfiguration(
 				group.getCompanyId()),
-			assetId, assetType, analyticsCloudChannelIds, identityType,
-			rangeKey);
+			assetId, assetType, analyticsCloudChannelIds, group.getCompanyId(),
+			identityType, rangeKey);
 	}
 
 	@Reference

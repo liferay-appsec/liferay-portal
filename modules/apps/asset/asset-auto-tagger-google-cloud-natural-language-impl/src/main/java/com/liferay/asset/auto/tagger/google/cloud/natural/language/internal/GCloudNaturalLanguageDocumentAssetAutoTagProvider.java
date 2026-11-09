@@ -24,11 +24,13 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.HttpURLConnection;
@@ -112,10 +114,17 @@ public class GCloudNaturalLanguageDocumentAssetAutoTagProvider
 			_getServiceURL(
 				_secretResolver.resolve(
 					companyId,
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							companyId,
+							GCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.class.
+								getName())),
 					gCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.
 						apiKey()),
 				"classifyText"),
 			documentPayload);
+
 		float confidence =
 			gCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.
 				confidence();
@@ -158,10 +167,17 @@ public class GCloudNaturalLanguageDocumentAssetAutoTagProvider
 			_getServiceURL(
 				_secretResolver.resolve(
 					companyId,
+					SecretContext.createSettingsSecretContext(
+						"apiKey",
+						new CompanyServiceSettingsLocator(
+							companyId,
+							GCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.class.
+								getName())),
 					gCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.
 						apiKey()),
 				"analyzeEntities"),
 			documentPayload);
+
 		float salience =
 			gCloudNaturalLanguageAssetAutoTaggerCompanyConfiguration.salience();
 
