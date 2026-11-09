@@ -24,8 +24,6 @@ import com.liferay.headless.asset.library.internal.util.AssetLibraryUtil;
 import com.liferay.headless.asset.library.resource.v1_0.AssetLibraryResource;
 import com.liferay.map.constants.MapProviderWebKeys;
 import com.liferay.petra.function.UnsafeSupplier;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.DuplicateGroupExternalReferenceCodeException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -48,6 +46,7 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -722,9 +721,7 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			key,
 			_secretResolver.store(
 				group.getCompanyId(),
-				StringBundler.concat(
-					"preference/group/", group.getGroupId(), StringPool.SLASH,
-					key),
+				SecretContext.createGroupSecretContext(group.getGroupId(), key),
 				value));
 	}
 
