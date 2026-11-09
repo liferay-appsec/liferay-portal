@@ -8,7 +8,6 @@ package com.liferay.portal.security.key.internal.secret;
 import aQute.bnd.annotation.metatype.Meta;
 
 import com.liferay.petra.reflect.ReflectionUtil;
-import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
@@ -34,7 +33,6 @@ import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.PropsValues;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
@@ -227,73 +225,16 @@ public class SecretResolverImpl implements SecretResolver {
 						identifier, StringPool.STAR, KeyReference.Type.SECRET),
 					value)) {
 
-				return _putSecret(
-					_getScopeCompanyId(
-						companyId, identifier, "store", secretIdentifierMap),
-					secret);
+				return KeyReferenceUtil.toKeyReferenceString(
+					_secretManager.putSecret(
+						_getScopeCompanyId(
+							companyId, identifier, "store",
+							secretIdentifierMap),
+						secret));
 			}
 		}
 		catch (PortalException portalException) {
 			return ReflectionUtil.throwException(portalException);
-		}
-	}
-
-	@Override
-	public String store(long companyId, String identifier, String value) {
-		if (!PropsValues.FIPS_ENABLED || Validator.isNull(value)) {
-			return value;
-		}
-
-		if (!identifier.startsWith("config/") &&
-			!identifier.startsWith(_IDENTIFIER_PREFIX_PREFERENCE)) {
-
-			throw new IllegalArgumentException(
-				StringBundler.concat(
-					"Unable to store \"", identifier,
-					"\" because its namespace is not supported"));
-		}
-
-		try {
-			if (KeyReferenceUtil.isKeyReference(value)) {
-				KeyReference keyReference = KeyReferenceUtil.parseKeyReference(
-					value);
-
-				if (keyReference == null) {
-					throw new SecretException(
-						"Unable to parse the key reference");
-				}
-
-				String keyReferenceIdentifier = keyReference.getIdentifier();
-
-				if (Objects.equals(identifier, keyReferenceIdentifier) ||
-					(identifier.startsWith(_IDENTIFIER_PREFIX_PREFERENCE) &&
-					 keyReferenceIdentifier.startsWith(
-						 _IDENTIFIER_PREFIX_PREFERENCE) &&
-					 Objects.equals(
-						 StringUtil.extractLast(identifier, CharPool.SLASH),
-						 StringUtil.extractLast(
-							 keyReferenceIdentifier, CharPool.SLASH)))) {
-
-					return value;
-				}
-
-				throw new SecretException(
-					StringBundler.concat(
-						"Unable to store \"", identifier,
-						"\" because it references \"", keyReferenceIdentifier,
-						"\""));
-			}
-
-			try (Secret secret = new Secret(
-					new KeyReference(
-						identifier, StringPool.STAR, KeyReference.Type.SECRET),
-					value)) {
-
-				return _putSecret(companyId, secret);
-			}
-		}
-		catch (SecretException secretException) {
-			return ReflectionUtil.throwException(secretException);
 		}
 	}
 
@@ -345,8 +286,8 @@ public class SecretResolverImpl implements SecretResolver {
 		String settingsId) {
 
 		return StringBundler.concat(
-			_IDENTIFIER_PREFIX_PREFERENCE, settingsId, StringPool.SLASH,
-			scope.getValue(), StringPool.SLASH, scopePK, StringPool.SLASH, key);
+			"preference/", settingsId, StringPool.SLASH, scope.getValue(),
+			StringPool.SLASH, scopePK, StringPool.SLASH, key);
 	}
 
 	private long _getScopeCompanyId(
@@ -489,13 +430,6 @@ public class SecretResolverImpl implements SecretResolver {
 			companyId);
 	}
 
-	private String _putSecret(long scopeCompanyId, Secret secret)
-		throws SecretException {
-
-		return KeyReferenceUtil.toKeyReferenceString(
-			_secretManager.putSecret(scopeCompanyId, secret));
-	}
-
 	private void _putSettingsScopes(
 			String key, Map<String, Long> secretIdentifierMap,
 			SettingsLocator settingsLocator)
@@ -627,8 +561,6 @@ public class SecretResolverImpl implements SecretResolver {
 
 		return ocd.id();
 	}
-
-	private static final String _IDENTIFIER_PREFIX_PREFERENCE = "preference/";
 
 	@Reference
 	private GroupLocalService _groupLocalService;

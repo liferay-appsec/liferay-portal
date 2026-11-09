@@ -26,6 +26,4 @@ public interface SecretResolver {
 	public String store(
 		long companyId, SecretContext secretContext, String value);
 
-	public String store(long companyId, String identifier, String value);
-
 }
