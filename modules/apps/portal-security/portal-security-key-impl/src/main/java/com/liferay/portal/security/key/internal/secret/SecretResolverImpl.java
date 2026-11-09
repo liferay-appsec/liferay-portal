@@ -18,11 +18,14 @@ import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.settings.SettingsLocatorHelper;
@@ -295,6 +298,15 @@ public class SecretResolverImpl implements SecretResolver {
 		return keyReference;
 	}
 
+	private String _getPreferenceIdentifier(
+		String key, ExtendedObjectClassDefinition.Scope scope, Object scopePK,
+		String settingsId) {
+
+		return StringBundler.concat(
+			_IDENTIFIER_PREFIX_PREFERENCE, settingsId, StringPool.SLASH,
+			scope.getValue(), StringPool.SLASH, scopePK, StringPool.SLASH, key);
+	}
+
 	private long _getScopeCompanyId(
 			long companyId, String identifier, String operation,
 			Map<String, Long> secretIdentifierMap)
@@ -411,10 +423,7 @@ public class SecretResolverImpl implements SecretResolver {
 		Map<String, Long> secretIdentifierMap, String settingsId) {
 
 		secretIdentifierMap.put(
-			StringBundler.concat(
-				_IDENTIFIER_PREFIX_PREFERENCE, settingsId, StringPool.SLASH,
-				scope.getValue(), StringPool.SLASH, scopePK, StringPool.SLASH,
-				key),
+			_getPreferenceIdentifier(key, scope, scopePK, settingsId),
 			companyId);
 		secretIdentifierMap.put(
 			SecretIdentifierUtil.getSecretIdentifier(
@@ -459,6 +468,51 @@ public class SecretResolverImpl implements SecretResolver {
 				groupServiceSettingsLocator.getConfigurationPid(), key,
 				secretIdentifierMap,
 				groupServiceSettingsLocator.getSettingsId());
+		}
+		else if (settingsLocator instanceof
+					PortletInstanceSettingsLocator
+						portletInstanceSettingsLocator) {
+
+			Layout layout = portletInstanceSettingsLocator.getLayout();
+
+			String portletId = portletInstanceSettingsLocator.getSettingsId();
+
+			long userId = PortletIdCodec.decodeUserId(portletId);
+
+			long ownerId = portletInstanceSettingsLocator.getOwnerId();
+
+			if (userId > 0) {
+				ownerId = userId;
+			}
+
+			secretIdentifierMap.put(
+				_getPreferenceIdentifier(
+					key, ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+					StringBundler.concat(
+						ownerId, StringPool.SLASH,
+						portletInstanceSettingsLocator.getPlid()),
+					portletId),
+				layout.getCompanyId());
+
+			String configurationPid =
+				portletInstanceSettingsLocator.getConfigurationPid();
+
+			secretIdentifierMap.put(
+				SecretIdentifierUtil.getSecretIdentifier(
+					configurationPid, key,
+					ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+					portletId),
+				CompanyConstants.SYSTEM);
+
+			Group group = _groupLocalService.getGroup(layout.getGroupId());
+
+			String portletName = PortletIdCodec.decodePortletName(portletId);
+
+			_putGroupScopes(
+				configurationPid, group, key, secretIdentifierMap, portletName);
+			_putCompanyScopes(
+				layout.getCompanyId(), configurationPid, key,
+				secretIdentifierMap, portletName);
 		}
 		else if (settingsLocator instanceof SystemSettingsLocator) {
 			_putSystemScope(
