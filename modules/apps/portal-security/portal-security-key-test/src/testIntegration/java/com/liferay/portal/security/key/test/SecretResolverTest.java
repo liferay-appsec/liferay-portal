@@ -155,6 +155,40 @@ public class SecretResolverTest {
 			SecretException.class,
 			() -> _secretResolver.resolve(
 				companyId, secretContext, keyReferenceString));
+
+		String typeSettingsValue = _putSecret(
+			companyId,
+			StringBundler.concat(
+				"typesettings/group/", _group.getGroupId(), StringPool.SLASH,
+				key),
+			value);
+
+		SecretContext groupSecretContext =
+			SecretContext.createGroupSecretContext(_group.getGroupId(), key);
+
+		Assert.assertEquals(
+			value,
+			_secretResolver.resolve(
+				companyId, groupSecretContext, typeSettingsValue));
+		Assert.assertThrows(
+			SecretException.class,
+			() -> _secretResolver.resolve(
+				RandomTestUtil.randomLong(), groupSecretContext,
+				typeSettingsValue));
+
+		GroupTestUtil.enableLocalStaging(_group);
+
+		Group group = _groupLocalService.getGroup(_group.getGroupId());
+
+		Group stagingGroup = group.getStagingGroup();
+
+		Assert.assertEquals(
+			value,
+			_secretResolver.resolve(
+				companyId,
+				SecretContext.createGroupSecretContext(
+					stagingGroup.getGroupId(), key),
+				typeSettingsValue));
 	}
 
 	@Test

@@ -104,22 +104,19 @@ public class SecretResolverImplTest {
 
 		Mockito.clearInvocations(_secretManager);
 
-		SecretContext secretContext = SecretContext.createCompanySecretContext(
-			RandomTestUtil.randomLong(), key);
+		_assertDeleteRejects(
+			companyId, keyReference,
+			SecretContext.createCompanySecretContext(
+				RandomTestUtil.randomLong(), key));
 
-		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
-				Mockito.mockStatic(FIPSAuditUtil.class)) {
+		long groupId = RandomTestUtil.randomLong();
 
-			Assert.assertThrows(
-				SecretException.class,
-				() -> _secretResolverImpl.delete(
-					companyId, secretContext,
-					KeyReferenceUtil.toKeyReferenceString(keyReference)));
+		_setUpGroup(companyId, groupId);
 
-			_assertFIPSAuditEvent(
-				companyId, fipsAuditUtilMockedStatic,
-				keyReference.getIdentifier(), "delete");
-		}
+		SecretContext secretContext = SecretContext.createGroupSecretContext(
+			groupId, key);
+
+		_assertDeleteRejects(companyId, keyReference, secretContext);
 
 		_secretResolverImpl.delete(
 			companyId, secretContext, RandomTestUtil.randomString());
@@ -312,6 +309,7 @@ public class SecretResolverImplTest {
 	public void testResolveWithSecretContext() throws Exception {
 		_testResolveWithCompanySecretContext();
 		_testResolveWithConfigurationSecretContext();
+		_testResolveWithGroupSecretContext();
 		_testResolveWithSettingsSecretContext();
 		_testResolveWithSettingsSecretContextWhenConfigurationPidIsMapped();
 		_testResolveWithSettingsSecretContextWhenSettingsLocatorIsPortletInstance();
@@ -353,6 +351,25 @@ public class SecretResolverImplTest {
 			_testStoreWithSecretContextWhenFIPSIsDisabled();
 			_testStoreWithSecretContextWhenValueReferencesAnotherContext();
 			_testStoreWithSecretContextWhenValueReferencesItsChain();
+		}
+	}
+
+	private void _assertDeleteRejects(
+		long companyId, KeyReference keyReference,
+		SecretContext secretContext) {
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			Assert.assertThrows(
+				SecretException.class,
+				() -> _secretResolverImpl.delete(
+					companyId, secretContext,
+					KeyReferenceUtil.toKeyReferenceString(keyReference)));
+
+			_assertFIPSAuditEvent(
+				companyId, fipsAuditUtilMockedStatic,
+				keyReference.getIdentifier(), "delete");
 		}
 	}
 
@@ -567,7 +584,7 @@ public class SecretResolverImplTest {
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
-	private void _setUpGroup(long companyId, long groupId) throws Exception {
+	private Group _setUpGroup(long companyId, long groupId) throws Exception {
 		Group group = Mockito.mock(Group.class);
 
 		Mockito.when(
@@ -587,6 +604,8 @@ public class SecretResolverImplTest {
 		).thenReturn(
 			group
 		);
+
+		return group;
 	}
 
 	private void _testResolveWithCompanySecretContext() throws Exception {
@@ -700,6 +719,55 @@ public class SecretResolverImplTest {
 				HashMapBuilder.<String, Object>put(
 					Constants.SERVICE_PID, pid
 				).build()));
+	}
+
+	private void _testResolveWithGroupSecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		Group group = _setUpGroup(companyId, groupId);
+
+		long liveGroupId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			group.getLiveGroupId()
+		).thenReturn(
+			liveGroupId
+		);
+
+		Mockito.when(
+			group.isStagingGroup()
+		).thenReturn(
+			true
+		);
+
+		String key = RandomTestUtil.randomString();
+
+		String identifier = StringBundler.concat(
+			"typesettings/group/", groupId, StringPool.SLASH, key);
+		SecretContext secretContext = SecretContext.createGroupSecretContext(
+			groupId, key);
+
+		_assertResolve(companyId, identifier, companyId, secretContext);
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"typesettings/group/", liveGroupId, StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolveRejects(
+			RandomTestUtil.randomLong(), identifier, secretContext);
+
+		String otherGroupIdentifier = StringBundler.concat(
+			"typesettings/group/", RandomTestUtil.randomLong(),
+			StringPool.SLASH, key);
+
+		_assertResolveRejects(companyId, otherGroupIdentifier, secretContext);
 	}
 
 	private void _testResolveWithSettingsSecretContext() throws Exception {
@@ -1065,6 +1133,12 @@ public class SecretResolverImplTest {
 
 		_setUpGroup(companyId, groupId);
 
+		_assertStore(
+			companyId,
+			StringBundler.concat(
+				"typesettings/group/", groupId, StringPool.SLASH, key),
+			SecretContext.createGroupSecretContext(groupId, key));
+
 		String settingsId = RandomTestUtil.randomString();
 
 		_assertStore(
@@ -1134,22 +1208,27 @@ public class SecretResolverImplTest {
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
-	private void _testStoreWithSecretContextWhenValueReferencesItsChain() {
+	private void _testStoreWithSecretContextWhenValueReferencesItsChain()
+		throws Exception {
+
 		Mockito.clearInvocations(_secretManager);
 
 		long companyId = RandomTestUtil.randomLong();
-		String key = RandomTestUtil.randomString();
-		String settingsId = RandomTestUtil.randomString();
+		long groupId = RandomTestUtil.randomLong();
 
-		SecretContext secretContext = SecretContext.createSettingsSecretContext(
-			key, new CompanyServiceSettingsLocator(companyId, settingsId));
+		_setUpGroup(companyId, groupId);
+
+		String key = RandomTestUtil.randomString();
 
 		String value = _toKeyReferenceString(
 			StringBundler.concat(
 				"preference/portal/", companyId, StringPool.SLASH, key));
 
 		Assert.assertEquals(
-			value, _secretResolverImpl.store(companyId, secretContext, value));
+			value,
+			_secretResolverImpl.store(
+				companyId, SecretContext.createGroupSecretContext(groupId, key),
+				value));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
