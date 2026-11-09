@@ -309,6 +309,20 @@ public class SecretResolverImpl implements SecretResolver {
 			PortalCacheManagerNames.SINGLE_VM, PORTAL_CACHE_NAME);
 	}
 
+	private long _getCounterpartGroupId(Group group) {
+		if (group.isStagingGroup()) {
+			return group.getLiveGroupId();
+		}
+
+		Group stagingGroup = group.getStagingGroup();
+
+		if (stagingGroup == null) {
+			return 0;
+		}
+
+		return stagingGroup.getGroupId();
+	}
+
 	private KeyReference _getKeyReference(String keyReferenceString)
 		throws SecretException {
 
@@ -392,6 +406,26 @@ public class SecretResolverImpl implements SecretResolver {
 							getPropertyKey()),
 					CompanyConstants.SYSTEM));
 		}
+		else if (type == SecretContext.Type.GROUP) {
+			Group group = _groupLocalService.getGroup(
+				secretContext.getGroupId());
+
+			_putTypeSettingsScope(
+				group.getCompanyId(), group.getGroupId(),
+				secretContext.getKey(), secretIdentifierMap);
+
+			long counterpartGroupId = _getCounterpartGroupId(group);
+
+			if (counterpartGroupId > 0) {
+				_putTypeSettingsScope(
+					group.getCompanyId(), counterpartGroupId,
+					secretContext.getKey(), secretIdentifierMap);
+			}
+
+			_putPortalPreferenceScope(
+				group.getCompanyId(), secretContext.getKey(),
+				secretIdentifierMap);
+		}
 		else {
 			_putSettingsScopes(
 				secretContext.getKey(), secretIdentifierMap,
@@ -422,18 +456,7 @@ public class SecretResolverImpl implements SecretResolver {
 			ExtendedObjectClassDefinition.Scope.GROUP, group.getGroupId(),
 			secretIdentifierMap, settingsId);
 
-		long counterpartGroupId = 0;
-
-		if (group.isStagingGroup()) {
-			counterpartGroupId = group.getLiveGroupId();
-		}
-		else {
-			Group stagingGroup = group.getStagingGroup();
-
-			if (stagingGroup != null) {
-				counterpartGroupId = stagingGroup.getGroupId();
-			}
-		}
+		long counterpartGroupId = _getCounterpartGroupId(group);
 
 		if (counterpartGroupId > 0) {
 			_putScope(
@@ -570,6 +593,16 @@ public class SecretResolverImpl implements SecretResolver {
 				CompanyConstants.SYSTEM),
 			CompanyConstants.SYSTEM);
 		secretIdentifierMap.put("property/" + key, CompanyConstants.SYSTEM);
+	}
+
+	private void _putTypeSettingsScope(
+		long companyId, long groupId, String key,
+		Map<String, Long> secretIdentifierMap) {
+
+		secretIdentifierMap.put(
+			StringBundler.concat(
+				"typesettings/group/", groupId, StringPool.SLASH, key),
+			companyId);
 	}
 
 	private String _toOCDPid(String configurationPid) {

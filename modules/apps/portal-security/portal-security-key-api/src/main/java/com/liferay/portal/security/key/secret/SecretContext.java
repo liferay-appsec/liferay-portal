@@ -22,7 +22,7 @@ public class SecretContext {
 	public static SecretContext createCompanySecretContext(
 		long companyId, String key) {
 
-		return new SecretContext(companyId, key, null, null, Type.COMPANY);
+		return new SecretContext(companyId, 0, key, null, null, Type.COMPANY);
 	}
 
 	public static SecretContext createConfigurationSecretContext(
@@ -53,8 +53,14 @@ public class SecretContext {
 		}
 
 		return new SecretContext(
-			0, key, Collections.unmodifiableMap(new HashMap<>(properties)),
+			0, 0, key, Collections.unmodifiableMap(new HashMap<>(properties)),
 			null, Type.CONFIGURATION);
+	}
+
+	public static SecretContext createGroupSecretContext(
+		long groupId, String key) {
+
+		return new SecretContext(0, groupId, key, null, null, Type.GROUP);
 	}
 
 	public static SecretContext createSettingsSecretContext(
@@ -64,11 +70,16 @@ public class SecretContext {
 			throw new IllegalArgumentException("Settings locator is null");
 		}
 
-		return new SecretContext(0, key, null, settingsLocator, Type.SETTINGS);
+		return new SecretContext(
+			0, 0, key, null, settingsLocator, Type.SETTINGS);
 	}
 
 	public long getCompanyId() {
 		return _companyId;
+	}
+
+	public long getGroupId() {
+		return _groupId;
 	}
 
 	public String getKey() {
@@ -89,19 +100,21 @@ public class SecretContext {
 
 	public enum Type {
 
-		COMPANY, CONFIGURATION, SETTINGS
+		COMPANY, CONFIGURATION, GROUP, SETTINGS
 
 	}
 
 	private SecretContext(
-		long companyId, String key, Map<String, Object> properties,
-		SettingsLocator settingsLocator, Type type) {
+		long companyId, long groupId, String key,
+		Map<String, Object> properties, SettingsLocator settingsLocator,
+		Type type) {
 
 		if (Validator.isNull(key)) {
 			throw new IllegalArgumentException("Key is null");
 		}
 
 		_companyId = companyId;
+		_groupId = groupId;
 		_key = key;
 		_properties = properties;
 		_settingsLocator = settingsLocator;
@@ -109,6 +122,7 @@ public class SecretContext {
 	}
 
 	private final long _companyId;
+	private final long _groupId;
 	private final String _key;
 	private final Map<String, Object> _properties;
 	private final SettingsLocator _settingsLocator;
