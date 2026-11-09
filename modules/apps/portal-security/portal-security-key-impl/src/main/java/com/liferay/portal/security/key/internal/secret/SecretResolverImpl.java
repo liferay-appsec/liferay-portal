@@ -8,6 +8,7 @@ package com.liferay.portal.security.key.internal.secret;
 import aQute.bnd.annotation.metatype.Meta;
 
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
@@ -33,6 +34,7 @@ import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
@@ -225,12 +227,10 @@ public class SecretResolverImpl implements SecretResolver {
 						identifier, StringPool.STAR, KeyReference.Type.SECRET),
 					value)) {
 
-				return KeyReferenceUtil.toKeyReferenceString(
-					_secretManager.putSecret(
-						_getScopeCompanyId(
-							companyId, identifier, "store",
-							secretIdentifierMap),
-						secret));
+				return _putSecret(
+					_getScopeCompanyId(
+						companyId, identifier, "store", secretIdentifierMap),
+					secret, secretContext);
 			}
 		}
 		catch (PortalException portalException) {
@@ -347,6 +347,16 @@ public class SecretResolverImpl implements SecretResolver {
 							getPropertyKey()),
 					CompanyConstants.SYSTEM));
 		}
+		else if (type == SecretContext.Type.ENTITY) {
+			secretIdentifierMap.put(
+				StringBundler.concat(
+					"entity/",
+					StringUtil.extractLast(
+						secretContext.getClassName(), CharPool.PERIOD),
+					StringPool.SLASH, secretContext.getPrimaryKey(),
+					StringPool.SLASH, secretContext.getKey()),
+				secretContext.getCompanyId());
+		}
 		else if (type == SecretContext.Type.GROUP) {
 			Group group = _groupLocalService.getGroup(
 				secretContext.getGroupId());
@@ -428,6 +438,21 @@ public class SecretResolverImpl implements SecretResolver {
 			SecretIdentifierUtil.getSecretIdentifier(
 				configurationPid, key, scope, scopePK),
 			companyId);
+	}
+
+	private String _putSecret(
+			long scopeCompanyId, Secret secret, SecretContext secretContext)
+		throws SecretException {
+
+		KeyReference keyReference = _secretManager.putSecret(
+			scopeCompanyId, secret);
+
+		if (secretContext.getType() == SecretContext.Type.ENTITY) {
+			return KeyReferenceUtil.toKeyReferenceString(
+				secret.getKeyReference());
+		}
+
+		return KeyReferenceUtil.toKeyReferenceString(keyReference);
 	}
 
 	private void _putSettingsScopes(

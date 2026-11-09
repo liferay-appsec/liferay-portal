@@ -22,7 +22,8 @@ public class SecretContext {
 	public static SecretContext createCompanySecretContext(
 		long companyId, String key) {
 
-		return new SecretContext(companyId, 0, key, null, null, Type.COMPANY);
+		return new SecretContext(
+			null, companyId, 0, key, 0, null, null, Type.COMPANY);
 	}
 
 	public static SecretContext createConfigurationSecretContext(
@@ -53,14 +54,28 @@ public class SecretContext {
 		}
 
 		return new SecretContext(
-			0, 0, key, Collections.unmodifiableMap(new HashMap<>(properties)),
-			null, Type.CONFIGURATION);
+			null, 0, 0, key, 0,
+			Collections.unmodifiableMap(new HashMap<>(properties)), null,
+			Type.CONFIGURATION);
+	}
+
+	public static SecretContext createEntitySecretContext(
+		Class<?> clazz, long companyId, String key, long primaryKey) {
+
+		if (clazz == null) {
+			throw new IllegalArgumentException("Class is null");
+		}
+
+		return new SecretContext(
+			clazz.getName(), companyId, 0, key, primaryKey, null, null,
+			Type.ENTITY);
 	}
 
 	public static SecretContext createGroupSecretContext(
 		long groupId, String key) {
 
-		return new SecretContext(0, groupId, key, null, null, Type.GROUP);
+		return new SecretContext(
+			null, 0, groupId, key, 0, null, null, Type.GROUP);
 	}
 
 	public static SecretContext createSettingsSecretContext(
@@ -71,7 +86,11 @@ public class SecretContext {
 		}
 
 		return new SecretContext(
-			0, 0, key, null, settingsLocator, Type.SETTINGS);
+			null, 0, 0, key, 0, null, settingsLocator, Type.SETTINGS);
+	}
+
+	public String getClassName() {
+		return _className;
 	}
 
 	public long getCompanyId() {
@@ -84,6 +103,10 @@ public class SecretContext {
 
 	public String getKey() {
 		return _key;
+	}
+
+	public long getPrimaryKey() {
+		return _primaryKey;
 	}
 
 	public Map<String, Object> getProperties() {
@@ -100,30 +123,34 @@ public class SecretContext {
 
 	public enum Type {
 
-		COMPANY, CONFIGURATION, GROUP, SETTINGS
+		COMPANY, CONFIGURATION, ENTITY, GROUP, SETTINGS
 
 	}
 
 	private SecretContext(
-		long companyId, long groupId, String key,
-		Map<String, Object> properties, SettingsLocator settingsLocator,
-		Type type) {
+		String className, long companyId, long groupId, String key,
+		long primaryKey, Map<String, Object> properties,
+		SettingsLocator settingsLocator, Type type) {
 
 		if (Validator.isNull(key)) {
 			throw new IllegalArgumentException("Key is null");
 		}
 
+		_className = className;
 		_companyId = companyId;
 		_groupId = groupId;
 		_key = key;
+		_primaryKey = primaryKey;
 		_properties = properties;
 		_settingsLocator = settingsLocator;
 		_type = type;
 	}
 
+	private final String _className;
 	private final long _companyId;
 	private final long _groupId;
 	private final String _key;
+	private final long _primaryKey;
 	private final Map<String, Object> _properties;
 	private final SettingsLocator _settingsLocator;
 	private final Type _type;
