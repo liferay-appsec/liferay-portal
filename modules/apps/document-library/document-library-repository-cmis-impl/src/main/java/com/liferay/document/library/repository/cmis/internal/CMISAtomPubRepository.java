@@ -12,7 +12,6 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.lang.ThreadContextClassLoaderUtil;
 import com.liferay.portal.kernel.exception.InvalidRepositoryException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -45,8 +44,8 @@ public class CMISAtomPubRepository extends CMISRepositoryHandler {
 		}
 		else {
 			login = _DL_REPOSITORY_GUEST_USERNAME;
-			password = SecretResolverUtil.resolve(
-				CompanyConstants.SYSTEM, _DL_REPOSITORY_GUEST_PASSWORD);
+			password = SecretResolverUtil.resolveProperty(
+				PropsKeys.DL_REPOSITORY_GUEST_PASSWORD);
 		}
 
 		Map<String, String> parameters = HashMapBuilder.put(
@@ -84,10 +83,6 @@ public class CMISAtomPubRepository extends CMISRepositoryHandler {
 		return CMISRepositoryUtil.getTypeSettingsValue(
 			getTypeSettingsProperties(), typeSettingsKey);
 	}
-
-	private static final String _DL_REPOSITORY_GUEST_PASSWORD =
-		GetterUtil.getString(
-			PropsUtil.get(PropsKeys.DL_REPOSITORY_GUEST_PASSWORD));
 
 	private static final String _DL_REPOSITORY_GUEST_USERNAME =
 		GetterUtil.getString(

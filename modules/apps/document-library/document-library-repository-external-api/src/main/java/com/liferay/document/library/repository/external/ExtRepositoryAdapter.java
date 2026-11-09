@@ -1299,9 +1299,8 @@ public class ExtRepositoryAdapter extends BaseRepositoryImpl {
 		String login = PrincipalThreadLocal.getName();
 
 		if (Validator.isNull(login) || _isGuestUser(login)) {
-			return SecretResolverUtil.resolve(
-				CompanyConstants.SYSTEM,
-				PropsUtil.get(PropsKeys.DL_REPOSITORY_GUEST_PASSWORD));
+			return SecretResolverUtil.resolveProperty(
+				PropsKeys.DL_REPOSITORY_GUEST_PASSWORD);
 		}
 
 		return PrincipalThreadLocal.getPassword();
