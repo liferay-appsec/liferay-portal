@@ -85,11 +85,6 @@ public class SecretResolverUtilTest {
 			IllegalStateException.class,
 			() -> SecretResolverUtil.resolve(
 				RandomTestUtil.randomLong(), _randomKeyReferenceString()));
-		Assert.assertThrows(
-			IllegalStateException.class,
-			() -> SecretResolverUtil.resolve(
-				RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
-				_randomKeyReferenceString()));
 
 		String plainValue = RandomTestUtil.randomString();
 
@@ -100,43 +95,6 @@ public class SecretResolverUtilTest {
 
 		Assert.assertNull(
 			SecretResolverUtil.resolve(RandomTestUtil.randomLong(), null));
-	}
-
-	@Test
-	public void testResolveWithIdentifier() {
-		long companyId = RandomTestUtil.randomLong();
-		String identifier = RandomTestUtil.randomString();
-		String resolvedValue = RandomTestUtil.randomString();
-		String value = _randomKeyReferenceString();
-
-		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
-
-		Mockito.when(
-			secretResolver.resolve(companyId, identifier, value)
-		).thenReturn(
-			resolvedValue
-		);
-
-		_setUpSecretResolverSnapshot(secretResolver);
-
-		Assert.assertSame(
-			resolvedValue,
-			SecretResolverUtil.resolve(companyId, identifier, value));
-
-		String plainValue = RandomTestUtil.randomString();
-
-		Assert.assertSame(
-			plainValue,
-			SecretResolverUtil.resolve(companyId, identifier, plainValue));
-
-		Assert.assertNull(
-			SecretResolverUtil.resolve(companyId, identifier, null));
-
-		Mockito.verify(
-			secretResolver, Mockito.never()
-		).resolve(
-			companyId, identifier, plainValue
-		);
 	}
 
 	@Test
