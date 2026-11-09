@@ -130,8 +130,8 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 		OIDCClientInformation oidcClientInformation =
 			OpenIdConnectClientInformationUtil.getOIDCClientInformation(
-				_configurationAdmin, oAuthClientEntry, _secretResolver,
-				_userLocalService);
+				_portal.getCompanyId(httpServletRequest), _configurationAdmin,
+				oAuthClientEntry, _secretResolver, _userLocalService);
 
 		OIDCProviderMetadata oidcProviderMetadata =
 			_authorizationServerMetadataResolver.resolveOIDCProviderMetadata(

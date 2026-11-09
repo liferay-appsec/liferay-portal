@@ -239,8 +239,8 @@ public class OfflineOpenIdConnectSessionManager {
 
 			OIDCTokens oidcTokens = OpenIdConnectTokenRequestUtil.request(
 				OpenIdConnectClientInformationUtil.getOIDCClientInformation(
-					_configurationAdmin, oAuthClientEntry, _secretResolver,
-					_userLocalService),
+					openIdConnectSession.getCompanyId(), _configurationAdmin,
+					oAuthClientEntry, _secretResolver, _userLocalService),
 				oidcProviderMetadata, refreshToken,
 				oAuthClientEntry.getTokenConnectionTimeout(),
 				oAuthClientEntry.getTokenRequestParametersJSON());

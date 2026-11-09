@@ -7,12 +7,11 @@ package com.liferay.portal.security.sso.openid.connect.internal.util;
 
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration;
 
@@ -33,7 +32,7 @@ import org.osgi.service.cm.ConfigurationAdmin;
 public class OpenIdConnectClientInformationUtil {
 
 	public static OIDCClientInformation getOIDCClientInformation(
-			ConfigurationAdmin configurationAdmin,
+			long companyId, ConfigurationAdmin configurationAdmin,
 			OAuthClientEntry oAuthClientEntry, SecretResolver secretResolver,
 			UserLocalService userLocalService)
 		throws Exception {
@@ -44,20 +43,51 @@ public class OpenIdConnectClientInformationUtil {
 		String clientSecret = GetterUtil.getString(
 			jsonObject.get("client_secret"));
 
-		if (_isResolvable(
-				clientSecret, configurationAdmin, oAuthClientEntry,
-				userLocalService)) {
+		SecretContext secretContext = _buildSecretContext(
+			clientSecret, configurationAdmin, oAuthClientEntry,
+			userLocalService);
 
+		if (secretContext != null) {
 			jsonObject.put(
 				"client_secret",
-				secretResolver.resolve(
-					oAuthClientEntry.getCompanyId(), clientSecret));
+				secretResolver.resolve(companyId, secretContext, clientSecret));
 		}
 
 		return OIDCClientInformation.parse(jsonObject);
 	}
 
-	private static boolean _isOpenIdConnectProviderClientSecret(
+	private static SecretContext _buildSecretContext(
+			String clientSecret, ConfigurationAdmin configurationAdmin,
+			OAuthClientEntry oAuthClientEntry,
+			UserLocalService userLocalService)
+		throws Exception {
+
+		if (!KeyReferenceUtil.isKeyReference(clientSecret)) {
+			return null;
+		}
+
+		if (oAuthClientEntry.getUserId() == userLocalService.getGuestUserId(
+				oAuthClientEntry.getCompanyId())) {
+
+			Configuration configuration =
+				_fetchOpenIdConnectProviderConfiguration(
+					oAuthClientEntry.getCompanyId(), configurationAdmin,
+					clientSecret);
+
+			if (configuration == null) {
+				return null;
+			}
+
+			return SecretContext.createConfigurationSecretContext(
+				"openIdConnectClientSecret", configuration.getProperties());
+		}
+
+		return SecretContext.createEntitySecretContext(
+			OAuthClientEntry.class, oAuthClientEntry.getCompanyId(),
+			"clientSecret", oAuthClientEntry.getPrimaryKey());
+	}
+
+	private static Configuration _fetchOpenIdConnectProviderConfiguration(
 			long companyId, ConfigurationAdmin configurationAdmin,
 			String keyReferenceString)
 		throws Exception {
@@ -71,7 +101,7 @@ public class OpenIdConnectClientInformationUtil {
 				".scoped))"));
 
 		if (configurations == null) {
-			return false;
+			return null;
 		}
 
 		for (Configuration configuration : configurations) {
@@ -87,40 +117,11 @@ public class OpenIdConnectClientInformationUtil {
 					keyReferenceString,
 					properties.get("openIdConnectClientSecret"))) {
 
-				return true;
+				return configuration;
 			}
 		}
 
-		return false;
-	}
-
-	private static boolean _isResolvable(
-			String clientSecret, ConfigurationAdmin configurationAdmin,
-			OAuthClientEntry oAuthClientEntry,
-			UserLocalService userLocalService)
-		throws Exception {
-
-		KeyReference keyReference = KeyReferenceUtil.parseKeyReference(
-			clientSecret);
-
-		if (keyReference == null) {
-			return false;
-		}
-
-		if (oAuthClientEntry.getUserId() == userLocalService.getGuestUserId(
-				oAuthClientEntry.getCompanyId())) {
-
-			return _isOpenIdConnectProviderClientSecret(
-				oAuthClientEntry.getCompanyId(), configurationAdmin,
-				clientSecret);
-		}
-
-		return Objects.equals(
-			keyReference.getIdentifier(),
-			StringBundler.concat(
-				OAuthClientEntry.class.getSimpleName(), StringPool.SLASH,
-				oAuthClientEntry.getCompanyId(), StringPool.SLASH,
-				oAuthClientEntry.getOAuthClientEntryId()));
+		return null;
 	}
 
 }
