@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.ParameterMapSettingsLocator;
@@ -38,6 +39,7 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -74,12 +76,22 @@ public class SecretResolverImplTest {
 			_secretResolverImpl, "_keyManagerProfileRegistry",
 			_keyManagerProfileRegistry);
 		ReflectionTestUtil.setFieldValue(
+			_secretResolverImpl, "_layoutLocalService", _layoutLocalService);
+		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_portalCache", _portalCache);
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_secretManager", _secretManager);
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_settingsLocatorHelper",
 			_settingsLocatorHelper);
+	}
+
+	@Test
+	public void testCopy() throws Exception {
+		_testCopy();
+		_testCopyWhenValueIsInTargetSecretContext();
+		_testCopyWhenValueIsNotInSourceSecretContext();
+		_testCopyWhenValueIsNotKeyReference();
 	}
 
 	@Test
@@ -458,6 +470,30 @@ public class SecretResolverImplTest {
 		Assert.assertTrue(secret.isDestroyed());
 	}
 
+	private Layout _mockLayout(long companyId, long groupId, long plid) {
+		Layout layout = Mockito.mock(Layout.class);
+
+		Mockito.when(
+			layout.getCompanyId()
+		).thenReturn(
+			companyId
+		);
+
+		Mockito.when(
+			layout.getGroupId()
+		).thenReturn(
+			groupId
+		);
+
+		Mockito.when(
+			layout.getPlid()
+		).thenReturn(
+			plid
+		);
+
+		return layout;
+	}
+
 	private Group _setUpGroup(long companyId, long groupId) throws Exception {
 		Group group = Mockito.mock(Group.class);
 
@@ -480,6 +516,176 @@ public class SecretResolverImplTest {
 		);
 
 		return group;
+	}
+
+	private void _testCopy() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		String key = RandomTestUtil.randomString();
+		long sourcePrimaryKey = RandomTestUtil.randomLong();
+
+		KeyReference keyReference = new KeyReference(
+			StringBundler.concat(
+				"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+				sourcePrimaryKey, StringPool.SLASH, key),
+			RandomTestUtil.randomString(), KeyReference.Type.SECRET);
+
+		String value = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_secretManager.getSecret(companyId, keyReference)
+		).thenReturn(
+			new Secret(keyReference, value)
+		);
+
+		long targetPrimaryKey = RandomTestUtil.randomLong();
+
+		KeyReference targetKeyReference = new KeyReference(
+			StringBundler.concat(
+				"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+				targetPrimaryKey, StringPool.SLASH, key),
+			StringPool.STAR, KeyReference.Type.SECRET);
+
+		AtomicReference<KeyReference> keyReferenceAtomicReference =
+			new AtomicReference<>();
+		AtomicReference<String> valueAtomicReference = new AtomicReference<>();
+
+		Mockito.when(
+			_secretManager.putSecret(Mockito.eq(companyId), Mockito.any())
+		).thenAnswer(
+			invocationOnMock -> {
+				Secret secret = invocationOnMock.getArgument(1);
+
+				keyReferenceAtomicReference.set(secret.getKeyReference());
+				valueAtomicReference.set(new String(secret.getChars()));
+
+				return new KeyReference(
+					targetKeyReference.getIdentifier(),
+					RandomTestUtil.randomString(), KeyReference.Type.SECRET);
+			}
+		);
+
+		Assert.assertEquals(
+			KeyReferenceUtil.toKeyReferenceString(targetKeyReference),
+			_secretResolverImpl.copy(
+				companyId,
+				SecretContext.createEntitySecretContext(
+					Secret.class, companyId, key, sourcePrimaryKey),
+				SecretContext.createEntitySecretContext(
+					Secret.class, companyId, key, targetPrimaryKey),
+				KeyReferenceUtil.toKeyReferenceString(keyReference)));
+		Assert.assertEquals(
+			targetKeyReference, keyReferenceAtomicReference.get());
+		Assert.assertEquals(value, valueAtomicReference.get());
+	}
+
+	private void _testCopyWhenValueIsInTargetSecretContext() {
+		Mockito.clearInvocations(_secretManager);
+
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+
+		String value = _toKeyReferenceString(
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key));
+
+		Assert.assertSame(
+			value,
+			_secretResolverImpl.copy(
+				companyId,
+				SecretContext.createEntitySecretContext(
+					Secret.class, companyId, key, RandomTestUtil.randomLong()),
+				SecretContext.createCompanySecretContext(companyId, key),
+				value));
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _testCopyWhenValueIsNotInSourceSecretContext() {
+		Mockito.clearInvocations(_secretManager);
+
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+		long primaryKey = RandomTestUtil.randomLong();
+
+		SecretContext sourceSecretContext =
+			SecretContext.createEntitySecretContext(
+				Secret.class, companyId, key, primaryKey);
+
+		SecretContext targetSecretContext =
+			SecretContext.createEntitySecretContext(
+				Secret.class, companyId, key, RandomTestUtil.randomLong());
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			String otherEntityIdentifier = StringBundler.concat(
+				"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+				RandomTestUtil.randomLong(), StringPool.SLASH, key);
+
+			String value = _toKeyReferenceString(otherEntityIdentifier);
+
+			Assert.assertSame(
+				value,
+				_secretResolverImpl.copy(
+					companyId, sourceSecretContext, targetSecretContext,
+					value));
+
+			_assertFIPSAuditEvent(
+				companyId, fipsAuditUtilMockedStatic, otherEntityIdentifier,
+				"copy");
+		}
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			String identifier = StringBundler.concat(
+				"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+				primaryKey, StringPool.SLASH, key);
+
+			String value = _toKeyReferenceString(identifier);
+
+			long otherCompanyId = RandomTestUtil.randomLong();
+
+			Assert.assertSame(
+				value,
+				_secretResolverImpl.copy(
+					otherCompanyId, sourceSecretContext, targetSecretContext,
+					value));
+
+			_assertFIPSAuditEvent(
+				otherCompanyId, fipsAuditUtilMockedStatic, identifier, "copy");
+		}
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _testCopyWhenValueIsNotKeyReference() {
+		Mockito.clearInvocations(_secretManager);
+
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext sourceSecretContext =
+			SecretContext.createCompanySecretContext(
+				companyId, RandomTestUtil.randomString());
+		SecretContext targetSecretContext =
+			SecretContext.createCompanySecretContext(
+				companyId, RandomTestUtil.randomString());
+
+		String value = RandomTestUtil.randomString();
+
+		Assert.assertSame(
+			value,
+			_secretResolverImpl.copy(
+				companyId, sourceSecretContext, targetSecretContext, value));
+
+		Assert.assertEquals(
+			"${secretRef:provider}",
+			_secretResolverImpl.copy(
+				companyId, sourceSecretContext, targetSecretContext,
+				"${secretRef:provider}"));
+
+		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	private void _testResolveWithCompanySecretContext() throws Exception {
@@ -767,28 +973,54 @@ public class SecretResolverImplTest {
 		long companyId = RandomTestUtil.randomLong();
 		long groupId = RandomTestUtil.randomLong();
 
-		_setUpGroup(companyId, groupId);
+		Group group = _setUpGroup(companyId, groupId);
 
-		Layout layout = Mockito.mock(Layout.class);
+		long liveGroupId = RandomTestUtil.randomLong();
 
 		Mockito.when(
-			layout.getCompanyId()
+			group.getLiveGroupId()
 		).thenReturn(
-			companyId
+			liveGroupId
 		);
 
 		Mockito.when(
-			layout.getGroupId()
+			group.isStagingGroup()
 		).thenReturn(
-			groupId
+			true
 		);
 
 		long plid = RandomTestUtil.randomLong();
 
+		Layout layout = _mockLayout(companyId, groupId, plid);
+
+		long layoutSetPrototypePlid = RandomTestUtil.randomLong();
+
+		Layout layoutSetPrototypeLayout = _mockLayout(
+			companyId, RandomTestUtil.randomLong(), layoutSetPrototypePlid);
+
 		Mockito.when(
-			layout.getPlid()
+			layout.getLayoutSetPrototypeLayout()
 		).thenReturn(
-			plid
+			layoutSetPrototypeLayout
+		);
+
+		String uuid = RandomTestUtil.randomString();
+
+		Mockito.when(
+			layout.getUuid()
+		).thenReturn(
+			uuid
+		);
+
+		long livePlid = RandomTestUtil.randomLong();
+
+		Layout liveLayout = _mockLayout(companyId, liveGroupId, livePlid);
+
+		Mockito.when(
+			_layoutLocalService.fetchLayoutByUuidAndGroupId(
+				uuid, liveGroupId, false)
+		).thenReturn(
+			liveLayout
 		);
 
 		String key = RandomTestUtil.randomString();
@@ -804,25 +1036,37 @@ public class SecretResolverImplTest {
 		_assertResolve(
 			companyId,
 			StringBundler.concat(
-				"preference/", portletId, "/portlet-instance/0/", plid,
-				StringPool.SLASH, key),
-			companyId, secretContext);
-		_assertResolve(
-			companyId,
-			StringBundler.concat(
 				"config/", portletName, "/portlet-instance/", portletId,
 				StringPool.SLASH, key),
 			CompanyConstants.SYSTEM, secretContext);
 		_assertResolve(
 			companyId,
 			StringBundler.concat(
-				"preference/", portletName, "/group/", groupId,
+				"preference/", portletId, "/portlet-instance/0/",
+				layoutSetPrototypePlid, StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/0/", livePlid,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/0/", plid,
 				StringPool.SLASH, key),
 			companyId, secretContext);
 		_assertResolve(
 			companyId,
 			StringBundler.concat(
 				"preference/", portletName, "/company/", companyId,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletName, "/group/", groupId,
 				StringPool.SLASH, key),
 			companyId, secretContext);
 
@@ -1080,6 +1324,9 @@ public class SecretResolverImplTest {
 
 	@Mock
 	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
+
+	@Mock
+	private LayoutLocalService _layoutLocalService;
 
 	@Mock
 	private PortalCache<String, String> _portalCache;

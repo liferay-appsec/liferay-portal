@@ -8,9 +8,12 @@ package com.liferay.portal.security.key.secret;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.util.Collections;
 
@@ -44,6 +47,99 @@ public class SecretResolverUtilTest {
 		ReflectionTestUtil.setFieldValue(
 			SecretResolverUtil.class, "_secretResolverSnapshot",
 			_secretResolverSnapshot);
+	}
+
+	@Test
+	public void testCopy() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext sourceSecretContext =
+			SecretContext.createCompanySecretContext(
+				companyId, RandomTestUtil.randomString());
+		SecretContext targetSecretContext =
+			SecretContext.createCompanySecretContext(
+				companyId, RandomTestUtil.randomString());
+
+		String keyReferenceString = _randomKeyReferenceString();
+
+		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
+
+		String copiedValue = _randomKeyReferenceString();
+
+		Mockito.when(
+			secretResolver.copy(
+				companyId, sourceSecretContext, targetSecretContext,
+				keyReferenceString)
+		).thenReturn(
+			copiedValue
+		);
+
+		_setUpSecretResolverSnapshot(secretResolver);
+
+		PortletPreferences portletPreferences = Mockito.mock(
+			PortletPreferences.class);
+
+		String key = RandomTestUtil.randomString();
+		String plainValue = RandomTestUtil.randomString();
+
+		Mockito.when(
+			portletPreferences.getMap()
+		).thenReturn(
+			HashMapBuilder.put(
+				key, new String[] {keyReferenceString, plainValue}
+			).put(
+				RandomTestUtil.randomString(), new String[] {plainValue}
+			).build()
+		);
+
+		SecretResolverUtil.copy(
+			companyId, portletPreferences, currentKey -> sourceSecretContext,
+			currentKey -> targetSecretContext);
+
+		Mockito.verify(
+			portletPreferences
+		).getMap();
+
+		Mockito.verify(
+			portletPreferences
+		).setValues(
+			key, copiedValue, plainValue
+		);
+
+		Mockito.verifyNoMoreInteractions(portletPreferences);
+
+		Mockito.verify(
+			secretResolver
+		).copy(
+			companyId, sourceSecretContext, targetSecretContext,
+			keyReferenceString
+		);
+
+		Mockito.verifyNoMoreInteractions(secretResolver);
+
+		PortletPreferences plainPortletPreferences = Mockito.mock(
+			PortletPreferences.class);
+
+		Mockito.when(
+			plainPortletPreferences.getMap()
+		).thenReturn(
+			HashMapBuilder.put(
+				RandomTestUtil.randomString(), new String[] {plainValue}
+			).build()
+		);
+
+		SecretResolverUtil.copy(
+			companyId, plainPortletPreferences,
+			currentKey -> sourceSecretContext,
+			currentKey -> targetSecretContext);
+
+		Mockito.verify(
+			plainPortletPreferences
+		).getMap();
+
+		Mockito.verifyNoMoreInteractions(plainPortletPreferences);
+
+		Mockito.verifyNoMoreInteractions(secretResolver);
 	}
 
 	@Test
