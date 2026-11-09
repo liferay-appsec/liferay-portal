@@ -68,16 +68,6 @@ public class SecretResolverUtil {
 		return secretResolver.resolve(companyId, secretContext, value);
 	}
 
-	public static String resolve(long companyId, String value) {
-		if (!KeyReferenceUtil.isKeyReference(value)) {
-			return value;
-		}
-
-		SecretResolver secretResolver = _getSecretResolver();
-
-		return secretResolver.resolve(companyId, value);
-	}
-
 	public static String resolveProperty(String key) {
 		String value = PropsUtil.get(key);
 

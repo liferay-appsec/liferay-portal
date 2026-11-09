@@ -45,14 +45,11 @@ import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.exception.SecretException;
-import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
-import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.SequencedMap;
 
 import org.osgi.framework.Constants;
@@ -203,51 +200,6 @@ public class SecretResolverImpl implements SecretResolver {
 		}
 		catch (PortalException portalException) {
 			return ReflectionUtil.throwException(portalException);
-		}
-	}
-
-	@Override
-	public String resolve(long companyId, String value) {
-		if (!KeyReferenceUtil.isKeyReference(value)) {
-			return value;
-		}
-
-		try {
-			KeyReference keyReference = _getKeyReference(value);
-
-			if (companyId != CompanyConstants.SYSTEM) {
-				KeyManagerProfile keyManagerProfile =
-					_keyManagerProfileRegistry.getActiveKeyManagerProfile();
-
-				if ((keyManagerProfile != null) &&
-					Objects.equals(
-						keyReference.getProviderId(),
-						keyManagerProfile.getSystemSecretProviderId())) {
-
-					companyId = CompanyConstants.SYSTEM;
-				}
-			}
-
-			String key = getKey(companyId, value);
-
-			String resolvedValue = _portalCache.get(key);
-
-			if (resolvedValue != null) {
-				return resolvedValue;
-			}
-
-			try (Secret secret = _secretManager.getSecret(
-					companyId, keyReference)) {
-
-				resolvedValue = new String(secret.getChars());
-			}
-
-			_portalCache.put(key, resolvedValue, 600);
-
-			return resolvedValue;
-		}
-		catch (SecretException secretException) {
-			return ReflectionUtil.throwException(secretException);
 		}
 	}
 
@@ -727,9 +679,6 @@ public class SecretResolverImpl implements SecretResolver {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference
-	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
