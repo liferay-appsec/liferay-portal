@@ -9,11 +9,13 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.PortletPreferences;
@@ -49,6 +51,10 @@ public class FacebookPortletConfigurationIcon
 
 		String lfrFacebookAPIKey = _secretResolver.resolve(
 			themeDisplay.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"lfrFacebookApiKey",
+				new PortletInstanceSettingsLocator(
+					themeDisplay.getLayout(), portletDisplay.getId())),
 			portletPreferences.getValue("lfrFacebookApiKey", StringPool.BLANK));
 
 		return "http://www.facebook.com/add.php?api_key=" + lfrFacebookAPIKey +

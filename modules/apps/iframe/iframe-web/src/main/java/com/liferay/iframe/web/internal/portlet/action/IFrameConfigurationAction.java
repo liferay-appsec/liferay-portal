@@ -5,20 +5,22 @@
 
 package com.liferay.iframe.web.internal.portlet.action;
 
+import com.liferay.iframe.web.internal.configuration.IFramePortletInstanceConfiguration;
 import com.liferay.iframe.web.internal.constants.IFramePortletKeys;
 import com.liferay.iframe.web.internal.util.IFrameUtil;
 import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.ActionRequest;
@@ -118,15 +120,17 @@ public class IFrameConfigurationAction extends DefaultConfigurationAction {
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			name,
+			new PortletInstanceSettingsLocator(
+				themeDisplay.getLayout(),
+				ParamUtil.getString(portletRequest, "portletResource"),
+				IFramePortletInstanceConfiguration.class.getName()));
+
 		String value = portletPreferences.getValue(name, StringPool.BLANK);
 
 		String storedValue = _secretResolver.store(
-			companyId,
-			StringBundler.concat(
-				"preference/portlet/", themeDisplay.getPlid(), StringPool.SLASH,
-				ParamUtil.getString(portletRequest, "portletResource"),
-				StringPool.SLASH, name),
-			value);
+			companyId, secretContext, value);
 
 		if (storedValue.equals(value)) {
 			return;
