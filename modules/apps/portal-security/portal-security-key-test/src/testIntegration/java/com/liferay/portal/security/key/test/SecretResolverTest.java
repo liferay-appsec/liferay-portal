@@ -309,7 +309,11 @@ public class SecretResolverTest {
 		Assert.assertNotNull(KeyReferenceUtil.parseKeyReference(storedValue));
 
 		Assert.assertEquals(
-			value, _secretResolver.resolve(group.getCompanyId(), storedValue));
+			value,
+			_secretResolver.resolve(
+				group.getCompanyId(),
+				SecretContext.createGroupSecretContext(group.getGroupId(), key),
+				storedValue));
 	}
 
 	private void _testStoreGroupTypeSettingsInheritedFromCompany()
@@ -335,7 +339,13 @@ public class SecretResolverTest {
 				GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY));
 
 		Assert.assertEquals(
-			value, _secretResolver.resolve(companyId, storedValue));
+			value,
+			_secretResolver.resolve(
+				companyId,
+				SecretContext.createGroupSecretContext(
+					group.getGroupId(),
+					GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY),
+				storedValue));
 	}
 
 	private void _testStoreIsIdempotent() throws Exception {
