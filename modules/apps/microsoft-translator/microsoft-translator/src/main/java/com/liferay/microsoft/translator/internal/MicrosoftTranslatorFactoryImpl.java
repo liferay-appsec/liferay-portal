@@ -10,6 +10,8 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.microsofttranslator.MicrosoftTranslator;
 import com.liferay.portal.kernel.microsofttranslator.MicrosoftTranslatorFactory;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Map;
@@ -36,6 +38,10 @@ public class MicrosoftTranslatorFactoryImpl
 			_microsoftTranslator = new MicrosoftTranslatorImpl(
 				_secretResolver.resolve(
 					CompanyConstants.SYSTEM,
+					SecretContext.createSettingsSecretContext(
+						"subscriptionKey",
+						new SystemSettingsLocator(
+							MicrosoftTranslatorConfiguration.class.getName())),
 					_microsoftTranslatorConfiguration.subscriptionKey()));
 		}
 

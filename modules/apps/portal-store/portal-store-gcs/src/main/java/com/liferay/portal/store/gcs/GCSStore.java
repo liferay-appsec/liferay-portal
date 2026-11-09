@@ -41,11 +41,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.store.gcs.configuration.GCSStoreConfiguration;
 
@@ -477,7 +479,12 @@ public class GCSStore implements Store {
 
 	private void _initEncryption() {
 		String aes256Key = _secretResolver.resolve(
-			CompanyConstants.SYSTEM, _gcsStoreConfiguration.aes256Key());
+			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"aes256Key",
+				new SystemSettingsLocator(
+					GCSStoreConfiguration.class.getName())),
+			_gcsStoreConfiguration.aes256Key());
 
 		if (Validator.isNull(aes256Key)) {
 			if (_log.isWarnEnabled()) {
@@ -503,6 +510,10 @@ public class GCSStore implements Store {
 	private void _initGCSStore() throws PortalException {
 		String serviceAccountKey = _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"serviceAccountKey",
+				new SystemSettingsLocator(
+					GCSStoreConfiguration.class.getName())),
 			_gcsStoreConfiguration.serviceAccountKey());
 
 		try {

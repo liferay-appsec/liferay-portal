@@ -23,9 +23,11 @@ import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.service.CountryLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.RegionLocalService;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -106,6 +108,10 @@ public class BingCommerceGeocoder implements CommerceGeocoder {
 
 		_apiKey = _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"apiKey",
+				new SystemSettingsLocator(
+					BingCommerceGeocoderConfiguration.class.getName())),
 			bingCommerceGeocoderConfiguration.apiKey());
 	}
 

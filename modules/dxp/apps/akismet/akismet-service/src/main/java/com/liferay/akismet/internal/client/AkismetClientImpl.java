@@ -23,11 +23,13 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.IOException;
@@ -75,6 +77,10 @@ public class AkismetClientImpl implements AkismetClient {
 			Http.HTTP_WITH_SLASH,
 			_secretResolver.resolve(
 				CompanyConstants.SYSTEM,
+				SecretContext.createSettingsSecretContext(
+					"akismetApiKey",
+					new SystemSettingsLocator(
+						AkismetServiceConfiguration.class.getName())),
 				_akismetServiceConfiguration.akismetApiKey()),
 			StringPool.PERIOD, AkismetConstants.URL_REST,
 			AkismetConstants.PATH_CHECK_SPAM);
@@ -122,6 +128,10 @@ public class AkismetClientImpl implements AkismetClient {
 			Http.HTTP_WITH_SLASH,
 			_secretResolver.resolve(
 				CompanyConstants.SYSTEM,
+				SecretContext.createSettingsSecretContext(
+					"akismetApiKey",
+					new SystemSettingsLocator(
+						AkismetServiceConfiguration.class.getName())),
 				_akismetServiceConfiguration.akismetApiKey()),
 			StringPool.PERIOD, AkismetConstants.URL_REST,
 			AkismetConstants.PATH_SUBMIT_HAM);
@@ -170,10 +180,15 @@ public class AkismetClientImpl implements AkismetClient {
 			_log.debug("Submitting message as spam: " + permalink);
 		}
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"akismetApiKey",
+			new SystemSettingsLocator(
+				AkismetServiceConfiguration.class.getName()));
+
 		String location = StringBundler.concat(
 			Http.HTTP_WITH_SLASH,
 			_secretResolver.resolve(
-				CompanyConstants.SYSTEM,
+				CompanyConstants.SYSTEM, secretContext,
 				_akismetServiceConfiguration.akismetApiKey()),
 			StringPool.PERIOD, AkismetConstants.URL_REST,
 			AkismetConstants.PATH_SUBMIT_SPAM);
@@ -186,7 +201,7 @@ public class AkismetClientImpl implements AkismetClient {
 			!verifyApiKey(
 				companyId,
 				_secretResolver.resolve(
-					CompanyConstants.SYSTEM,
+					CompanyConstants.SYSTEM, secretContext,
 					_akismetServiceConfiguration.akismetApiKey()))) {
 
 			_log.error("There was an issue submitting message as spam");

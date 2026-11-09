@@ -21,11 +21,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.push.notifications.constants.PushNotificationsConstants;
 import com.liferay.push.notifications.exception.PushNotificationsException;
@@ -283,6 +285,11 @@ public class FirebasePushNotificationsSender
 
 		String serviceAccountKey = _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"serviceAccountKey",
+				new SystemSettingsLocator(
+					FirebasePushNotificationsSenderConfiguration.class.
+						getName())),
 			_firebasePushNotificationsSenderConfiguration.serviceAccountKey());
 
 		try {

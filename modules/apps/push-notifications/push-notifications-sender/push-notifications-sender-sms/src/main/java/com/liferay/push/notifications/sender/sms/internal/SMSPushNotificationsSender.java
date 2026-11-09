@@ -9,7 +9,9 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.push.notifications.constants.PushNotificationsConstants;
 import com.liferay.push.notifications.constants.PushNotificationsDestinationNames;
@@ -87,10 +89,15 @@ public class SMSPushNotificationsSender implements PushNotificationsSender {
 			ConfigurableUtil.createConfigurable(
 				SMSPushNotificationsSenderConfiguration.class, properties);
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"authToken",
+			new SystemSettingsLocator(
+				SMSPushNotificationsSenderConfiguration.class.getName()));
+
 		String accountSID =
 			_smsPushNotificationsSenderConfiguration.accountSID();
 		String authToken = _secretResolver.resolve(
-			CompanyConstants.SYSTEM,
+			CompanyConstants.SYSTEM, secretContext,
 			_smsPushNotificationsSenderConfiguration.authToken());
 
 		if (Validator.isNull(accountSID) || Validator.isNull(authToken)) {

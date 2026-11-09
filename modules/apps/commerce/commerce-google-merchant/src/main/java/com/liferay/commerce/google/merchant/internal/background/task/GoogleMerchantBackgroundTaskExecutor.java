@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.backgroundtask.BackgroundTaskResult;
 import com.liferay.portal.kernel.backgroundtask.BaseBackgroundTaskExecutor;
 import com.liferay.portal.kernel.backgroundtask.display.BackgroundTaskDisplay;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.ByteArrayInputStream;
@@ -78,9 +80,16 @@ public class GoogleMerchantBackgroundTaskExecutor
 		Session jschSession = null;
 
 		try {
+			SecretContext secretContext =
+				SecretContext.createSettingsSecretContext(
+					"password",
+					new SystemSettingsLocator(
+						SftpConfiguration.class.getName()));
+
 			String host = _sftpConfiguration.host();
 			String password = _secretResolver.resolve(
-				CompanyConstants.SYSTEM, _sftpConfiguration.password());
+				CompanyConstants.SYSTEM, secretContext,
+				_sftpConfiguration.password());
 			int port = _sftpConfiguration.port();
 			String username = _sftpConfiguration.username();
 

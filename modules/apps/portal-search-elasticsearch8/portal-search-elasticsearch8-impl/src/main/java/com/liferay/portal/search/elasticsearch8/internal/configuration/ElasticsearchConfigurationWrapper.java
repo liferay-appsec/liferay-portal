@@ -8,10 +8,12 @@ package com.liferay.portal.search.elasticsearch8.internal.configuration;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.elasticsearch8.configuration.ElasticsearchConfiguration;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Collections;
@@ -159,7 +161,12 @@ public class ElasticsearchConfigurationWrapper
 
 	public String password() {
 		return _secretResolver.resolve(
-			CompanyConstants.SYSTEM, _elasticsearchConfiguration.password());
+			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"password",
+				new SystemSettingsLocator(
+					ElasticsearchConfiguration.class.getName())),
+			_elasticsearchConfiguration.password());
 	}
 
 	public boolean productionModeEnabled() {
@@ -173,6 +180,10 @@ public class ElasticsearchConfigurationWrapper
 	public String proxyPassword() {
 		return _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"proxyPassword",
+				new SystemSettingsLocator(
+					ElasticsearchConfiguration.class.getName())),
 			_elasticsearchConfiguration.proxyPassword());
 	}
 
@@ -242,6 +253,10 @@ public class ElasticsearchConfigurationWrapper
 	public String truststorePassword() {
 		return _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.createSettingsSecretContext(
+				"truststorePassword",
+				new SystemSettingsLocator(
+					ElasticsearchConfiguration.class.getName())),
 			_elasticsearchConfiguration.truststorePassword());
 	}
 

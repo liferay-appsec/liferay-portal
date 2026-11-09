@@ -8,6 +8,8 @@ package com.liferay.oauth2.provider.rest.internal.endpoint.jwks;
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.ws.rs.GET;
@@ -66,9 +68,14 @@ public class LiferayJWKSService extends JwksService {
 				ConfigurableUtil.createConfigurable(
 					OAuth2AuthorizationServerConfiguration.class, properties);
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"oauth2.authorization.server.jwt.access.token.signing.json.web.key",
+			new SystemSettingsLocator(
+				OAuth2AuthorizationServerConfiguration.class.getName()));
+
 		JsonWebKey jsonWebKey = JwkUtils.readJwkKey(
 			_secretResolver.resolve(
-				CompanyConstants.SYSTEM,
+				CompanyConstants.SYSTEM, secretContext,
 				oAuth2AuthorizationServerConfiguration.
 					jwtAccessTokenSigningJSONWebKey()));
 
