@@ -256,7 +256,11 @@ public class SecretResolverTest {
 		Assert.assertNotNull(KeyReferenceUtil.parseKeyReference(storedValue));
 
 		Assert.assertEquals(
-			value, _secretResolver.resolve(companyId, storedValue));
+			value,
+			_secretResolver.resolve(
+				companyId,
+				SecretContext.createCompanySecretContext(companyId, key),
+				storedValue));
 	}
 
 	private void _testStoreGroupTypeSettings(String key) throws Exception {
