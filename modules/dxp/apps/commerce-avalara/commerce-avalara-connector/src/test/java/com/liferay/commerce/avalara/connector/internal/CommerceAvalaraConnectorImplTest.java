@@ -5,19 +5,23 @@
 
 package com.liferay.commerce.avalara.connector.internal;
 
+import com.liferay.commerce.avalara.connector.configuration.CommerceAvalaraConnectorConfiguration;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
+import java.util.Objects;
 
 import net.avalara.avatax.rest.client.AvaTaxClient;
 
@@ -53,7 +57,21 @@ public class CommerceAvalaraConnectorImplTest {
 		String licenseKey = RandomTestUtil.randomString();
 
 		Mockito.when(
-			secretResolver.resolve(companyId, keyReferenceString)
+			secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(secretContext.getKey(), "licenseKey") &&
+						(secretContext.getSettingsLocator() instanceof
+							CompanyServiceSettingsLocator
+								companyServiceSettingsLocator) &&
+						(companyServiceSettingsLocator.getCompanyId() ==
+							companyId) &&
+						Objects.equals(
+							companyServiceSettingsLocator.getSettingsId(),
+							CommerceAvalaraConnectorConfiguration.class.
+								getName())),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			licenseKey
 		);

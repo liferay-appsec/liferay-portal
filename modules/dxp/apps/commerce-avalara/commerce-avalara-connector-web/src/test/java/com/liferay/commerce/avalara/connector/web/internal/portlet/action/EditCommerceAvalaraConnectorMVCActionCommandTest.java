@@ -6,8 +6,7 @@
 package com.liferay.commerce.avalara.connector.web.internal.portlet.action;
 
 import com.liferay.commerce.avalara.connector.configuration.CommerceAvalaraConnectorConfiguration;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.FallbackKeysSettingsUtil;
 import com.liferay.portal.kernel.settings.ModifiableSettings;
 import com.liferay.portal.kernel.settings.Settings;
@@ -18,11 +17,14 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
+
+import java.util.Objects;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -86,18 +88,27 @@ public class EditCommerceAvalaraConnectorMVCActionCommandTest {
 
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
-		String identifier = StringBundler.concat(
-			"preference/company/", companyId, StringPool.SLASH,
-			CommerceAvalaraConnectorConfiguration.class.getName(),
-			"/licenseKey");
-
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
-				identifier, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
 
 		Mockito.when(
-			secretResolver.store(companyId, identifier, licenseKey)
+			secretResolver.store(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(secretContext.getKey(), "licenseKey") &&
+						(secretContext.getSettingsLocator() instanceof
+							CompanyServiceSettingsLocator
+								companyServiceSettingsLocator) &&
+						(companyServiceSettingsLocator.getCompanyId() ==
+							companyId) &&
+						Objects.equals(
+							companyServiceSettingsLocator.getSettingsId(),
+							CommerceAvalaraConnectorConfiguration.class.
+								getName())),
+				Mockito.eq(licenseKey))
 		).thenReturn(
 			keyReferenceString
 		);
