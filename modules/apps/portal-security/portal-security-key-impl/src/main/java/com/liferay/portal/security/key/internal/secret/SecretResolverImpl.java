@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionary;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -251,8 +252,22 @@ public class SecretResolverImpl implements SecretResolver {
 	}
 
 	@Override
+	public String resolveProperty(String key) {
+		SecretContext secretContext = SecretContext.createPropertySecretContext(
+			key);
+		String value = PropsUtil.get(key);
+
+		return resolve(CompanyConstants.SYSTEM, secretContext, value);
+	}
+
+	@Override
 	public String store(
 		long companyId, SecretContext secretContext, String value) {
+
+		if (secretContext.getType() == SecretContext.Type.PROPERTY) {
+			throw new IllegalArgumentException(
+				"A property secret context cannot be stored");
+		}
 
 		if (!PropsValues.FIPS_ENABLED || Validator.isNull(value)) {
 			return value;
@@ -371,6 +386,10 @@ public class SecretResolverImpl implements SecretResolver {
 			StringPool.SLASH, scopePK, StringPool.SLASH, key);
 	}
 
+	private String _getPropertyIdentifier(String key) {
+		return "property/" + key;
+	}
+
 	private long _getScopeCompanyId(
 			long companyId, String identifier, String operation,
 			Map<String, Long> secretIdentifierMap)
@@ -448,6 +467,11 @@ public class SecretResolverImpl implements SecretResolver {
 			_putPortalPreferenceScope(
 				group.getCompanyId(), secretContext.getKey(),
 				secretIdentifierMap);
+		}
+		else if (type == SecretContext.Type.PROPERTY) {
+			secretIdentifierMap.put(
+				_getPropertyIdentifier(secretContext.getKey()),
+				CompanyConstants.SYSTEM);
 		}
 		else {
 			_putSettingsScopes(
@@ -664,7 +688,8 @@ public class SecretResolverImpl implements SecretResolver {
 				ExtendedObjectClassDefinition.Scope.SYSTEM,
 				CompanyConstants.SYSTEM),
 			CompanyConstants.SYSTEM);
-		secretIdentifierMap.put("property/" + key, CompanyConstants.SYSTEM);
+		secretIdentifierMap.put(
+			_getPropertyIdentifier(key), CompanyConstants.SYSTEM);
 	}
 
 	private void _putTypeSettingsScope(

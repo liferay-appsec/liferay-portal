@@ -6,6 +6,7 @@
 package com.liferay.portal.security.key.secret;
 
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 
 import jakarta.portlet.PortletPreferences;
@@ -75,6 +76,18 @@ public class SecretResolverUtil {
 		SecretResolver secretResolver = _getSecretResolver();
 
 		return secretResolver.resolve(companyId, value);
+	}
+
+	public static String resolveProperty(String key) {
+		String value = PropsUtil.get(key);
+
+		if (!KeyReferenceUtil.isKeyReference(value)) {
+			return value;
+		}
+
+		SecretResolver secretResolver = _getSecretResolver();
+
+		return secretResolver.resolveProperty(key);
 	}
 
 	private static SecretResolver _getSecretResolver() {

@@ -25,6 +25,8 @@ public interface SecretResolver {
 
 	public String resolve(long companyId, String value);
 
+	public String resolveProperty(String key);
+
 	public String store(
 		long companyId, SecretContext secretContext, String value);
 

@@ -78,6 +78,10 @@ public class SecretContext {
 			null, 0, groupId, key, 0, null, null, Type.GROUP);
 	}
 
+	public static SecretContext createPropertySecretContext(String key) {
+		return new SecretContext(null, 0, 0, key, 0, null, null, Type.PROPERTY);
+	}
+
 	public static SecretContext createSettingsSecretContext(
 		String key, SettingsLocator settingsLocator) {
 
@@ -123,7 +127,7 @@ public class SecretContext {
 
 	public enum Type {
 
-		COMPANY, CONFIGURATION, ENTITY, GROUP, SETTINGS
+		COMPANY, CONFIGURATION, ENTITY, GROUP, PROPERTY, SETTINGS
 
 	}
 
