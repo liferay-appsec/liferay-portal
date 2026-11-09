@@ -83,6 +83,51 @@ public class SecretResolverImplTest {
 	}
 
 	@Test
+	public void testDelete() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+
+		KeyReference keyReference = new KeyReference(
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key),
+			RandomTestUtil.randomString(), KeyReference.Type.SECRET);
+
+		_secretResolverImpl.delete(
+			companyId, SecretContext.createCompanySecretContext(companyId, key),
+			KeyReferenceUtil.toKeyReferenceString(keyReference));
+
+		Mockito.verify(
+			_secretManager
+		).deleteSecret(
+			companyId, keyReference
+		);
+
+		Mockito.clearInvocations(_secretManager);
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			RandomTestUtil.randomLong(), key);
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			Assert.assertThrows(
+				SecretException.class,
+				() -> _secretResolverImpl.delete(
+					companyId, secretContext,
+					KeyReferenceUtil.toKeyReferenceString(keyReference)));
+
+			_assertFIPSAuditEvent(
+				companyId, fipsAuditUtilMockedStatic,
+				keyReference.getIdentifier(), "delete");
+		}
+
+		_secretResolverImpl.delete(
+			companyId, secretContext, RandomTestUtil.randomString());
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	@Test
 	public void testGetKey() {
 		long companyId = RandomTestUtil.randomLong();
 		String keyReferenceString = RandomTestUtil.randomString();
