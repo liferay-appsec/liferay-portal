@@ -317,8 +317,8 @@ public class OpenIdConnectAuthenticationHandlerImplTest {
 			openIdConnectClientInformationUtilMockedStatic.when(
 				() ->
 					OpenIdConnectClientInformationUtil.getOIDCClientInformation(
-						Mockito.any(), Mockito.any(), Mockito.any(),
-						Mockito.any())
+						Mockito.anyLong(), Mockito.any(), Mockito.any(),
+						Mockito.any(), Mockito.any())
 			).thenReturn(
 				Mockito.mock(OIDCClientInformation.class)
 			);

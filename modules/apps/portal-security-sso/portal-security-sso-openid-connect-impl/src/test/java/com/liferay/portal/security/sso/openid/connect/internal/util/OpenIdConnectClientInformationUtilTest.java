@@ -7,13 +7,13 @@ package com.liferay.portal.security.sso.openid.connect.internal.util;
 
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.sso.openid.connect.internal.configuration.OpenIdConnectProviderConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -22,6 +22,8 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.openid.connect.sdk.rp.OIDCClientInformation;
 
 import java.util.Dictionary;
+import java.util.Map;
+import java.util.Objects;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -54,12 +56,9 @@ public class OpenIdConnectClientInformationUtilTest {
 			guestUserId
 		);
 
-		String keyReferenceString = _getKeyReferenceString(
-			RandomTestUtil.randomString());
-		String otherKeyReferenceString = _getKeyReferenceString(
-			RandomTestUtil.randomString());
-		String systemKeyReferenceString = _getKeyReferenceString(
-			RandomTestUtil.randomString());
+		String keyReferenceString = _getKeyReferenceString();
+		String otherKeyReferenceString = _getKeyReferenceString();
+		String systemKeyReferenceString = _getKeyReferenceString();
 
 		Configuration[] configurations = {
 			_getConfiguration(
@@ -95,34 +94,64 @@ public class OpenIdConnectClientInformationUtilTest {
 		String clientSecret = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(Mockito.eq(companyId), Mockito.anyString())
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						_isConfigurationSecretContext(
+							keyReferenceString, secretContext)),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			clientSecret
 		);
 
-		long oAuthClientEntryId = RandomTestUtil.randomLong();
+		Mockito.when(
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						_isConfigurationSecretContext(
+							systemKeyReferenceString, secretContext)),
+				Mockito.eq(systemKeyReferenceString))
+		).thenReturn(
+			clientSecret
+		);
+
+		long primaryKey = RandomTestUtil.randomLong();
+		String userKeyReferenceString = _getKeyReferenceString();
+
+		Mockito.when(
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						(secretContext != null) &&
+						Objects.equals(
+							secretContext.getClassName(),
+							OAuthClientEntry.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(
+							secretContext.getKey(), "clientSecret") &&
+						(secretContext.getPrimaryKey() == primaryKey)),
+				Mockito.eq(userKeyReferenceString))
+		).thenReturn(
+			clientSecret
+		);
 
 		_testGetOIDCClientInformation(
-			keyReferenceString, companyId, clientSecret, oAuthClientEntryId,
+			keyReferenceString, companyId, clientSecret, primaryKey,
 			guestUserId);
 		_testGetOIDCClientInformation(
-			keyReferenceString, companyId, keyReferenceString,
-			oAuthClientEntryId, guestUserId + 1);
-		_testGetOIDCClientInformation(
 			otherKeyReferenceString, companyId, otherKeyReferenceString,
-			oAuthClientEntryId, guestUserId);
+			primaryKey, guestUserId);
 		_testGetOIDCClientInformation(
-			systemKeyReferenceString, companyId, clientSecret,
-			oAuthClientEntryId, guestUserId);
+			systemKeyReferenceString, companyId, clientSecret, primaryKey,
+			guestUserId);
 
 		_testGetOIDCClientInformation(
-			_getKeyReferenceString(
-				StringBundler.concat(
-					OAuthClientEntry.class.getSimpleName(), StringPool.SLASH,
-					companyId, StringPool.SLASH, oAuthClientEntryId)),
-			companyId, clientSecret, oAuthClientEntryId, guestUserId + 1);
+			clientSecret, companyId, clientSecret, primaryKey, guestUserId + 1);
 		_testGetOIDCClientInformation(
-			clientSecret, companyId, clientSecret, oAuthClientEntryId,
+			userKeyReferenceString, companyId, clientSecret, primaryKey,
 			guestUserId + 1);
 
 		Mockito.when(
@@ -132,8 +161,8 @@ public class OpenIdConnectClientInformationUtilTest {
 		);
 
 		_testGetOIDCClientInformation(
-			keyReferenceString, companyId, keyReferenceString,
-			oAuthClientEntryId, guestUserId);
+			keyReferenceString, companyId, keyReferenceString, primaryKey,
+			guestUserId);
 	}
 
 	private Configuration _getConfiguration(
@@ -150,16 +179,33 @@ public class OpenIdConnectClientInformationUtilTest {
 		return configuration;
 	}
 
-	private String _getKeyReferenceString(String identifier) {
+	private String _getKeyReferenceString() {
 		return KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
-				identifier, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
+	}
+
+	private boolean _isConfigurationSecretContext(
+		String keyReferenceString, SecretContext secretContext) {
+
+		if ((secretContext == null) ||
+			(secretContext.getType() != SecretContext.Type.CONFIGURATION) ||
+			!Objects.equals(
+				secretContext.getKey(), "openIdConnectClientSecret")) {
+
+			return false;
+		}
+
+		Map<String, Object> properties = secretContext.getProperties();
+
+		return Objects.equals(
+			keyReferenceString, properties.get("openIdConnectClientSecret"));
 	}
 
 	private void _testGetOIDCClientInformation(
 			String clientSecret, long companyId, String expectedClientSecret,
-			long oAuthClientEntryId, long userId)
+			long primaryKey, long userId)
 		throws Exception {
 
 		OAuthClientEntry oAuthClientEntry = Mockito.mock(
@@ -182,9 +228,9 @@ public class OpenIdConnectClientInformationUtilTest {
 		);
 
 		Mockito.when(
-			oAuthClientEntry.getOAuthClientEntryId()
+			oAuthClientEntry.getPrimaryKey()
 		).thenReturn(
-			oAuthClientEntryId
+			primaryKey
 		);
 
 		Mockito.when(
@@ -195,8 +241,8 @@ public class OpenIdConnectClientInformationUtilTest {
 
 		OIDCClientInformation oidcClientInformation =
 			OpenIdConnectClientInformationUtil.getOIDCClientInformation(
-				_configurationAdmin, oAuthClientEntry, _secretResolver,
-				_userLocalService);
+				companyId, _configurationAdmin, oAuthClientEntry,
+				_secretResolver, _userLocalService);
 
 		Secret secret = oidcClientInformation.getSecret();
 
