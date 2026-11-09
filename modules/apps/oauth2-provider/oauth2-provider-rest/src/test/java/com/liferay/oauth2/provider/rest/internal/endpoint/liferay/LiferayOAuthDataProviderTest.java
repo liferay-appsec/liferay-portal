@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -141,7 +142,10 @@ public class LiferayOAuthDataProviderTest {
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			secretResolver.resolve(CompanyConstants.SYSTEM, keyReferenceString)
+			secretResolver.resolve(
+				Mockito.eq(CompanyConstants.SYSTEM),
+				Mockito.any(SecretContext.class),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			JwkUtils.jwkKeyToJson(jsonWebKey)
 		);

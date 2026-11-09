@@ -5,11 +5,13 @@
 
 package com.liferay.oauth2.provider.rest.internal.configuration;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SettingsLocator;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -63,17 +65,13 @@ public class OAuth2AuthorizationServerConfigurationGeneratorTest {
 			oAuth2AuthorizationServerConfigurationGenerator,
 			"_configurationAdmin", configurationAdmin);
 
-		String identifier = StringBundler.concat(
-			"config/", OAuth2AuthorizationServerConfiguration.class.getName(),
-			"/0/oauth2.authorization.server.jwt.access.token.signing.json.web.",
-			"key");
 		String keyReferenceString = RandomTestUtil.randomString();
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
 			secretResolver.store(
-				Mockito.eq(CompanyConstants.SYSTEM), Mockito.eq(identifier),
-				Mockito.anyString())
+				Mockito.eq(CompanyConstants.SYSTEM),
+				Mockito.any(SecretContext.class), Mockito.anyString())
 		).thenReturn(
 			keyReferenceString
 		);
@@ -84,15 +82,30 @@ public class OAuth2AuthorizationServerConfigurationGeneratorTest {
 
 		oAuth2AuthorizationServerConfigurationGenerator.activate();
 
+		ArgumentCaptor<SecretContext> secretContextArgumentCaptor =
+			ArgumentCaptor.forClass(SecretContext.class);
 		ArgumentCaptor<String> valueArgumentCaptor = ArgumentCaptor.forClass(
 			String.class);
 
 		Mockito.verify(
 			secretResolver
 		).store(
-			Mockito.eq(CompanyConstants.SYSTEM), Mockito.eq(identifier),
-			valueArgumentCaptor.capture()
+			Mockito.eq(CompanyConstants.SYSTEM),
+			secretContextArgumentCaptor.capture(), valueArgumentCaptor.capture()
 		);
+
+		SecretContext secretContext = secretContextArgumentCaptor.getValue();
+
+		Assert.assertEquals(
+			"oauth2.authorization.server.jwt.access.token.signing.json.web.key",
+			secretContext.getKey());
+
+		SettingsLocator settingsLocator = secretContext.getSettingsLocator();
+
+		Assert.assertTrue(settingsLocator instanceof SystemSettingsLocator);
+		Assert.assertEquals(
+			OAuth2AuthorizationServerConfiguration.class.getName(),
+			settingsLocator.getSettingsId());
 
 		JsonWebKey jsonWebKey = JwkUtils.readJwkKey(
 			valueArgumentCaptor.getValue());
