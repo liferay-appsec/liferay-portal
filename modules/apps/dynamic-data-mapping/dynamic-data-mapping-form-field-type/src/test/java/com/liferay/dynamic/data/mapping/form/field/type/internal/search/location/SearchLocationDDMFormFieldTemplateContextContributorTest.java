@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -220,9 +221,11 @@ public class SearchLocationDDMFormFieldTemplateContextContributorTest {
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			secretResolver.resolve(Mockito.anyLong(), Mockito.any())
+			secretResolver.resolve(
+				Mockito.anyLong(), Mockito.any(SecretContext.class),
+				Mockito.any())
 		).thenAnswer(
-			invocationOnMock -> invocationOnMock.getArgument(1)
+			invocationOnMock -> invocationOnMock.getArgument(2)
 		);
 
 		ReflectionTestUtil.setFieldValue(
