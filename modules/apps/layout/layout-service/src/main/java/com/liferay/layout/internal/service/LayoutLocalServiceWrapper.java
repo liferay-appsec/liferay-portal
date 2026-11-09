@@ -71,6 +71,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
@@ -85,6 +86,8 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portlet.exportimport.staging.StagingAdvicesThreadLocal;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsExperience;
@@ -751,8 +754,9 @@ public class LayoutLocalServiceWrapper
 	}
 
 	private void _copyPortletPreferences(
-		Map<String, String> instanceIdsMap, boolean masterLayoutCopy,
-		List<String> portletIds, Layout sourceLayout, Layout targetLayout) {
+			Map<String, String> instanceIdsMap, boolean masterLayoutCopy,
+			List<String> portletIds, Layout sourceLayout, Layout targetLayout)
+		throws Exception {
 
 		boolean stagingAdvicesThreadLocalEnabled =
 			StagingAdvicesThreadLocal.isEnabled();
@@ -792,6 +796,20 @@ public class LayoutLocalServiceWrapper
 							portlet.getPortletName(), instanceId);
 					}
 				}
+
+				PortletInstanceSettingsLocator
+					targetPortletInstanceSettingsLocator =
+						new PortletInstanceSettingsLocator(
+							targetLayout, newPortletId);
+
+				SecretResolverUtil.copy(
+					targetLayout.getCompanyId(), jxPortletPreferences,
+					key -> SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							sourceLayout, portletId)),
+					key -> SecretContext.createSettingsSecretContext(
+						key, targetPortletInstanceSettingsLocator));
 
 				PortletPreferences targetPortletPreferences =
 					_portletPreferencesLocalService.fetchPortletPreferences(

@@ -62,6 +62,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -76,6 +77,8 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.security.key.secret.SecretContext;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portlet.PortletPreferencesImpl;
 import com.liferay.site.internal.exportimport.internal.notifications.LayoutSetPrototypeNotificationUtil;
 import com.liferay.sites.kernel.util.Sites;
@@ -340,6 +343,23 @@ public class SitesImpl implements Sites {
 			PortletPreferencesImpl targetPortletPreferencesImpl =
 				(PortletPreferencesImpl)targetPortletPreferences;
 
+			if ((sourcePortletPreferencesImpl.getOwnerId() !=
+					targetPortletPreferencesImpl.getOwnerId()) ||
+				(sourcePortletPreferencesImpl.getPlid() !=
+					targetPortletPreferencesImpl.getPlid())) {
+
+				SecretResolverUtil.copy(
+					targetLayout.getCompanyId(), sourcePortletPreferences,
+					key -> SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							sourceLayout, sourcePortletId)),
+					key -> SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							targetLayout, sourcePortletId)));
+			}
+
 			_portletPreferencesLocalService.updatePreferences(
 				targetPortletPreferencesImpl.getOwnerId(),
 				targetPortletPreferencesImpl.getOwnerType(),
@@ -361,6 +381,17 @@ public class SitesImpl implements Sites {
 
 				targetPortletPreferencesImpl =
 					(PortletPreferencesImpl)targetPortletPreferences;
+
+				SecretResolverUtil.copy(
+					targetLayout.getCompanyId(), sourcePortletPreferences,
+					key -> SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							sourceLayout, sourcePortletId)),
+					key -> SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							targetLayout, sourcePortletId)));
 
 				_portletPreferencesLocalService.updatePreferences(
 					targetPortletPreferencesImpl.getOwnerId(),

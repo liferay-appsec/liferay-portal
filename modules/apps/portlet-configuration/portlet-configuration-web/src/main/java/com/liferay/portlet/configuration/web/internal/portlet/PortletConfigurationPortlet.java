@@ -74,6 +74,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portlet.configuration.kernel.util.PortletConfigurationUtil;
 import com.liferay.portlet.configuration.web.internal.constants.PortletConfigurationPortletKeys;
 import com.liferay.portlet.configuration.web.internal.constants.PortletConfigurationWebKeys;
@@ -441,18 +442,31 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		PortletItem portletItem = _portletItemLocalService.getPortletItem(
+			themeDisplay.getSiteGroupId(),
+			ParamUtil.getString(actionRequest, "name"),
+			portlet.getRootPortletId(),
+			com.liferay.portal.kernel.model.PortletPreferences.class.getName());
+		PortletPreferences portletPreferences =
+			_getPortletInstancePortletPreferences(
+				themeDisplay.getLayout(), portlet.getPortletId());
+
 		_portletPreferencesService.restoreArchivedPreferences(
 			themeDisplay.getScopeGroupId(),
 			PortletConfigurationLayoutUtil.getLayout(themeDisplay),
-			portlet.getPortletId(),
-			_portletItemLocalService.getPortletItem(
-				themeDisplay.getSiteGroupId(),
-				ParamUtil.getString(actionRequest, "name"),
-				portlet.getRootPortletId(),
-				com.liferay.portal.kernel.model.PortletPreferences.class.
-					getName()),
-			_getPortletInstancePortletPreferences(
-				themeDisplay.getLayout(), portlet.getPortletId()));
+			portlet.getPortletId(), portletItem, portletPreferences);
+
+		SecretResolverUtil.copy(
+			themeDisplay.getCompanyId(), portletPreferences,
+			key -> SecretContext.createEntitySecretContext(
+				PortletItem.class, portletItem.getCompanyId(), key,
+				portletItem.getPrimaryKey()),
+			key -> SecretContext.createSettingsSecretContext(
+				key,
+				new PortletInstanceSettingsLocator(
+					themeDisplay.getLayout(), portlet.getPortletId())));
+
+		portletPreferences.store();
 
 		String portletResource = ParamUtil.getString(
 			actionRequest, "portletResource");
@@ -541,6 +555,16 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		PortletPreferences portletPreferences =
 			_getPortletInstancePortletPreferences(
 				themeDisplay.getLayout(), portlet.getPortletId());
+
+		SecretResolverUtil.copy(
+			themeDisplay.getCompanyId(), portletPreferences,
+			key -> SecretContext.createSettingsSecretContext(
+				key,
+				new PortletInstanceSettingsLocator(
+					themeDisplay.getLayout(), portlet.getPortletId())),
+			key -> SecretContext.createEntitySecretContext(
+				PortletItem.class, portletItem.getCompanyId(), key,
+				portletItem.getPrimaryKey()));
 
 		Map<String, String[]> preferenceMap = portletPreferences.getMap();
 

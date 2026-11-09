@@ -17,6 +17,7 @@ import com.liferay.layout.content.page.editor.web.internal.util.layout.structure
 import com.liferay.layout.util.CheckNoninstanceablePortletThreadLocal;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.LockedLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -41,15 +42,19 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
+import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
 import jakarta.portlet.PortletPreferences;
+import jakarta.portlet.ReadOnlyException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -324,22 +329,43 @@ public abstract class BaseDuplicateItemMVCActionCommand
 			String oldInstanceId, String newInstanceId)
 		throws PortalException {
 
+		String oldPortletId = PortletIdCodec.encode(portletId, oldInstanceId);
+
 		PortletPreferences portletPreferences =
 			portletPreferencesFactory.getPortletPreferences(
-				httpServletRequest,
-				PortletIdCodec.encode(portletId, oldInstanceId));
+				httpServletRequest, oldPortletId);
 
 		PortletPreferencesIds portletPreferencesIds =
 			portletPreferencesFactory.getPortletPreferencesIds(
-				httpServletRequest,
-				PortletIdCodec.encode(portletId, oldInstanceId));
+				httpServletRequest, oldPortletId);
+
+		String newPortletId = PortletIdCodec.encode(portletId, newInstanceId);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		try {
+			SecretResolverUtil.copy(
+				portletPreferencesIds.getCompanyId(), portletPreferences,
+				key -> SecretContext.createSettingsSecretContext(
+					key,
+					new PortletInstanceSettingsLocator(
+						themeDisplay.getLayout(), oldPortletId)),
+				key -> SecretContext.createSettingsSecretContext(
+					key,
+					new PortletInstanceSettingsLocator(
+						themeDisplay.getLayout(), newPortletId)));
+		}
+		catch (ReadOnlyException readOnlyException) {
+			ReflectionUtil.throwException(readOnlyException);
+		}
 
 		portletPreferencesLocalService.addPortletPreferences(
 			portletPreferencesIds.getCompanyId(),
 			portletPreferencesIds.getOwnerId(),
 			portletPreferencesIds.getOwnerType(),
-			portletPreferencesIds.getPlid(),
-			PortletIdCodec.encode(portletId, newInstanceId), null,
+			portletPreferencesIds.getPlid(), newPortletId, null,
 			PortletPreferencesFactoryUtil.toXML(portletPreferences));
 	}
 
