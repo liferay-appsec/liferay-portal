@@ -9,13 +9,12 @@ import com.liferay.mail.kernel.model.SMTPAccount;
 import com.liferay.message.boards.model.MBMailingList;
 import com.liferay.message.boards.service.MBMailingListLocalService;
 import com.liferay.message.boards.service.MBMailingListLocalServiceUtil;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.security.key.secret.exception.SecretException;
@@ -24,6 +23,7 @@ import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -74,14 +74,6 @@ public class MBSubscriptionSenderTest {
 	public void testAddMailingListSubscriber() {
 		MBMailingList mbMailingList = Mockito.mock(MBMailingList.class);
 
-		long categoryId = RandomTestUtil.randomLong();
-
-		Mockito.when(
-			mbMailingList.getCategoryId()
-		).thenReturn(
-			categoryId
-		);
-
 		long companyId = RandomTestUtil.randomLong();
 
 		Mockito.when(
@@ -98,19 +90,21 @@ public class MBSubscriptionSenderTest {
 			mailingListId
 		);
 
-		String identifier = StringBundler.concat(
-			MBMailingList.class.getSimpleName(), StringPool.SLASH, companyId,
-			StringPool.SLASH, categoryId, "/outPassword");
-
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
-				identifier, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
 
 		Mockito.when(
 			mbMailingList.getOutPassword()
 		).thenReturn(
 			keyReferenceString
+		);
+
+		Mockito.when(
+			mbMailingList.getPrimaryKey()
+		).thenReturn(
+			mailingListId
 		);
 
 		Mockito.when(
@@ -125,6 +119,7 @@ public class MBSubscriptionSenderTest {
 			true
 		);
 
+		long categoryId = RandomTestUtil.randomLong();
 		long groupId = RandomTestUtil.randomLong();
 
 		Mockito.when(
@@ -137,7 +132,18 @@ public class MBSubscriptionSenderTest {
 		String resolvedPassword = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, identifier, keyReferenceString)
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						(secretContext != null) &&
+						Objects.equals(
+							secretContext.getClassName(),
+							MBMailingList.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(secretContext.getKey(), "outPassword") &&
+						(secretContext.getPrimaryKey() == mailingListId)),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			resolvedPassword
 		);
@@ -154,7 +160,9 @@ public class MBSubscriptionSenderTest {
 		Assert.assertTrue(mbSubscriptionSender.hasSubscribers());
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, identifier, keyReferenceString)
+			_secretResolver.resolve(
+				Mockito.eq(companyId), Mockito.any(SecretContext.class),
+				Mockito.eq(keyReferenceString))
 		).thenAnswer(
 			invocation -> {
 				throw new SecretException();

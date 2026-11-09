@@ -11,8 +11,6 @@ import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRequest;
 import com.liferay.dynamic.data.mapping.data.provider.configuration.DDMDataProviderConfiguration;
 import com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance;
 import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.web.service.client.JSONWebServiceClient;
 import com.liferay.portal.json.web.service.client.JSONWebServiceClientFactory;
 import com.liferay.portal.kernel.cache.PortalCache;
@@ -22,10 +20,12 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -88,12 +88,12 @@ public class DDMRESTDataProviderTest {
 			companyId
 		);
 
-		long dataProviderInstanceId = RandomTestUtil.randomLong();
+		long primaryKey = RandomTestUtil.randomLong();
 
 		Mockito.when(
-			ddmDataProviderInstance.getDataProviderInstanceId()
+			ddmDataProviderInstance.getPrimaryKey()
 		).thenReturn(
-			dataProviderInstanceId
+			primaryKey
 		);
 
 		String ddmDataProviderId = RandomTestUtil.randomString();
@@ -152,12 +152,16 @@ public class DDMRESTDataProviderTest {
 
 		Mockito.when(
 			_secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					DDMDataProviderInstance.class.getSimpleName(),
-					StringPool.SLASH, companyId, StringPool.SLASH,
-					dataProviderInstanceId, "/password"),
-				password)
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							DDMDataProviderInstance.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(secretContext.getKey(), "password") &&
+						(secretContext.getPrimaryKey() == primaryKey)),
+				Mockito.eq(password))
 		).thenReturn(
 			resolvedPassword
 		);
@@ -205,6 +209,8 @@ public class DDMRESTDataProviderTest {
 
 		_ddmrestDataProvider.getData(
 			DDMDataProviderRequest.Builder.newBuilder(
+			).withCompanyId(
+				companyId
 			).withDDMDataProviderId(
 				ddmDataProviderId
 			).build());

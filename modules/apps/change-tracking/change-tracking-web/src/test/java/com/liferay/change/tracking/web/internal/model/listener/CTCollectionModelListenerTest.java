@@ -6,16 +6,16 @@
 package com.liferay.change.tracking.web.internal.model.listener;
 
 import com.liferay.change.tracking.model.CTRemote;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -58,12 +58,12 @@ public class CTCollectionModelListenerTest {
 			companyId
 		);
 
-		long ctRemoteId = RandomTestUtil.randomLong();
+		long primaryKey = RandomTestUtil.randomLong();
 
 		Mockito.when(
-			ctRemote.getCtRemoteId()
+			ctRemote.getPrimaryKey()
 		).thenReturn(
-			ctRemoteId
+			primaryKey
 		);
 
 		Http http = Mockito.mock(Http.class);
@@ -86,11 +86,17 @@ public class CTCollectionModelListenerTest {
 
 		Mockito.when(
 			secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					CTRemote.class.getSimpleName(), StringPool.SLASH, companyId,
-					StringPool.SLASH, ctRemoteId, "/clientSecret"),
-				clientSecret)
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							CTRemote.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(
+							secretContext.getKey(), "clientSecret") &&
+						(secretContext.getPrimaryKey() == primaryKey)),
+				Mockito.eq(clientSecret))
 		).thenReturn(
 			resolvedClientSecret
 		);
@@ -100,7 +106,7 @@ public class CTCollectionModelListenerTest {
 
 		ReflectionTestUtil.invoke(
 			ctCollectionModelListener, "_getToken",
-			new Class<?>[] {CTRemote.class}, ctRemote);
+			new Class<?>[] {long.class, CTRemote.class}, companyId, ctRemote);
 
 		ArgumentCaptor<Http.Options> argumentCaptor = ArgumentCaptor.forClass(
 			Http.Options.class);

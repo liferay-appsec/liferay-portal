@@ -5,17 +5,18 @@
 
 package com.liferay.portal.reports.engine.console.internal.util;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.reports.engine.console.model.Source;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.util.Objects;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,19 +56,26 @@ public class SourceDriverPasswordUtilTest {
 		long companyId = RandomTestUtil.randomLong();
 		long sourceId = RandomTestUtil.randomLong();
 
-		String identifier = StringBundler.concat(
-			Source.class.getSimpleName(), StringPool.SLASH, companyId,
-			StringPool.SLASH, sourceId, "/driverPassword");
-
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
-				identifier, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
 
 		String resolvedDriverPassword = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, identifier, keyReferenceString)
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							Source.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(
+							secretContext.getKey(), "driverPassword") &&
+						(secretContext.getPrimaryKey() == sourceId)),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			resolvedDriverPassword
 		);

@@ -6,17 +6,17 @@
 package com.liferay.object.internal.action.executor;
 
 import com.liferay.object.model.ObjectAction;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -56,11 +56,16 @@ public class WebhookObjectActionExecutorImplTest {
 
 		Mockito.when(
 			secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					ObjectAction.class.getSimpleName(), StringPool.SLASH,
-					companyId, StringPool.SLASH, objectActionId, "/secret"),
-				secret)
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							ObjectAction.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(secretContext.getKey(), "secret") &&
+						(secretContext.getPrimaryKey() == objectActionId)),
+				Mockito.eq(secret))
 		).thenReturn(
 			resolvedSecret
 		);

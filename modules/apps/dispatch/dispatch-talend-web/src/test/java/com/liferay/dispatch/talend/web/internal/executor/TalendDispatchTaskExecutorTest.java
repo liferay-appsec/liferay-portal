@@ -17,11 +17,13 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PortalClassPathUtil;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -89,24 +91,28 @@ public class TalendDispatchTaskExecutorTest {
 			).build()
 		);
 
-		long dispatchTriggerId = RandomTestUtil.randomLong();
+		long primaryKey = RandomTestUtil.randomLong();
 
 		Mockito.when(
-			dispatchTrigger.getDispatchTriggerId()
+			dispatchTrigger.getPrimaryKey()
 		).thenReturn(
-			dispatchTriggerId
+			primaryKey
 		);
 
 		String resolvedValue = RandomTestUtil.randomString();
 
 		Mockito.when(
 			_secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					DispatchTrigger.class.getSimpleName(), StringPool.SLASH,
-					companyId, StringPool.SLASH, dispatchTriggerId,
-					StringPool.SLASH, name),
-				value)
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							DispatchTrigger.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(secretContext.getKey(), name) &&
+						(secretContext.getPrimaryKey() == primaryKey)),
+				Mockito.eq(value))
 		).thenReturn(
 			resolvedValue
 		);

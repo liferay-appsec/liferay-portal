@@ -6,16 +6,17 @@
 package com.liferay.message.boards.internal.util;
 
 import com.liferay.message.boards.model.MBMailingList;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+
+import java.util.Objects;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -60,23 +61,44 @@ public class MBMailingListPasswordUtilTest {
 
 	@Test
 	public void testGetPassword() {
-		long categoryId = RandomTestUtil.randomLong();
-		long companyId = RandomTestUtil.randomLong();
-		String name = RandomTestUtil.randomString();
+		MBMailingList mailingList = Mockito.mock(MBMailingList.class);
 
-		String identifier = StringBundler.concat(
-			MBMailingList.class.getSimpleName(), StringPool.SLASH, companyId,
-			StringPool.SLASH, categoryId, StringPool.SLASH, name);
+		long companyId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			mailingList.getCompanyId()
+		).thenReturn(
+			companyId
+		);
+
+		long primaryKey = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			mailingList.getPrimaryKey()
+		).thenReturn(
+			primaryKey
+		);
 
 		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
 			new KeyReference(
-				identifier, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 				KeyReference.Type.SECRET));
 
+		String name = RandomTestUtil.randomString();
 		String resolvedPassword = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, identifier, keyReferenceString)
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							MBMailingList.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(secretContext.getKey(), name) &&
+						(secretContext.getPrimaryKey() == primaryKey)),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			resolvedPassword
 		);
@@ -84,7 +106,7 @@ public class MBMailingListPasswordUtilTest {
 		Assert.assertEquals(
 			resolvedPassword,
 			MBMailingListPasswordUtil.getPassword(
-				categoryId, companyId, name, keyReferenceString));
+				mailingList, name, keyReferenceString));
 	}
 
 	private final SecretResolver _secretResolver = Mockito.mock(

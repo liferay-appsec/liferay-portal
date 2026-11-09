@@ -5,18 +5,21 @@
 
 package com.liferay.portal.reports.engine.console.web.internal.admin.portlet.action;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.reports.engine.console.model.Source;
 import com.liferay.portal.reports.engine.console.service.SourceService;
 import com.liferay.portal.reports.engine.console.util.ReportsEngineConsoleUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
+
+import java.util.Objects;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -42,6 +45,22 @@ public class TestDataSourceMVCActionCommandTest {
 
 		ActionRequest actionRequest = Mockito.mock(ActionRequest.class);
 
+		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
+
+		long companyId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			themeDisplay.getCompanyId()
+		).thenReturn(
+			companyId
+		);
+
+		Mockito.when(
+			actionRequest.getAttribute(WebKeys.THEME_DISPLAY)
+		).thenReturn(
+			themeDisplay
+		);
+
 		long sourceId = RandomTestUtil.randomLong();
 
 		Mockito.when(
@@ -53,8 +72,6 @@ public class TestDataSourceMVCActionCommandTest {
 		SourceService sourceService = Mockito.mock(SourceService.class);
 
 		Source source = Mockito.mock(Source.class);
-
-		long companyId = RandomTestUtil.randomLong();
 
 		Mockito.when(
 			source.getCompanyId()
@@ -71,7 +88,7 @@ public class TestDataSourceMVCActionCommandTest {
 		);
 
 		Mockito.when(
-			source.getSourceId()
+			source.getPrimaryKey()
 		).thenReturn(
 			sourceId
 		);
@@ -91,11 +108,17 @@ public class TestDataSourceMVCActionCommandTest {
 
 		Mockito.when(
 			secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					Source.class.getSimpleName(), StringPool.SLASH, companyId,
-					StringPool.SLASH, sourceId, "/driverPassword"),
-				driverPassword)
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) ->
+						Objects.equals(
+							secretContext.getClassName(),
+							Source.class.getName()) &&
+						(secretContext.getCompanyId() == companyId) &&
+						Objects.equals(
+							secretContext.getKey(), "driverPassword") &&
+						(secretContext.getPrimaryKey() == sourceId)),
+				Mockito.eq(driverPassword))
 		).thenReturn(
 			resolvedDriverPassword
 		);
