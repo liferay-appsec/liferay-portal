@@ -9,14 +9,13 @@ import com.liferay.change.tracking.model.CTCollection;
 import com.liferay.change.tracking.model.CTRemote;
 import com.liferay.change.tracking.rest.client.resource.v1_0.CTCollectionResource;
 import com.liferay.change.tracking.service.CTRemoteLocalService;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import org.osgi.service.component.annotations.Component;
@@ -38,7 +37,7 @@ public class CTCollectionModelListener extends BaseModelListener<CTCollection> {
 
 		try {
 			CTCollectionResource ctCollectionResource =
-				_getCTCollectionResource(ctCollection.getCtRemoteId());
+				_getCTCollectionResource(ctCollection);
 
 			ctCollectionResource.postCTCollection(
 				new com.liferay.change.tracking.rest.client.dto.v1_0.
@@ -67,7 +66,7 @@ public class CTCollectionModelListener extends BaseModelListener<CTCollection> {
 
 		try {
 			CTCollectionResource ctCollectionResource =
-				_getCTCollectionResource(ctCollection.getCtRemoteId());
+				_getCTCollectionResource(ctCollection);
 
 			ctCollectionResource.deleteCTCollectionByExternalReferenceCode(
 				ctCollection.getExternalReferenceCode());
@@ -88,7 +87,7 @@ public class CTCollectionModelListener extends BaseModelListener<CTCollection> {
 
 		try {
 			CTCollectionResource ctCollectionResource =
-				_getCTCollectionResource(ctCollection.getCtRemoteId());
+				_getCTCollectionResource(ctCollection);
 
 			ctCollectionResource.patchCTCollectionByExternalReferenceCode(
 				ctCollection.getExternalReferenceCode(),
@@ -108,36 +107,39 @@ public class CTCollectionModelListener extends BaseModelListener<CTCollection> {
 		}
 	}
 
-	private CTCollectionResource _getCTCollectionResource(long ctRemoteId)
+	private CTCollectionResource _getCTCollectionResource(
+			CTCollection ctCollection)
 		throws Exception {
 
-		CTRemote ctRemote = _ctRemoteLocalService.fetchCTRemote(ctRemoteId);
+		CTRemote ctRemote = _ctRemoteLocalService.fetchCTRemote(
+			ctCollection.getCtRemoteId());
 
 		CTCollectionResource.Builder builder = CTCollectionResource.builder();
 
 		return builder.endpoint(
 			ctRemote.getUrl(), "http"
 		).bearerToken(
-			_getToken(ctRemote)
+			_getToken(ctCollection.getCompanyId(), ctRemote)
 		).build();
 	}
 
-	private String _getToken(CTRemote ctRemote) throws Exception {
+	private String _getToken(long companyId, CTRemote ctRemote)
+		throws Exception {
+
 		Http.Options options = new Http.Options();
 
 		options.setLocation(ctRemote.getUrl() + "/o/oauth2/token");
 		options.setPost(true);
 
+		SecretContext secretContext = SecretContext.createEntitySecretContext(
+			CTRemote.class, ctRemote.getCompanyId(), "clientSecret",
+			ctRemote.getPrimaryKey());
+
 		options.addPart("client_id", ctRemote.getClientId());
 		options.addPart(
 			"client_secret",
 			_secretResolver.resolve(
-				ctRemote.getCompanyId(),
-				StringBundler.concat(
-					CTRemote.class.getSimpleName(), StringPool.SLASH,
-					ctRemote.getCompanyId(), StringPool.SLASH,
-					ctRemote.getCtRemoteId(), "/clientSecret"),
-				ctRemote.getClientSecret()));
+				companyId, secretContext, ctRemote.getClientSecret()));
 		options.addPart("grant_type", "client_credentials");
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject(

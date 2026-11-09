@@ -5,9 +5,8 @@
 
 package com.liferay.portal.reports.engine.console.internal.util;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.reports.engine.console.model.Source;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 /**
@@ -20,9 +19,8 @@ public class SourceDriverPasswordUtil {
 
 		return SecretResolverUtil.resolve(
 			companyId,
-			StringBundler.concat(
-				Source.class.getSimpleName(), StringPool.SLASH, companyId,
-				StringPool.SLASH, sourceId, "/driverPassword"),
+			SecretContext.createEntitySecretContext(
+				Source.class, companyId, "driverPassword", sourceId),
 			driverPassword);
 	}
 

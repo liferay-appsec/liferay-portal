@@ -21,14 +21,13 @@ import com.liferay.petra.concurrent.NoticeableFuture;
 import com.liferay.petra.process.ProcessChannel;
 import com.liferay.petra.process.ProcessException;
 import com.liferay.petra.process.ProcessExecutor;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.File;
@@ -171,12 +170,10 @@ public class TalendDispatchTaskExecutor extends BaseDispatchTaskExecutor {
 				if (!Objects.equals(name, "JAVA_OPTS")) {
 					value = _secretResolver.resolve(
 						dispatchTrigger.getCompanyId(),
-						StringBundler.concat(
-							DispatchTrigger.class.getSimpleName(),
-							StringPool.SLASH, dispatchTrigger.getCompanyId(),
-							StringPool.SLASH,
-							dispatchTrigger.getDispatchTriggerId(),
-							StringPool.SLASH, name),
+						SecretContext.createEntitySecretContext(
+							DispatchTrigger.class,
+							dispatchTrigger.getCompanyId(), name,
+							dispatchTrigger.getPrimaryKey()),
 						value);
 				}
 

@@ -67,8 +67,8 @@ public class MBSubscriptionSender
 			try {
 				smtpAccount.setPassword(
 					MBMailingListPasswordUtil.getPassword(
-						mailingList.getCategoryId(), mailingList.getCompanyId(),
-						"outPassword", mailingList.getOutPassword()));
+						mailingList, "outPassword",
+						mailingList.getOutPassword()));
 			}
 			catch (Exception exception) {
 				_log.error(

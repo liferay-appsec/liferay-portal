@@ -6,8 +6,7 @@
 package com.liferay.message.boards.internal.util;
 
 import com.liferay.message.boards.model.MBMailingList;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 /**
@@ -16,14 +15,13 @@ import com.liferay.portal.security.key.secret.SecretResolverUtil;
 public class MBMailingListPasswordUtil {
 
 	public static String getPassword(
-		long categoryId, long companyId, String name, String password) {
+		MBMailingList mailingList, String name, String password) {
 
 		return SecretResolverUtil.resolve(
-			companyId,
-			StringBundler.concat(
-				MBMailingList.class.getSimpleName(), StringPool.SLASH,
-				companyId, StringPool.SLASH, categoryId, StringPool.SLASH,
-				name),
+			mailingList.getCompanyId(),
+			SecretContext.createEntitySecretContext(
+				MBMailingList.class, mailingList.getCompanyId(), name,
+				mailingList.getPrimaryKey()),
 			password);
 	}
 

@@ -12,7 +12,9 @@ import com.liferay.message.boards.internal.util.MBMailMessage;
 import com.liferay.message.boards.internal.util.MBMailUtil;
 import com.liferay.message.boards.internal.util.MBMailingListPasswordUtil;
 import com.liferay.message.boards.internal.util.MailingListThreadLocal;
+import com.liferay.message.boards.model.MBMailingList;
 import com.liferay.message.boards.model.MBMessage;
+import com.liferay.message.boards.service.MBMailingListLocalService;
 import com.liferay.message.boards.service.MBMessageLocalService;
 import com.liferay.message.boards.service.MBMessageService;
 import com.liferay.petra.string.StringPool;
@@ -160,14 +162,17 @@ public class MailingListMessageListener extends BaseMessageListener {
 	private Store _getStore(MailingListRequest mailingListRequest)
 		throws Exception {
 
+		MBMailingList mailingList =
+			_mbMailingListLocalService.getCategoryMailingList(
+				mailingListRequest.getGroupId(),
+				mailingListRequest.getCategoryId());
+
 		String protocol = mailingListRequest.getInProtocol();
 		String host = mailingListRequest.getInServerName();
 		int port = mailingListRequest.getInServerPort();
 		String user = mailingListRequest.getInUserName();
 		String password = MBMailingListPasswordUtil.getPassword(
-			mailingListRequest.getCategoryId(),
-			mailingListRequest.getCompanyId(), "inPassword",
-			mailingListRequest.getInPassword());
+			mailingList, "inPassword", mailingListRequest.getInPassword());
 
 		Account account = Account.getInstance(protocol, port);
 
@@ -332,6 +337,9 @@ public class MailingListMessageListener extends BaseMessageListener {
 
 	@Reference
 	private MailService _mailService;
+
+	@Reference
+	private MBMailingListLocalService _mbMailingListLocalService;
 
 	@Reference
 	private MBMessageLocalService _mbMessageLocalService;

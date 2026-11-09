@@ -5,15 +5,16 @@
 
 package com.liferay.portal.reports.engine.console.web.internal.admin.portlet.action;
 
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.reports.engine.console.constants.ReportsEngineConsolePortletKeys;
 import com.liferay.portal.reports.engine.console.model.Source;
 import com.liferay.portal.reports.engine.console.service.SourceService;
 import com.liferay.portal.reports.engine.console.util.ReportsEngineConsoleUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.ActionRequest;
@@ -39,6 +40,9 @@ public class TestDataSourceMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		long sourceId = ParamUtil.getLong(actionRequest, "sourceId");
 
 		Source source = _sourceService.getSource(sourceId);
@@ -47,11 +51,10 @@ public class TestDataSourceMVCActionCommand extends BaseMVCActionCommand {
 			source.getDriverClassName(), source.getDriverUrl(),
 			source.getDriverUserName(),
 			_secretResolver.resolve(
-				source.getCompanyId(),
-				StringBundler.concat(
-					Source.class.getSimpleName(), StringPool.SLASH,
-					source.getCompanyId(), StringPool.SLASH,
-					source.getSourceId(), "/driverPassword"),
+				themeDisplay.getCompanyId(),
+				SecretContext.createEntitySecretContext(
+					Source.class, source.getCompanyId(), "driverPassword",
+					source.getPrimaryKey()),
 				source.getDriverPassword()));
 	}
 

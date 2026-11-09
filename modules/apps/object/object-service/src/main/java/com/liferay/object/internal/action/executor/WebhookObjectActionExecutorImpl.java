@@ -9,7 +9,6 @@ import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.exception.ObjectActionParametersException;
 import com.liferay.object.model.ObjectAction;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -23,6 +22,7 @@ import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.net.URI;
@@ -54,15 +54,15 @@ public class WebhookObjectActionExecutorImpl implements ObjectActionExecutor {
 
 		Http.Options options = new Http.Options();
 
+		SecretContext secretContext = SecretContext.createEntitySecretContext(
+			ObjectAction.class, companyId, "secret", objectActionId);
+
 		options.addHeader(
 			HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
 		options.addHeader(
 			"x-api-key",
 			_secretResolver.resolve(
-				companyId,
-				StringBundler.concat(
-					ObjectAction.class.getSimpleName(), StringPool.SLASH,
-					companyId, StringPool.SLASH, objectActionId, "/secret"),
+				companyId, secretContext,
 				parametersUnicodeProperties.get("secret")));
 		options.setBody(
 			payloadJSONObject.toString(), ContentTypes.APPLICATION_JSON,

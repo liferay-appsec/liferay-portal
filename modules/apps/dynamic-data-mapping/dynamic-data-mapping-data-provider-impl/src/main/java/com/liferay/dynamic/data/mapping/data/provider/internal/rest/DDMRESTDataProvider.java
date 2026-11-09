@@ -21,7 +21,6 @@ import com.liferay.dynamic.data.mapping.data.provider.settings.DDMDataProviderSe
 import com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance;
 import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
 import com.liferay.petra.string.CharPool;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.json.web.service.client.JSONWebServiceClient;
@@ -43,6 +42,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.ByteArrayInputStream;
@@ -430,12 +430,11 @@ public class DDMRESTDataProvider implements DDMDataProvider {
 		}
 
 		String password = _secretResolver.resolve(
-			ddmDataProviderInstance.getCompanyId(),
-			StringBundler.concat(
-				DDMDataProviderInstance.class.getSimpleName(), StringPool.SLASH,
-				ddmDataProviderInstance.getCompanyId(), StringPool.SLASH,
-				ddmDataProviderInstance.getDataProviderInstanceId(),
-				"/password"),
+			ddmDataProviderRequest.getCompanyId(),
+			SecretContext.createEntitySecretContext(
+				DDMDataProviderInstance.class,
+				ddmDataProviderInstance.getCompanyId(), "password",
+				ddmDataProviderInstance.getPrimaryKey()),
 			ddmRESTDataProviderSettings.password());
 
 		JSONWebServiceClient jsonWebServiceClient =

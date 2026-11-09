@@ -20,7 +20,9 @@ if (Validator.isNull(driverPassword)) {
 	Source source = SourceLocalServiceUtil.fetchSource(sourceId);
 
 	if ((source != null) && SourcePermissionChecker.contains(permissionChecker, source, ActionKeys.UPDATE)) {
-		driverPassword = SecretResolverUtil.resolve(source.getCompanyId(), StringBundler.concat(Source.class.getSimpleName(), StringPool.SLASH, source.getCompanyId(), StringPool.SLASH, source.getSourceId(), "/driverPassword"), source.getDriverPassword());
+		SecretContext secretContext = SecretContext.createEntitySecretContext(Source.class, source.getCompanyId(), "driverPassword", source.getPrimaryKey());
+
+		driverPassword = SecretResolverUtil.resolve(themeDisplay.getCompanyId(), secretContext, source.getDriverPassword());
 	}
 }
 
