@@ -6,7 +6,6 @@
 package com.liferay.marketplace.settings.web.internal.util;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -20,12 +19,9 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
-import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
-import com.liferay.portal.security.key.secret.Secret;
-import com.liferay.portal.security.key.secret.SecretManager;
+import com.liferay.portal.security.key.secret.SecretContext;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.PortletPreferences;
 
@@ -98,17 +94,19 @@ public class MarketplaceUtil {
 
 	public static void deleteTokens(long companyId) {
 		for (String name : _TOKEN_NAMES) {
-			KeyReference keyReference = _getKeyReference(
-				companyId, name, PrefsPropsUtil.getString(companyId, name));
+			String token = PrefsPropsUtil.getString(companyId, name);
 
-			if (keyReference == null) {
+			if (!KeyReferenceUtil.isKeyReference(token)) {
 				continue;
 			}
 
 			try {
-				SecretManager secretManager = _getSecretManager();
+				SecretContext secretContext =
+					SecretContext.createCompanySecretContext(companyId, name);
 
-				secretManager.deleteSecret(companyId, keyReference);
+				SecretResolver secretResolver = _getSecretResolver();
+
+				secretResolver.delete(companyId, secretContext, token);
 			}
 			catch (Exception exception) {
 				FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
@@ -134,49 +132,26 @@ public class MarketplaceUtil {
 
 		String token = PrefsPropsUtil.getString(companyId, name);
 
-		KeyReference keyReference = _getKeyReference(companyId, name, token);
-
-		if (keyReference == null) {
+		if (!KeyReferenceUtil.isKeyReference(token)) {
 			return token;
 		}
 
-		SecretManager secretManager = _getSecretManager();
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, name);
 
-		try (Secret secret = secretManager.getSecret(companyId, keyReference)) {
-			return new String(secret.getChars());
-		}
+		SecretResolver secretResolver = _getSecretResolver();
+
+		return secretResolver.resolve(companyId, secretContext, token);
 	}
 
-	private static KeyReference _getKeyReference(
-		long companyId, String name, String token) {
+	private static SecretResolver _getSecretResolver() {
+		SecretResolver secretResolver = _secretResolverSnapshot.get();
 
-		KeyReference keyReference = KeyReferenceUtil.parseKeyReference(token);
-
-		if (keyReference == null) {
-			return null;
+		if (secretResolver == null) {
+			throw new IllegalStateException("Secret resolver is unavailable");
 		}
 
-		String identifier = keyReference.getIdentifier();
-
-		if (!identifier.startsWith(
-				StringBundler.concat(
-					"Marketplace/", companyId, StringPool.SLASH, name,
-					StringPool.SLASH))) {
-
-			return null;
-		}
-
-		return keyReference;
-	}
-
-	private static SecretManager _getSecretManager() {
-		SecretManager secretManager = _secretManagerSnapshot.get();
-
-		if (secretManager == null) {
-			throw new IllegalStateException("Secret manager is unavailable");
-		}
-
-		return secretManager;
+		return secretResolver;
 	}
 
 	private static String _storeToken(long companyId, String name, String token)
@@ -187,31 +162,12 @@ public class MarketplaceUtil {
 				"Token cannot begin with a reserved key reference prefix");
 		}
 
-		if (!PropsValues.FIPS_ENABLED || Validator.isNull(token)) {
-			return token;
-		}
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, name);
 
-		String identifier = StringBundler.concat(
-			"Marketplace/", companyId, StringPool.SLASH, name, StringPool.SLASH,
-			PortalUUIDUtil.generate());
+		SecretResolver secretResolver = _getSecretResolver();
 
-		KeyReference keyReference = _getKeyReference(
-			companyId, name, PrefsPropsUtil.getString(companyId, name));
-
-		if (keyReference != null) {
-			identifier = keyReference.getIdentifier();
-		}
-
-		SecretManager secretManager = _getSecretManager();
-
-		try (Secret secret = new Secret(
-				new KeyReference(
-					identifier, StringPool.STAR, KeyReference.Type.SECRET),
-				token)) {
-
-			return KeyReferenceUtil.toKeyReferenceString(
-				secretManager.putSecret(companyId, secret));
-		}
+		return secretResolver.store(companyId, secretContext, token);
 	}
 
 	private static final String[] _TOKEN_NAMES = {
@@ -221,7 +177,7 @@ public class MarketplaceUtil {
 	private static final Log _log = LogFactoryUtil.getLog(
 		MarketplaceUtil.class);
 
-	private static final Snapshot<SecretManager> _secretManagerSnapshot =
-		new Snapshot<>(MarketplaceUtil.class, SecretManager.class, null, true);
+	private static final Snapshot<SecretResolver> _secretResolverSnapshot =
+		new Snapshot<>(MarketplaceUtil.class, SecretResolver.class, null, true);
 
 }
