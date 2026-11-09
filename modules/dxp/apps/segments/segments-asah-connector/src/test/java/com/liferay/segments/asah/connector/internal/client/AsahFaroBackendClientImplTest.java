@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -436,7 +437,9 @@ public class AsahFaroBackendClientImplTest {
 		String securitySignature = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretResolver.resolve(companyId, keyReferenceString)
+			_secretResolver.resolve(
+				Mockito.eq(companyId), Mockito.any(SecretContext.class),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
 			securitySignature
 		);

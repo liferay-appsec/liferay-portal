@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
@@ -206,7 +207,7 @@ public class JiraTicketResolverUtilTest {
 	@Test
 	public void testResolveTicketsDedupesDuplicateTickets() throws Exception {
 		List<String> resolvedTickets = JiraTicketResolverUtil.resolveTickets(
-			_patcherConfiguration, "LPD-1,LPD-1");
+			RandomTestUtil.randomLong(), _patcherConfiguration, "LPD-1,LPD-1");
 
 		Assert.assertEquals(
 			resolvedTickets.toString(), 1, resolvedTickets.size());
@@ -218,7 +219,7 @@ public class JiraTicketResolverUtilTest {
 		throws Exception {
 
 		List<String> resolvedTickets = JiraTicketResolverUtil.resolveTickets(
-			_patcherConfiguration, "LPD-1,LPS-2");
+			RandomTestUtil.randomLong(), _patcherConfiguration, "LPD-1,LPS-2");
 
 		Assert.assertEquals(
 			resolvedTickets.toString(), 2, resolvedTickets.size());
@@ -230,7 +231,8 @@ public class JiraTicketResolverUtilTest {
 	public void testResolveTicketsResolvesLPEToSingleLPD() throws Exception {
 		_jiraUtilMockedStatic.when(
 			() -> JiraUtil.getIssueJSONObject(
-				Mockito.any(PatcherConfiguration.class), Mockito.eq("LPE-123"))
+				Mockito.anyLong(), Mockito.any(PatcherConfiguration.class),
+				Mockito.eq("LPE-123"))
 		).thenReturn(
 			_createIssueJSONObject(
 				_createIssueLinksJSONArray(
@@ -239,7 +241,7 @@ public class JiraTicketResolverUtilTest {
 		);
 
 		List<String> resolvedTickets = JiraTicketResolverUtil.resolveTickets(
-			_patcherConfiguration, "LPE-123");
+			RandomTestUtil.randomLong(), _patcherConfiguration, "LPE-123");
 
 		Assert.assertEquals(
 			resolvedTickets.toString(), 1, resolvedTickets.size());
@@ -252,7 +254,8 @@ public class JiraTicketResolverUtilTest {
 
 		_jiraUtilMockedStatic.when(
 			() -> JiraUtil.getIssueJSONObject(
-				Mockito.any(PatcherConfiguration.class), Mockito.eq("LPE-1"))
+				Mockito.anyLong(), Mockito.any(PatcherConfiguration.class),
+				Mockito.eq("LPE-1"))
 		).thenReturn(
 			_createIssueJSONObject(
 				_createIssueLinksJSONArray(
@@ -264,7 +267,7 @@ public class JiraTicketResolverUtilTest {
 
 		try {
 			JiraTicketResolverUtil.resolveTickets(
-				_patcherConfiguration, "LPE-1");
+				RandomTestUtil.randomLong(), _patcherConfiguration, "LPE-1");
 
 			Assert.fail();
 		}
@@ -281,14 +284,15 @@ public class JiraTicketResolverUtilTest {
 
 		_jiraUtilMockedStatic.when(
 			() -> JiraUtil.getIssueJSONObject(
-				Mockito.any(PatcherConfiguration.class), Mockito.eq("LPE-404"))
+				Mockito.anyLong(), Mockito.any(PatcherConfiguration.class),
+				Mockito.eq("LPE-404"))
 		).thenReturn(
 			_createIssueJSONObject(JSONFactoryUtil.createJSONArray())
 		);
 
 		try {
 			JiraTicketResolverUtil.resolveTickets(
-				_patcherConfiguration, "LPE-404");
+				RandomTestUtil.randomLong(), _patcherConfiguration, "LPE-404");
 
 			Assert.fail();
 		}
@@ -302,7 +306,8 @@ public class JiraTicketResolverUtilTest {
 	@Test
 	public void testResolveTicketsTrimsAndSkipsBlanks() throws Exception {
 		List<String> resolvedTickets = JiraTicketResolverUtil.resolveTickets(
-			_patcherConfiguration, " LPD-1 , , LPD-2 ,");
+			RandomTestUtil.randomLong(), _patcherConfiguration,
+			" LPD-1 , , LPD-2 ,");
 
 		Assert.assertEquals(
 			resolvedTickets.toString(), 2, resolvedTickets.size());
