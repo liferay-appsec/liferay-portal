@@ -9,6 +9,7 @@ import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -24,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 /**
@@ -170,6 +172,52 @@ public class SecretResolverUtilTest {
 			secretResolver, Mockito.never()
 		).resolve(
 			companyId, plainValue
+		);
+	}
+
+	@Test
+	public void testResolveProperty() {
+		String key = RandomTestUtil.randomString();
+		String resolvedValue = RandomTestUtil.randomString();
+
+		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
+
+		Mockito.when(
+			secretResolver.resolveProperty(key)
+		).thenReturn(
+			resolvedValue
+		);
+
+		_setUpSecretResolverSnapshot(secretResolver);
+
+		try (MockedStatic<PropsUtil> propsUtilMockedStatic = Mockito.mockStatic(
+				PropsUtil.class)) {
+
+			propsUtilMockedStatic.when(
+				() -> PropsUtil.get(key)
+			).thenReturn(
+				_randomKeyReferenceString()
+			);
+
+			Assert.assertSame(
+				resolvedValue, SecretResolverUtil.resolveProperty(key));
+
+			String plainValue = RandomTestUtil.randomString();
+
+			propsUtilMockedStatic.when(
+				() -> PropsUtil.get(key)
+			).thenReturn(
+				plainValue
+			);
+
+			Assert.assertSame(
+				plainValue, SecretResolverUtil.resolveProperty(key));
+		}
+
+		Mockito.verify(
+			secretResolver
+		).resolveProperty(
+			key
 		);
 	}
 

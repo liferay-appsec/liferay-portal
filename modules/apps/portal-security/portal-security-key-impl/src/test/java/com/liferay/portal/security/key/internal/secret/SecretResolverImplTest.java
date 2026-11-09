@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
@@ -150,6 +151,42 @@ public class SecretResolverImplTest {
 	public void testResolve() throws Exception {
 		_assertResolve(RandomTestUtil.randomString());
 		_assertResolve(StringPool.STAR);
+	}
+
+	@Test
+	public void testResolveProperty() throws Exception {
+		String key = RandomTestUtil.randomString();
+
+		KeyReference keyReference = new KeyReference(
+			"property/" + key, RandomTestUtil.randomString(),
+			KeyReference.Type.SECRET);
+
+		String value = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_secretManager.getSecret(CompanyConstants.SYSTEM, keyReference)
+		).thenReturn(
+			new Secret(keyReference, value)
+		);
+
+		try (MockedStatic<PropsUtil> propsUtilMockedStatic = Mockito.mockStatic(
+				PropsUtil.class)) {
+
+			propsUtilMockedStatic.when(
+				() -> PropsUtil.get(key)
+			).thenReturn(
+				KeyReferenceUtil.toKeyReferenceString(keyReference)
+			);
+
+			Assert.assertEquals(
+				value, _secretResolverImpl.resolveProperty(key));
+		}
+
+		_assertResolveRejects(
+			CompanyConstants.SYSTEM,
+			StringBundler.concat(
+				"config/", RandomTestUtil.randomString(), "/system/0/", key),
+			SecretContext.createPropertySecretContext(key));
 	}
 
 	@Test
@@ -1137,6 +1174,14 @@ public class SecretResolverImplTest {
 				key),
 			SecretContext.createSettingsSecretContext(
 				key, new GroupServiceSettingsLocator(groupId, settingsId)));
+
+		SecretContext secretContext = SecretContext.createPropertySecretContext(
+			key);
+
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> _secretResolverImpl.store(
+				companyId, secretContext, RandomTestUtil.randomString()));
 	}
 
 	private void _testStoreWhenFIPSIsDisabled() throws Exception {
