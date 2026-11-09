@@ -309,6 +309,7 @@ public class SecretResolverImplTest {
 	public void testResolveWithSecretContext() throws Exception {
 		_testResolveWithCompanySecretContext();
 		_testResolveWithConfigurationSecretContext();
+		_testResolveWithEntitySecretContext();
 		_testResolveWithGroupSecretContext();
 		_testResolveWithSettingsSecretContext();
 		_testResolveWithSettingsSecretContextWhenConfigurationPidIsMapped();
@@ -329,6 +330,7 @@ public class SecretResolverImplTest {
 			_testStoreWhenValueIsBlank();
 			_testStoreWhenValueReferencesAnotherContext();
 			_testStoreWhenValueReferencesItsChain();
+			_testStoreWithEntitySecretContext();
 		}
 	}
 
@@ -634,6 +636,28 @@ public class SecretResolverImplTest {
 				HashMapBuilder.<String, Object>put(
 					Constants.SERVICE_PID, pid
 				).build()));
+	}
+
+	private void _testResolveWithEntitySecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+		long primaryKey = RandomTestUtil.randomLong();
+
+		String identifier = StringBundler.concat(
+			"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+			primaryKey, StringPool.SLASH, key);
+		SecretContext secretContext = SecretContext.createEntitySecretContext(
+			Secret.class, companyId, key, primaryKey);
+
+		_assertResolve(companyId, identifier, companyId, secretContext);
+		_assertResolveRejects(
+			RandomTestUtil.randomLong(), identifier, secretContext);
+
+		String otherEntityIdentifier = StringBundler.concat(
+			"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+			RandomTestUtil.randomLong(), StringPool.SLASH, key);
+
+		_assertResolveRejects(companyId, otherEntityIdentifier, secretContext);
 	}
 
 	private void _testResolveWithGroupSecretContext() throws Exception {
@@ -1044,6 +1068,44 @@ public class SecretResolverImplTest {
 				value));
 
 		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _testStoreWithEntitySecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		String key = RandomTestUtil.randomString();
+		long primaryKey = RandomTestUtil.randomLong();
+
+		String identifier = StringBundler.concat(
+			"entity/", Secret.class.getSimpleName(), StringPool.SLASH,
+			primaryKey, StringPool.SLASH, key);
+
+		KeyReference keyReference = new KeyReference(
+			identifier, StringPool.STAR, KeyReference.Type.SECRET);
+
+		Mockito.when(
+			_secretManager.putSecret(Mockito.eq(companyId), Mockito.any())
+		).thenReturn(
+			new KeyReference(
+				identifier, RandomTestUtil.randomString(),
+				KeyReference.Type.SECRET)
+		);
+
+		Assert.assertEquals(
+			KeyReferenceUtil.toKeyReferenceString(keyReference),
+			_secretResolverImpl.store(
+				companyId,
+				SecretContext.createEntitySecretContext(
+					Secret.class, companyId, key, primaryKey),
+				RandomTestUtil.randomString()));
+
+		Mockito.verify(
+			_secretManager
+		).putSecret(
+			Mockito.eq(companyId),
+			Mockito.argThat(
+				secret -> keyReference.equals(secret.getKeyReference()))
+		);
 	}
 
 	private String _toKeyReferenceString(String identifier) {
