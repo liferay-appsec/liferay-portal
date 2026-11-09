@@ -46,6 +46,7 @@ import com.liferay.portal.security.key.secret.exception.SecretException;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -70,6 +71,33 @@ public class SecretResolverImpl implements SecretResolver {
 	public static String getKey(long companyId, String keyReferenceString) {
 		return StringBundler.concat(
 			companyId, StringPool.POUND, keyReferenceString);
+	}
+
+	@Override
+	public void delete(
+		long companyId, SecretContext secretContext, String value) {
+
+		if (!KeyReferenceUtil.isKeyReference(value)) {
+			return;
+		}
+
+		try {
+			KeyReference keyReference = _getKeyReference(value);
+
+			SequencedMap<String, Long> secretIdentifierMap =
+				_getSecretIdentifierMap(secretContext);
+
+			Map.Entry<String, Long> entry = secretIdentifierMap.firstEntry();
+
+			_secretManager.deleteSecret(
+				_getScopeCompanyId(
+					companyId, keyReference.getIdentifier(), "delete",
+					Collections.singletonMap(entry.getKey(), entry.getValue())),
+				keyReference);
+		}
+		catch (PortalException portalException) {
+			ReflectionUtil.throwException(portalException);
+		}
 	}
 
 	@Override

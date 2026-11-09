@@ -13,6 +13,9 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface SecretResolver {
 
+	public void delete(
+		long companyId, SecretContext secretContext, String value);
+
 	public String resolve(
 		long companyId, SecretContext secretContext, String value);
 
