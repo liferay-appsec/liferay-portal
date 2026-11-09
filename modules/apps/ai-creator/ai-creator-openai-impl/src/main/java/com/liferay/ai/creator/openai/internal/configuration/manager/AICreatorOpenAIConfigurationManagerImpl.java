@@ -13,8 +13,11 @@ import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import org.osgi.service.component.annotations.Component;
@@ -37,7 +40,13 @@ public class AICreatorOpenAIConfigurationManagerImpl
 					AICreatorOpenAICompanyConfiguration.class, companyId);
 
 		return _secretResolver.resolve(
-			companyId, aiCreatorOpenAICompanyConfiguration.apiKey());
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"apiKey",
+				new CompanyServiceSettingsLocator(
+					companyId,
+					AICreatorOpenAICompanyConfiguration.class.getName())),
+			aiCreatorOpenAICompanyConfiguration.apiKey());
 	}
 
 	@Override
@@ -88,7 +97,14 @@ public class AICreatorOpenAIConfigurationManagerImpl
 				groupId);
 
 		return _secretResolver.resolve(
-			group.getCompanyId(), aiCreatorOpenAIGroupConfiguration.apiKey());
+			group.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"apiKey",
+				new GroupServiceSettingsLocator(
+					group.getCompanyId(), groupId,
+					AICreatorOpenAIGroupConfiguration.class.getName(),
+					AICreatorOpenAIGroupConfiguration.class.getName())),
+			aiCreatorOpenAIGroupConfiguration.apiKey());
 	}
 
 	@Override
@@ -102,7 +118,15 @@ public class AICreatorOpenAIConfigurationManagerImpl
 		String apiKey = aiCreatorOpenAIGroupConfiguration.apiKey();
 
 		if (Validator.isNotNull(apiKey)) {
-			return _secretResolver.resolve(companyId, apiKey);
+			return _secretResolver.resolve(
+				companyId,
+				SecretContext.createSettingsSecretContext(
+					"apiKey",
+					new GroupServiceSettingsLocator(
+						companyId, groupId,
+						AICreatorOpenAIGroupConfiguration.class.getName(),
+						AICreatorOpenAIGroupConfiguration.class.getName())),
+				apiKey);
 		}
 
 		AICreatorOpenAICompanyConfiguration
@@ -111,7 +135,13 @@ public class AICreatorOpenAIConfigurationManagerImpl
 					AICreatorOpenAICompanyConfiguration.class, companyId);
 
 		return _secretResolver.resolve(
-			companyId, aiCreatorOpenAICompanyConfiguration.apiKey());
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"apiKey",
+				new CompanyServiceSettingsLocator(
+					companyId,
+					AICreatorOpenAICompanyConfiguration.class.getName())),
+			aiCreatorOpenAICompanyConfiguration.apiKey());
 	}
 
 	@Override

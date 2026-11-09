@@ -41,6 +41,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import com.paypal.core.PayPalEnvironment;
@@ -700,11 +701,21 @@ public class PayPalCommercePaymentIntegration
 			CommercePaymentEntry commercePaymentEntry)
 		throws PortalException {
 
+		CommerceChannel commerceChannel =
+			_commerceChannelLocalService.getCommerceChannel(
+				commercePaymentEntry.getCommerceChannelId());
+
 		PayPalGroupServiceConfiguration payPalGroupServiceConfiguration =
-			_getPayPalGroupServiceConfiguration(commercePaymentEntry);
+			_getPayPalGroupServiceConfiguration(commerceChannel.getGroupId());
 
 		String clientSecret = _secretResolver.resolve(
 			commercePaymentEntry.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"clientSecret",
+				new GroupServiceSettingsLocator(
+					commerceChannel.getGroupId(),
+					PayPalCommercePaymentMethodConstants.
+						COMMERCE_PAYMENT_INTEGRATION_SERVICE_NAME)),
 			payPalGroupServiceConfiguration.clientSecret());
 
 		if (Objects.equals(

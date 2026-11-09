@@ -35,6 +35,7 @@ import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import com.paypal.api.payments.Agreement;
@@ -1031,7 +1032,14 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 		return new APIContext(
 			payPalGroupServiceConfiguration.clientId(),
 			_secretResolver.resolve(
-				companyId, payPalGroupServiceConfiguration.clientSecret()),
+				companyId,
+				SecretContext.createSettingsSecretContext(
+					"clientSecret",
+					new GroupServiceSettingsLocator(
+						groupId,
+						PayPalCommercePaymentMethodConstants.
+							COMMERCE_PAYMENT_ENGINE_SERVICE_NAME)),
+				payPalGroupServiceConfiguration.clientSecret()),
 			payPalGroupServiceConfiguration.mode());
 	}
 
@@ -1165,6 +1173,12 @@ public class PayPalCommercePaymentMethod implements CommercePaymentMethod {
 
 		String clientSecret = _secretResolver.resolve(
 			commerceOrder.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"clientSecret",
+				new GroupServiceSettingsLocator(
+					commerceOrder.getGroupId(),
+					PayPalCommercePaymentMethodConstants.
+						COMMERCE_PAYMENT_ENGINE_SERVICE_NAME)),
 			payPalGroupServiceConfiguration.clientSecret());
 
 		PayPalEnvironment payPalEnvironment = new PayPalEnvironment.Sandbox(

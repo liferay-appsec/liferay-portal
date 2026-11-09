@@ -12,6 +12,9 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.util.Map;
@@ -38,7 +41,15 @@ public class LayoutReportsGooglePageSpeedConfigurationProvider {
 					group.getCompanyId(), group.getGroupId());
 
 		return _secretResolver.resolve(
-			group.getCompanyId(),
+			CompanyThreadLocal.getCompanyId(),
+			SecretContext.createSettingsSecretContext(
+				"apiKey",
+				new GroupServiceSettingsLocator(
+					group.getCompanyId(), group.getGroupId(),
+					LayoutReportsGooglePageSpeedGroupConfiguration.class.
+						getName(),
+					LayoutReportsGooglePageSpeedGroupConfiguration.class.
+						getName())),
 			layoutReportsGooglePageSpeedGroupConfiguration.apiKey());
 	}
 

@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.servlet.taglib.DynamicInclude;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.ServletContext;
@@ -145,6 +146,11 @@ public class ClickToChatBottomJSPDynamicInclude extends BaseJSPDynamicInclude {
 			}
 		}
 
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			"chatProviderSecretKey",
+			ClickToChatConfigurationUtil.buildSettingsLocator(
+				themeDisplay.getCompanyId(), themeDisplay.getSiteGroupId()));
+
 		httpServletRequest.setAttribute(
 			ClickToChatWebKeys.CLICK_TO_CHAT_CHAT_PROVIDER_ACCOUNT_ID,
 			clickToChatConfiguration.chatProviderAccountId());
@@ -157,7 +163,7 @@ public class ClickToChatBottomJSPDynamicInclude extends BaseJSPDynamicInclude {
 		httpServletRequest.setAttribute(
 			ClickToChatWebKeys.CLICK_TO_CHAT_CHAT_PROVIDER_SECRET_KEY,
 			_secretResolver.resolve(
-				themeDisplay.getCompanyId(),
+				themeDisplay.getCompanyId(), secretContext,
 				clickToChatConfiguration.chatProviderSecretKey()));
 
 		super.include(httpServletRequest, httpServletResponse, key);

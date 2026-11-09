@@ -13,7 +13,9 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.text.SimpleDateFormat;
@@ -128,7 +130,13 @@ public class CommerceAvalaraConnectorImpl implements CommerceAvalaraConnector {
 		String securityHeader = StringBundler.concat(
 			accountNumber, StringPool.COLON,
 			_secretResolver.resolve(
-				CompanyThreadLocal.getCompanyId(), licenseKey));
+				CompanyThreadLocal.getCompanyId(),
+				SecretContext.createSettingsSecretContext(
+					"licenseKey",
+					new CompanyServiceSettingsLocator(
+						CompanyThreadLocal.getCompanyId(),
+						CommerceAvalaraConnectorConfiguration.class.getName())),
+				licenseKey));
 
 		return avaTaxClient.withSecurity(
 			Base64.encode(securityHeader.getBytes()));

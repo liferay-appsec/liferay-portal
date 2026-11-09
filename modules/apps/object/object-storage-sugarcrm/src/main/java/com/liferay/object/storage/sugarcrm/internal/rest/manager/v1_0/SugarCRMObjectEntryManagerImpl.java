@@ -27,6 +27,9 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -362,7 +365,8 @@ public class SugarCRMObjectEntryManagerImpl
 			@Override
 			public JSONObject getAccessToken(long companyId, long groupId) {
 				JSONObject jSONObject = SugarCRMAccessTokenWebCacheItem.get(
-					companyId, _getSugarCRMConfiguration(companyId, groupId));
+					companyId, _getSettingsLocator(companyId, groupId),
+					_getSugarCRMConfiguration(companyId, groupId));
 
 				if (jSONObject == null) {
 					throw new ObjectEntryManagerHttpException(
@@ -380,17 +384,26 @@ public class SugarCRMObjectEntryManagerImpl
 				return sugarCRMConfiguration.baseURL();
 			}
 
+			private SettingsLocator _getSettingsLocator(
+				long companyId, long groupId) {
+
+				if (groupId == 0) {
+					return new CompanyServiceSettingsLocator(
+						companyId, SugarCRMConfiguration.class.getName());
+				}
+
+				return new GroupServiceSettingsLocator(
+					companyId, groupId, SugarCRMConfiguration.class.getName(),
+					SugarCRMConfiguration.class.getName());
+			}
+
 			private SugarCRMConfiguration _getSugarCRMConfiguration(
 				long companyId, long groupId) {
 
 				try {
-					if (groupId == 0) {
-						return _configurationProvider.getCompanyConfiguration(
-							SugarCRMConfiguration.class, companyId);
-					}
-
-					return _configurationProvider.getGroupConfiguration(
-						SugarCRMConfiguration.class, companyId, groupId);
+					return _configurationProvider.getConfiguration(
+						SugarCRMConfiguration.class,
+						_getSettingsLocator(companyId, groupId));
 				}
 				catch (ConfigurationException configurationException) {
 					return ReflectionUtil.throwException(

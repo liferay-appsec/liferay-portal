@@ -8,8 +8,6 @@ package com.liferay.commerce.avalara.connector.web.internal.portlet.action;
 import com.liferay.commerce.avalara.connector.CommerceAvalaraConnector;
 import com.liferay.commerce.avalara.connector.configuration.CommerceAvalaraConnectorConfiguration;
 import com.liferay.commerce.avalara.connector.web.internal.constants.CommerceAvalaraPortletKeys;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -22,6 +20,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.ActionRequest;
@@ -76,10 +75,13 @@ public class EditCommerceAvalaraConnectorMVCActionCommand
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		Settings settings = FallbackKeysSettingsUtil.getSettings(
+		CompanyServiceSettingsLocator companyServiceSettingsLocator =
 			new CompanyServiceSettingsLocator(
 				themeDisplay.getCompanyId(),
-				CommerceAvalaraConnectorConfiguration.class.getName()));
+				CommerceAvalaraConnectorConfiguration.class.getName());
+
+		Settings settings = FallbackKeysSettingsUtil.getSettings(
+			companyServiceSettingsLocator);
 
 		ModifiableSettings modifiableSettings =
 			settings.getModifiableSettings();
@@ -95,11 +97,8 @@ public class EditCommerceAvalaraConnectorMVCActionCommand
 			"licenseKey",
 			_secretResolver.store(
 				themeDisplay.getCompanyId(),
-				StringBundler.concat(
-					"preference/company/", themeDisplay.getCompanyId(),
-					StringPool.SLASH,
-					CommerceAvalaraConnectorConfiguration.class.getName(),
-					"/licenseKey"),
+				SecretContext.createSettingsSecretContext(
+					"licenseKey", companyServiceSettingsLocator),
 				licenseKey));
 
 		String serviceURL = ParamUtil.getString(actionRequest, "serviceURL");

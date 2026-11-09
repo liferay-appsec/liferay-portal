@@ -22,10 +22,12 @@ import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.store.s3.configuration.S3StoreConfiguration;
 
@@ -495,6 +497,9 @@ public class S3Store implements Store {
 		_s3StoreConfiguration = ConfigurableUtil.createConfigurable(
 			S3StoreConfiguration.class, properties);
 
+		SystemSettingsLocator systemSettingsLocator = new SystemSettingsLocator(
+			S3StoreConfiguration.class.getName());
+
 		AwsCredentialsProvider awsCredentialsProvider = null;
 
 		if (Validator.isNotNull(_s3StoreConfiguration.accessKey()) &&
@@ -505,6 +510,8 @@ public class S3Store implements Store {
 					_s3StoreConfiguration.accessKey(),
 					_secretResolver.resolve(
 						CompanyConstants.SYSTEM,
+						SecretContext.createSettingsSecretContext(
+							"secretKey", systemSettingsLocator),
 						_s3StoreConfiguration.secretKey())));
 		}
 		else {
@@ -538,6 +545,8 @@ public class S3Store implements Store {
 				proxyConfigurationBuilder.password(
 					_secretResolver.resolve(
 						CompanyConstants.SYSTEM,
+						SecretContext.createSettingsSecretContext(
+							"proxyPassword", systemSettingsLocator),
 						_s3StoreConfiguration.proxyPassword())
 				).username(
 					_s3StoreConfiguration.proxyUsername()

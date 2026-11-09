@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.security.KeyFactory;
@@ -38,7 +40,8 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
 		String accountURL, String apiUsername, long companyId,
-		String environment, String integrationKey, String rsaPrivateKey) {
+		String environment, String integrationKey, String rsaPrivateKey,
+		SettingsLocator settingsLocator) {
 
 		return (JSONObject)WebCachePoolUtil.get(
 			StringBundler.concat(
@@ -48,24 +51,34 @@ public class DSAccessTokenWebCacheItem implements WebCacheItem {
 				integrationKey, StringPool.POUND, rsaPrivateKey),
 			new DSAccessTokenWebCacheItem(
 				accountURL, apiUsername, companyId, environment, integrationKey,
-				rsaPrivateKey));
+				rsaPrivateKey, settingsLocator));
 	}
 
 	public DSAccessTokenWebCacheItem(
 		String accountURL, String apiUsername, long companyId,
-		String environment, String integrationKey, String rsaPrivateKey) {
+		String environment, String integrationKey, String rsaPrivateKey,
+		SettingsLocator settingsLocator) {
 
 		_accountURL = accountURL;
 		_apiUsername = apiUsername;
 		_environment = environment;
-		_integrationKey = SecretResolverUtil.resolve(companyId, integrationKey);
+
+		_integrationKey = SecretResolverUtil.resolve(
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"integrationKey", settingsLocator),
+			integrationKey);
 
 		if (rsaPrivateKey == null) {
 			_rsaPrivateKeyBytes = new byte[0];
 		}
 		else {
 			String pem = _getPEM(
-				SecretResolverUtil.resolve(companyId, rsaPrivateKey));
+				SecretResolverUtil.resolve(
+					companyId,
+					SecretContext.createSettingsSecretContext(
+						"rsaPrivateKey", settingsLocator),
+					rsaPrivateKey));
 
 			_rsaPrivateKeyBytes = pem.getBytes();
 		}

@@ -6,6 +6,7 @@
 package com.liferay.digital.signature.web.internal.display.context;
 
 import com.liferay.digital.signature.configuration.DigitalSignatureConfiguration;
+import com.liferay.digital.signature.configuration.DigitalSignatureConfigurationUtil;
 import com.liferay.digital.signature.constants.DigitalSignatureConstants;
 import com.liferay.digital.signature.model.DSRequest;
 import com.liferay.portal.kernel.model.Group;
@@ -17,6 +18,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import jakarta.portlet.RenderRequest;
@@ -102,8 +104,13 @@ public class SignDSRequestDisplayContext {
 			"containerId", _renderResponse.getNamespace() + "signContainer"
 		).put(
 			"integrationKey",
-			SecretResolverUtil.resolve(
-				_dsRequest.getCompanyId(),
+			() -> SecretResolverUtil.resolve(
+				_themeDisplay.getCompanyId(),
+				SecretContext.createSettingsSecretContext(
+					"integrationKey",
+					DigitalSignatureConfigurationUtil.buildSettingsLocator(
+						_themeDisplay.getCompanyId(),
+						_dsRequest.getSiteGroupId())),
 				_digitalSignatureConfiguration.integrationKey())
 		).put(
 			"jsURL",

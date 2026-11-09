@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import com.worldline.sips.model.CaptureMode;
@@ -208,6 +209,11 @@ public class MercanetCommercePaymentMethod implements CommercePaymentMethod {
 			Integer.valueOf(keyVersion),
 			_secretResolver.resolve(
 				commerceOrder.getCompanyId(),
+				SecretContext.createSettingsSecretContext(
+					"secretKey",
+					new GroupServiceSettingsLocator(
+						commerceOrder.getGroupId(),
+						MercanetCommercePaymentMethodConstants.SERVICE_NAME)),
 				mercanetGroupServiceConfiguration.secretKey()));
 
 		InitializationResponse initializationResponse =

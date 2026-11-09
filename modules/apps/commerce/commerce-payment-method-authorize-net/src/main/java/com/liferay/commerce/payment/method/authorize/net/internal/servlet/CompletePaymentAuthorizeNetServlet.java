@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.Servlet;
@@ -119,7 +120,13 @@ public class CompletePaymentAuthorizeNetServlet extends HttpServlet {
 
 				if (Validator.isNull(
 						_secretResolver.resolve(
-							commerceOrder.getCompanyId(),
+							_portal.getCompanyId(httpServletRequest),
+							SecretContext.createSettingsSecretContext(
+								"signatureKey",
+								new GroupServiceSettingsLocator(
+									commerceOrder.getGroupId(),
+									AuthorizeNetCommercePaymentMethodConstants.
+										SERVICE_NAME)),
 							authorizeNetGroupServiceConfiguration.
 								signatureKey()))) {
 
@@ -226,7 +233,13 @@ public class CompletePaymentAuthorizeNetServlet extends HttpServlet {
 						commerceOrder.getGroupId());
 
 			String signatureKey = _secretResolver.resolve(
-				commerceOrder.getCompanyId(),
+				_portal.getCompanyId(httpServletRequest),
+				SecretContext.createSettingsSecretContext(
+					"signatureKey",
+					new GroupServiceSettingsLocator(
+						commerceOrder.getGroupId(),
+						AuthorizeNetCommercePaymentMethodConstants.
+							SERVICE_NAME)),
 				authorizeNetGroupServiceConfiguration.signatureKey());
 
 			if (Validator.isNull(signatureKey)) {

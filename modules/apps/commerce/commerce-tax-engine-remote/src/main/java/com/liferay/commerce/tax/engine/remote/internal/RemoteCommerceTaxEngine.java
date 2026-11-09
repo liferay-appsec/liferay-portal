@@ -27,8 +27,10 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.IOException;
@@ -298,6 +300,11 @@ public class RemoteCommerceTaxEngine implements CommerceTaxEngine {
 
 			String taxValueEndpointAuthorizationToken = _secretResolver.resolve(
 				group.getCompanyId(),
+				SecretContext.createSettingsSecretContext(
+					"taxValueEndpointAuthorizationToken",
+					new GroupServiceSettingsLocator(
+						group.getGroupId(),
+						RemoteCommerceTaxConfiguration.class.getName())),
 				remoteCommerceTaxConfiguration.
 					taxValueEndpointAuthorizationToken());
 

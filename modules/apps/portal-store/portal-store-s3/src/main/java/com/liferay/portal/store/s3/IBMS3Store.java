@@ -50,10 +50,12 @@ import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.store.s3.configuration.S3StoreConfiguration;
 
@@ -423,6 +425,10 @@ public class IBMS3Store implements Store {
 					_s3StoreConfiguration.accessKey(),
 					_secretResolver.resolve(
 						CompanyConstants.SYSTEM,
+						SecretContext.createSettingsSecretContext(
+							"secretKey",
+							new SystemSettingsLocator(
+								S3StoreConfiguration.class.getName())),
 						_s3StoreConfiguration.secretKey())));
 		}
 		else {
@@ -557,7 +563,12 @@ public class IBMS3Store implements Store {
 			clientConfiguration.setProxyPassword(
 				_secretResolver.resolve(
 					CompanyConstants.SYSTEM,
+					SecretContext.createSettingsSecretContext(
+						"proxyPassword",
+						new SystemSettingsLocator(
+							S3StoreConfiguration.class.getName())),
 					_s3StoreConfiguration.proxyPassword()));
+
 			clientConfiguration.setProxyUsername(
 				_s3StoreConfiguration.proxyUsername());
 

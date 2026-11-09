@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import com.worldline.sips.model.PaypageResponse;
@@ -231,7 +232,12 @@ public class MercanetServlet extends HttpServlet {
 			mercanetGroupServiceConfiguration.merchantId(),
 			Integer.valueOf(mercanetGroupServiceConfiguration.keyVersion()),
 			_secretResolver.resolve(
-				commerceOrder.getCompanyId(),
+				_portal.getCompanyId(httpServletRequest),
+				SecretContext.createSettingsSecretContext(
+					"secretKey",
+					new GroupServiceSettingsLocator(
+						commerceOrder.getGroupId(),
+						MercanetCommercePaymentMethodConstants.SERVICE_NAME)),
 				mercanetGroupServiceConfiguration.secretKey()));
 
 		PaypageResponse paypageResponse = paypageClient.decodeResponse(

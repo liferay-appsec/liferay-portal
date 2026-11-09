@@ -29,6 +29,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
@@ -36,6 +37,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.mail.Authenticator;
@@ -189,17 +191,30 @@ public class MailServiceImpl
 			_log.error(configurationException);
 		}
 
+		CompanyServiceSettingsLocator companyServiceSettingsLocator =
+			new CompanyServiceSettingsLocator(
+				companyId, MailSettingCompanyConfiguration.class.getName());
+
+		SecretContext popPasswordSecretContext =
+			SecretContext.createSettingsSecretContext(
+				"popPassword", companyServiceSettingsLocator);
+		SecretContext smtpPasswordSecretContext =
+			SecretContext.createSettingsSecretContext(
+				"smtpPassword", companyServiceSettingsLocator);
+
 		String advancedPropertiesString =
 			mailSettingCompanyConfiguration.additionalJavaMailProperties();
 		String pop3Host = mailSettingCompanyConfiguration.incomingPOPServer();
 		String pop3Password = _secretResolver.resolve(
-			companyId, mailSettingCompanyConfiguration.popPassword());
+			companyId, popPasswordSecretContext,
+			mailSettingCompanyConfiguration.popPassword());
 		int pop3Port = GetterUtil.getInteger(
 			mailSettingCompanyConfiguration.incomingPOPPort());
 		String pop3User = mailSettingCompanyConfiguration.popUserName();
 		String smtpHost = mailSettingCompanyConfiguration.outgoingSMTPServer();
 		String smtpPassword = _secretResolver.resolve(
-			companyId, mailSettingCompanyConfiguration.smtpPassword());
+			companyId, smtpPasswordSecretContext,
+			mailSettingCompanyConfiguration.smtpPassword());
 		int smtpPort = GetterUtil.getInteger(
 			mailSettingCompanyConfiguration.outgoingSMTPPort());
 		boolean smtpStartTLSEnable = GetterUtil.getBoolean(
