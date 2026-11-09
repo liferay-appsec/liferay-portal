@@ -14,10 +14,12 @@ import com.liferay.object.dynamic.data.mapping.form.field.type.internal.BaseDDMF
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.PortletPreferences;
@@ -57,6 +59,10 @@ public class LocationDDMFormFieldTemplateContextContributor
 				String googleMapsAPIKey = companyPortletPreferences.getValue(
 					"googleMapsAPIKey", null);
 
+				SecretContext secretContext =
+					SecretContext.createCompanySecretContext(
+						objectDefinition.getCompanyId(), "googleMapsAPIKey");
+
 				Group group = _groupLocalService.fetchGroup(
 					GetterUtil.getLong(ddmFormField.getProperty("groupId")));
 
@@ -64,10 +70,14 @@ public class LocationDDMFormFieldTemplateContextContributor
 					googleMapsAPIKey = GetterUtil.getString(
 						group.getTypeSettingsProperty("googleMapsAPIKey"),
 						googleMapsAPIKey);
+
+					secretContext = SecretContext.createGroupSecretContext(
+						group.getGroupId(), "googleMapsAPIKey");
 				}
 
 				return _secretResolver.resolve(
-					objectDefinition.getCompanyId(), googleMapsAPIKey);
+					CompanyThreadLocal.getCompanyId(), secretContext,
+					googleMapsAPIKey);
 			}
 		).put(
 			"groupId", GetterUtil.getLong(ddmFormField.getProperty("groupId"))

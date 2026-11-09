@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.url.URLBuilder;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.portlet.PortletPreferences;
@@ -55,15 +56,22 @@ public class GoogleMapsGeocoder implements Geocoder {
 		String googleMapsAPIKey = companyPortletPreferences.getValue(
 			"googleMapsAPIKey", null);
 
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, "googleMapsAPIKey");
+
 		Group group = _groupLocalService.fetchGroup(groupId);
 
 		if ((group != null) && !group.isControlPanel()) {
 			googleMapsAPIKey = GetterUtil.getString(
 				group.getTypeSettingsProperty("googleMapsAPIKey"),
 				googleMapsAPIKey);
+
+			secretContext = SecretContext.createGroupSecretContext(
+				group.getGroupId(), "googleMapsAPIKey");
 		}
 
-		return _secretResolver.resolve(companyId, googleMapsAPIKey);
+		return _secretResolver.resolve(
+			companyId, secretContext, googleMapsAPIKey);
 	}
 
 	private GeocoderResult _getGeocoderResult(

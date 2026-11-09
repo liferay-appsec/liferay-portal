@@ -11,6 +11,7 @@ import com.liferay.dynamic.data.mapping.form.field.type.internal.util.DDMFormFie
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
+import com.liferay.google.places.constants.GooglePlacesWebKeys;
 import com.liferay.google.places.util.GooglePlacesUtil;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -19,6 +20,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -26,6 +28,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -97,13 +100,23 @@ public class SearchLocationDDMFormFieldTemplateContextContributor
 
 		long companyId = themeDisplay.getCompanyId();
 
+		long groupId = GetterUtil.getLong(
+			ddmFormFieldRenderingContext.getProperty("groupId"));
+
+		Group group = _groupLocalService.fetchGroup(groupId);
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY);
+
+		if (group != null) {
+			secretContext = SecretContext.createGroupSecretContext(
+				group.getGroupId(), GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY);
+		}
+
 		return _secretResolver.resolve(
-			companyId,
+			companyId, secretContext,
 			GooglePlacesUtil.getGooglePlacesAPIKey(
-				companyId,
-				GetterUtil.getLong(
-					ddmFormFieldRenderingContext.getProperty("groupId")),
-				_groupLocalService));
+				companyId, groupId, _groupLocalService));
 	}
 
 	private JSONObject _getLabelsJSONObject(
