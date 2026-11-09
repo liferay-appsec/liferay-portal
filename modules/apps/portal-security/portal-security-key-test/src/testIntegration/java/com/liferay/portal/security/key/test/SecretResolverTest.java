@@ -7,18 +7,22 @@ package com.liferay.portal.security.key.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.google.places.constants.GooglePlacesWebKeys;
+import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
@@ -47,6 +51,8 @@ import com.liferay.portal.security.key.test.util.TestSecretProvider;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+
+import jakarta.portlet.PortletPreferences;
 
 import java.util.Map;
 
@@ -124,6 +130,83 @@ public class SecretResolverTest {
 			).put(
 				GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY, ""
 			).build());
+	}
+
+	@Test
+	public void testCopy() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			Layout layout = LayoutTestUtil.addTypePortletLayout(_group);
+
+			String portletId = LayoutTestUtil.addPortletToLayout(
+				layout, "com_liferay_iframe_web_portlet_IFramePortlet");
+
+			String key = RandomTestUtil.randomString();
+			String value = RandomTestUtil.randomString();
+
+			String storedValue = _secretResolver.store(
+				layout.getCompanyId(),
+				SecretContext.createSettingsSecretContext(
+					key, new PortletInstanceSettingsLocator(layout, portletId)),
+				value);
+
+			PortletPreferences portletPreferences =
+				PortletPreferencesFactoryUtil.getPortletSetup(
+					layout, portletId, null);
+
+			portletPreferences.setValue(key, storedValue);
+
+			portletPreferences.store();
+
+			Layout targetLayout = LayoutTestUtil.addTypePortletLayout(_group);
+
+			_layoutLocalService.copyLayoutContent(layout, targetLayout);
+
+			Assert.assertEquals(
+				storedValue,
+				_getPortletPreferenceValue(key, layout, portletId));
+
+			String targetValue = _getPortletPreferenceValue(
+				key, targetLayout, portletId);
+
+			Assert.assertNotEquals(storedValue, targetValue);
+			Assert.assertEquals(
+				value,
+				_secretResolver.resolve(
+					targetLayout.getCompanyId(),
+					SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							targetLayout, portletId)),
+					targetValue));
+
+			GroupTestUtil.enableLocalStaging(_group);
+
+			Group group = _groupLocalService.getGroup(_group.getGroupId());
+
+			Group stagingGroup = group.getStagingGroup();
+
+			Layout stagingLayout =
+				_layoutLocalService.getLayoutByUuidAndGroupId(
+					layout.getUuid(), stagingGroup.getGroupId(),
+					layout.isPrivateLayout());
+
+			String stagingValue = _getPortletPreferenceValue(
+				key, stagingLayout, portletId);
+
+			Assert.assertEquals(storedValue, stagingValue);
+			Assert.assertEquals(
+				value,
+				_secretResolver.resolve(
+					stagingLayout.getCompanyId(),
+					SecretContext.createSettingsSecretContext(
+						key,
+						new PortletInstanceSettingsLocator(
+							stagingLayout, portletId)),
+					stagingValue));
+		}
 	}
 
 	@Test
@@ -261,6 +344,17 @@ public class SecretResolverTest {
 			}
 
 		};
+	}
+
+	private String _getPortletPreferenceValue(
+			String key, Layout layout, String portletId)
+		throws Exception {
+
+		PortletPreferences portletPreferences =
+			PortletPreferencesFactoryUtil.getPortletSetup(
+				layout, portletId, null);
+
+		return portletPreferences.getValue(key, null);
 	}
 
 	private String _putSecret(long companyId, String identifier, String value)
