@@ -10,7 +10,6 @@ import com.liferay.document.library.kernel.service.DLAppHelperLocalService;
 import com.liferay.document.library.repository.external.model.ExtRepositoryFileEntryAdapter;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.RepositoryEntry;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -182,7 +181,8 @@ public class ExtRepositoryAdapterTest {
 		_secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			_secretResolver.resolve(CompanyConstants.SYSTEM, keyReferenceString)
+			_secretResolver.resolveProperty(
+				PropsKeys.DL_REPOSITORY_GUEST_PASSWORD)
 		).thenReturn(
 			password
 		);

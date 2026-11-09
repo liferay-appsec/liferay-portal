@@ -5,10 +5,12 @@
 
 package com.liferay.document.library.repository.cmis.internal;
 
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.SecretResolver;
@@ -42,6 +44,8 @@ public class CMISAtomPubRepositoryTest {
 
 	@Before
 	public void setUp() {
+		_dlRepositoryGuestPassword = GetterUtil.getString(
+			PropsUtil.get(PropsKeys.DL_REPOSITORY_GUEST_PASSWORD));
 		_secretResolverSnapshot = ReflectionTestUtil.getAndSetFieldValue(
 			SecretResolverUtil.class, "_secretResolverSnapshot",
 			new Snapshot<SecretResolver>(
@@ -57,6 +61,8 @@ public class CMISAtomPubRepositoryTest {
 
 	@After
 	public void tearDown() {
+		PropsUtil.set(
+			PropsKeys.DL_REPOSITORY_GUEST_PASSWORD, _dlRepositoryGuestPassword);
 		ReflectionTestUtil.setFieldValue(
 			SecretResolverUtil.class, "_secretResolverSnapshot",
 			_secretResolverSnapshot);
@@ -73,7 +79,8 @@ public class CMISAtomPubRepositoryTest {
 		_secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			_secretResolver.resolve(CompanyConstants.SYSTEM, keyReferenceString)
+			_secretResolver.resolveProperty(
+				PropsKeys.DL_REPOSITORY_GUEST_PASSWORD)
 		).thenReturn(
 			password
 		);
@@ -85,11 +92,9 @@ public class CMISAtomPubRepositoryTest {
 	private void _testGetSession(String expectedPassword, String password)
 		throws Exception {
 
-		try (AutoCloseable autoCloseable =
-				ReflectionTestUtil.setFieldValueWithAutoCloseable(
-					CMISAtomPubRepository.class,
-					"_DL_REPOSITORY_GUEST_PASSWORD", password);
-			MockedStatic<CMISRepositoryUtil> cmisRepositoryUtilMockedStatic =
+		PropsUtil.set(PropsKeys.DL_REPOSITORY_GUEST_PASSWORD, password);
+
+		try (MockedStatic<CMISRepositoryUtil> cmisRepositoryUtilMockedStatic =
 				Mockito.mockStatic(CMISRepositoryUtil.class)) {
 
 			CMISAtomPubRepository cmisAtomPubRepository =
@@ -111,6 +116,7 @@ public class CMISAtomPubRepositoryTest {
 		}
 	}
 
+	private String _dlRepositoryGuestPassword;
 	private SecretResolver _secretResolver;
 	private Snapshot<SecretResolver> _secretResolverSnapshot;
 
