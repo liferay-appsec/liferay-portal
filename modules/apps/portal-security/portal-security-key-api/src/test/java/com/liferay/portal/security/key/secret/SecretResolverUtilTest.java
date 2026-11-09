@@ -16,8 +16,6 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import jakarta.portlet.PortletPreferences;
 
-import java.util.Collections;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -147,13 +145,16 @@ public class SecretResolverUtilTest {
 	@Test
 	public void testResolve() {
 		long companyId = RandomTestUtil.randomLong();
+		String keyReferenceString = _randomKeyReferenceString();
 		String resolvedValue = RandomTestUtil.randomString();
-		String value = _randomKeyReferenceString();
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, RandomTestUtil.randomString());
 
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			secretResolver.resolve(companyId, value)
+			secretResolver.resolve(companyId, secretContext, keyReferenceString)
 		).thenReturn(
 			resolvedValue
 		);
@@ -161,17 +162,20 @@ public class SecretResolverUtilTest {
 		_setUpSecretResolverSnapshot(secretResolver);
 
 		Assert.assertSame(
-			resolvedValue, SecretResolverUtil.resolve(companyId, value));
+			resolvedValue,
+			SecretResolverUtil.resolve(
+				companyId, secretContext, keyReferenceString));
 
 		String plainValue = RandomTestUtil.randomString();
 
 		Assert.assertSame(
-			plainValue, SecretResolverUtil.resolve(companyId, plainValue));
+			plainValue,
+			SecretResolverUtil.resolve(companyId, secretContext, plainValue));
 
 		Mockito.verify(
 			secretResolver, Mockito.never()
 		).resolve(
-			companyId, plainValue
+			companyId, secretContext, plainValue
 		);
 	}
 
@@ -225,46 +229,15 @@ public class SecretResolverUtilTest {
 	public void testResolveWhenSecretResolverIsUnavailable() {
 		_setUpSecretResolverSnapshot(null);
 
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, RandomTestUtil.randomString());
+
 		Assert.assertThrows(
 			IllegalStateException.class,
 			() -> SecretResolverUtil.resolve(
-				RandomTestUtil.randomLong(), _randomKeyReferenceString()));
-
-		String plainValue = RandomTestUtil.randomString();
-
-		Assert.assertSame(
-			plainValue,
-			SecretResolverUtil.resolve(
-				RandomTestUtil.randomLong(), plainValue));
-
-		Assert.assertNull(
-			SecretResolverUtil.resolve(RandomTestUtil.randomLong(), null));
-	}
-
-	@Test
-	public void testResolveWithSecretContext() {
-		long companyId = RandomTestUtil.randomLong();
-		String keyReferenceString = _randomKeyReferenceString();
-		String resolvedValue = RandomTestUtil.randomString();
-
-		SecretContext secretContext =
-			SecretContext.createConfigurationSecretContext(
-				RandomTestUtil.randomString(), Collections.emptyMap());
-
-		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
-
-		Mockito.when(
-			secretResolver.resolve(companyId, secretContext, keyReferenceString)
-		).thenReturn(
-			resolvedValue
-		);
-
-		_setUpSecretResolverSnapshot(secretResolver);
-
-		Assert.assertSame(
-			resolvedValue,
-			SecretResolverUtil.resolve(
-				companyId, secretContext, keyReferenceString));
+				companyId, secretContext, _randomKeyReferenceString()));
 
 		String plainValue = RandomTestUtil.randomString();
 
@@ -272,11 +245,8 @@ public class SecretResolverUtilTest {
 			plainValue,
 			SecretResolverUtil.resolve(companyId, secretContext, plainValue));
 
-		Mockito.verify(
-			secretResolver, Mockito.never()
-		).resolve(
-			companyId, secretContext, plainValue
-		);
+		Assert.assertNull(
+			SecretResolverUtil.resolve(companyId, secretContext, null));
 	}
 
 	private String _randomKeyReferenceString() {

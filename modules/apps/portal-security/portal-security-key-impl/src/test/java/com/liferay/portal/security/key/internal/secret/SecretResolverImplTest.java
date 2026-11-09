@@ -34,8 +34,6 @@ import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.exception.SecretException;
-import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
-import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collections;
@@ -73,9 +71,6 @@ public class SecretResolverImplTest {
 
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_groupLocalService", _groupLocalService);
-		ReflectionTestUtil.setFieldValue(
-			_secretResolverImpl, "_keyManagerProfileRegistry",
-			_keyManagerProfileRegistry);
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_layoutLocalService", _layoutLocalService);
 		ReflectionTestUtil.setFieldValue(
@@ -149,8 +144,14 @@ public class SecretResolverImplTest {
 
 	@Test
 	public void testResolve() throws Exception {
-		_assertResolve(RandomTestUtil.randomString());
-		_assertResolve(StringPool.STAR);
+		_testResolveWithCompanySecretContext();
+		_testResolveWithConfigurationSecretContext();
+		_testResolveWithEntitySecretContext();
+		_testResolveWithGroupSecretContext();
+		_testResolveWithSettingsSecretContext();
+		_testResolveWithSettingsSecretContextWhenConfigurationPidIsMapped();
+		_testResolveWithSettingsSecretContextWhenSettingsLocatorIsPortletInstance();
+		_testResolveWithSettingsSecretContextWhenSettingsLocatorIsUnsupported();
 	}
 
 	@Test
@@ -191,71 +192,44 @@ public class SecretResolverImplTest {
 
 	@Test
 	public void testResolveWhenKeyReferenceIsCrypto() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, RandomTestUtil.randomString());
+
 		Assert.assertThrows(
 			SecretException.class,
 			() -> _secretResolverImpl.resolve(
-				RandomTestUtil.randomLong(), "${keyRef:provider:identifier}"));
+				companyId, secretContext, "${keyRef:provider:identifier}"));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	@Test
 	public void testResolveWhenKeyReferenceIsInvalid() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, RandomTestUtil.randomString());
+
 		Assert.assertThrows(
 			SecretException.class,
 			() -> _secretResolverImpl.resolve(
-				RandomTestUtil.randomLong(), "${secretRef:provider}"));
+				companyId, secretContext, "${secretRef:provider}"));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	@Test
-	public void testResolveWhenProviderIsSystem() throws Exception {
-		String systemSecretProviderId = RandomTestUtil.randomString();
-
-		Mockito.when(
-			_keyManagerProfile.getSystemSecretProviderId()
-		).thenReturn(
-			systemSecretProviderId
-		);
-
-		Mockito.when(
-			_keyManagerProfileRegistry.getActiveKeyManagerProfile()
-		).thenReturn(
-			_keyManagerProfile
-		);
-
-		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), systemSecretProviderId,
-			KeyReference.Type.SECRET);
-		String value = RandomTestUtil.randomString();
-
-		Mockito.when(
-			_secretManager.getSecret(CompanyConstants.SYSTEM, keyReference)
-		).thenReturn(
-			new Secret(keyReference, value)
-		);
-
-		Assert.assertEquals(
-			value,
-			_secretResolverImpl.resolve(
-				RandomTestUtil.randomLong(),
-				KeyReferenceUtil.toKeyReferenceString(keyReference)));
-
-		Mockito.verify(
-			_secretManager
-		).getSecret(
-			CompanyConstants.SYSTEM, keyReference
-		);
-	}
-
-	@Test
 	public void testResolveWhenSecretManagerFails() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
 
 		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			KeyReference.Type.SECRET);
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key),
+			RandomTestUtil.randomString(), KeyReference.Type.SECRET);
+
 		SecretException secretException = new SecretException();
 
 		Mockito.when(
@@ -264,25 +238,26 @@ public class SecretResolverImplTest {
 			secretException
 		);
 
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, key);
+
 		Assert.assertSame(
 			secretException,
 			Assert.assertThrows(
 				SecretException.class,
 				() -> _secretResolverImpl.resolve(
-					companyId,
+					companyId, secretContext,
 					KeyReferenceUtil.toKeyReferenceString(keyReference))));
 	}
 
 	@Test
 	public void testResolveWhenValueIsCached() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
 
-		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			KeyReference.Type.SECRET);
-
-		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
-			keyReference);
+		String keyReferenceString = _toKeyReferenceString(
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key));
 
 		String value = RandomTestUtil.randomString();
 
@@ -293,34 +268,32 @@ public class SecretResolverImplTest {
 		);
 
 		Assert.assertEquals(
-			value, _secretResolverImpl.resolve(companyId, keyReferenceString));
+			value,
+			_secretResolverImpl.resolve(
+				companyId,
+				SecretContext.createCompanySecretContext(companyId, key),
+				keyReferenceString));
 
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	@Test
 	public void testResolveWhenValueIsNotKeyReference() throws Exception {
-		String value = RandomTestUtil.randomString();
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, RandomTestUtil.randomString());
 
 		Assert.assertNull(
-			_secretResolverImpl.resolve(RandomTestUtil.randomLong(), null));
+			_secretResolverImpl.resolve(companyId, secretContext, null));
+
+		String value = RandomTestUtil.randomString();
+
 		Assert.assertSame(
 			value,
-			_secretResolverImpl.resolve(RandomTestUtil.randomLong(), value));
+			_secretResolverImpl.resolve(companyId, secretContext, value));
 
 		Mockito.verifyNoInteractions(_secretManager);
-	}
-
-	@Test
-	public void testResolveWithSecretContext() throws Exception {
-		_testResolveWithCompanySecretContext();
-		_testResolveWithConfigurationSecretContext();
-		_testResolveWithEntitySecretContext();
-		_testResolveWithGroupSecretContext();
-		_testResolveWithSettingsSecretContext();
-		_testResolveWithSettingsSecretContextWhenConfigurationPidIsMapped();
-		_testResolveWithSettingsSecretContextWhenSettingsLocatorIsPortletInstance();
-		_testResolveWithSettingsSecretContextWhenSettingsLocatorIsUnsupported();
 	}
 
 	@Test
@@ -405,44 +378,6 @@ public class SecretResolverImplTest {
 			_secretResolverImpl.resolve(
 				companyId, secretContext,
 				KeyReferenceUtil.toKeyReferenceString(keyReference)));
-	}
-
-	private void _assertResolve(String providerId) throws Exception {
-		long companyId = RandomTestUtil.randomLong();
-
-		KeyReference keyReference = new KeyReference(
-			RandomTestUtil.randomString(), providerId,
-			KeyReference.Type.SECRET);
-		String value = RandomTestUtil.randomString();
-
-		Secret secret = new Secret(keyReference, value);
-
-		Mockito.when(
-			_secretManager.getSecret(companyId, keyReference)
-		).thenReturn(
-			secret
-		);
-
-		Assert.assertEquals(
-			value,
-			_secretResolverImpl.resolve(
-				companyId,
-				KeyReferenceUtil.toKeyReferenceString(keyReference)));
-		Assert.assertTrue(secret.isDestroyed());
-
-		Mockito.verify(
-			_secretManager
-		).getSecret(
-			companyId, keyReference
-		);
-
-		Mockito.verify(
-			_portalCache
-		).put(
-			companyId + StringPool.POUND +
-				KeyReferenceUtil.toKeyReferenceString(keyReference),
-			value, 600
-		);
 	}
 
 	private void _assertResolveRejects(
@@ -1363,12 +1298,6 @@ public class SecretResolverImplTest {
 
 	@Mock
 	private GroupLocalService _groupLocalService;
-
-	@Mock
-	private KeyManagerProfile _keyManagerProfile;
-
-	@Mock
-	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
 
 	@Mock
 	private LayoutLocalService _layoutLocalService;
