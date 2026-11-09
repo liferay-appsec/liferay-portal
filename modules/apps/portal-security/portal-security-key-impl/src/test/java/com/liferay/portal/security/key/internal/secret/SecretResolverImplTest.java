@@ -265,6 +265,7 @@ public class SecretResolverImplTest {
 
 	@Test
 	public void testResolveWithSecretContext() throws Exception {
+		_testResolveWithCompanySecretContext();
 		_testResolveWithConfigurationSecretContext();
 		_testResolveWithSettingsSecretContext();
 		_testResolveWithSettingsSecretContextWhenConfigurationPidIsMapped();
@@ -541,6 +542,26 @@ public class SecretResolverImplTest {
 		).thenReturn(
 			group
 		);
+	}
+
+	private void _testResolveWithCompanySecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+
+		String identifier = StringBundler.concat(
+			"preference/portal/", companyId, StringPool.SLASH, key);
+		SecretContext secretContext = SecretContext.createCompanySecretContext(
+			companyId, key);
+
+		_assertResolve(companyId, identifier, companyId, secretContext);
+		_assertResolveRejects(
+			RandomTestUtil.randomLong(), identifier, secretContext);
+
+		String otherCompanyIdentifier = StringBundler.concat(
+			"preference/portal/", RandomTestUtil.randomLong(), StringPool.SLASH,
+			key);
+
+		_assertResolveRejects(companyId, otherCompanyIdentifier, secretContext);
 	}
 
 	private void _testResolveWithConfigurationSecretContext() throws Exception {
@@ -974,6 +995,13 @@ public class SecretResolverImplTest {
 	private void _testStoreWithSecretContext() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 		String key = RandomTestUtil.randomString();
+
+		_assertStore(
+			companyId,
+			StringBundler.concat(
+				"preference/portal/", companyId, StringPool.SLASH, key),
+			SecretContext.createCompanySecretContext(companyId, key));
+
 		String pid = RandomTestUtil.randomString();
 
 		_assertStore(
