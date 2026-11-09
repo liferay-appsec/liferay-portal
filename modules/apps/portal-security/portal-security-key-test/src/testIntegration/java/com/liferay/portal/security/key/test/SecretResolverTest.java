@@ -7,6 +7,7 @@ package com.liferay.portal.security.key.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.google.places.constants.GooglePlacesWebKeys;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -16,6 +17,8 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
@@ -35,6 +38,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.Secret;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.exception.SecretException;
@@ -74,18 +78,27 @@ public class SecretResolverTest {
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
 
-		_secretProviderServiceRegistration = _bundleContext.registerService(
-			SecretProvider.class, new TestSecretProvider(_SECRET_PROVIDER_ID),
-			HashMapDictionaryBuilder.<String, Object>put(
-				"secret.provider.id", _SECRET_PROVIDER_ID
-			).build());
+		_companySecretProviderServiceRegistration =
+			_bundleContext.registerService(
+				SecretProvider.class,
+				new TestSecretProvider(_SECRET_PROVIDER_ID_COMPANY, false),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"secret.provider.id", _SECRET_PROVIDER_ID_COMPANY
+				).build());
+		_systemSecretProviderServiceRegistration =
+			_bundleContext.registerService(
+				SecretProvider.class,
+				new TestSecretProvider(_SECRET_PROVIDER_ID_SYSTEM, true),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"secret.provider.id", _SECRET_PROVIDER_ID_SYSTEM
+				).build());
 
 		ConfigurationTestUtil.saveConfiguration(
 			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID,
 			HashMapDictionaryBuilder.<String, Object>put(
-				"companySecretProviderId", _SECRET_PROVIDER_ID
+				"companySecretProviderId", _SECRET_PROVIDER_ID_COMPANY
 			).put(
-				"systemSecretProviderId", _SECRET_PROVIDER_ID
+				"systemSecretProviderId", _SECRET_PROVIDER_ID_SYSTEM
 			).build());
 	}
 
@@ -94,8 +107,12 @@ public class SecretResolverTest {
 		ConfigurationTestUtil.deleteConfiguration(
 			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
 
-		if (_secretProviderServiceRegistration != null) {
-			_secretProviderServiceRegistration.unregister();
+		if (_companySecretProviderServiceRegistration != null) {
+			_companySecretProviderServiceRegistration.unregister();
+		}
+
+		if (_systemSecretProviderServiceRegistration != null) {
+			_systemSecretProviderServiceRegistration.unregister();
 		}
 
 		_companyLocalService.updatePreferences(
@@ -111,33 +128,33 @@ public class SecretResolverTest {
 
 	@Test
 	public void testResolve() throws Exception {
-		long companyId = TestPropsValues.getCompanyId();
-		String identifier = RandomTestUtil.randomString();
+		String key = RandomTestUtil.randomString();
+		String pid = RandomTestUtil.randomString();
 		String value = RandomTestUtil.randomString();
 
-		KeyReference keyReference = _putSecret(companyId, identifier, value);
+		String keyReferenceString = _putSecret(
+			CompanyConstants.SYSTEM,
+			StringBundler.concat("config/", pid, "/system/0/", key), value);
 
-		Assert.assertEquals(_SECRET_PROVIDER_ID, keyReference.getProviderId());
-		Assert.assertEquals(identifier, keyReference.getIdentifier());
-		Assert.assertEquals(KeyReference.Type.SECRET, keyReference.getType());
+		long companyId = TestPropsValues.getCompanyId();
+
 		Assert.assertEquals(
 			value,
 			_secretResolver.resolve(
 				companyId,
-				KeyReferenceUtil.toKeyReferenceString(keyReference)));
-	}
+				SecretContext.createSettingsSecretContext(
+					key, new CompanyServiceSettingsLocator(companyId, pid)),
+				keyReferenceString));
 
-	@Test
-	public void testResolveUnderAnotherCompany() throws Exception {
-		KeyReference keyReference = _putSecret(
-			TestPropsValues.getCompanyId(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString());
+		SecretContext secretContext = SecretContext.createSettingsSecretContext(
+			key,
+			new GroupServiceSettingsLocator(
+				_group.getGroupId(), RandomTestUtil.randomString()));
 
 		Assert.assertThrows(
 			SecretException.class,
 			() -> _secretResolver.resolve(
-				CompanyConstants.SYSTEM,
-				KeyReferenceUtil.toKeyReferenceString(keyReference)));
+				companyId, secretContext, keyReferenceString));
 	}
 
 	@Test
@@ -212,8 +229,7 @@ public class SecretResolverTest {
 		};
 	}
 
-	private KeyReference _putSecret(
-			long companyId, String identifier, String value)
+	private String _putSecret(long companyId, String identifier, String value)
 		throws Exception {
 
 		try (Secret secret = new Secret(
@@ -221,7 +237,10 @@ public class SecretResolverTest {
 					identifier, StringPool.STAR, KeyReference.Type.SECRET),
 				value)) {
 
-			return _secretManager.putSecret(companyId, secret);
+			KeyReference keyReference = _secretManager.putSecret(
+				companyId, secret);
+
+			return KeyReferenceUtil.toKeyReferenceString(keyReference);
 		}
 	}
 
@@ -305,7 +324,10 @@ public class SecretResolverTest {
 		"com.liferay.portal.security.key.internal.profile.configuration." +
 			"KeyManagerCustomProfileConfiguration";
 
-	private static final String _SECRET_PROVIDER_ID =
+	private static final String _SECRET_PROVIDER_ID_COMPANY =
+		RandomTestUtil.randomString();
+
+	private static final String _SECRET_PROVIDER_ID_SYSTEM =
 		RandomTestUtil.randomString();
 
 	private static final BundleContext _bundleContext =
@@ -313,6 +335,9 @@ public class SecretResolverTest {
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	private ServiceRegistration<SecretProvider>
+		_companySecretProviderServiceRegistration;
 
 	@Inject(filter = "mvc.command.name=/portal_settings/edit_company")
 	private MVCActionCommand _editCompanyMVCActionCommand;
@@ -335,10 +360,10 @@ public class SecretResolverTest {
 	@Inject
 	private SecretManager _secretManager;
 
-	private ServiceRegistration<SecretProvider>
-		_secretProviderServiceRegistration;
-
 	@Inject
 	private SecretResolver _secretResolver;
+
+	private ServiceRegistration<SecretProvider>
+		_systemSecretProviderServiceRegistration;
 
 }

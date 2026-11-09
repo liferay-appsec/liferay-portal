@@ -6,6 +6,7 @@
 package com.liferay.portal.security.key.test.util;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.exception.SecretException;
@@ -22,8 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TestSecretProvider implements SecretProvider {
 
-	public TestSecretProvider(String secretProviderId) {
+	public TestSecretProvider(String secretProviderId, boolean system) {
 		_secretProviderId = secretProviderId;
+		_system = system;
 	}
 
 	@Override
@@ -73,7 +75,11 @@ public class TestSecretProvider implements SecretProvider {
 
 	@Override
 	public boolean isAllowedCompany(long companyId) {
-		return true;
+		if (_system == (companyId == CompanyConstants.SYSTEM)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	@Override
@@ -91,5 +97,6 @@ public class TestSecretProvider implements SecretProvider {
 
 	private final String _secretProviderId;
 	private final Map<String, String> _secrets = new ConcurrentHashMap<>();
+	private final boolean _system;
 
 }
