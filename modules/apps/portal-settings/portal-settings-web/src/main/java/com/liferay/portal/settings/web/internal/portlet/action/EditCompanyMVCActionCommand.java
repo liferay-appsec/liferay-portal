@@ -8,7 +8,6 @@ package com.liferay.portal.settings.web.internal.portlet.action;
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.google.places.constants.GooglePlacesWebKeys;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.Disjunction;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -67,6 +66,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.settings.web.internal.exception.RequiredLocaleException;
 import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
@@ -187,8 +187,7 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 			key,
 			_secretResolver.store(
 				companyId,
-				StringBundler.concat(
-					"preference/company/", companyId, StringPool.SLASH, key),
+				SecretContext.createCompanySecretContext(companyId, key),
 				unicodeProperties.getProperty(key)));
 	}
 
