@@ -5,7 +5,6 @@
 
 package com.liferay.marketplace.settings.web.internal.util;
 
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.service.Snapshot;
@@ -15,12 +14,10 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.PrefsProps;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
-import com.liferay.portal.kernel.util.PropsValues;
-import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
-import com.liferay.portal.security.key.secret.Secret;
-import com.liferay.portal.security.key.secret.SecretManager;
+import com.liferay.portal.security.key.secret.SecretContext;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.secret.exception.SecretException;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
@@ -29,6 +26,7 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -55,14 +53,14 @@ public class MarketplaceUtilTest {
 	public void setUp() {
 		_prefsProps = ReflectionTestUtil.getAndSetFieldValue(
 			PrefsPropsUtil.class, "_prefsProps", _mockPrefsProps);
-		_secretManagerSnapshot = ReflectionTestUtil.getAndSetFieldValue(
-			MarketplaceUtil.class, "_secretManagerSnapshot",
-			new Snapshot<SecretManager>(
-				MarketplaceUtil.class, SecretManager.class) {
+		_secretResolverSnapshot = ReflectionTestUtil.getAndSetFieldValue(
+			MarketplaceUtil.class, "_secretResolverSnapshot",
+			new Snapshot<SecretResolver>(
+				MarketplaceUtil.class, SecretResolver.class) {
 
 				@Override
-				public SecretManager get() {
-					return _secretManager;
+				public SecretResolver get() {
+					return _secretResolver;
 				}
 
 			});
@@ -71,8 +69,8 @@ public class MarketplaceUtilTest {
 	@After
 	public void tearDown() {
 		ReflectionTestUtil.setFieldValue(
-			MarketplaceUtil.class, "_secretManagerSnapshot",
-			_secretManagerSnapshot);
+			MarketplaceUtil.class, "_secretResolverSnapshot",
+			_secretResolverSnapshot);
 		ReflectionTestUtil.setFieldValue(
 			PrefsPropsUtil.class, "_prefsProps", _prefsProps);
 	}
@@ -81,12 +79,10 @@ public class MarketplaceUtilTest {
 	public void testDeleteTokens() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 
-		KeyReference accessTokenKeyReference = _getKeyReference(
-			companyId, "marketplaceAccessToken");
+		String accessToken = KeyReferenceUtil.toKeyReferenceString(
+			_getKeyReference());
 
-		_mockPreference(
-			companyId, "marketplaceAccessToken",
-			KeyReferenceUtil.toKeyReferenceString(accessTokenKeyReference));
+		_mockPreference(companyId, "marketplaceAccessToken", accessToken);
 
 		_mockPreference(
 			companyId, "marketplaceRefreshToken",
@@ -94,45 +90,36 @@ public class MarketplaceUtilTest {
 
 		MarketplaceUtil.deleteTokens(companyId);
 
-		Mockito.verify(
-			_secretManager
-		).deleteSecret(
-			companyId, accessTokenKeyReference
-		);
+		_verifyDelete(companyId, "marketplaceAccessToken", accessToken);
 
-		Mockito.verifyNoMoreInteractions(_secretManager);
+		Mockito.verifyNoMoreInteractions(_secretResolver);
 
-		Mockito.clearInvocations(_secretManager);
+		Mockito.clearInvocations(_secretResolver);
 
-		KeyReference refreshTokenKeyReference = _getKeyReference(
-			companyId, "marketplaceRefreshToken");
+		String refreshToken = KeyReferenceUtil.toKeyReferenceString(
+			_getKeyReference());
 
-		_mockPreference(
-			companyId, "marketplaceRefreshToken",
-			KeyReferenceUtil.toKeyReferenceString(refreshTokenKeyReference));
+		_mockPreference(companyId, "marketplaceRefreshToken", refreshToken);
 
 		MarketplaceUtil.deleteTokens(companyId);
 
-		Mockito.verify(
-			_secretManager
-		).deleteSecret(
-			companyId, accessTokenKeyReference
-		);
+		_verifyDelete(companyId, "marketplaceAccessToken", accessToken);
+		_verifyDelete(companyId, "marketplaceRefreshToken", refreshToken);
 
-		Mockito.verify(
-			_secretManager
-		).deleteSecret(
-			companyId, refreshTokenKeyReference
-		);
+		Mockito.clearInvocations(_secretResolver);
 
-		Mockito.clearInvocations(_secretManager);
-
-		Mockito.doThrow(
-			new SecretException()
+		Mockito.doAnswer(
+			invocationOnMock -> {
+				throw new SecretException();
+			}
 		).when(
-			_secretManager
-		).deleteSecret(
-			companyId, accessTokenKeyReference
+			_secretResolver
+		).delete(
+			Mockito.eq(companyId),
+			Mockito.argThat(
+				(SecretContext secretContext) -> _isCompanySecretContext(
+					companyId, "marketplaceAccessToken", secretContext)),
+			Mockito.eq(accessToken)
 		);
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
@@ -172,165 +159,54 @@ public class MarketplaceUtilTest {
 				logEntry.getMessage());
 		}
 
-		Mockito.verify(
-			_secretManager
-		).deleteSecret(
-			companyId, refreshTokenKeyReference
-		);
-
-		Mockito.clearInvocations(_secretManager);
-
-		_mockPreference(
-			companyId, "marketplaceAccessToken",
-			KeyReferenceUtil.toKeyReferenceString(
-				_getKeyReference(companyId + 1, "marketplaceAccessToken")));
-		_mockPreference(
-			companyId, "marketplaceRefreshToken",
-			KeyReferenceUtil.toKeyReferenceString(
-				_getKeyReference(companyId, "marketplaceAccessToken")));
-
-		MarketplaceUtil.deleteTokens(companyId);
-
-		Mockito.verifyNoInteractions(_secretManager);
+		_verifyDelete(companyId, "marketplaceRefreshToken", refreshToken);
 	}
 
 	@Test
 	public void testGetToken() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 
-		KeyReference keyReference = _getKeyReference(
-			companyId, "marketplaceAccessToken");
+		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
+			_getKeyReference());
 
 		String token = RandomTestUtil.randomString();
 
 		Mockito.when(
-			_secretManager.getSecret(companyId, keyReference)
+			_secretResolver.resolve(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) -> _isCompanySecretContext(
+						companyId, "marketplaceAccessToken", secretContext)),
+				Mockito.eq(keyReferenceString))
 		).thenReturn(
-			new Secret(keyReference, token)
+			token
 		);
 
-		_testGetToken(
-			companyId, token,
-			KeyReferenceUtil.toKeyReferenceString(keyReference));
+		_testGetToken(companyId, token, keyReferenceString);
 
 		_testGetToken(companyId, token, token);
-
-		for (KeyReference unboundKeyReference :
-				new KeyReference[] {
-					_getKeyReference(companyId, "marketplaceRefreshToken"),
-					_getKeyReference(companyId + 1, "marketplaceAccessToken")
-				}) {
-
-			String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
-				unboundKeyReference);
-
-			_testGetToken(companyId, keyReferenceString, keyReferenceString);
-		}
 	}
 
 	@Test
 	public void testStoreToken() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
+		String keyReferenceString = RandomTestUtil.randomString();
 		String token = RandomTestUtil.randomString();
 
-		Assert.assertEquals(
-			token, _storeToken(companyId, "marketplaceRefreshToken", token));
-
-		String providerId = RandomTestUtil.randomString();
-
 		Mockito.when(
-			_secretManager.putSecret(
-				Mockito.eq(companyId), Mockito.any(Secret.class))
-		).thenAnswer(
-			invocationOnMock -> {
-				Secret secret = invocationOnMock.getArgument(1);
-
-				Assert.assertEquals(token, new String(secret.getChars()));
-
-				KeyReference keyReference = secret.getKeyReference();
-
-				Assert.assertEquals(
-					StringPool.STAR, keyReference.getProviderId());
-
-				return new KeyReference(
-					keyReference.getIdentifier(), providerId,
-					KeyReference.Type.SECRET);
-			}
+			_secretResolver.store(
+				Mockito.eq(companyId),
+				Mockito.argThat(
+					(SecretContext secretContext) -> _isCompanySecretContext(
+						companyId, "marketplaceRefreshToken", secretContext)),
+				Mockito.eq(token))
+		).thenReturn(
+			keyReferenceString
 		);
 
-		try (AutoCloseable autoCloseable =
-				ReflectionTestUtil.setFieldValueWithAutoCloseable(
-					PropsValues.class, "FIPS_ENABLED", true);
-			MockedStatic<PortalUUIDUtil> portalUUIDUtilMockedStatic =
-				Mockito.mockStatic(PortalUUIDUtil.class)) {
-
-			Assert.assertNull(
-				_storeToken(companyId, "marketplaceRefreshToken", null));
-			Assert.assertEquals(
-				StringPool.BLANK,
-				_storeToken(
-					companyId, "marketplaceRefreshToken", StringPool.BLANK));
-
-			Mockito.verifyNoInteractions(_secretManager);
-
-			String uuid = RandomTestUtil.randomString();
-
-			portalUUIDUtilMockedStatic.when(
-				PortalUUIDUtil::generate
-			).thenReturn(
-				uuid
-			);
-
-			String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
-				new KeyReference(
-					_getIdentifier(companyId, "marketplaceRefreshToken", uuid),
-					providerId, KeyReference.Type.SECRET));
-
-			Assert.assertEquals(
-				keyReferenceString,
-				_storeToken(companyId, "marketplaceRefreshToken", token));
-
-			String boundKeyReferenceString =
-				KeyReferenceUtil.toKeyReferenceString(
-					new KeyReference(
-						_getIdentifier(
-							companyId, "marketplaceRefreshToken",
-							RandomTestUtil.randomString()),
-						providerId, KeyReference.Type.SECRET));
-
-			_mockPreference(
-				companyId, "marketplaceRefreshToken", boundKeyReferenceString);
-
-			Assert.assertEquals(
-				boundKeyReferenceString,
-				_storeToken(companyId, "marketplaceRefreshToken", token));
-
-			_mockPreference(
-				companyId, "marketplaceRefreshToken",
-				KeyReferenceUtil.toKeyReferenceString(
-					_getKeyReference(
-						companyId + 1, "marketplaceRefreshToken")));
-
-			Assert.assertEquals(
-				keyReferenceString,
-				_storeToken(companyId, "marketplaceRefreshToken", token));
-
-			SecretException secretException = new SecretException();
-
-			Mockito.when(
-				_secretManager.putSecret(
-					Mockito.eq(companyId), Mockito.any(Secret.class))
-			).thenThrow(
-				secretException
-			);
-
-			Assert.assertSame(
-				secretException,
-				Assert.assertThrows(
-					SecretException.class,
-					() -> _storeToken(
-						companyId, "marketplaceRefreshToken", token)));
-		}
+		Assert.assertEquals(
+			keyReferenceString,
+			_storeToken(companyId, "marketplaceRefreshToken", token));
 
 		PortalException portalException = Assert.assertThrows(
 			PortalException.class,
@@ -346,16 +222,24 @@ public class MarketplaceUtilTest {
 			portalException.getMessage());
 	}
 
-	private String _getIdentifier(long companyId, String name, String uuid) {
-		return StringBundler.concat(
-			"Marketplace/", companyId, StringPool.SLASH, name, StringPool.SLASH,
-			uuid);
+	private KeyReference _getKeyReference() {
+		return new KeyReference(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			KeyReference.Type.SECRET);
 	}
 
-	private KeyReference _getKeyReference(long companyId, String name) {
-		return new KeyReference(
-			_getIdentifier(companyId, name, RandomTestUtil.randomString()),
-			RandomTestUtil.randomString(), KeyReference.Type.SECRET);
+	private boolean _isCompanySecretContext(
+		long companyId, String key, SecretContext secretContext) {
+
+		if ((secretContext != null) &&
+			(secretContext.getType() == SecretContext.Type.COMPANY) &&
+			(secretContext.getCompanyId() == companyId) &&
+			Objects.equals(secretContext.getKey(), key)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _mockPreference(long companyId, String name, String value) {
@@ -386,10 +270,22 @@ public class MarketplaceUtilTest {
 			MarketplaceUtil.getToken(companyId, "marketplaceAccessToken"));
 	}
 
+	private void _verifyDelete(long companyId, String name, String token) {
+		Mockito.verify(
+			_secretResolver
+		).delete(
+			Mockito.eq(companyId),
+			Mockito.argThat(
+				(SecretContext secretContext) -> _isCompanySecretContext(
+					companyId, name, secretContext)),
+			Mockito.eq(token)
+		);
+	}
+
 	private final PrefsProps _mockPrefsProps = Mockito.mock(PrefsProps.class);
 	private PrefsProps _prefsProps;
-	private final SecretManager _secretManager = Mockito.mock(
-		SecretManager.class);
-	private Snapshot<SecretManager> _secretManagerSnapshot;
+	private final SecretResolver _secretResolver = Mockito.mock(
+		SecretResolver.class);
+	private Snapshot<SecretResolver> _secretResolverSnapshot;
 
 }
