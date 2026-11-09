@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
@@ -71,6 +72,72 @@ public class SecretResolverImpl implements SecretResolver {
 	public static String getKey(long companyId, String keyReferenceString) {
 		return StringBundler.concat(
 			companyId, StringPool.POUND, keyReferenceString);
+	}
+
+	@Override
+	public String copy(
+		long companyId, SecretContext sourceSecretContext,
+		SecretContext targetSecretContext, String value) {
+
+		if (!KeyReferenceUtil.isKeyReference(value)) {
+			return value;
+		}
+
+		KeyReference keyReference = KeyReferenceUtil.parseKeyReference(value);
+
+		if ((keyReference == null) ||
+			(keyReference.getType() != KeyReference.Type.SECRET)) {
+
+			return value;
+		}
+
+		try {
+			SequencedMap<String, Long> targetSecretIdentifierMap =
+				_getSecretIdentifierMap(targetSecretContext);
+
+			Long scopeCompanyId = _fetchScopeCompanyId(
+				companyId, keyReference.getIdentifier(),
+				targetSecretIdentifierMap);
+
+			if (scopeCompanyId != null) {
+				return value;
+			}
+
+			Long sourceScopeCompanyId = _fetchScopeCompanyId(
+				companyId, keyReference.getIdentifier(),
+				_getSecretIdentifierMap(sourceSecretContext));
+
+			Map.Entry<String, Long> entry =
+				targetSecretIdentifierMap.firstEntry();
+
+			Long targetScopeCompanyId = _fetchScopeCompanyId(
+				companyId, entry.getKey(), targetSecretIdentifierMap);
+
+			if ((sourceScopeCompanyId == null) ||
+				(targetScopeCompanyId == null)) {
+
+				_audit(companyId, keyReference.getIdentifier(), "copy");
+
+				return value;
+			}
+
+			try (Secret sourceSecret = _secretManager.getSecret(
+					sourceScopeCompanyId, keyReference)) {
+
+				try (Secret secret = new Secret(
+						sourceSecret.getBytes(),
+						new KeyReference(
+							entry.getKey(), StringPool.STAR,
+							KeyReference.Type.SECRET))) {
+
+					return _putSecret(
+						targetScopeCompanyId, secret, targetSecretContext);
+				}
+			}
+		}
+		catch (PortalException portalException) {
+			return ReflectionUtil.throwException(portalException);
+		}
 	}
 
 	@Override
@@ -237,6 +304,33 @@ public class SecretResolverImpl implements SecretResolver {
 			PortalCacheManagerNames.SINGLE_VM, PORTAL_CACHE_NAME);
 	}
 
+	private void _audit(long companyId, String identifier, String operation) {
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"secret-reference-refused", FIPSAuditEvent.Severity.WARNING);
+
+		fipsAuditEvent.put("company-id", companyId);
+		fipsAuditEvent.put("identifier", identifier);
+		fipsAuditEvent.put("operation", operation);
+
+		FIPSAuditUtil.write(fipsAuditEvent);
+	}
+
+	private Long _fetchScopeCompanyId(
+		long companyId, String identifier,
+		Map<String, Long> secretIdentifierMap) {
+
+		Long scopeCompanyId = secretIdentifierMap.get(identifier);
+
+		if ((scopeCompanyId != null) &&
+			((scopeCompanyId == CompanyConstants.SYSTEM) ||
+			 (scopeCompanyId == companyId))) {
+
+			return scopeCompanyId;
+		}
+
+		return null;
+	}
+
 	private long _getCounterpartGroupId(Group group) {
 		if (group.isStagingGroup()) {
 			return group.getLiveGroupId();
@@ -282,23 +376,14 @@ public class SecretResolverImpl implements SecretResolver {
 			Map<String, Long> secretIdentifierMap)
 		throws SecretException {
 
-		Long scopeCompanyId = secretIdentifierMap.get(identifier);
+		Long scopeCompanyId = _fetchScopeCompanyId(
+			companyId, identifier, secretIdentifierMap);
 
-		if ((scopeCompanyId != null) &&
-			((scopeCompanyId == CompanyConstants.SYSTEM) ||
-			 (scopeCompanyId == companyId))) {
-
+		if (scopeCompanyId != null) {
 			return scopeCompanyId;
 		}
 
-		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
-			"secret-reference-refused", FIPSAuditEvent.Severity.WARNING);
-
-		fipsAuditEvent.put("company-id", companyId);
-		fipsAuditEvent.put("identifier", identifier);
-		fipsAuditEvent.put("operation", operation);
-
-		FIPSAuditUtil.write(fipsAuditEvent);
+		_audit(companyId, identifier, operation);
 
 		throw new SecretException(
 			StringBundler.concat(
@@ -413,6 +498,33 @@ public class SecretResolverImpl implements SecretResolver {
 			companyId);
 	}
 
+	private void _putPortletInstanceScope(
+		String key,
+		PortletInstanceSettingsLocator portletInstanceSettingsLocator,
+		Map<String, Long> secretIdentifierMap) {
+
+		String portletId = portletInstanceSettingsLocator.getSettingsId();
+
+		long userId = PortletIdCodec.decodeUserId(portletId);
+
+		long ownerId = portletInstanceSettingsLocator.getOwnerId();
+
+		if (userId > 0) {
+			ownerId = userId;
+		}
+
+		Layout layout = portletInstanceSettingsLocator.getLayout();
+
+		secretIdentifierMap.put(
+			_getPreferenceIdentifier(
+				key, ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+				StringBundler.concat(
+					ownerId, StringPool.SLASH,
+					portletInstanceSettingsLocator.getPlid()),
+				portletId),
+			layout.getCompanyId());
+	}
+
 	private void _putScope(
 		long companyId, String configurationPid, String key,
 		ExtendedObjectClassDefinition.Scope scope, long scopePK,
@@ -477,26 +589,42 @@ public class SecretResolverImpl implements SecretResolver {
 					PortletInstanceSettingsLocator
 						portletInstanceSettingsLocator) {
 
+			_putPortletInstanceScope(
+				key, portletInstanceSettingsLocator, secretIdentifierMap);
+
 			Layout layout = portletInstanceSettingsLocator.getLayout();
+
+			Group group = _groupLocalService.getGroup(layout.getGroupId());
+
+			long counterpartGroupId = _getCounterpartGroupId(group);
 
 			String portletId = portletInstanceSettingsLocator.getSettingsId();
 
-			long userId = PortletIdCodec.decodeUserId(portletId);
+			if (counterpartGroupId > 0) {
+				Layout counterpartLayout =
+					_layoutLocalService.fetchLayoutByUuidAndGroupId(
+						layout.getUuid(), counterpartGroupId,
+						layout.isPrivateLayout());
 
-			long ownerId = portletInstanceSettingsLocator.getOwnerId();
-
-			if (userId > 0) {
-				ownerId = userId;
+				if (counterpartLayout != null) {
+					_putPortletInstanceScope(
+						key,
+						new PortletInstanceSettingsLocator(
+							counterpartLayout, portletId),
+						secretIdentifierMap);
+				}
 			}
 
-			secretIdentifierMap.put(
-				_getPreferenceIdentifier(
-					key, ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
-					StringBundler.concat(
-						ownerId, StringPool.SLASH,
-						portletInstanceSettingsLocator.getPlid()),
-					portletId),
-				layout.getCompanyId());
+			Layout layoutSetPrototypeLayout =
+				layout.getLayoutSetPrototypeLayout();
+
+			if (layoutSetPrototypeLayout != null) {
+				_putPortletInstanceScope(
+					key,
+					new PortletInstanceSettingsLocator(
+						layoutSetPrototypeLayout, portletId),
+					secretIdentifierMap);
+			}
 
 			String configurationPid =
 				portletInstanceSettingsLocator.getConfigurationPid();
@@ -507,8 +635,6 @@ public class SecretResolverImpl implements SecretResolver {
 					ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 					portletId),
 				CompanyConstants.SYSTEM);
-
-			Group group = _groupLocalService.getGroup(layout.getGroupId());
 
 			String portletName = PortletIdCodec.decodePortletName(portletId);
 
@@ -579,6 +705,9 @@ public class SecretResolverImpl implements SecretResolver {
 
 	@Reference
 	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 	private PortalCache<String, String> _portalCache;
 

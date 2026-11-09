@@ -13,6 +13,10 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface SecretResolver {
 
+	public String copy(
+		long companyId, SecretContext sourceSecretContext,
+		SecretContext targetSecretContext, String value);
+
 	public void delete(
 		long companyId, SecretContext secretContext, String value);
 
