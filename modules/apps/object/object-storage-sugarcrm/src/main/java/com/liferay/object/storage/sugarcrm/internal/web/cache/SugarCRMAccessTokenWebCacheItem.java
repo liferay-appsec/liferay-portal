@@ -51,19 +51,19 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 		long companyId, SettingsLocator settingsLocator,
 		SugarCRMConfiguration sugarCRMConfiguration) {
 
-		_companyId = companyId;
-		_settingsLocator = settingsLocator;
 		_sugarCRMConfiguration = sugarCRMConfiguration;
+
+		_password = SecretResolverUtil.resolve(
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"password", settingsLocator),
+			sugarCRMConfiguration.password());
 	}
 
 	@Override
 	public JSONObject convert(String key) {
 		try {
 			Http.Options options = new Http.Options();
-
-			SecretContext secretContext =
-				SecretContext.createSettingsSecretContext(
-					"password", _settingsLocator);
 
 			options.setCookieSpec(Http.CookieSpec.STANDARD);
 			options.setParts(
@@ -72,10 +72,7 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 				).put(
 					"grant_type", _sugarCRMConfiguration.grantType()
 				).put(
-					"password",
-					SecretResolverUtil.resolve(
-						_companyId, secretContext,
-						_sugarCRMConfiguration.password())
+					"password", _password
 				).put(
 					"username", _sugarCRMConfiguration.username()
 				).build());
@@ -118,8 +115,7 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SugarCRMAccessTokenWebCacheItem.class);
 
-	private final long _companyId;
-	private final SettingsLocator _settingsLocator;
+	private final String _password;
 	private final SugarCRMConfiguration _sugarCRMConfiguration;
 
 }

@@ -49,9 +49,19 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 		long companyId, SalesforceConfiguration salesforceConfiguration,
 		SettingsLocator settingsLocator) {
 
-		_companyId = companyId;
 		_salesforceConfiguration = salesforceConfiguration;
-		_settingsLocator = settingsLocator;
+
+		_consumerSecret = SecretResolverUtil.resolve(
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"consumerSecret", settingsLocator),
+			salesforceConfiguration.consumerSecret());
+
+		_password = SecretResolverUtil.resolve(
+			companyId,
+			SecretContext.createSettingsSecretContext(
+				"password", settingsLocator),
+			salesforceConfiguration.password());
 	}
 
 	@Override
@@ -65,31 +75,18 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 
 			Http.Options options = new Http.Options();
 
-			SecretContext consumerSecretSecretContext =
-				SecretContext.createSettingsSecretContext(
-					"consumerSecret", _settingsLocator);
-
 			options.setParts(
 				HashMapBuilder.put(
 					"client_id", _salesforceConfiguration.consumerKey()
 				).put(
-					"client_secret",
-					SecretResolverUtil.resolve(
-						_companyId, consumerSecretSecretContext,
-						_salesforceConfiguration.consumerSecret())
+					"client_secret", _consumerSecret
 				).put(
 					"grant_type", "password"
 				).put(
-					"password",
-					SecretResolverUtil.resolve(
-						_companyId,
-						SecretContext.createSettingsSecretContext(
-							"password", _settingsLocator),
-						_salesforceConfiguration.password())
+					"password", _password
 				).put(
 					"username", _salesforceConfiguration.username()
 				).build());
-
 			options.setLocation(
 				_salesforceConfiguration.loginURL() + "/services/oauth2/token");
 			options.setPost(true);
@@ -130,8 +127,8 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SalesforceAccessTokenWebCacheItem.class);
 
-	private final long _companyId;
+	private final String _consumerSecret;
+	private final String _password;
 	private final SalesforceConfiguration _salesforceConfiguration;
-	private final SettingsLocator _settingsLocator;
 
 }
