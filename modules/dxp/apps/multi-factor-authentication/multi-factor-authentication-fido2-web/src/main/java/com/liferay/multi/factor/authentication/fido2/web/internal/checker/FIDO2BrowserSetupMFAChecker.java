@@ -142,6 +142,10 @@ public class FIDO2BrowserSetupMFAChecker
 				MFAFIDO2WebKeys.MFA_FIDO2_PKCC_OPTIONS, mfaFIDO2PKCCOptions);
 		}
 
+		httpServletRequest.setAttribute(
+			MFAFIDO2WebKeys.MFA_FIDO2_CREDENTIAL_ENTRIES,
+			mfaFIDO2CredentialEntries);
+
 		RequestDispatcher requestDispatcher =
 			_servletContext.getRequestDispatcher(
 				"/mfa_fido2_checker/setup.jsp");
