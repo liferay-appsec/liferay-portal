@@ -341,8 +341,13 @@ public class OAuthClientASLocalMetadataLocalServiceImpl
 		if (!issuer.equals(oAuthClientASLocalMetadata.getIssuer()) ||
 			oldLocalWellKnownURI.contains("openid-configuration")) {
 
-			String localWellKnownURI = _generateLocalWellKnownURI(
-				issuer, tokenEndpoint, "openid-configuration");
+			String localWellKnownURI = oldLocalWellKnownURI;
+
+			if (!issuer.equals(oAuthClientASLocalMetadata.getIssuer())) {
+				localWellKnownURI = _generateLocalWellKnownURI(
+					issuer, tokenEndpoint, "openid-configuration");
+			}
+
 			String oAuthASLocalWellKnownURI = _generateLocalWellKnownURI(
 				issuer, null, "oauth-authorization-server");
 

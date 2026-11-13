@@ -11,10 +11,12 @@ import com.liferay.oauth.client.persistence.exception.DuplicateOAuthClientASLoca
 import com.liferay.oauth.client.persistence.exception.OAuthClientASLocalMetadataLocalWellKnownURIException;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.test.rule.Inject;
@@ -117,6 +119,9 @@ public class OAuthClientASLocalMetadataLocalServiceTest {
 					TestPropsValues.getUserId(), metadataJSONObject.toString(),
 					"openid-configuration");
 
+		String originalLocalWellKnownURI =
+			_oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
 		String updatedIssuer = _ISSUER + "/updated";
 
 		_oAuthClientASLocalMetadata =
@@ -140,6 +145,11 @@ public class OAuthClientASLocalMetadataLocalServiceTest {
 					).toString(),
 					"openid-configuration");
 
+		String localWellKnownURI =
+			_oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+		Assert.assertNotEquals(originalLocalWellKnownURI, localWellKnownURI);
+
 		String metadataJSON = _oAuthClientASLocalMetadata.getMetadataJSON();
 
 		Assert.assertFalse(
@@ -149,6 +159,28 @@ public class OAuthClientASLocalMetadataLocalServiceTest {
 			metadataJSON);
 
 		Assert.assertNull(oidcProviderMetadata.getUserInfoEndpointURI());
+
+		metadataJSONObject = _createMetadataJSONObject(updatedIssuer);
+
+		metadataJSONObject.put(
+			"token_endpoint",
+			updatedIssuer + "/" + RandomTestUtil.randomString());
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					updateOAuthClientASLocalMetadata(
+						_oAuthClientASLocalMetadata.
+							getOAuthClientASLocalMetadataId(),
+						metadataJSONObject.toString(), "openid-configuration");
+		}
+
+		Assert.assertEquals(
+			localWellKnownURI,
+			_oAuthClientASLocalMetadata.getLocalWellKnownURI());
 	}
 
 	private JSONObject _createMetadataJSONObject(String issuer) {
