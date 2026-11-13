@@ -141,15 +141,19 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 			return discoveryEndpoint;
 		}
 
-		String localWellKnownURI =
-			OpenIdConnectProviderUtil.generateLocalWellKnownURI(
-				_getPropertyAsString("issuerURL", properties),
-				_getPropertyAsString("tokenEndpoint", properties));
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			_oAuthClientASLocalMetadataLocalService.
+				fetchOAuthClientASLocalMetadata(
+					companyId, _getPropertyAsString("issuerURL", properties));
+
+		if (oAuthClientASLocalMetadata == null) {
+			return null;
+		}
 
 		_oAuthClientASLocalMetadataLocalService.
-			deleteOAuthClientASLocalMetadata(companyId, localWellKnownURI);
+			deleteOAuthClientASLocalMetadata(oAuthClientASLocalMetadata);
 
-		return localWellKnownURI;
+		return oAuthClientASLocalMetadata.getLocalWellKnownURI();
 	}
 
 	private void _deleteOAuthClientEntries(Dictionary<String, ?> properties) {
@@ -410,31 +414,29 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 			return discoveryEndpoint;
 		}
 
-		String localWellKnownURI =
-			OpenIdConnectProviderUtil.generateLocalWellKnownURI(
-				_getPropertyAsString("issuerURL", properties),
-				_getPropertyAsString("tokenEndpoint", properties));
-
 		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
 			_oAuthClientASLocalMetadataLocalService.
-				fetchOAuthClientASLocalMetadataByLocalWellKnownURI(
-					companyId, localWellKnownURI);
+				fetchOAuthClientASLocalMetadata(
+					companyId, _getPropertyAsString("issuerURL", properties));
 
 		if (oAuthClientASLocalMetadata == null) {
-			_oAuthClientASLocalMetadataLocalService.
-				addOAuthClientASLocalMetadata(
-					guestUserId, _generateMetadataJSON(properties),
-					"openid-configuration");
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					addOAuthClientASLocalMetadata(
+						guestUserId, _generateMetadataJSON(properties),
+						"openid-configuration");
 		}
 		else {
-			_oAuthClientASLocalMetadataLocalService.
-				updateOAuthClientASLocalMetadata(
-					oAuthClientASLocalMetadata.
-						getOAuthClientASLocalMetadataId(),
-					_generateMetadataJSON(properties), "openid-configuration");
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					updateOAuthClientASLocalMetadata(
+						oAuthClientASLocalMetadata.
+							getOAuthClientASLocalMetadataId(),
+						_generateMetadataJSON(properties),
+						"openid-configuration");
 		}
 
-		return localWellKnownURI;
+		return oAuthClientASLocalMetadata.getLocalWellKnownURI();
 	}
 
 	private void _updateOAuthClientEntry(
