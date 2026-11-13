@@ -5,7 +5,6 @@
 
 package com.liferay.portal.security.auth.tunnel;
 
-import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -65,22 +64,10 @@ public class TunnelAuthenticationManagerImpl
 			throw authException;
 		}
 
-		String expectedPassword = null;
-
-		String login = httpAuthorizationHeader.getAuthParameter(
-			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_USERNAME);
+		Key sharedSecretKey = null;
 
 		try {
-			expectedPassword = EncryptorUtil.encrypt(
-				getSharedSecretKey(), login);
-		}
-		catch (EncryptorException encryptorException) {
-			AuthException authException = new RemoteAuthException(
-				encryptorException);
-
-			authException.setType(AuthException.INTERNAL_SERVER_ERROR);
-
-			throw authException;
+			sharedSecretKey = getSharedSecretKey();
 		}
 		catch (AuthException authException1) {
 			AuthException authException2 = new RemoteAuthException(
@@ -91,13 +78,30 @@ public class TunnelAuthenticationManagerImpl
 			throw authException2;
 		}
 
+		String decryptedLogin = null;
+
 		String password = httpAuthorizationHeader.getAuthParameter(
 			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_PASSWORD);
 
-		if ((password == null) ||
+		if (password != null) {
+			try {
+				decryptedLogin = EncryptorUtil.decrypt(
+					sharedSecretKey, password);
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(exception);
+				}
+			}
+		}
+
+		String login = httpAuthorizationHeader.getAuthParameter(
+			HttpAuthorizationHeader.AUTH_PARAMETER_NAME_USERNAME);
+
+		if ((decryptedLogin == null) || (login == null) ||
 			!MessageDigest.isEqual(
-				password.getBytes(StandardCharsets.UTF_8),
-				expectedPassword.getBytes(StandardCharsets.UTF_8))) {
+				decryptedLogin.getBytes(StandardCharsets.UTF_8),
+				login.getBytes(StandardCharsets.UTF_8))) {
 
 			AuthException authException = new RemoteAuthException();
 
