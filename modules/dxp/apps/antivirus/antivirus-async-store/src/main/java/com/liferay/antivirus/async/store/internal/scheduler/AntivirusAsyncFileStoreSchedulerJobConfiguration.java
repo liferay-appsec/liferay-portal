@@ -10,6 +10,7 @@ import com.liferay.antivirus.async.store.constants.AntivirusAsyncConstants;
 import com.liferay.antivirus.async.store.constants.AntivirusAsyncDestinationNames;
 import com.liferay.antivirus.async.store.internal.event.AntivirusAsyncEventListenerManager;
 import com.liferay.antivirus.async.store.util.AntivirusAsyncUtil;
+import com.liferay.document.library.kernel.antivirus.AntivirusScanner;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalService;
@@ -287,6 +288,10 @@ public class AntivirusAsyncFileStoreSchedulerJobConfiguration
 		String fileName, String jobName, long repositoryId, long size,
 		String sourceFileName, long userId, String versionLabel) {
 
+		if (!_antivirusScanner.isActive()) {
+			return;
+		}
+
 		Message message = new Message();
 
 		message.put("className", className);
@@ -313,6 +318,9 @@ public class AntivirusAsyncFileStoreSchedulerJobConfiguration
 	@Reference
 	private AntivirusAsyncEventListenerManager
 		_antivirusAsyncEventListenerManager;
+
+	@Reference
+	private AntivirusScanner _antivirusScanner;
 
 	@Reference
 	private DLFileVersionLocalService _dlFileVersionLocalService;
