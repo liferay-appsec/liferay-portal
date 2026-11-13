@@ -11,6 +11,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.router.configuration.FileSystemAuditMessageProcessorConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorCompanyConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.function.Function;
@@ -59,8 +62,19 @@ public class AuditConfigurationDisplayContextTest {
 			FileSystemAuditMessageProcessorConfiguration.class, "outputFormat");
 		_testGetHelpMessage(
 			AuditConfigurationDisplayContext::
+				getPersistentAuditMessageProcessorEnabledHelpMessage,
+			PersistentAuditMessageProcessorCompanyConfiguration.class,
+			"enabled");
+		_testGetHelpMessage(
+			AuditConfigurationDisplayContext::
 				getPseudonymizationEnabledHelpMessage,
 			AuditConfiguration.class, "pseudonymizationEnabled");
+
+		Assert.assertEquals(
+			"the-database-processor-is-disabled-in-system-settings",
+			_createDisplayContext(
+				false
+			).getPersistentAuditMessageProcessorEnabledHelpMessage());
 	}
 
 	@Test
@@ -88,15 +102,60 @@ public class AuditConfigurationDisplayContextTest {
 			FileSystemAuditMessageProcessorConfiguration.class, "outputFormat");
 		_testIsOverridden(
 			AuditConfigurationDisplayContext::
+				isPersistentAuditMessageProcessorEnabledOverridden,
+			PersistentAuditMessageProcessorCompanyConfiguration.class,
+			"enabled");
+		_testIsOverridden(
+			AuditConfigurationDisplayContext::
 				isPseudonymizationEnabledOverridden,
 			AuditConfiguration.class, "pseudonymizationEnabled");
 	}
 
+	@FeatureFlag("LPD-114718")
+	@Test
+	public void testIsPersistentAuditMessageProcessorVisible() {
+		AuditConfigurationDisplayContext auditConfigurationDisplayContext =
+			_createDisplayContext();
+
+		Assert.assertTrue(
+			auditConfigurationDisplayContext.
+				isPersistentAuditMessageProcessorVisible());
+	}
+
+	@FeatureFlag(enable = false, value = "LPD-114718")
+	@Test
+	public void testIsPersistentAuditMessageProcessorVisibleWhenFeatureFlagIsDisabled() {
+		AuditConfigurationDisplayContext auditConfigurationDisplayContext =
+			_createDisplayContext();
+
+		Assert.assertFalse(
+			auditConfigurationDisplayContext.
+				isPersistentAuditMessageProcessorVisible());
+	}
+
 	private AuditConfigurationDisplayContext _createDisplayContext() {
+		return _createDisplayContext(true);
+	}
+
+	private AuditConfigurationDisplayContext _createDisplayContext(
+		boolean persistentAuditMessageProcessorEnabled) {
+
+		PersistentAuditMessageProcessorConfiguration
+			persistentAuditMessageProcessorConfiguration = Mockito.mock(
+				PersistentAuditMessageProcessorConfiguration.class);
+
+		Mockito.when(
+			persistentAuditMessageProcessorConfiguration.enabled()
+		).thenReturn(
+			persistentAuditMessageProcessorEnabled
+		);
+
 		return new AuditConfigurationDisplayContext(
 			Mockito.mock(AuditConfiguration.class),
 			Mockito.mock(FileSystemAuditMessageProcessorConfiguration.class),
-			false);
+			Mockito.mock(
+				PersistentAuditMessageProcessorCompanyConfiguration.class),
+			persistentAuditMessageProcessorConfiguration, false);
 	}
 
 	private void _mockOverrideProperties(
