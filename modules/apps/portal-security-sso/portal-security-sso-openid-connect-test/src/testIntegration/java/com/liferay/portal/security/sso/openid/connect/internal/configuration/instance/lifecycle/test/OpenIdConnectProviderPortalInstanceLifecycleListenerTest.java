@@ -24,6 +24,8 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -32,6 +34,7 @@ import java.net.URI;
 import java.security.MessageDigest;
 
 import java.util.Dictionary;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -329,6 +332,18 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 				TestPropsValues.getCompanyId(),
 				_generateLocalWellKnownURI(issuerURL, tokenEndpoint),
 				clientId));
+
+		Class<?> clazz = _portalInstanceLifecycleListener.getClass();
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				clazz.getName(), LoggerTestUtil.WARN)) {
+
+			_portalInstanceLifecycleListener.portalInstanceRegistered(company);
+
+			List<String> messages = logCapture.getMessages();
+
+			Assert.assertEquals(messages.toString(), 0, messages.size());
+		}
 	}
 
 	@Test
@@ -381,6 +396,41 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 		Assert.assertEquals(
 			tokenConnectionTimeout,
 			oAuthClientEntry.getTokenConnectionTimeout());
+
+		Class<?> clazz = _portalInstanceLifecycleListener.getClass();
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				clazz.getName(), LoggerTestUtil.WARN)) {
+
+			_pid2 = ConfigurationTestUtil.createFactoryConfiguration(
+				"com.liferay.portal.security.sso.openid.connect.internal." +
+					"configuration.OpenIdConnectProviderConfiguration",
+				HashMapDictionaryBuilder.<String, Object>put(
+					"authorizationEndpoint",
+					"http://" + RandomTestUtil.randomString()
+				).put(
+					"companyId", TestPropsValues.getCompanyId()
+				).put(
+					"issuerURL", "http://" + RandomTestUtil.randomString(240)
+				).put(
+					"jwksURI", "http://" + RandomTestUtil.randomString()
+				).put(
+					"openIdConnectClientId", RandomTestUtil.randomString()
+				).put(
+					"subjectTypes", new String[] {"public"}
+				).put(
+					"tokenEndpoint", "http://" + RandomTestUtil.randomString()
+				).put(
+					"userInfoEndpoint",
+					"http://" + RandomTestUtil.randomString()
+				).build());
+
+			List<String> messages = logCapture.getMessages();
+
+			Assert.assertEquals(messages.toString(), 1, messages.size());
+			Assert.assertEquals(
+				"Unable to update OAuth client entry", messages.get(0));
+		}
 	}
 
 	private String _generateLocalWellKnownURI(

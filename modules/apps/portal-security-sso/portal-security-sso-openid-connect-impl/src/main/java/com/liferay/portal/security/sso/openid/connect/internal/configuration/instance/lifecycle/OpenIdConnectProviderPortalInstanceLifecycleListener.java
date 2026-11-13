@@ -162,8 +162,8 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 				companyId -> _deleteOAuthClientEntry(companyId, properties));
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
 			}
 		}
 	}
@@ -491,15 +491,27 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 				}
 			}
 			else {
-				_addOAuthClientEntry(companyId, properties, guestUserId);
+				String authServerWellKnownURI =
+					_updateOAuthClientASLocalMetadata(
+						companyId, guestUserId, properties);
+
+				OAuthClientEntry oAuthClientEntry =
+					_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+						companyId, authServerWellKnownURI,
+						_getPropertyAsString(
+							"openIdConnectClientId", properties));
+
+				if (oAuthClientEntry == null) {
+					_addOAuthClientEntry(companyId, properties, guestUserId);
+				}
 			}
 
 			OpenIdConnectProviderUtil.removeOAuthClientEntryIdsByCompanyId(
 				companyId);
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Unable to update OAuth client entry", exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to update OAuth client entry", exception);
 			}
 		}
 	}
@@ -578,8 +590,8 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 						});
 				}
 				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(exception);
+					if (_log.isWarnEnabled()) {
+						_log.warn(exception);
 					}
 				}
 
