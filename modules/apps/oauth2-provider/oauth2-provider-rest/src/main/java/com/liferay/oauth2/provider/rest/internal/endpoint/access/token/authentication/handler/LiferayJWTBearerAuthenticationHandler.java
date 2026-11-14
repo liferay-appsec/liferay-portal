@@ -34,6 +34,7 @@ import org.apache.cxf.jaxrs.utils.HttpUtils;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.jose.common.JoseConstants;
+import org.apache.cxf.rs.security.jose.common.JoseException;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKey;
 import org.apache.cxf.rs.security.jose.jwk.JsonWebKeys;
 import org.apache.cxf.rs.security.jose.jwk.JwkUtils;
@@ -46,6 +47,7 @@ import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.grants.jwt.Constants;
 import org.apache.cxf.rs.security.oauth2.grants.jwt.JwtBearerAuthHandler;
 import org.apache.cxf.rs.security.oauth2.provider.ClientRegistrationProvider;
+import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 import org.apache.cxf.security.SecurityContext;
 
@@ -80,7 +82,18 @@ public class LiferayJWTBearerAuthenticationHandler
 			throw new NotAuthorizedException("Missing JWT assertion");
 		}
 
-		JwtToken jwtToken = super.getJwtToken(assertion);
+		JwtToken jwtToken = null;
+
+		try {
+			jwtToken = super.getJwtToken(assertion);
+		}
+		catch (JoseException | OAuthServiceException exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+
+			throw new NotAuthorizedException(OAuthConstants.INVALID_CLIENT);
+		}
 
 		String claimSubject = (String)jwtToken.getClaim(
 			JwtConstants.CLAIM_SUBJECT);
@@ -115,12 +128,15 @@ public class LiferayJWTBearerAuthenticationHandler
 	protected JwsSignatureVerifier getInitializedSignatureVerifier(
 		JwtToken jwtToken) {
 
-		Client client = _clientRegistrationProvider.getClient(
-			(String)jwtToken.getClaim(JwtConstants.CLAIM_SUBJECT));
-
-		String tokenEndpointAuthMethod = client.getTokenEndpointAuthMethod();
-
 		try {
+			Client client = _clientRegistrationProvider.getClient(
+				(String)jwtToken.getClaim(JwtConstants.CLAIM_SUBJECT));
+
+			if (client == null) {
+				throw new IllegalArgumentException(
+					"No client found for the JWT subject");
+			}
+
 			String algorithm = GetterUtil.getString(
 				jwtToken.getJwsHeader(JoseConstants.HEADER_ALGORITHM), null);
 
@@ -137,6 +153,9 @@ public class LiferayJWTBearerAuthenticationHandler
 
 				throw securityException;
 			}
+
+			String tokenEndpointAuthMethod =
+				client.getTokenEndpointAuthMethod();
 
 			if (tokenEndpointAuthMethod.equals("client_secret_jwt")) {
 				String clientSecret = client.getClientSecret();

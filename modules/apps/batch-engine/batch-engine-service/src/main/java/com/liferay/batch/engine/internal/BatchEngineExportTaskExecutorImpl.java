@@ -39,7 +39,6 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelperUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -254,18 +253,20 @@ public class BatchEngineExportTaskExecutorImpl
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 			new UnsyncByteArrayOutputStream();
 
-		try (BatchEngineExportTaskItemWriter batchEngineExportTaskItemWriter =
-				_getBatchEngineExportTaskItemWriter(
-					batchEngineExportTask, parameters, settings,
-					unsyncByteArrayOutputStream);
-
-			BatchEngineTaskItemDelegateSafeCloseable
+		try (BatchEngineTaskItemDelegateSafeCloseable
 				batchEngineTaskItemDelegateSafeCloseable =
 					_batchEngineTaskItemDelegateRegistry.
 						getBatchEngineTaskItemDelegateWithSafeCloseable(
 							batchEngineExportTask.getCompanyId(),
 							batchEngineExportTask.getClassName(),
 							batchEngineExportTask.getTaskItemDelegateName());
+
+			BatchEngineExportTaskItemWriter batchEngineExportTaskItemWriter =
+				_getBatchEngineExportTaskItemWriter(
+					batchEngineExportTask,
+					batchEngineTaskItemDelegateSafeCloseable.
+						getBatchEngineTaskItemDelegate(),
+					parameters, settings, unsyncByteArrayOutputStream);
 
 			SafeCloseable safeCloseable = _getNestedFieldsContextSafeCloseable(
 				batchEngineTaskItemDelegateSafeCloseable, parameters)) {
@@ -397,6 +398,7 @@ public class BatchEngineExportTaskExecutorImpl
 
 	private BatchEngineExportTaskItemWriter _getBatchEngineExportTaskItemWriter(
 			BatchEngineExportTask batchEngineExportTask,
+			BatchEngineTaskItemDelegate<?> batchEngineTaskItemDelegate,
 			Map<String, Serializable> parameters, Settings settings,
 			UnsyncByteArrayOutputStream unsyncByteArrayOutputStream)
 		throws Exception {
@@ -431,8 +433,7 @@ public class BatchEngineExportTaskExecutorImpl
 			).fieldNames(
 				batchEngineExportTask.getFieldNamesList()
 			).itemClass(
-				_itemClassRegistry.getItemClass(
-					batchEngineExportTask.getClassName())
+				_itemClassRegistry.getItemClass(batchEngineTaskItemDelegate)
 			).outputStream(
 				outputStream
 			).parameters(
@@ -653,9 +654,6 @@ public class BatchEngineExportTaskExecutorImpl
 
 	@Reference
 	private ColumnDescriptorProvider _columnDescriptorProvider;
-
-	@Reference
-	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;
