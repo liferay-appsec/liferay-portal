@@ -49,8 +49,7 @@ public class UserLocalServiceTest {
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
 		new AggregateTestRule(
-			new LiferayIntegrationTestRule(),
-			SynchronousMailTestRule.INSTANCE);
+			new LiferayIntegrationTestRule(), SynchronousMailTestRule.INSTANCE);
 
 	@Test
 	public void testAuthenticateByEmailAddress() throws Exception {
@@ -81,8 +80,8 @@ public class UserLocalServiceTest {
 				Authenticator.SUCCESS,
 				_userLocalService.authenticateByEmailAddress(
 					outdatedUser.getCompanyId(),
-					outdatedUser.getDisplayEmailAddress(), password, null,
-					null, null));
+					outdatedUser.getDisplayEmailAddress(), password, null, null,
+					null));
 		}
 		finally {
 			ServiceContextThreadLocal.popServiceContext();

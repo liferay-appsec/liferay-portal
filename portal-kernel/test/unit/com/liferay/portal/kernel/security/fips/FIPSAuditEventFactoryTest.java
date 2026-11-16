@@ -118,8 +118,8 @@ public class FIPSAuditEventFactoryTest {
 	}
 
 	private void _assertFields(
-		FIPSAuditEvent fipsAuditEvent, String fromAlgorithm,
-		String toAlgorithm, String userId) {
+		FIPSAuditEvent fipsAuditEvent, String fromAlgorithm, String toAlgorithm,
+		String userId) {
 
 		Assert.assertEquals(
 			HashMapBuilder.<String, Object>put(
