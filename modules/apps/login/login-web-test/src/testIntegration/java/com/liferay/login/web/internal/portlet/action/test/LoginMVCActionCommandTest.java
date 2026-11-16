@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -155,6 +156,41 @@ public class LoginMVCActionCommandTest {
 			_assertParameter(redirectLocation, "p_p_lifecycle", "0");
 			_assertParameter(redirectLocation, "p_p_state", "maximized");
 			_assertParameter(redirectLocation, "saveLastPath", "false");
+		}
+	}
+
+	@Test
+	public void testFailedLoginWithShortPasswordInFIPSMode() throws Exception {
+		try (SafeCloseable safeCloseable1 =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"AUTH_TOKEN_CHECK_ENABLED", false)) {
+
+			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+				_getMockLiferayPortletActionRequest();
+
+			_mvcActionCommand.processAction(
+				mockLiferayPortletActionRequest,
+				new CustomMockLiferayPortletActionResponse());
+
+			Assert.assertFalse(
+				SessionErrors.contains(
+					mockLiferayPortletActionRequest, "fipsPasswordTooShort"));
+
+			mockLiferayPortletActionRequest =
+				_getMockLiferayPortletActionRequest();
+
+			try (SafeCloseable safeCloseable2 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				_mvcActionCommand.processAction(
+					mockLiferayPortletActionRequest,
+					new CustomMockLiferayPortletActionResponse());
+			}
+
+			Assert.assertTrue(
+				SessionErrors.contains(
+					mockLiferayPortletActionRequest, "fipsPasswordTooShort"));
 		}
 	}
 
