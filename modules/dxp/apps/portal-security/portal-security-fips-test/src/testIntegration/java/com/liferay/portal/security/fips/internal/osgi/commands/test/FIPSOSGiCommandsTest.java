@@ -10,11 +10,16 @@ import com.liferay.osgi.util.osgi.commands.OSGiCommands;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.test.rule.Inject;
@@ -46,12 +51,26 @@ public class FIPSOSGiCommandsTest {
 
 	@Test
 	public void testReadiness() throws Exception {
+		_user = UserTestUtil.addUser();
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PasswordEncryptorUtil.class,
+					"_PASSWORDS_ENCRYPTION_ALGORITHM", "MD5")) {
+
+			String password = RandomTestUtil.randomString(14);
+
+			_userLocalService.updatePassword(
+				_user.getUserId(), password, password, false, true);
+		}
+
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 13)) {
 
 			String readiness = _getReadiness();
 
+			Assert.assertTrue(readiness.contains("- MD5: "));
 			Assert.assertTrue(
 				readiness.contains(
 					StringBundler.concat(
@@ -92,5 +111,11 @@ public class FIPSOSGiCommandsTest {
 
 	@Inject(filter = "osgi.command.scope=fips")
 	private OSGiCommands _osgiCommands;
+
+	@DeleteAfterTestRun
+	private User _user;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 }
