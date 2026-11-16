@@ -524,7 +524,7 @@ public class FIPSModeValidator {
 		_collect(
 			_GUIDE_SECTION_CLUSTER_LINK,
 			() -> _validateAllowedPropertyValues(
-				new String[] {"PKCS12"},
+				new String[] {"BCFKS"},
 				PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE,
 				PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE)),
 			securityExceptions);
