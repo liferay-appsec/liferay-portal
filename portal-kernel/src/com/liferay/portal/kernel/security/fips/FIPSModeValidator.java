@@ -629,7 +629,7 @@ public class FIPSModeValidator {
 					isInApprovedOnlyModeMethod.invoke(null))) {
 
 				throw new SecurityException(
-					"BCFIPS is not in approved only mode");
+					"\"BCFIPS\" is not in approved only mode");
 			}
 
 			Class<?> fipsStatusClass = Class.forName(
@@ -644,7 +644,7 @@ public class FIPSModeValidator {
 						fipsStatusClass, "getStatusMessage");
 
 				throw new SecurityException(
-					"BCFIPS integrity self test failed: " +
+					"\"BCFIPS\" integrity self test failed: " +
 						getStatusMessageMethod.invoke(null));
 			}
 		}

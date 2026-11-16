@@ -997,6 +997,13 @@ public class FIPSModeValidatorTest {
 				curKey -> "TRUE", Map.of(key, new String[] {"true"})));
 
 		_assertViolation(
+			"FIPS mode requires the property \"" + key +
+				"\" to include \"TLSv1.3\"",
+			"TLS and Certificate Revocation",
+			_getRequiredPropertyValuesViolations(
+				curKey -> "TLSv1.2",
+				Map.of(key, new String[] {"TLSv1.2", "TLSv1.3"})));
+		_assertViolation(
 			"FIPS mode requires the property \"" + key + "\"",
 			"TLS and Certificate Revocation",
 			_getRequiredPropertyValuesViolations(
@@ -1016,13 +1023,6 @@ public class FIPSModeValidatorTest {
 			"TLS and Certificate Revocation",
 			_getRequiredPropertyValuesViolations(
 				curKey -> null, Map.of(key, new String[] {"true"})));
-		_assertViolation(
-			"FIPS mode requires the property \"" + key +
-				"\" to include \"TLSv1.3\"",
-			"TLS and Certificate Revocation",
-			_getRequiredPropertyValuesViolations(
-				curKey -> "TLSv1.2",
-				Map.of(key, new String[] {"TLSv1.2", "TLSv1.3"})));
 
 		Assert.assertEquals(
 			Arrays.asList(
@@ -1304,6 +1304,8 @@ public class FIPSModeValidatorTest {
 	}
 
 	private AutoCloseable _setEncryptor(Key key) throws Exception {
+		Snapshot<Encryptor> snapshot = Mockito.mock(Snapshot.class);
+
 		Encryptor encryptor = Mockito.mock(Encryptor.class);
 
 		Mockito.when(
@@ -1311,8 +1313,6 @@ public class FIPSModeValidatorTest {
 		).thenReturn(
 			key
 		);
-
-		Snapshot<Encryptor> snapshot = Mockito.mock(Snapshot.class);
 
 		Mockito.when(
 			snapshot.get()
