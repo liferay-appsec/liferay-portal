@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.security.fips;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -95,22 +97,18 @@ public class FIPSModeValidator {
 				_allowedTLSProtocols, SetUtil.fromArray(tlsProtocols)));
 	}
 
+	public static List<String> getPortalPropertiesViolations() {
+		return TransformUtil.transform(
+			_getPortalPropertiesSecurityExceptions(),
+			SecurityException::getMessage);
+	}
+
 	public static boolean isNotAllowedAlgorithm(String algorithm) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return false;
 		}
 
-		if (Validator.isNull(algorithm)) {
-			return true;
-		}
-
-		for (String allowedAlgorithm : _allowedAlgorithms) {
-			if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
-				return false;
-			}
-		}
-
-		return true;
+		return _isNotAllowedAlgorithm(algorithm);
 	}
 
 	public static boolean isNotAllowedPassword(String password) {
@@ -118,35 +116,44 @@ public class FIPSModeValidator {
 			return false;
 		}
 
-		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
-
-		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
-			return false;
-		}
-
-		return true;
+		return _isNotAllowedPassword(password);
 	}
 
 	public static void validate() {
+		List<SecurityException> securityExceptions = new ArrayList<>();
+
 		Provider[] providers = Security.getProviders();
 
-		_validateFIPSProvider(providers);
-		_validateProviders(providers);
+		_collect(
+			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			() -> _validateFIPSProvider(providers), securityExceptions);
+		_collect(
+			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			() -> _validateProviders(providers), securityExceptions);
 
-		_validateAllowedPropertyValues(System::getProperty);
-		_validatePortalProperties();
+		_collect(
+			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			FIPSModeValidator::_validateSecureRandomProvider,
+			securityExceptions);
+
+		_validateAllowedPropertyValues(System::getProperty, securityExceptions);
 		_validateRequiredPropertyValues(
-			Security::getProperty, _requiredSecurityProperties);
+			Security::getProperty, _requiredSecurityProperties,
+			securityExceptions);
 		_validateRequiredPropertyValues(
-			System::getProperty, _requiredSystemProperties);
-		_validateSecureRandomProvider();
+			System::getProperty, _requiredSystemProperties, securityExceptions);
+
+		securityExceptions.addAll(_getPortalPropertiesSecurityExceptions());
+
+		_validate(securityExceptions);
 	}
 
 	public static void validateAlgorithm(String algorithm) {
-		if (isNotAllowedAlgorithm(algorithm)) {
-			throw new SecurityException(
-				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
+		if (!PropsValues.FIPS_ENABLED) {
+			return;
 		}
+
+		_validateAlgorithm(algorithm);
 	}
 
 	public static void validateJWSAlgorithm(String algorithm) {
@@ -166,14 +173,7 @@ public class FIPSModeValidator {
 			return;
 		}
 
-		validateAlgorithm(algorithm);
-
-		if ((keySize == 0) || _allowedSymmetricKeySizes.contains(keySize)) {
-			return;
-		}
-
-		throw new SecurityException(
-			"Key size " + keySize + " is not allowed in FIPS mode");
+		_validateKey(algorithm, keySize);
 	}
 
 	public static void validatePassword(String password) {
@@ -185,12 +185,11 @@ public class FIPSModeValidator {
 	}
 
 	public static void validateSessionTimeout(int sessionTimeout) {
-		if (!PropsValues.FIPS_ENABLED || (sessionTimeout <= 720)) {
+		if (!PropsValues.FIPS_ENABLED) {
 			return;
 		}
 
-		throw new SecurityException(
-			"Session timeout must not be greater than 12 hours in FIPS mode");
+		_validateSessionTimeout(sessionTimeout);
 	}
 
 	public static void validateURL(String url) {
@@ -203,6 +202,23 @@ public class FIPSModeValidator {
 
 		throw new SecurityException(
 			"URL protocol scheme is not allowed in FIPS mode");
+	}
+
+	private static void _collect(
+		String guideSection, Runnable runnable,
+		List<SecurityException> securityExceptions) {
+
+		try {
+			runnable.run();
+		}
+		catch (SecurityException securityException) {
+			securityExceptions.add(
+				new SecurityException(
+					StringBundler.concat(
+						securityException.getMessage(), ". See \"",
+						guideSection, "\" in the FIPS migration guide."),
+					securityException));
+		}
 	}
 
 	private static List<String> _getPlaintextSecretProperties(
@@ -227,6 +243,84 @@ public class FIPSModeValidator {
 		}
 
 		return plaintextSecretProperties;
+	}
+
+	private static List<SecurityException>
+		_getPortalPropertiesSecurityExceptions() {
+
+		List<SecurityException> securityExceptions = new ArrayList<>();
+
+		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
+			_collect(
+				_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+				() -> _validateAlgorithm(
+					PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM)),
+				securityExceptions);
+		}
+
+		_collect(
+			_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+			() -> _validateAlgorithm(
+				PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM)),
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+			() -> _validateAlgorithm(
+				PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM),
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+			FIPSModeValidator::_validateTunnelUtilVerifySSLHostname,
+			securityExceptions);
+
+		_validateClusterLinkConfiguration(securityExceptions);
+
+		_collect(
+			_GUIDE_SECTION_PASSWORDS,
+			() -> _validatePasswordsEncryptionAlgorithm(
+				PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM)),
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_PASSWORDS,
+			FIPSModeValidator::_validateDefaultAdminPassword,
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_PASSWORDS,
+			FIPSModeValidator::_validatePasswordsDefaultPolicyMinLength,
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_SECRETS_IN_PROPERTIES_FILES,
+			FIPSModeValidator::_validatePlaintextSecrets, securityExceptions);
+		_collect(
+			_GUIDE_SECTION_SESSION_TIMEOUT,
+			() -> _validateSessionTimeout(PropsValues.SESSION_TIMEOUT),
+			securityExceptions);
+
+		return securityExceptions;
+	}
+
+	private static boolean _isNotAllowedAlgorithm(String algorithm) {
+		if (Validator.isNull(algorithm)) {
+			return true;
+		}
+
+		for (String allowedAlgorithm : _allowedAlgorithms) {
+			if (StringUtil.startsWith(algorithm, allowedAlgorithm)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean _isNotAllowedPassword(String password) {
+		byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
+
+		if (bytes.length >= PASSWORDS_MIN_LENGTH) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private static Document _readChannelPropertiesDocument(
@@ -263,16 +357,54 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validate(List<SecurityException> securityExceptions) {
+		if (securityExceptions.isEmpty()) {
+			return;
+		}
+
+		List<String> violations = TransformUtil.transform(
+			securityExceptions, SecurityException::getMessage);
+
+		StringBundler sb = new StringBundler((violations.size() * 4) + 1);
+
+		sb.append("The configuration is not allowed in FIPS mode:");
+
+		for (int i = 0; i < violations.size(); i++) {
+			sb.append(StringPool.NEW_LINE);
+			sb.append(i + 1);
+			sb.append(". ");
+			sb.append(violations.get(i));
+		}
+
+		SecurityException securityException = new SecurityException(
+			sb.toString());
+
+		securityExceptions.forEach(securityException::addSuppressed);
+
+		throw securityException;
+	}
+
+	private static void _validateAlgorithm(String algorithm) {
+		if (_isNotAllowedAlgorithm(algorithm)) {
+			throw new SecurityException(
+				"Algorithm \"" + algorithm + "\" is not allowed in FIPS mode");
+		}
+	}
+
 	private static void _validateAllowedPropertyValues(
-		Function<String, String> function) {
+		Function<String, String> function,
+		List<SecurityException> securityExceptions) {
 
 		for (Map.Entry<String, String[]> entry :
-				_allowedSystemProperties.entrySet()) {
+				new TreeMap<>(_allowedSystemProperties).entrySet()) {
 
-			_validateAllowedPropertyValues(
-				entry.getValue(), entry.getKey(),
-				StringUtil.removeChar(
-					function.apply(entry.getKey()), CharPool.SPACE));
+			_collect(
+				_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+				() -> _validateAllowedPropertyValues(
+					entry.getValue(), entry.getKey(),
+					StringUtil.removeChar(
+						function.apply(entry.getKey()), CharPool.SPACE)),
+				securityExceptions);
 		}
 	}
 
@@ -357,7 +489,7 @@ public class FIPSModeValidator {
 		String[] symAlgorithmParts = StringUtil.split(
 			symAlgorithm, CharPool.SLASH);
 
-		validateKey(
+		_validateKey(
 			symAlgorithmParts[0],
 			GetterUtil.getInteger(
 				symEncryptElement.getAttribute("sym_keylength")));
@@ -382,25 +514,49 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validateClusterLinkConfiguration() {
+	private static void _validateClusterLinkConfiguration(
+		List<SecurityException> securityExceptions) {
+
 		if (!PropsValues.CLUSTER_LINK_ENABLED) {
 			return;
 		}
 
-		_validateAllowedPropertyValues(
-			new String[] {"PKCS12"}, PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE,
-			PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE));
-		_validateClusterLinkChannelConfiguration(
-			GetterUtil.getString(
-				PropsUtil.get(
-					PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL)));
+		_collect(
+			_GUIDE_SECTION_CLUSTER_LINK,
+			() -> _validateAllowedPropertyValues(
+				new String[] {"PKCS12"},
+				PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE,
+				PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE)),
+			securityExceptions);
+		_collect(
+			_GUIDE_SECTION_CLUSTER_LINK,
+			() -> _validateClusterLinkChannelConfiguration(
+				GetterUtil.getString(
+					PropsUtil.get(
+						PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_CONTROL))),
+			securityExceptions);
 
 		Properties properties = PropsUtil.getProperties(
 			PropsKeys.CLUSTER_LINK_CHANNEL_PROPERTIES_TRANSPORT, true);
 
 		for (Object channelPropertiesLocation : properties.values()) {
-			_validateClusterLinkChannelConfiguration(
-				GetterUtil.getString(channelPropertiesLocation));
+			_collect(
+				_GUIDE_SECTION_CLUSTER_LINK,
+				() -> _validateClusterLinkChannelConfiguration(
+					GetterUtil.getString(channelPropertiesLocation)),
+				securityExceptions);
+		}
+	}
+
+	private static void _validateDefaultAdminPassword() {
+		if (Validator.isNotNull(PropsValues.DEFAULT_ADMIN_PASSWORD) &&
+			_isNotAllowedPassword(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
+
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
+					PASSWORDS_MIN_LENGTH, " bytes"));
 		}
 	}
 
@@ -504,6 +660,29 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validateKey(String algorithm, int keySize) {
+		_validateAlgorithm(algorithm);
+
+		if ((keySize == 0) || _allowedSymmetricKeySizes.contains(keySize)) {
+			return;
+		}
+
+		throw new SecurityException(
+			"Key size " + keySize + " is not allowed in FIPS mode");
+	}
+
+	private static void _validatePasswordsDefaultPolicyMinLength() {
+		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
+				PASSWORDS_MIN_LENGTH) {
+
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"",
+					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
+					"\" to be at least ", PASSWORDS_MIN_LENGTH));
+		}
+	}
+
 	private static void _validatePasswordsEncryptionAlgorithm(
 		String algorithm) {
 
@@ -546,30 +725,6 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validatePasswordsMinLength() {
-		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
-				PASSWORDS_MIN_LENGTH) {
-
-			throw new SecurityException(
-				StringBundler.concat(
-					"FIPS mode requires the property \"",
-					PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
-					"\" to be at least ", PASSWORDS_MIN_LENGTH));
-		}
-
-		if (Validator.isNull(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
-			return;
-		}
-
-		if (isNotAllowedPassword(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
-			throw new SecurityException(
-				StringBundler.concat(
-					"FIPS mode requires the property \"",
-					PropsKeys.DEFAULT_ADMIN_PASSWORD, "\" to be at least ",
-					PASSWORDS_MIN_LENGTH, " bytes"));
-		}
-	}
-
 	private static void _validatePlaintextSecrets() {
 		List<String> messages = new ArrayList<>();
 
@@ -603,37 +758,22 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validatePortalProperties() {
-		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
-			validateAlgorithm(PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM));
-		}
-
-		validateAlgorithm(
-			PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM));
-		validateAlgorithm(PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM);
-
-		if (!GetterUtil.getBoolean(
-				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
-
-			throw new SecurityException(
-				"FIPS mode requires the property \"" +
-					PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME +
-						"\" to be enabled");
-		}
-
-		_validateClusterLinkConfiguration();
-		_validatePasswordsEncryptionAlgorithm(
-			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
-		_validatePasswordsMinLength();
-		_validatePlaintextSecrets();
-		validateSessionTimeout(PropsValues.SESSION_TIMEOUT);
-	}
-
 	private static void _validateProviders(Provider[] providers) {
+		if (ArrayUtil.isEmpty(providers)) {
+			return;
+		}
+
 		Provider provider = providers[0];
 
-		List<String> allowedProviderNames = _allowedProviderNames.get(
-			provider.getName());
+		String name = provider.getName();
+
+		if (Validator.isNull(name) ||
+			!_allowedProviderNames.containsKey(name)) {
+
+			return;
+		}
+
+		List<String> allowedProviderNames = _allowedProviderNames.get(name);
 
 		Provider[] notAllowedProviders = ArrayUtil.filter(
 			providers,
@@ -652,23 +792,34 @@ public class FIPSModeValidator {
 	}
 
 	private static void _validateRequiredPropertyValues(
-		Function<String, String> function,
-		Map<String, String[]> propertiesMap) {
+		Function<String, String> function, Map<String, String[]> propertiesMap,
+		List<SecurityException> securityExceptions) {
 
-		for (Map.Entry<String, String[]> entry : propertiesMap.entrySet()) {
-			String value = StringUtil.removeChar(
-				function.apply(entry.getKey()), CharPool.SPACE);
+		for (Map.Entry<String, String[]> entry :
+				new TreeMap<>(propertiesMap).entrySet()) {
 
-			for (String requiredValue : entry.getValue()) {
-				if (StringUtil.containsIgnoreCase(value, requiredValue)) {
-					continue;
-				}
+			_collect(
+				_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+				() -> _validateRequiredPropertyValues(
+					entry.getKey(), entry.getValue(),
+					StringUtil.removeChar(
+						function.apply(entry.getKey()), CharPool.SPACE)),
+				securityExceptions);
+		}
+	}
 
-				throw new SecurityException(
-					StringBundler.concat(
-						"FIPS mode requires the property \"", entry.getKey(),
-						"\" to include \"", requiredValue, "\""));
+	private static void _validateRequiredPropertyValues(
+		String key, String[] requiredValues, String value) {
+
+		for (String requiredValue : requiredValues) {
+			if (StringUtil.containsIgnoreCase(value, requiredValue)) {
+				continue;
 			}
+
+			throw new SecurityException(
+				StringBundler.concat(
+					"FIPS mode requires the property \"", key,
+					"\" to include \"", requiredValue, "\""));
 		}
 	}
 
@@ -704,6 +855,45 @@ public class FIPSModeValidator {
 				throwable);
 		}
 	}
+
+	private static void _validateSessionTimeout(int sessionTimeout) {
+		if (sessionTimeout <= 720) {
+			return;
+		}
+
+		throw new SecurityException(
+			"Session timeout must not be greater than 12 hours in FIPS mode");
+	}
+
+	private static void _validateTunnelUtilVerifySSLHostname() {
+		if (!GetterUtil.getBoolean(
+				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
+
+			throw new SecurityException(
+				"FIPS mode requires the property \"" +
+					PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME +
+						"\" to be enabled");
+		}
+	}
+
+	private static final String _GUIDE_SECTION_CLUSTER_LINK = "Cluster Link";
+
+	private static final String _GUIDE_SECTION_ENCRYPTION_ALGORITHMS =
+		"Encryption Algorithms";
+
+	private static final String _GUIDE_SECTION_PASSWORDS = "Passwords";
+
+	private static final String _GUIDE_SECTION_SECRETS_IN_PROPERTIES_FILES =
+		"Secrets in Properties Files";
+
+	private static final String _GUIDE_SECTION_SECURITY_PROVIDERS =
+		"Security Providers";
+
+	private static final String _GUIDE_SECTION_SESSION_TIMEOUT =
+		"Session Timeout";
+
+	private static final String _GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION =
+		"TLS and Certificate Revocation";
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
