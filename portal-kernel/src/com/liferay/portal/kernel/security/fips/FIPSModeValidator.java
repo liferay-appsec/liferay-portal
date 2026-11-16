@@ -122,6 +122,16 @@ public class FIPSModeValidator {
 		return _isNotAllowedAlgorithm(algorithm);
 	}
 
+	public static boolean isNotAllowedEncryptedPassword(
+		String encryptedPassword) {
+
+		if (!PropsValues.FIPS_ENABLED) {
+			return false;
+		}
+
+		return _isNotAllowedEncryptedPassword(encryptedPassword);
+	}
+
 	public static boolean isNotAllowedPassword(String password) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return false;
@@ -347,6 +357,30 @@ public class FIPSModeValidator {
 		}
 
 		return true;
+	}
+
+	private static boolean _isNotAllowedEncryptedPassword(
+		String encryptedPassword) {
+
+		if (Validator.isNull(encryptedPassword)) {
+			return false;
+		}
+
+		String algorithm = null;
+
+		if (encryptedPassword.charAt(0) == CharPool.OPEN_CURLY_BRACE) {
+			int index = encryptedPassword.indexOf(CharPool.CLOSE_CURLY_BRACE);
+
+			if (index > 0) {
+				algorithm = encryptedPassword.substring(1, index);
+			}
+		}
+		else {
+			algorithm = PropsUtil.get(
+				PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY);
+		}
+
+		return !StringUtil.startsWith(algorithm, PasswordEncryptor.TYPE_PBKDF2);
 	}
 
 	private static boolean _isNotAllowedPassword(String password) {
