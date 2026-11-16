@@ -137,6 +137,47 @@ public class FIPSModeValidatorTest {
 	}
 
 	@Test
+	public void testIsNotAllowedEncryptedPassword() {
+		String encryptedPassword = "{MD5}" + RandomTestUtil.randomString();
+
+		Assert.assertFalse(
+			FIPSModeValidator.isNotAllowedEncryptedPassword(encryptedPassword));
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			Assert.assertTrue(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					"{" + RandomTestUtil.randomString()));
+			Assert.assertFalse(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					"{PBKDF2WITHHMACSHA1}" + RandomTestUtil.randomString()));
+			Assert.assertFalse(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					"{pbkdf2withhmacsha256}" + RandomTestUtil.randomString()));
+			Assert.assertTrue(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					RandomTestUtil.randomString()));
+			Assert.assertTrue(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					encryptedPassword));
+			Assert.assertFalse(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(null));
+
+			try (SafeCloseable safeCloseable1 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY",
+						"PBKDF2WithHmacSHA1/160/1300000")) {
+
+				Assert.assertFalse(
+					FIPSModeValidator.isNotAllowedEncryptedPassword(
+						RandomTestUtil.randomString()));
+			}
+		}
+	}
+
+	@Test
 	public void testIsNotAllowedPassword() {
 		String password = RandomTestUtil.randomString(13);
 
