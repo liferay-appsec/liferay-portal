@@ -573,70 +573,43 @@ public class FIPSModeValidator {
 			!_allowedProviderNames.containsKey(name)) {
 
 			throw new SecurityException(
-				"The first security provider must be an allowed FIPS provider");
+				"The first security provider \"" + name +
+					"\" is not allowed in FIPS mode");
 		}
 
 		try {
-			if (Objects.equals(name, "AmazonCorrettoCryptoProvider")) {
-				Class<?> providerClass = provider.getClass();
+			Class<?> providerClass = provider.getClass();
 
-				Method assertHealthyMethod = ReflectionUtil.getDeclaredMethod(
-					providerClass, "assertHealthy");
+			ClassLoader classLoader = providerClass.getClassLoader();
 
-				assertHealthyMethod.invoke(provider);
+			Method isInApprovedOnlyModeMethod =
+				ReflectionUtil.getDeclaredMethod(
+					Class.forName(
+						"org.bouncycastle.crypto.CryptoServicesRegistrar", true,
+						classLoader),
+					"isInApprovedOnlyMode");
 
-				Method isExperimentalFIPSMethod =
-					ReflectionUtil.getDeclaredMethod(
-						providerClass, "isExperimentalFips");
-				Method isFIPSMethod = ReflectionUtil.getDeclaredMethod(
-					providerClass, "isFips");
-
-				if (!GetterUtil.getBoolean(
-						isExperimentalFIPSMethod.invoke(provider)) &&
-					GetterUtil.getBoolean(isFIPSMethod.invoke(provider))) {
-
-					return;
-				}
+			if (!GetterUtil.getBoolean(
+					isInApprovedOnlyModeMethod.invoke(null))) {
 
 				throw new SecurityException(
-					"AmazonCorrettoCryptoProvider must be a nonexperimental " +
-						"FIPS build");
+					"BCFIPS is not in approved only mode");
 			}
-			else if (Objects.equals(name, "BCFIPS")) {
-				Class<?> providerClass = provider.getClass();
 
-				ClassLoader classLoader = providerClass.getClassLoader();
+			Class<?> fipsStatusClass = Class.forName(
+				"org.bouncycastle.crypto.fips.FipsStatus", true, classLoader);
 
-				Method isInApprovedOnlyModeMethod =
+			Method isReadyMethod = ReflectionUtil.getDeclaredMethod(
+				fipsStatusClass, "isReady");
+
+			if (!GetterUtil.getBoolean(isReadyMethod.invoke(null))) {
+				Method getStatusMessageMethod =
 					ReflectionUtil.getDeclaredMethod(
-						Class.forName(
-							"org.bouncycastle.crypto.CryptoServicesRegistrar",
-							true, classLoader),
-						"isInApprovedOnlyMode");
+						fipsStatusClass, "getStatusMessage");
 
-				if (!GetterUtil.getBoolean(
-						isInApprovedOnlyModeMethod.invoke(null))) {
-
-					throw new SecurityException(
-						"BCFIPS is not in approved only mode");
-				}
-
-				Class<?> fipsStatusClass = Class.forName(
-					"org.bouncycastle.crypto.fips.FipsStatus", true,
-					classLoader);
-
-				Method isReadyMethod = ReflectionUtil.getDeclaredMethod(
-					fipsStatusClass, "isReady");
-
-				if (!GetterUtil.getBoolean(isReadyMethod.invoke(null))) {
-					Method getStatusMessageMethod =
-						ReflectionUtil.getDeclaredMethod(
-							fipsStatusClass, "getStatusMessage");
-
-					throw new SecurityException(
-						"BCFIPS integrity self test failed: " +
-							getStatusMessageMethod.invoke(null));
-				}
+				throw new SecurityException(
+					"BCFIPS integrity self test failed: " +
+						getStatusMessageMethod.invoke(null));
 			}
 		}
 		catch (SecurityException securityException) {
@@ -909,10 +882,6 @@ public class FIPSModeValidator {
 		"RS384", "RS512");
 	private static final Map<String, List<String>> _allowedProviderNames =
 		Map.of(
-			"AmazonCorrettoCryptoProvider",
-			List.of(
-				"JdkLDAP", "JdkSASL", "SUN", "SunEC", "SunJCE", "SunJGSS",
-				"SunJSSE", "SunRsaSign", "SunSASL", "XMLDSig"),
 			"BCFIPS",
 			List.of(
 				"BCJSSE", "JdkLDAP", "JdkSASL", "SUN", "SunJCE", "SunJGSS",
