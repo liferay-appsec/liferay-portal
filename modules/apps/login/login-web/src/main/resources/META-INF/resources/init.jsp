@@ -75,6 +75,7 @@ page import="com.liferay.portal.kernel.security.auth.FullNameDefinition" %><%@
 page import="com.liferay.portal.kernel.security.auth.FullNameDefinitionFactory" %><%@
 page import="com.liferay.portal.kernel.security.auth.PrincipalException" %><%@
 page import="com.liferay.portal.kernel.security.auth.ScreenNameValidator" %><%@
+page import="com.liferay.portal.kernel.security.fips.FIPSModeValidator" %><%@
 page import="com.liferay.portal.kernel.security.permission.ActionKeys" %><%@
 page import="com.liferay.portal.kernel.service.UserLocalServiceUtil" %><%@
 page import="com.liferay.portal.kernel.service.permission.PortletPermissionUtil" %><%@
