@@ -143,9 +143,9 @@ public class ConfigurationSecretConfigurationModelListener
 				continue;
 			}
 
-			String id = attributeDefinition.getID();
+			String key = attributeDefinition.getID();
 
-			if (!(properties.get(id) instanceof String value) ||
+			if (!(properties.get(key) instanceof String value) ||
 				Validator.isNull(value)) {
 
 				continue;
@@ -153,11 +153,11 @@ public class ConfigurationSecretConfigurationModelListener
 
 			try {
 				properties.put(
-					id,
+					key,
 					_secretResolver.store(
 						companyId,
 						SecretContext.createConfigurationSecretContext(
-							id, properties),
+							key, properties),
 						value));
 			}
 			catch (Exception exception) {
@@ -167,7 +167,7 @@ public class ConfigurationSecretConfigurationModelListener
 
 				fipsAuditEvent.put(
 					"configuration-pid", GetterUtil.getString(pid));
-				fipsAuditEvent.put("property-id", GetterUtil.getString(id));
+				fipsAuditEvent.put("property-id", GetterUtil.getString(key));
 
 				FIPSAuditUtil.write(fipsAuditEvent);
 
