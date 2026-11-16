@@ -119,6 +119,8 @@
 					</c:otherwise>
 				</c:choose>
 
+				<liferay-ui:error key="fipsPasswordTooShort" message='<%= LanguageUtil.format(request, "in-fips-mode,-passwords-must-be-at-least-x-bytes-long.-if-yours-is-shorter,-reset-it", FIPSModeValidator.PASSWORDS_MIN_LENGTH, false) %>' />
+
 				<liferay-ui:error exception="<%= CompanyMaxUsersException.class %>" message="unable-to-log-in-because-the-maximum-number-of-users-has-been-reached" />
 				<liferay-ui:error exception="<%= CookieNotSupportedException.class %>" message="authentication-failed-please-enable-browser-cookies" />
 				<liferay-ui:error exception="<%= NoSuchUserException.class %>" message="authentication-failed" />
