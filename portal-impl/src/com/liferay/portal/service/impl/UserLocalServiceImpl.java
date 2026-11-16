@@ -6105,10 +6105,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		else if ((authResult == Authenticator.SUCCESS) &&
 				 PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
 
-			boolean authenticated = PwdAuthenticator.authenticate(
-				login, password, user.getPassword());
+			if (FIPSModeValidator.isNotAllowedEncryptedPassword(
+					user.getPassword())) {
 
-			if (authenticated) {
+				PwdAuthenticator.pretendToAuthenticate();
+
+				_sendPasswordReset(user);
+
+				authResult = Authenticator.FAILURE;
+			}
+			else if (PwdAuthenticator.authenticate(
+						login, password, user.getPassword())) {
+
 				if (FIPSModeValidator.isNotAllowedPassword(password)) {
 					passwordReset = true;
 				}
@@ -7572,6 +7580,45 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 		catch (IOException ioException) {
 			throw new SystemException(ioException);
+		}
+	}
+
+	private void _sendPasswordReset(User user) {
+		try {
+			Company company = _companyPersistence.findByPrimaryKey(
+				user.getCompanyId());
+			PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
+
+			if (!company.isSendPasswordResetLink() ||
+				(passwordPolicy == null) || !passwordPolicy.isChangeable() ||
+				(serviceContext == null) ||
+				Validator.isNull(serviceContext.getPortalURL())) {
+
+				return;
+			}
+
+			List<Ticket> tickets = _ticketPersistence.findByC_C_C_T(
+				user.getCompanyId(),
+				_classNameLocalService.getClassNameId(User.class.getName()),
+				user.getUserId(), TicketConstants.TYPE_PASSWORD);
+
+			for (Ticket ticket : tickets) {
+				if (!ticket.isExpired()) {
+					return;
+				}
+			}
+
+			userLocalService.sendPassword(
+				user.getCompanyId(), user.getEmailAddress(), null, null, null,
+				null, serviceContext);
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to send the password reset email to user " +
+					user.getUserId(),
+				exception);
 		}
 	}
 
