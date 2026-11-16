@@ -112,6 +112,9 @@ import com.liferay.portal.kernel.security.auth.FullNameValidator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.security.auth.ScreenNameValidator;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -6120,15 +6123,25 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			else if (PwdAuthenticator.authenticate(
 						login, password, user.getPassword())) {
 
+				String encryptedPasswordAlgorithmSettings =
+					PasswordEncryptorUtil.getEncryptedPasswordAlgorithmSettings(
+						user.getPassword());
+
 				if (!StringUtil.equalsIgnoreCase(
-						PasswordEncryptorUtil.
-							getEncryptedPasswordAlgorithmSettings(
-								user.getPassword()),
+						encryptedPasswordAlgorithmSettings,
 						_PASSWORDS_ENCRYPTION_ALGORITHM)) {
 
 					user.setPassword(
 						PasswordEncryptorUtil.encrypt(
 							password, user.getPassword(), true));
+
+					if (PropsValues.FIPS_ENABLED) {
+						_writeFIPSAuditEvent(
+							FIPSAuditEventFactory.createPasswordRehash(
+								encryptedPasswordAlgorithmSettings,
+								_PASSWORDS_ENCRYPTION_ALGORITHM,
+								String.valueOf(user.getUserId())));
+					}
 				}
 
 				authResult = Authenticator.SUCCESS;
@@ -7609,6 +7622,10 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			userLocalService.sendPassword(
 				user.getCompanyId(), user.getEmailAddress(), null, null, null,
 				null, serviceContext);
+
+			_writeFIPSAuditEvent(
+				FIPSAuditEventFactory.createPasswordResetForced(
+					String.valueOf(user.getUserId())));
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -7781,6 +7798,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		return userLocalService.updateUser(user);
+	}
+
+	private void _writeFIPSAuditEvent(FIPSAuditEvent fipsAuditEvent) {
+		try {
+			FIPSAuditUtil.write(fipsAuditEvent);
+		}
+		catch (Throwable throwable) {
+			_log.error(
+				"Unable to write the FIPS audit event " +
+					fipsAuditEvent.getEventType(),
+				throwable);
+		}
 	}
 
 	private static final String _PASSWORDS_ENCRYPTION_ALGORITHM =
