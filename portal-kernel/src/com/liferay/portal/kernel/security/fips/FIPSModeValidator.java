@@ -10,9 +10,13 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.encryptor.CompanyKeyResolver;
+import com.liferay.portal.kernel.encryptor.EncryptorUtil;
+import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
@@ -36,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.security.Key;
 import java.security.Provider;
 import java.security.Security;
 
@@ -95,6 +100,12 @@ public class FIPSModeValidator {
 		return ArrayUtil.toStringArray(
 			SetUtil.intersect(
 				_allowedTLSProtocols, SetUtil.fromArray(tlsProtocols)));
+	}
+
+	public static List<String> getKeyEncryptionKeyViolations() {
+		return TransformUtil.transform(
+			_getKeyEncryptionKeySecurityExceptions(),
+			SecurityException::getMessage);
 	}
 
 	public static List<String> getPortalPropertiesViolations() {
@@ -176,6 +187,10 @@ public class FIPSModeValidator {
 		_validateKey(algorithm, keySize);
 	}
 
+	public static void validateKeyEncryptionKeys() {
+		_validate(_getKeyEncryptionKeySecurityExceptions());
+	}
+
 	public static void validatePassword(String password) {
 		if (isNotAllowedPassword(password)) {
 			throw new SecurityException(
@@ -219,6 +234,27 @@ public class FIPSModeValidator {
 						guideSection, "\" in the FIPS migration guide."),
 					securityException));
 		}
+	}
+
+	private static List<SecurityException>
+		_getKeyEncryptionKeySecurityExceptions() {
+
+		List<SecurityException> securityExceptions = new ArrayList<>();
+
+		CompanyKeyResolver companyKeyResolver =
+			_companyKeyResolverSnapshot.get();
+
+		if (companyKeyResolver == null) {
+			return securityExceptions;
+		}
+
+		CompanyLocalServiceUtil.forEachCompanyId(
+			companyId -> _collect(
+				_GUIDE_SECTION_KEY_ENCRYPTION_KEY,
+				() -> _validateKeyEncryptionKey(companyId, companyKeyResolver),
+				securityExceptions));
+
+		return securityExceptions;
 	}
 
 	private static List<String> _getPlaintextSecretProperties(
@@ -644,6 +680,37 @@ public class FIPSModeValidator {
 			"Key size " + keySize + " is not allowed in FIPS mode");
 	}
 
+	private static void _validateKeyEncryptionKey(
+		long companyId, CompanyKeyResolver companyKeyResolver) {
+
+		try {
+			if (!companyKeyResolver.isEnabled(companyId)) {
+				return;
+			}
+
+			Key key = EncryptorUtil.generateKey();
+
+			Key unwrappedKey = companyKeyResolver.unwrapKey(
+				companyId, companyKeyResolver.wrapKey(companyId, key));
+
+			if (!Arrays.equals(key.getEncoded(), unwrappedKey.getEncoded())) {
+				throw new SecurityException(
+					"The key encryption key of company " + companyId +
+						" did not return the key it wrapped");
+			}
+		}
+		catch (SecurityException securityException) {
+			throw securityException;
+		}
+		catch (Exception exception) {
+			throw new SecurityException(
+				StringBundler.concat(
+					"Unable to reach the key encryption key of company ",
+					companyId, ": ", exception.getMessage()),
+				exception);
+		}
+	}
+
 	private static void _validatePasswordsDefaultPolicyMinLength() {
 		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
 				PASSWORDS_MIN_LENGTH) {
@@ -854,6 +921,9 @@ public class FIPSModeValidator {
 	private static final String _GUIDE_SECTION_ENCRYPTION_ALGORITHMS =
 		"Encryption Algorithms";
 
+	private static final String _GUIDE_SECTION_KEY_ENCRYPTION_KEY =
+		"Key Encryption Key";
+
 	private static final String _GUIDE_SECTION_PASSWORDS = "Passwords";
 
 	private static final String _GUIDE_SECTION_SECRETS_IN_PROPERTIES_FILES =
@@ -898,6 +968,9 @@ public class FIPSModeValidator {
 		"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384");
 	private static final Set<String> _allowedTLSProtocols = Set.of(
 		"TLSv1.2", "TLSv1.3");
+	private static final Snapshot<CompanyKeyResolver>
+		_companyKeyResolverSnapshot = new Snapshot<>(
+			FIPSModeValidator.class, CompanyKeyResolver.class, null, true);
 	private static final Pattern _pbkdf2Pattern = Pattern.compile(
 		"^[^/]*(?:/([0-9]+))?/([0-9]+)$");
 	private static final Map<String, String[]> _requiredSecurityProperties =
