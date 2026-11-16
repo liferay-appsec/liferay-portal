@@ -74,11 +74,8 @@ public class FIPSOSGiCommands implements OSGiCommands {
 			}
 
 			lines.add(
-				"In FIPS mode, only PBKDF2 hashes sign in, and " +
-					"PBKDF2WITHHMACSHA1 is re-hashed at sign-in. Other " +
-						"hashes are refused at sign-in and go through a " +
-							"reset. Passwords under 14 bytes can't be " +
-								"counted from their hash.");
+				"In FIPS mode, a user whose stored hash is not PBKDF2 must " +
+					"reset it. See \"Passwords\" in the FIPS migration guide.");
 		}
 
 		lines.add(StringPool.BLANK);
