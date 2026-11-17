@@ -2992,8 +2992,8 @@ public class UserLocalServiceTest {
 			int expectedMailMessagesCount, String passwordsEncryptionAlgorithm)
 		throws Exception {
 
-		User user = UserTestUtil.addUser();
 		String password = RandomTestUtil.randomString(14);
+		User user = UserTestUtil.addUser();
 
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
