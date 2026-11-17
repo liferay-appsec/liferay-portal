@@ -176,11 +176,11 @@ public class OAuthClientASLocalMetadataLocalServiceTest {
 						_oAuthClientASLocalMetadata.
 							getOAuthClientASLocalMetadataId(),
 						metadataJSONObject.toString(), "openid-configuration");
-		}
 
-		Assert.assertEquals(
-			localWellKnownURI,
-			_oAuthClientASLocalMetadata.getLocalWellKnownURI());
+			Assert.assertEquals(
+				localWellKnownURI,
+				_oAuthClientASLocalMetadata.getLocalWellKnownURI());
+		}
 	}
 
 	private JSONObject _createMetadataJSONObject(String issuer) {

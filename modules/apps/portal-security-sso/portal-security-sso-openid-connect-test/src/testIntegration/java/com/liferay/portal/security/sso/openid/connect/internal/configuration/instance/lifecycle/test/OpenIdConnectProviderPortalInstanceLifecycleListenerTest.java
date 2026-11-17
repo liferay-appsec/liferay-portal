@@ -105,17 +105,18 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 					"FIPS_ENABLED", true)) {
 
 			ConfigurationTestUtil.deleteConfiguration(_pid1);
+
+			_pid1 = null;
+
+			Assert.assertNull(
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						TestPropsValues.getCompanyId(), issuerURL));
+			Assert.assertNull(
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), localWellKnownURI,
+					clientId));
 		}
-
-		_pid1 = null;
-
-		Assert.assertNull(
-			_oAuthClientASLocalMetadataLocalService.
-				fetchOAuthClientASLocalMetadata(
-					TestPropsValues.getCompanyId(), issuerURL));
-		Assert.assertNull(
-			_oAuthClientEntryLocalService.fetchOAuthClientEntry(
-				TestPropsValues.getCompanyId(), localWellKnownURI, clientId));
 	}
 
 	@Test
@@ -381,21 +382,24 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 
 		properties.put("tokenConnectionTimeout", tokenConnectionTimeout);
 
+		String localWellKnownURI = _generateLocalWellKnownURI(
+			issuerURL, tokenEndpoint);
+
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
 
 			ConfigurationTestUtil.saveConfiguration(_pid1, properties);
+
+			OAuthClientEntry oAuthClientEntry =
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), localWellKnownURI,
+					clientId);
+
+			Assert.assertEquals(
+				tokenConnectionTimeout,
+				oAuthClientEntry.getTokenConnectionTimeout());
 		}
-
-		OAuthClientEntry oAuthClientEntry =
-			_oAuthClientEntryLocalService.fetchOAuthClientEntry(
-				TestPropsValues.getCompanyId(),
-				_generateLocalWellKnownURI(issuerURL, tokenEndpoint), clientId);
-
-		Assert.assertEquals(
-			tokenConnectionTimeout,
-			oAuthClientEntry.getTokenConnectionTimeout());
 
 		Class<?> clazz = _portalInstanceLifecycleListener.getClass();
 
