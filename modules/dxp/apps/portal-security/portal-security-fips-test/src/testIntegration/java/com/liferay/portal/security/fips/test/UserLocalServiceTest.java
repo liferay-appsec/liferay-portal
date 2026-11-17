@@ -8,6 +8,7 @@ package com.liferay.portal.security.fips.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
@@ -106,6 +107,46 @@ public class UserLocalServiceTest {
 		Assert.assertEquals(
 			PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM),
 			fieldsJSONObject.getString("to-algorithm"));
+	}
+
+	@Test
+	public void testAuthenticateForBasic() throws Exception {
+		String password = RandomTestUtil.randomString(14);
+
+		User legacyUser = _addUser(password, "MD5");
+		User validUser = _addUser(
+			password, PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM));
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
+
+		serviceContext.setPathMain(_portal.getPathMain());
+		serviceContext.setPortalURL(RandomTestUtil.randomString());
+
+		ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
+		try (SafeCloseable safeCloseable =
+				FIPSTestUtil.enableFIPSModeWithSafeCloseable()) {
+
+			Assert.assertEquals(
+				0,
+				_userLocalService.authenticateForBasic(
+					legacyUser.getCompanyId(), CompanyConstants.AUTH_TYPE_EA,
+					legacyUser.getDisplayEmailAddress(), password));
+			Assert.assertEquals(
+				validUser.getUserId(),
+				_userLocalService.authenticateForBasic(
+					validUser.getCompanyId(), CompanyConstants.AUTH_TYPE_EA,
+					validUser.getDisplayEmailAddress(), password));
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+
+		List<JSONObject> jsonObjects = _getAuditLogJSONObjects(
+			"password-reset-forced", legacyUser);
+
+		Assert.assertEquals(jsonObjects.toString(), 1, jsonObjects.size());
 	}
 
 	private User _addUser(String password, String passwordsEncryptionAlgorithm)

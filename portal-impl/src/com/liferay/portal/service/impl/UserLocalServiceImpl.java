@@ -1733,6 +1733,26 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			userPassword = PasswordEncryptorUtil.encrypt(userPassword);
 		}
 
+		boolean notAllowedEncryptedPassword =
+			FIPSModeValidator.isNotAllowedEncryptedPassword(userPassword);
+
+		if (notAllowedEncryptedPassword ||
+			FIPSModeValidator.isNotAllowedPassword(password)) {
+
+			PwdAuthenticator.pretendToAuthenticate();
+
+			if (notAllowedEncryptedPassword) {
+				_sendPasswordReset(user);
+			}
+
+			handleAuthenticationFailure(
+				companyId, authType, login, user,
+				Collections.<String, String[]>emptyMap(),
+				Collections.<String, String[]>emptyMap());
+
+			return 0;
+		}
+
 		String encPassword = PasswordEncryptorUtil.encrypt(
 			password, userPassword);
 
