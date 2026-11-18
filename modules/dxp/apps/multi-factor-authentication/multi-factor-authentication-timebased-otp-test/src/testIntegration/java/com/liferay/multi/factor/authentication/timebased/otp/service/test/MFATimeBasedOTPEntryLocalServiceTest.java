@@ -142,6 +142,28 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testAddTimeBasedOTPEntryWhenSecretProviderIsNotConfigured()
+		throws Exception {
+
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			String sharedSecret = RandomTestUtil.randomString();
+
+			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
+				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
+					_user.getUserId(), sharedSecret);
+
+			Assert.assertEquals(
+				sharedSecret, mfaTimeBasedOTPEntry.getSharedSecret());
+		}
+	}
+
+	@Test
 	public void testAddTimeBasedOTPEntryWhenSharedSecretIsKeyReference()
 		throws Exception {
 
