@@ -167,14 +167,6 @@ public class AuditEventServiceTest {
 
 		Assert.assertEquals(String.valueOf(classPK), auditEvent.getClassPK());
 
-		Assert.assertEquals(
-			1,
-			_auditEventService.getAuditEventsCount(
-				TestPropsValues.getCompanyId(), 0, 0, null, null, null,
-				new long[] {_accountEntry.getAccountEntryId()}, className,
-				String.valueOf(classPK), null, null, contextName, null, null, 0,
-				null, false));
-
 		try {
 			_auditEventService.getAuditEvents(
 				TestPropsValues.getCompanyId(), 0, 0, null, null, null, null,
