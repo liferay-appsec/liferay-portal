@@ -80,21 +80,21 @@ public class AuditEventServiceTest {
 
 	@Test
 	public void testGetAuditEvents() throws Exception {
+		String className = RandomTestUtil.randomString();
+		long classPK = RandomTestUtil.randomLong();
 		String contextName = RandomTestUtil.randomString();
 
 		_auditEvents.add(
 			_auditEventLocalService.addAuditEvent(
 				AuditMessageBuilder.buildAuditMessage(
-					0L, RandomTestUtil.randomString(),
-					RandomTestUtil.randomLong(), contextName,
+					0L, className, RandomTestUtil.randomLong(), contextName,
 					RandomTestUtil.randomString(), new ArrayList<>())));
 		_auditEvents.add(
 			_auditEventLocalService.addAuditEvent(
 				AuditMessageBuilder.buildAuditMessage(
 					_accountEntry.getAccountEntryId(),
-					RandomTestUtil.randomString(), RandomTestUtil.randomLong(),
-					contextName, RandomTestUtil.randomString(),
-					new ArrayList<>())));
+					RandomTestUtil.randomString(), classPK, contextName,
+					RandomTestUtil.randomString(), new ArrayList<>())));
 		_auditEvents.add(
 			_auditEventLocalService.addAuditEvent(
 				AuditMessageBuilder.buildAuditMessage(
@@ -150,6 +150,27 @@ public class AuditEventServiceTest {
 			QueryUtil.ALL_POS, new AuditEventCreateDateComparator());
 
 		Assert.assertEquals(auditEvents.toString(), 2, auditEvents.size());
+
+		auditEvents = _auditEventService.getAuditEvents(
+			TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+			new long[] {_accountEntry.getAccountEntryId()}, className,
+			String.valueOf(classPK), null, null, contextName, null, null, 0,
+			null, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+			new AuditEventCreateDateComparator());
+
+		Assert.assertEquals(auditEvents.toString(), 1, auditEvents.size());
+
+		AuditEvent auditEvent = auditEvents.get(0);
+
+		Assert.assertEquals(String.valueOf(classPK), auditEvent.getClassPK());
+
+		Assert.assertEquals(
+			1,
+			_auditEventService.getAuditEventsCount(
+				TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+				new long[] {_accountEntry.getAccountEntryId()}, className,
+				String.valueOf(classPK), null, null, contextName, null, null, 0,
+				null, false));
 
 		try {
 			_auditEventService.getAuditEvents(
