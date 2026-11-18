@@ -71,7 +71,7 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"companySecretProviderId", _PROVIDER_ID
 			).put(
-				"systemSecretProviderId", _PROVIDER_ID
+				"systemSecretProviderId", RandomTestUtil.randomString()
 			).build());
 
 		_user = UserTestUtil.addUser();
