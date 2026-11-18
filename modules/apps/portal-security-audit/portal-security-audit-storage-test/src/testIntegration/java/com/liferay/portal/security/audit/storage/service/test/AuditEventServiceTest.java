@@ -81,7 +81,6 @@ public class AuditEventServiceTest {
 	@Test
 	public void testGetAuditEvents() throws Exception {
 		String className = RandomTestUtil.randomString();
-		long classPK = RandomTestUtil.randomLong();
 		String contextName = RandomTestUtil.randomString();
 
 		_auditEvents.add(
@@ -89,12 +88,16 @@ public class AuditEventServiceTest {
 				AuditMessageBuilder.buildAuditMessage(
 					0L, className, RandomTestUtil.randomLong(), contextName,
 					RandomTestUtil.randomString(), new ArrayList<>())));
+
+		long classPK = RandomTestUtil.randomLong();
+
 		_auditEvents.add(
 			_auditEventLocalService.addAuditEvent(
 				AuditMessageBuilder.buildAuditMessage(
 					_accountEntry.getAccountEntryId(),
 					RandomTestUtil.randomString(), classPK, contextName,
 					RandomTestUtil.randomString(), new ArrayList<>())));
+
 		_auditEvents.add(
 			_auditEventLocalService.addAuditEvent(
 				AuditMessageBuilder.buildAuditMessage(
