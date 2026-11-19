@@ -162,8 +162,7 @@ public class ConfigurationSecretConfigurationModelListener
 					key,
 					_secretResolver.store(
 						companyId,
-						SecretContext.createConfigurationSecretContext(
-							key, properties),
+						SecretContext.fromConfiguration(key, properties),
 						value));
 			}
 			catch (Exception exception) {

@@ -130,7 +130,7 @@ public class SharepointRepositoryTokenBroker {
 			ClientCredentialFactory.createFromSecret(
 				SecretResolverUtil.resolve(
 					GetterUtil.getLong(_properties.get("companyId")),
-					SecretContext.createConfigurationSecretContext(
+					SecretContext.fromConfiguration(
 						"clientSecret", _properties),
 					_sharepointRepositoryConfiguration.clientSecret()))
 		).authority(
