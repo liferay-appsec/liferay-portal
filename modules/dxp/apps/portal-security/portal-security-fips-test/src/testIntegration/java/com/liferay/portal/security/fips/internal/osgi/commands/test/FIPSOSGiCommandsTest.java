@@ -1,0 +1,121 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.security.fips.internal.osgi.commands.test;
+
+import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.osgi.util.osgi.commands.OSGiCommands;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+/**
+ * @author Jorge García Jiménez
+ */
+@RunWith(Arquillian.class)
+public class FIPSOSGiCommandsTest {
+
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new LiferayIntegrationTestRule();
+
+	@After
+	public void tearDown() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CONFIGURATION_PID);
+	}
+
+	@Test
+	public void testReadiness() throws Exception {
+		_user = UserTestUtil.addUser();
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PasswordEncryptorUtil.class,
+					"_PASSWORDS_ENCRYPTION_ALGORITHM", "MD5")) {
+
+			String password = RandomTestUtil.randomString(14);
+
+			_userLocalService.updatePassword(
+				_user.getUserId(), password, password, false, true);
+		}
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_MIN_LENGTH", 13)) {
+
+			String readiness = _getReadiness();
+
+			Assert.assertTrue(readiness.contains("- MD5: "));
+			Assert.assertTrue(
+				readiness.contains(
+					StringBundler.concat(
+						"FIPS mode requires the property \"",
+						PropsKeys.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH,
+						"\" to be at least 14. See \"Passwords\" in the FIPS ",
+						"migration guide.")));
+			Assert.assertTrue(
+				readiness.endsWith(
+					"Only the FIPS boot checks the JVM: the security " +
+						"providers, the SecureRandom provider, and the TLS " +
+							"and certificate revocation properties."));
+			Assert.assertFalse(readiness.contains("key encryption key"));
+		}
+
+		ConfigurationTestUtil.saveConfiguration(
+			_KEY_MANAGER_CONFIGURATION_PID,
+			HashMapDictionaryBuilder.<String, Object>put(
+				"companyKEKIdentifier", RandomTestUtil.randomString()
+			).build());
+
+		String readiness = _getReadiness();
+
+		Assert.assertTrue(
+			readiness.contains(
+				"Unable to reach the key encryption key of company " +
+					TestPropsValues.getCompanyId() + ": "));
+	}
+
+	private String _getReadiness() {
+		return ReflectionTestUtil.invoke(
+			_osgiCommands, "readiness", new Class<?>[0]);
+	}
+
+	private static final String _KEY_MANAGER_CONFIGURATION_PID =
+		"com.liferay.portal.security.key.internal.profile.configuration." +
+			"KeyManagerConfiguration";
+
+	@Inject(filter = "osgi.command.scope=fips")
+	private OSGiCommands _osgiCommands;
+
+	@DeleteAfterTestRun
+	private User _user;
+
+	@Inject
+	private UserLocalService _userLocalService;
+
+}

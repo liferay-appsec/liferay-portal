@@ -9,6 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.login.web.constants.LoginPortletKeys;
 import com.liferay.multi.factor.authentication.spi.checker.headless.HeadlessMFAChecker;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
 import com.liferay.portal.kernel.model.Company;
@@ -26,11 +27,13 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -253,6 +256,41 @@ public class LoginMVCActionCommandTest {
 				logEntryMessage.contains(
 					"Ignoring login attempt because the password parameter " +
 						"was found for the request with the referer header:"));
+		}
+	}
+
+	@Test
+	public void testProcessActionWithShortPasswordInFIPSMode()
+		throws Exception {
+
+		try (CompanyConfigurationTemporarySwapper
+				configurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						_company.getCompanyId(),
+						"com.liferay.multi.factor.authentication.email.otp." +
+							"configuration.MFAEmailOTPConfiguration",
+						HashMapDictionaryBuilder.<String, Object>put(
+							"enabled", true
+						).build());
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
+				_getMockLiferayPortletActionRequest(
+					HashMapBuilder.put(
+						"login", RandomTestUtil.randomString() + "@liferay.com"
+					).put(
+						"password", RandomTestUtil.randomString(13)
+					).build());
+
+			_mvcActionCommand.processAction(
+				mockLiferayPortletActionRequest,
+				new MockLiferayPortletActionResponse());
+
+			Assert.assertTrue(
+				SessionErrors.contains(
+					mockLiferayPortletActionRequest, "fipsPasswordTooShort"));
 		}
 	}
 

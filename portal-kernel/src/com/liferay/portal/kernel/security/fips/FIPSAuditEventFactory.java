@@ -50,4 +50,27 @@ public class FIPSAuditEventFactory {
 		return fipsAuditEvent;
 	}
 
+	public static FIPSAuditEvent createPasswordRehash(
+		String fromAlgorithm, String toAlgorithm, String userId) {
+
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"password-rehash", FIPSAuditEvent.Severity.INFO);
+
+		fipsAuditEvent.put(
+			"from-algorithm", GetterUtil.getString(fromAlgorithm));
+		fipsAuditEvent.put("to-algorithm", GetterUtil.getString(toAlgorithm));
+		fipsAuditEvent.put("user-id", GetterUtil.getString(userId));
+
+		return fipsAuditEvent;
+	}
+
+	public static FIPSAuditEvent createPasswordResetForced(String userId) {
+		FIPSAuditEvent fipsAuditEvent = new FIPSAuditEvent(
+			"password-reset-forced", FIPSAuditEvent.Severity.WARNING);
+
+		fipsAuditEvent.put("user-id", GetterUtil.getString(userId));
+
+		return fipsAuditEvent;
+	}
+
 }

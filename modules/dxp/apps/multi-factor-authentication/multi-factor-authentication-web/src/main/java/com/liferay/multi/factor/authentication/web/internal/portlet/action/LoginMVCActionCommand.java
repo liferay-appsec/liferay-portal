@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.auth.AuthException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Accessor;
@@ -152,6 +153,11 @@ public class LoginMVCActionCommand extends BaseMVCActionCommand {
 						}
 
 						SessionErrors.add(actionRequest, exception.getClass());
+
+						if (FIPSModeValidator.isNotAllowedPassword(password)) {
+							SessionErrors.add(
+								actionRequest, "fipsPasswordTooShort");
+						}
 					}
 				}
 				else if (exception instanceof CompanyMaxUsersException ||
