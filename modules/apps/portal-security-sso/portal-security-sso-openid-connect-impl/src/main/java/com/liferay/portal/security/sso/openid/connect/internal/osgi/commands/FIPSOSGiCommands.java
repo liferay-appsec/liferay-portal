@@ -22,10 +22,13 @@ import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
+import com.liferay.portal.kernel.util.Base64;
+import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
 import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
+
+import java.security.MessageDigest;
 
 import java.util.List;
 
@@ -47,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
 public class FIPSOSGiCommands implements OSGiCommands {
 
 	@Descriptor(
-		"Update the hash in the local well known URI of every OpenID Connect provider to the algorithm of the current FIPS mode"
+		"Update the hash in the local well known URI of every OpenID Connect provider to SHA-256"
 	)
 	public String updateLocalWellKnownURIs() throws Exception {
 		int count = 0;
@@ -139,9 +142,12 @@ public class FIPSOSGiCommands implements OSGiCommands {
 
 		String prefix = localWellKnownURI.substring(0, index);
 
+		MessageDigest messageDigest = MessageDigest.getInstance(
+			DigesterUtil.SHA_256);
+
 		return StringBundler.concat(
 			prefix, "/",
-			OpenIdConnectProviderUtil.generateTokenEndpointHash(tokenEndpoint),
+			Base64.encodeToURL(messageDigest.digest(tokenEndpoint.getBytes())),
 			"/local");
 	}
 

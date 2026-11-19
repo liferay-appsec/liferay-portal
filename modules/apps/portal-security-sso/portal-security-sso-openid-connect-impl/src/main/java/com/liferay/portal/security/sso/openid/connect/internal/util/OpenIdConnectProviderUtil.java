@@ -34,21 +34,14 @@ public class OpenIdConnectProviderUtil {
 		throws Exception {
 
 		URI issuerURI = URI.create(issuer);
+		MessageDigest messageDigest = MessageDigest.getInstance(
+			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
 
 		return StringBundler.concat(
 			issuerURI.getScheme(), "://", issuerURI.getAuthority(),
 			"/.well-known/openid-configuration", issuerURI.getPath(), '/',
-			generateTokenEndpointHash(tokenEndpoint), "/local");
-	}
-
-	public static String generateTokenEndpointHash(String tokenEndpoint)
-		throws Exception {
-
-		MessageDigest messageDigest = MessageDigest.getInstance(
-			PropsValues.FIPS_ENABLED ? DigesterUtil.SHA_256 : DigesterUtil.MD5);
-
-		return Base64.encodeToURL(
-			messageDigest.digest(tokenEndpoint.getBytes()));
+			Base64.encodeToURL(messageDigest.digest(tokenEndpoint.getBytes())),
+			"/local");
 	}
 
 	public static long getOAuthClientEntryId(

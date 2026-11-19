@@ -103,38 +103,38 @@ public class FIPSOSGiCommandsTest {
 				_openIdConnectSessionLocalService.updateOpenIdConnectSession(
 					openIdConnectSession);
 
+			_updateLocalWellKnownURIs();
+
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						TestPropsValues.getCompanyId(), issuerURL);
+
+			String newLocalWellKnownURI =
+				oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+			Assert.assertNotEquals(localWellKnownURI, newLocalWellKnownURI);
+
+			OAuthClientEntry newOAuthClientEntry =
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), newLocalWellKnownURI,
+					clientId);
+
+			Assert.assertEquals(
+				oAuthClientEntry.getOAuthClientEntryId(),
+				newOAuthClientEntry.getOAuthClientEntryId());
+
+			openIdConnectSession =
+				_openIdConnectSessionLocalService.getOpenIdConnectSession(
+					openIdConnectSession.getOpenIdConnectSessionId());
+
+			Assert.assertEquals(
+				newLocalWellKnownURI,
+				openIdConnectSession.getAuthServerWellKnownURI());
+
 			try (SafeCloseable safeCloseable =
 					PropsValuesTestUtil.swapWithSafeCloseable(
 						"FIPS_ENABLED", true)) {
-
-				_updateLocalWellKnownURIs();
-
-				oAuthClientASLocalMetadata =
-					_oAuthClientASLocalMetadataLocalService.
-						fetchOAuthClientASLocalMetadata(
-							TestPropsValues.getCompanyId(), issuerURL);
-
-				String newLocalWellKnownURI =
-					oAuthClientASLocalMetadata.getLocalWellKnownURI();
-
-				Assert.assertNotEquals(localWellKnownURI, newLocalWellKnownURI);
-
-				OAuthClientEntry newOAuthClientEntry =
-					_oAuthClientEntryLocalService.fetchOAuthClientEntry(
-						TestPropsValues.getCompanyId(), newLocalWellKnownURI,
-						clientId);
-
-				Assert.assertEquals(
-					oAuthClientEntry.getOAuthClientEntryId(),
-					newOAuthClientEntry.getOAuthClientEntryId());
-
-				openIdConnectSession =
-					_openIdConnectSessionLocalService.getOpenIdConnectSession(
-						openIdConnectSession.getOpenIdConnectSessionId());
-
-				Assert.assertEquals(
-					newLocalWellKnownURI,
-					openIdConnectSession.getAuthServerWellKnownURI());
 
 				Assert.assertEquals(
 					"Updated 0 local well known URIs",
