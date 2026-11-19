@@ -5,7 +5,6 @@
 
 package com.liferay.portal.remote.json.web.service.web.internal;
 
-import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -28,8 +27,8 @@ public class JSONRPCRequest {
 		HttpServletRequest httpServletRequest) {
 
 		try {
-			String requestBody = StreamUtil.toString(
-				httpServletRequest.getInputStream());
+			String requestBody = JSONWebServiceRequestBodyUtil.getRequestBody(
+				httpServletRequest);
 
 			if (Validator.isNull(requestBody) ||
 				!requestBody.startsWith(StringPool.OPEN_CURLY_BRACE) ||
@@ -65,6 +64,9 @@ public class JSONRPCRequest {
 			}
 
 			return jsonrpcRequest;
+		}
+		catch (RequestEntityTooLargeException requestEntityTooLargeException) {
+			throw requestEntityTooLargeException;
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
