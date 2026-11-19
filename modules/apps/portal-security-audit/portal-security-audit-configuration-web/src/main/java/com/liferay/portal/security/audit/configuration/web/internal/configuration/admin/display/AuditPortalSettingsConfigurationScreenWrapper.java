@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.configuration.web.internal.display.context.AuditConfigurationDisplayContext;
 import com.liferay.portal.security.audit.router.configuration.FileSystemAuditMessageProcessorConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorCompanyConfiguration;
+import com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration;
 import com.liferay.portal.settings.configuration.admin.display.PortalSettingsConfigurationScreenContributor;
 import com.liferay.portal.settings.configuration.admin.display.PortalSettingsConfigurationScreenFactory;
 
@@ -113,18 +115,31 @@ public class AuditPortalSettingsConfigurationScreenWrapper
 					_getConfiguration(AuditConfiguration.class),
 					_getConfiguration(
 						FileSystemAuditMessageProcessorConfiguration.class),
+					_getConfiguration(
+						PersistentAuditMessageProcessorCompanyConfiguration.
+							class),
+					_getSystemConfiguration(
+						PersistentAuditMessageProcessorConfiguration.class),
 					ExtendedObjectClassDefinition.Scope.SYSTEM.equals(_scope)));
 		}
 
 		private <T> T _getConfiguration(Class<T> clazz) {
-			try {
-				if (ExtendedObjectClassDefinition.Scope.COMPANY.equals(
-						_scope)) {
-
+			if (ExtendedObjectClassDefinition.Scope.COMPANY.equals(_scope)) {
+				try {
 					return _configurationProvider.getCompanyConfiguration(
 						clazz, CompanyThreadLocal.getCompanyId());
 				}
+				catch (ConfigurationException configurationException) {
+					return ReflectionUtil.throwException(
+						configurationException);
+				}
+			}
 
+			return _getSystemConfiguration(clazz);
+		}
+
+		private <T> T _getSystemConfiguration(Class<T> clazz) {
+			try {
 				return _configurationProvider.getSystemConfiguration(clazz);
 			}
 			catch (ConfigurationException configurationException) {

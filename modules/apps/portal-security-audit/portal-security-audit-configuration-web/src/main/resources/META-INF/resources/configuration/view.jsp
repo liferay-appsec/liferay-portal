@@ -50,6 +50,12 @@ AuditConfigurationDisplayContext auditConfigurationDisplayContext = (AuditConfig
 	</aui:script>
 </c:if>
 
+<c:if test="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorVisible() %>">
+	<h3 class="sheet-subtitle"><liferay-ui:message key="database-processor" /></h3>
+
+	<aui:input disabled="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorEnabledOverridden() || auditConfigurationDisplayContext.isPersistentAuditMessageProcessorSystemDisabled() %>" helpMessage="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorEnabledHelpMessage() %>" label="enable-database-processor" name="persistentAuditMessageProcessorEnabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorEnabled() %>" />
+</c:if>
+
 <h3 class="sheet-subtitle"><liferay-ui:message key="file-system-processor" /></h3>
 
 <aui:input disabled="<%= auditConfigurationDisplayContext.isFileSystemAuditMessageProcessorEnabledOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getFileSystemAuditMessageProcessorEnabledHelpMessage() %>" label="enable-file-system-processor" name="fileSystemAuditMessageProcessorEnabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isFileSystemAuditMessageProcessorEnabled() %>" />
