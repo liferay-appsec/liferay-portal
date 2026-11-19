@@ -121,6 +121,7 @@ public class AuditMessageTest {
 		_testConstructorWhenFeatureFlagIsDisabled();
 		_testConstructorWithHeadlessRequest();
 		_testConstructorWithHeadlessRequestWithoutCSRFToken();
+		_testConstructorWithJSON();
 		_testConstructorWithPortalRequest();
 	}
 
@@ -377,6 +378,35 @@ public class AuditMessageTest {
 
 		_assertNoImpersonatedUser(
 			_getHeadlessAuditMessage(_getMockHttpServletRequest()));
+	}
+
+	private void _testConstructorWithJSON() throws Exception {
+		long[] accountEntryIds = {
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong()
+		};
+
+		AuditMessage auditMessage = _getAuditMessage(
+			String.valueOf(_user.getUserId()));
+
+		auditMessage.setAccountEntryIds(accountEntryIds);
+
+		JSONObject jsonObject = auditMessage.toJSONObject();
+
+		auditMessage = new AuditMessage(jsonObject.toString());
+
+		Assert.assertArrayEquals(
+			accountEntryIds, auditMessage.getAccountEntryIds());
+
+		auditMessage = _getAuditMessage(String.valueOf(_user.getUserId()));
+
+		jsonObject = auditMessage.toJSONObject();
+
+		Assert.assertFalse(jsonObject.has("accountEntryIds"));
+
+		auditMessage = new AuditMessage(jsonObject.toString());
+
+		Assert.assertArrayEquals(
+			new long[0], auditMessage.getAccountEntryIds());
 	}
 
 	private void _testConstructorWithPortalRequest() throws Exception {
