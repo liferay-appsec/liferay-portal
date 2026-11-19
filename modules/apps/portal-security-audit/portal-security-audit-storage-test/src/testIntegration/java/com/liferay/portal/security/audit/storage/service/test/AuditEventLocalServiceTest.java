@@ -8,16 +8,24 @@ package com.liferay.portal.security.audit.storage.service.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
+import com.liferay.portal.security.audit.storage.model.AuditEventAccountEntryRel;
+import com.liferay.portal.security.audit.storage.service.AuditEventAccountEntryRelLocalService;
 import com.liferay.portal.security.audit.storage.service.AuditEventLocalService;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -38,10 +46,16 @@ public class AuditEventLocalServiceTest {
 
 	@Test
 	public void testAddAuditEvent() {
+		long[] accountEntryIds = {
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong()
+		};
+
 		AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
 			RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), new ArrayList<>());
+
+		auditMessage.setAccountEntryIds(accountEntryIds);
 
 		long companyId = RandomTestUtil.randomLong();
 
@@ -109,8 +123,77 @@ public class AuditEventLocalServiceTest {
 
 		Assert.assertEquals(companyId, persistedAuditEvent.getCompanyId());
 
+		_assertAuditEventAccountEntryRels(accountEntryIds, auditEvent);
+
 		_testAddAuditEvent(StringPool.BLANK);
 		_testAddAuditEvent(null);
+	}
+
+	@Test
+	public void testAddAuditEvents() {
+		long[] accountEntryIds = {
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong()
+		};
+
+		AuditMessage auditMessage1 = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		auditMessage1.setAccountEntryIds(accountEntryIds);
+
+		AuditMessage auditMessage2 = new AuditMessage(
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		_auditEventLocalService.addAuditEvents(
+			Arrays.asList(auditMessage1, auditMessage2));
+
+		_assertAuditEventAccountEntryRels(
+			accountEntryIds, _getAuditEvent(auditMessage1));
+		_assertAuditEventAccountEntryRels(
+			new long[0], _getAuditEvent(auditMessage2));
+	}
+
+	private void _assertAuditEventAccountEntryRels(
+		long[] accountEntryIds, AuditEvent auditEvent) {
+
+		DynamicQuery dynamicQuery =
+			_auditEventAccountEntryRelLocalService.dynamicQuery();
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"auditEventId", auditEvent.getAuditEventId()));
+
+		List<AuditEventAccountEntryRel> auditEventAccountEntryRels =
+			_auditEventAccountEntryRelLocalService.dynamicQuery(dynamicQuery);
+
+		Assert.assertEquals(
+			auditEventAccountEntryRels.toString(), accountEntryIds.length,
+			auditEventAccountEntryRels.size());
+
+		for (AuditEventAccountEntryRel auditEventAccountEntryRel :
+				auditEventAccountEntryRels) {
+
+			Assert.assertTrue(
+				ArrayUtil.contains(
+					accountEntryIds,
+					auditEventAccountEntryRel.getAccountEntryId()));
+			Assert.assertEquals(
+				auditEvent.getCompanyId(),
+				auditEventAccountEntryRel.getCompanyId());
+			Assert.assertEquals(
+				auditEvent.getCreateDate(),
+				auditEventAccountEntryRel.getCreateDate());
+		}
+	}
+
+	private AuditEvent _getAuditEvent(AuditMessage auditMessage) {
+		List<AuditEvent> auditEvents = _auditEventLocalService.getAuditEvents(
+			auditMessage.getCompanyId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		Assert.assertEquals(auditEvents.toString(), 1, auditEvents.size());
+
+		return auditEvents.get(0);
 	}
 
 	private void _testAddAuditEvent(String contextName) {
@@ -127,7 +210,13 @@ public class AuditEventLocalServiceTest {
 		Assert.assertEquals(
 			AuditEventConstants.CONTEXT_NAME_INSTANCE,
 			auditEvent.getContextName());
+
+		_assertAuditEventAccountEntryRels(new long[0], auditEvent);
 	}
+
+	@Inject
+	private AuditEventAccountEntryRelLocalService
+		_auditEventAccountEntryRelLocalService;
 
 	@Inject
 	private AuditEventLocalService _auditEventLocalService;
