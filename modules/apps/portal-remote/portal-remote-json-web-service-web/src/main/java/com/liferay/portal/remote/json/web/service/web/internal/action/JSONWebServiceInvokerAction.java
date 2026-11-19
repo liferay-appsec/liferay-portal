@@ -5,7 +5,6 @@
 
 package com.liferay.portal.remote.json.web.service.web.internal.action;
 
-import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
@@ -17,6 +16,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.remote.json.web.service.JSONWebServiceAction;
 import com.liferay.portal.remote.json.web.service.JSONWebServiceActionsManager;
+import com.liferay.portal.remote.json.web.service.web.internal.JSONWebServiceRequestBodyUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -55,8 +55,8 @@ public class JSONWebServiceInvokerAction implements JSONWebServiceAction {
 
 		if (command == null) {
 			try {
-				command = StreamUtil.toString(
-					httpServletRequest.getInputStream());
+				command = JSONWebServiceRequestBodyUtil.getRequestBody(
+					httpServletRequest);
 			}
 			catch (IOException ioException) {
 				throw new IllegalArgumentException(ioException);

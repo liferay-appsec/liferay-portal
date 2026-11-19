@@ -1,0 +1,19 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.remote.json.web.service.web.internal;
+
+/**
+ * @author Jorge García Jiménez
+ */
+public class RequestEntityTooLargeException extends RuntimeException {
+
+	public RequestEntityTooLargeException(long maxRequestLength) {
+		super(
+			"Request body exceeds the maximum length of " + maxRequestLength +
+				" bytes");
+	}
+
+}
