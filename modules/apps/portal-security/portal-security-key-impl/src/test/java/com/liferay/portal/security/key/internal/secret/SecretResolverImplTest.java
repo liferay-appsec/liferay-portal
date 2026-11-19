@@ -9,19 +9,23 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
 import com.liferay.portal.security.key.secret.Secret;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.exception.SecretException;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,9 +33,14 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+
+import org.osgi.framework.Constants;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
  * @author Pedro Victor Silvestre
@@ -238,6 +247,101 @@ public class SecretResolverImplTest {
 	}
 
 	@Test
+	public void testResolveWithSecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+		String pid = RandomTestUtil.randomString();
+
+		SecretContext secretContext = SecretContext.fromConfiguration(
+			key,
+			HashMapBuilder.<String, Object>put(
+				ConfigurationAdmin.SERVICE_FACTORYPID, pid + ".scoped"
+			).put(
+				Constants.SERVICE_PID,
+				pid + ".scoped~" + RandomTestUtil.randomString()
+			).put(
+				"companyId", companyId
+			).build());
+
+		String identifier = StringBundler.concat(
+			"config/", pid, "/company/", companyId, StringPool.SLASH, key);
+
+		_assertResolve(companyId, identifier, companyId, secretContext);
+		_assertResolveRejects(
+			RandomTestUtil.randomLong(), identifier, secretContext);
+
+		_assertResolveRejects(
+			companyId, StringBundler.concat("config/", pid, "/system/0/", key),
+			secretContext);
+
+		String name = RandomTestUtil.randomString();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", pid, StringPool.SLASH, name, "/company/", companyId,
+				StringPool.SLASH, key),
+			companyId,
+			SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					ConfigurationAdmin.SERVICE_FACTORYPID, pid
+				).put(
+					Constants.SERVICE_PID, pid + "~" + name
+				).put(
+					"companyId", companyId
+				).build()));
+
+		long groupId = RandomTestUtil.randomLong();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", pid, "/group/", groupId, StringPool.SLASH, key),
+			companyId,
+			SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					ConfigurationAdmin.SERVICE_FACTORYPID, pid + ".scoped"
+				).put(
+					Constants.SERVICE_PID,
+					pid + ".scoped~" + RandomTestUtil.randomString()
+				).put(
+					"companyId", companyId
+				).put(
+					"groupId", groupId
+				).build()));
+
+		String portletInstanceId = RandomTestUtil.randomString();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", pid, "/portlet-instance/", portletInstanceId,
+				StringPool.SLASH, key),
+			CompanyConstants.SYSTEM,
+			SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					ConfigurationAdmin.SERVICE_FACTORYPID, pid + ".scoped"
+				).put(
+					Constants.SERVICE_PID,
+					pid + ".scoped~" + RandomTestUtil.randomString()
+				).put(
+					"portletInstanceId", portletInstanceId
+				).build()));
+
+		_assertResolve(
+			companyId, StringBundler.concat("config/", pid, "/system/0/", key),
+			CompanyConstants.SYSTEM,
+			SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					Constants.SERVICE_PID, pid
+				).build()));
+	}
+
+	@Test
 	public void testStore() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
@@ -260,6 +364,75 @@ public class SecretResolverImplTest {
 			_testStoreWhenValueReferencesSameKeyInAnotherScope();
 			_testStoreWhenValueReferencesSameSlot();
 		}
+	}
+
+	@Test
+	public void testStoreWithSecretContext() throws Exception {
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			_testStoreWithSecretContext();
+			_testStoreWithSecretContextWhenFIPSIsDisabled();
+			_testStoreWithSecretContextWhenValueReferencesAnotherContext();
+			_testStoreWithSecretContextWhenValueReferencesSameContext();
+		}
+	}
+
+	private void _assertFIPSAuditEvent(
+		long companyId, MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic,
+		String identifier, String operation) {
+
+		ArgumentCaptor<FIPSAuditEvent> argumentCaptor = ArgumentCaptor.forClass(
+			FIPSAuditEvent.class);
+
+		fipsAuditUtilMockedStatic.verify(
+			() -> FIPSAuditUtil.write(argumentCaptor.capture()));
+
+		FIPSAuditEvent fipsAuditEvent = argumentCaptor.getValue();
+
+		Assert.assertEquals(
+			"secret-reference-refused", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"company-id", companyId
+			).put(
+				"identifier", identifier
+			).put(
+				"operation", operation
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
+	private void _assertResolve(
+			long companyId, String identifier, long scopeCompanyId,
+			SecretContext secretContext)
+		throws Exception {
+
+		KeyReference keyReference = new KeyReference(
+			identifier, RandomTestUtil.randomString(),
+			KeyReference.Type.SECRET);
+		String value = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_secretManager.getSecret(scopeCompanyId, keyReference)
+		).thenReturn(
+			new Secret(keyReference, value)
+		);
+
+		String keyReferenceString = KeyReferenceUtil.toKeyReferenceString(
+			keyReference);
+
+		Assert.assertEquals(
+			value,
+			_secretResolverImpl.resolve(
+				companyId, secretContext, keyReferenceString));
+
+		Mockito.verify(
+			_portalCache
+		).put(
+			scopeCompanyId + StringPool.POUND + keyReferenceString, value, 600
+		);
 	}
 
 	private void _assertResolve(String providerId) throws Exception {
@@ -300,6 +473,66 @@ public class SecretResolverImplTest {
 		);
 	}
 
+	private void _assertResolveRejects(
+		long companyId, String identifier, SecretContext secretContext) {
+
+		Mockito.clearInvocations(_secretManager);
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			Assert.assertThrows(
+				SecretException.class,
+				() -> _secretResolverImpl.resolve(
+					companyId, secretContext,
+					_toKeyReferenceString(identifier)));
+
+			_assertFIPSAuditEvent(
+				companyId, fipsAuditUtilMockedStatic, identifier, "resolve");
+		}
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _assertStore(
+			long companyId, String identifier, SecretContext secretContext)
+		throws Exception {
+
+		KeyReference keyReference = new KeyReference(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			KeyReference.Type.SECRET);
+
+		Mockito.when(
+			_secretManager.putSecret(Mockito.eq(companyId), Mockito.any())
+		).thenReturn(
+			keyReference
+		);
+
+		Assert.assertEquals(
+			KeyReferenceUtil.toKeyReferenceString(keyReference),
+			_secretResolverImpl.store(
+				companyId, secretContext, RandomTestUtil.randomString()));
+
+		ArgumentCaptor<Secret> argumentCaptor = ArgumentCaptor.forClass(
+			Secret.class);
+
+		Mockito.verify(
+			_secretManager
+		).putSecret(
+			Mockito.eq(companyId), argumentCaptor.capture()
+		);
+
+		Secret secret = argumentCaptor.getValue();
+
+		KeyReference secretKeyReference = secret.getKeyReference();
+
+		Assert.assertEquals(identifier, secretKeyReference.getIdentifier());
+		Assert.assertEquals(
+			StringPool.STAR, secretKeyReference.getProviderId());
+
+		Assert.assertTrue(secret.isDestroyed());
+	}
+
 	private void _assertStore(String identifier) throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 
@@ -307,16 +540,10 @@ public class SecretResolverImplTest {
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			KeyReference.Type.SECRET);
 
-		AtomicReference<Secret> atomicReference = new AtomicReference<>();
-
 		Mockito.when(
 			_secretManager.putSecret(Mockito.eq(companyId), Mockito.any())
-		).thenAnswer(
-			invocationOnMock -> {
-				atomicReference.set(invocationOnMock.getArgument(1));
-
-				return keyReference;
-			}
+		).thenReturn(
+			keyReference
 		);
 
 		Assert.assertEquals(
@@ -324,7 +551,16 @@ public class SecretResolverImplTest {
 			_secretResolverImpl.store(
 				companyId, identifier, RandomTestUtil.randomString()));
 
-		Secret secret = atomicReference.get();
+		ArgumentCaptor<Secret> argumentCaptor = ArgumentCaptor.forClass(
+			Secret.class);
+
+		Mockito.verify(
+			_secretManager
+		).putSecret(
+			Mockito.eq(companyId), argumentCaptor.capture()
+		);
+
+		Secret secret = argumentCaptor.getValue();
 
 		KeyReference secretKeyReference = secret.getKeyReference();
 
@@ -509,6 +745,109 @@ public class SecretResolverImplTest {
 			RandomTestUtil.randomString());
 
 		_assertStoreKeepsValue(preferenceIdentifier, preferenceIdentifier);
+	}
+
+	private void _testStoreWithSecretContext() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+		String pid = RandomTestUtil.randomString();
+
+		_assertStore(
+			companyId,
+			StringBundler.concat(
+				"config/", pid, "/company/", companyId, StringPool.SLASH, key),
+			SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					Constants.SERVICE_PID, pid
+				).put(
+					"companyId", companyId
+				).build()));
+	}
+
+	private void _testStoreWithSecretContextWhenFIPSIsDisabled()
+		throws Exception {
+
+		Mockito.clearInvocations(_secretManager);
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", false)) {
+
+			String value = RandomTestUtil.randomString();
+
+			Assert.assertEquals(
+				value,
+				_secretResolverImpl.store(
+					RandomTestUtil.randomLong(),
+					SecretContext.fromConfiguration(
+						RandomTestUtil.randomString(), Collections.emptyMap()),
+					value));
+		}
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _testStoreWithSecretContextWhenValueReferencesAnotherContext() {
+		Mockito.clearInvocations(_secretManager);
+
+		try (MockedStatic<FIPSAuditUtil> fipsAuditUtilMockedStatic =
+				Mockito.mockStatic(FIPSAuditUtil.class)) {
+
+			long companyId = RandomTestUtil.randomLong();
+			String key = RandomTestUtil.randomString();
+			String pid = RandomTestUtil.randomString();
+
+			String identifier = StringBundler.concat(
+				"config/", pid, "/company/", RandomTestUtil.randomLong(),
+				StringPool.SLASH, key);
+			SecretContext secretContext = SecretContext.fromConfiguration(
+				key,
+				HashMapBuilder.<String, Object>put(
+					Constants.SERVICE_PID, pid
+				).put(
+					"companyId", companyId
+				).build());
+
+			Assert.assertThrows(
+				SecretException.class,
+				() -> _secretResolverImpl.store(
+					companyId, secretContext,
+					_toKeyReferenceString(identifier)));
+
+			_assertFIPSAuditEvent(
+				companyId, fipsAuditUtilMockedStatic, identifier, "store");
+		}
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private void _testStoreWithSecretContextWhenValueReferencesSameContext() {
+		Mockito.clearInvocations(_secretManager);
+
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+		String pid = RandomTestUtil.randomString();
+
+		String identifier = StringBundler.concat(
+			"config/", pid, "/company/", companyId, StringPool.SLASH, key);
+
+		String keyReferenceString = _toKeyReferenceString(identifier);
+
+		Assert.assertEquals(
+			keyReferenceString,
+			_secretResolverImpl.store(
+				companyId,
+				SecretContext.fromConfiguration(
+					key,
+					HashMapBuilder.<String, Object>put(
+						Constants.SERVICE_PID, pid
+					).put(
+						"companyId", companyId
+					).build()),
+				keyReferenceString));
+
+		Mockito.verifyNoInteractions(_secretManager);
 	}
 
 	private String _toKeyReferenceString(String identifier) {

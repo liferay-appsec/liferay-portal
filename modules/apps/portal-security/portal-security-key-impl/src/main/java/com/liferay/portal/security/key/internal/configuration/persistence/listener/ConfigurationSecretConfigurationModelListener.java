@@ -6,9 +6,7 @@
 package com.liferay.portal.security.key.internal.configuration.persistence.listener;
 
 import com.liferay.configuration.admin.util.ConfigurationPidUtil;
-import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeInformation;
 import com.liferay.portal.configuration.metatype.definitions.ExtendedMetaTypeService;
@@ -21,10 +19,11 @@ import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.internal.secret.SecretIdentifierUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
@@ -101,7 +100,10 @@ public class ConfigurationSecretConfigurationModelListener
 
 					String identifier = keyReference.getIdentifier();
 
-					if (!identifier.startsWith(_IDENTIFIER_PREFIX)) {
+					if (!identifier.equals(
+							SecretIdentifierUtil.getSecretIdentifier(
+								key, pid, properties))) {
+
 						continue;
 					}
 
@@ -147,9 +149,9 @@ public class ConfigurationSecretConfigurationModelListener
 				continue;
 			}
 
-			String id = attributeDefinition.getID();
+			String key = attributeDefinition.getID();
 
-			if (!(properties.get(id) instanceof String value) ||
+			if (!(properties.get(key) instanceof String value) ||
 				Validator.isNull(value)) {
 
 				continue;
@@ -157,14 +159,10 @@ public class ConfigurationSecretConfigurationModelListener
 
 			try {
 				properties.put(
-					id,
+					key,
 					_secretResolver.store(
 						companyId,
-						StringBundler.concat(
-							_IDENTIFIER_PREFIX,
-							StringUtil.replace(
-								pid, CharPool.TILDE, CharPool.SLASH),
-							StringPool.SLASH, companyId, StringPool.SLASH, id),
+						SecretContext.fromConfiguration(key, properties),
 						value));
 			}
 			catch (Exception exception) {
@@ -174,7 +172,7 @@ public class ConfigurationSecretConfigurationModelListener
 
 				fipsAuditEvent.put(
 					"configuration-pid", GetterUtil.getString(pid));
-				fipsAuditEvent.put("property-id", GetterUtil.getString(id));
+				fipsAuditEvent.put("property-id", GetterUtil.getString(key));
 
 				FIPSAuditUtil.write(fipsAuditEvent);
 
@@ -260,8 +258,6 @@ public class ConfigurationSecretConfigurationModelListener
 
 		return null;
 	}
-
-	private static final String _IDENTIFIER_PREFIX = "config/";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ConfigurationSecretConfigurationModelListener.class);
