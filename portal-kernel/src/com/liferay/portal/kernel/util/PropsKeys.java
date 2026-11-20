@@ -1330,6 +1330,9 @@ public interface PropsKeys {
 	public static final String JSONWS_WEB_SERVICE_INVALID_HTTP_METHODS =
 		"jsonws.web.service.invalid.http.methods";
 
+	public static final String JSONWS_WEB_SERVICE_MAX_REQUEST_LENGTH =
+		"jsonws.web.service.max.request.length";
+
 	public static final String
 		JSONWS_WEB_SERVICE_PARAMETER_TYPE_WHITELIST_CLASS_NAMES =
 			"jsonws.web.service.parameter.type.whitelist.class.names";

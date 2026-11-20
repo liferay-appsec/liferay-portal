@@ -1074,6 +1074,10 @@ public class PropsValues {
 	public static final String[] JSONWS_WEB_SERVICE_INVALID_HTTP_METHODS =
 		PropsUtil.getArray(PropsKeys.JSONWS_WEB_SERVICE_INVALID_HTTP_METHODS);
 
+	public static final long JSONWS_WEB_SERVICE_MAX_REQUEST_LENGTH =
+		GetterUtil.getLong(
+			PropsUtil.get(PropsKeys.JSONWS_WEB_SERVICE_MAX_REQUEST_LENGTH));
+
 	public static final boolean JSONWS_WEB_SERVICE_STRICT_HTTP_METHOD =
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.JSONWS_WEB_SERVICE_STRICT_HTTP_METHOD));
