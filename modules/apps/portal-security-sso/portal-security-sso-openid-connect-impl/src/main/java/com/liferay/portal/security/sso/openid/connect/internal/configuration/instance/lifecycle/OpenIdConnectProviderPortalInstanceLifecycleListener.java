@@ -80,6 +80,8 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 
 		if (PropsValues.FIPS_ENABLED) {
 			_updateLocalWellKnownURIs(company.getCompanyId());
+
+			_checkOrphanedOAuthClientEntries(company.getCompanyId());
 		}
 
 		_properties.forEach(
@@ -140,6 +142,40 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 				properties.get("tokenConnectionTimeout"),
 				OAuthClientEntryConstants.TOKEN_CONNECTION_TIMEOUT_DEFAULT),
 			_generateTokenRequestParametersJSON(properties));
+	}
+
+	private void _checkOrphanedOAuthClientEntries(long companyId) {
+		for (OAuthClientEntry oAuthClientEntry :
+				_oAuthClientEntryLocalService.getCompanyOAuthClientEntries(
+					companyId)) {
+
+			String authServerWellKnownURI =
+				oAuthClientEntry.getAuthServerWellKnownURI();
+
+			if (!authServerWellKnownURI.endsWith("/local")) {
+				continue;
+			}
+
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadataByLocalWellKnownURI(
+						companyId, authServerWellKnownURI);
+
+			if (oAuthClientASLocalMetadata != null) {
+				continue;
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"OAuth client entry ",
+						oAuthClientEntry.getOAuthClientEntryId(),
+						" points to the local well known URI ",
+						authServerWellKnownURI,
+						", which has no OAuth client authorization server ",
+						"local metadata"));
+			}
+		}
 	}
 
 	private String _deleteOAuthClientASLocalMetadata(
