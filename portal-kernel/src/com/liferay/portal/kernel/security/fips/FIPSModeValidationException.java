@@ -29,12 +29,15 @@ public class FIPSModeValidationException extends SecurityException {
 		for (int i = 0; i < _validationErrors.size(); i++) {
 			ValidationError validationError = _validationErrors.get(i);
 
+			MigrationGuideSection migrationGuideSection =
+				validationError.getMigrationGuideSection();
+
 			sb.append(StringPool.NEW_LINE);
 			sb.append(i + 1);
 			sb.append(". ");
 			sb.append(validationError.getErrorMessage());
 			sb.append(". See \"");
-			sb.append(validationError.getGuideSection());
+			sb.append(migrationGuideSection.getTitle());
 			sb.append("\" in the FIPS migration guide.");
 		}
 
@@ -56,9 +59,10 @@ public class FIPSModeValidationException extends SecurityException {
 	public static class ValidationError {
 
 		public ValidationError(
-			String guideSection, SecurityException securityException) {
+			MigrationGuideSection migrationGuideSection,
+			SecurityException securityException) {
 
-			_guideSection = guideSection;
+			_migrationGuideSection = migrationGuideSection;
 			_securityException = securityException;
 		}
 
@@ -66,16 +70,38 @@ public class FIPSModeValidationException extends SecurityException {
 			return _securityException.getMessage();
 		}
 
-		public String getGuideSection() {
-			return _guideSection;
+		public MigrationGuideSection getMigrationGuideSection() {
+			return _migrationGuideSection;
 		}
 
 		public SecurityException getSecurityException() {
 			return _securityException;
 		}
 
-		private final String _guideSection;
+		private final MigrationGuideSection _migrationGuideSection;
 		private final SecurityException _securityException;
+
+	}
+
+	public enum MigrationGuideSection {
+
+		CLUSTER_LINK("Cluster Link"),
+		ENCRYPTION_ALGORITHMS("Encryption Algorithms"),
+		KEY_ENCRYPTION_KEY("Key Encryption Key"), PASSWORDS("Passwords"),
+		SECRETS_IN_PROPERTIES_FILES("Secrets in Properties Files"),
+		SECURITY_PROVIDERS("Security Providers"),
+		SESSION_TIMEOUT("Session Timeout"),
+		TLS_AND_CERTIFICATE_REVOCATION("TLS and Certificate Revocation");
+
+		public String getTitle() {
+			return _title;
+		}
+
+		private MigrationGuideSection(String title) {
+			_title = title;
+		}
+
+		private final String _title;
 
 	}
 

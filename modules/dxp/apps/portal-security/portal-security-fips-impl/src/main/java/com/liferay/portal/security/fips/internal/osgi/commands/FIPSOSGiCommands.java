@@ -8,6 +8,7 @@ package com.liferay.portal.security.fips.internal.osgi.commands;
 import com.liferay.osgi.util.osgi.commands.OSGiCommands;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.MigrationGuideSection;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.ValidationError;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -47,10 +48,13 @@ public class FIPSOSGiCommands implements OSGiCommands {
 			for (int i = 0; i < validationErrors.size(); i++) {
 				ValidationError validationError = validationErrors.get(i);
 
+				MigrationGuideSection migrationGuideSection =
+					validationError.getMigrationGuideSection();
+
 				lines.add(
 					StringBundler.concat(
 						i + 1, ". ", validationError.getErrorMessage(),
-						". See \"", validationError.getGuideSection(),
+						". See \"", migrationGuideSection.getTitle(),
 						"\" in the FIPS migration guide."));
 			}
 		}

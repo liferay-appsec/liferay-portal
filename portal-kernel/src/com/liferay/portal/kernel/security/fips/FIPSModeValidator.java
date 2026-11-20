@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.MigrationGuideSection;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.ValidationError;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptor;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
@@ -122,7 +123,7 @@ public class FIPSModeValidator {
 
 		CompanyLocalServiceUtil.forEachCompanyId(
 			companyId -> _addValidationError(
-				_GUIDE_SECTION_KEY_ENCRYPTION_KEY,
+				MigrationGuideSection.KEY_ENCRYPTION_KEY,
 				() -> _validateKeyEncryptionKey(companyId, companyKeyResolver),
 				validationErrors));
 
@@ -134,46 +135,46 @@ public class FIPSModeValidator {
 
 		if (GetterUtil.getBoolean(PropsUtil.get(PropsKeys.AUTH_MAC_ALLOW))) {
 			_addValidationError(
-				_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+				MigrationGuideSection.ENCRYPTION_ALGORITHMS,
 				() -> _validateAlgorithm(
 					PropsUtil.get(PropsKeys.AUTH_MAC_ALGORITHM)),
 				validationErrors);
 		}
 
 		_addValidationError(
-			_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+			MigrationGuideSection.ENCRYPTION_ALGORITHMS,
 			() -> _validateAlgorithm(
 				PropsUtil.get(PropsKeys.COMPANY_ENCRYPTION_ALGORITHM)),
 			validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_ENCRYPTION_ALGORITHMS,
+			MigrationGuideSection.ENCRYPTION_ALGORITHMS,
 			() -> _validateAlgorithm(
 				PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM),
 			validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+			MigrationGuideSection.TLS_AND_CERTIFICATE_REVOCATION,
 			FIPSModeValidator::_validateTunnelUtilVerifySSLHostname,
 			validationErrors);
 
 		_validateClusterLinkConfiguration(validationErrors);
 
 		_addValidationError(
-			_GUIDE_SECTION_PASSWORDS,
+			MigrationGuideSection.PASSWORDS,
 			() -> _validatePasswordsEncryptionAlgorithm(
 				PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM)),
 			validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_PASSWORDS,
+			MigrationGuideSection.PASSWORDS,
 			FIPSModeValidator::_validateDefaultAdminPassword, validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_PASSWORDS,
+			MigrationGuideSection.PASSWORDS,
 			FIPSModeValidator::_validatePasswordsDefaultPolicyMinLength,
 			validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_SECRETS_IN_PROPERTIES_FILES,
+			MigrationGuideSection.SECRETS_IN_PROPERTIES_FILES,
 			FIPSModeValidator::_validatePlaintextSecrets, validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_SESSION_TIMEOUT,
+			MigrationGuideSection.SESSION_TIMEOUT,
 			() -> _validateSessionTimeout(PropsValues.SESSION_TIMEOUT),
 			validationErrors);
 
@@ -201,14 +202,14 @@ public class FIPSModeValidator {
 		List<ValidationError> validationErrors = new ArrayList<>();
 
 		_addValidationError(
-			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			MigrationGuideSection.SECURITY_PROVIDERS,
 			() -> _validateFIPSProvider(providers), validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			MigrationGuideSection.SECURITY_PROVIDERS,
 			() -> _validateProviders(providers), validationErrors);
 
 		_addValidationError(
-			_GUIDE_SECTION_SECURITY_PROVIDERS,
+			MigrationGuideSection.SECURITY_PROVIDERS,
 			FIPSModeValidator::_validateSecureRandomProvider, validationErrors);
 
 		_validateAllowedPropertyValues(System::getProperty, validationErrors);
@@ -284,7 +285,7 @@ public class FIPSModeValidator {
 	}
 
 	private static void _addValidationError(
-		String guideSection, Runnable runnable,
+		MigrationGuideSection migrationGuideSection, Runnable runnable,
 		List<ValidationError> validationErrors) {
 
 		try {
@@ -292,7 +293,7 @@ public class FIPSModeValidator {
 		}
 		catch (SecurityException securityException) {
 			validationErrors.add(
-				new ValidationError(guideSection, securityException));
+				new ValidationError(migrationGuideSection, securityException));
 		}
 	}
 
@@ -406,7 +407,7 @@ public class FIPSModeValidator {
 				new TreeMap<>(_allowedSystemProperties).entrySet()) {
 
 			_addValidationError(
-				_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+				MigrationGuideSection.TLS_AND_CERTIFICATE_REVOCATION,
 				() -> _validateAllowedPropertyValues(
 					entry.getValue(), entry.getKey(),
 					StringUtil.removeChar(
@@ -529,7 +530,7 @@ public class FIPSModeValidator {
 		}
 
 		_addValidationError(
-			_GUIDE_SECTION_CLUSTER_LINK,
+			MigrationGuideSection.CLUSTER_LINK,
 			() -> _validateAllowedPropertyValues(
 				new String[] {"BCFKS"},
 				PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE,
@@ -537,7 +538,7 @@ public class FIPSModeValidator {
 					PropsUtil.get(PropsKeys.CLUSTER_LINK_AUTH_KEYSTORE_TYPE))),
 			validationErrors);
 		_addValidationError(
-			_GUIDE_SECTION_CLUSTER_LINK,
+			MigrationGuideSection.CLUSTER_LINK,
 			() -> _validateClusterLinkChannelConfiguration(
 				GetterUtil.getString(
 					PropsUtil.get(
@@ -549,7 +550,7 @@ public class FIPSModeValidator {
 
 		for (Object channelPropertiesLocation : properties.values()) {
 			_addValidationError(
-				_GUIDE_SECTION_CLUSTER_LINK,
+				MigrationGuideSection.CLUSTER_LINK,
 				() -> _validateClusterLinkChannelConfiguration(
 					GetterUtil.getString(channelPropertiesLocation)),
 				validationErrors);
@@ -811,7 +812,7 @@ public class FIPSModeValidator {
 				new TreeMap<>(propertiesMap).entrySet()) {
 
 			_addValidationError(
-				_GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION,
+				MigrationGuideSection.TLS_AND_CERTIFICATE_REVOCATION,
 				() -> _validateRequiredPropertyValues(
 					entry.getKey(), entry.getValue(),
 					StringUtil.removeChar(
@@ -887,28 +888,6 @@ public class FIPSModeValidator {
 						"\" to be enabled");
 		}
 	}
-
-	private static final String _GUIDE_SECTION_CLUSTER_LINK = "Cluster Link";
-
-	private static final String _GUIDE_SECTION_ENCRYPTION_ALGORITHMS =
-		"Encryption Algorithms";
-
-	private static final String _GUIDE_SECTION_KEY_ENCRYPTION_KEY =
-		"Key Encryption Key";
-
-	private static final String _GUIDE_SECTION_PASSWORDS = "Passwords";
-
-	private static final String _GUIDE_SECTION_SECRETS_IN_PROPERTIES_FILES =
-		"Secrets in Properties Files";
-
-	private static final String _GUIDE_SECTION_SECURITY_PROVIDERS =
-		"Security Providers";
-
-	private static final String _GUIDE_SECTION_SESSION_TIMEOUT =
-		"Session Timeout";
-
-	private static final String _GUIDE_SECTION_TLS_AND_CERTIFICATE_REVOCATION =
-		"TLS and Certificate Revocation";
 
 	private static final int _PASSWORDS_ENCRYPTION_ALGORITHM_KEY_SIZE_MIN = 112;
 
