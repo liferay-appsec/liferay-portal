@@ -37,7 +37,15 @@ public class MFATimeBasedOTPUtil {
 
 	public static final int MFA_TIMEBASED_OTP_DIGITS = 6;
 
+	public static final int MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN = 14;
+
 	public static String generateSharedSecret(int algorithmKeySize) {
+		if (PropsValues.FIPS_ENABLED) {
+			algorithmKeySize = Math.max(
+				algorithmKeySize,
+				MFA_TIMEBASED_OTP_FIPS_ALGORITHM_KEY_SIZE_MIN);
+		}
+
 		int count = (int)Math.ceil((double)algorithmKeySize / 8);
 
 		byte[] buffer = new byte[count * 8];
@@ -53,8 +61,24 @@ public class MFATimeBasedOTPUtil {
 		return Base32.encode(secret);
 	}
 
+	public static String getAlgorithm() {
+		if (PropsValues.FIPS_ENABLED) {
+			return "HmacSHA256";
+		}
+
+		return "HmacSHA1";
+	}
+
+	public static String[] getAlgorithms() {
+		if (PropsValues.FIPS_ENABLED) {
+			return new String[] {"HmacSHA256", "HmacSHA1"};
+		}
+
+		return new String[] {"HmacSHA1", "HmacSHA256"};
+	}
+
 	public static boolean verifyTimeBasedOTP(
-		long clockSkew, String sharedSecret, String value) {
+		String algorithm, long clockSkew, String sharedSecret, String value) {
 
 		long initialTime =
 			(System.currentTimeMillis() - clockSkew) /
@@ -65,7 +89,7 @@ public class MFATimeBasedOTPUtil {
 
 		for (long i = initialTime; i <= finalTime; i++) {
 			String timeBasedOTP = _generateTimeBasedOTP(
-				Base32.decode(sharedSecret), _getTimeCountHex(i));
+				algorithm, Base32.decode(sharedSecret), _getTimeCountHex(i));
 
 			if (MessageDigest.isEqual(
 					value.getBytes(StandardCharsets.UTF_8),
@@ -78,8 +102,8 @@ public class MFATimeBasedOTPUtil {
 		return false;
 	}
 
-	private static byte[] _generateHMAC(byte[] key, String text) {
-		String algorithm = PropsValues.FIPS_ENABLED ? "HmacSHA256" : "HmacSHA1";
+	private static byte[] _generateHMAC(
+		String algorithm, byte[] key, String text) {
 
 		try {
 			Mac mac = Mac.getInstance(algorithm);
@@ -105,9 +129,9 @@ public class MFATimeBasedOTPUtil {
 	}
 
 	private static String _generateTimeBasedOTP(
-		byte[] sharedSecret, String timeCountHex) {
+		String algorithm, byte[] sharedSecret, String timeCountHex) {
 
-		byte[] hash = _generateHMAC(sharedSecret, timeCountHex);
+		byte[] hash = _generateHMAC(algorithm, sharedSecret, timeCountHex);
 
 		int offset = hash[hash.length - 1] & 0xf;
 

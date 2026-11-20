@@ -95,7 +95,70 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 	}
 
 	@Test
-	public void testAddTimeBasedOTPEntryUsesAPortableSecretIdentifier()
+	public void testAddTimeBasedOTPEntry() throws Exception {
+		_testAddTimeBasedOTPEntry();
+		_testAddTimeBasedOTPEntryUsesAPortableSecretIdentifier();
+		_testAddTimeBasedOTPEntryWhenPutSecretFails();
+		_testAddTimeBasedOTPEntryWhenSharedSecretIsKeyReference();
+	}
+
+	@Test
+	public void testDeleteMFATimeBasedOTPEntry() throws Exception {
+		_testDeleteMFATimeBasedOTPEntry();
+		_testDeleteMFATimeBasedOTPEntryByPrimaryKey();
+	}
+
+	@Test
+	public void testGetPlaintextSharedSecret() throws Exception {
+		_testGetPlaintextSharedSecret();
+		_testGetPlaintextSharedSecretWhenFIPSIsDisabled();
+		_testGetPlaintextSharedSecretWhenSharedSecretIsPlaintext();
+	}
+
+	@Test
+	public void testUpdateAlgorithm() throws Exception {
+		_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
+			_user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString());
+
+		String algorithm = RandomTestUtil.randomString();
+
+		_mfaTimeBasedOTPEntryLocalService.updateAlgorithm(
+			_user.getUserId(), algorithm);
+
+		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
+			_mfaTimeBasedOTPEntryLocalService.fetchMFATimeBasedOTPEntryByUserId(
+				_user.getUserId());
+
+		Assert.assertEquals(algorithm, mfaTimeBasedOTPEntry.getAlgorithm());
+	}
+
+	private String _getSecretIdentifier(
+		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry) {
+
+		KeyReference keyReference = KeyReferenceUtil.toKeyReference(
+			mfaTimeBasedOTPEntry.getSharedSecret());
+
+		return keyReference.getIdentifier();
+	}
+
+	private void _testAddTimeBasedOTPEntry() throws Exception {
+		String algorithm = RandomTestUtil.randomString();
+
+		_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
+			_user.getUserId(), algorithm, RandomTestUtil.randomString());
+
+		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
+			_mfaTimeBasedOTPEntryLocalService.fetchMFATimeBasedOTPEntryByUserId(
+				_user.getUserId());
+
+		Assert.assertEquals(algorithm, mfaTimeBasedOTPEntry.getAlgorithm());
+
+		_mfaTimeBasedOTPEntryLocalService.deleteMFATimeBasedOTPEntry(
+			mfaTimeBasedOTPEntry);
+	}
+
+	private void _testAddTimeBasedOTPEntryUsesAPortableSecretIdentifier()
 		throws Exception {
 
 		try (AutoCloseable autoCloseable =
@@ -104,7 +167,8 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 
 			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-					_user.getUserId(), RandomTestUtil.randomString());
+					_user.getUserId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString());
 
 			String secretIdentifier = _getSecretIdentifier(
 				mfaTimeBasedOTPEntry);
@@ -113,11 +177,15 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 				secretIdentifier);
 
 			Assert.assertTrue(secretIdentifier, matcher.matches());
+
+			_mfaTimeBasedOTPEntryLocalService.deleteMFATimeBasedOTPEntry(
+				mfaTimeBasedOTPEntry);
 		}
 	}
 
-	@Test
-	public void testAddTimeBasedOTPEntryWhenPutSecretFails() throws Exception {
+	private void _testAddTimeBasedOTPEntryWhenPutSecretFails()
+		throws Exception {
+
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PropsValues.class, "FIPS_ENABLED", true)) {
@@ -126,7 +194,8 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 
 			try {
 				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-					_user.getUserId(), RandomTestUtil.randomString());
+					_user.getUserId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString());
 
 				Assert.fail();
 			}
@@ -141,13 +210,12 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 		}
 	}
 
-	@Test
-	public void testAddTimeBasedOTPEntryWhenSharedSecretIsKeyReference()
+	private void _testAddTimeBasedOTPEntryWhenSharedSecretIsKeyReference()
 		throws Exception {
 
 		try {
 			_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-				_user.getUserId(),
+				_user.getUserId(), RandomTestUtil.randomString(),
 				KeyReferenceUtil.toKeyReferenceString(
 					new KeyReference(
 						RandomTestUtil.randomString(), StringPool.STAR,
@@ -163,15 +231,15 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 		}
 	}
 
-	@Test
-	public void testDeleteMFATimeBasedOTPEntry() throws Exception {
+	private void _testDeleteMFATimeBasedOTPEntry() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PropsValues.class, "FIPS_ENABLED", true)) {
 
 			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-					_user.getUserId(), RandomTestUtil.randomString());
+					_user.getUserId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString());
 
 			long companyId = mfaTimeBasedOTPEntry.getCompanyId();
 			String secretIdentifier = _getSecretIdentifier(
@@ -196,15 +264,17 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 		}
 	}
 
-	@Test
-	public void testDeleteMFATimeBasedOTPEntryByPrimaryKey() throws Exception {
+	private void _testDeleteMFATimeBasedOTPEntryByPrimaryKey()
+		throws Exception {
+
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PropsValues.class, "FIPS_ENABLED", true)) {
 
 			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-					_user.getUserId(), RandomTestUtil.randomString());
+					_user.getUserId(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString());
 
 			long companyId = mfaTimeBasedOTPEntry.getCompanyId();
 			String secretIdentifier = _getSecretIdentifier(
@@ -222,8 +292,7 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 		}
 	}
 
-	@Test
-	public void testGetPlaintextSharedSecret() throws Exception {
+	private void _testGetPlaintextSharedSecret() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
 					PropsValues.class, "FIPS_ENABLED", true)) {
@@ -232,7 +301,8 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 
 			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-					_user.getUserId(), sharedSecret);
+					_user.getUserId(), RandomTestUtil.randomString(),
+					sharedSecret);
 
 			Assert.assertEquals(
 				sharedSecret,
@@ -241,18 +311,20 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 			Assert.assertTrue(
 				KeyReferenceUtil.isKeyReference(
 					mfaTimeBasedOTPEntry.getSharedSecret()));
+
+			_mfaTimeBasedOTPEntryLocalService.deleteMFATimeBasedOTPEntry(
+				mfaTimeBasedOTPEntry);
 		}
 	}
 
-	@Test
-	public void testGetPlaintextSharedSecretWhenFIPSIsDisabled()
+	private void _testGetPlaintextSharedSecretWhenFIPSIsDisabled()
 		throws Exception {
 
 		String sharedSecret = RandomTestUtil.randomString();
 
 		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 			_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-				_user.getUserId(), sharedSecret);
+				_user.getUserId(), RandomTestUtil.randomString(), sharedSecret);
 
 		Assert.assertEquals(
 			sharedSecret, mfaTimeBasedOTPEntry.getSharedSecret());
@@ -260,17 +332,19 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 			sharedSecret,
 			_mfaTimeBasedOTPEntryLocalService.getPlaintextSharedSecret(
 				mfaTimeBasedOTPEntry));
+
+		_mfaTimeBasedOTPEntryLocalService.deleteMFATimeBasedOTPEntry(
+			mfaTimeBasedOTPEntry);
 	}
 
-	@Test
-	public void testGetPlaintextSharedSecretWhenSharedSecretIsPlaintext()
+	private void _testGetPlaintextSharedSecretWhenSharedSecretIsPlaintext()
 		throws Exception {
 
 		String sharedSecret = RandomTestUtil.randomString();
 
 		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
 			_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
-				_user.getUserId(), sharedSecret);
+				_user.getUserId(), RandomTestUtil.randomString(), sharedSecret);
 
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
@@ -281,15 +355,6 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 				_mfaTimeBasedOTPEntryLocalService.getPlaintextSharedSecret(
 					mfaTimeBasedOTPEntry));
 		}
-	}
-
-	private String _getSecretIdentifier(
-		MFATimeBasedOTPEntry mfaTimeBasedOTPEntry) {
-
-		KeyReference keyReference = KeyReferenceUtil.toKeyReference(
-			mfaTimeBasedOTPEntry.getSharedSecret());
-
-		return keyReference.getIdentifier();
 	}
 
 	private static final String _KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID =
