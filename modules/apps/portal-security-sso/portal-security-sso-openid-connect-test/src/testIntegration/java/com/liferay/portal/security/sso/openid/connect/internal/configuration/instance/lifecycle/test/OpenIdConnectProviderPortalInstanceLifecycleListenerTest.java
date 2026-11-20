@@ -6,11 +6,13 @@
 package com.liferay.portal.security.sso.openid.connect.internal.configuration.instance.lifecycle.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.oauth.client.persistence.constants.OAuthClientEntryConstants;
 import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
@@ -19,11 +21,14 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
+import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
@@ -325,6 +330,12 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 
 			Assert.assertEquals(messages.toString(), 0, messages.size());
 		}
+
+		ConfigurationTestUtil.deleteConfiguration(_pid1);
+
+		_pid1 = null;
+
+		_testPortalInstanceRegisteredWhenFIPSIsEnabled(company);
 	}
 
 	@Test
@@ -506,8 +517,179 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 				oAuthClientASLocalMetadata.getLocalWellKnownURI(), clientId1));
 	}
 
+	private void _testPortalInstanceRegisteredWhenFIPSIsEnabled(Company company)
+		throws Exception {
+
+		String clientId = RandomTestUtil.randomString();
+		String issuerURL = "http://" + RandomTestUtil.randomString();
+
+		Dictionary<String, Object> properties =
+			HashMapDictionaryBuilder.<String, Object>put(
+				"authorizationEndpoint",
+				"http://" + RandomTestUtil.randomString()
+			).put(
+				"companyId", TestPropsValues.getCompanyId()
+			).put(
+				"issuerURL", issuerURL
+			).put(
+				"jwksURI", "http://" + RandomTestUtil.randomString()
+			).put(
+				"openIdConnectClientId", clientId
+			).put(
+				"subjectTypes", new String[] {"public"}
+			).put(
+				"tokenEndpoint", "http://" + RandomTestUtil.randomString()
+			).put(
+				"userInfoEndpoint", "http://" + RandomTestUtil.randomString()
+			).build();
+
+		_pid2 = ConfigurationTestUtil.createFactoryConfiguration(
+			"com.liferay.portal.security.sso.openid.connect.internal." +
+				"configuration.OpenIdConnectProviderConfiguration",
+			properties);
+
+		OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+			_oAuthClientASLocalMetadataLocalService.
+				fetchOAuthClientASLocalMetadata(
+					TestPropsValues.getCompanyId(), issuerURL);
+
+		String localWellKnownURI =
+			oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+		OpenIdConnectSession openIdConnectSession =
+			_openIdConnectSessionLocalService.createOpenIdConnectSession(
+				_counterLocalService.increment());
+
+		openIdConnectSession.setCompanyId(TestPropsValues.getCompanyId());
+		openIdConnectSession.setUserId(TestPropsValues.getUserId());
+		openIdConnectSession.setAuthServerWellKnownURI(localWellKnownURI);
+		openIdConnectSession.setClientId(clientId);
+		openIdConnectSession.setIssuer(issuerURL);
+
+		openIdConnectSession =
+			_openIdConnectSessionLocalService.updateOpenIdConnectSession(
+				openIdConnectSession);
+
+		OAuthClientEntry oAuthClientEntry =
+			_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+				TestPropsValues.getCompanyId(), localWellKnownURI, clientId);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			_portalInstanceLifecycleListener.portalInstanceRegistered(company);
+
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						TestPropsValues.getCompanyId(), issuerURL);
+
+			String newLocalWellKnownURI =
+				oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+			Assert.assertNotEquals(localWellKnownURI, newLocalWellKnownURI);
+
+			OAuthClientEntry newOAuthClientEntry =
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), newLocalWellKnownURI,
+					clientId);
+
+			Assert.assertEquals(
+				oAuthClientEntry.getOAuthClientEntryId(),
+				newOAuthClientEntry.getOAuthClientEntryId());
+
+			openIdConnectSession =
+				_openIdConnectSessionLocalService.getOpenIdConnectSession(
+					openIdConnectSession.getOpenIdConnectSessionId());
+
+			Assert.assertEquals(
+				newLocalWellKnownURI,
+				openIdConnectSession.getAuthServerWellKnownURI());
+
+			Class<?> clazz = _portalInstanceLifecycleListener.getClass();
+
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					clazz.getName(), LoggerTestUtil.WARN)) {
+
+				_portalInstanceLifecycleListener.portalInstanceRegistered(
+					company);
+
+				List<String> messages = logCapture.getMessages();
+
+				Assert.assertEquals(messages.toString(), 0, messages.size());
+			}
+
+			oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						TestPropsValues.getCompanyId(), issuerURL);
+
+			Assert.assertEquals(
+				newLocalWellKnownURI,
+				oAuthClientASLocalMetadata.getLocalWellKnownURI());
+
+			int tokenConnectionTimeout = RandomTestUtil.randomInt();
+
+			properties.put("tokenConnectionTimeout", tokenConnectionTimeout);
+
+			ConfigurationTestUtil.saveConfiguration(_pid2, properties);
+
+			newOAuthClientEntry =
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), newLocalWellKnownURI,
+					clientId);
+
+			Assert.assertEquals(
+				tokenConnectionTimeout,
+				newOAuthClientEntry.getTokenConnectionTimeout());
+
+			_oAuthClientASLocalMetadataLocalService.
+				deleteOAuthClientASLocalMetadata(oAuthClientASLocalMetadata);
+
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					clazz.getName(), LoggerTestUtil.WARN)) {
+
+				_portalInstanceLifecycleListener.portalInstanceRegistered(
+					company);
+
+				List<String> messages = logCapture.getMessages();
+
+				Assert.assertTrue(
+					messages.contains(
+						StringBundler.concat(
+							"OAuth client entry ",
+							newOAuthClientEntry.getOAuthClientEntryId(),
+							" points to the local well known URI ",
+							newLocalWellKnownURI,
+							", which has no OAuth client authorization server ",
+							"local metadata")));
+			}
+
+			ConfigurationTestUtil.deleteConfiguration(_pid2);
+
+			_pid2 = null;
+
+			Assert.assertNull(
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadata(
+						TestPropsValues.getCompanyId(), issuerURL));
+			Assert.assertNull(
+				_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+					TestPropsValues.getCompanyId(), newLocalWellKnownURI,
+					clientId));
+		}
+		finally {
+			_openIdConnectSessionLocalService.deleteOpenIdConnectSession(
+				openIdConnectSession);
+		}
+	}
+
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private CounterLocalService _counterLocalService;
 
 	@Inject
 	private OAuthClientASLocalMetadataLocalService
@@ -515,6 +697,9 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListenerTest {
 
 	@Inject
 	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
+
+	@Inject
+	private OpenIdConnectSessionLocalService _openIdConnectSessionLocalService;
 
 	private String _pid1;
 	private String _pid2;
