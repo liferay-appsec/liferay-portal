@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.CompanyKeyException;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.security.SecureRandomUtil;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.MigrationGuideSection;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidationException.ValidationError;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProvider;
 import com.liferay.portal.kernel.security.xml.SecureXMLFactoryProviderUtil;
@@ -1306,9 +1307,14 @@ public class FIPSModeValidatorTest {
 
 		return TransformUtil.transform(
 			validationErrors,
-			validationError -> _getViolation(
-				validationError.getGuideSection(),
-				validationError.getErrorMessage()));
+			validationError -> {
+				MigrationGuideSection migrationGuideSection =
+					validationError.getMigrationGuideSection();
+
+				return _getViolation(
+					migrationGuideSection.getTitle(),
+					validationError.getErrorMessage());
+			});
 	}
 
 	private AutoCloseable _setCompanyKeyResolver(
