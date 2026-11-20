@@ -10,12 +10,15 @@ import com.liferay.oauth.client.persistence.model.OAuthClientASLocalMetadata;
 import com.liferay.oauth.client.persistence.model.OAuthClientEntry;
 import com.liferay.oauth.client.persistence.service.OAuthClientASLocalMetadataLocalService;
 import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.BaseManagedServiceFactory;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.EveryNodeEveryStartup;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.cluster.ClusterMasterExecutor;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -25,15 +28,20 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
+import com.liferay.portal.security.sso.openid.connect.persistence.model.OpenIdConnectSession;
+import com.liferay.portal.security.sso.openid.connect.persistence.service.OpenIdConnectSessionLocalService;
 
 import java.util.Dictionary;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,6 +76,12 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 
 		if (!_clusterMasterExecutor.isMaster()) {
 			return;
+		}
+
+		if (PropsValues.FIPS_ENABLED) {
+			_updateLocalWellKnownURIs(company.getCompanyId());
+
+			_checkOrphanedOAuthClientEntries(company.getCompanyId());
 		}
 
 		_properties.forEach(
@@ -130,6 +144,40 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 			_generateTokenRequestParametersJSON(properties));
 	}
 
+	private void _checkOrphanedOAuthClientEntries(long companyId) {
+		for (OAuthClientEntry oAuthClientEntry :
+				_oAuthClientEntryLocalService.getCompanyOAuthClientEntries(
+					companyId)) {
+
+			String authServerWellKnownURI =
+				oAuthClientEntry.getAuthServerWellKnownURI();
+
+			if (!authServerWellKnownURI.endsWith("/local")) {
+				continue;
+			}
+
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata =
+				_oAuthClientASLocalMetadataLocalService.
+					fetchOAuthClientASLocalMetadataByLocalWellKnownURI(
+						companyId, authServerWellKnownURI);
+
+			if (oAuthClientASLocalMetadata != null) {
+				continue;
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"OAuth client entry ",
+						oAuthClientEntry.getOAuthClientEntryId(),
+						" points to the local well known URI ",
+						authServerWellKnownURI,
+						", which has no OAuth client authorization server ",
+						"local metadata"));
+			}
+		}
+	}
+
 	private String _deleteOAuthClientASLocalMetadata(
 			long companyId, Dictionary<String, ?> properties)
 		throws Exception {
@@ -158,8 +206,8 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 				companyId -> _deleteOAuthClientEntry(companyId, properties));
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
 			}
 		}
 	}
@@ -399,6 +447,135 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 		return value;
 	}
 
+	private void _updateLocalWellKnownURI(
+			String localWellKnownURI,
+			OAuthClientASLocalMetadata oAuthClientASLocalMetadata)
+		throws Exception {
+
+		String oldLocalWellKnownURI =
+			oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+		for (OAuthClientEntry oAuthClientEntry :
+				_oAuthClientEntryLocalService.getCompanyOAuthClientEntries(
+					oAuthClientASLocalMetadata.getCompanyId())) {
+
+			if (!oldLocalWellKnownURI.equals(
+					oAuthClientEntry.getAuthServerWellKnownURI())) {
+
+				continue;
+			}
+
+			oAuthClientEntry.setAuthServerWellKnownURI(localWellKnownURI);
+
+			_oAuthClientEntryLocalService.updateOAuthClientEntry(
+				oAuthClientEntry);
+		}
+
+		DynamicQuery dynamicQuery =
+			_openIdConnectSessionLocalService.dynamicQuery();
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"authServerWellKnownURI", oldLocalWellKnownURI));
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"companyId", oAuthClientASLocalMetadata.getCompanyId()));
+
+		List<OpenIdConnectSession> openIdConnectSessions =
+			_openIdConnectSessionLocalService.dynamicQuery(dynamicQuery);
+
+		for (OpenIdConnectSession openIdConnectSession :
+				openIdConnectSessions) {
+
+			openIdConnectSession.setAuthServerWellKnownURI(localWellKnownURI);
+
+			_openIdConnectSessionLocalService.updateOpenIdConnectSession(
+				openIdConnectSession);
+		}
+
+		oAuthClientASLocalMetadata.setLocalWellKnownURI(localWellKnownURI);
+
+		_oAuthClientASLocalMetadataLocalService.
+			updateOAuthClientASLocalMetadata(oAuthClientASLocalMetadata);
+	}
+
+	private void _updateLocalWellKnownURIs(long companyId) {
+		for (OAuthClientASLocalMetadata oAuthClientASLocalMetadata :
+				_oAuthClientASLocalMetadataLocalService.
+					getCompanyOAuthClientASLocalMetadata(companyId)) {
+
+			String localWellKnownURI =
+				oAuthClientASLocalMetadata.getLocalWellKnownURI();
+
+			if (!localWellKnownURI.endsWith("/local")) {
+				continue;
+			}
+
+			try {
+				JSONObject metadataJSONObject = _jsonFactory.createJSONObject(
+					oAuthClientASLocalMetadata.getMetadataJSON());
+
+				String tokenEndpoint = metadataJSONObject.getString(
+					"token_endpoint");
+
+				if (Validator.isNull(tokenEndpoint)) {
+					continue;
+				}
+
+				String newLocalWellKnownURI =
+					OpenIdConnectProviderUtil.generateLocalWellKnownURI(
+						oAuthClientASLocalMetadata.getIssuer(), tokenEndpoint);
+
+				if (newLocalWellKnownURI.equals(localWellKnownURI)) {
+					continue;
+				}
+
+				int maxLength = ModelHintsUtil.getMaxLength(
+					OAuthClientASLocalMetadata.class.getName(),
+					"localWellKnownURI");
+
+				if (newLocalWellKnownURI.length() > maxLength) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							StringBundler.concat(
+								"Unable to update the local well known URI of ",
+								"OAuth client authorization server local ",
+								"metadata ",
+								oAuthClientASLocalMetadata.
+									getOAuthClientASLocalMetadataId(),
+								" because it would exceed ", maxLength,
+								" characters"));
+					}
+
+					continue;
+				}
+
+				_updateLocalWellKnownURI(
+					newLocalWellKnownURI, oAuthClientASLocalMetadata);
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Updated the local well known URI of OAuth client ",
+							"authorization server local metadata ",
+							oAuthClientASLocalMetadata.
+								getOAuthClientASLocalMetadataId()));
+				}
+			}
+			catch (Exception exception) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"Unable to update the local well known URI of ",
+							"OAuth client authorization server local metadata ",
+							oAuthClientASLocalMetadata.
+								getOAuthClientASLocalMetadataId()),
+						exception);
+				}
+			}
+		}
+	}
+
 	private String _updateOAuthClientASLocalMetadata(
 			long companyId, long guestUserId, Dictionary<String, ?> properties)
 		throws Exception {
@@ -455,49 +632,60 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 		}
 
 		try {
+			OAuthClientEntry oldOAuthClientEntry = null;
+
 			if (oldProperties != null) {
 				String oldAuthServerWellKnownURI =
 					_updateOAuthClientASLocalMetadata(
 						companyId, guestUserId, oldProperties);
 
-				OAuthClientEntry oldOAuthClientEntry =
+				oldOAuthClientEntry =
 					_oAuthClientEntryLocalService.fetchOAuthClientEntry(
 						companyId, oldAuthServerWellKnownURI,
 						_getPropertyAsString(
 							"openIdConnectClientId", oldProperties));
+			}
 
-				if (oldOAuthClientEntry != null) {
-					_oAuthClientEntryLocalService.updateOAuthClientEntry(
-						oldOAuthClientEntry.getOAuthClientEntryId(),
-						_generateAuthRequestParametersJSON(properties),
-						_updateOAuthClientASLocalMetadata(
-							companyId, guestUserId, properties),
-						_generateCustomClaimsJSON(properties),
-						_generateInfoJSON(properties),
-						GetterUtil.getString(properties.get("matcherField")),
-						GetterUtil.getLong(
-							properties.get("discoveryEndpointCacheInMillis")),
-						oldOAuthClientEntry.getOIDCUserInfoMapperJSON(),
-						GetterUtil.getInteger(
-							properties.get("tokenConnectionTimeout"),
-							OAuthClientEntryConstants.
-								TOKEN_CONNECTION_TIMEOUT_DEFAULT),
-						_generateTokenRequestParametersJSON(properties));
-				}
-				else {
-					_addOAuthClientEntry(companyId, properties, guestUserId);
-				}
+			if (oldOAuthClientEntry != null) {
+				_oAuthClientEntryLocalService.updateOAuthClientEntry(
+					oldOAuthClientEntry.getOAuthClientEntryId(),
+					_generateAuthRequestParametersJSON(properties),
+					_updateOAuthClientASLocalMetadata(
+						companyId, guestUserId, properties),
+					_generateCustomClaimsJSON(properties),
+					_generateInfoJSON(properties),
+					GetterUtil.getString(properties.get("matcherField")),
+					GetterUtil.getLong(
+						properties.get("discoveryEndpointCacheInMillis")),
+					oldOAuthClientEntry.getOIDCUserInfoMapperJSON(),
+					GetterUtil.getInteger(
+						properties.get("tokenConnectionTimeout"),
+						OAuthClientEntryConstants.
+							TOKEN_CONNECTION_TIMEOUT_DEFAULT),
+					_generateTokenRequestParametersJSON(properties));
 			}
 			else {
-				_addOAuthClientEntry(companyId, properties, guestUserId);
+				String authServerWellKnownURI =
+					_updateOAuthClientASLocalMetadata(
+						companyId, guestUserId, properties);
+
+				OAuthClientEntry oAuthClientEntry =
+					_oAuthClientEntryLocalService.fetchOAuthClientEntry(
+						companyId, authServerWellKnownURI,
+						_getPropertyAsString(
+							"openIdConnectClientId", properties));
+
+				if (oAuthClientEntry == null) {
+					_addOAuthClientEntry(companyId, properties, guestUserId);
+				}
 			}
 
 			OpenIdConnectProviderUtil.removeOAuthClientEntryIdsByCompanyId(
 				companyId);
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Unable to update OAuth client entry", exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to update OAuth client entry", exception);
 			}
 		}
 	}
@@ -522,6 +710,9 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 
 	@Reference
 	private OAuthClientEntryLocalService _oAuthClientEntryLocalService;
+
+	@Reference
+	private OpenIdConnectSessionLocalService _openIdConnectSessionLocalService;
 
 	private final Map<String, Dictionary<String, ?>> _properties =
 		new ConcurrentHashMap<>();
@@ -576,8 +767,8 @@ public class OpenIdConnectProviderPortalInstanceLifecycleListener
 						});
 				}
 				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(exception);
+					if (_log.isWarnEnabled()) {
+						_log.warn(exception);
 					}
 				}
 
