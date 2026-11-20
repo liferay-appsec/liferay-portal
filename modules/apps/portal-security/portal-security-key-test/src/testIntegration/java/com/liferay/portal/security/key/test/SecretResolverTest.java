@@ -85,7 +85,7 @@ public class SecretResolverTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"companySecretProviderId", _SECRET_PROVIDER_ID
 			).put(
-				"systemSecretProviderId", _SECRET_PROVIDER_ID
+				"systemSecretProviderId", RandomTestUtil.randomString()
 			).build());
 	}
 
@@ -154,6 +154,7 @@ public class SecretResolverTest {
 			_testStoreGroupTypeSettings(_GOOGLE_MAPS_API_KEY);
 			_testStoreGroupTypeSettingsInheritedFromCompany();
 			_testStoreIsIdempotent();
+			_testStoreWhenSecretProviderIsNotConfigured();
 		}
 	}
 
@@ -297,6 +298,23 @@ public class SecretResolverTest {
 			storedValue,
 			PrefsPropsUtil.getString(
 				companyId, GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY));
+	}
+
+	private void _testStoreWhenSecretProviderIsNotConfigured()
+		throws Exception {
+
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
+
+		String value = RandomTestUtil.randomString();
+
+		_editCompany(GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY, value);
+
+		Assert.assertEquals(
+			value,
+			PrefsPropsUtil.getString(
+				TestPropsValues.getCompanyId(),
+				GooglePlacesWebKeys.GOOGLE_PLACES_API_KEY));
 	}
 
 	private static final String _GOOGLE_MAPS_API_KEY = "googleMapsAPIKey";

@@ -71,7 +71,7 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"companySecretProviderId", _PROVIDER_ID
 			).put(
-				"systemSecretProviderId", _PROVIDER_ID
+				"systemSecretProviderId", RandomTestUtil.randomString()
 			).build());
 
 		_user = UserTestUtil.addUser();
@@ -138,6 +138,28 @@ public class MFATimeBasedOTPEntryLocalServiceTest {
 			Assert.assertNull(
 				_mfaTimeBasedOTPEntryLocalService.
 					fetchMFATimeBasedOTPEntryByUserId(_user.getUserId()));
+		}
+	}
+
+	@Test
+	public void testAddTimeBasedOTPEntryWhenSecretProviderIsNotConfigured()
+		throws Exception {
+
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			String sharedSecret = RandomTestUtil.randomString();
+
+			MFATimeBasedOTPEntry mfaTimeBasedOTPEntry =
+				_mfaTimeBasedOTPEntryLocalService.addTimeBasedOTPEntry(
+					_user.getUserId(), sharedSecret);
+
+			Assert.assertEquals(
+				sharedSecret, mfaTimeBasedOTPEntry.getSharedSecret());
 		}
 	}
 

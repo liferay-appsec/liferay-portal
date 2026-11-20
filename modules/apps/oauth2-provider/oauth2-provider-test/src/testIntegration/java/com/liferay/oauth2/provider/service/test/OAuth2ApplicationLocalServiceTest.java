@@ -72,7 +72,7 @@ public class OAuth2ApplicationLocalServiceTest {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"companySecretProviderId", _PROVIDER_ID
 			).put(
-				"systemSecretProviderId", _PROVIDER_ID
+				"systemSecretProviderId", RandomTestUtil.randomString()
 			).build());
 
 		_user = UserTestUtil.addUser();
@@ -120,6 +120,30 @@ public class OAuth2ApplicationLocalServiceTest {
 			clientSecret,
 			_oAuth2ApplicationLocalService.getPlaintextClientSecret(
 				_oAuth2Application));
+	}
+
+	@Test
+	public void testGetPlaintextClientSecretWhenSecretProviderIsNotConfigured()
+		throws Exception {
+
+		ConfigurationTestUtil.deleteConfiguration(
+			_KEY_MANAGER_CUSTOM_PROFILE_CONFIGURATION_PID);
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PropsValues.class, "FIPS_ENABLED", true)) {
+
+			String clientSecret = RandomTestUtil.randomString();
+
+			_oAuth2Application = _addOAuth2Application(clientSecret);
+
+			Assert.assertEquals(
+				clientSecret, _oAuth2Application.getClientSecret());
+			Assert.assertEquals(
+				clientSecret,
+				_oAuth2ApplicationLocalService.getPlaintextClientSecret(
+					_oAuth2Application));
+		}
 	}
 
 	private OAuth2Application _addOAuth2Application(String clientSecret)
