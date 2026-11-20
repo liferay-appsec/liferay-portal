@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalRunMode;
@@ -215,6 +216,8 @@ public class AuditMessage implements Serializable {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(message);
 
 		_accountEntryId = jsonObject.getLong(_ACCOUNT_ENTRY_ID);
+		_accountEntryIds = JSONUtil.toLongArray(
+			jsonObject.getJSONArray(_ACCOUNT_ENTRY_IDS));
 
 		if (jsonObject.has(_ACTION)) {
 			_action = jsonObject.getString(_ACTION);
@@ -320,6 +323,10 @@ public class AuditMessage implements Serializable {
 
 	public long getAccountEntryId() {
 		return _accountEntryId;
+	}
+
+	public long[] getAccountEntryIds() {
+		return _accountEntryIds;
 	}
 
 	public String getAction() {
@@ -452,6 +459,10 @@ public class AuditMessage implements Serializable {
 
 	public void setAccountEntryId(long accountEntryId) {
 		_accountEntryId = accountEntryId;
+	}
+
+	public void setAccountEntryIds(long[] accountEntryIds) {
+		_accountEntryIds = accountEntryIds;
 	}
 
 	public void setAction(String action) {
@@ -594,6 +605,15 @@ public class AuditMessage implements Serializable {
 		return JSONUtil.put(
 			_ACCOUNT_ENTRY_ID, _accountEntryId
 		).put(
+			_ACCOUNT_ENTRY_IDS,
+			() -> {
+				if (ArrayUtil.isEmpty(_accountEntryIds)) {
+					return null;
+				}
+
+				return JSONUtil.putAll(ArrayUtil.toArray(_accountEntryIds));
+			}
+		).put(
 			_ACTION, _action
 		).put(
 			_ADDITIONAL_INFO, _additionalInfoJSONObject
@@ -668,6 +688,8 @@ public class AuditMessage implements Serializable {
 
 	private static final String _ACCOUNT_ENTRY_ID = "accountEntryId";
 
+	private static final String _ACCOUNT_ENTRY_IDS = "accountEntryIds";
+
 	private static final String _ACTION = "action";
 
 	private static final String _ADDITIONAL_INFO = "additionalInfo";
@@ -739,6 +761,7 @@ public class AuditMessage implements Serializable {
 	private static final Log _log = LogFactoryUtil.getLog(AuditMessage.class);
 
 	private long _accountEntryId;
+	private long[] _accountEntryIds = new long[0];
 	private String _action;
 	private JSONObject _additionalInfoJSONObject;
 	private String _className;
