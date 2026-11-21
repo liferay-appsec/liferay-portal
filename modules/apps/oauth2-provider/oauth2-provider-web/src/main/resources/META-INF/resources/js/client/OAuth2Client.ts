@@ -11,7 +11,13 @@ interface IOAuth2ClientFromParametersOptions {
 	debug?: boolean;
 	homePageURL: string;
 	redirectURIs?: Array<string>;
+	resource?: string | Array<string>;
 	tokenURL?: string;
+}
+
+interface IOAuth2ClientFromUserAgentApplicationOptions {
+	debug?: boolean;
+	resource?: string | Array<string>;
 }
 
 interface IOAuth2ClientOptions {
@@ -20,6 +26,7 @@ interface IOAuth2ClientOptions {
 	debug?: boolean;
 	homePageURL: string;
 	redirectURIs: Array<string>;
+	resource?: string | Array<string>;
 	tokenURL: string;
 }
 
@@ -38,6 +45,7 @@ export class OAuth2Client {
 	private debug: boolean;
 	private homePageURL: string;
 	private redirectURIs: Array<string>;
+	private resources: Array<string>;
 	private tokenURL: string;
 
 	constructor(options: IOAuth2ClientOptions) {
@@ -46,6 +54,7 @@ export class OAuth2Client {
 		this.debug = options.debug || false;
 		this.homePageURL = options.homePageURL;
 		this.redirectURIs = options.redirectURIs;
+		this.resources = toResources(options.resource);
 		this.tokenURL = options.tokenURL;
 	}
 
@@ -231,7 +240,11 @@ export class OAuth2Client {
 
 	private async _getOrRequestToken(): Promise<any> {
 		const oauth2Client = this;
-		const sessionKey = `${oauth2Client.clientId}-${Liferay.authToken}-token`;
+		let sessionKey = `${oauth2Client.clientId}-${Liferay.authToken}-token`;
+
+		if (oauth2Client.resources.length) {
+			sessionKey = `${sessionKey}-${[...oauth2Client.resources].sort().join(' ')}`;
+		}
 
 		const cachedTokenData = Liferay.Util.SessionStorage.getItem(
 			sessionKey,
@@ -274,17 +287,23 @@ export class OAuth2Client {
 	): Promise<IOAuth2ClientTokenResponse> {
 		const oauth2Client = this;
 
+		const body = new URLSearchParams({
+			client_id: oauth2Client.clientId,
+			code,
+			code_verifier: codeVerifier,
+			grant_type: 'authorization_code',
+			redirect_uri: redirectURI,
+		});
+
+		for (const resource of oauth2Client.resources) {
+			body.append('resource', resource);
+		}
+
 		// This client must avoid using @liferay/portal/no-global-fetch in order
 		// to perform OAuth2 token authentication instead
 		// eslint-disable-next-line @liferay/portal/no-global-fetch
 		const response = await fetch(oauth2Client.tokenURL, {
-			body: new URLSearchParams({
-				client_id: oauth2Client.clientId,
-				code,
-				code_verifier: codeVerifier,
-				grant_type: 'authorization_code',
-				redirect_uri: redirectURI,
-			}),
+			body,
 			cache: 'no-cache',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
@@ -308,13 +327,14 @@ export function FromParameters(options: IOAuth2ClientFromParametersOptions) {
 		debug: options.debug,
 		homePageURL: options.homePageURL,
 		redirectURIs: options.redirectURIs || [getBuiltInRedirectURL()],
+		resource: options.resource,
 		tokenURL: options.tokenURL || getTokenURL(),
 	});
 }
 
 export async function FromUserAgentApplication(
 	userAgentApplicationName: string,
-	debug?: boolean
+	options?: boolean | IOAuth2ClientFromUserAgentApplicationOptions
 ) {
 	const userAgentApplication = await getUserAgentApplication(
 		userAgentApplicationName
@@ -326,12 +346,15 @@ export async function FromUserAgentApplication(
 		);
 	}
 
+	const {debug, resource} = toUserAgentApplicationOptions(options);
+
 	return new OAuth2Client({
 		authorizeURL: getAuthorizeURL(),
 		clientId: userAgentApplication.clientId,
 		debug,
 		homePageURL: userAgentApplication.homePageURL,
 		redirectURIs: [getBuiltInRedirectURL()],
+		resource: resource ?? userAgentApplication.homePageURL,
 		tokenURL: getTokenURL(),
 	});
 }
@@ -381,6 +404,16 @@ export async function getUserAgentApplication(externalReferenceCode: string) {
 	};
 }
 
+export function toUserAgentApplicationOptions(
+	options?: boolean | IOAuth2ClientFromUserAgentApplicationOptions
+): IOAuth2ClientFromUserAgentApplicationOptions {
+	if (typeof options === 'boolean') {
+		return {debug: options};
+	}
+
+	return options || {};
+}
+
 function createState(): string {
 	const bytes = new Uint8Array(16);
 
@@ -389,4 +422,12 @@ function createState(): string {
 	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
 		''
 	);
+}
+
+function toResources(resource?: string | Array<string>): Array<string> {
+	if (!resource) {
+		return [];
+	}
+
+	return Array.isArray(resource) ? resource : [resource];
 }
