@@ -92,13 +92,15 @@ export class OAuth2Client {
 
 		const ifrm = document.createElement('iframe');
 
+		const state = createState();
+
 		ifrm.src = `${oauth2Client.authorizeURL}?client_id=${
 			oauth2Client.clientId
 		}&code_challenge=${
 			challenge.code_challenge
 		}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(
 			redirectURI
-		)}&response_type=code&prompt=none&state=${sessionKey}`;
+		)}&response_type=code&prompt=none&state=${state}`;
 		ifrm.style.display = 'none';
 
 		document.body.appendChild(ifrm);
@@ -130,7 +132,7 @@ export class OAuth2Client {
 					return;
 				}
 
-				if (event.data.state !== sessionKey) {
+				if (event.data.state !== state) {
 
 					// Remove the iframe and reject the promise
 
@@ -377,4 +379,14 @@ export async function getUserAgentApplication(externalReferenceCode: string) {
 		clientId: data.client_id as string,
 		homePageURL: data.homePageURL as string,
 	};
+}
+
+function createState(): string {
+	const bytes = new Uint8Array(16);
+
+	window.crypto.getRandomValues(bytes);
+
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+		''
+	);
 }
