@@ -24,7 +24,12 @@ declare module Liferay {
 			clientId: string;
 			homePageURL: string;
 			redirectURIs?: Array<string>;
+			resource?: string | Array<string>;
 			tokenURL?: string;
+		}
+		interface IOAuth2ClientFromUserAgentApplicationOptions {
+			debug?: boolean;
+			resource?: string | Array<string>;
 		}
 		interface IOAuth2ClientOptions {
 			authorizeURL: string;
@@ -32,6 +37,7 @@ declare module Liferay {
 			encodedRedirectURL: string;
 			homePageURL: string;
 			redirectURIs: Array<string>;
+			resource?: string | Array<string>;
 			tokenURL: string;
 		}
 
@@ -41,6 +47,7 @@ declare module Liferay {
 			private encodedRedirectURL;
 			private homePageURL;
 			private redirectURIs;
+			private resources;
 			private tokenURL;
 			constructor(options: IOAuth2ClientOptions);
 			fetch(url: RequestInfo, options?: any): Promise<any>;
@@ -55,7 +62,8 @@ declare module Liferay {
 			options: IOAuth2ClientFromParametersOptions
 		): OAuth2Client;
 		function FromUserAgentApplication(
-			userAgentApplicationName: string
+			userAgentApplicationName: string,
+			options?: boolean | IOAuth2ClientFromUserAgentApplicationOptions
 		): OAuth2Client;
 	}
 }
