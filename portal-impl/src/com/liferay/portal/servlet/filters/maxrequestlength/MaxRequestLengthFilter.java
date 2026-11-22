@@ -1,0 +1,113 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.servlet.filters.maxrequestlength;
+
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.servlet.filters.BasePortalFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * @author Jorge García Jiménez
+ * @author Alejandro Tardín
+ */
+public class MaxRequestLengthFilter extends BasePortalFilter {
+
+	@Override
+	protected void processFilter(
+			HttpServletRequest httpServletRequest,
+			HttpServletResponse httpServletResponse, FilterChain filterChain)
+		throws Exception {
+
+		if (StringUtil.startsWith(
+				httpServletRequest.getContentType(), "multipart/")) {
+
+			processFilter(
+				MaxRequestLengthFilter.class.getName(), httpServletRequest,
+				httpServletResponse, filterChain);
+
+			return;
+		}
+
+		long maxRequestLength = _getMaxRequestLength();
+
+		long contentLength = httpServletRequest.getContentLengthLong();
+
+		if (contentLength > maxRequestLength) {
+			_sendError(httpServletResponse, maxRequestLength);
+
+			return;
+		}
+
+		if (contentLength >= 0) {
+			processFilter(
+				MaxRequestLengthFilter.class.getName(), httpServletRequest,
+				httpServletResponse, filterChain);
+
+			return;
+		}
+
+		MaxRequestLengthHttpServletRequestWrapper
+			maxRequestLengthHttpServletRequestWrapper =
+				new MaxRequestLengthHttpServletRequestWrapper(
+					httpServletRequest, maxRequestLength);
+
+		try {
+			processFilter(
+				MaxRequestLengthFilter.class.getName(),
+				maxRequestLengthHttpServletRequestWrapper, httpServletResponse,
+				filterChain);
+		}
+		catch (Exception exception) {
+			if (!maxRequestLengthHttpServletRequestWrapper.
+					isMaxRequestLengthExceeded()) {
+
+				throw exception;
+			}
+		}
+
+		if (maxRequestLengthHttpServletRequestWrapper.
+				isMaxRequestLengthExceeded() &&
+			!httpServletResponse.isCommitted()) {
+
+			httpServletResponse.reset();
+
+			_sendError(httpServletResponse, maxRequestLength);
+		}
+	}
+
+	private long _getMaxRequestLength() {
+		if (PropsValues.MAX_REQUEST_LENGTH > 0) {
+			return PropsValues.MAX_REQUEST_LENGTH;
+		}
+
+		return 1024 * 1024;
+	}
+
+	private void _sendError(
+		HttpServletResponse httpServletResponse, long maxRequestLength) {
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				StringBundler.concat(
+					"Request body exceeds the maximum length of ",
+					maxRequestLength, " bytes"));
+		}
+
+		httpServletResponse.setStatus(
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		MaxRequestLengthFilter.class);
+
+}
