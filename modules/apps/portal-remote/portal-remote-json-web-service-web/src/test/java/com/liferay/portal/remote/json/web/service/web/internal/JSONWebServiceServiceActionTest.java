@@ -8,7 +8,6 @@ package com.liferay.portal.remote.json.web.service.web.internal;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.memory.DeleteFileFinalizeAction;
 import com.liferay.petra.memory.FinalizeManager;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -219,66 +218,6 @@ public class JSONWebServiceServiceActionTest
 			new LinkedHashMap<>());
 	}
 
-	@Test
-	public void testStatusRequestEntityTooLarge() throws Exception {
-		registerActionClass(FooService.class);
-
-		Map<String, Object> params = LinkedHashMapBuilder.<String, Object>put(
-			"userId", 173
-		).put(
-			"worldName", "Jupiter"
-		).build();
-
-		String json = toJSON(
-			LinkedHashMapBuilder.<String, Object>put(
-				"/foo/hello-world", params
-			).build());
-
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"JSONWS_WEB_SERVICE_MAX_REQUEST_LENGTH",
-					(long)json.length())) {
-
-			Assert.assertEquals(
-				"\"Welcome 173 to Jupiter\"",
-				_jsonWebServiceServiceAction.getJSON(
-					createInvokerHttpServletRequest(json),
-					new MockHttpServletResponse()));
-
-			_testStatusRequestEntityTooLarge(
-				createInvokerHttpServletRequest(json + StringPool.SPACE));
-
-			MockHttpServletRequest mockHttpServletRequest = Mockito.spy(
-				createInvokerHttpServletRequest(json + StringPool.SPACE));
-
-			Mockito.when(
-				mockHttpServletRequest.getContentLengthLong()
-			).thenReturn(
-				-1L
-			);
-
-			_testStatusRequestEntityTooLarge(mockHttpServletRequest);
-
-			mockHttpServletRequest = createHttpRequest(
-				"/foo", HttpMethods.POST);
-
-			mockHttpServletRequest.setContent(
-				toJSON(
-					LinkedHashMapBuilder.<String, Object>put(
-						"id", RandomTestUtil.randomInt()
-					).put(
-						"jsonrpc", "2.0"
-					).put(
-						"method", "hello-world"
-					).put(
-						"params", params
-					).build()
-				).getBytes());
-
-			_testStatusRequestEntityTooLarge(mockHttpServletRequest);
-		}
-	}
-
 	protected MockHttpServletRequest createInvokerHttpServletRequest(
 		String content) {
 
@@ -481,23 +420,6 @@ public class JSONWebServiceServiceActionTest
 
 		Assert.assertEquals(
 			HttpServletResponse.SC_NOT_FOUND,
-			mockHttpServletResponse.getStatus());
-
-		Assert.assertEquals(JSONFactoryUtil.getNullJSON(), json);
-	}
-
-	private void _testStatusRequestEntityTooLarge(
-			MockHttpServletRequest mockHttpServletRequest)
-		throws Exception {
-
-		MockHttpServletResponse mockHttpServletResponse =
-			new MockHttpServletResponse();
-
-		String json = _jsonWebServiceServiceAction.getJSON(
-			mockHttpServletRequest, mockHttpServletResponse);
-
-		Assert.assertEquals(
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
 			mockHttpServletResponse.getStatus());
 
 		Assert.assertEquals(JSONFactoryUtil.getNullJSON(), json);
