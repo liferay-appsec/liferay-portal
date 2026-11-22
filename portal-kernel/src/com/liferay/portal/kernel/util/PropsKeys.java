@@ -1330,9 +1330,6 @@ public interface PropsKeys {
 	public static final String JSONWS_WEB_SERVICE_INVALID_HTTP_METHODS =
 		"jsonws.web.service.invalid.http.methods";
 
-	public static final String JSONWS_WEB_SERVICE_MAX_REQUEST_LENGTH =
-		"jsonws.web.service.max.request.length";
-
 	public static final String
 		JSONWS_WEB_SERVICE_PARAMETER_TYPE_WHITELIST_CLASS_NAMES =
 			"jsonws.web.service.parameter.type.whitelist.class.names";
@@ -1573,6 +1570,8 @@ public interface PropsKeys {
 	public static final String MARKETPLACE_REDIRECT = "marketplace.redirect";
 
 	public static final String MARKETPLACE_URL = "marketplace.url";
+
+	public static final String MAX_REQUEST_LENGTH = "max.request.length";
 
 	public static final String MEMBERSHIP_POLICY_AUTO_VERIFY =
 		"membership.policy.auto.verify";

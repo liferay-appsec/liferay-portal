@@ -96,16 +96,6 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 
 				return JSONFactoryUtil.getNullJSON();
 			}
-			else if (throwable instanceof RequestEntityTooLargeException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(getThrowableMessage(throwable), throwable);
-				}
-
-				httpServletResponse.setStatus(
-					HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-
-				return JSONFactoryUtil.getNullJSON();
-			}
 			else {
 				status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 			}
