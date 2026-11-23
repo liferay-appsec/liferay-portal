@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.upload.UploadServletRequest;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
@@ -248,18 +249,7 @@ public class JSONWebServiceServiceActionTest
 			_testStatusRequestEntityTooLarge(
 				createInvokerHttpServletRequest(json + StringPool.SPACE));
 
-			MockHttpServletRequest mockHttpServletRequest = Mockito.spy(
-				createInvokerHttpServletRequest(json + StringPool.SPACE));
-
-			Mockito.when(
-				mockHttpServletRequest.getContentLengthLong()
-			).thenReturn(
-				-1L
-			);
-
-			_testStatusRequestEntityTooLarge(mockHttpServletRequest);
-
-			mockHttpServletRequest = createHttpRequest(
+			MockHttpServletRequest mockHttpServletRequest = createHttpRequest(
 				"/foo", HttpMethods.POST);
 
 			mockHttpServletRequest.setContent(
@@ -276,6 +266,25 @@ public class JSONWebServiceServiceActionTest
 				).getBytes());
 
 			_testStatusRequestEntityTooLarge(mockHttpServletRequest);
+
+			mockHttpServletRequest = Mockito.spy(
+				createHttpRequest("/foo/hello-world", HttpMethods.POST));
+
+			Mockito.when(
+				mockHttpServletRequest.getContentLengthLong()
+			).thenReturn(
+				(long)json.length() + 1
+			);
+
+			mockHttpServletRequest.setContentType(
+				ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED);
+			mockHttpServletRequest.setParameter("userId", "173");
+			mockHttpServletRequest.setParameter("worldName", "Jupiter");
+
+			Assert.assertEquals(
+				"\"Welcome 173 to Jupiter\"",
+				_jsonWebServiceServiceAction.getJSON(
+					mockHttpServletRequest, new MockHttpServletResponse()));
 		}
 	}
 
