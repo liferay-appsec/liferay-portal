@@ -9,6 +9,7 @@ import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.remote.json.web.service.web.internal.exception.RequestEntityTooLargeException;
 
 import jakarta.servlet.http.HttpServletRequest;
 

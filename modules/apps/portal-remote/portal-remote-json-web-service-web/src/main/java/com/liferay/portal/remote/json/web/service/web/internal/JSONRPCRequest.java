@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.remote.json.web.service.web.internal.exception.RequestEntityTooLargeException;
 
 import jakarta.servlet.http.HttpServletRequest;
 

@@ -26,6 +26,7 @@ import com.liferay.portal.remote.json.web.service.JSONWebServiceActionsManager;
 import com.liferay.portal.remote.json.web.service.exception.NoSuchJSONWebServiceException;
 import com.liferay.portal.remote.json.web.service.web.internal.action.JSONWebServiceDiscoverAction;
 import com.liferay.portal.remote.json.web.service.web.internal.action.JSONWebServiceInvokerAction;
+import com.liferay.portal.remote.json.web.service.web.internal.exception.RequestEntityTooLargeException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
