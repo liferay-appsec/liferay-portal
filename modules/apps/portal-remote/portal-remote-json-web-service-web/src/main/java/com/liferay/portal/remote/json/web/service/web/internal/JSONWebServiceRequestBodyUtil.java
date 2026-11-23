@@ -25,10 +25,6 @@ public class JSONWebServiceRequestBodyUtil {
 
 		long maxRequestLength = _getMaxRequestLength();
 
-		if (httpServletRequest.getContentLengthLong() > maxRequestLength) {
-			throw new RequestEntityTooLargeException(maxRequestLength);
-		}
-
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 			new UnsyncByteArrayOutputStream();
 
