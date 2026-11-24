@@ -9,10 +9,19 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.encryptor.Encryptor;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
+
 import java.security.Key;
+
+import javax.crypto.Cipher;
 
 /**
  * @author Manuele Castro
@@ -34,7 +43,16 @@ public class EncryptedObjectFieldUtil {
 			return encryptor.decryptAuthenticated(key, _getCiphertext(value));
 		}
 
-		return encryptor.decrypt(key, value);
+		try {
+			return encryptor.decryptAuthenticated(key, value);
+		}
+		catch (EncryptorException encryptorException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(encryptorException);
+			}
+
+			return _decryptECB(key, value);
+		}
 	}
 
 	public static String encrypt(Encryptor encryptor, Key key, String value)
@@ -51,6 +69,25 @@ public class EncryptedObjectFieldUtil {
 
 	public static boolean isAESKey(Key key) {
 		return StringUtil.equalsIgnoreCase(key.getAlgorithm(), "AES");
+	}
+
+	private static String _decryptECB(Key key, String value)
+		throws EncryptorException {
+
+		try {
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+
+			cipher.init(Cipher.DECRYPT_MODE, key);
+
+			CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
+
+			return String.valueOf(
+				charsetDecoder.decode(
+					ByteBuffer.wrap(cipher.doFinal(Base64.decode(value)))));
+		}
+		catch (Exception exception) {
+			throw new EncryptorException(exception);
+		}
 	}
 
 	private static String _getCiphertext(String value) {
@@ -74,5 +111,8 @@ public class EncryptedObjectFieldUtil {
 	}
 
 	private static final String _MARKER_PREFIX = "${aesGcm:v1:";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		EncryptedObjectFieldUtil.class);
 
 }
