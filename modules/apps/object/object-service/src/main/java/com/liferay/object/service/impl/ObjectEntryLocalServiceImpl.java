@@ -92,6 +92,7 @@ import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.field.util.EncryptedObjectFieldUtil;
 import com.liferay.object.internal.filter.parser.CurrentUserObjectFilterParser;
 import com.liferay.object.internal.filter.parser.DateRangeObjectFilterParser;
 import com.liferay.object.internal.filter.parser.EqualityOperatorsObjectFilterParser;
@@ -6723,7 +6724,8 @@ public class ObjectEntryLocalServiceImpl
 						ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
 
 					try {
-						object = _encryptor.decrypt(_getKey(), (String)object);
+						object = EncryptedObjectFieldUtil.decrypt(
+							_encryptor, _getKey(), (String)object);
 					}
 					catch (IllegalArgumentException illegalArgumentException) {
 						throw new IllegalArgumentException(
@@ -7869,7 +7871,8 @@ public class ObjectEntryLocalServiceImpl
 			_setColumn(
 				columnNames, index, insertedValues, preparedStatement,
 				column.getSQLType(),
-				_encryptor.encrypt(_getKey(), valueString));
+				EncryptedObjectFieldUtil.encrypt(
+					_encryptor, _getKey(), valueString));
 
 			_putInsertedValue(
 				insertedValues, columnNames.get(index - 1), valueString);
