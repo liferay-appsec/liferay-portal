@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.junit.After;
@@ -83,6 +84,19 @@ public class MaxRequestLengthFilterTest {
 		_testProcessFilter(
 			bytes, ContentTypes.MULTIPART_FORM_DATA + "; boundary=test",
 			bytes.length, false, HttpServletResponse.SC_OK);
+		_testProcessFilter(
+			bytes, ContentTypes.MULTIPART_FORM_DATA + "; boundary=test", -1,
+			false, HttpServletResponse.SC_OK);
+		_testProcessFilter(
+			bytes, "Multipart/form-data; boundary=test", bytes.length, false,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+		_testProcessFilter(
+			bytes, ContentTypes.MULTIPART_MIXED + "; boundary=test",
+			bytes.length, false,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+		_testProcessFilter(
+			bytes, ContentTypes.MULTIPART_MIXED + "; boundary=test", -1, true,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
 	}
 
 	private void _testProcessFilter(
@@ -105,6 +119,8 @@ public class MaxRequestLengthFilterTest {
 		MockHttpServletResponse mockHttpServletResponse =
 			new MockHttpServletResponse();
 
+		mockHttpServletResponse.setHeader("X-Before", "before");
+
 		ReflectionTestUtil.invoke(
 			new MaxRequestLengthFilter(), "processFilter",
 			new Class<?>[] {
@@ -113,22 +129,34 @@ public class MaxRequestLengthFilterTest {
 			},
 			mockHttpServletRequest, mockHttpServletResponse,
 			(FilterChain)(servletRequest, servletResponse) -> {
-				if (reader) {
-					BufferedReader bufferedReader = servletRequest.getReader();
+				try {
+					if (reader) {
+						BufferedReader bufferedReader =
+							servletRequest.getReader();
 
-					while (bufferedReader.read() != -1) {
+						while (bufferedReader.read() != -1) {
+						}
 					}
+					else {
+						InputStream inputStream =
+							servletRequest.getInputStream();
 
-					return;
+						inputStream.readAllBytes();
+					}
 				}
+				catch (IOException ioException) {
+					HttpServletResponse httpServletResponse =
+						(HttpServletResponse)servletResponse;
 
-				InputStream inputStream = servletRequest.getInputStream();
-
-				inputStream.readAllBytes();
+					httpServletResponse.setStatus(
+						HttpServletResponse.SC_BAD_REQUEST);
+				}
 			});
 
 		Assert.assertEquals(
 			expectedStatus, mockHttpServletResponse.getStatus());
+		Assert.assertEquals(
+			"before", mockHttpServletResponse.getHeader("X-Before"));
 	}
 
 	private static final byte[] _BYTES = RandomTestUtil.randomBytes();
