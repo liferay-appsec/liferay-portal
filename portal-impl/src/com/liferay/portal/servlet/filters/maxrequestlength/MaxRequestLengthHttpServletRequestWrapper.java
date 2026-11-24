@@ -12,6 +12,7 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,10 +25,12 @@ public class MaxRequestLengthHttpServletRequestWrapper
 	extends HttpServletRequestWrapper {
 
 	public MaxRequestLengthHttpServletRequestWrapper(
-		HttpServletRequest httpServletRequest, long maxRequestLength) {
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, long maxRequestLength) {
 
 		super(httpServletRequest);
 
+		_httpServletResponse = httpServletResponse;
 		_maxRequestLength = maxRequestLength;
 	}
 
@@ -62,6 +65,7 @@ public class MaxRequestLengthHttpServletRequestWrapper
 	}
 
 	private BufferedReader _bufferedReader;
+	private final HttpServletResponse _httpServletResponse;
 	private final long _maxRequestLength;
 	private boolean _maxRequestLengthExceeded;
 	private ServletInputStream _servletInputStream;
@@ -129,6 +133,13 @@ public class MaxRequestLengthHttpServletRequestWrapper
 
 			if (_length > _maxRequestLength) {
 				_maxRequestLengthExceeded = true;
+
+				if (!_httpServletResponse.isCommitted()) {
+					_httpServletResponse.setStatus(
+						HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+
+					_httpServletResponse.flushBuffer();
+				}
 
 				throw new IOException(
 					StringBundler.concat(

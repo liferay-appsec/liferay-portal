@@ -362,10 +362,14 @@
 	<filter-mapping>
 		<filter-name>Max Request Length Filter</filter-name>
 		<url-pattern>/api/jsonws/*</url-pattern>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>
 	</filter-mapping>
 	<filter-mapping>
 		<filter-name>Max Request Length Filter</filter-name>
 		<url-pattern>/o/*</url-pattern>
+		<dispatcher>FORWARD</dispatcher>
+		<dispatcher>REQUEST</dispatcher>
 	</filter-mapping>
 	<filter-mapping>
 		<filter-name>Thread Dump Filter</filter-name>

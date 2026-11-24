@@ -8,8 +8,8 @@ package com.liferay.portal.servlet.filters.maxrequestlength;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.PropsValues;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 
 import jakarta.servlet.FilterChain;
@@ -28,8 +28,10 @@ public class MaxRequestLengthFilter extends BasePortalFilter {
 			HttpServletResponse httpServletResponse, FilterChain filterChain)
 		throws Exception {
 
-		if (StringUtil.startsWith(
-				httpServletRequest.getContentType(), "multipart/")) {
+		String contentType = httpServletRequest.getContentType();
+
+		if ((contentType != null) &&
+			contentType.startsWith(ContentTypes.MULTIPART_FORM_DATA)) {
 
 			processFilter(
 				MaxRequestLengthFilter.class.getName(), httpServletRequest,
@@ -59,7 +61,7 @@ public class MaxRequestLengthFilter extends BasePortalFilter {
 		MaxRequestLengthHttpServletRequestWrapper
 			maxRequestLengthHttpServletRequestWrapper =
 				new MaxRequestLengthHttpServletRequestWrapper(
-					httpServletRequest, maxRequestLength);
+					httpServletRequest, httpServletResponse, maxRequestLength);
 
 		try {
 			processFilter(
@@ -73,15 +75,6 @@ public class MaxRequestLengthFilter extends BasePortalFilter {
 
 				throw exception;
 			}
-		}
-
-		if (maxRequestLengthHttpServletRequestWrapper.
-				isMaxRequestLengthExceeded() &&
-			!httpServletResponse.isCommitted()) {
-
-			httpServletResponse.reset();
-
-			_sendError(httpServletResponse, maxRequestLength);
 		}
 	}
 
