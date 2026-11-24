@@ -60,6 +60,11 @@
 		<finder name="CompanyId" return-type="Collection">
 			<finder-column name="companyId" />
 		</finder>
+		<finder name="C_CD_CN" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="createDate" />
+			<finder-column name="contextName" />
+		</finder>
 	</entity>
 	<entity cache-enabled="false" local-service="false" name="AuditEventAccountEntryRel" remote-service="false" table="Audit_EventAccountEntryRel">
 
