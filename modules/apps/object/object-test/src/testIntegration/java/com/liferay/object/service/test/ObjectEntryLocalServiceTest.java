@@ -2469,10 +2469,20 @@ public class ObjectEntryLocalServiceTest {
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				resultSet.next();
 
+				String encryptedValue = resultSet.getString(
+					objectField.getDBColumnName());
+
+				Assert.assertTrue(encryptedValue.startsWith(_MARKER_PREFIX));
+				Assert.assertTrue(
+					encryptedValue.endsWith(StringPool.CLOSE_CURLY_BRACE));
+
 				Assert.assertEquals(
-					_encryptor.encrypt(
-						new SecretKeySpec(Base64.decode(key), "AES"), "Baker"),
-					resultSet.getString(objectField.getDBColumnName()));
+					"Baker",
+					_encryptor.decryptAuthenticated(
+						new SecretKeySpec(Base64.decode(key), "AES"),
+						StringUtil.removeSubstrings(
+							encryptedValue, _MARKER_PREFIX,
+							StringPool.CLOSE_CURLY_BRACE)));
 			}
 		}
 
@@ -7630,6 +7640,98 @@ public class ObjectEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testGetValuesWithEncryptedObjectField() throws Exception {
+		String key = EncryptedObjectFieldTestUtil.generateKey("AES");
+
+		EncryptedObjectFieldTestUtil.withEncryptedObjectFieldProperties(
+			"AES", true, key,
+			() -> {
+				ObjectField objectField = _addCustomObjectField(
+					new EncryptedObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"encrypted"
+					).objectDefinitionId(
+						_objectDefinition.getObjectDefinitionId()
+					).build());
+
+				String emailAddress = _getRandomEmailAddress();
+
+				ObjectEntry objectEntry = _addObjectEntry(
+					HashMapBuilder.<String, Serializable>put(
+						"emailAddressRequired", emailAddress
+					).put(
+						"encrypted", RandomTestUtil.randomString()
+					).put(
+						"listTypeEntryKeyRequired", "listTypeEntryKey1"
+					).build());
+
+				SecretKeySpec secretKeySpec = new SecretKeySpec(
+					Base64.decode(key), "AES");
+				String value = RandomTestUtil.randomString();
+
+				_testGetValuesWithEncryptedObjectField(
+					value, objectEntry, objectField,
+					_encryptor.encrypt(secretKeySpec, value));
+				_testGetValuesWithEncryptedObjectField(
+					value, objectEntry, objectField,
+					_encryptor.encryptAuthenticated(secretKeySpec, value));
+
+				_setEncryptedValue(
+					objectEntry, objectField,
+					_MARKER_PREFIX + RandomTestUtil.randomString() +
+						StringPool.CLOSE_CURLY_BRACE);
+
+				objectEntry = _objectEntryLocalService.getObjectEntry(
+					objectEntry.getObjectEntryId());
+
+				try (LogCapture logCapture =
+						LoggerTestUtil.configureLog4JLogger(
+							"com.liferay.object.service.impl." +
+								"ObjectEntryLocalServiceImpl",
+							LoggerTestUtil.WARN)) {
+
+					_assertUnreadableEncryptedValue(
+						emailAddress,
+						_objectEntryLocalService.getValues(
+							objectEntry.getObjectEntryId()));
+					_assertUnreadableEncryptedValue(
+						emailAddress, objectEntry.getValues());
+
+					List<ObjectEntry> objectEntries = Collections.singletonList(
+						_objectEntryLocalService.getObjectEntry(
+							objectEntry.getObjectEntryId()));
+
+					_objectEntryLocalService.loadValues(
+						_objectDefinitionLocalService.getObjectDefinition(
+							_objectDefinition.getObjectDefinitionId()),
+						objectEntries);
+
+					ObjectEntry loadedObjectEntry = objectEntries.get(0);
+
+					_assertUnreadableEncryptedValue(
+						emailAddress, loadedObjectEntry.getValues());
+
+					List<LogEntry> logEntries = logCapture.getLogEntries();
+
+					Assert.assertEquals(
+						logEntries.toString(), 3, logEntries.size());
+
+					LogEntry logEntry = logEntries.get(0);
+
+					Assert.assertEquals(
+						"Unable to decrypt object field \"encrypted\" of " +
+							"object entry " + objectEntry.getObjectEntryId(),
+						logEntry.getMessage());
+				}
+
+				_objectFieldLocalService.deleteObjectField(objectField);
+			});
+	}
+
+	@Test
 	public void testGetValuesWithFirstExtensionTableAggregationObjectField()
 		throws Exception {
 
@@ -12118,6 +12220,14 @@ public class ObjectEntryLocalServiceTest {
 			publishedObjectEntry.getStatus());
 	}
 
+	private void _assertUnreadableEncryptedValue(
+		String expectedEmailAddress, Map<String, Serializable> values) {
+
+		Assert.assertEquals(
+			expectedEmailAddress, values.get("emailAddressRequired"));
+		Assert.assertEquals(StringPool.BLANK, values.get("encrypted"));
+	}
+
 	private void _assertValuesLoaded(
 			ObjectEntry expectedObjectEntry, ObjectEntry objectEntry)
 		throws Exception {
@@ -12496,6 +12606,32 @@ public class ObjectEntryLocalServiceTest {
 				System.currentTimeMillis() - TimeUnit.MINUTE.toMillis(1)));
 
 		return _objectEntryLocalService.updateObjectEntry(objectEntry);
+	}
+
+	private void _setEncryptedValue(
+			ObjectEntry objectEntry, ObjectField objectField, String value)
+		throws Exception {
+
+		try (Connection connection = DataAccess.getConnection();
+
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"update ", objectField.getDBTableName(), " set ",
+					objectField.getDBColumnName(), " = ? where ",
+					_objectDefinition.getPKObjectFieldDBColumnName(),
+					" = ?"))) {
+
+			preparedStatement.setString(1, value);
+			preparedStatement.setLong(2, objectEntry.getObjectEntryId());
+
+			preparedStatement.executeUpdate();
+		}
+
+		EntityCacheUtil.removeResult(
+			objectEntry.getClass(), objectEntry.getPrimaryKeyObj());
+		FinderCacheUtil.clearDSLQueryCache(_objectDefinition.getDBTableName());
+		FinderCacheUtil.clearDSLQueryCache(
+			_objectDefinition.getExtensionDBTableName());
 	}
 
 	private void _testAddObjectEntry(
@@ -13208,6 +13344,21 @@ public class ObjectEntryLocalServiceTest {
 			LocaleThreadLocal.setThemeDisplayLocale(originalThemeDisplayLocale);
 			LocaleThreadLocal.setSiteDefaultLocale(originalSiteDefaultLocale);
 		}
+	}
+
+	private void _testGetValuesWithEncryptedObjectField(
+			String expectedValue, ObjectEntry objectEntry,
+			ObjectField objectField, String value)
+		throws Exception {
+
+		_setEncryptedValue(objectEntry, objectField, value);
+
+		Assert.assertEquals(
+			expectedValue,
+			MapUtil.getString(
+				_objectEntryLocalService.getValues(
+					objectEntry.getObjectEntryId()),
+				"encrypted"));
 	}
 
 	private void _testPartialUpdateObjectEntryExternalReferenceCode()
@@ -14595,6 +14746,8 @@ public class ObjectEntryLocalServiceTest {
 			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(), 0,
 			objectDefinition.getClassName(), 0, 0, workflowDefinitionName, 1);
 	}
+
+	private static final String _MARKER_PREFIX = "${aesGcm:v1:";
 
 	private static final String _OBJECT_VALIDATION_RULE_KEY =
 		ObjectValidationRuleConstants.ENGINE_TYPE_JAVA_DELEGATE_PREFIX +
