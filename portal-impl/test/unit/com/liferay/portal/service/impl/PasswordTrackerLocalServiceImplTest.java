@@ -179,7 +179,7 @@ public class PasswordTrackerLocalServiceImplTest {
 		Mockito.when(
 			passwordPolicy.getHistoryCount()
 		).thenReturn(
-			6
+			RandomTestUtil.randomInt(1, 10)
 		);
 
 		Mockito.when(
