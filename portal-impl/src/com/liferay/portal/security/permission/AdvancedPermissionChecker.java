@@ -759,11 +759,11 @@ public class AdvancedPermissionChecker extends BasePermissionChecker {
 	protected boolean isContentReviewerImpl(long groupId)
 		throws PortalException {
 
-		if (isCompanyAdmin() || isGroupAdmin(groupId)) {
+		Group group = GroupLocalServiceUtil.getGroup(groupId);
+
+		if (isCompanyAdmin(group.getCompanyId()) || isGroupAdmin(groupId)) {
 			return true;
 		}
-
-		Group group = GroupLocalServiceUtil.getGroup(groupId);
 
 		if (RoleLocalServiceUtil.hasUserRole(
 				getUserId(), group.getCompanyId(),
