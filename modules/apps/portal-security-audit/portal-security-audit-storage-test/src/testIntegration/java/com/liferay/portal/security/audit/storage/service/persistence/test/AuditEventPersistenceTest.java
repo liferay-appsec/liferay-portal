@@ -270,6 +270,17 @@ public class AuditEventPersistenceTest {
 	}
 
 	@Test
+	public void testCountByC_CD_CN() throws Exception {
+		_persistence.countByC_CD_CN(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextDate(), "");
+
+		_persistence.countByC_CD_CN(0L, RandomTestUtil.nextDate(), "null");
+
+		_persistence.countByC_CD_CN(
+			0L, RandomTestUtil.nextDate(), (String)null);
+	}
+
+	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		AuditEvent newAuditEvent = addAuditEvent();
 
@@ -594,4 +605,4 @@ public class AuditEventPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1262735458
+// LIFERAY-SERVICE-BUILDER-HASH:1077051264

@@ -147,11 +147,16 @@ public class AuditEventModelImpl
 	public static final long COMPANYID_COLUMN_BITMASK = 1L;
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *		#getColumnBitmask(String)}
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long CREATEDATE_COLUMN_BITMASK = 2L;
+	public static final long CONTEXTNAME_COLUMN_BITMASK = 2L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long CREATEDATE_COLUMN_BITMASK = 4L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -555,6 +560,15 @@ public class AuditEventModelImpl
 		_createDate = createDate;
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public Date getOriginalCreateDate() {
+		return getColumnOriginalValue("createDate");
+	}
+
 	@JSON
 	@Override
 	public long getAccountEntryId() {
@@ -688,6 +702,15 @@ public class AuditEventModelImpl
 		}
 
 		_contextName = contextName;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalContextName() {
+		return getColumnOriginalValue("contextName");
 	}
 
 	@JSON
@@ -1766,4 +1789,4 @@ public class AuditEventModelImpl
 	private AuditEvent _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1490691344
+// LIFERAY-SERVICE-BUILDER-HASH:1876270950
