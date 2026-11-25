@@ -103,6 +103,14 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 	}
 
 	@Override
+	public List<AuditEventAccountEntryRel> getAuditEventAccountEntryRels(
+		long auditEventId) {
+
+		return _auditEventAccountEntryRelPersistence.findByAuditEventId(
+			auditEventId);
+	}
+
+	@Override
 	public List<AuditEvent> getAuditEvents(
 		long companyId, int start, int end,
 		OrderByComparator<AuditEvent> orderByComparator) {
