@@ -10,6 +10,7 @@ import com.liferay.oauth.client.persistence.service.OAuthClientEntryLocalService
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.Language;
@@ -124,9 +125,9 @@ public class OpenIdConnectAuthenticationHandlerImpl
 			openIdConnectAuthenticationSession.getState(),
 			authenticationSuccessResponse.getState());
 
-		OAuthClientEntry oAuthClientEntry =
-			_oAuthClientEntryLocalService.getOAuthClientEntry(
-				openIdConnectAuthenticationSession.getOAuthClientEntryId());
+		OAuthClientEntry oAuthClientEntry = _getOAuthClientEntry(
+			httpServletRequest,
+			openIdConnectAuthenticationSession.getOAuthClientEntryId());
 
 		OIDCClientInformation oidcClientInformation =
 			OpenIdConnectClientInformationUtil.getOIDCClientInformation(
@@ -218,9 +219,8 @@ public class OpenIdConnectAuthenticationHandlerImpl
 		}
 
 		CodeVerifier codeVerifier = new CodeVerifier();
-		OAuthClientEntry oAuthClientEntry =
-			_oAuthClientEntryLocalService.getOAuthClientEntry(
-				oAuthClientEntryId);
+		OAuthClientEntry oAuthClientEntry = _getOAuthClientEntry(
+			httpServletRequest, oAuthClientEntryId);
 
 		Map<String, Object> runtimeRequestParameters =
 			HashMapBuilder.<String, Object>put(
@@ -420,6 +420,25 @@ public class OpenIdConnectAuthenticationHandlerImpl
 					uriSyntaxException.getMessage(),
 				uriSyntaxException);
 		}
+	}
+
+	private OAuthClientEntry _getOAuthClientEntry(
+			HttpServletRequest httpServletRequest, long oAuthClientEntryId)
+		throws PortalException {
+
+		OAuthClientEntry oAuthClientEntry =
+			_oAuthClientEntryLocalService.getOAuthClientEntry(
+				oAuthClientEntryId);
+
+		if (oAuthClientEntry.getCompanyId() != _portal.getCompanyId(
+				httpServletRequest)) {
+
+			throw new NoSuchModelException(
+				"No OAuth client entry exists with the primary key " +
+					oAuthClientEntryId);
+		}
+
+		return oAuthClientEntry;
 	}
 
 	private String _requestUserInfoJSON(
