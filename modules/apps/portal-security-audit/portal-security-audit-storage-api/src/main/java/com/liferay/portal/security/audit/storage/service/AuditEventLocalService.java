@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
+import com.liferay.portal.security.audit.storage.model.AuditEventAccountEntryRel;
 
 import java.io.Serializable;
 
@@ -210,6 +211,10 @@ public interface AuditEventLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public AuditEvent getAuditEvent(long auditEventId) throws PortalException;
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AuditEventAccountEntryRel> getAuditEventAccountEntryRels(
+		long auditEventId);
+
 	/**
 	 * Returns a range of all the audit events.
 	 *
@@ -297,4 +302,4 @@ public interface AuditEventLocalService
 	public AuditEvent updateAuditEvent(AuditEvent auditEvent);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-149333919
+// LIFERAY-SERVICE-BUILDER-HASH:487910468
