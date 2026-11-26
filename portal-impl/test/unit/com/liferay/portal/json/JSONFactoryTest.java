@@ -13,6 +13,8 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.test.AssertUtils;
+import com.liferay.portal.kernel.test.TestInfo;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
@@ -24,6 +26,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import jodd.json.JsonException;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -256,6 +260,25 @@ public class JSONFactoryTest {
 		Assert.assertNotNull(map);
 		Assert.assertEquals(map.toString(), 1, map.size());
 		Assert.assertEquals(JSONFactoryImpl.class.getName(), map.get("class"));
+	}
+
+	@Test
+	@TestInfo("LPD-116154")
+	public void testLooseDeserializeWithJSONDeserializerType() {
+		AssertUtils.assertFailure(
+			JsonException.class,
+			"Not instantiating " + JSONDeserializerImpl.class.getName() +
+				" at []",
+			() -> JSONFactoryUtil.looseDeserialize(
+				"{}", JSONDeserializerImpl.class));
+		AssertUtils.assertFailure(
+			JsonException.class,
+			"Not instantiating " + PortalJsonParser.class.getName() + " at []",
+			() -> JSONFactoryUtil.looseDeserialize(
+				StringBundler.concat(
+					"{\"", RandomTestUtil.randomString(), "\": \"",
+					RandomTestUtil.randomString(), "\"}"),
+				PortalJsonParser.class));
 	}
 
 	@Test
