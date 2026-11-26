@@ -37,6 +37,10 @@ public class PortletInstanceSettingsLocator implements SettingsLocator {
 		return _configurationPid;
 	}
 
+	public Layout getLayout() {
+		return _layout;
+	}
+
 	public long getOwnerId() {
 		if (isEmbeddedPortlet()) {
 			return _layout.getGroupId();

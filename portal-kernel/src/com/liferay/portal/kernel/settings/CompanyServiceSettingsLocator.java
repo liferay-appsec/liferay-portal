@@ -24,6 +24,14 @@ public class CompanyServiceSettingsLocator implements SettingsLocator {
 		_configurationPid = configurationPid;
 	}
 
+	public long getCompanyId() {
+		return _companyId;
+	}
+
+	public String getConfigurationPid() {
+		return _configurationPid;
+	}
+
 	@Override
 	public Settings getSettings() throws SettingsException {
 		SystemSettingsLocator systemSettingsLocator = new SystemSettingsLocator(
