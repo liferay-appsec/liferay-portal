@@ -9,14 +9,25 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.ParameterMapSettingsLocator;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
+import com.liferay.portal.kernel.settings.SettingsLocatorHelper;
+import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.internal.profile.configuration.KeyManagerConfiguration;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
@@ -26,6 +37,7 @@ import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,12 +69,17 @@ public class SecretResolverImplTest {
 		MockitoAnnotations.openMocks(this);
 
 		ReflectionTestUtil.setFieldValue(
+			_secretResolverImpl, "_groupLocalService", _groupLocalService);
+		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_keyManagerProfileRegistry",
 			_keyManagerProfileRegistry);
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_portalCache", _portalCache);
 		ReflectionTestUtil.setFieldValue(
 			_secretResolverImpl, "_secretManager", _secretManager);
+		ReflectionTestUtil.setFieldValue(
+			_secretResolverImpl, "_settingsLocatorHelper",
+			_settingsLocatorHelper);
 	}
 
 	@Test
@@ -97,6 +114,14 @@ public class SecretResolverImplTest {
 	public void testResolveWithSecretContext() throws Exception {
 		_testResolveWithSecretContext();
 		_testResolveWithSecretContextUnderAnotherCompany();
+		_testResolveWithSecretContextWhenConfigurationPidIsMapped();
+		_testResolveWithSecretContextWhenGroupIsStaged();
+		_testResolveWithSecretContextWhenGroupIsStagingGroup();
+		_testResolveWithSecretContextWhenPortletIsEmbedded();
+		_testResolveWithSecretContextWhenPortletIsUserPortlet();
+		_testResolveWithSecretContextWhenSettingsLocatorIsGroup();
+		_testResolveWithSecretContextWhenSettingsLocatorIsPortletInstance();
+		_testResolveWithSecretContextWhenSettingsLocatorIsUnsupported();
 		_testResolveWithSecretContextWhenValueReferencesAnotherContext();
 	}
 
@@ -134,6 +159,7 @@ public class SecretResolverImplTest {
 			_testStoreWithSecretContext();
 			_testStoreWithSecretContextWhenFIPSIsDisabled();
 			_testStoreWithSecretContextWhenValueReferencesAnotherContext();
+			_testStoreWithSecretContextWhenValueReferencesItsChain();
 			_testStoreWithSecretContextWhenValueReferencesSameContext();
 		}
 	}
@@ -257,6 +283,8 @@ public class SecretResolverImplTest {
 			long companyId, String identifier, SecretContext secretContext)
 		throws Exception {
 
+		Mockito.clearInvocations(_secretManager);
+
 		KeyReference keyReference = new KeyReference(
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			KeyReference.Type.SECRET);
@@ -353,6 +381,54 @@ public class SecretResolverImplTest {
 				RandomTestUtil.randomLong(), identifier, value));
 
 		Mockito.verifyNoInteractions(_secretManager);
+	}
+
+	private Group _setUpGroup(long companyId, long groupId) throws Exception {
+		Group group = Mockito.mock(Group.class);
+
+		Mockito.when(
+			group.getCompanyId()
+		).thenReturn(
+			companyId
+		);
+
+		Mockito.when(
+			group.getGroupId()
+		).thenReturn(
+			groupId
+		);
+
+		Mockito.when(
+			_groupLocalService.getGroup(groupId)
+		).thenReturn(
+			group
+		);
+
+		return group;
+	}
+
+	private Layout _setUpLayout(long companyId, long groupId, long plid) {
+		Layout layout = Mockito.mock(Layout.class);
+
+		Mockito.when(
+			layout.getCompanyId()
+		).thenReturn(
+			companyId
+		);
+
+		Mockito.when(
+			layout.getGroupId()
+		).thenReturn(
+			groupId
+		);
+
+		Mockito.when(
+			layout.getPlid()
+		).thenReturn(
+			plid
+		);
+
+		return layout;
 	}
 
 	private void _testResolve() throws Exception {
@@ -641,6 +717,315 @@ public class SecretResolverImplTest {
 				).build()));
 	}
 
+	private void _testResolveWithSecretContextWhenConfigurationPidIsMapped()
+		throws Exception {
+
+		ConfigurationPidMapping configurationPidMapping = Mockito.mock(
+			ConfigurationPidMapping.class);
+
+		Mockito.doReturn(
+			KeyManagerConfiguration.class
+		).when(
+			configurationPidMapping
+		).getConfigurationBeanClass();
+
+		String settingsId = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_settingsLocatorHelper.getConfigurationPidMapping(settingsId)
+		).thenReturn(
+			configurationPidMapping
+		);
+
+		long companyId = RandomTestUtil.randomLong();
+		String key = RandomTestUtil.randomString();
+
+		SecretContext secretContext = SecretContext.fromSettings(
+			key, new CompanyServiceSettingsLocator(companyId, settingsId));
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", KeyManagerConfiguration.class.getName(),
+				"/system/0/", key),
+			CompanyConstants.SYSTEM, secretContext);
+		_assertResolveFails(
+			companyId,
+			StringBundler.concat("config/", settingsId, "/system/0/", key),
+			secretContext);
+	}
+
+	private void _testResolveWithSecretContextWhenGroupIsStaged()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		Group group = _setUpGroup(companyId, groupId);
+
+		Group stagingGroup = Mockito.mock(Group.class);
+
+		long stagingGroupId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			stagingGroup.getGroupId()
+		).thenReturn(
+			stagingGroupId
+		);
+
+		Mockito.when(
+			group.getStagingGroup()
+		).thenReturn(
+			stagingGroup
+		);
+
+		String key = RandomTestUtil.randomString();
+		String settingsId = RandomTestUtil.randomString();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", settingsId, "/group/", stagingGroupId,
+				StringPool.SLASH, key),
+			companyId,
+			SecretContext.fromSettings(
+				key, new GroupServiceSettingsLocator(groupId, settingsId)));
+	}
+
+	private void _testResolveWithSecretContextWhenGroupIsStagingGroup()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		Group group = _setUpGroup(companyId, groupId);
+
+		Mockito.when(
+			group.isStagingGroup()
+		).thenReturn(
+			true
+		);
+
+		long liveGroupId = RandomTestUtil.randomLong();
+
+		Mockito.when(
+			group.getLiveGroupId()
+		).thenReturn(
+			liveGroupId
+		);
+
+		String key = RandomTestUtil.randomString();
+		String settingsId = RandomTestUtil.randomString();
+
+		SecretContext secretContext = SecretContext.fromSettings(
+			key, new GroupServiceSettingsLocator(groupId, settingsId));
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", settingsId, "/group/", liveGroupId, StringPool.SLASH,
+				key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", settingsId, "/group/", liveGroupId,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+	}
+
+	private void _testResolveWithSecretContextWhenPortletIsEmbedded()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		_setUpGroup(companyId, groupId);
+
+		Layout layout = _setUpLayout(
+			companyId, groupId, RandomTestUtil.randomLong());
+
+		Mockito.when(
+			layout.isSupportsEmbeddedPortlets()
+		).thenReturn(
+			true
+		);
+
+		String portletId = PortletIdCodec.encode(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		Mockito.when(
+			layout.isPortletEmbedded(portletId, groupId)
+		).thenReturn(
+			true
+		);
+
+		String key = RandomTestUtil.randomString();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/", groupId, "/0/",
+				key),
+			companyId,
+			SecretContext.fromSettings(
+				key, new PortletInstanceSettingsLocator(layout, portletId)));
+	}
+
+	private void _testResolveWithSecretContextWhenPortletIsUserPortlet()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		_setUpGroup(companyId, groupId);
+
+		long plid = RandomTestUtil.randomLong();
+
+		long userId = RandomTestUtil.randomLong();
+
+		String portletId = PortletIdCodec.encode(
+			RandomTestUtil.randomString(), userId,
+			RandomTestUtil.randomString());
+
+		String key = RandomTestUtil.randomString();
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/", userId,
+				StringPool.SLASH, plid, StringPool.SLASH, key),
+			companyId,
+			SecretContext.fromSettings(
+				key,
+				new PortletInstanceSettingsLocator(
+					_setUpLayout(companyId, groupId, plid), portletId)));
+	}
+
+	private void _testResolveWithSecretContextWhenSettingsLocatorIsGroup()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		_setUpGroup(companyId, groupId);
+
+		String key = RandomTestUtil.randomString();
+		String settingsId = RandomTestUtil.randomString();
+
+		SecretContext secretContext = SecretContext.fromSettings(
+			key, new GroupServiceSettingsLocator(groupId, settingsId));
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", settingsId, "/company/", companyId, StringPool.SLASH,
+				key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", settingsId, "/group/", groupId, StringPool.SLASH,
+				key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat("config/", settingsId, "/system/0/", key),
+			CompanyConstants.SYSTEM, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", settingsId, "/company/", companyId,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+
+		String identifier = StringBundler.concat(
+			"preference/", settingsId, "/group/", groupId, StringPool.SLASH,
+			key);
+
+		_assertResolve(companyId, identifier, companyId, secretContext);
+
+		_assertResolveFails(
+			RandomTestUtil.randomLong(), identifier, secretContext);
+
+		_assertResolveFails(
+			companyId,
+			StringBundler.concat(
+				"config/", RandomTestUtil.randomString(), "/system/0/", key),
+			secretContext);
+	}
+
+	private void _testResolveWithSecretContextWhenSettingsLocatorIsPortletInstance()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+
+		_setUpGroup(companyId, groupId);
+
+		long plid = RandomTestUtil.randomLong();
+
+		Layout layout = _setUpLayout(companyId, groupId, plid);
+
+		String portletName = RandomTestUtil.randomString();
+
+		String portletId = PortletIdCodec.encode(
+			portletName, RandomTestUtil.randomString());
+
+		String key = RandomTestUtil.randomString();
+
+		SecretContext secretContext = SecretContext.fromSettings(
+			key, new PortletInstanceSettingsLocator(layout, portletId));
+
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"config/", portletName, "/portlet-instance/", portletId,
+				StringPool.SLASH, key),
+			CompanyConstants.SYSTEM, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/0/", plid,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletName, "/company/", companyId,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolve(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletName, "/group/", groupId,
+				StringPool.SLASH, key),
+			companyId, secretContext);
+		_assertResolveFails(
+			companyId,
+			StringBundler.concat(
+				"preference/", portletId, "/portlet-instance/0/",
+				RandomTestUtil.randomLong(), StringPool.SLASH, key),
+			secretContext);
+	}
+
+	private void _testResolveWithSecretContextWhenSettingsLocatorIsUnsupported() {
+		long companyId = RandomTestUtil.randomLong();
+
+		SecretContext secretContext = SecretContext.fromSettings(
+			RandomTestUtil.randomString(),
+			new ParameterMapSettingsLocator(
+				new HashMap<>(),
+				new CompanyServiceSettingsLocator(
+					companyId, RandomTestUtil.randomString())));
+
+		Assert.assertThrows(
+			IllegalArgumentException.class,
+			() -> _secretResolverImpl.resolve(
+				companyId, secretContext,
+				_toKeyReferenceString(RandomTestUtil.randomString())));
+	}
+
 	private void _testResolveWithSecretContextWhenValueReferencesAnotherContext() {
 		long companyId = RandomTestUtil.randomLong();
 		String key = RandomTestUtil.randomString();
@@ -825,6 +1210,20 @@ public class SecretResolverImplTest {
 				).put(
 					"companyId", companyId
 				).build()));
+
+		long groupId = RandomTestUtil.randomLong();
+
+		_setUpGroup(companyId, groupId);
+
+		String settingsId = RandomTestUtil.randomString();
+
+		_assertStore(
+			companyId,
+			StringBundler.concat(
+				"preference/", settingsId, "/group/", groupId, StringPool.SLASH,
+				key),
+			SecretContext.fromSettings(
+				key, new GroupServiceSettingsLocator(groupId, settingsId)));
 	}
 
 	private void _testStoreWithSecretContextWhenFIPSIsDisabled()
@@ -885,6 +1284,29 @@ public class SecretResolverImplTest {
 		Mockito.verifyNoInteractions(_secretManager);
 	}
 
+	private void _testStoreWithSecretContextWhenValueReferencesItsChain() {
+		Mockito.clearInvocations(_secretManager);
+
+		long companyId = RandomTestUtil.randomLong();
+
+		String key = RandomTestUtil.randomString();
+		String settingsId = RandomTestUtil.randomString();
+
+		String value = _toKeyReferenceString(
+			StringBundler.concat("config/", settingsId, "/system/0/", key));
+
+		Assert.assertEquals(
+			value,
+			_secretResolverImpl.store(
+				companyId,
+				SecretContext.fromSettings(
+					key,
+					new CompanyServiceSettingsLocator(companyId, settingsId)),
+				value));
+
+		Mockito.verifyNoInteractions(_secretManager);
+	}
+
 	private void _testStoreWithSecretContextWhenValueReferencesSameContext() {
 		Mockito.clearInvocations(_secretManager);
 
@@ -920,6 +1342,9 @@ public class SecretResolverImplTest {
 	}
 
 	@Mock
+	private GroupLocalService _groupLocalService;
+
+	@Mock
 	private KeyManagerProfile _keyManagerProfile;
 
 	@Mock
@@ -933,5 +1358,8 @@ public class SecretResolverImplTest {
 
 	private final SecretResolverImpl _secretResolverImpl =
 		new SecretResolverImpl();
+
+	@Mock
+	private SettingsLocatorHelper _settingsLocatorHelper;
 
 }
