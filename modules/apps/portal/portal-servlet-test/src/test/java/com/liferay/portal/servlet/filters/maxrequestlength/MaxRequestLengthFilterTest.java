@@ -5,10 +5,14 @@
 
 package com.liferay.portal.servlet.filters.maxrequestlength;
 
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import jakarta.servlet.FilterChain;
@@ -26,10 +30,12 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * @author Alejandro Tardín
@@ -43,65 +49,158 @@ public class MaxRequestLengthFilterTest {
 
 	@Before
 	public void setUp() {
+		_batchMaxRequestLength = PropsValues.MAX_REQUEST_LENGTH_BATCH;
 		_maxRequestLength = PropsValues.MAX_REQUEST_LENGTH;
+		_signedInMaxRequestLength = PropsValues.MAX_REQUEST_LENGTH_SIGNED_IN;
 
 		ReflectionTestUtil.setFieldValue(
 			PropsValues.class, "MAX_REQUEST_LENGTH", (long)_BYTES.length);
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "MAX_REQUEST_LENGTH_BATCH",
+			(long)_BYTES.length * 3);
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "MAX_REQUEST_LENGTH_SIGNED_IN",
+			(long)_BYTES.length * 2);
 	}
 
 	@After
 	public void tearDown() {
 		ReflectionTestUtil.setFieldValue(
 			PropsValues.class, "MAX_REQUEST_LENGTH", _maxRequestLength);
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "MAX_REQUEST_LENGTH_BATCH",
+			_batchMaxRequestLength);
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "MAX_REQUEST_LENGTH_SIGNED_IN",
+			_signedInMaxRequestLength);
 	}
 
 	@Test
 	public void testProcessFilter() throws Exception {
 		_testProcessFilter(
-			_BYTES, ContentTypes.APPLICATION_JSON, _BYTES.length, false,
-			HttpServletResponse.SC_OK);
+			_BYTES, -1, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_OK, false);
 		_testProcessFilter(
-			_BYTES, ContentTypes.APPLICATION_JSON, -1, false,
-			HttpServletResponse.SC_OK);
+			_BYTES, -1, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_OK, true);
 		_testProcessFilter(
-			_BYTES, ContentTypes.APPLICATION_JSON, -1, true,
-			HttpServletResponse.SC_OK);
+			_BYTES, _BYTES.length, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_OK, false);
 
 		byte[] bytes = new byte[_BYTES.length + 1];
 
 		_testProcessFilter(
-			bytes, ContentTypes.APPLICATION_JSON, bytes.length, false,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, -1, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
 		_testProcessFilter(
-			bytes, ContentTypes.APPLICATION_JSON, -1, false,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, -1, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, true);
 		_testProcessFilter(
-			bytes, ContentTypes.APPLICATION_JSON, -1, true,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, -1,
+			ContentTypes.MULTIPART_FORM_DATA + "; boundary=" +
+				RandomTestUtil.randomString(),
+			HttpServletResponse.SC_OK, false);
 		_testProcessFilter(
-			bytes, ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED, bytes.length,
-			false, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, -1,
+			ContentTypes.MULTIPART_MIXED + "; boundary=" +
+				RandomTestUtil.randomString(),
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, true);
 		_testProcessFilter(
-			bytes, ContentTypes.MULTIPART_FORM_DATA + "; boundary=test",
-			bytes.length, false, HttpServletResponse.SC_OK);
+			bytes, bytes.length,
+			"Multipart/form-data; boundary=" + RandomTestUtil.randomString(),
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
 		_testProcessFilter(
-			bytes, ContentTypes.MULTIPART_FORM_DATA + "; boundary=test", -1,
-			false, HttpServletResponse.SC_OK);
+			bytes, bytes.length, ContentTypes.APPLICATION_JSON,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
 		_testProcessFilter(
-			bytes, "Multipart/form-data; boundary=test", bytes.length, false,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, bytes.length, ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED,
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
 		_testProcessFilter(
-			bytes, ContentTypes.MULTIPART_MIXED + "; boundary=test",
-			bytes.length, false,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, bytes.length,
+			ContentTypes.MULTIPART_FORM_DATA + "; boundary=" +
+				RandomTestUtil.randomString(),
+			HttpServletResponse.SC_OK, false);
 		_testProcessFilter(
-			bytes, ContentTypes.MULTIPART_MIXED + "; boundary=test", -1, true,
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			bytes, bytes.length,
+			ContentTypes.MULTIPART_MIXED + "; boundary=" +
+				RandomTestUtil.randomString(),
+			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
+
+		_testProcessFilterWithParameter(bytes);
+		_testProcessFilterWithSession(bytes, HttpServletResponse.SC_OK);
+
+		PermissionThreadLocal.setPermissionChecker(
+			Mockito.mock(PermissionChecker.class));
+
+		try {
+			_testProcessFilterWithSession(
+				bytes, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(null);
+		}
+
+		PermissionChecker permissionChecker = Mockito.mock(
+			PermissionChecker.class);
+
+		Mockito.when(
+			permissionChecker.isSignedIn()
+		).thenReturn(
+			true
+		);
+
+		PermissionThreadLocal.setPermissionChecker(permissionChecker);
+
+		try {
+			_testProcessFilter(
+				bytes, -1, ContentTypes.APPLICATION_JSON,
+				HttpServletResponse.SC_OK, true);
+			_testProcessFilter(
+				bytes, bytes.length, ContentTypes.APPLICATION_JSON,
+				HttpServletResponse.SC_OK, false);
+
+			byte[] signedInBytes = new byte[(_BYTES.length * 2) + 1];
+
+			_testProcessFilterWithBatch(
+				signedInBytes, HttpServletResponse.SC_OK);
+
+			byte[] batchBytes = new byte[(_BYTES.length * 3) + 1];
+
+			_testProcessFilterWithBatch(
+				batchBytes, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+
+			_testProcessFilter(
+				signedInBytes, -1, ContentTypes.APPLICATION_JSON,
+				HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
+			_testProcessFilter(
+				signedInBytes, signedInBytes.length,
+				ContentTypes.APPLICATION_JSON,
+				HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, false);
+		}
+		finally {
+			PermissionThreadLocal.setPermissionChecker(null);
+		}
+
+		ReflectionTestUtil.setFieldValue(
+			PropsValues.class, "MAX_REQUEST_LENGTH_SIGNED_IN", 0L);
+
+		try (MockedStatic<UploadServletRequestConfigurationProviderUtil>
+				uploadServletRequestConfigurationProviderUtilMockedStatic =
+					Mockito.mockStatic(
+						UploadServletRequestConfigurationProviderUtil.class)) {
+
+			_testProcessFilter(
+				_BYTES, -1, ContentTypes.APPLICATION_JSON,
+				HttpServletResponse.SC_OK, false);
+
+			uploadServletRequestConfigurationProviderUtilMockedStatic.
+				verifyNoInteractions();
+		}
 	}
 
 	private void _testProcessFilter(
-			byte[] bytes, String contentType, long contentLength,
-			boolean reader, int expectedStatus)
+			byte[] bytes, long contentLength, String contentType,
+			int expectedStatus, boolean reader)
 		throws Exception {
 
 		MockHttpServletRequest mockHttpServletRequest = Mockito.spy(
@@ -159,8 +258,111 @@ public class MaxRequestLengthFilterTest {
 			"before", mockHttpServletResponse.getHeader("X-Before"));
 	}
 
+	private void _testProcessFilterWithBatch(byte[] bytes, int expectedStatus)
+		throws Exception {
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setContent(bytes);
+		mockHttpServletRequest.setContentType(ContentTypes.APPLICATION_JSON);
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			new MaxRequestLengthFilter(), "processFilter",
+			new Class<?>[] {
+				HttpServletRequest.class, HttpServletResponse.class,
+				FilterChain.class
+			},
+			mockHttpServletRequest, mockHttpServletResponse,
+			(FilterChain)(servletRequest, servletResponse) -> {
+				InputStream inputStream = servletRequest.getInputStream();
+
+				servletRequest.setAttribute(
+					WebKeys.MAX_REQUEST_LENGTH_BATCH, Boolean.TRUE);
+
+				inputStream.readAllBytes();
+			});
+
+		Assert.assertEquals(
+			expectedStatus, mockHttpServletResponse.getStatus());
+	}
+
+	private void _testProcessFilterWithParameter(byte[] bytes)
+		throws Exception {
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setContent(bytes);
+		mockHttpServletRequest.setContentType(
+			ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED);
+
+		String name = RandomTestUtil.randomString();
+		String value = RandomTestUtil.randomString();
+
+		mockHttpServletRequest.setParameter(name, value);
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			new MaxRequestLengthFilter(), "processFilter",
+			new Class<?>[] {
+				HttpServletRequest.class, HttpServletResponse.class,
+				FilterChain.class
+			},
+			mockHttpServletRequest, mockHttpServletResponse,
+			(FilterChain)
+				(servletRequest, servletResponse) -> Assert.assertEquals(
+					value, servletRequest.getParameter(name)));
+
+		Assert.assertEquals(
+			HttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
+	}
+
+	private void _testProcessFilterWithSession(byte[] bytes, int expectedStatus)
+		throws Exception {
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setContent(bytes);
+		mockHttpServletRequest.setContentType(ContentTypes.APPLICATION_JSON);
+
+		MockHttpSession mockHttpSession = new MockHttpSession();
+
+		mockHttpSession.setAttribute(
+			WebKeys.USER_ID, RandomTestUtil.randomLong());
+
+		mockHttpServletRequest.setSession(mockHttpSession);
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		ReflectionTestUtil.invoke(
+			new MaxRequestLengthFilter(), "processFilter",
+			new Class<?>[] {
+				HttpServletRequest.class, HttpServletResponse.class,
+				FilterChain.class
+			},
+			mockHttpServletRequest, mockHttpServletResponse,
+			(FilterChain)(servletRequest, servletResponse) -> {
+				InputStream inputStream = servletRequest.getInputStream();
+
+				inputStream.readAllBytes();
+			});
+
+		Assert.assertEquals(
+			expectedStatus, mockHttpServletResponse.getStatus());
+	}
+
 	private static final byte[] _BYTES = RandomTestUtil.randomBytes();
 
+	private long _batchMaxRequestLength;
 	private long _maxRequestLength;
+	private long _signedInMaxRequestLength;
 
 }
