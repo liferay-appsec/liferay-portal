@@ -365,6 +365,12 @@ public interface WebKeys {
 
 	public static final String MAIL_STORE = "MAIL_STORE";
 
+	public static final String MAX_REQUEST_LENGTH_BATCH =
+		"MAX_REQUEST_LENGTH_BATCH";
+
+	public static final String MAX_REQUEST_LENGTH_EXCEEDED =
+		"MAX_REQUEST_LENGTH_EXCEEDED";
+
 	public static final String MEMBERSHIP_REQUEST = "MEMBERSHIP_REQUEST";
 
 	public static final String MESSAGE_BOARDS_CATEGORY =

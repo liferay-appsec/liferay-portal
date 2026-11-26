@@ -1299,6 +1299,12 @@ public class PropsValues {
 	public static final long MAX_REQUEST_LENGTH = GetterUtil.getLong(
 		PropsUtil.get(PropsKeys.MAX_REQUEST_LENGTH));
 
+	public static final long MAX_REQUEST_LENGTH_BATCH = GetterUtil.getLong(
+		PropsUtil.get(PropsKeys.MAX_REQUEST_LENGTH_BATCH));
+
+	public static final long MAX_REQUEST_LENGTH_SIGNED_IN = GetterUtil.getLong(
+		PropsUtil.get(PropsKeys.MAX_REQUEST_LENGTH_SIGNED_IN));
+
 	public static final boolean MEMBERSHIP_POLICY_AUTO_VERIFY =
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.MEMBERSHIP_POLICY_AUTO_VERIFY));

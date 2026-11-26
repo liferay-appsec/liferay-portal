@@ -7,6 +7,8 @@ package com.liferay.portal.servlet.filters.maxrequestlength;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.servlet.MaxRequestLengthUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -20,18 +22,18 @@ import java.io.InputStreamReader;
 
 /**
  * @author Alejandro Tardín
+ * @author Jorge García Jiménez
  */
 public class MaxRequestLengthHttpServletRequestWrapper
 	extends HttpServletRequestWrapper {
 
 	public MaxRequestLengthHttpServletRequestWrapper(
 		HttpServletRequest httpServletRequest,
-		HttpServletResponse httpServletResponse, long maxRequestLength) {
+		HttpServletResponse httpServletResponse) {
 
 		super(httpServletRequest);
 
 		_httpServletResponse = httpServletResponse;
-		_maxRequestLength = maxRequestLength;
 	}
 
 	@Override
@@ -64,9 +66,25 @@ public class MaxRequestLengthHttpServletRequestWrapper
 		return _maxRequestLengthExceeded;
 	}
 
+	private void _rejectRequest(long maxRequestLength) throws IOException {
+		_maxRequestLengthExceeded = true;
+
+		setAttribute(WebKeys.MAX_REQUEST_LENGTH_EXCEEDED, Boolean.TRUE);
+
+		if (!_httpServletResponse.isCommitted()) {
+			_httpServletResponse.setStatus(
+				HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+			_httpServletResponse.flushBuffer();
+		}
+
+		throw new IOException(
+			StringBundler.concat(
+				"Request body exceeds the maximum length of ", maxRequestLength,
+				" bytes"));
+	}
+
 	private BufferedReader _bufferedReader;
 	private final HttpServletResponse _httpServletResponse;
-	private final long _maxRequestLength;
 	private boolean _maxRequestLengthExceeded;
 	private ServletInputStream _servletInputStream;
 
@@ -108,13 +126,13 @@ public class MaxRequestLengthHttpServletRequestWrapper
 		public int read(byte[] bytes, int offset, int length)
 			throws IOException {
 
-			int count = _servletInputStream.read(bytes, offset, length);
+			int read = _servletInputStream.read(bytes, offset, length);
 
-			if (count > 0) {
-				_checkLength(count);
+			if (read > 0) {
+				_checkLength(read);
 			}
 
-			return count;
+			return read;
 		}
 
 		@Override
@@ -131,20 +149,11 @@ public class MaxRequestLengthHttpServletRequestWrapper
 		private void _checkLength(int count) throws IOException {
 			_length += count;
 
-			if (_length > _maxRequestLength) {
-				_maxRequestLengthExceeded = true;
+			long maxRequestLength = MaxRequestLengthUtil.getMaxRequestLength(
+				MaxRequestLengthHttpServletRequestWrapper.this);
 
-				if (!_httpServletResponse.isCommitted()) {
-					_httpServletResponse.setStatus(
-						HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-
-					_httpServletResponse.flushBuffer();
-				}
-
-				throw new IOException(
-					StringBundler.concat(
-						"Request body exceeds the maximum length of ",
-						_maxRequestLength, " bytes"));
+			if (_length > maxRequestLength) {
+				_rejectRequest(maxRequestLength);
 			}
 		}
 

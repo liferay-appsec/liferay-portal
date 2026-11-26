@@ -8,8 +8,8 @@ package com.liferay.portal.servlet.filters.maxrequestlength;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.MaxRequestLengthUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 
 import jakarta.servlet.FilterChain;
@@ -40,28 +40,32 @@ public class MaxRequestLengthFilter extends BasePortalFilter {
 			return;
 		}
 
-		long maxRequestLength = _getMaxRequestLength();
-
 		long contentLength = httpServletRequest.getContentLengthLong();
 
-		if (contentLength > maxRequestLength) {
-			_sendError(httpServletResponse, maxRequestLength);
+		if (contentLength > 0) {
+			long maxRequestLength = Math.max(
+				MaxRequestLengthUtil.getBatchMaxRequestLength(),
+				MaxRequestLengthUtil.getSignedInMaxRequestLength());
 
-			return;
-		}
+			if (contentLength > maxRequestLength) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						StringBundler.concat(
+							"Request body exceeds the maximum length of ",
+							maxRequestLength, " bytes"));
+				}
 
-		if (contentLength >= 0) {
-			processFilter(
-				MaxRequestLengthFilter.class.getName(), httpServletRequest,
-				httpServletResponse, filterChain);
+				httpServletResponse.setStatus(
+					HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
 
-			return;
+				return;
+			}
 		}
 
 		MaxRequestLengthHttpServletRequestWrapper
 			maxRequestLengthHttpServletRequestWrapper =
 				new MaxRequestLengthHttpServletRequestWrapper(
-					httpServletRequest, httpServletResponse, maxRequestLength);
+					httpServletRequest, httpServletResponse);
 
 		try {
 			processFilter(
@@ -76,28 +80,6 @@ public class MaxRequestLengthFilter extends BasePortalFilter {
 				throw exception;
 			}
 		}
-	}
-
-	private long _getMaxRequestLength() {
-		if (PropsValues.MAX_REQUEST_LENGTH > 0) {
-			return PropsValues.MAX_REQUEST_LENGTH;
-		}
-
-		return 1024 * 1024;
-	}
-
-	private void _sendError(
-		HttpServletResponse httpServletResponse, long maxRequestLength) {
-
-		if (_log.isDebugEnabled()) {
-			_log.debug(
-				StringBundler.concat(
-					"Request body exceeds the maximum length of ",
-					maxRequestLength, " bytes"));
-		}
-
-		httpServletResponse.setStatus(
-			HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
