@@ -5,6 +5,8 @@
 
 package com.liferay.portal.security.key.internal.secret;
 
+import aQute.bnd.annotation.metatype.Meta;
+
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -13,25 +15,42 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
 import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
+import com.liferay.portal.kernel.settings.Settings;
+import com.liferay.portal.kernel.settings.SettingsLocator;
+import com.liferay.portal.kernel.settings.SettingsLocatorHelper;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
+import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.ConfigurationSecretContext;
 import com.liferay.portal.security.key.secret.Secret;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.SecretResolver;
+import com.liferay.portal.security.key.secret.SettingsSecretContext;
 import com.liferay.portal.security.key.secret.exception.SecretException;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfile;
 import com.liferay.portal.security.key.spi.profile.KeyManagerProfileRegistry;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SequencedMap;
 
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -66,7 +85,7 @@ public class SecretResolverImpl implements SecretResolver {
 
 			long scopeCompanyId = _getScopeCompanyId(
 				companyId, keyReference.getIdentifier(), "resolve",
-				secretContext);
+				_getSecretIdentifierMap(secretContext));
 
 			String key = getKey(scopeCompanyId, value);
 
@@ -86,8 +105,8 @@ public class SecretResolverImpl implements SecretResolver {
 
 			return resolvedValue;
 		}
-		catch (SecretException secretException) {
-			return ReflectionUtil.throwException(secretException);
+		catch (PortalException portalException) {
+			return ReflectionUtil.throwException(portalException);
 		}
 	}
 
@@ -158,32 +177,36 @@ public class SecretResolverImpl implements SecretResolver {
 		}
 
 		try {
+			SequencedMap<String, Long> secretIdentifierMap =
+				_getSecretIdentifierMap(secretContext);
+
 			if (KeyReferenceUtil.isKeyReference(value)) {
 				KeyReference keyReference = _getKeyReference(value);
 
 				_getScopeCompanyId(
 					companyId, keyReference.getIdentifier(), "store",
-					secretContext);
+					secretIdentifierMap);
 
 				return value;
 			}
 
-			String secretIdentifier = _getSecretIdentifier(secretContext);
+			Map.Entry<String, Long> entry = secretIdentifierMap.firstEntry();
+
+			String identifier = entry.getKey();
 
 			try (Secret secret = new Secret(
 					new KeyReference(
-						secretIdentifier, StringPool.STAR,
-						KeyReference.Type.SECRET),
+						identifier, StringPool.STAR, KeyReference.Type.SECRET),
 					value)) {
 
 				return _putSecret(
 					_getScopeCompanyId(
-						companyId, secretIdentifier, "store", secretContext),
+						companyId, identifier, "store", secretIdentifierMap),
 					secret);
 			}
 		}
-		catch (SecretException secretException) {
-			return ReflectionUtil.throwException(secretException);
+		catch (PortalException portalException) {
+			return ReflectionUtil.throwException(portalException);
 		}
 	}
 
@@ -275,17 +298,23 @@ public class SecretResolverImpl implements SecretResolver {
 		return keyReference;
 	}
 
+	private String _getPreferenceIdentifier(
+		String key, ExtendedObjectClassDefinition.Scope scope, Object scopePK,
+		String settingsId) {
+
+		return StringBundler.concat(
+			_IDENTIFIER_PREFIX_PREFERENCE, settingsId, StringPool.SLASH,
+			scope.getValue(), StringPool.SLASH, scopePK, StringPool.SLASH, key);
+	}
+
 	private long _getScopeCompanyId(
 			long companyId, String identifier, String operation,
-			SecretContext secretContext)
+			Map<String, Long> secretIdentifierMap)
 		throws SecretException {
 
-		long scopeCompanyId = MapUtil.getLong(
-			secretContext.getProperties(),
-			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-			CompanyConstants.SYSTEM);
+		Long scopeCompanyId = secretIdentifierMap.get(identifier);
 
-		if (Objects.equals(identifier, _getSecretIdentifier(secretContext)) &&
+		if ((scopeCompanyId != null) &&
 			((scopeCompanyId == CompanyConstants.SYSTEM) ||
 			 (scopeCompanyId == companyId))) {
 
@@ -307,13 +336,182 @@ public class SecretResolverImpl implements SecretResolver {
 				"\" in this secret context"));
 	}
 
-	private String _getSecretIdentifier(SecretContext secretContext) {
-		Map<String, Object> properties = secretContext.getProperties();
+	private SequencedMap<String, Long> _getSecretIdentifierMap(
+			SecretContext secretContext)
+		throws PortalException {
 
-		return SecretIdentifierUtil.getSecretIdentifier(
-			secretContext.getKey(),
-			MapUtil.getString(properties, Constants.SERVICE_PID),
-			properties::get);
+		SequencedMap<String, Long> secretIdentifierMap = new LinkedHashMap<>();
+
+		String key = secretContext.getKey();
+
+		if (secretContext instanceof
+				ConfigurationSecretContext configurationSecretContext) {
+
+			Map<String, Object> properties =
+				configurationSecretContext.getProperties();
+
+			secretIdentifierMap.put(
+				SecretIdentifierUtil.getSecretIdentifier(
+					key, MapUtil.getString(properties, Constants.SERVICE_PID),
+					properties::get),
+				MapUtil.getLong(
+					properties,
+					ExtendedObjectClassDefinition.Scope.COMPANY.
+						getPropertyKey(),
+					CompanyConstants.SYSTEM));
+		}
+		else if (secretContext instanceof
+					SettingsSecretContext settingsSecretContext) {
+
+			SettingsLocator settingsLocator =
+				settingsSecretContext.getSettingsLocator();
+
+			if (settingsLocator instanceof
+					CompanyServiceSettingsLocator
+						companyServiceSettingsLocator) {
+
+				_putCompanyScopes(
+					companyServiceSettingsLocator.getCompanyId(),
+					companyServiceSettingsLocator.getConfigurationPid(), key,
+					secretIdentifierMap,
+					companyServiceSettingsLocator.getSettingsId());
+			}
+			else if (settingsLocator instanceof
+						GroupServiceSettingsLocator
+							groupServiceSettingsLocator) {
+
+				Group group = _groupLocalService.getGroup(
+					groupServiceSettingsLocator.getGroupId());
+
+				_putGroupScopes(
+					groupServiceSettingsLocator.getConfigurationPid(), group,
+					key, secretIdentifierMap,
+					groupServiceSettingsLocator.getSettingsId());
+				_putCompanyScopes(
+					group.getCompanyId(),
+					groupServiceSettingsLocator.getConfigurationPid(), key,
+					secretIdentifierMap,
+					groupServiceSettingsLocator.getSettingsId());
+			}
+			else if (settingsLocator instanceof
+						PortletInstanceSettingsLocator
+							portletInstanceSettingsLocator) {
+
+				String portletId =
+					portletInstanceSettingsLocator.getSettingsId();
+
+				long ownerId = portletInstanceSettingsLocator.getOwnerId();
+
+				long userId = PortletIdCodec.decodeUserId(portletId);
+
+				if (userId > 0) {
+					ownerId = userId;
+				}
+
+				Layout layout = portletInstanceSettingsLocator.getLayout();
+
+				secretIdentifierMap.put(
+					_getPreferenceIdentifier(
+						key,
+						ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+						StringBundler.concat(
+							ownerId, StringPool.SLASH,
+							portletInstanceSettingsLocator.getPlid()),
+						portletId),
+					layout.getCompanyId());
+
+				String configurationPid =
+					portletInstanceSettingsLocator.getConfigurationPid();
+
+				secretIdentifierMap.put(
+					SecretIdentifierUtil.getSecretIdentifier(
+						configurationPid, key,
+						ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+						portletId),
+					CompanyConstants.SYSTEM);
+
+				String portletName = PortletIdCodec.decodePortletName(
+					portletId);
+
+				_putGroupScopes(
+					configurationPid,
+					_groupLocalService.getGroup(layout.getGroupId()), key,
+					secretIdentifierMap, portletName);
+				_putCompanyScopes(
+					layout.getCompanyId(), configurationPid, key,
+					secretIdentifierMap, portletName);
+			}
+			else if (settingsLocator instanceof SystemSettingsLocator) {
+				_putSystemScope(
+					settingsLocator.getSettingsId(), key, secretIdentifierMap);
+			}
+			else {
+				throw new IllegalArgumentException(
+					"Unsupported settings locator " +
+						settingsLocator.getClass());
+			}
+		}
+		else {
+			throw new IllegalArgumentException(
+				"Unsupported secret context " + secretContext.getClass());
+		}
+
+		return secretIdentifierMap;
+	}
+
+	private void _putCompanyScopes(
+		long companyId, String configurationPid, String key,
+		Map<String, Long> secretIdentifierMap, String settingsId) {
+
+		_putScope(
+			companyId, configurationPid, key,
+			ExtendedObjectClassDefinition.Scope.COMPANY, companyId,
+			secretIdentifierMap, settingsId);
+		_putSystemScope(configurationPid, key, secretIdentifierMap);
+	}
+
+	private void _putGroupScopes(
+		String configurationPid, Group group, String key,
+		Map<String, Long> secretIdentifierMap, String settingsId) {
+
+		_putScope(
+			group.getCompanyId(), configurationPid, key,
+			ExtendedObjectClassDefinition.Scope.GROUP, group.getGroupId(),
+			secretIdentifierMap, settingsId);
+
+		long counterpartGroupId = 0;
+
+		if (group.isStagingGroup()) {
+			counterpartGroupId = group.getLiveGroupId();
+		}
+		else {
+			Group stagingGroup = group.getStagingGroup();
+
+			if (stagingGroup != null) {
+				counterpartGroupId = stagingGroup.getGroupId();
+			}
+		}
+
+		if (counterpartGroupId > 0) {
+			_putScope(
+				group.getCompanyId(), configurationPid, key,
+				ExtendedObjectClassDefinition.Scope.GROUP, counterpartGroupId,
+				secretIdentifierMap, settingsId);
+		}
+	}
+
+	private void _putScope(
+		long companyId, String configurationPid, String key,
+		ExtendedObjectClassDefinition.Scope scope, long scopePK,
+		Map<String, Long> secretIdentifierMap, String settingsId) {
+
+		secretIdentifierMap.put(
+			_getPreferenceIdentifier(key, scope, scopePK, settingsId),
+			companyId);
+		secretIdentifierMap.put(
+			SecretIdentifierUtil.getSecretIdentifier(
+				configurationPid, key, scope, scopePK),
+			companyId);
 	}
 
 	private String _putSecret(long companyId, Secret secret)
@@ -323,7 +521,38 @@ public class SecretResolverImpl implements SecretResolver {
 			_secretManager.putSecret(companyId, secret));
 	}
 
+	private void _putSystemScope(
+		String configurationPid, String key,
+		Map<String, Long> secretIdentifierMap) {
+
+		ConfigurationPidMapping configurationPidMapping =
+			_settingsLocatorHelper.getConfigurationPidMapping(configurationPid);
+
+		if (configurationPidMapping != null) {
+			Class<?> clazz =
+				configurationPidMapping.getConfigurationBeanClass();
+
+			Meta.OCD ocd = clazz.getAnnotation(Meta.OCD.class);
+
+			if ((clazz.getAnnotation(Settings.Config.class) == null) &&
+				(ocd != null)) {
+
+				configurationPid = ocd.id();
+			}
+		}
+
+		secretIdentifierMap.put(
+			SecretIdentifierUtil.getSecretIdentifier(
+				configurationPid, key,
+				ExtendedObjectClassDefinition.Scope.SYSTEM,
+				CompanyConstants.SYSTEM),
+			CompanyConstants.SYSTEM);
+	}
+
 	private static final String _IDENTIFIER_PREFIX_PREFERENCE = "preference/";
+
+	@Reference
+	private GroupLocalService _groupLocalService;
 
 	@Reference
 	private KeyManagerProfileRegistry _keyManagerProfileRegistry;
@@ -332,5 +561,8 @@ public class SecretResolverImpl implements SecretResolver {
 
 	@Reference
 	private SecretManager _secretManager;
+
+	@Reference
+	private SettingsLocatorHelper _settingsLocatorHelper;
 
 }
