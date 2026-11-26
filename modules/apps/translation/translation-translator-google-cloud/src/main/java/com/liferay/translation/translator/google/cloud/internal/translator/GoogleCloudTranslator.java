@@ -16,8 +16,10 @@ import com.liferay.portal.configuration.module.configuration.ConfigurationProvid
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.translation.exception.TranslatorException;
 import com.liferay.translation.translator.BaseTranslator;
@@ -151,6 +153,11 @@ public class GoogleCloudTranslator extends BaseTranslator {
 
 		String serviceAccountPrivateKey = _secretResolver.resolve(
 			companyId,
+			SecretContext.fromSettings(
+				"serviceAccountPrivateKey",
+				new CompanyServiceSettingsLocator(
+					companyId,
+					GoogleCloudTranslatorConfiguration.class.getName())),
 			googleCloudTranslatorConfiguration.serviceAccountPrivateKey());
 
 		GoogleCredentials googleCredentials = null;

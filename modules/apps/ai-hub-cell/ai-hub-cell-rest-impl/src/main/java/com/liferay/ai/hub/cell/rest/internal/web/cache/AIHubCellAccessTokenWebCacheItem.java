@@ -12,9 +12,11 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 /**
@@ -63,7 +65,13 @@ public class AIHubCellAccessTokenWebCacheItem extends BaseWebCacheItem {
 			options.addPart(
 				"client_secret",
 				SecretResolverUtil.resolve(
-					_companyId, _aiHubCellConfiguration.clientSecret()));
+					_companyId,
+					SecretContext.fromSettings(
+						"clientSecret",
+						new CompanyServiceSettingsLocator(
+							_companyId,
+							AIHubCellConfiguration.class.getName())),
+					_aiHubCellConfiguration.clientSecret()));
 			options.addPart("grant_type", "client_credentials");
 			options.setLocation(
 				_aiHubCellConfiguration.serviceURL() + "/o/oauth2/token");

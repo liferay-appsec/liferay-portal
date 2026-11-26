@@ -9,6 +9,9 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Objects;
@@ -22,32 +25,58 @@ public class DigitalSignatureConfigurationUtil {
 		getDigitalSignatureConfiguration(long companyId, long groupId) {
 
 		try {
+			return ConfigurationProviderUtil.getConfiguration(
+				DigitalSignatureConfiguration.class,
+				getSettingsLocator(companyId, groupId));
+		}
+		catch (ConfigurationException configurationException) {
+			return ReflectionUtil.throwException(configurationException);
+		}
+	}
+
+	public static SettingsLocator getSettingsLocator(
+		long companyId, long groupId) {
+
+		try {
+			SettingsLocator companySettingsLocator =
+				new CompanyServiceSettingsLocator(
+					companyId, DigitalSignatureConfiguration.class.getName());
+
 			DigitalSignatureConfiguration companyDigitalSignatureConfiguration =
-				ConfigurationProviderUtil.getCompanyConfiguration(
-					DigitalSignatureConfiguration.class, companyId);
+				ConfigurationProviderUtil.getConfiguration(
+					DigitalSignatureConfiguration.class,
+					companySettingsLocator);
 
 			if ((groupId == 0) ||
 				Objects.equals(
 					companyDigitalSignatureConfiguration.siteSettingsStrategy(),
 					"always-inherit")) {
 
-				return companyDigitalSignatureConfiguration;
+				return companySettingsLocator;
 			}
 
-			DigitalSignatureConfiguration groupDigitalSignatureConfiguration =
-				ConfigurationProviderUtil.getGroupConfiguration(
-					DigitalSignatureConfiguration.class, companyId, groupId);
+			SettingsLocator groupSettingsLocator =
+				new GroupServiceSettingsLocator(
+					companyId, groupId,
+					DigitalSignatureConfiguration.class.getName(),
+					DigitalSignatureConfiguration.class.getName());
 
 			if (Objects.equals(
 					companyDigitalSignatureConfiguration.siteSettingsStrategy(),
 					"always-override")) {
 
-				return groupDigitalSignatureConfiguration;
+				return groupSettingsLocator;
 			}
 
 			if (Objects.equals(
 					companyDigitalSignatureConfiguration.siteSettingsStrategy(),
 					"inherit-or-override")) {
+
+				DigitalSignatureConfiguration
+					groupDigitalSignatureConfiguration =
+						ConfigurationProviderUtil.getConfiguration(
+							DigitalSignatureConfiguration.class,
+							groupSettingsLocator);
 
 				if (Validator.isNotNull(
 						groupDigitalSignatureConfiguration.apiUsername()) &&
@@ -62,13 +91,13 @@ public class DigitalSignatureConfigurationUtil {
 					Validator.isNotNull(
 						groupDigitalSignatureConfiguration.rsaPrivateKey())) {
 
-					return groupDigitalSignatureConfiguration;
+					return groupSettingsLocator;
 				}
 
-				return companyDigitalSignatureConfiguration;
+				return companySettingsLocator;
 			}
 
-			return companyDigitalSignatureConfiguration;
+			return companySettingsLocator;
 		}
 		catch (ConfigurationException configurationException) {
 			return ReflectionUtil.throwException(configurationException);

@@ -13,13 +13,13 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.sso.facebook.connect.configuration.FacebookConnectConfiguration;
 import com.liferay.portal.security.sso.facebook.connect.constants.FacebookConnectConstants;
@@ -58,10 +58,7 @@ public class FacebookConnectImpl implements FacebookConnect {
 		url = HttpComponentsUtil.addParameter(
 			url, "client_id", facebookConnectConfiguration.appId());
 		url = HttpComponentsUtil.addParameter(
-			url, "client_secret",
-			_secretResolver.resolve(
-				CompanyConstants.SYSTEM,
-				facebookConnectConfiguration.appSecret()));
+			url, "client_secret", getAppSecret(companyId));
 		url = HttpComponentsUtil.addParameter(url, "code", code);
 		url = HttpComponentsUtil.addParameter(
 			url, "redirect_uri",
@@ -130,7 +127,12 @@ public class FacebookConnectImpl implements FacebookConnect {
 			_getFacebookConnectConfiguration(companyId);
 
 		return _secretResolver.resolve(
-			CompanyConstants.SYSTEM, facebookConnectConfiguration.appSecret());
+			companyId,
+			SecretContext.fromSettings(
+				"appSecret",
+				new CompanyServiceSettingsLocator(
+					companyId, FacebookConnectConstants.SERVICE_NAME)),
+			facebookConnectConfiguration.appSecret());
 	}
 
 	@Override

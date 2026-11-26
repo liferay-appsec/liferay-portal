@@ -12,12 +12,14 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -30,7 +32,8 @@ import java.util.Objects;
 public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
-		long companyId, SalesforceConfiguration salesforceConfiguration) {
+		long companyId, SalesforceConfiguration salesforceConfiguration,
+		SettingsLocator settingsLocator) {
 
 		return (JSONObject)WebCachePoolUtil.get(
 			StringBundler.concat(
@@ -42,14 +45,23 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 				salesforceConfiguration.password(), StringPool.POUND,
 				salesforceConfiguration.username()),
 			new SalesforceAccessTokenWebCacheItem(
-				companyId, salesforceConfiguration));
+				companyId, salesforceConfiguration, settingsLocator));
 	}
 
 	public SalesforceAccessTokenWebCacheItem(
-		long companyId, SalesforceConfiguration salesforceConfiguration) {
+		long companyId, SalesforceConfiguration salesforceConfiguration,
+		SettingsLocator settingsLocator) {
 
-		_companyId = companyId;
 		_salesforceConfiguration = salesforceConfiguration;
+
+		_consumerSecret = SecretResolverUtil.resolve(
+			companyId,
+			SecretContext.fromSettings("consumerSecret", settingsLocator),
+			salesforceConfiguration.consumerSecret());
+
+		_password = SecretResolverUtil.resolve(
+			companyId, SecretContext.fromSettings("password", settingsLocator),
+			salesforceConfiguration.password());
 	}
 
 	@Override
@@ -70,9 +82,7 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 				HashMapBuilder.put(
 					"client_id", _salesforceConfiguration.consumerKey()
 				).put(
-					"client_secret",
-					SecretResolverUtil.resolve(
-						_companyId, _salesforceConfiguration.consumerSecret())
+					"client_secret", _consumerSecret
 				).put(
 					"grant_type",
 					() -> {
@@ -89,8 +99,7 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 							return null;
 						}
 
-						return SecretResolverUtil.resolve(
-							_companyId, _salesforceConfiguration.password());
+						return _password;
 					}
 				).put(
 					"username",
@@ -142,7 +151,8 @@ public class SalesforceAccessTokenWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SalesforceAccessTokenWebCacheItem.class);
 
-	private final long _companyId;
+	private final String _consumerSecret;
+	private final String _password;
 	private final SalesforceConfiguration _salesforceConfiguration;
 
 }

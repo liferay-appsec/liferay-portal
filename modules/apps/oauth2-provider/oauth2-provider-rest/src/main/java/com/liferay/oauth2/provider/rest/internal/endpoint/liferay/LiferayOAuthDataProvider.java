@@ -49,6 +49,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
@@ -65,6 +66,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.configuration.URLFetchSecurityCompanyConfiguration;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -1221,8 +1223,13 @@ public class LiferayOAuthDataProvider
 	private OAuthJoseJwtProducer _createJwtAccessTokenProducer() {
 		OAuthJoseJwtProducer oAuthJoseJwtProducer = new OAuthJoseJwtProducer();
 
+		SecretContext secretContext = SecretContext.fromSettings(
+			"oauth2.authorization.server.jwt.access.token.signing.json.web.key",
+			new SystemSettingsLocator(
+				OAuth2AuthorizationServerConfiguration.class.getName()));
+
 		String jwtAccessTokenSigningJSONWebKey = _secretResolver.resolve(
-			CompanyConstants.SYSTEM,
+			CompanyConstants.SYSTEM, secretContext,
 			_oAuth2AuthorizationServerConfiguration.
 				jwtAccessTokenSigningJSONWebKey());
 

@@ -11,12 +11,14 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
 import com.liferay.portal.search.internal.configuration.AsahConfiguration;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -65,6 +67,11 @@ public class AsahWebCacheItem implements WebCacheItem {
 				"OSB-Asah-Faro-Backend-Security-Signature",
 				SecretResolverUtil.resolve(
 					_companyId,
+					SecretContext.fromSettings(
+						"liferayAnalyticsFaroBackendSecuritySignature",
+						new CompanyServiceSettingsLocator(
+							_companyId,
+							AnalyticsConfiguration.class.getName())),
 					_analyticsConfiguration.
 						liferayAnalyticsFaroBackendSecuritySignature()));
 			options.addHeader(

@@ -86,8 +86,8 @@ public class AssetDeviceMetricResourceImpl
 		return analyticsCloudClient.getAssetDeviceMetric(
 			_analyticsSettingsManager.getAnalyticsConfiguration(
 				group.getCompanyId()),
-			assetId, assetType, analyticsCloudChannelIds, identityType,
-			rangeKey);
+			assetId, assetType, analyticsCloudChannelIds, group.getCompanyId(),
+			identityType, rangeKey);
 	}
 
 	@Reference

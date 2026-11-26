@@ -27,11 +27,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -329,6 +331,11 @@ public class AnalyticsCloudClient {
 				"OSB-Asah-Faro-Backend-Security-Signature",
 				SecretResolverUtil.resolve(
 					_user.getCompanyId(),
+					SecretContext.fromSettings(
+						"liferayAnalyticsFaroBackendSecuritySignature",
+						new CompanyServiceSettingsLocator(
+							_user.getCompanyId(),
+							AnalyticsConfiguration.class.getName())),
 					analyticsConfiguration.
 						liferayAnalyticsFaroBackendSecuritySignature()));
 			options.addHeader(

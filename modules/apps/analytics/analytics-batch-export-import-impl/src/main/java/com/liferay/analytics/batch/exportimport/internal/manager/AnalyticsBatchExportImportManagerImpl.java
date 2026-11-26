@@ -58,6 +58,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.File;
@@ -439,6 +440,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			null, analyticsConfiguration.liferayAnalyticsDataSourceId(),
 			_secretResolver.resolve(
 				companyId,
+				SecretContext.fromSettings(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()),
 			HttpMethods.GET, analyticsConfiguration.liferayAnalyticsProjectId(),
@@ -609,7 +614,13 @@ public class AnalyticsBatchExportImportManagerImpl
 			new String(
 				Base64.decode(
 					_secretResolver.resolve(
-						companyId, analyticsConfiguration.token()))));
+						companyId,
+						SecretContext.fromSettings(
+							"token",
+							new CompanyServiceSettingsLocator(
+								companyId,
+								AnalyticsConfiguration.class.getName())),
+						analyticsConfiguration.token()))));
 
 		options.setLocation(
 			StringUtil.replace(
@@ -812,6 +823,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			_secretResolver.resolve(
 				companyId,
+				SecretContext.fromSettings(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 		options.addHeader(
@@ -974,6 +989,10 @@ public class AnalyticsBatchExportImportManagerImpl
 			"OSB-Asah-Faro-Backend-Security-Signature",
 			_secretResolver.resolve(
 				companyId,
+				SecretContext.fromSettings(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature()));
 		httpPost.setHeader(
