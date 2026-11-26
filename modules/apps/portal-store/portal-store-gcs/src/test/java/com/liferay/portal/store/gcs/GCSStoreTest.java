@@ -12,6 +12,7 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.store.gcs.configuration.GCSStoreConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -52,9 +53,11 @@ public class GCSStoreTest {
 		SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 		Mockito.when(
-			secretResolver.resolve(Mockito.anyLong(), Mockito.any())
+			secretResolver.resolve(
+				Mockito.anyLong(), Mockito.any(SecretContext.class),
+				Mockito.any())
 		).thenAnswer(
-			invocation -> invocation.getArgument(1)
+			invocation -> invocation.getArgument(2)
 		);
 
 		ReflectionTestUtil.setFieldValue(
