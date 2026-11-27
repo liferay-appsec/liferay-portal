@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.PasswordPolicy;
 import com.liferay.portal.kernel.model.PasswordTracker;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.service.PasswordPolicyLocalService;
 import com.liferay.portal.kernel.service.persistence.UserPersistence;
@@ -39,6 +40,10 @@ public class PasswordTrackerLocalServiceImpl
 		String currentPwd = user.getPassword();
 
 		if (user.isPasswordEncrypted()) {
+			if (FIPSModeValidator.isNotAllowedEncryptedPassword(currentPwd)) {
+				return false;
+			}
+
 			String newEncPwd = PasswordEncryptorUtil.encrypt(
 				newClearTextPwd, user.getPassword());
 
@@ -71,7 +76,13 @@ public class PasswordTrackerLocalServiceImpl
 				break;
 			}
 
+			historyCount++;
+
 			String oldEncPwd = passwordTracker.getPassword();
+
+			if (FIPSModeValidator.isNotAllowedEncryptedPassword(oldEncPwd)) {
+				continue;
+			}
 
 			String newEncPwd = PasswordEncryptorUtil.encrypt(
 				newClearTextPwd, oldEncPwd);
@@ -79,8 +90,6 @@ public class PasswordTrackerLocalServiceImpl
 			if (oldEncPwd.equals(newEncPwd)) {
 				return false;
 			}
-
-			historyCount++;
 		}
 
 		return true;

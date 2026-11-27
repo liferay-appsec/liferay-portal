@@ -58,6 +58,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.Authenticator;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -573,6 +574,18 @@ public class UserLocalServiceTest {
 	public void testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm()
 		throws Exception {
 
+		_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(1, "BCRYPT/10");
+		_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(1, "MD5");
+		_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(1, "NONE");
+		_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(1, "SSHA");
+
+		try (SafeCloseable safeCloseable =
+				_updateDefaultPasswordPolicyWithSafeCloseable(
+					passwordPolicy -> passwordPolicy.setChangeable(false))) {
+
+			_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(0, "MD5");
+		}
+
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm(
 			"BCRYPT/15", "BCRYPT/10");
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm(
@@ -580,11 +593,11 @@ public class UserLocalServiceTest {
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm(
 			"SHA-384", "PBKDF2WITHHMACSHA1/160/1300000");
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
-			false, "PBKDF2WITHHMACSHA256/256/1300000",
-			RandomTestUtil.randomString(14));
-		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
-			true, "PBKDF2WITHHMACSHA1/160/1300000",
+			Authenticator.FAILURE, "PBKDF2WITHHMACSHA1/160/1300000",
 			RandomTestUtil.randomString(13));
+		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
+			Authenticator.SUCCESS, "PBKDF2WITHHMACSHA256/256/1300000",
+			RandomTestUtil.randomString(14));
 	}
 
 	@Test
@@ -2189,6 +2202,40 @@ public class UserLocalServiceTest {
 
 			Assert.assertTrue(encryptedPassword.startsWith("{MD5}"));
 		}
+
+		try (SafeCloseable safeCloseable =
+				_updateDefaultPasswordPolicyWithSafeCloseable(
+					passwordPolicy -> {
+						passwordPolicy.setHistory(true);
+						passwordPolicy.setHistoryCount(3);
+					})) {
+
+			User user = UserTestUtil.addUser();
+
+			ServiceContextThreadLocal.pushServiceContext(
+				ServiceContextTestUtil.getServiceContext(
+					user.getGroupId(), user.getUserId()));
+
+			user = _updatePassword("BCRYPT/10", user);
+			user = _updatePassword("UFC-CRYPT", user);
+
+			try (SafeCloseable safeCloseable1 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				String password = RandomTestUtil.randomString(14);
+
+				user = _userLocalService.updatePassword(
+					user.getUserId(), password, password, false, false);
+
+				Assert.assertFalse(
+					FIPSModeValidator.isNotAllowedEncryptedPassword(
+						user.getPassword()));
+			}
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
 	}
 
 	@Test
@@ -2761,6 +2808,66 @@ public class UserLocalServiceTest {
 				document -> GetterUtil.getLong(document.get(Field.USER_ID))));
 	}
 
+	private void _testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(
+			int expectedMailMessagesCount, String passwordsEncryptionAlgorithm)
+		throws Exception {
+
+		String password = RandomTestUtil.randomString(14);
+		User user = UserTestUtil.addUser();
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PasswordEncryptorUtil.class,
+					"_PASSWORDS_ENCRYPTION_ALGORITHM",
+					passwordsEncryptionAlgorithm)) {
+
+			user = _userLocalService.updatePassword(
+				user.getUserId(), password, password, false, true);
+		}
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
+
+		serviceContext.setPathMain(_portal.getPathMain());
+		serviceContext.setPortalURL(RandomTestUtil.randomString());
+
+		ServiceContextThreadLocal.pushServiceContext(serviceContext);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			int initialInboxSize = MailServiceTestUtil.getInboxSize();
+
+			Assert.assertEquals(
+				Authenticator.FAILURE,
+				_userLocalService.authenticateByEmailAddress(
+					user.getCompanyId(), user.getDisplayEmailAddress(),
+					password, null, null, null));
+			Assert.assertEquals(
+				initialInboxSize + expectedMailMessagesCount,
+				MailServiceTestUtil.getInboxSize());
+
+			Assert.assertEquals(
+				Authenticator.FAILURE,
+				_userLocalService.authenticateByEmailAddress(
+					user.getCompanyId(), user.getDisplayEmailAddress(),
+					password, null, null, null));
+			Assert.assertEquals(
+				initialInboxSize + expectedMailMessagesCount,
+				MailServiceTestUtil.getInboxSize());
+
+			String encryptedPassword = user.getPassword();
+
+			user = _userLocalService.getUser(user.getUserId());
+
+			Assert.assertEquals(encryptedPassword, user.getPassword());
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
 	private void
 			_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm(
 				String newPasswordsEncryptionAlgorithm,
@@ -2837,7 +2944,7 @@ public class UserLocalServiceTest {
 
 	private void
 			_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithmInFIPSMode(
-				boolean expectedPasswordReset,
+				int expectedAuthResult,
 				String expectedPasswordsEncryptionAlgorithm, String password)
 		throws Exception {
 
@@ -2870,7 +2977,7 @@ public class UserLocalServiceTest {
 					passwordsEncryptionAlgorithm)) {
 
 			Assert.assertEquals(
-				Authenticator.SUCCESS,
+				expectedAuthResult,
 				_userLocalService.authenticateByEmailAddress(
 					user.getCompanyId(), user.getDisplayEmailAddress(),
 					password, null, null, null));
@@ -2881,7 +2988,7 @@ public class UserLocalServiceTest {
 				expectedPasswordsEncryptionAlgorithm,
 				PasswordEncryptorUtil.getEncryptedPasswordAlgorithmSettings(
 					user.getPassword()));
-			Assert.assertEquals(expectedPasswordReset, user.isPasswordReset());
+			Assert.assertFalse(user.isPasswordReset());
 		}
 	}
 
@@ -3260,6 +3367,22 @@ public class UserLocalServiceTest {
 			() -> ReflectionTestUtil.invoke(
 				userLocalServiceImpl, "_updateLastLogin",
 				new Class<?>[] {List.class}, Collections.singletonList(user)));
+	}
+
+	private User _updatePassword(String passwordsEncryptionAlgorithm, User user)
+		throws Exception {
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					PasswordEncryptorUtil.class,
+					"_PASSWORDS_ENCRYPTION_ALGORITHM",
+					passwordsEncryptionAlgorithm)) {
+
+			String password = RandomTestUtil.randomString(14);
+
+			return _userLocalService.updatePassword(
+				user.getUserId(), password, password, false, false);
+		}
 	}
 
 	private SafeCloseable _updateSecuritySendPasswordResetLinkWithSafeCloseable(

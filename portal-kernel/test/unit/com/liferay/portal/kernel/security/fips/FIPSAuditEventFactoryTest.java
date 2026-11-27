@@ -71,6 +71,67 @@ public class FIPSAuditEventFactoryTest {
 			tokenType);
 	}
 
+	@Test
+	public void testCreatePasswordRehash() {
+		String fromAlgorithm = RandomTestUtil.randomString();
+		String toAlgorithm = RandomTestUtil.randomString();
+		String userId = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createPasswordRehash(
+				fromAlgorithm, toAlgorithm, userId);
+
+		Assert.assertEquals("password-rehash", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.INFO, fipsAuditEvent.getSeverity());
+
+		_assertFields(
+			FIPSAuditEventFactory.createPasswordRehash(null, null, null),
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK);
+		_assertFields(fipsAuditEvent, fromAlgorithm, toAlgorithm, userId);
+	}
+
+	@Test
+	public void testCreatePasswordResetForced() {
+		String userId = RandomTestUtil.randomString();
+
+		FIPSAuditEvent fipsAuditEvent =
+			FIPSAuditEventFactory.createPasswordResetForced(userId);
+
+		Assert.assertEquals(
+			"password-reset-forced", fipsAuditEvent.getEventType());
+		Assert.assertEquals(
+			FIPSAuditEvent.Severity.WARNING, fipsAuditEvent.getSeverity());
+
+		_assertFields(
+			FIPSAuditEventFactory.createPasswordResetForced(null),
+			StringPool.BLANK);
+		_assertFields(fipsAuditEvent, userId);
+	}
+
+	private void _assertFields(FIPSAuditEvent fipsAuditEvent, String userId) {
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"user-id", userId
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
+	private void _assertFields(
+		FIPSAuditEvent fipsAuditEvent, String fromAlgorithm, String toAlgorithm,
+		String userId) {
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"from-algorithm", fromAlgorithm
+			).put(
+				"to-algorithm", toAlgorithm
+			).put(
+				"user-id", userId
+			).build(),
+			fipsAuditEvent.getFields());
+	}
+
 	private void _assertFields(
 		FIPSAuditEvent fipsAuditEvent, String receivingEndpoint,
 		String rejectedValue, String tokenIssuer, String tokenType) {

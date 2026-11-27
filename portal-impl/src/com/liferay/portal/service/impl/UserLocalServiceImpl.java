@@ -112,6 +112,9 @@ import com.liferay.portal.kernel.security.auth.FullNameValidator;
 import com.liferay.portal.kernel.security.auth.PasswordModificationThreadLocal;
 import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.security.auth.ScreenNameValidator;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEvent;
+import com.liferay.portal.kernel.security.fips.FIPSAuditEventFactory;
+import com.liferay.portal.kernel.security.fips.FIPSAuditUtil;
 import com.liferay.portal.kernel.security.fips.FIPSModeValidator;
 import com.liferay.portal.kernel.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -6097,30 +6100,48 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 		// Authenticate against the User_ table
 
-		boolean passwordReset = false;
-
 		if (authResult == Authenticator.SKIP_LIFERAY_CHECK) {
 			authResult = Authenticator.SUCCESS;
 		}
 		else if ((authResult == Authenticator.SUCCESS) &&
 				 PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
 
-			boolean authenticated = PwdAuthenticator.authenticate(
-				login, password, user.getPassword());
+			if (FIPSModeValidator.isNotAllowedEncryptedPassword(
+					user.getPassword())) {
 
-			if (authenticated) {
-				if (FIPSModeValidator.isNotAllowedPassword(password)) {
-					passwordReset = true;
-				}
-				else if (!StringUtil.equalsIgnoreCase(
-							PasswordEncryptorUtil.
-								getEncryptedPasswordAlgorithmSettings(
-									user.getPassword()),
-							_PASSWORDS_ENCRYPTION_ALGORITHM)) {
+				PwdAuthenticator.pretendToAuthenticate();
+
+				_sendPasswordReset(user);
+
+				authResult = Authenticator.FAILURE;
+			}
+			else if (FIPSModeValidator.isNotAllowedPassword(password)) {
+				PwdAuthenticator.pretendToAuthenticate();
+
+				authResult = Authenticator.FAILURE;
+			}
+			else if (PwdAuthenticator.authenticate(
+						login, password, user.getPassword())) {
+
+				String encryptedPasswordAlgorithmSettings =
+					PasswordEncryptorUtil.getEncryptedPasswordAlgorithmSettings(
+						user.getPassword());
+
+				if (!StringUtil.equalsIgnoreCase(
+						encryptedPasswordAlgorithmSettings,
+						_PASSWORDS_ENCRYPTION_ALGORITHM)) {
 
 					user.setPassword(
 						PasswordEncryptorUtil.encrypt(
 							password, user.getPassword(), true));
+
+					if (PropsValues.FIPS_ENABLED) {
+						_writeFIPSAuditEvent(
+							FIPSAuditEventFactory.createPasswordRehash(
+								encryptedPasswordAlgorithmSettings,
+								_PASSWORDS_ENCRYPTION_ALGORITHM,
+								String.valueOf(user.getUserId())));
+					}
 				}
 
 				authResult = Authenticator.SUCCESS;
@@ -6161,10 +6182,6 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					companyId, authType, login, user, headerMap, parameterMap);
 
 				throw portalException;
-			}
-
-			if (passwordReset) {
-				user.setPasswordReset(true);
 			}
 		}
 
@@ -7575,6 +7592,49 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 	}
 
+	private void _sendPasswordReset(User user) {
+		try {
+			Company company = _companyPersistence.findByPrimaryKey(
+				user.getCompanyId());
+			PasswordPolicy passwordPolicy = user.getPasswordPolicy();
+			ServiceContext serviceContext =
+				ServiceContextThreadLocal.getServiceContext();
+
+			if (!company.isSendPasswordResetLink() ||
+				(passwordPolicy == null) || !passwordPolicy.isChangeable() ||
+				(serviceContext == null) ||
+				Validator.isNull(serviceContext.getPortalURL())) {
+
+				return;
+			}
+
+			List<Ticket> tickets = _ticketPersistence.findByC_C_C_T(
+				user.getCompanyId(),
+				_classNameLocalService.getClassNameId(User.class.getName()),
+				user.getUserId(), TicketConstants.TYPE_PASSWORD);
+
+			for (Ticket ticket : tickets) {
+				if (!ticket.isExpired()) {
+					return;
+				}
+			}
+
+			userLocalService.sendPassword(
+				user.getCompanyId(), user.getEmailAddress(), null, null, null,
+				null, serviceContext);
+
+			_writeFIPSAuditEvent(
+				FIPSAuditEventFactory.createPasswordResetForced(
+					String.valueOf(user.getUserId())));
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to send the password reset email to user " +
+					user.getUserId(),
+				exception);
+		}
+	}
+
 	private Timestamp _toSQLTimestamp(Date date) {
 		return new Timestamp(date.getTime());
 	}
@@ -7738,6 +7798,18 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 		}
 
 		return userLocalService.updateUser(user);
+	}
+
+	private void _writeFIPSAuditEvent(FIPSAuditEvent fipsAuditEvent) {
+		try {
+			FIPSAuditUtil.write(fipsAuditEvent);
+		}
+		catch (Throwable throwable) {
+			_log.error(
+				"Unable to write the FIPS audit event " +
+					fipsAuditEvent.getEventType(),
+				throwable);
+		}
 	}
 
 	private static final String _PASSWORDS_ENCRYPTION_ALGORITHM =

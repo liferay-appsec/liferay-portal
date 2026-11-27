@@ -113,6 +113,30 @@ public class FIPSModeValidator {
 		return true;
 	}
 
+	public static boolean isNotAllowedEncryptedPassword(
+		String encryptedPassword) {
+
+		if (!PropsValues.FIPS_ENABLED || Validator.isNull(encryptedPassword)) {
+			return false;
+		}
+
+		String algorithm = null;
+
+		if (encryptedPassword.charAt(0) == CharPool.OPEN_CURLY_BRACE) {
+			int index = encryptedPassword.indexOf(CharPool.CLOSE_CURLY_BRACE);
+
+			if (index > 0) {
+				algorithm = encryptedPassword.substring(1, index);
+			}
+		}
+		else {
+			algorithm = PropsUtil.get(
+				PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY);
+		}
+
+		return !StringUtil.startsWith(algorithm, "PBKDF2WithHmacSHA");
+	}
+
 	public static boolean isNotAllowedPassword(String password) {
 		if (!PropsValues.FIPS_ENABLED) {
 			return false;
