@@ -18,7 +18,8 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -103,7 +104,7 @@ public class PasswordTrackerLocalServiceImplTest {
 
 	@Test
 	public void testIsValidPassword() throws Exception {
-		_setUpPasswordHistory(_HASH_PBKDF2);
+		_setUpPasswordHistory(1, _HASH_PBKDF2);
 
 		try (MockedStatic<PasswordEncryptorUtil> mockedStatic =
 				Mockito.mockStatic(PasswordEncryptorUtil.class)) {
@@ -129,11 +130,30 @@ public class PasswordTrackerLocalServiceImplTest {
 					_USER_ID, _NEW_PASSWORD));
 		}
 
-		_setUpPasswordHistory(_HASH_LEGACY);
+		_setUpPasswordHistory(1, _HASH_LEGACY);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"FIPS_ENABLED", true)) {
+
+			Assert.assertTrue(
+				_passwordTrackerLocalServiceImpl.isValidPassword(
+					_USER_ID, _NEW_PASSWORD));
+		}
+
+		_setUpPasswordHistory(1, _HASH_LEGACY, _HASH_PBKDF2);
+
+		try (MockedStatic<PasswordEncryptorUtil> mockedStatic =
+				Mockito.mockStatic(PasswordEncryptorUtil.class);
+			SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"FIPS_ENABLED", true)) {
+
+			mockedStatic.when(
+				() -> PasswordEncryptorUtil.encrypt(_NEW_PASSWORD, _HASH_PBKDF2)
+			).thenReturn(
+				_HASH_PBKDF2
+			);
 
 			Assert.assertTrue(
 				_passwordTrackerLocalServiceImpl.isValidPassword(
@@ -165,7 +185,8 @@ public class PasswordTrackerLocalServiceImplTest {
 		);
 	}
 
-	private void _setUpPasswordHistory(String encryptedPassword)
+	private void _setUpPasswordHistory(
+			int historyCount, String... encryptedPasswords)
 		throws Exception {
 
 		PasswordPolicy passwordPolicy = Mockito.mock(PasswordPolicy.class);
@@ -179,7 +200,7 @@ public class PasswordTrackerLocalServiceImplTest {
 		Mockito.when(
 			passwordPolicy.getHistoryCount()
 		).thenReturn(
-			RandomTestUtil.randomInt(1, 10)
+			historyCount
 		);
 
 		Mockito.when(
@@ -188,18 +209,25 @@ public class PasswordTrackerLocalServiceImplTest {
 			passwordPolicy
 		);
 
-		PasswordTracker passwordTracker = Mockito.mock(PasswordTracker.class);
+		List<PasswordTracker> passwordTrackers = new ArrayList<>();
 
-		Mockito.when(
-			passwordTracker.getPassword()
-		).thenReturn(
-			encryptedPassword
-		);
+		for (String encryptedPassword : encryptedPasswords) {
+			PasswordTracker passwordTracker = Mockito.mock(
+				PasswordTracker.class);
+
+			Mockito.when(
+				passwordTracker.getPassword()
+			).thenReturn(
+				encryptedPassword
+			);
+
+			passwordTrackers.add(passwordTracker);
+		}
 
 		Mockito.when(
 			_passwordTrackerPersistence.findByUserId(_USER_ID)
 		).thenReturn(
-			Collections.singletonList(passwordTracker)
+			passwordTrackers
 		);
 	}
 
