@@ -6063,7 +6063,7 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			user = userPersistence.fetchByC_SN(companyId, login);
 		}
 		else if (authType.equals(CompanyConstants.AUTH_TYPE_ID)) {
-			user = userPersistence.fetchByPrimaryKey(GetterUtil.getLong(login));
+			user = userPersistence.fetchByC_U(companyId, userId);
 		}
 
 		if (user == null) {

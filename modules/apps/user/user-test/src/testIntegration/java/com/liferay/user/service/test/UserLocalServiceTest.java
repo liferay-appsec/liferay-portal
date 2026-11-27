@@ -114,6 +114,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.comparator.UserLastLoginDateComparator;
@@ -138,9 +139,11 @@ import com.liferay.portal.test.rule.SynchronousMailTestRule;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -148,7 +151,6 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -159,7 +161,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
@@ -193,20 +194,9 @@ public class UserLocalServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_auditMessageProcessor = new TestAuditMessageProcessor();
-
-		_bundleActivator = new UserLocalServiceTestBundleActivator();
-
 		Bundle bundle = FrameworkUtil.getBundle(UserLocalServiceTest.class);
 
 		_bundleContext = bundle.getBundleContext();
-
-		_bundleActivator.start(_bundleContext);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		_bundleActivator.stop(_bundleContext);
 	}
 
 	@Test
@@ -588,6 +578,48 @@ public class UserLocalServiceTest {
 	}
 
 	@Test
+	@TestInfo("LPD-117791")
+	public void testAuthenticateByUserId() throws Exception {
+		ServiceRegistration<Authenticator> serviceRegistration =
+			_bundleContext.registerService(
+				Authenticator.class,
+				(Authenticator)ProxyUtil.newProxyInstance(
+					Authenticator.class.getClassLoader(),
+					new Class<?>[] {Authenticator.class},
+					(proxy, method, args) -> Authenticator.SKIP_LIFERAY_CHECK),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"key", PropsKeys.AUTH_PIPELINE_PRE
+				).put(
+					"service.ranking", Integer.MAX_VALUE
+				).build());
+
+		try {
+			_company = CompanyTestUtil.addCompany();
+
+			User user = UserTestUtil.addUser();
+
+			Map<String, Object> resultsMap = new HashMap<>();
+
+			Assert.assertEquals(
+				Authenticator.DNE,
+				_userLocalService.authenticateByUserId(
+					_company.getCompanyId(), user.getUserId(),
+					RandomTestUtil.randomString(), null, null, resultsMap));
+			Assert.assertTrue(resultsMap.isEmpty());
+
+			Assert.assertEquals(
+				Authenticator.SUCCESS,
+				_userLocalService.authenticateByUserId(
+					user.getCompanyId(), user.getUserId(),
+					RandomTestUtil.randomString(), null, null, resultsMap));
+			Assert.assertEquals(user.getUserId(), resultsMap.get("userId"));
+		}
+		finally {
+			serviceRegistration.unregister();
+		}
+	}
+
+	@Test
 	public void testAuthenticateForDigest() throws Exception {
 		String method = RandomTestUtil.randomString();
 		String nonce = RandomTestUtil.randomString();
@@ -620,11 +652,42 @@ public class UserLocalServiceTest {
 
 	@Test
 	public void testAuthenticationWhenUserDoesNotExist() throws Exception {
-		Assert.assertEquals(
-			Authenticator.DNE,
-			_userLocalService.authenticateByEmailAddress(
-				RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
-				RandomTestUtil.randomString(), null, null, null));
+		List<AuditMessage> auditMessages = new ArrayList<>();
+
+		ServiceRegistration<AuditMessageProcessor> serviceRegistration =
+			_bundleContext.registerService(
+				AuditMessageProcessor.class, auditMessages::add,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"eventTypes", EventTypes.LOGIN_DNE
+				).build());
+
+		try {
+			Assert.assertEquals(
+				Authenticator.DNE,
+				_userLocalService.authenticateByEmailAddress(
+					RandomTestUtil.randomLong(), RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), null, null, null));
+
+			Assert.assertEquals(
+				auditMessages.toString(), 1, auditMessages.size());
+
+			AuditMessage auditMessage = auditMessages.get(0);
+
+			JSONObject additionalInfoJSONObject =
+				auditMessage.getAdditionalInfo();
+
+			Assert.assertEquals(
+				"emailAddress", additionalInfoJSONObject.getString("authType"));
+			Assert.assertEquals(
+				"User does not exist",
+				additionalInfoJSONObject.getString("reason"));
+
+			Assert.assertEquals(
+				EventTypes.LOGIN_DNE, auditMessage.getEventType());
+		}
+		finally {
+			serviceRegistration.unregister();
+		}
 	}
 
 	@Test
@@ -3311,8 +3374,6 @@ public class UserLocalServiceTest {
 	@Inject
 	private AssetEntryLocalService _assetEntryLocalService;
 
-	private AuditMessageProcessor _auditMessageProcessor;
-	private BundleActivator _bundleActivator;
 	private BundleContext _bundleContext;
 	private Company _company;
 
@@ -3340,8 +3401,6 @@ public class UserLocalServiceTest {
 	@Inject
 	private RoleLocalService _roleLocalService;
 
-	private ServiceRegistration<AuditMessageProcessor> _serviceRegistration;
-
 	@Inject
 	private SystemEventLocalService _systemEventLocalService;
 
@@ -3367,49 +3426,5 @@ public class UserLocalServiceTest {
 
 	@Inject
 	private WorkflowTaskManager _workflowTaskManager;
-
-	private class TestAuditMessageProcessor implements AuditMessageProcessor {
-
-		@Override
-		public void process(AuditMessage auditMessage) {
-			Assert.assertNotNull(auditMessage);
-
-			JSONObject additionalInfoJSONObject =
-				auditMessage.getAdditionalInfo();
-
-			String authType = String.valueOf(
-				additionalInfoJSONObject.get("authType"));
-
-			Assert.assertEquals("emailAddress", authType);
-
-			String reason = String.valueOf(
-				additionalInfoJSONObject.get("reason"));
-
-			Assert.assertEquals("User does not exist", reason);
-
-			Assert.assertEquals(
-				EventTypes.LOGIN_DNE, auditMessage.getEventType());
-		}
-
-	}
-
-	private class UserLocalServiceTestBundleActivator
-		implements BundleActivator {
-
-		@Override
-		public void start(BundleContext bundleContext) {
-			_serviceRegistration = _bundleContext.registerService(
-				AuditMessageProcessor.class, _auditMessageProcessor,
-				HashMapDictionaryBuilder.<String, Object>put(
-					"eventTypes", EventTypes.LOGIN_DNE
-				).build());
-		}
-
-		@Override
-		public void stop(BundleContext bundleContext) {
-			_serviceRegistration.unregister();
-		}
-
-	}
 
 }
