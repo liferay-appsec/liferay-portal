@@ -571,7 +571,7 @@ public class UserLocalServiceTest {
 	}
 
 	@Test
-	public void testAuthenticateByEmailAddressWithLegacyHashInFIPSMode()
+	public void testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm()
 		throws Exception {
 
 		_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(1, "BCRYPT/10");
@@ -585,11 +585,6 @@ public class UserLocalServiceTest {
 
 			_testAuthenticateByEmailAddressWithLegacyHashInFIPSMode(0, "MD5");
 		}
-	}
-
-	@Test
-	public void testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm()
-		throws Exception {
 
 		_testAuthenticateByEmailAddressWithOutdatedPasswordsEncryptionAlgorithm(
 			"BCRYPT/15", "BCRYPT/10");
@@ -2166,43 +2161,6 @@ public class UserLocalServiceTest {
 	}
 
 	@Test
-	public void testUpdatePasswordWithLegacyHashInFIPSMode() throws Exception {
-		try (SafeCloseable safeCloseable =
-				_updateDefaultPasswordPolicyWithSafeCloseable(
-					passwordPolicy -> {
-						passwordPolicy.setHistory(true);
-						passwordPolicy.setHistoryCount(3);
-					})) {
-
-			User user = UserTestUtil.addUser();
-
-			ServiceContextThreadLocal.pushServiceContext(
-				ServiceContextTestUtil.getServiceContext(
-					user.getGroupId(), user.getUserId()));
-
-			user = _updatePassword("BCRYPT/10", user);
-			user = _updatePassword("UFC-CRYPT", user);
-
-			try (SafeCloseable safeCloseable1 =
-					PropsValuesTestUtil.swapWithSafeCloseable(
-						"FIPS_ENABLED", true)) {
-
-				String password = RandomTestUtil.randomString(14);
-
-				user = _userLocalService.updatePassword(
-					user.getUserId(), password, password, false, false);
-
-				Assert.assertFalse(
-					FIPSModeValidator.isNotAllowedEncryptedPassword(
-						user.getPassword()));
-			}
-		}
-		finally {
-			ServiceContextThreadLocal.popServiceContext();
-		}
-	}
-
-	@Test
 	public void testUpdatePasswordWithModifiedAlgorithm() throws Exception {
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
@@ -2243,6 +2201,40 @@ public class UserLocalServiceTest {
 			encryptedPassword = user.getPassword();
 
 			Assert.assertTrue(encryptedPassword.startsWith("{MD5}"));
+		}
+
+		try (SafeCloseable safeCloseable =
+				_updateDefaultPasswordPolicyWithSafeCloseable(
+					passwordPolicy -> {
+						passwordPolicy.setHistory(true);
+						passwordPolicy.setHistoryCount(3);
+					})) {
+
+			User user = UserTestUtil.addUser();
+
+			ServiceContextThreadLocal.pushServiceContext(
+				ServiceContextTestUtil.getServiceContext(
+					user.getGroupId(), user.getUserId()));
+
+			user = _updatePassword("BCRYPT/10", user);
+			user = _updatePassword("UFC-CRYPT", user);
+
+			try (SafeCloseable safeCloseable1 =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"FIPS_ENABLED", true)) {
+
+				String password = RandomTestUtil.randomString(14);
+
+				user = _userLocalService.updatePassword(
+					user.getUserId(), password, password, false, false);
+
+				Assert.assertFalse(
+					FIPSModeValidator.isNotAllowedEncryptedPassword(
+						user.getPassword()));
+			}
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
 		}
 	}
 
