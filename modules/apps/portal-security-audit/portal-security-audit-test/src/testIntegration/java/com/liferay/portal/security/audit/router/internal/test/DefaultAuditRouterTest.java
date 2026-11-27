@@ -33,14 +33,19 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserGroupTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
+import com.liferay.portal.security.audit.context.AuditContext;
+import com.liferay.portal.security.audit.context.AuditDeliveryPath;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
+import com.liferay.portal.security.audit.router.internal.context.test.TestAuditContext;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -74,16 +79,27 @@ public class DefaultAuditRouterTest {
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		_serviceRegistration = bundleContext.registerService(
-			AuditMessageProcessor.class, _auditMessages::add,
+		_auditContextServiceRegistration = bundleContext.registerService(
+			AuditContext.class,
+			new TestAuditContext(
+				Collections.singleton(AuditDeliveryPath.DATABASE), 730, 30,
+				RandomTestUtil.randomString(), Collections.emptySet(),
+				Collections.emptySet()),
 			HashMapDictionaryBuilder.<String, Object>put(
-				"eventTypes", "*"
+				"audit.context.name", "AI_HUB"
 			).build());
+		_auditMessageProcessorServiceRegistration =
+			bundleContext.registerService(
+				AuditMessageProcessor.class, _auditMessages::add,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"eventTypes", "*"
+				).build());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_serviceRegistration.unregister();
+		_auditContextServiceRegistration.unregister();
+		_auditMessageProcessorServiceRegistration.unregister();
 	}
 
 	@Test
@@ -141,7 +157,7 @@ public class DefaultAuditRouterTest {
 		Assert.assertEquals("prompt", auditMessage.getResourceType());
 
 		auditMessage = _getAuditMessage(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), "AI_HUB",
 			RandomTestUtil.randomString(), RandomTestUtil.randomLong());
 
 		auditMessage.setResourceAction("ai_hub.prompt.submit");
@@ -153,7 +169,7 @@ public class DefaultAuditRouterTest {
 		Assert.assertNull(auditMessage.getResourceType());
 
 		auditMessage = _getAuditMessage(
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), "AI_HUB",
 			RandomTestUtil.randomString(), RandomTestUtil.randomLong());
 
 		String resourceType = RandomTestUtil.randomString();
@@ -272,6 +288,24 @@ public class DefaultAuditRouterTest {
 
 		Assert.assertFalse(_auditMessages.contains(auditMessage));
 
+		String contextName = StringUtil.toUpperCase(
+			RandomTestUtil.randomString());
+
+		_testRouteWithInvalidContext(
+			contextName, "Audit context " + contextName + " is not registered",
+			null);
+
+		_testRouteWithInvalidContext(
+			"AI_HUB",
+			"Resource action instance.user.add does not belong to audit " +
+				"context AI_HUB",
+			"instance.user.add");
+		_testRouteWithInvalidContext(
+			null,
+			"Resource action ai_hub.prompt.submit does not belong to audit " +
+				"context INSTANCE",
+			"ai_hub.prompt.submit");
+
 		_testRouteWhenAuditIsDisabled();
 	}
 
@@ -331,6 +365,31 @@ public class DefaultAuditRouterTest {
 		}
 	}
 
+	private void _testRouteWithInvalidContext(
+			String contextName, String expectedMessage, String resourceAction)
+		throws Exception {
+
+		AuditMessage auditMessage = _getAuditMessage(
+			User.class.getName(), contextName, EventTypes.ADD,
+			RandomTestUtil.randomLong());
+
+		auditMessage.setResourceAction(resourceAction);
+
+		try {
+			_auditRouter.route(auditMessage);
+
+			Assert.fail();
+		}
+		catch (AuditException auditException) {
+			Assert.assertEquals(expectedMessage, auditException.getMessage());
+		}
+
+		Assert.assertFalse(_auditMessages.contains(auditMessage));
+	}
+
+	private ServiceRegistration<AuditContext> _auditContextServiceRegistration;
+	private ServiceRegistration<AuditMessageProcessor>
+		_auditMessageProcessorServiceRegistration;
 	private final List<AuditMessage> _auditMessages = new ArrayList<>();
 
 	@Inject
@@ -350,8 +409,6 @@ public class DefaultAuditRouterTest {
 
 	@Inject
 	private RoleLocalService _roleLocalService;
-
-	private ServiceRegistration<AuditMessageProcessor> _serviceRegistration;
 
 	@DeleteAfterTestRun
 	private Role _siteRole;
