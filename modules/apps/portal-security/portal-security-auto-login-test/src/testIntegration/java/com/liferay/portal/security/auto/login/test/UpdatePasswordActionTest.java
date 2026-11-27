@@ -215,6 +215,8 @@ public class UpdatePasswordActionTest {
 			boolean mfaEnabled)
 		throws Exception {
 
+		Action action = new UpdatePasswordAction();
+
 		User user = UserTestUtil.addUser();
 
 		Company company = _companyLocalService.getCompany(user.getCompanyId());
@@ -228,8 +230,6 @@ public class UpdatePasswordActionTest {
 			WebKeys.LAST_PATH,
 			new LastPath(StringPool.BLANK, RandomTestUtil.randomString()));
 		httpSession.setAttribute(WebKeys.MFA_ENABLED, mfaEnabled);
-
-		Action action = new UpdatePasswordAction();
 
 		action.execute(
 			null, mockHttpServletRequest, new MockHttpServletResponse());
