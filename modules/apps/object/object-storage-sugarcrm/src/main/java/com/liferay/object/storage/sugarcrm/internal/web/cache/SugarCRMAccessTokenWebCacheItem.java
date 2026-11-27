@@ -12,12 +12,14 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
 import com.liferay.portal.kernel.webcache.WebCachePoolUtil;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import java.net.HttpURLConnection;
@@ -28,7 +30,8 @@ import java.net.HttpURLConnection;
 public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 
 	public static JSONObject get(
-		long companyId, SugarCRMConfiguration sugarCRMConfiguration) {
+		long companyId, SettingsLocator settingsLocator,
+		SugarCRMConfiguration sugarCRMConfiguration) {
 
 		return (JSONObject)WebCachePoolUtil.get(
 			StringBundler.concat(
@@ -41,14 +44,18 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 				sugarCRMConfiguration.password(), StringPool.POUND,
 				sugarCRMConfiguration.username()),
 			new SugarCRMAccessTokenWebCacheItem(
-				companyId, sugarCRMConfiguration));
+				companyId, settingsLocator, sugarCRMConfiguration));
 	}
 
 	public SugarCRMAccessTokenWebCacheItem(
-		long companyId, SugarCRMConfiguration sugarCRMConfiguration) {
+		long companyId, SettingsLocator settingsLocator,
+		SugarCRMConfiguration sugarCRMConfiguration) {
 
-		_companyId = companyId;
 		_sugarCRMConfiguration = sugarCRMConfiguration;
+
+		_password = SecretResolverUtil.resolve(
+			companyId, SecretContext.fromSettings("password", settingsLocator),
+			sugarCRMConfiguration.password());
 	}
 
 	@Override
@@ -63,9 +70,7 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 				).put(
 					"grant_type", _sugarCRMConfiguration.grantType()
 				).put(
-					"password",
-					SecretResolverUtil.resolve(
-						_companyId, _sugarCRMConfiguration.password())
+					"password", _password
 				).put(
 					"username", _sugarCRMConfiguration.username()
 				).build());
@@ -108,7 +113,7 @@ public class SugarCRMAccessTokenWebCacheItem implements WebCacheItem {
 	private static final Log _log = LogFactoryUtil.getLog(
 		SugarCRMAccessTokenWebCacheItem.class);
 
-	private final long _companyId;
+	private final String _password;
 	private final SugarCRMConfiguration _sugarCRMConfiguration;
 
 }

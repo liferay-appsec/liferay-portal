@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
@@ -25,6 +26,7 @@ import com.liferay.portal.search.elasticsearch.monitoring.web.internal.constants
 import com.liferay.portal.search.elasticsearch.monitoring.web.internal.constants.MonitoringProxyServletWebKeys;
 import com.liferay.portal.search.elasticsearch.monitoring.web.internal.constants.MonitoringWebConstants;
 import com.liferay.portal.search.elasticsearch.monitoring.web.internal.servlet.display.context.ErrorDisplayContext;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 
 import jakarta.servlet.RequestDispatcher;
@@ -199,6 +201,10 @@ public class MonitoringProxyServlet extends ProxyServlet {
 		String password = GetterUtil.getString(
 			_secretResolver.resolve(
 				CompanyConstants.SYSTEM,
+				SecretContext.fromSettings(
+					"kibanaPassword",
+					new SystemSettingsLocator(
+						MonitoringConfiguration.class.getName())),
 				_monitoringConfiguration.kibanaPassword()));
 
 		String authorization = userName + ":" + password;

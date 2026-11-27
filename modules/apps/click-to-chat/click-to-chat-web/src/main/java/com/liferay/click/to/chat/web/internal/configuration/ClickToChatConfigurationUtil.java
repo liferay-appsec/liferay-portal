@@ -8,6 +8,9 @@ package com.liferay.click.to.chat.web.internal.configuration;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Objects;
@@ -21,32 +24,55 @@ public class ClickToChatConfigurationUtil {
 		long companyId, long groupId) {
 
 		try {
+			return ConfigurationProviderUtil.getConfiguration(
+				ClickToChatConfiguration.class,
+				getSettingsLocator(companyId, groupId));
+		}
+		catch (ConfigurationException configurationException) {
+			return ReflectionUtil.throwException(configurationException);
+		}
+	}
+
+	public static SettingsLocator getSettingsLocator(
+		long companyId, long groupId) {
+
+		try {
+			SettingsLocator companySettingsLocator =
+				new CompanyServiceSettingsLocator(
+					companyId, ClickToChatConfiguration.class.getName());
+
 			ClickToChatConfiguration companyClickToChatConfiguration =
-				ConfigurationProviderUtil.getCompanyConfiguration(
-					ClickToChatConfiguration.class, companyId);
+				ConfigurationProviderUtil.getConfiguration(
+					ClickToChatConfiguration.class, companySettingsLocator);
 
 			if ((groupId == 0) ||
 				Objects.equals(
 					companyClickToChatConfiguration.siteSettingsStrategy(),
 					"always-inherit")) {
 
-				return companyClickToChatConfiguration;
+				return companySettingsLocator;
 			}
 
-			ClickToChatConfiguration groupClickToChatConfiguration =
-				ConfigurationProviderUtil.getGroupConfiguration(
-					ClickToChatConfiguration.class, companyId, groupId);
+			SettingsLocator groupSettingsLocator =
+				new GroupServiceSettingsLocator(
+					companyId, groupId,
+					ClickToChatConfiguration.class.getName(),
+					ClickToChatConfiguration.class.getName());
 
 			if (Objects.equals(
 					companyClickToChatConfiguration.siteSettingsStrategy(),
 					"always-override")) {
 
-				return groupClickToChatConfiguration;
+				return groupSettingsLocator;
 			}
 
 			if (Objects.equals(
 					companyClickToChatConfiguration.siteSettingsStrategy(),
 					"inherit-or-override")) {
+
+				ClickToChatConfiguration groupClickToChatConfiguration =
+					ConfigurationProviderUtil.getConfiguration(
+						ClickToChatConfiguration.class, groupSettingsLocator);
 
 				if (Validator.isNotNull(
 						groupClickToChatConfiguration.
@@ -54,13 +80,13 @@ public class ClickToChatConfigurationUtil {
 					Validator.isNotNull(
 						groupClickToChatConfiguration.chatProviderId())) {
 
-					return groupClickToChatConfiguration;
+					return groupSettingsLocator;
 				}
 
-				return companyClickToChatConfiguration;
+				return companySettingsLocator;
 			}
 
-			return companyClickToChatConfiguration;
+			return companySettingsLocator;
 		}
 		catch (ConfigurationException configurationException) {
 			return ReflectionUtil.throwException(configurationException);

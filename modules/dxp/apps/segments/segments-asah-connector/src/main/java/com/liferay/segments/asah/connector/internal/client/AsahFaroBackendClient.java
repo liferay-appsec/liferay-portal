@@ -18,6 +18,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NestableRuntimeException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Http;
@@ -25,6 +26,7 @@ import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 import com.liferay.segments.asah.connector.internal.client.constants.FilterConstants;
 import com.liferay.segments.asah.connector.internal.client.data.binding.ExperimentJSONObjectMapper;
@@ -309,8 +311,12 @@ public class AsahFaroBackendClient {
 			"Content-Type", "application/json"
 		).put(
 			"OSB-Asah-Faro-Backend-Security-Signature",
-			SecretResolverUtil.resolve(
+			() -> SecretResolverUtil.resolve(
 				companyId,
+				SecretContext.fromSettings(
+					"liferayAnalyticsFaroBackendSecuritySignature",
+					new CompanyServiceSettingsLocator(
+						companyId, AnalyticsConfiguration.class.getName())),
 				analyticsConfiguration.
 					liferayAnalyticsFaroBackendSecuritySignature())
 		).put(

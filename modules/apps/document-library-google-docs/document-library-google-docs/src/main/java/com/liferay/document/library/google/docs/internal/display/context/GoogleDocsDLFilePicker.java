@@ -13,12 +13,14 @@ import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.template.Template;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.template.TemplateManagerUtil;
 import com.liferay.portal.kernel.template.URLTemplateResource;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.HtmlUtil_IW;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 /**
@@ -94,7 +96,13 @@ public class GoogleDocsDLFilePicker implements DLFilePicker {
 		template.put(
 			"googleAppsAPIKey",
 			SecretResolverUtil.resolve(
-				_companyId, _dlGoogleDriveCompanyConfiguration.pickerAPIKey()));
+				_companyId,
+				SecretContext.fromSettings(
+					"pickerAPIKey",
+					new CompanyServiceSettingsLocator(
+						_companyId,
+						DLGoogleDriveCompanyConfiguration.class.getName())),
+				_dlGoogleDriveCompanyConfiguration.pickerAPIKey()));
 		template.put(
 			"googleClientId", _dlGoogleDriveCompanyConfiguration.clientId());
 		template.put("htmlUtil", HtmlUtil_IW.getInstance());

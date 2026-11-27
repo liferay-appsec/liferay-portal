@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.store.s3.configuration.S3StoreConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -241,9 +242,11 @@ public class IBMS3StoreUnitTest {
 			SecretResolver secretResolver = Mockito.mock(SecretResolver.class);
 
 			Mockito.when(
-				secretResolver.resolve(Mockito.anyLong(), Mockito.any())
+				secretResolver.resolve(
+					Mockito.anyLong(), Mockito.any(SecretContext.class),
+					Mockito.any())
 			).thenAnswer(
-				invocation -> invocation.getArgument(1)
+				invocation -> invocation.getArgument(2)
 			);
 
 			ReflectionTestUtil.setFieldValue(

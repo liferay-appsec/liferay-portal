@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.security.key.KeyReference;
 import com.liferay.portal.security.key.KeyReferenceUtil;
+import com.liferay.portal.security.key.secret.ConfigurationSecretContext;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretManager;
 import com.liferay.portal.security.key.secret.SecretResolver;
@@ -249,9 +250,11 @@ public class ConfigurationSecretConfigurationModelListenerTest {
 	private boolean _isCredentialSecretContext(
 		Map<String, Object> properties, SecretContext secretContext) {
 
-		if ((secretContext != null) &&
-			Objects.equals(secretContext.getKey(), "credential") &&
-			Objects.equals(secretContext.getProperties(), properties)) {
+		if ((secretContext instanceof
+				ConfigurationSecretContext configurationSecretContext) &&
+			Objects.equals(configurationSecretContext.getKey(), "credential") &&
+			Objects.equals(
+				configurationSecretContext.getProperties(), properties)) {
 
 			return true;
 		}

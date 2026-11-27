@@ -21,7 +21,9 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.push.notifications.constants.PushNotificationsConstants;
 import com.liferay.push.notifications.constants.PushNotificationsDestinationNames;
@@ -92,6 +94,10 @@ public class ApplePushNotificationsSender implements PushNotificationsSender {
 		String appId = applePushNotificationsSenderConfiguration.appId();
 		String certificatePassword = _secretResolver.resolve(
 			CompanyConstants.SYSTEM,
+			SecretContext.fromSettings(
+				"certificatePassword",
+				new SystemSettingsLocator(
+					ApplePushNotificationsSenderConfiguration.class.getName())),
 			applePushNotificationsSenderConfiguration.certificatePassword());
 		String certificatePath =
 			applePushNotificationsSenderConfiguration.certificatePath();

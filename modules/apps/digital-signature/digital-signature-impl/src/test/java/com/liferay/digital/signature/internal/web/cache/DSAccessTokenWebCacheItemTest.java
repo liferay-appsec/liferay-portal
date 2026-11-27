@@ -6,6 +6,7 @@
 package com.liferay.digital.signature.internal.web.cache;
 
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -67,7 +68,8 @@ public class DSAccessTokenWebCacheItemTest {
 			new DSAccessTokenWebCacheItem(
 				"https://" + RandomTestUtil.randomString(), "api-username",
 				CompanyConstants.SYSTEM, "sandbox", "integration-key",
-				rsaPrivateKey);
+				rsaPrivateKey,
+				new SystemSettingsLocator(RandomTestUtil.randomString()));
 
 		byte[] rsaPrivateKeyBytes = ReflectionTestUtil.getFieldValue(
 			dsAccessTokenWebCacheItem, "_rsaPrivateKeyBytes");

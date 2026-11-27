@@ -35,6 +35,14 @@ public class GroupServiceSettingsLocator implements SettingsLocator {
 		this(0L, groupId, settingsId, configurationPid);
 	}
 
+	public String getConfigurationPid() {
+		return _configurationPid;
+	}
+
+	public long getGroupId() {
+		return _groupId;
+	}
+
 	@Override
 	public Settings getSettings() throws SettingsException {
 		CompanyServiceSettingsLocator companyServiceSettingsLocator =

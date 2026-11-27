@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.security.key.secret.ConfigurationSecretContext;
 import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -89,8 +90,9 @@ public class OAuth2AuthorizationServerConfigurationGeneratorTest {
 
 		oAuth2AuthorizationServerConfigurationGenerator.activate();
 
-		ArgumentCaptor<SecretContext> secretContextArgumentCaptor =
-			ArgumentCaptor.forClass(SecretContext.class);
+		ArgumentCaptor<ConfigurationSecretContext>
+			configurationSecretContextArgumentCaptor = ArgumentCaptor.forClass(
+				ConfigurationSecretContext.class);
 		ArgumentCaptor<String> valueArgumentCaptor = ArgumentCaptor.forClass(
 			String.class);
 
@@ -98,20 +100,22 @@ public class OAuth2AuthorizationServerConfigurationGeneratorTest {
 			secretResolver
 		).store(
 			Mockito.eq(CompanyConstants.SYSTEM),
-			secretContextArgumentCaptor.capture(), valueArgumentCaptor.capture()
+			configurationSecretContextArgumentCaptor.capture(),
+			valueArgumentCaptor.capture()
 		);
 
-		SecretContext secretContext = secretContextArgumentCaptor.getValue();
+		ConfigurationSecretContext configurationSecretContext =
+			configurationSecretContextArgumentCaptor.getValue();
 
 		Assert.assertEquals(
 			"oauth2.authorization.server.jwt.access.token.signing.json.web.key",
-			secretContext.getKey());
+			configurationSecretContext.getKey());
 		Assert.assertEquals(
 			HashMapBuilder.put(
 				Constants.SERVICE_PID,
 				OAuth2AuthorizationServerConfiguration.class.getName()
 			).build(),
-			secretContext.getProperties());
+			configurationSecretContext.getProperties());
 
 		JsonWebKey jsonWebKey = JwkUtils.readJwkKey(
 			valueArgumentCaptor.getValue());

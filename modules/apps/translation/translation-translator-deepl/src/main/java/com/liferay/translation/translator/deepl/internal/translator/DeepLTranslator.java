@@ -18,11 +18,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.url.URLBuilder;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.translation.exception.TranslatorException;
 import com.liferay.translation.translator.BaseTranslator;
@@ -188,7 +190,12 @@ public class DeepLTranslator extends BaseTranslator {
 		String json = null;
 
 		String authKey = _secretResolver.resolve(
-			companyId, deepLTranslatorConfiguration.authKey());
+			companyId,
+			SecretContext.fromSettings(
+				"authKey",
+				new CompanyServiceSettingsLocator(
+					companyId, DeepLTranslatorConfiguration.class.getName())),
+			deepLTranslatorConfiguration.authKey());
 
 		options.addHeader(
 			HttpHeaders.AUTHORIZATION, "DeepL-Auth-Key " + authKey);

@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.key.secret;
 
+import com.liferay.portal.kernel.settings.SettingsLocator;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Collections;
@@ -15,9 +16,9 @@ import java.util.Map;
 /**
  * @author Caio Farias
  */
-public class SecretContext {
+public abstract class SecretContext {
 
-	public static SecretContext fromConfiguration(
+	public static ConfigurationSecretContext fromConfiguration(
 		String key, Dictionary<String, ?> properties) {
 
 		if (properties == null) {
@@ -33,34 +34,39 @@ public class SecretContext {
 		return fromConfiguration(key, propertiesMap);
 	}
 
-	public static SecretContext fromConfiguration(
+	public static ConfigurationSecretContext fromConfiguration(
 		String key, Map<String, ?> properties) {
 
 		if (properties == null) {
 			throw new IllegalArgumentException("Properties are null");
 		}
 
-		return new SecretContext(key, Collections.unmodifiableMap(properties));
+		return new ConfigurationSecretContext(
+			key, Collections.unmodifiableMap(properties));
+	}
+
+	public static SettingsSecretContext fromSettings(
+		String key, SettingsLocator settingsLocator) {
+
+		if (settingsLocator == null) {
+			throw new IllegalArgumentException("Settings locator is null");
+		}
+
+		return new SettingsSecretContext(key, settingsLocator);
 	}
 
 	public String getKey() {
 		return _key;
 	}
 
-	public Map<String, Object> getProperties() {
-		return _properties;
-	}
-
-	private SecretContext(String key, Map<String, Object> properties) {
+	protected SecretContext(String key) {
 		if (Validator.isNull(key)) {
 			throw new IllegalArgumentException("Key is null");
 		}
 
 		_key = key;
-		_properties = properties;
 	}
 
 	private final String _key;
-	private final Map<String, Object> _properties;
 
 }

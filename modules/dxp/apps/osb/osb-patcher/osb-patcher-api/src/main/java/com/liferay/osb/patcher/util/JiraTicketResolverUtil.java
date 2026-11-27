@@ -66,7 +66,8 @@ public class JiraTicketResolverUtil {
 	}
 
 	public static List<String> resolveTickets(
-			PatcherConfiguration patcherConfiguration, String tickets)
+			long companyId, PatcherConfiguration patcherConfiguration,
+			String tickets)
 		throws Exception {
 
 		List<String> resolvedTickets = new ArrayList<>();
@@ -87,7 +88,8 @@ public class JiraTicketResolverUtil {
 			}
 
 			List<String> lpdKeys = getRelatedLPDKeys(
-				JiraUtil.getIssueJSONObject(patcherConfiguration, ticket));
+				JiraUtil.getIssueJSONObject(
+					companyId, patcherConfiguration, ticket));
 
 			if (lpdKeys.isEmpty()) {
 				throw new PortalException(

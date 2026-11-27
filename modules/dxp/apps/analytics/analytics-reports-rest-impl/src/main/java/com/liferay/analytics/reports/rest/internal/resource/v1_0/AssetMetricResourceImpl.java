@@ -85,8 +85,8 @@ public class AssetMetricResourceImpl extends BaseAssetMetricResourceImpl {
 		return analyticsCloudClient.getAssetMetric(
 			_analyticsSettingsManager.getAnalyticsConfiguration(
 				group.getCompanyId()),
-			assetId, assetType, analyticsCloudChannelIds, identityType,
-			rangeKey, selectedMetrics);
+			assetId, assetType, analyticsCloudChannelIds, group.getCompanyId(),
+			identityType, rangeKey, selectedMetrics);
 	}
 
 	@Reference

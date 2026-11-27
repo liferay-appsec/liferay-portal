@@ -14,12 +14,15 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.settings.PortletInstanceSettingsLocator;
+import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.security.key.secret.SecretContext;
 import com.liferay.portal.security.key.secret.SecretResolverUtil;
 
 import jakarta.portlet.PortletRequest;
@@ -64,6 +67,8 @@ public class IFrameDisplayContext {
 
 		_basicPassword = SecretResolverUtil.resolve(
 			_themeDisplay.getCompanyId(),
+			SecretContext.fromSettings(
+				"basicPassword", _getPortletInstanceSettingsLocator()),
 			_iFramePortletInstanceConfiguration.basicPassword());
 
 		return _basicPassword;
@@ -209,8 +214,10 @@ public class IFrameDisplayContext {
 		}
 
 		String authType = getAuthType();
+		String key = "formPassword";
 
 		if (authType.equals("basic")) {
+			key = "basicPassword";
 			_password = _iFramePortletInstanceConfiguration.basicPassword();
 		}
 		else {
@@ -222,7 +229,10 @@ public class IFrameDisplayContext {
 		}
 
 		_password = SecretResolverUtil.resolve(
-			_themeDisplay.getCompanyId(), _password);
+			_themeDisplay.getCompanyId(),
+			SecretContext.fromSettings(
+				key, _getPortletInstanceSettingsLocator()),
+			_password);
 
 		String passwordField =
 			_iFramePortletInstanceConfiguration.passwordField();
@@ -284,6 +294,22 @@ public class IFrameDisplayContext {
 		}
 
 		return _userName;
+	}
+
+	private PortletInstanceSettingsLocator
+		_getPortletInstanceSettingsLocator() {
+
+		PortletDisplay portletDisplay = _themeDisplay.getPortletDisplay();
+
+		String portletId = portletDisplay.getPortletResource();
+
+		if (Validator.isNull(portletId)) {
+			portletId = portletDisplay.getId();
+		}
+
+		return new PortletInstanceSettingsLocator(
+			_themeDisplay.getLayout(), portletId,
+			IFramePortletInstanceConfiguration.class.getName());
 	}
 
 	private static final String _IFRAME_PREFIX = "iframe_";
