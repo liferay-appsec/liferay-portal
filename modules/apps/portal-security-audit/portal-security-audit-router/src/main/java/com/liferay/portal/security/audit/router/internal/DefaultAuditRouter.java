@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.audit.AuditMessageProcessor;
 import com.liferay.portal.security.audit.configuration.AuditConfiguration;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
+import com.liferay.portal.security.audit.context.AuditContextRegistry;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.router.internal.constants.AuditConstants;
 
@@ -135,6 +136,13 @@ public class DefaultAuditRouter implements AuditRouter {
 				AuditEventConstants.CONTEXT_NAME_INSTANCE);
 		}
 
+		String contextName = auditMessage.getContextName();
+
+		if (_auditContextRegistry.getAuditContext(contextName) == null) {
+			throw new AuditException(
+				"Audit context " + contextName + " is not registered");
+		}
+
 		if (Validator.isNull(auditMessage.getRoles()) &&
 			(auditMessage.getUserId() > 0)) {
 
@@ -164,7 +172,7 @@ public class DefaultAuditRouter implements AuditRouter {
 		String resourceAction = auditMessage.getResourceAction();
 
 		if (Validator.isNotNull(resourceAction)) {
-			_validateResourceAction(resourceAction);
+			_validateResourceAction(contextName, resourceAction);
 
 			return;
 		}
@@ -197,11 +205,12 @@ public class DefaultAuditRouter implements AuditRouter {
 
 		auditMessage.setResourceAction(
 			StringBundler.concat(
-				StringUtil.toLowerCase(auditMessage.getContextName()),
-				StringPool.PERIOD, resourceType, StringPool.PERIOD, action));
+				StringUtil.toLowerCase(contextName), StringPool.PERIOD,
+				resourceType, StringPool.PERIOD, action));
 	}
 
-	private void _validateResourceAction(String resourceAction)
+	private void _validateResourceAction(
+			String contextName, String resourceAction)
 		throws AuditException {
 
 		Matcher matcher = _resourceActionPattern.matcher(resourceAction);
@@ -213,6 +222,15 @@ public class DefaultAuditRouter implements AuditRouter {
 					" does not match format ",
 					"\"<contextName>.<resourceType>.<action>\""));
 		}
+
+		if (!resourceAction.startsWith(
+				StringUtil.toLowerCase(contextName) + StringPool.PERIOD)) {
+
+			throw new AuditException(
+				StringBundler.concat(
+					"Resource action ", resourceAction,
+					" does not belong to audit context ", contextName));
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -220,6 +238,9 @@ public class DefaultAuditRouter implements AuditRouter {
 
 	private static final Pattern _resourceActionPattern = Pattern.compile(
 		"[a-z0-9_]+\\.[a-z0-9_]+\\.[a-z0-9_]+");
+
+	@Reference
+	private AuditContextRegistry _auditContextRegistry;
 
 	private volatile boolean _auditEnabled;
 	private ServiceTrackerMap<String, List<AuditMessageProcessor>>
