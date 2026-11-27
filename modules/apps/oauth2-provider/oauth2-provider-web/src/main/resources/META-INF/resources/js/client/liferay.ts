@@ -8,6 +8,7 @@ import {
 	OAuth2Client,
 	getAuthorizeURL,
 	getTokenURL,
+	toUserAgentApplicationOptions,
 } from './OAuth2Client';
 
 window.Liferay = window.Liferay || {};
@@ -24,7 +25,7 @@ window.Liferay.OAuth2Client = {
 
 	FromUserAgentApplication(
 		userAgentApplicationName: string,
-		debug?: boolean
+		options?: boolean | {debug?: boolean; resource?: string | Array<string>}
 	) {
 		const userAgentApplication = Liferay.OAuth2.getUserAgentApplication(
 			userAgentApplicationName
@@ -36,12 +37,15 @@ window.Liferay.OAuth2Client = {
 			);
 		}
 
+		const {debug, resource} = toUserAgentApplicationOptions(options);
+
 		return new OAuth2Client({
 			authorizeURL: getAuthorizeURL(),
 			clientId: userAgentApplication.clientId,
 			debug,
 			homePageURL: userAgentApplication.homePageURL,
 			redirectURIs: userAgentApplication.redirectURIs,
+			resource: resource ?? userAgentApplication.homePageURL,
 			tokenURL: getTokenURL(),
 		});
 	},
