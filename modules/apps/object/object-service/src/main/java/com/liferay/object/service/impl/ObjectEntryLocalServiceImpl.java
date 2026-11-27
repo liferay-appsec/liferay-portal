@@ -92,6 +92,7 @@ import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.internal.definition.security.permission.resource.util.ObjectDefinitionResourcePermissionUtil;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.field.util.EncryptedObjectFieldUtil;
 import com.liferay.object.internal.filter.parser.CurrentUserObjectFilterParser;
 import com.liferay.object.internal.filter.parser.DateRangeObjectFilterParser;
 import com.liferay.object.internal.filter.parser.EqualityOperatorsObjectFilterParser;
@@ -193,6 +194,7 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.encryptor.Encryptor;
+import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
@@ -6850,7 +6852,24 @@ public class ObjectEntryLocalServiceImpl
 						ObjectFieldConstants.BUSINESS_TYPE_ENCRYPTED)) {
 
 					try {
-						object = _encryptor.decrypt(_getKey(), (String)object);
+						object = EncryptedObjectFieldUtil.decrypt(
+							_encryptor, _getKey(), (String)object);
+					}
+					catch (EncryptorException encryptorException) {
+						if (!EncryptedObjectFieldUtil.isAESKey(_getKey())) {
+							throw new PortalException(encryptorException);
+						}
+
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								StringBundler.concat(
+									"Unable to decrypt object field \"",
+									objectField.getName(),
+									"\" of object entry ", objects[0]),
+								encryptorException);
+						}
+
+						object = null;
 					}
 					catch (IllegalArgumentException illegalArgumentException) {
 						throw new IllegalArgumentException(
@@ -7996,7 +8015,8 @@ public class ObjectEntryLocalServiceImpl
 			_setColumn(
 				columnNames, index, insertedValues, preparedStatement,
 				column.getSQLType(),
-				_encryptor.encrypt(_getKey(), valueString));
+				EncryptedObjectFieldUtil.encrypt(
+					_encryptor, _getKey(), valueString));
 
 			_putInsertedValue(
 				insertedValues, columnNames.get(index - 1), valueString);
