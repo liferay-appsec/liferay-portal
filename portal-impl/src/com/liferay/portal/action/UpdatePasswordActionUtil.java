@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.service.TicketLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -203,10 +204,17 @@ public class UpdatePasswordActionUtil {
 			}
 		}
 
+		if (!themeDisplay.isSignedIn()) {
+			httpSession.removeAttribute(WebKeys.LAST_PATH);
+		}
+
 		if (GetterUtil.getBoolean(
 				httpSession.getAttribute(WebKeys.MFA_ENABLED))) {
 
-			redirectUnsafeConsumer.accept(themeDisplay.getURLSignIn());
+			redirectUnsafeConsumer.accept(
+				HttpComponentsUtil.addParameter(
+					themeDisplay.getURLSignIn(), "redirect",
+					themeDisplay.getPathMain()));
 
 			return;
 		}

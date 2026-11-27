@@ -27,12 +27,14 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.HttpMethods;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.struts.LastPath;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.URLUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -72,6 +74,8 @@ public class UpdatePasswordActionTest {
 	@Test
 	public void testExecute() throws Exception {
 		_testExecute();
+		_testExecuteWithLastPathRemovedOnlyForGuests(false);
+		_testExecuteWithLastPathRemovedOnlyForGuests(true);
 		_testExecuteWithMFARedirectingToSignIn();
 		_testExecuteWithoutTicket(
 			false,
@@ -207,6 +211,59 @@ public class UpdatePasswordActionTest {
 			content.contains("Your password reset link is no longer valid"));
 	}
 
+	private void _testExecuteWithLastPathRemovedOnlyForGuests(
+			boolean mfaEnabled)
+		throws Exception {
+
+		Action action = new UpdatePasswordAction();
+
+		User user = UserTestUtil.addUser();
+
+		Company company = _companyLocalService.getCompany(user.getCompanyId());
+
+		MockHttpServletRequest mockHttpServletRequest = _mockHttpServletRequest(
+			company, user);
+
+		HttpSession httpSession = mockHttpServletRequest.getSession();
+
+		httpSession.setAttribute(
+			WebKeys.LAST_PATH,
+			new LastPath(StringPool.BLANK, RandomTestUtil.randomString()));
+		httpSession.setAttribute(WebKeys.MFA_ENABLED, mfaEnabled);
+
+		action.execute(
+			null, mockHttpServletRequest, new MockHttpServletResponse());
+
+		httpSession = mockHttpServletRequest.getSession();
+
+		Assert.assertNull(httpSession.getAttribute(WebKeys.LAST_PATH));
+
+		mockHttpServletRequest = _mockHttpServletRequest(company, user);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)mockHttpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		themeDisplay.setSignedIn(true);
+
+		httpSession = mockHttpServletRequest.getSession();
+
+		LastPath lastPath = new LastPath(
+			StringPool.BLANK, RandomTestUtil.randomString());
+
+		httpSession.setAttribute(WebKeys.LAST_PATH, lastPath);
+
+		httpSession.setAttribute(WebKeys.MFA_ENABLED, mfaEnabled);
+
+		action.execute(
+			null, mockHttpServletRequest, new MockHttpServletResponse());
+
+		httpSession = mockHttpServletRequest.getSession();
+
+		Assert.assertSame(
+			lastPath, httpSession.getAttribute(WebKeys.LAST_PATH));
+	}
+
 	private void _testExecuteWithMFARedirectingToSignIn() throws Exception {
 		Action action = new UpdatePasswordAction();
 
@@ -231,7 +288,9 @@ public class UpdatePasswordActionTest {
 				WebKeys.THEME_DISPLAY);
 
 		Assert.assertEquals(
-			themeDisplay.getURLSignIn(),
+			HttpComponentsUtil.addParameter(
+				themeDisplay.getURLSignIn(), "redirect",
+				themeDisplay.getPathMain()),
 			mockHttpServletResponse.getRedirectedUrl());
 	}
 
