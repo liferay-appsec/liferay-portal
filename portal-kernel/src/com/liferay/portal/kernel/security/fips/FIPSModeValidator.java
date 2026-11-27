@@ -134,7 +134,7 @@ public class FIPSModeValidator {
 				PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM_LEGACY);
 		}
 
-		return !StringUtil.startsWith(algorithm, PasswordEncryptor.TYPE_PBKDF2);
+		return !StringUtil.startsWith(algorithm, "PBKDF2WithHmacSHA");
 	}
 
 	public static boolean isNotAllowedPassword(String password) {

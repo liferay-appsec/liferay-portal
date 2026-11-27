@@ -150,6 +150,9 @@ public class FIPSModeValidatorTest {
 			Assert.assertTrue(
 				FIPSModeValidator.isNotAllowedEncryptedPassword(
 					"{" + RandomTestUtil.randomString()));
+			Assert.assertTrue(
+				FIPSModeValidator.isNotAllowedEncryptedPassword(
+					"{PBKDF2WithHmacMD5}" + RandomTestUtil.randomString()));
 			Assert.assertFalse(
 				FIPSModeValidator.isNotAllowedEncryptedPassword(
 					"{PBKDF2WITHHMACSHA1}" + RandomTestUtil.randomString()));
