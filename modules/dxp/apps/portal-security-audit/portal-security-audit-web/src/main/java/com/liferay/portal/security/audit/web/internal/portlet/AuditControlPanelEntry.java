@@ -5,8 +5,13 @@
 
 package com.liferay.portal.security.audit.web.internal.portlet;
 
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.portlet.AdministratorControlPanelEntry;
 import com.liferay.portal.kernel.portlet.ControlPanelEntry;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.security.audit.web.internal.AuditAccountEntryUtil;
 import com.liferay.portal.security.audit.web.internal.constants.AuditPortletKeys;
 
 import org.osgi.service.component.annotations.Component;
@@ -19,4 +24,21 @@ import org.osgi.service.component.annotations.Component;
 	service = ControlPanelEntry.class
 )
 public class AuditControlPanelEntry extends AdministratorControlPanelEntry {
+
+	@Override
+	public boolean hasAccessPermission(
+			PermissionChecker permissionChecker, Group group, Portlet portlet)
+		throws Exception {
+
+		if (super.hasAccessPermission(permissionChecker, group, portlet) ||
+			ArrayUtil.isNotEmpty(
+				AuditAccountEntryUtil.getAdministeredAccountEntryIds(
+					permissionChecker))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 }

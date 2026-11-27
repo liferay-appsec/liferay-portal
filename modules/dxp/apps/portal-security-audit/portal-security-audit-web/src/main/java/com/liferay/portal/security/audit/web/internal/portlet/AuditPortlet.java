@@ -5,12 +5,17 @@
 
 package com.liferay.portal.security.audit.web.internal.portlet;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.security.audit.AuditEvent;
+import com.liferay.portal.security.audit.storage.model.AuditEventAccountEntryRel;
+import com.liferay.portal.security.audit.storage.service.AuditEventLocalService;
+import com.liferay.portal.security.audit.web.internal.AuditAccountEntryUtil;
 import com.liferay.portal.security.audit.web.internal.AuditEventManagerUtil;
 import com.liferay.portal.security.audit.web.internal.constants.AuditPortletKeys;
 
@@ -27,6 +32,7 @@ import jakarta.portlet.ResourceResponse;
 import java.io.IOException;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Brian Greenwald
@@ -56,7 +62,7 @@ public class AuditPortlet extends MVCPortlet {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws IOException, PortletException {
 
-		_checkCompanyAdmin(actionRequest);
+		_checkPermission(actionRequest);
 
 		super.processAction(actionRequest, actionResponse);
 	}
@@ -66,7 +72,7 @@ public class AuditPortlet extends MVCPortlet {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws IOException, PortletException {
 
-		_checkCompanyAdmin(renderRequest);
+		_checkPermission(renderRequest);
 
 		super.render(renderRequest, renderResponse);
 	}
@@ -76,42 +82,81 @@ public class AuditPortlet extends MVCPortlet {
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws IOException, PortletException {
 
-		_checkCompanyAdmin(resourceRequest);
+		_checkPermission(resourceRequest);
 
 		super.serveResource(resourceRequest, resourceResponse);
 	}
 
-	private void _checkCompanyAdmin(PortletRequest portletRequest)
+	private void _checkPermission(PortletRequest portletRequest)
 		throws PortletException {
 
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
+		try {
+			PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
 
-		long auditEventId = ParamUtil.getLong(portletRequest, "auditEventId");
+			long[] accountEntryIds = null;
 
-		if (auditEventId > 0) {
+			if (!permissionChecker.isCompanyAdmin()) {
+				accountEntryIds =
+					AuditAccountEntryUtil.getAdministeredAccountEntryIds(
+						permissionChecker);
+
+				if (ArrayUtil.isEmpty(accountEntryIds)) {
+					throw new PrincipalException.MustBeCompanyAdmin(
+						permissionChecker.getUserId());
+				}
+			}
+
+			long auditEventId = ParamUtil.getLong(
+				portletRequest, "auditEventId");
+
+			if (auditEventId <= 0) {
+				return;
+			}
+
 			AuditEvent auditEvent = AuditEventManagerUtil.fetchAuditEvent(
 				auditEventId);
 
 			if ((auditEvent != null) &&
-				(permissionChecker.getCompanyId() !=
-					auditEvent.getCompanyId())) {
+				((permissionChecker.getCompanyId() !=
+					auditEvent.getCompanyId()) ||
+				 ((accountEntryIds != null) &&
+				  !_hasAccountEntryId(accountEntryIds, auditEvent)))) {
 
-				PrincipalException principalException =
-					new PrincipalException.MustBeCompanyAdmin(
-						permissionChecker.getUserId());
+				throw new PrincipalException.MustBeCompanyAdmin(
+					permissionChecker.getUserId());
+			}
+		}
+		catch (PortalException portalException) {
+			throw new PortletException(portalException);
+		}
+	}
 
-				throw new PortletException(principalException);
+	private boolean _hasAccountEntryId(
+		long[] accountEntryIds, AuditEvent auditEvent) {
+
+		if (ArrayUtil.contains(
+				accountEntryIds, auditEvent.getAccountEntryId())) {
+
+			return true;
+		}
+
+		for (AuditEventAccountEntryRel auditEventAccountEntryRel :
+				_auditEventLocalService.getAuditEventAccountEntryRels(
+					auditEvent.getAuditEventId())) {
+
+			if (ArrayUtil.contains(
+					accountEntryIds,
+					auditEventAccountEntryRel.getAccountEntryId())) {
+
+				return true;
 			}
 		}
 
-		if (!permissionChecker.isCompanyAdmin()) {
-			PrincipalException principalException =
-				new PrincipalException.MustBeCompanyAdmin(
-					permissionChecker.getUserId());
-
-			throw new PortletException(principalException);
-		}
+		return false;
 	}
+
+	@Reference
+	private AuditEventLocalService _auditEventLocalService;
 
 }

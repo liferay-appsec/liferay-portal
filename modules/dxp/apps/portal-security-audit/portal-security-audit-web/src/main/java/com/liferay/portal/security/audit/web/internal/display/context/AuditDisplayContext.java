@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.PortletQName;
 import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -24,6 +25,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.security.audit.AuditEvent;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
 import com.liferay.portal.security.audit.storage.comparator.AuditEventCreateDateComparator;
+import com.liferay.portal.security.audit.web.internal.AuditAccountEntryUtil;
 import com.liferay.portal.security.audit.web.internal.AuditEventManagerUtil;
 
 import jakarta.portlet.PortletURL;
@@ -224,6 +226,8 @@ public class AuditDisplayContext {
 			range[1] = _searchContainer.getEnd();
 		}
 
+		long[] accountEntryIds = _getAccountEntryIds();
+
 		if (displayTerms.isAdvancedSearch()) {
 			Date endDate = PortalUtil.getDate(
 				getEndDateMonth(), getEndDateDay(), getEndDateYear(),
@@ -240,18 +244,18 @@ public class AuditDisplayContext {
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
 					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, null, getClassName(),
-					getClassPK(), getClientHost(), getClientIP(),
-					AuditEventConstants.CONTEXT_NAME_INSTANCE, getEventType(),
-					getServerName(), getServerPort(), null,
+					getUserName(), startDate, endDate, accountEntryIds,
+					getClassName(), getClassPK(), getClientHost(),
+					getClientIP(), AuditEventConstants.CONTEXT_NAME_INSTANCE,
+					getEventType(), getServerName(), getServerPort(), null,
 					displayTerms.isAndOperator(), range[0], range[1],
 					new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(), getGroupId(), getUserId(),
-					getUserName(), startDate, endDate, null, getClassName(),
-					getClassPK(), getClientHost(), getClientIP(),
-					AuditEventConstants.CONTEXT_NAME_INSTANCE, getEventType(),
-					getServerName(), getServerPort(), null,
+					getUserName(), startDate, endDate, accountEntryIds,
+					getClassName(), getClassPK(), getClientHost(),
+					getClientIP(), AuditEventConstants.CONTEXT_NAME_INSTANCE,
+					getEventType(), getServerName(), getServerPort(), null,
 					displayTerms.isAndOperator()));
 		}
 		else {
@@ -263,15 +267,15 @@ public class AuditDisplayContext {
 			_searchContainer.setResultsAndTotal(
 				() -> AuditEventManagerUtil.getAuditEvents(
 					_themeDisplay.getCompanyId(), getGroupId(),
-					Long.valueOf(number), keywords, null, null, null, keywords,
-					keywords, keywords, keywords,
+					Long.valueOf(number), keywords, null, null, accountEntryIds,
+					keywords, keywords, keywords, keywords,
 					AuditEventConstants.CONTEXT_NAME_INSTANCE, keywords,
 					keywords, Integer.valueOf(number), null, false, range[0],
 					range[1], new AuditEventCreateDateComparator()),
 				AuditEventManagerUtil.getAuditEventsCount(
 					_themeDisplay.getCompanyId(), getGroupId(),
-					Long.valueOf(number), keywords, null, null, null, keywords,
-					keywords, keywords, keywords,
+					Long.valueOf(number), keywords, null, null, accountEntryIds,
+					keywords, keywords, keywords, keywords,
 					AuditEventConstants.CONTEXT_NAME_INSTANCE, keywords,
 					keywords, Integer.valueOf(number), null, false));
 		}
@@ -406,6 +410,18 @@ public class AuditDisplayContext {
 			HttpServletRequest httpServletRequest, String param,
 			V defaultValue);
 
+	}
+
+	private long[] _getAccountEntryIds() throws Exception {
+		PermissionChecker permissionChecker =
+			_themeDisplay.getPermissionChecker();
+
+		if (permissionChecker.isCompanyAdmin()) {
+			return null;
+		}
+
+		return AuditAccountEntryUtil.getAdministeredAccountEntryIds(
+			permissionChecker);
 	}
 
 	private <T> T _getParamWithOrWithoutNamespace(

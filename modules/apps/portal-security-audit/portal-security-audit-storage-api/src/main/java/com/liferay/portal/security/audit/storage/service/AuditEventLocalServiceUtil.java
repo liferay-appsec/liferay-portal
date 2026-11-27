@@ -232,6 +232,14 @@ public class AuditEventLocalServiceUtil {
 		return getService().getAuditEvent(auditEventId);
 	}
 
+	public static List
+		<com.liferay.portal.security.audit.storage.model.
+			AuditEventAccountEntryRel> getAuditEventAccountEntryRels(
+				long auditEventId) {
+
+		return getService().getAuditEventAccountEntryRels(auditEventId);
+	}
+
 	/**
 	 * Returns a range of all the audit events.
 	 *
@@ -362,4 +370,4 @@ public class AuditEventLocalServiceUtil {
 			AuditEventLocalServiceUtil.class, AuditEventLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1374424710
+// LIFERAY-SERVICE-BUILDER-HASH:1779294779

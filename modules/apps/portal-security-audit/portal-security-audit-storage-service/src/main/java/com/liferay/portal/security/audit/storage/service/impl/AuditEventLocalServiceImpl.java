@@ -10,11 +10,15 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.change.tracking.CTAware;
+import com.liferay.portal.kernel.dao.orm.Criterion;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.Junction;
+import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -103,6 +107,14 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 	}
 
 	@Override
+	public List<AuditEventAccountEntryRel> getAuditEventAccountEntryRels(
+		long auditEventId) {
+
+		return _auditEventAccountEntryRelPersistence.findByAuditEventId(
+			auditEventId);
+	}
+
+	@Override
 	public List<AuditEvent> getAuditEvents(
 		long companyId, int start, int end,
 		OrderByComparator<AuditEvent> orderByComparator) {
@@ -180,6 +192,20 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 		auditEventAccountEntryRel.setAuditEventId(auditEvent.getAuditEventId());
 
 		_auditEventAccountEntryRelPersistence.update(auditEventAccountEntryRel);
+	}
+
+	private void _addCreateDateCriteria(
+		Date createDateGT, Date createDateLT, DynamicQuery dynamicQuery) {
+
+		Property property = PropertyFactoryUtil.forName("createDate");
+
+		if (createDateGT != null) {
+			dynamicQuery.add(property.gt(createDateGT));
+		}
+
+		if (createDateLT != null) {
+			dynamicQuery.add(property.lt(createDateLT));
+		}
 	}
 
 	private DynamicQuery _buildDynamicQuery(
@@ -280,7 +306,35 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			"accountEntryId");
 
 		if (ArrayUtil.isNotEmpty(accountEntryIds)) {
-			dynamicQuery.add(accountEntryIdProperty.in(accountEntryIds));
+			Criterion criterion = accountEntryIdProperty.in(accountEntryIds);
+
+			if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-113659")) {
+				DynamicQuery auditEventAccountEntryRelDynamicQuery =
+					DynamicQueryFactoryUtil.forClass(
+						AuditEventAccountEntryRel.class, getClassLoader());
+
+				auditEventAccountEntryRelDynamicQuery.add(
+					RestrictionsFactoryUtil.eq("companyId", companyId));
+				auditEventAccountEntryRelDynamicQuery.add(
+					accountEntryIdProperty.in(accountEntryIds));
+
+				_addCreateDateCriteria(
+					createDateGT, createDateLT,
+					auditEventAccountEntryRelDynamicQuery);
+
+				auditEventAccountEntryRelDynamicQuery.setProjection(
+					ProjectionFactoryUtil.property("auditEventId"));
+
+				Property auditEventIdProperty = PropertyFactoryUtil.forName(
+					"auditEventId");
+
+				criterion = RestrictionsFactoryUtil.or(
+					criterion,
+					auditEventIdProperty.in(
+						auditEventAccountEntryRelDynamicQuery));
+			}
+
+			dynamicQuery.add(criterion);
 		}
 		else if (andSearch) {
 			dynamicQuery.add(accountEntryIdProperty.eq(0L));
@@ -298,17 +352,7 @@ public class AuditEventLocalServiceImpl extends AuditEventLocalServiceBaseImpl {
 			dynamicQuery.add(property.eq(contextName));
 		}
 
-		if (createDateGT != null) {
-			Property property = PropertyFactoryUtil.forName("createDate");
-
-			dynamicQuery.add(property.gt(createDateGT));
-		}
-
-		if (createDateLT != null) {
-			Property property = PropertyFactoryUtil.forName("createDate");
-
-			dynamicQuery.add(property.lt(createDateLT));
-		}
+		_addCreateDateCriteria(createDateGT, createDateLT, dynamicQuery);
 
 		return dynamicQuery.add(junction);
 	}

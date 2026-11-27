@@ -267,6 +267,16 @@ public class AuditEventLocalServiceWrapper
 		return _auditEventLocalService.getAuditEvent(auditEventId);
 	}
 
+	@Override
+	public java.util.List
+		<com.liferay.portal.security.audit.storage.model.
+			AuditEventAccountEntryRel> getAuditEventAccountEntryRels(
+				long auditEventId) {
+
+		return _auditEventLocalService.getAuditEventAccountEntryRels(
+			auditEventId);
+	}
+
 	/**
 	 * Returns a range of all the audit events.
 	 *
@@ -436,4 +446,4 @@ public class AuditEventLocalServiceWrapper
 	private AuditEventLocalService _auditEventLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1098962820
+// LIFERAY-SERVICE-BUILDER-HASH:955954474

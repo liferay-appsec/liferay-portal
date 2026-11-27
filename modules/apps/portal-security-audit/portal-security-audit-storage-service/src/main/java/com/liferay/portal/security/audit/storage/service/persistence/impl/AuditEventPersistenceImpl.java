@@ -155,6 +155,109 @@ public class AuditEventPersistenceImpl
 			dummyFinderCache, new Object[] {companyId});
 	}
 
+	private CollectionPersistenceFinder<AuditEvent, NoSuchEventException>
+		_collectionPersistenceFinderByC_CD_CN;
+
+	/**
+	 * Returns an ordered range of all the audit events where companyId = &#63; and createDate = &#63; and contextName = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>AuditEventModelImpl</code>.
+	 * </p>
+	 *
+	 * @param companyId the company ID
+	 * @param createDate the create date
+	 * @param contextName the context name
+	 * @param start the lower bound of the range of audit events
+	 * @param end the upper bound of the range of audit events (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching audit events
+	 */
+	@Override
+	public List<AuditEvent> findByC_CD_CN(
+		long companyId, Date createDate, String contextName, int start, int end,
+		OrderByComparator<AuditEvent> orderByComparator,
+		boolean useFinderCache) {
+
+		return _collectionPersistenceFinderByC_CD_CN.find(
+			dummyFinderCache, new Object[] {companyId, createDate, contextName},
+			start, end, orderByComparator, useFinderCache);
+	}
+
+	/**
+	 * Returns the first audit event in the ordered set where companyId = &#63; and createDate = &#63; and contextName = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param createDate the create date
+	 * @param contextName the context name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching audit event
+	 * @throws NoSuchEventException if a matching audit event could not be found
+	 */
+	@Override
+	public AuditEvent findByC_CD_CN_First(
+			long companyId, Date createDate, String contextName,
+			OrderByComparator<AuditEvent> orderByComparator)
+		throws NoSuchEventException {
+
+		return _collectionPersistenceFinderByC_CD_CN.findFirst(
+			dummyFinderCache, new Object[] {companyId, createDate, contextName},
+			orderByComparator);
+	}
+
+	/**
+	 * Returns the first audit event in the ordered set where companyId = &#63; and createDate = &#63; and contextName = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param createDate the create date
+	 * @param contextName the context name
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching audit event, or <code>null</code> if a matching audit event could not be found
+	 */
+	@Override
+	public AuditEvent fetchByC_CD_CN_First(
+		long companyId, Date createDate, String contextName,
+		OrderByComparator<AuditEvent> orderByComparator) {
+
+		return _collectionPersistenceFinderByC_CD_CN.fetchFirst(
+			dummyFinderCache, new Object[] {companyId, createDate, contextName},
+			orderByComparator);
+	}
+
+	/**
+	 * Removes all the audit events where companyId = &#63; and createDate = &#63; and contextName = &#63; from the database.
+	 *
+	 * @param companyId the company ID
+	 * @param createDate the create date
+	 * @param contextName the context name
+	 */
+	@Override
+	public void removeByC_CD_CN(
+		long companyId, Date createDate, String contextName) {
+
+		_collectionPersistenceFinderByC_CD_CN.remove(
+			dummyFinderCache,
+			new Object[] {companyId, createDate, contextName});
+	}
+
+	/**
+	 * Returns the number of audit events where companyId = &#63; and createDate = &#63; and contextName = &#63;.
+	 *
+	 * @param companyId the company ID
+	 * @param createDate the create date
+	 * @param contextName the context name
+	 * @return the number of matching audit events
+	 */
+	@Override
+	public int countByC_CD_CN(
+		long companyId, Date createDate, String contextName) {
+
+		return _collectionPersistenceFinderByC_CD_CN.count(
+			dummyFinderCache,
+			new Object[] {companyId, createDate, contextName});
+	}
+
 	public AuditEventPersistenceImpl() {
 		setModelClass(AuditEvent.class);
 
@@ -367,6 +470,48 @@ public class AuditEventPersistenceImpl
 					"auditEvent.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, AuditEvent::getCompanyId));
 
+		_collectionPersistenceFinderByC_CD_CN =
+			new CollectionPersistenceFinder<>(
+				this,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_CD_CN",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						String.class.getName(), Integer.class.getName(),
+						Integer.class.getName(),
+						OrderByComparator.class.getName()
+					},
+					new String[] {"companyId", "createDate", "contextName"},
+					true),
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_CD_CN",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						String.class.getName()
+					},
+					new String[] {"companyId", "createDate", "contextName"}, 0,
+					4, true, null),
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_CD_CN",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						String.class.getName()
+					},
+					new String[] {"companyId", "createDate", "contextName"}, 0,
+					4, false, null),
+				_SQL_SELECT_AUDITEVENT_WHERE, _SQL_COUNT_AUDITEVENT_WHERE,
+				AuditEventModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
+				null,
+				new FinderColumn<>(
+					"auditEvent.", "companyId", FinderColumn.Type.LONG, "=",
+					true, true, AuditEvent::getCompanyId),
+				new FinderColumn<>(
+					"auditEvent.", "createDate", FinderColumn.Type.DATE, "=",
+					true, true, AuditEvent::getCreateDate),
+				new FinderColumn<>(
+					"auditEvent.", "contextName", FinderColumn.Type.STRING, "=",
+					true, true, AuditEvent::getContextName));
+
 		AuditEventUtil.setPersistence(this);
 	}
 
@@ -421,4 +566,4 @@ public class AuditEventPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:86948105
+// LIFERAY-SERVICE-BUILDER-HASH:83647812

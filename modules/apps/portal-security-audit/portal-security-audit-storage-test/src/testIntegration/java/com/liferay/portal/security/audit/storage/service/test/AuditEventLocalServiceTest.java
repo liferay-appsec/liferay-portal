@@ -6,13 +6,18 @@
 package com.liferay.portal.security.audit.storage.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.TransactionTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.security.audit.constants.AuditEventConstants;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 import com.liferay.portal.security.audit.storage.model.AuditEvent;
@@ -24,6 +29,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Assert;
@@ -170,6 +176,130 @@ public class AuditEventLocalServiceTest {
 		_assertAuditEventAccountEntryRels(new long[0], auditEvent);
 	}
 
+	@Test
+	public void testGetAuditEventAccountEntryRels() throws Exception {
+		_addAuditEvent(0, new Date(), RandomTestUtil.randomLong());
+
+		long[] userAccountEntryIds = {
+			RandomTestUtil.randomLong(), RandomTestUtil.randomLong()
+		};
+
+		Arrays.sort(userAccountEntryIds);
+
+		AuditEvent auditEvent = _addAuditEvent(
+			0, new Date(), userAccountEntryIds);
+
+		long[] accountEntryIds = TransformUtil.transformToLongArray(
+			_auditEventLocalService.getAuditEventAccountEntryRels(
+				auditEvent.getAuditEventId()),
+			AuditEventAccountEntryRel::getAccountEntryId);
+
+		Arrays.sort(accountEntryIds);
+
+		Assert.assertArrayEquals(userAccountEntryIds, accountEntryIds);
+	}
+
+	@Test
+	public void testGetAuditEvents() throws Exception {
+		long accountEntryId1 = RandomTestUtil.randomLong();
+
+		AuditEvent auditEvent1 = _addAuditEvent(accountEntryId1, new Date());
+
+		long accountEntryId2 = RandomTestUtil.randomLong();
+
+		AuditEvent auditEvent2 = _addAuditEvent(
+			0, new Date(), accountEntryId1, accountEntryId2);
+
+		long accountEntryId3 = RandomTestUtil.randomLong();
+
+		AuditEvent auditEvent3 = _addAuditEvent(
+			0, new Date(System.currentTimeMillis() - Time.DAY),
+			accountEntryId3);
+
+		_addAuditEvent(0, new Date());
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-113659")) {
+
+			_assertGetAuditEvents(
+				new long[] {accountEntryId1, accountEntryId2}, true, null,
+				auditEvent1, auditEvent2);
+			_assertGetAuditEvents(
+				new long[] {accountEntryId1}, true, null, auditEvent1,
+				auditEvent2);
+			_assertGetAuditEvents(
+				new long[] {accountEntryId2}, false, null, auditEvent2);
+			_assertGetAuditEvents(
+				new long[] {accountEntryId2}, true, null, auditEvent2);
+			_assertGetAuditEvents(
+				new long[] {accountEntryId3}, true, null, auditEvent3);
+
+			Date createDateGT = new Date(
+				System.currentTimeMillis() - Time.HOUR);
+
+			_assertGetAuditEvents(
+				new long[] {accountEntryId1}, true, createDateGT, auditEvent1,
+				auditEvent2);
+			_assertGetAuditEvents(
+				new long[] {accountEntryId3}, true, createDateGT);
+		}
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					false, "LPD-113659")) {
+
+			_assertGetAuditEvents(
+				new long[] {accountEntryId1}, true, null, auditEvent1);
+			_assertGetAuditEvents(new long[] {accountEntryId2}, true, null);
+		}
+	}
+
+	@Test
+	public void testGetAuditEventsCount() throws Exception {
+		long accountEntryId1 = RandomTestUtil.randomLong();
+
+		_addAuditEvent(accountEntryId1, new Date());
+
+		long accountEntryId2 = RandomTestUtil.randomLong();
+
+		_addAuditEvent(0, new Date(), accountEntryId1, accountEntryId2);
+
+		_addAuditEvent(0, new Date());
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-113659")) {
+
+			_assertGetAuditEventsCount(1, accountEntryId2);
+			_assertGetAuditEventsCount(2, accountEntryId1);
+			_assertGetAuditEventsCount(2, accountEntryId1, accountEntryId2);
+		}
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					false, "LPD-113659")) {
+
+			_assertGetAuditEventsCount(0, accountEntryId2);
+			_assertGetAuditEventsCount(1, accountEntryId1);
+		}
+	}
+
+	private AuditEvent _addAuditEvent(
+			long accountEntryId, Date createDate, long... userAccountEntryIds)
+		throws Exception {
+
+		AuditMessage auditMessage = new AuditMessage(
+			TestPropsValues.getCompanyId(), RandomTestUtil.randomLong(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		auditMessage.setAccountEntryId(accountEntryId);
+		auditMessage.setTimestampDate(createDate);
+		auditMessage.setUserAccountEntryIds(userAccountEntryIds);
+
+		return _auditEventLocalService.addAuditEvent(auditMessage);
+	}
+
 	private void _assertAuditEventAccountEntryRels(
 			long[] userAccountEntryIds, AuditEvent auditEvent)
 		throws Exception {
@@ -199,6 +329,40 @@ public class AuditEventLocalServiceTest {
 				auditEvent.getCreateDate(),
 				auditEventAccountEntryRel.getCreateDate());
 		}
+	}
+
+	private void _assertGetAuditEvents(
+			long[] accountEntryIds, boolean andSearch, Date createDateGT,
+			AuditEvent... expectedAuditEvents)
+		throws Exception {
+
+		long[] expectedAuditEventIds = TransformUtil.transformToLongArray(
+			Arrays.asList(expectedAuditEvents), AuditEvent::getAuditEventId);
+
+		Arrays.sort(expectedAuditEventIds);
+
+		long[] auditEventIds = TransformUtil.transformToLongArray(
+			_auditEventLocalService.getAuditEvents(
+				TestPropsValues.getCompanyId(), 0, 0, null, createDateGT, null,
+				accountEntryIds, null, null, null, null, null, null, null, 0,
+				null, andSearch, QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+			AuditEvent::getAuditEventId);
+
+		Arrays.sort(auditEventIds);
+
+		Assert.assertArrayEquals(expectedAuditEventIds, auditEventIds);
+	}
+
+	private void _assertGetAuditEventsCount(
+			int expectedCount, long... accountEntryIds)
+		throws Exception {
+
+		Assert.assertEquals(
+			expectedCount,
+			_auditEventLocalService.getAuditEventsCount(
+				TestPropsValues.getCompanyId(), 0, 0, null, null, null,
+				accountEntryIds, null, null, null, null, null, null, null, 0,
+				null, true));
 	}
 
 	private AuditEvent _getAuditEvent(AuditMessage auditMessage) {

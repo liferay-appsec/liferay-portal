@@ -82,6 +82,8 @@ public class AuditStorageServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.5.0", "2.6.0", AuditEventAccountEntryRelTable.create());
+
+		registry.register("2.6.0", "2.6.1", new DummyUpgradeStep());
 	}
 
 	@Reference

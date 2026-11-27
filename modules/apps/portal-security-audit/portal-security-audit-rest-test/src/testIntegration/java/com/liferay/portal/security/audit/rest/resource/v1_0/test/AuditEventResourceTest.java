@@ -13,11 +13,13 @@ import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.account.service.AccountRoleLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -148,6 +150,22 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 		assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
 		assertContains(auditEvent2, (List<AuditEvent>)page.getItems());
 
+		AuditEvent auditEvent4 = _addLoginAuditEvent(
+			contextName, accountEntry1.getAccountEntryId());
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-113659")) {
+
+			page = auditEventResource.getAuditEventsPage(
+				null, contextName, null, null, null, Pagination.of(1, 10),
+				null);
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertContains(auditEvent4, (List<AuditEvent>)page.getItems());
+		}
+
 		User user = UserTestUtil.addUser(
 			testCompany, PropsValues.DEFAULT_ADMIN_PASSWORD);
 
@@ -190,6 +208,33 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 					accountEntry2.getAccountEntryId()
 				},
 				contextName, null, null, null, Pagination.of(1, 10), null));
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					true, "LPD-113659")) {
+
+			page = auditEventResource.getAuditEventsPage(
+				new Long[] {accountEntry1.getAccountEntryId()}, contextName,
+				null, null, null, Pagination.of(1, 10), null);
+
+			Assert.assertEquals(2, page.getTotalCount());
+
+			assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
+			assertContains(auditEvent4, (List<AuditEvent>)page.getItems());
+		}
+
+		try (SafeCloseable safeCloseable =
+				FeatureFlagTestUtil.setFeatureFlagsWithSafeCloseable(
+					false, "LPD-113659")) {
+
+			page = auditEventResource.getAuditEventsPage(
+				new Long[] {accountEntry1.getAccountEntryId()}, contextName,
+				null, null, null, Pagination.of(1, 10), null);
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertContains(auditEvent1, (List<AuditEvent>)page.getItems());
+		}
 	}
 
 	@Override
@@ -238,6 +283,28 @@ public class AuditEventResourceTest extends BaseAuditEventResourceTestCase {
 				id = serviceBuilderAuditEvent.getAuditEventId();
 				impersonated = auditEvent.getImpersonated();
 				impersonatedCreator = auditEvent.getImpersonatedCreator();
+			}
+		};
+	}
+
+	private AuditEvent _addLoginAuditEvent(
+		String contextName, long... userAccountEntryIds) {
+
+		AuditMessage auditMessage = new AuditMessage(
+			0, testCompany.getCompanyId(), 0, null, null, 0, null, null, null,
+			contextName, EventTypes.LOGIN, null);
+
+		auditMessage.setUserAccountEntryIds(userAccountEntryIds);
+
+		com.liferay.portal.security.audit.storage.model.AuditEvent
+			serviceBuilderAuditEvent = _auditEventLocalService.addAuditEvent(
+				auditMessage);
+
+		_serviceBuilderAuditEvents.add(serviceBuilderAuditEvent);
+
+		return new AuditEvent() {
+			{
+				id = serviceBuilderAuditEvent.getAuditEventId();
 			}
 		};
 	}
