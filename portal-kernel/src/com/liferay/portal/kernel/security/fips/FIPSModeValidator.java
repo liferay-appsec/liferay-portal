@@ -122,26 +122,17 @@ public class FIPSModeValidator {
 	}
 
 	public static void validate() {
-		Provider[] providers = Security.getProviders();
 		List<ValidationError> validationErrors = new ArrayList<>();
 
-		_validate(
-			() -> _validateFIPSProvider(providers), validationErrors,
-			ValidationErrorType.SECURITY_PROVIDERS);
-		_validate(
-			() -> _validateProviders(providers), validationErrors,
-			ValidationErrorType.SECURITY_PROVIDERS);
-		_validate(
-			FIPSModeValidator::_validateSecureRandomProvider, validationErrors,
-			ValidationErrorType.SECURITY_PROVIDERS);
-
 		_validateAllowedPropertyValues(System::getProperty, validationErrors);
+		_validateClusterLinkConfiguration(validationErrors);
 		_validatePortalProperties(validationErrors);
 		_validateRequiredPropertyValues(
 			Security::getProperty, _requiredSecurityProperties,
 			validationErrors);
 		_validateRequiredPropertyValues(
 			System::getProperty, _requiredSystemProperties, validationErrors);
+		_validateSecurityProviders(validationErrors);
 
 		_throwFIPSModeValidationException(validationErrors);
 	}
@@ -193,6 +184,7 @@ public class FIPSModeValidator {
 	public static void validatePortalConfiguration() {
 		List<ValidationError> validationErrors = new ArrayList<>();
 
+		_validateClusterLinkConfiguration(validationErrors);
 		_validateKeyEncryptionKeys(validationErrors);
 		_validatePortalProperties(validationErrors);
 
@@ -498,9 +490,11 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validateDefaultAdminPassword() {
-		if (Validator.isNotNull(PropsValues.DEFAULT_ADMIN_PASSWORD) &&
-			_isNotAllowedPassword(PropsValues.DEFAULT_ADMIN_PASSWORD)) {
+	private static void _validateDefaultAdminPassword(
+		String defaultAdminPassword) {
+
+		if (Validator.isNotNull(defaultAdminPassword) &&
+			_isNotAllowedPassword(defaultAdminPassword)) {
 
 			throw new SecurityException(
 				StringBundler.concat(
@@ -647,10 +641,10 @@ public class FIPSModeValidator {
 				validationErrors, ValidationErrorType.KEY_ENCRYPTION_KEY));
 	}
 
-	private static void _validatePasswordsDefaultPolicyMinLength() {
-		if (PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH <
-				PASSWORDS_MIN_LENGTH) {
+	private static void _validatePasswordsDefaultPolicyMinLength(
+		int passwordsDefaultPolicyMinLength) {
 
+		if (passwordsDefaultPolicyMinLength < PASSWORDS_MIN_LENGTH) {
 			throw new SecurityException(
 				StringBundler.concat(
 					"FIPS mode requires the property \"",
@@ -701,10 +695,10 @@ public class FIPSModeValidator {
 		}
 	}
 
-	private static void _validatePlaintextSecrets() {
+	private static void _validatePlaintextSecrets(List<String> loadedSources) {
 		List<String> messages = new ArrayList<>();
 
-		for (String source : PropsUtil.getLoadedSources()) {
+		for (String source : loadedSources) {
 			String fileName = source.substring(source.lastIndexOf('/') + 1);
 
 			if (fileName.equals("portal.properties")) {
@@ -753,28 +747,28 @@ public class FIPSModeValidator {
 				PropsValues.TUNNELING_SERVLET_ENCRYPTION_ALGORITHM),
 			validationErrors, ValidationErrorType.ENCRYPTION_ALGORITHMS);
 		_validate(
-			FIPSModeValidator::_validateTunnelUtilVerifySSLHostname,
-			validationErrors,
-			ValidationErrorType.TLS_AND_CERTIFICATE_REVOCATION);
-
-		_validateClusterLinkConfiguration(validationErrors);
-
+			() -> _validateDefaultAdminPassword(
+				PropsValues.DEFAULT_ADMIN_PASSWORD),
+			validationErrors, ValidationErrorType.PASSWORDS);
+		_validate(
+			() -> _validatePasswordsDefaultPolicyMinLength(
+				PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH),
+			validationErrors, ValidationErrorType.PASSWORDS);
 		_validate(
 			() -> _validatePasswordsEncryptionAlgorithm(
 				PropsUtil.get(PropsKeys.PASSWORDS_ENCRYPTION_ALGORITHM)),
 			validationErrors, ValidationErrorType.PASSWORDS);
 		_validate(
+			() -> _validatePlaintextSecrets(PropsUtil.getLoadedSources()),
+			validationErrors, ValidationErrorType.SECRETS_IN_PROPERTIES_FILES);
+		_validate(
 			() -> _validateSessionTimeout(PropsValues.SESSION_TIMEOUT),
 			validationErrors, ValidationErrorType.SESSION_TIMEOUT);
 		_validate(
-			FIPSModeValidator::_validateDefaultAdminPassword, validationErrors,
-			ValidationErrorType.PASSWORDS);
-		_validate(
-			FIPSModeValidator::_validatePasswordsDefaultPolicyMinLength,
-			validationErrors, ValidationErrorType.PASSWORDS);
-		_validate(
-			FIPSModeValidator::_validatePlaintextSecrets, validationErrors,
-			ValidationErrorType.SECRETS_IN_PROPERTIES_FILES);
+			() -> _validateTunnelUtilVerifySSLHostname(
+				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME)),
+			validationErrors,
+			ValidationErrorType.TLS_AND_CERTIFICATE_REVOCATION);
 	}
 
 	private static void _validateProviders(Provider[] providers) {
@@ -873,6 +867,23 @@ public class FIPSModeValidator {
 		}
 	}
 
+	private static void _validateSecurityProviders(
+		List<ValidationError> validationErrors) {
+
+		Provider[] providers = Security.getProviders();
+
+		_validate(
+			() -> _validateFIPSProvider(providers), validationErrors,
+			ValidationErrorType.SECURITY_PROVIDERS);
+		_validate(
+			() -> _validateProviders(providers), validationErrors,
+			ValidationErrorType.SECURITY_PROVIDERS);
+
+		_validate(
+			FIPSModeValidator::_validateSecureRandomProvider, validationErrors,
+			ValidationErrorType.SECURITY_PROVIDERS);
+	}
+
 	private static void _validateSessionTimeout(int sessionTimeout) {
 		if (sessionTimeout <= 720) {
 			return;
@@ -882,10 +893,10 @@ public class FIPSModeValidator {
 			"Session timeout must not be greater than 12 hours in FIPS mode");
 	}
 
-	private static void _validateTunnelUtilVerifySSLHostname() {
-		if (!GetterUtil.getBoolean(
-				PropsUtil.get(PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME))) {
+	private static void _validateTunnelUtilVerifySSLHostname(
+		String tunnelUtilVerifySSLHostname) {
 
+		if (!GetterUtil.getBoolean(tunnelUtilVerifySSLHostname)) {
 			throw new SecurityException(
 				"FIPS mode requires the property \"" +
 					PropsKeys.TUNNEL_UTIL_VERIFY_SSL_HOSTNAME +
