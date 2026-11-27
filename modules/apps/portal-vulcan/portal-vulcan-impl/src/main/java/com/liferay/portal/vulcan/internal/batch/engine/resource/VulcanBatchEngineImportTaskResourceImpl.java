@@ -5,7 +5,13 @@
 
 package com.liferay.portal.vulcan.internal.batch.engine.resource;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
 import com.liferay.headless.batch.engine.resource.v1_0.ImportTaskResource;
+import com.liferay.petra.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
@@ -123,7 +129,44 @@ public class VulcanBatchEngineImportTaskResourceImpl
 		).build();
 	}
 
-	private Object _getItemsArray(Object object) {
+	private Object _getItemsArray(byte[] bytes) throws Exception {
+		try (JsonParser jsonParser = _jsonFactory.createParser(bytes)) {
+			if (jsonParser.nextToken() != JsonToken.START_OBJECT) {
+				return bytes;
+			}
+
+			while (jsonParser.nextToken() == JsonToken.FIELD_NAME) {
+				jsonParser.nextToken();
+
+				String fieldName = jsonParser.currentName();
+
+				if (!fieldName.equals("items")) {
+					jsonParser.skipChildren();
+
+					continue;
+				}
+
+				UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+					new UnsyncByteArrayOutputStream();
+
+				try (JsonGenerator jsonGenerator = _jsonFactory.createGenerator(
+						unsyncByteArrayOutputStream)) {
+
+					jsonGenerator.copyCurrentStructure(jsonParser);
+				}
+
+				return unsyncByteArrayOutputStream.toByteArray();
+			}
+		}
+
+		return null;
+	}
+
+	private Object _getItemsArray(Object object) throws Exception {
+		if (object instanceof byte[]) {
+			return _getItemsArray((byte[])object);
+		}
+
 		if (!(object instanceof Map)) {
 			return object;
 		}
@@ -163,6 +206,8 @@ public class VulcanBatchEngineImportTaskResourceImpl
 
 		return _taskItemDelegateName;
 	}
+
+	private static final JsonFactory _jsonFactory = new JsonFactory();
 
 	private AcceptLanguage _contextAcceptLanguage;
 	private Company _contextCompany;

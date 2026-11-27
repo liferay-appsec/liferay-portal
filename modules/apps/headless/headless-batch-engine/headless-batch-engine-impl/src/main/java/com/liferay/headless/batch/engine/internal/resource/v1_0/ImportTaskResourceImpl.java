@@ -264,7 +264,10 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 
 		byte[] bytes = null;
 
-		if (contentType.equals(MediaType.APPLICATION_JSON)) {
+		if (object instanceof byte[]) {
+			bytes = (byte[])object;
+		}
+		else if (contentType.equals(MediaType.APPLICATION_JSON)) {
 			ObjectMapper objectMapper = new ObjectMapper();
 
 			bytes = objectMapper.writeValueAsBytes(object);

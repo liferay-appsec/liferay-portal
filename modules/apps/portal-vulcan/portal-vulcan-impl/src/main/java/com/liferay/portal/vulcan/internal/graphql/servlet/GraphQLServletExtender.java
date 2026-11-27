@@ -17,6 +17,7 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapListener;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
@@ -35,8 +36,10 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.servlet.MaxRequestLengthUtil;
 import com.liferay.portal.kernel.util.CamelCaseUtil;
 import com.liferay.portal.kernel.util.ClassUtil;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -45,6 +48,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.odata.sort.SortParserProvider;
@@ -187,6 +191,7 @@ import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -196,6 +201,10 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 
 import jakarta.xml.bind.DatatypeConverter;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
@@ -674,6 +683,50 @@ public class GraphQLServletExtender {
 
 						HttpServletRequest httpServletRequest =
 							(HttpServletRequest)arguments[0];
+
+						String contentType =
+							httpServletRequest.getContentType();
+
+						if ((contentType == null) ||
+							!contentType.startsWith(
+								ContentTypes.MULTIPART_FORM_DATA)) {
+
+							byte[] bytes = _read(httpServletRequest);
+
+							if (bytes == null) {
+								HttpServletResponse httpServletResponse =
+									(HttpServletResponse)arguments[1];
+
+								httpServletResponse.setStatus(
+									HttpServletResponse.
+										SC_REQUEST_ENTITY_TOO_LARGE);
+
+								return null;
+							}
+
+							httpServletRequest = new HttpServletRequestWrapper(
+								httpServletRequest) {
+
+								@Override
+								public BufferedReader getReader()
+									throws IOException {
+
+									String characterEncoding =
+										getCharacterEncoding();
+
+									if (characterEncoding == null) {
+										characterEncoding = StringPool.UTF8;
+									}
+
+									return new BufferedReader(
+										new InputStreamReader(
+											new UnsyncByteArrayInputStream(
+												bytes),
+											characterEncoding));
+								}
+
+							};
+						}
 
 						arguments[0] = new HttpServletRequestWrapper(
 							httpServletRequest) {
@@ -1395,6 +1448,28 @@ public class GraphQLServletExtender {
 		}
 
 		return GraphQLUtil.isGraphQLFieldValue(method);
+	}
+
+	private byte[] _read(HttpServletRequest httpServletRequest)
+		throws IOException {
+
+		try {
+			return MaxRequestLengthUtil.read(httpServletRequest);
+		}
+		catch (IOException ioException) {
+			if (!GetterUtil.getBoolean(
+					httpServletRequest.getAttribute(
+						WebKeys.MAX_REQUEST_LENGTH_EXCEEDED))) {
+
+				throw ioException;
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(ioException);
+			}
+
+			return null;
+		}
 	}
 
 	private void _registerCustomTypes(

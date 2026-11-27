@@ -11,7 +11,9 @@ import com.liferay.portal.kernel.json.JSONDeserializer;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -67,6 +69,13 @@ public class JSONRPCRequest {
 			return jsonrpcRequest;
 		}
 		catch (Exception exception) {
+			if (GetterUtil.getBoolean(
+					httpServletRequest.getAttribute(
+						WebKeys.MAX_REQUEST_LENGTH_EXCEEDED))) {
+
+				throw new IllegalArgumentException(exception);
+			}
+
 			if (_log.isDebugEnabled()) {
 				_log.debug("Unable to parse JSON RPC request", exception);
 			}

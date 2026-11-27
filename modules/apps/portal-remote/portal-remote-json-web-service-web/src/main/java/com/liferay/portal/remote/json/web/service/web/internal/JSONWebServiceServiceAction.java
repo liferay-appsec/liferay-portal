@@ -96,6 +96,19 @@ public class JSONWebServiceServiceAction extends JSONServiceAction {
 
 				return JSONFactoryUtil.getNullJSON();
 			}
+			else if (GetterUtil.getBoolean(
+						httpServletRequest.getAttribute(
+							WebKeys.MAX_REQUEST_LENGTH_EXCEEDED))) {
+
+				if (_log.isDebugEnabled()) {
+					_log.debug(getThrowableMessage(throwable), throwable);
+				}
+
+				httpServletResponse.setStatus(
+					HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+
+				return JSONFactoryUtil.getNullJSON();
+			}
 			else {
 				status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 			}

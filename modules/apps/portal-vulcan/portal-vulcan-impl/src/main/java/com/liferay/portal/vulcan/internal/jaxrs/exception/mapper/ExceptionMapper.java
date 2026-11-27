@@ -8,10 +8,14 @@ package com.liferay.portal.vulcan.internal.jaxrs.exception.mapper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.jaxrs.exception.mapper.BaseExceptionMapper;
 import com.liferay.portal.vulcan.jaxrs.exception.mapper.Problem;
 import com.liferay.portal.vulcan.problem.ProblemProvider;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
@@ -26,6 +30,19 @@ public class ExceptionMapper extends BaseExceptionMapper<Exception> {
 
 	@Override
 	public Response toResponse(Exception exception) {
+		if (GetterUtil.getBoolean(
+				_httpServletRequest.getAttribute(
+					WebKeys.MAX_REQUEST_LENGTH_EXCEEDED))) {
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			return Response.status(
+				Response.Status.REQUEST_ENTITY_TOO_LARGE
+			).build();
+		}
+
 		Class<? extends Exception> exceptionClass = exception.getClass();
 
 		String exceptionClassName = exceptionClass.getSimpleName();
@@ -122,6 +139,9 @@ public class ExceptionMapper extends BaseExceptionMapper<Exception> {
 
 	@Context
 	private AcceptLanguage _acceptLanguage;
+
+	@Context
+	private HttpServletRequest _httpServletRequest;
 
 	@Context
 	private Providers _providers;

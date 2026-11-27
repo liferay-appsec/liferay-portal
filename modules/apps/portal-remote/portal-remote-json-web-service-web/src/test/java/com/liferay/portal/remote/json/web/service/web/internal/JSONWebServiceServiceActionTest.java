@@ -8,6 +8,7 @@ package com.liferay.portal.remote.json.web.service.web.internal;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.memory.DeleteFileFinalizeAction;
 import com.liferay.petra.memory.FinalizeManager;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
@@ -19,10 +20,13 @@ import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.upload.UploadServletRequest;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.remote.json.web.service.JSONWebServiceAction;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -30,6 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.File;
+import java.io.IOException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -216,6 +221,85 @@ public class JSONWebServiceServiceActionTest
 		_testJSONRPCError(
 			"Invalid params", SecurityException.class, "security-exception",
 			new LinkedHashMap<>());
+	}
+
+	@Test
+	public void testStatusRequestEntityTooLarge() throws Exception {
+		registerActionClass(FooService.class);
+
+		String worldName = RandomTestUtil.randomString();
+
+		String json = toJSON(
+			LinkedHashMapBuilder.<String, Object>put(
+				"/foo/hello-world",
+				LinkedHashMapBuilder.<String, Object>put(
+					"userId", 173
+				).put(
+					"worldName", worldName
+				).build()
+			).build());
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"MAX_REQUEST_LENGTH", (long)json.length() - 1)) {
+
+			MockHttpServletRequest mockHttpServletRequest =
+				createInvokerHttpServletRequest(json);
+
+			mockHttpServletRequest.setContentType(
+				ContentTypes.MULTIPART_FORM_DATA + "; boundary=" +
+					RandomTestUtil.randomString());
+
+			MockHttpServletResponse mockHttpServletResponse =
+				new MockHttpServletResponse();
+
+			Assert.assertEquals(
+				JSONFactoryUtil.getNullJSON(),
+				_jsonWebServiceServiceAction.getJSON(
+					mockHttpServletRequest, mockHttpServletResponse));
+			Assert.assertEquals(
+				HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+				mockHttpServletResponse.getStatus());
+
+			mockHttpServletRequest = Mockito.spy(
+				createHttpRequest("/foo", HttpMethods.POST));
+
+			Mockito.doAnswer(
+				invocation -> {
+					HttpServletRequest httpServletRequest =
+						(HttpServletRequest)invocation.getMock();
+
+					httpServletRequest.setAttribute(
+						WebKeys.MAX_REQUEST_LENGTH_EXCEEDED, Boolean.TRUE);
+
+					throw new IOException();
+				}
+			).when(
+				mockHttpServletRequest
+			).getInputStream();
+
+			mockHttpServletResponse = new MockHttpServletResponse();
+
+			Assert.assertEquals(
+				JSONFactoryUtil.getNullJSON(),
+				_jsonWebServiceServiceAction.getJSON(
+					mockHttpServletRequest, mockHttpServletResponse));
+			Assert.assertEquals(
+				HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+				mockHttpServletResponse.getStatus());
+
+			mockHttpServletRequest = createInvokerHttpServletRequest(
+				StringPool.BLANK);
+
+			mockHttpServletRequest.setContentType(
+				ContentTypes.APPLICATION_X_WWW_FORM_URLENCODED);
+			mockHttpServletRequest.setParameter(Constants.CMD, json);
+
+			Assert.assertEquals(
+				"\"Welcome 173 to " + worldName + "\"",
+				_jsonWebServiceServiceAction.getJSON(
+					mockHttpServletRequest, new MockHttpServletResponse()));
+		}
 	}
 
 	protected MockHttpServletRequest createInvokerHttpServletRequest(

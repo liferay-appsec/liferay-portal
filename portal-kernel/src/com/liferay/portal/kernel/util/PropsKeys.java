@@ -1571,6 +1571,14 @@ public interface PropsKeys {
 
 	public static final String MARKETPLACE_URL = "marketplace.url";
 
+	public static final String MAX_REQUEST_LENGTH = "max.request.length";
+
+	public static final String MAX_REQUEST_LENGTH_BATCH =
+		"max.request.length.batch";
+
+	public static final String MAX_REQUEST_LENGTH_SIGNED_IN =
+		"max.request.length.signed.in";
+
 	public static final String MEMBERSHIP_POLICY_AUTO_VERIFY =
 		"membership.policy.auto.verify";
 
