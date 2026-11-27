@@ -7,11 +7,10 @@ package com.liferay.portal.kernel.security.fips;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.ListUtil;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Jorge García Jiménez
@@ -25,44 +24,26 @@ public class FIPSModeValidationException extends SecurityException {
 		}
 
 		StringBundler sb = new StringBundler(
-			(_validationErrors.size() * 7) + 1);
+			(_validationErrors.size() * 5) + 2);
 
-		sb.append("The configuration is not allowed in FIPS mode.");
+		sb.append("The following FIPS boot blockers were found:");
+		sb.append(StringPool.NEW_LINE);
 
-		Map<ValidationErrorType, List<String>> errorMessagesMap = new EnumMap<>(
-			ValidationErrorType.class);
+		List<ValidationError> validationErrors = ListUtil.sort(
+			ListUtil.copy(_validationErrors),
+			Comparator.comparing(ValidationError::getValidationErrorType));
 
-		for (ValidationError validationError : _validationErrors) {
-			List<String> errorMessages = errorMessagesMap.computeIfAbsent(
-				validationError.getValidationErrorType(),
-				validationErrorType -> new ArrayList<>());
-
-			errorMessages.add(validationError.getErrorMessage());
+		for (ValidationError validationError : validationErrors) {
+			sb.append(StringPool.TAB);
+			sb.append(validationError.getLabel());
+			sb.append(": ");
+			sb.append(validationError.getErrorMessage());
+			sb.append(StringPool.NEW_LINE);
 		}
 
-		for (Map.Entry<ValidationErrorType, List<String>> entry :
-				errorMessagesMap.entrySet()) {
-
-			sb.append(StringPool.NEW_LINE);
-			sb.append(StringPool.NEW_LINE);
-
-			ValidationErrorType validationErrorType = entry.getKey();
-
-			sb.append(validationErrorType.getLabel());
-
-			for (String errorMessage : entry.getValue()) {
-				sb.append(StringPool.NEW_LINE);
-				sb.append(StringPool.DASH);
-				sb.append(StringPool.SPACE);
-				sb.append(errorMessage);
-			}
-		}
+		sb.setIndex(sb.index() - 1);
 
 		return sb.toString();
-	}
-
-	public List<ValidationError> getValidationErrors() {
-		return _validationErrors;
 	}
 
 	public void setValidationErrors(List<ValidationError> validationErrors) {
@@ -85,6 +66,10 @@ public class FIPSModeValidationException extends SecurityException {
 
 		public String getErrorMessage() {
 			return _securityException.getMessage();
+		}
+
+		public String getLabel() {
+			return _validationErrorType.getLabel();
 		}
 
 		public SecurityException getSecurityException() {

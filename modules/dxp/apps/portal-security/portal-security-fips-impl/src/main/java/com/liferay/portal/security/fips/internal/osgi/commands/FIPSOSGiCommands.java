@@ -23,22 +23,22 @@ import org.osgi.service.component.annotations.Component;
 )
 public class FIPSOSGiCommands implements OSGiCommands {
 
-	@Descriptor("List the FIPS boot blockers before switching to FIPS mode.")
+	@Descriptor("List FIPS boot blockers")
 	public String check() {
 		StringBundler sb = new StringBundler(4);
 
 		try {
 			FIPSModeValidator.validatePortalConfiguration();
 
-			sb.append("No FIPS boot blockers were found.");
+			sb.append("No FIPS boot blockers were found");
 		}
 		catch (FIPSModeValidationException fipsModeValidationException) {
 			sb.append(fipsModeValidationException.getMessage());
 		}
 
-		sb.append("\n\nOnly the FIPS boot checks the JVM. This includes the ");
+		sb.append("\nOnly the FIPS boot checks the JVM, including the ");
 		sb.append("security providers, the SecureRandom provider, and the ");
-		sb.append("TLS and certificate revocation properties.");
+		sb.append("TLS and certificate revocation properties");
 
 		return sb.toString();
 	}
