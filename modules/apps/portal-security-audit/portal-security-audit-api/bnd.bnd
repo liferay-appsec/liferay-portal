@@ -1,9 +1,10 @@
 Bundle-Name: Liferay Portal Security Audit API
 Bundle-SymbolicName: com.liferay.portal.security.audit.api
-Bundle-Version: 10.1.0
+Bundle-Version: 10.2.0
 Export-Package:\
 	com.liferay.portal.security.audit,\
 	com.liferay.portal.security.audit.configuration,\
 	com.liferay.portal.security.audit.constants,\
+	com.liferay.portal.security.audit.context,\
 	com.liferay.portal.security.audit.formatter,\
 	com.liferay.portal.security.audit.router.configuration
